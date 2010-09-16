@@ -1,0 +1,1 @@
+SUBDIRS = clock rhythmbox screensaver volume weather macros sysmon indicator-me fx

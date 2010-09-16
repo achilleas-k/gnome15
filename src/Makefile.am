@@ -1,0 +1,1 @@
+SUBDIRS = scripts plugins gnome main

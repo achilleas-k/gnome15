@@ -1,0 +1,55 @@
+AC_INIT(gnome15, 0.1)
+AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_applet.py])
+AM_INIT_AUTOMAKE
+
+dnl AM_CONFIG_HEADER(config.h)
+
+AM_MAINTAINER_MODE
+
+dnl AC_PATH_PROG(GCONFTOOL, gconftool-2)
+dnl AM_GCONF_SOURCE_2
+dnl AC_PROG_INTLTOOL([0.21])
+
+dnl check for python
+AM_PATH_PYTHON
+
+PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
+AC_SUBST(PYGTK_CFLAGS)
+AC_SUBST(PYGTK_LIBS)
+
+dnl ALL_LINGUAS="es ja pl pt sr sr@Latn sv it"
+                                                                                
+dnl GETTEXT_PACKAGE=gnome-blog
+dnl AC_SUBST(GETTEXT_PACKAGE)
+dnl AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [The gettext package])
+
+dnl AM_GLIB_GNU_GETTEXT
+
+AC_OUTPUT([
+Makefile
+src/Makefile
+src/scripts/Makefile
+src/plugins/Makefile
+src/plugins/clock/Makefile
+src/plugins/rhythmbox/Makefile
+src/plugins/screensaver/Makefile
+src/plugins/volume/Makefile
+src/plugins/weather/Makefile
+src/plugins/macros/Makefile
+src/plugins/sysmon/Makefile
+src/plugins/indicator-me/Makefile
+src/plugins/fx/Makefile
+src/gnome/Makefile
+src/gnome/applications/Makefile
+src/gnome/applications/g15-config.desktop
+src/gnome/servers/Makefile
+src/gnome/servers/GNOME_G15Applet.server
+src/main/Makefile
+src/main/python/Makefile
+src/main/python/gnome15/Makefile
+src/main/python/gnome15/g15_globals.py
+src/main/resources/Makefile
+src/main/resources/fonts/Makefile
+src/main/resources/images/Makefile
+src/main/resources/glade/Makefile
+])

@@ -1,0 +1,26 @@
+<oaf_info>
+        <oaf_server iid="OAFIID:GNOME_G15Applet_Factory"
+                    type="exe" location="@prefix@/lib/gnome15/g15-applet">
+
+                <oaf_attribute name="repo_ids" type="stringv">
+                        <item value="IDL:Bonobo/GenericFactory:1.0"/>
+                        <item value="IDL:Bonobo/Unknown:1.0"/>
+                </oaf_attribute>
+                <oaf_attribute name="name" type="string" value="G15 Applet Factory"/>
+                <oaf_attribute name="description" type="string" value="Applet for configuring a Logitech G15 keyboard"/>
+        </oaf_server>
+
+        <oaf_server iid="OAFIID:GNOME_G15Applet"
+                    type="factory" location="OAFIID:GNOME_G15Applet_Factory">
+
+                <oaf_attribute name="repo_ids" type="stringv">
+                        <item value="IDL:GNOME/Vertigo/PanelAppletShell:1.0"/>
+                        <item value="IDL:Bonobo/Control:1.0"/>
+                        <item value="IDL:Bonobo/Unknown:1.0"/>
+                </oaf_attribute>
+                <oaf_attribute name="name" type="string" value="G15 Applet"/>
+                <oaf_attribute name="description" type="string" value="Applet for configuring a Logitech G15 keyboard"/>
+                <oaf_attribute name="panel:category" type="string" value="System &amp; Hardware"/>
+                <oaf_attribute name="panel:icon" type="string" value="g15key.png"/>
+        </oaf_server>
+</oaf_info>
