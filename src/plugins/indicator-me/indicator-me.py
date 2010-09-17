@@ -53,20 +53,15 @@ class G15IndicatorMe():
         self.screen = screen;
         self.timer = None
         self.session_bus = None
-        self.canvas = None
         self.gconf_client = gconf_client
         self.session_bus = dbus.SessionBus()
 
     def activate(self):
-        self.canvas= self.screen.new_canvas(id="Indicator Me")
         self.me_service = self.session_bus.get_object('org.ayatana.indicator.me', '/org/ayatana/indicator/me/service')
         self.session_bus.add_signal_receiver(self.status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
         self.session_bus.add_signal_receiver(self.user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")        
-        self.redraw()
     
     def deactivate(self):
-        self.screen.del_canvas(self.canvas)
-        self.canvas = None
         self.session_bus.remove_signal_receiver(self.status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
         self.session_bus.remove_signal_receiver(self.user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")      
         
@@ -85,17 +80,26 @@ class G15IndicatorMe():
     def redraw(self):
         if self.timer != None:
             self.timer.cancel()        
+        
+        canvas = self.screen.get_canvas("Indicator Me")
+        if canvas == None:
+            canvas = self.screen.new_canvas(priority=g15screen.PRI_HIGH, id="Indicator Me")
+            self.hide_timer = self.screen.hide_after(3.0, canvas)
+        else:
+            self.hide_timer.cancel()
+            self.hime_timer = self.screen.set_priority(canvas, g15screen.PRI_HIGH, hide_after = 3.0)
+            
         icon_theme = self.gconf_client.get_string("/desktop/gnome/interface/icon_theme")        
-        self.canvas.clear()
+        canvas.clear()
         icon = self.me_service.StatusIcons()
         real_icon_file = icons.getIconPath(icon, theme=icon_theme, size = 32)
         if real_icon_file != None:
             if real_icon_file.endswith(".svg"):
                 pixbuf = gtk.gdk.pixbuf_new_from_file(real_icon_file)
                 image = Image.fromstring("RGBA", (pixbuf.get_width(), pixbuf.get_height()), pixbuf.get_pixels())  
-                self.canvas.draw_image(image, (0, g15draw.CENTER), (40, 40), mask=True)
+                canvas.draw_image(image, (0, g15draw.CENTER), (40, 40), mask=True)
             else:              
-                self.canvas.draw_image_from_file(real_icon_file, (0, g15draw.CENTER), (40, 40))
+                canvas.draw_image_from_file(real_icon_file, (0, g15draw.CENTER), (40, 40))
         text = "Unknown"
         if icon == "user-available-panel":
             text = "Available"
@@ -107,16 +111,9 @@ class G15IndicatorMe():
             text = "Offline"
         elif icon == "user-invisible-panel":
             text = "Invisible"
-        self.canvas.set_font_size(g15draw.FONT_MEDIUM)
-        self.canvas.draw_text(text, (48, 2), emboss="White")
-        self.canvas.set_font_size(g15draw.FONT_SMALL)
-        self.canvas.draw_text(self.me_service.PrettyUserName(), (48, 22), emboss="White")
-        self.screen.set_priority(self.canvas, g15screen.PRI_HIGH)
-        self.timer = Timer(3, self.lower, ())
-        self.timer.name = "IndicatorHideTimer"
-        self.timer.setDaemon(True)
-        self.timer.start()
-        
-    def lower(self):
-        self.screen.set_priority(self.canvas, g15screen.PRI_NORMAL)
-        
+        canvas.set_font_size(g15draw.FONT_MEDIUM)
+        canvas.draw_text(text, (48, 2), emboss="White")
+        canvas.set_font_size(g15draw.FONT_SMALL)
+        canvas.draw_text(self.me_service.PrettyUserName(), (48, 22), emboss="White")        
+            
+        self.screen.draw_current_canvas()

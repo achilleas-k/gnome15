@@ -52,7 +52,6 @@ class G15Volume():
         self.screen = screen
         self.volume = 0.0
         self.thread = None
-        self.canvas = None
         self.mute = False
 
     def activate(self):
@@ -76,11 +75,14 @@ class G15Volume():
     
     def redraw(self):
         
-        if self.canvas == None:
-            self.canvas = self.screen.new_canvas(priority=g15screen.PRI_HIGH, id="Volume", hide_after = 3.0)
+        canvas = self.screen.get_canvas("Volume")
+        if canvas == None:
+            canvas = self.screen.new_canvas(priority=g15screen.PRI_HIGH, id="Volume")
             self.screen.draw_current_canvas()
+            self.hide_timer = self.screen.hide_after(3.0, canvas)
         else:
-            self.screen.set_priority(self.canvas, g15screen.PRI_HIGH, hide_after = 3.0)
+            self.hide_timer.cancel()
+            self.hime_timer = self.screen.set_priority(canvas, g15screen.PRI_HIGH, hide_after = 3.0)
         
         vol_mixer = alsaaudio.Mixer("Master", cardindex=0)
 
@@ -108,7 +110,7 @@ class G15Volume():
             total += vol
         volume = total / len(volumes)
         
-        self.canvas.clear()
+        canvas.clear()
                     
         width = self.screen.driver.get_size()[0]
         height = self.screen.driver.get_size()[1]
@@ -116,13 +118,13 @@ class G15Volume():
         gap = ( height - 25 ) / 2
         for j in range(0, int(volume / 4) + 1):
             x = ( width / 2 ) - 25 + ( j * 2 )
-            self.canvas.draw_line([(x, height - gap), (x, height - gap - j) ])
+            canvas.draw_line([(x, height - gap), (x, height - gap - j) ])
             
         if mute:
-            self.canvas.set_font_size(size=g15draw.FONT_SMALL)
-            self.canvas.draw_text("Mute", (g15draw.CENTER, g15draw.CENTER), emboss="White")
+            canvas.set_font_size(size=g15draw.FONT_SMALL)
+            canvas.draw_text("Mute", (g15draw.CENTER, g15draw.CENTER), emboss="White")
         
-        self.screen.draw(self.canvas)
+        self.screen.draw(canvas)
             
 class VolumeThread(Thread):
     def __init__(self, volume):

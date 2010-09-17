@@ -90,7 +90,7 @@ class G15MacroScreen():
                         cycle_to = True
                         
                     self.canvas.fill_box((x, y - 1, x + col, y + 7), color=clear)                        
-                    self.canvas.draw_text(", ".join(g15util.get_key_names(macro.key)) + ":" + macro.name, (x, y), color=color)
+                    self.canvas.draw_text(", ".join(g15util.get_key_names(macro.key)) + ":" + str(macro.name), (x, y), color=color)
                     x += col
                     if x + col > ( width ):
                         x = 0

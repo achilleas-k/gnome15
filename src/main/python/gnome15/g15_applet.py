@@ -240,8 +240,10 @@ class G15Applet(gnomeapplet.Applet):
         self.cycle_timer.start()
             
     def screen_cycle(self):
-        self.screen.cycle(1)
-        self.schedule_cycle()
+        # Don't cycle while recording
+        if self.record_thread == None:
+            self.screen.cycle(1)
+            self.schedule_cycle()
         
     def resched_cycle(self):        
         if self.cycle_timer != None:
@@ -452,24 +454,26 @@ class G15Applet(gnomeapplet.Applet):
     def timeout_callback(self,event=None):
         # Get the currently active window
         try:
-            window = wnck.screen_get_default().get_active_window()
-            choose_profile = None
-            if window != None:
-                title = window.get_name()                                    
-                # Active window has changed, see if we have a profile that matches it
-                for profile in g15profile.get_profiles():
-                    if not profile.get_default() and profile.activate_on_focus and len(profile.window_name) > 0 and title.lower().find(profile.window_name.lower()) != -1:
-                        choose_profile = profile 
-                        break
-                        
-            # No applicable profile found. Look for a default profile, and see if it is set to activate by default
-            active_profile = g15profile.get_active_profile()
-            if choose_profile == None:
-                default_profile = g15profile.get_default_profile()
-                if ( active_profile == None or active_profile.id != default_profile.id ) and default_profile.activate_on_focus:
-                    default_profile.make_active()
-            elif active_profile == None or choose_profile.id != active_profile.id:
-                choose_profile.make_active()
+            # Don't change profiles while recording
+            if self.record_thread == None:
+                window = wnck.screen_get_default().get_active_window()
+                choose_profile = None
+                if window != None:
+                    title = window.get_name()                                    
+                    # Active window has changed, see if we have a profile that matches it
+                    for profile in g15profile.get_profiles():
+                        if not profile.get_default() and profile.activate_on_focus and len(profile.window_name) > 0 and title.lower().find(profile.window_name.lower()) != -1:
+                            choose_profile = profile 
+                            break
+                            
+                # No applicable profile found. Look for a default profile, and see if it is set to activate by default
+                active_profile = g15profile.get_active_profile()
+                if choose_profile == None:
+                    default_profile = g15profile.get_default_profile()
+                    if ( active_profile == None or active_profile.id != default_profile.id ) and default_profile.activate_on_focus:
+                        default_profile.make_active()
+                elif active_profile == None or choose_profile.id != active_profile.id:
+                    choose_profile.make_active()
             
         except Exception as exception:
             traceback.print_exc(file=sys.stdout)
@@ -562,21 +566,27 @@ class G15Applet(gnomeapplet.Applet):
     def done_recording(self):
         if self.record_key != None:     
             active_profile = g15profile.get_active_profile()
-            if len(self.script_model) == 0:
+            key_name = ", ".join(self.record_key)
+            if len(self.script_model) == 0:                
+                canvas = self.screen.new_canvas(priority=g15screen.PRI_HIGH, hide_after=3.0)[1]
+                canvas.draw_text(key_name + " deleted", (g15draw.CENTER, g15draw.CENTER))
+                self.screen.draw_current_canvas()                
                 active_profile.delete_macro(self.screen.get_mkey(), self.last_key)
             else:
-                key_name = ", ".join(self.record_key)
                 str = ""
                 for row in self.script_model:
                     if len(str) != 0:                    
                         str += "\n"
-                    str += row[0] + " " + row[1]
+                    str += row[0] + " " + row[1]          
+                canvas = self.screen.new_canvas(priority=g15screen.PRI_HIGH, hide_after=3.0)[1]
+                canvas.draw_text(key_name + " created", (g15draw.CENTER, g15draw.CENTER))
+                self.screen.draw_current_canvas()                
                 active_profile.create_macro(self.screen.get_mkey(), self.last_key, key_name, str)
         self.hide_recorder()     
         
     def about_info(self,event,data=None):
         about = gnome.ui.About("Gnome15",pglobals.version, "GPL",\
-                               "GNOME Applet to configre a Logitech G15 keyboard",["Brett Smith <tanktarta@blueyonder.co.uk>"],\
+                               "GNOME Applet to configure a Logitech G15 keyboard",["Brett Smith <tanktarta@blueyonder.co.uk>"],\
                                ["Brett Smith <tanktarta@blueyonder.co.uk>"],"Brett Smith <tanktarta@blueyonder.co.uk>",self.logo_pixbuf)
         about.show()
         

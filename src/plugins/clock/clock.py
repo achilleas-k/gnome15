@@ -37,10 +37,10 @@ copyright="Copyright (C)2010 Brett Smith"
 site="http://localhost"
 has_preferences=True
 
-''' 
-This simple plugin displays a digital clock. It also demostates
-how to add a preferences dialog for your plugin
-'''
+# 
+# This simple plugin displays a digital clock. It also demonstrates
+# how to add a preferences dialog for your plugin
+# 
 
 ''' 
 This function must create your plugin instance. You are provided with
@@ -62,23 +62,23 @@ class G15Clock():
         self.gconf_key = gconf_key
     
     def activate(self):
+        '''
+        The activate function is invoked when gnome15 starts up, or the plugin is re-enabled
+        after it has been disabled
+        '''
+        
         self.active = True
         self.timer = None
         
-        ''' 
-        The activate function is invoked when the applet no longer needs the screen for itself. In
-        practice, this is when the applet is started, after a macro has finished
-        recording and when the plugin is enabled
-        '''
         
         '''
         Most plugins will usually want to draw on the screen. To do so, a 'canvas' is created.
         In this case we want a low priority screen. We also supply some callbacks here to
-        get notified when the screen is actually visible. This isn't striclty required, but
-        if the can do optimisations and not paint if the screen is not visible, this is a good
+        get notified when the screen is actually visible. This isn't strictly required, but
+        if the plugin can do optimisations and not paint if the screen is not visible, this is a good
         thing!
         '''        
-        self.canvas = self.screen.new_canvas(priority=g15screen.PRI_LOW, on_shown=self.on_shown, on_hidden=self.on_hidden, id="Clock")
+        self.canvas = self.screen.new_canvas(priority=g15screen.PRI_NORMAL, on_shown=self.on_shown, on_hidden=self.on_hidden, id="Clock")
         
         ''' 
         Once created, we should always ask for the screen to be drawn (even if another higher
@@ -89,7 +89,8 @@ class G15Clock():
     
     def deactivate(self):
         ''' 
-        On deactivate, we must remove our canvas
+        Deactivation occurs when either the plugin is disabled, or the applet is stopped
+        On deactivate, we must remove our canvas.  
         '''        
         self.screen.del_canvas(self.canvas)
         
@@ -127,17 +128,29 @@ class G15Clock():
     '''
     
     def on_shown(self):
+        '''
+        The page showing our canvas is now visible. We should redraw using the latest
+        details 
+        '''
         if self.timer != None:
             self.timer.cancel()
         self.hidden = False
         self.redraw()
         
     def on_hidden(self):
+        '''
+        The page showing our canvas was hidden for some reason. This may be due to a higher priority 
+        screen being displayed, the user manually cycling, or any other any mechanism that changes
+        the current page
+        '''
         self.hidden = True
         if self.timer != None:
             self.timer.cancel()
     
     def changed(self, widget, key):
+        '''
+        gconf configuration has changed, redraw our canvas
+        '''
         self.gconf_client.set_bool(key, widget.get_active())
         self.redraw()    
         
@@ -145,11 +158,22 @@ class G15Clock():
     ''' 
     
     def redraw(self):
+        '''
+        No need to paint anything if our canvas is not visible.
+        '''
         if not self.hidden:
             self.canvas.clear()
+            
+            '''
+            Get the details to display
+            '''
             time_format = "%H:%M"
             if self.gconf_client.get_bool(self.gconf_key + "/display_seconds"):
                 time_format = "%H:%M:%S"                
+                
+            '''
+            Draw to the screen. 
+            '''
             if self.gconf_client.get_bool(self.gconf_key + "/display_date"):
                 self.canvas.set_font_size(g15draw.FONT_MEDIUM)
                 self.canvas.draw_text(datetime.datetime.now().strftime(time_format), (g15draw.CENTER, g15draw.TOP))
@@ -158,12 +182,19 @@ class G15Clock():
                 self.canvas.set_font_size(g15draw.FONT_LARGE)
                 self.canvas.draw_text(datetime.datetime.now().strftime(time_format), (g15draw.CENTER, g15draw.CENTER))
                 
-            ''' Ask the screen to draw our canvas
+            ''' 
+            Ask the screen to draw our canvas. This will only actually occur if this page is currently visible. Because
+            we are using on_shown and on_hidden, in our case the page will be visible at this point.
             '''
             self.screen.draw(self.canvas)
             
-            ''' Redraw again in one second
+            ''' 
+            Redraw again in one second. It is important our timer is a daemon, otherwise
+            the applet will not shut down when requested. This is true of any threads
+            you might start in your plugin, so always ensure either the thread is somehow
+            stopped during deactivate(), or your threads are always daemons 
             '''
             self.timer = Timer(1, self.redraw, ())
             self.timer.name = "ClockRedrawTimer"
+            self.timer.setDaemon(True)
             self.timer.start()

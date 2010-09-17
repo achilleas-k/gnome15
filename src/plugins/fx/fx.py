@@ -49,10 +49,12 @@ class G15Fx():
         self.gconf_key = gconf_key
     
     def activate(self):
-        self.screen.set_transition(self.transition)
+        self.chained_painter = self.screen.set_painter(self.paint)
+        self.chained_transition =self.screen.set_transition(self.transition)
     
     def deactivate(self):
-        self.screen.set_transition(None)
+        self.screen.set_painter(self.chained_painter)
+        self.screen.set_transition(self.chained_transition)
         
     def destroy(self):
         pass
@@ -64,18 +66,34 @@ class G15Fx():
         dialog = widget_tree.get_object("FxDialog")
         dialog.set_transient_for(parent)
         
-        vertical_scroll = widget_tree.get_object("ScrollVertically")
-        vertical_scroll.set_active(self.gconf_client.get_bool(self.gconf_key + "/vertical_scroll"))
-        vs_h = vertical_scroll.connect("toggled", self.changed, self.gconf_key + "/vertical_scroll")
+        self.configure_checkbox(widget_tree, "ScrollVertically", "/vertical_scroll")
+        self.configure_checkbox(widget_tree, "Invert", "/invert")
         
         dialog.run()
         dialog.hide()
-        vertical_scroll.disconnect(vs_h)
+        
+    '''
+    '''
+    def configure_checkbox(self, widget_tree, glade_id, key):
+        widget = widget_tree.get_object(glade_id)
+        widget.set_active(self.gconf_client.get_bool(self.gconf_key + key))
+        widget.connect("toggled", self.changed, self.gconf_key + key)
     
     ''' Callbacks
     '''
     def changed(self, widget, key):
         self.gconf_client.set_bool(key, widget.get_active())
+        self.screen.draw_current_canvas()
+        
+    def paint(self, image):
+        invert = self.gconf_client.get_bool(self.gconf_key + "/invert")
+        if invert:    
+            image = image.point(lambda i: 255^i)
+        
+        if self.chained_painter != None:
+            self.chained_painter.paint(image)
+        else:        
+            self.screen.driver.paint(image)
     
     def transition(self, old_page, new_page, direction="up"):
         
@@ -101,7 +119,7 @@ class G15Fx():
                     working_img.paste(im, (0, 0))
                     im = new_img.crop((0, 0, width, i + step))
                     working_img.paste(im, (0, height - i - step))
-                    self.screen.driver.paint(working_img)
+                    self.paint(working_img)
             else:
                 for i in range(0, height, step):
                     working_img = old_canvas.img.copy()
@@ -110,24 +128,45 @@ class G15Fx():
                     working_img.paste(im, (0, i + step))
                     im = new_img.crop((0, height - i - step, width, height))
                     working_img.paste(im, (0, 0))
-                    self.screen.driver.paint(working_img)
+                    self.paint(working_img)
                 
         else:
             step = width / height
-            for i in range(0, width, step):
             
-                working_img = old_canvas.img.copy()
-                new_img = new_canvas.img.copy()
-                
-                # Shift the original 1 pixel to the left
-                im = old_canvas.img.crop((i + step, 0, width, height))
-                
-                working_img.paste(im, (0, 0))
             
-                # Paste the new canvas            
-                im = new_img.crop((0, 0, i + step, height))
-                working_img.paste(im, (width - i - step, 0))
+            if direction == "up":
+                for i in range(0, width, step):
                 
-                # Now draw it
-                self.screen.driver.paint(working_img)
-    #            time.sleep(0.1)
+                    working_img = old_canvas.img.copy()
+                    new_img = new_canvas.img.copy()
+                    
+                    # Shift the original 1 pixel to the left
+                    im = old_canvas.img.crop((i + step, 0, width, height))
+                    
+                    working_img.paste(im, (0, 0))
+                
+                    # Paste the new canvas            
+                    im = new_img.crop((0, 0, i + step, height))
+                    working_img.paste(im, (width - i - step, 0))
+                    
+                    # Now draw it
+                    self.paint(working_img)
+            else:
+                for i in range(0, width, step):
+                
+                    working_img = old_canvas.img.copy()
+                    new_img = new_canvas.img.copy()
+                    
+                    # Shift the original 1 pixel to the right
+                    im = old_canvas.img.crop((0, 0, width - i - step, height))                    
+                    working_img.paste(im, (i + step, 0))
+                
+                    # Paste the new canvas            
+                    im = new_img.crop((width - i - step, 0, width, height))
+                    working_img.paste(im, (0, 0))
+                    
+                    # Now draw it
+                    self.paint(working_img)
+    
+        if self.chained_transition != None:
+            self.chained_transition(old_page, new_page, direction)

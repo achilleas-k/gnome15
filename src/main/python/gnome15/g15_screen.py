@@ -60,6 +60,7 @@ class G15Screen():
         self.pages = []
         self.current_canvas = None
         self.transition_function = None
+        self.painter_function = None
         self.driver = driver
         self.timer = None
         
@@ -126,23 +127,26 @@ class G15Screen():
                 return i
             i = i + 1
         return i
+    
+    def get_canvas(self, id):
+        for page in self.pages:
+            if page.id == id:
+                return page.canvas
         
     def new_canvas(self, priority=PRI_NORMAL, on_shown=None, on_hidden=None, id="Unknown", hide_after=0.0):
         draw = g15draw.G15Draw(self.driver)
         page = G15Page(id, priority, time.time(), draw, on_shown, on_hidden)
-        self.pages.append(page)
+        self.pages.append(page)    
         if hide_after != 0.0:
-            self.hide_after(hide_after, draw)    
+            return (self.hide_after(hide_after, draw), draw)
         return draw
-    
 
-    def hide_after(self, hide_after, draw):        
-        if self.timer != None:
-            self.timer.cancel()
-        self.timer = threading.Timer(hide_after, self.del_canvas, ([draw]))
-        self.timer.setDaemon(True)
-        self.timer.name = "HideScreenTimer"
-        self.timer.start()
+    def hide_after(self, hide_after, draw):
+        timer = threading.Timer(hide_after, self.del_canvas, ([draw]))
+        timer.setDaemon(True)
+        timer.name = "HideScreenTimer"
+        timer.start()
+        return timer
     
     def set_priority(self, canvas, priority, revert_after=0.0, hide_after=0.0):
         page = self.get_page(canvas) 
@@ -151,12 +155,11 @@ class G15Screen():
             page.set_priority(priority)
             self.draw_current_canvas()        
             if revert_after != 0.0:                    
-                if self.timer != None:
-                    self.timer.cancel()
-                self.timer = threading.Timer(revert_after, self.set_priority, ([canvas, old_priority]))
-                self.timer.start()
+                timer = threading.Timer(revert_after, self.set_priority, ([canvas, old_priority]))
+                timer.start()
+                return timer
             if hide_after != 0.0:                    
-                self.hide_after(hide_after, canvas)
+                return self.hide_after(hide_after, canvas)
     
     def raise_page(self, canvas):
         self.get_page(canvas).set_time(time.time())
@@ -200,9 +203,16 @@ class G15Screen():
             if canvas == screen.canvas:
                 return screen
         return None
+    
+    def set_painter(self, painter_function):
+        o_painter = self.painter_function
+        self.painter_function = painter_function
+        return o_painter
 
     def set_transition(self, transition_function):
+        o_transition = self.transition_function
         self.transition_function = transition_function
+        return o_transition
         
     def draw_current_canvas(self, direction=None, transitions = True):
         visible_canvas = self.get_current_canvas()
@@ -230,4 +240,7 @@ class G15Screen():
             finally:
                 self.lock.release()
             
-        self.driver.paint(self.current_canvas.img)
+        if self.painter_function != None:
+            self.painter_function(self.current_canvas.img)
+        else:
+            self.driver.paint(self.current_canvas.img)
