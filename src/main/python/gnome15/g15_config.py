@@ -18,8 +18,10 @@ import sys
 import os
 import g15_globals as pglobals
 import g15_profile as g15profile
+import g15_daemon as g15daemon
 import gconf
 import g15_driver as g15driver
+import gtk_driver as gtkdriver
 import g15_util as g15util
 import wnck
 
@@ -48,6 +50,13 @@ class G15Config:
         self.conf_client.notify_add("/apps/gnome15/keyboard_backlight", self.keyboard_backlight_configuration_changed);
         self.conf_client.notify_add("/apps/gnome15/active_profile", self.active_profile_changed);
         self.conf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed);
+        
+        # Driver
+        driver = self.conf_client.get_string("/apps/gnome15/driver")
+        if driver == "gtk":
+            self.driver = gtkdriver.GtkDriver()
+        else:
+            self.driver = g15daemon.G15Daemon()
 
         # Widgets
         self.main_window = self.widget_tree.get_object("MainWindow")
@@ -61,6 +70,9 @@ class G15Config:
         self.m2 = self.widget_tree.get_object("M2") 
         self.m3 = self.widget_tree.get_object("M3")
         self.keyboard_backlight = self.widget_tree.get_object("KeyboardBacklightAdjustment")  
+        self.keyboard_backlight.set_upper(self.driver.get_keyboard_backlight_colours())
+        self.contrast = self.widget_tree.get_object("ContrastAdjustment")
+        self.lcd_backlight = self.widget_tree.get_object("LCDBacklightAdjustment")    
         self.window_name_entry = self.widget_tree.get_object("WindowNameEntry")
         self.remove_button = self.widget_tree.get_object("RemoveButton")
         self.activate_on_focus = self.widget_tree.get_object("ActivateProfileOnFocusCheckbox")
@@ -86,6 +98,8 @@ class G15Config:
         self.profiles_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)        
         self.macroList.get_selection().set_mode(gtk.SELECTION_SINGLE)
         self.set_keyboard_backlight_value_from_configuration()
+        self.set_lcd_backlight_value_from_configuration()
+        self.set_contrast_value_from_configuration()
         self.set_cycle_seconds_value_from_configuration()
         self.set_cycle_screens_value_from_configuration()
         
@@ -98,6 +112,8 @@ class G15Config:
         self.m2.connect("toggled", self.memory_changed)
         self.m3.connect("toggled", self.memory_changed)
         self.keyboard_backlight.connect("value-changed", self.keyboard_backlight_changed)
+        self.contrast.connect("value-changed", self.contrast_changed)
+        self.lcd_backlight.connect("value-changed", self.lcd_backlight_changed)
         self.cycle_seconds.connect("value-changed", self.cycle_seconds_changed)
         self.activate_on_focus.connect("toggled", self.activate_on_focus_changed)
         self.activate_by_default.connect("toggled", self.activate_on_focus_changed)
@@ -110,6 +126,16 @@ class G15Config:
         val = self.conf_client.get_int("/apps/gnome15/keyboard_backlight")
         if val != self.keyboard_backlight.get_value():
             self.keyboard_backlight.set_value(val)
+            
+    def set_contrast_value_from_configuration(self):
+        val = self.conf_client.get_int("/apps/gnome15/contrast")
+        if val != self.contrast.get_value():
+            self.contrast.set_value(val)
+            
+    def set_lcd_backlight_value_from_configuration(self):
+        val = self.conf_client.get_int("/apps/gnome15/lcd_backlight")
+        if val != self.lcd_backlight.get_value():
+            self.lcd_backlight.set_value(val)
             
     def set_cycle_seconds_value_from_configuration(self):
         val = self.conf_client.get("/apps/gnome15/cycle_seconds")
@@ -127,6 +153,12 @@ class G15Config:
 
     def active_profile_changed(self, client, connection_id, entry, args):
         self.load_configurations()
+        
+    def contrast_configuration_changed(self, client, connection_id, entry, args):
+        self.set_contrast_value_from_configuration()
+        
+    def lcd_backlight_configuration_changed(self, client, connection_id, entry, args):
+        self.set_lcd_backlight_value_from_configuration()
         
     def keyboard_backlight_configuration_changed(self, client, connection_id, entry, args):
         self.set_keyboard_backlight_value_from_configuration()
@@ -156,6 +188,14 @@ class G15Config:
     def window_name_changed(self, widget=None):
         self.selected_profile.window_name = self.window_name_entry.get_text()
         self.selected_profile.save()
+        
+    def contrast_changed(self, widget):
+        val = int(self.contrast.get_value())
+        self.conf_client.set_int("/apps/gnome15/contrast", val)
+        
+    def lcd_backlight_changed(self, widget):
+        val = int(self.lcd_backlight.get_value())
+        self.conf_client.set_int("/apps/gnome15/lcd_backlight", val)
         
     def keyboard_backlight_changed(self, widget):
         val = int(self.keyboard_backlight.get_value())

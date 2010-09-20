@@ -62,6 +62,12 @@ G15_KEY_LIGHT = 1<<27
 class AbstractDriver(object):
     
     """
+    Start the driver
+    """
+    def connect(self):
+        raise NotImplementedError( "Not implemented" )
+    
+    """
     Get the name of the driver
     """
     def get_name(self):
@@ -72,6 +78,30 @@ class AbstractDriver(object):
     """
     def get_size(self):
         raise NotImplementedError( "Not implemented" )
+    
+    """
+    Get the grid dimensions of the g-key layout. This is currently only a hint for the Gtk driver
+    """
+    def get_gkey_layout(self):
+        raise NotImplementedError( "Not implemented" )
+    
+    """
+    Get the bits per pixel. 1 would be monochrome
+    """
+    def get_bpp(self):
+        raise NotImplementedError( "Not implemented")
+    
+    """
+    Get the number of colours available for keyboard backlight (or brightness as it is on the G15)
+    """
+    def get_keyboard_backlight_colours(self):
+        raise NotImplementedError( "Not implemented")
+    
+    """
+    How many G keys are there
+    """
+    def get_gkeys(self):
+        raise NotImplementedError( "Not implemented")
     
     """
     Repaint the screen. 
@@ -124,10 +154,12 @@ class AbstractDriver(object):
         raise NotImplementedError( "Not implemented" )
     
     """
-    Set the keyboard backlight level. This may be any integer from 0 to 2.
+    Set the keyboard backlight level. This may be any integer from 0 to 2, a 24 bit integer
+    or a tuple of RGB depending on what the device supports
     """     
     def set_keyboard_backlight(self, level):
         raise NotImplementedError( "Not implemented" )
+    
         
     """
     Set the M key LCD lights. The value is a bitmask made up of MKEY_LIGHT1,

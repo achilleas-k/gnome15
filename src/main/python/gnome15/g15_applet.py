@@ -38,11 +38,11 @@ import getopt
 import optparse
 import wnck
 import subprocess
-import pynotify
 import g15_draw as g15draw
 import g15_profile as g15profile
 import g15_daemon as g15daemon
 import g15_config as g15config
+import gtk_driver as gtkdriver
 import traceback
 import gconf
 import sys
@@ -78,7 +78,7 @@ if UseXTest and not local_dpy.query_extension("XTEST") :
     UseXTest = False
     
 NAME="Gnome15"
-VERSION="0.0.1"
+VERSION=pglobals.version
 
 class RecordThread(Thread):
     def __init__(self, plugin):
@@ -121,9 +121,10 @@ class G15Applet(gnomeapplet.Applet):
         self.active_window = None
         self.timeout_interval = 1000
         self.verbs = [ ( "Props", self.properties ), ( "About", self.about_info ), ("Plugins", self.show_plugins) ]
-        self.activate_notify = None
         self.cycle_timer = None
         self.keyboard_backlight = -1
+        self.contrast = 0
+        self.lcd_backlight = -1
         self.propxml="""
         <popup name="button3">
         <menuitem name="Item 1" verb="Props" label="_Preferences..." pixtype="stock" pixname="gtk-properties"/>
@@ -172,19 +173,22 @@ class G15Applet(gnomeapplet.Applet):
         self.conf_client = gconf.client_get_default()
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
         self.conf_client.notify_add("/apps/gnome15/keyboard_backlight", self.keyboard_backlight_configuration_changed);
+        self.conf_client.notify_add("/apps/gnome15/lcd_backlight", self.lcd_backlight_configuration_changed);
+        self.conf_client.notify_add("/apps/gnome15/contrast", self.contrast_configuration_changed);
         self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.check_cycle);
         self.conf_client.notify_add("/apps/gnome15/active_profile", self.active_profile_changed);
         self.conf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed);
         
-        # Enabled notifications
-        pynotify.init("G15 Applet")
-             
         # update info from filesystem
         gobject.timeout_add(self.timeout_interval,self.timeout_callback, self)
         
         # Start a client that handles keystrokes
-        self.driver = g15daemon.G15Daemon()
-        self.set_keyboard_backlight_from_configuration()
+        driver = self.conf_client.get_string("/apps/gnome15/driver")
+        if driver == "gtk":
+            self.driver = gtkdriver.GtkDriver()
+        else:
+            self.driver = g15daemon.G15Daemon()
+        self.driver.connect()
         
         # Connect some events   
         self.widget_tree.get_object("CancelMacroButton").connect("clicked", self.cancel_macro)
@@ -209,8 +213,23 @@ class G15Applet(gnomeapplet.Applet):
         self.applet.show_all()
         
         # Now start listening for key events and cycle the screen if required
+        self.set_keyboard_backlight_from_configuration()
+        self.set_lcd_backlight_from_configuration()
+        self.set_contrast_from_configuration()
         self.driver.grab_keyboard(self.key_received)
         self.check_cycle()
+        
+        # Start async loop
+        
+#        class AsyncThread(Thread):
+#            def __init__(self):
+#                Thread.__init__(self)
+#                self.setDaemon(True)
+#                self.name = "AsyncIO"
+#                
+#            def run(self):
+#                asyncore.loop(timeout=0.1)                
+#        AsyncThread().start()
         
     def __del__(self):
         if self.record_thread != None:
@@ -262,12 +281,12 @@ class G15Applet(gnomeapplet.Applet):
             backlight = self.conf_client.get_int("/apps/gnome15/keyboard_backlight")
             backlight -= 1
             if backlight < 0:
-                backlight = 2
+                backlight = self.driver.get_keyboard_backlight_colours() - 1
             self.conf_client.set_int("/apps/gnome15/keyboard_backlight", backlight)
         elif direction == gtk.gdk.SCROLL_RIGHT:            
             backlight = self.conf_client.get_int("/apps/gnome15/keyboard_backlight")
             backlight += 1
-            if backlight > 2:
+            if backlight > self.driver.get_keyboard_backlight_colours() - 1:
                 backlight = 0
             self.conf_client.set_int("/apps/gnome15/keyboard_backlight", backlight)
         
@@ -446,7 +465,25 @@ class G15Applet(gnomeapplet.Applet):
         backlight = self.conf_client.get_int("/apps/gnome15/keyboard_backlight")
         if backlight != self.keyboard_backlight:
             self.driver.set_keyboard_backlight(backlight)
-        self.keyboard_backlight = backlight
+        self.keyboard_backlight = backlight 
+             
+    def set_lcd_backlight_from_configuration(self):
+        backlight = self.conf_client.get_int("/apps/gnome15/lcd_backlight")
+        if backlight != self.lcd_backlight:
+            self.driver.set_lcd_backlight(backlight)
+        self.lcd_backlight = backlight 
+             
+    def set_contrast_from_configuration(self):
+        contrast = self.conf_client.get_int("/apps/gnome15/contrast")
+        if contrast != self.contrast:
+            self.driver.set_contrast(contrast)
+        self.contrast = contrast
+        
+    def lcd_backlight_configuration_changed(self, client, connection_id, entry, args):
+        self.set_lcd_backlight_from_configuration()
+        
+    def contrast_configuration_changed(self, client, connection_id, entry, args):
+        self.set_contrast_from_configuration()
         
     def keyboard_backlight_configuration_changed(self, client, connection_id, entry, args):
         self.set_keyboard_backlight_from_configuration()
@@ -496,26 +533,9 @@ class G15Applet(gnomeapplet.Applet):
     def activate_profile(self):
         profile = g15profile.get_active_profile()
         self.screen.set_mkey(1)
-        
-        if self.activate_notify != None:
-            self.activate_notify.close()
-            
-        if profile != None:
-            self.activate_notify = pynotify.Notification("G15", "Current macro profile changed to " + profile.name)
-            self.activate_notify.set_urgency(pynotify.URGENCY_CRITICAL)
-            self.activate_notify.set_timeout(10000) # 10 seconds - Ignored now
-            self.activate_notify.set_category("device")
-            self.activate_notify.set_icon_from_pixbuf(self.logo_pixbuf)
-            self.activate_notify.show()
     
     def deactivate_profile(self):
         self.screen.set_mkey(0)
-        n = pynotify.Notification("G15", "Macros disabled")
-        n.set_urgency(pynotify.URGENCY_CRITICAL)
-        n.set_timeout(10000) # 10 seconds
-        n.set_category("device")
-        n.set_icon_from_pixbuf(self.logo_pixbuf)
-        n.show()
         
     def change_orientation(self,arg1,data):
         self.orientation = self.applet.get_orient()

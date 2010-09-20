@@ -30,6 +30,7 @@ import time
 import ImageMath
 from threading import Thread
 from threading import Lock
+import asyncore
 import struct
 import g15_driver as g15driver
 
@@ -47,28 +48,47 @@ CLIENT_CMD_NEVER_SELECT = ord('n')
 CLIENT_CMD_IS_FOREGROUND = ord('v')
 CLIENT_CMD_IS_USER_SELECTED = ord('u')
 
+class AsyncClient(asyncore.dispatcher):
 
-class EventReceive(Thread):
-    def __init__(self, socket, callback):
-        Thread.__init__(self)
-        self.name = "KeyboardReceiveThread"
-        self.socket = socket;
-        self.callback = callback;
-        self.setDaemon(True)
-        
-    def run(self):
-        self.running = True
-        while self.running:
-            val = struct.unpack("<L",self.socket.recv(4))[0]            
+    def __init__(self, host, port):
+        asyncore.dispatcher.__init__(self)
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connect( (host, port) )
+        self.buffer = ""
+        self.callback = None
+        self.hello_received = False
+        self.init_sent = False
+        self.oob_buffer = ""
+
+    def handle_connect(self):
+        pass
+    
+    def handle_expt(self):
+        print "OOB data arrived"
+        data = self.socket.recv(1, socket.MSG_OOB)
+        print data
+
+    def handle_close(self):
+        self.close()
+
+    def handle_read(self):
+        if not self.hello_received:
+            if self.recv(16) != "G15 daemon HELLO":
+                raise Exception("Communication error with server")
+            self.hello_received = True
+        elif self.init_sent:
+            buf = self.recv(4)
+            print "Received",buf,len(buf)
+            val = struct.unpack("<L",buf)[0]            
             self.callback(val, g15driver.KEY_STATE_DOWN)
             while True:
                 # The next 4 bytes should be zero?
-                val_2 = struct.unpack("<L",self.socket.recv(4))[0]
+                val_2 = struct.unpack("<L",self.recv(4))[0]
                 if val_2 != 0:
                     print "WARNING: Expected zero keyboard event"
                 
                 # If the next 4 bytes are zero, then this is a normal key press / release, if not, a second key was pressed before the first was release
-                received = self.socket.recv(4)              
+                received = self.recv(4)              
                 val_3 = struct.unpack("<L",received)[0]
                 if val_3 == 0:
                     break
@@ -76,25 +96,37 @@ class EventReceive(Thread):
                 self.callback(val, g15driver.KEY_STATE_UP)
             
             # Final value should be zero, indicating key release             
-            val_4 = struct.unpack("<L",self.socket.recv(4))[0]
+            val_4 = struct.unpack("<L",self.recv(4))[0]
             if val_4 != 0:
                 print "WARNING: Expected zero keyboard event"
-            self.callback(val, g15driver.KEY_STATE_UP)            
+            self.callback(val, g15driver.KEY_STATE_UP)   
             
-#            if received:              
-#                val = struct.unpack("<L",received)[0]
-#                
-#                # Discard this, i've no idea why we get it        
-#                received = self.socket.recv(12)         
-#
-#                self.jobqueue.run(self.callback, val, g15driver.KEY_STATE_DOWN)
-#                
-#                received = self.socket.recv(16)   
-#                # Discard this, i've no idea why we get it
-#                                
-#                self.jobqueue.run(self.callback, val, g15driver.KEY_STATE_UP)
-#            else:
-#                self.running = False
+    def buffer_text(self, val):
+        print "Buffering", len(val),val
+        self.buffer += val  
+        
+    def buf_oob(self, val): 
+        print "Buffering OOB", len(val),val
+        self.oob_buffer += val     
+
+    def writable(self):
+        return (len(self.buffer) > 0) or ( self.hello_received and not self.init_sent ) or len(self.oob_buffer) > 0
+
+    def handle_write(self):
+        if len(self.oob_buffer) > 0:
+            ch = self.oob_buffer[:1]
+            sent = self.socket.send(ch, socket.MSG_OOB)
+            print "Sent",sent,"bytes"
+            print "Written %d, %d bytes"  % ( ord(ch) ,sent )
+            self.oob_buffer = self.oob_buffer[sent:]
+        elif self.hello_received and not self.init_sent:
+            self.send("GBUF")
+            self.init_sent = True
+        else:
+            sent = self.send(self.buffer)
+            print "Written '" + self.buffer[:sent] + "'",sent
+            self.buffer = self.buffer[sent:]
+
 
 class G15Daemon(g15driver.AbstractDriver):
 
@@ -125,43 +157,42 @@ class G15Daemon(g15driver.AbstractDriver):
         raise NotImplementedError( "Not implemented" )
         
     def connect(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((self.remote_host, self.remote_port))
-        if self.socket.recv(16) != "G15 daemon HELLO":
-            raise Exception("Communication error with server")
-        self.socket.send(self.init_string)
+        self.handler = AsyncClient(self.remote_host, self.remote_port)
         
     def reconnect(self):
-        self.socket.close()
+        self.handler.close()
         self.connect()
         
     def __del__(self):
-        self.socket.close()
+        self.handler.close()
 
     def switch_priorities(self):
-        self.socket.send(chr(CLIENT_CMD_SWITCH_PRIORITIES),socket.MSG_OOB)
+        self.handler.buf_oob(chr(CLIENT_CMD_SWITCH_PRIORITIES))
     
     def is_foreground(self):
-        self.socket.send(chr(CLIENT_CMD_IS_FOREGROUND),socket.MSG_OOB)
-        received = self.socket.recv(1,socket.MSG_OOB)         
-        return received == "1"
+        self.handler.buf_oob(chr(CLIENT_CMD_IS_FOREGROUND))
+#        received = self.handler.recv(1,socket.MSG_OOB)         
+#        return received == "1"
+        return True
     
     def never_user_selected(self):
-        self.socket.send(chr(CLIENT_CMD_NEVER_SELECT),socket.MSG_OOB)
+        self.handler.buf_oob(chr(CLIENT_CMD_NEVER_SELECT))
     
     def is_user_selected(self):
-        self.socket.send(chr(CLIENT_CMD_IS_USER_SELECTED),socket.MSG_OOB)       
-        user_selected = self.socket.recv(1,socket.MSG_OOB)         
-        return user_selected == "1"
+        self.handler.buf_oob(chr(CLIENT_CMD_IS_USER_SELECTED))       
+#        user_selected = self.socket.recv(1,socket.MSG_OOB)         
+#        return user_selected == "1"
+        return True
     
     def set_lcd_backlight(self, level):
-#        self.socket.send(chr(CLIENT_CMD_BACKLIGHT + level),socket.MSG_OOB)    
+        self.handler.buf_oob(chr(CLIENT_CMD_BACKLIGHT + level))    
+#        level = self.socket.recv(1,socket.MSG_OOB)                  
         return level
             
     def set_contrast(self, level):
         print "Setting contrast",level
-#        self.socket.send(chr(CLIENT_CMD_CONTRAST + level),socket.MSG_OOB)     
-#        level = self.socket.recv(1,socket.MSG_OOB)         
+        self.handler.buf_oob(chr(CLIENT_CMD_CONTRAST + level))     
+#        level = self.handler.recv(1,socket.MSG_OOB)         
         return level
             
     def set_keyboard_backlight(self, level):
@@ -169,36 +200,28 @@ class G15Daemon(g15driver.AbstractDriver):
             level = 2
         elif level < 0:
             level = 0
-        self.socket.send(chr(CLIENT_CMD_KB_BACKLIGHT  + level),socket.MSG_OOB) 
+        self.handler.buf_oob(chr(CLIENT_CMD_KB_BACKLIGHT  + level)) 
             
     def set_mkey_lights(self, lights):
-        self.socket.send(chr(CLIENT_CMD_MKEY_LIGHTS  + lights),socket.MSG_OOB)
+        self.handler.buf_oob(chr(CLIENT_CMD_MKEY_LIGHTS  + lights))
         
     def grab_keyboard(self, callback):
-        if self.thread == None:
-            self.thread = EventReceive(self.socket, callback)
-            self.thread.start()
-        else:
-            self.thread.callback = callback
-        self.socket.send(chr(CLIENT_CMD_KEY_HANDLER),socket.MSG_OOB)
+        self.handler.callback = callback
+        self.handler.buf_oob(chr(CLIENT_CMD_KEY_HANDLER))
 
-    def paint(self, img):     
-        self.lock.acquire()
-        try :           
-            # Convert to black and white and invert        
-            img = ImageMath.eval("convert(img,'1')",img=img)
-            img = ImageMath.eval("convert(img,'P')",img=img)
-            img = img.point(lambda i: i >= 250,'1')
-            img = img.point(lambda i: 1^i)
-    
-            # Covert image buffer to string
-            buf = ""
-            for x in list(img.getdata()): 
-                buf += chr(x)
-                
-            if len(buf) != MAX_X * MAX_Y:
-                print "Invalid buffer size"
-            else:
-                self.socket.sendall(buf)
-        finally:
-            self.lock.release()
+    def paint(self, img):  
+        # Convert to black and white and invert        
+        img = ImageMath.eval("convert(img,'1')",img=img)
+        img = ImageMath.eval("convert(img,'P')",img=img)
+        img = img.point(lambda i: i >= 250,'1')
+        img = img.point(lambda i: 1^i)
+
+        # Covert image buffer to string
+        buf = ""
+        for x in list(img.getdata()): 
+            buf += chr(x)
+            
+        if len(buf) != MAX_X * MAX_Y:
+            print "Invalid buffer size"
+        else:
+            self.handler.buffer_text(buf)

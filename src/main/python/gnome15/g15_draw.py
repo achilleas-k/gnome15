@@ -99,12 +99,15 @@ class G15Draw:
 			self.img.paste(image, box, image)
 		else:
 			self.img.paste(image, box)
-	
-	def draw_text(self, text, xy, color="Black", inset_x=0, inset_y=0, clear=None, emboss=None):
+		
+	def draw_text(self, text, xy, color="Black", inset_x=0, inset_y=0, clear=None, emboss=None, wrap=False):
 		x = xy[0]
 		y = xy[1]
 		lcd_w = self.driver.get_size()[0]
 		lcd_h =  self.driver.get_size()[1]
+		if len(xy) == 4:
+			lcd_w = xy[2]
+			lcd_h = xy[3]
 		text_size = self.draw.textsize(text, self.font)
 		if clear != None:
 			self.fill_box([xy, (xy[0] + text_size[0], xy[1] + text_size[1])], clear)
@@ -120,6 +123,27 @@ class G15Draw:
 			y = ( lcd_h / 2 ) - ( text_size[1] / 2 ) + inset_y
 		else:
 			y += inset_y
+			
+		ox = x
+		oy = y
+			
+		if wrap:
+			words = text.split()
+			space_size = self.draw.textsize(" ", self.font)
+			for word in words:
+				word_size = self.draw.textsize(word, self.font)
+				if x > ox:
+					x += space_size[0]
+				if x + word_size[0] >= lcd_w:
+					x = ox
+					y += word_size[1]
+				self.draw_words(x, y, word, emboss, color)
+				x += word_size[0]
+		else:
+			self.draw_words(x, y, text, emboss, color)
+			
+			
+	def draw_words(self, x, y, text, emboss, color):
 		if emboss != None:
 			for xx in range(0, 3):
 				for yy in range(0, 3):

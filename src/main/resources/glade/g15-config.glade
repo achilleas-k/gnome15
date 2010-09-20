@@ -449,77 +449,84 @@ the following title has focus</property>
               </packing>
             </child>
             <child>
-              <object class="GtkHBox" id="hbox4">
+              <object class="GtkFrame" id="frame2">
                 <property name="visible">True</property>
-                <property name="spacing">4</property>
+                <property name="label_xalign">0</property>
+                <property name="shadow_type">none</property>
                 <child>
-                  <object class="GtkLabel" id="label6">
+                  <object class="GtkAlignment" id="alignment4">
                     <property name="visible">True</property>
-                    <property name="xalign">1</property>
-                    <property name="label" translatable="yes">Backlight</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkHScale" id="hscale2">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="adjustment">KeyboardBacklightAdjustment</property>
-                    <property name="digits">0</property>
-                    <property name="value_pos">right</property>
-                  </object>
-                  <packing>
-                    <property name="padding">32</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkVBox" id="vbox11">
-                    <property name="visible">True</property>
+                    <property name="left_padding">12</property>
                     <child>
-                      <object class="GtkCheckButton" id="CycleScreens">
-                        <property name="label" translatable="yes">Cycle screens</property>
+                      <object class="GtkHBox" id="hbox4">
                         <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">False</property>
-                        <property name="draw_indicator">True</property>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkAlignment" id="alignment6">
-                        <property name="visible">True</property>
-                        <property name="left_padding">32</property>
                         <child>
-                          <object class="GtkHBox" id="hbox8">
+                          <object class="GtkVBox" id="vbox13">
                             <property name="visible">True</property>
                             <child>
-                              <object class="GtkLabel" id="label19">
+                              <object class="GtkHBox" id="hbox9">
                                 <property name="visible">True</property>
-                                <property name="xalign">0</property>
-                                <property name="label" translatable="yes">Every</property>
+                                <child>
+                                  <object class="GtkLabel" id="label6">
+                                    <property name="width_request">120</property>
+                                    <property name="visible">True</property>
+                                    <property name="xalign">0</property>
+                                    <property name="label" translatable="yes">Keyboard Backlight</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkHScale" id="hscale2">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="adjustment">KeyboardBacklightAdjustment</property>
+                                    <property name="digits">0</property>
+                                    <property name="value_pos">right</property>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">32</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">False</property>
-                                <property name="padding">4</property>
                                 <property name="position">0</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkSpinButton" id="CycleSeconds">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="invisible_char">●</property>
-                                <property name="adjustment">CycleAdjustment</property>
+                              <object class="GtkHBox" id="hbox10">
+                                <child>
+                                  <object class="GtkLabel" id="label19">
+                                    <property name="width_request">120</property>
+                                    <property name="visible">True</property>
+                                    <property name="xalign">0</property>
+                                    <property name="label" translatable="yes">LCD Backlight</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkHScale" id="hscale1">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="adjustment">LCDBacklightAdjustment</property>
+                                    <property name="digits">0</property>
+                                    <property name="value_pos">right</property>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">32</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -528,39 +535,137 @@ the following title has focus</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkLabel" id="label20">
+                              <object class="GtkHBox" id="hbox11">
+                                <child>
+                                  <object class="GtkLabel" id="label22">
+                                    <property name="width_request">120</property>
+                                    <property name="visible">True</property>
+                                    <property name="xalign">0</property>
+                                    <property name="label" translatable="yes">LCD Contrast</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkHScale" id="hscale3">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="adjustment">ContrastAdjustment</property>
+                                    <property name="digits">0</property>
+                                    <property name="value_pos">right</property>
+                                  </object>
+                                  <packing>
+                                    <property name="padding">32</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">2</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkVBox" id="vbox11">
+                            <property name="visible">True</property>
+                            <child>
+                              <object class="GtkCheckButton" id="CycleScreens">
+                                <property name="label" translatable="yes">Cycle screens</property>
                                 <property name="visible">True</property>
-                                <property name="label" translatable="yes">seconds</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">False</property>
+                                <property name="draw_indicator">True</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkAlignment" id="alignment6">
+                                <property name="visible">True</property>
+                                <property name="left_padding">32</property>
+                                <child>
+                                  <object class="GtkHBox" id="hbox8">
+                                    <property name="visible">True</property>
+                                    <child>
+                                      <object class="GtkLabel" id="label20">
+                                        <property name="visible">True</property>
+                                        <property name="xalign">0</property>
+                                        <property name="label" translatable="yes">Every</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="padding">4</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkSpinButton" id="CycleSeconds">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">True</property>
+                                        <property name="invisible_char">●</property>
+                                        <property name="adjustment">CycleAdjustment</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="label23">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">seconds</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="padding">4</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                </child>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">False</property>
                                 <property name="padding">4</property>
-                                <property name="position">2</property>
+                                <property name="position">1</property>
                               </packing>
                             </child>
                           </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">1</property>
+                          </packing>
                         </child>
                       </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="padding">4</property>
-                        <property name="position">1</property>
-                      </packing>
                     </child>
                   </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">2</property>
-                  </packing>
+                </child>
+                <child type="label">
+                  <object class="GtkLabel" id="label3">
+                    <property name="visible">True</property>
+                    <property name="label" translatable="yes">&lt;b&gt;Keyboard Options&lt;/b&gt;</property>
+                    <property name="use_markup">True</property>
+                  </object>
                 </child>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="padding">4</property>
                 <property name="position">1</property>
               </packing>
             </child>

@@ -1,0 +1,14 @@
+*.in
+Makefile
+config.log
+config.status
+gnome15-*.tar.gz
+Makefile.in
+py-compile
+missing
+install-sh
+autom4te.cache
+configure
+GNOME_G15Applet.server
+g15-config.desktop
+aclocal.m4

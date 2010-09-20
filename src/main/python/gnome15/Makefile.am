@@ -11,6 +11,7 @@ gnome15_PYTHON = 		\
 	g15_draw.py \
 	g15_profile.py \
 	g15_screen.py \
+	gtk_driver.py \
 	jobqueue.py
 	
 EXTRA_DIST =  			\

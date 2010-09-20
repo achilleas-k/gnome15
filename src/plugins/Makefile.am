@@ -1,1 +1,1 @@
-SUBDIRS = clock rhythmbox screensaver volume weather macros sysmon indicator-me fx
+SUBDIRS = clock rhythmbox screensaver volume weather macros sysmon indicator-me fx videoplayer cal notify-lcd

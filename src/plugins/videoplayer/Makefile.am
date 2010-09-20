@@ -1,5 +1,5 @@
-plugindir = $(datadir)/gnome15/plugins/sysmon
-plugin_DATA = sysmon.py
+plugindir = $(datadir)/gnome15/plugins/videoplayer
+plugin_DATA = videoplayer.py
 
 EXTRA_DIST =  			\
 	$(plugin_DATA)
