@@ -145,7 +145,6 @@ class G15VideoPlayer():
         self.redraw()
     
     def play(self):
-        self.movie_path = "/home/tanktarta/Desktop/a.avi"
         self.playing = PlayThread(self)
         self.playing.start()
     
