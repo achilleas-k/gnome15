@@ -21,7 +21,9 @@
 #        +-----------------------------------------------------------------------------+
  
 import gnome15.g15_screen as g15screen 
-import gnome15.g15_draw as g15draw
+import gnome15.g15_theme as g15theme
+import gnome15.g15_driver as g15driver
+import gnome15.g15_util as g15util
 import datetime
 from threading import Timer
 import gtk
@@ -33,11 +35,14 @@ import vobject
 
 id="cal"
 name="Calendar"
-description="Clock & Calendar. Integrates with Evolution calendar"
+description="Clock & Calendar. Integrates with Evolution calendar. " \
+    + "You may move around the calendar using the cursor keys near " \
+    + "the display on the G19, or using the right most 4 keys under the " \
+    + "display (L2-L5)."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://localhost"
-has_preferences=True
+site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
+has_preferences=False
 
 def create(gconf_key, gconf_client, screen):
     return G15Cal(gconf_key, gconf_client, screen)
@@ -46,62 +51,52 @@ class G15Cal():
     
     def __init__(self, gconf_key, gconf_client, screen):
         self.screen = screen
-        self.hidden = False
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
+        self.timer = None
     
     def activate(self):
-        self.active = True 
-        self.timer = None
+        self.active = True
         self.event_days = None
+        self.calendar_date = None
         self.loaded_minute = 0
-        self.load_month_events(datetime.datetime.now())
-        self.canvas = self.screen.new_canvas(priority=g15screen.PRI_NORMAL, on_shown=self.on_shown, on_hidden=self.on_hidden, id="Cal")
-        self.screen.draw_current_canvas()
-    
-    def deactivate(self):
-        self.screen.del_canvas(self.canvas)
+        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
+        self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_NORMAL, on_shown=self.on_shown, on_hidden=self.on_hidden, id="Cal")
         
-    def destroy(self):
-        pass
-    
-    def show_preferences(self, parent):
-        widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "clock.glade"))
+    def redraw(self):
+        now = datetime.datetime.now()
         
-        dialog = widget_tree.get_object("ClockDialog")
-        dialog.set_transient_for(parent)
+        # Only load the events every minute
+        if self.calendar_date == None and self.event_days == None or self.loaded_minute != now.minute:
+            self.loaded_minute = now.minute
+            self.load_month_events(now)
+            
+        self.screen.redraw(self.page)
+        self.schedule_redraw()
         
-        display_seconds = widget_tree.get_object("DisplaySecondsCheckbox")
-        display_seconds.set_active(self.gconf_client.get_bool(self.gconf_key + "/display_seconds"))
-        seconds_h = display_seconds.connect("toggled", self.changed, self.gconf_key + "/display_seconds")
+    def schedule_redraw(self):
+        if self.screen.is_visible(self.page):
+            self.timer = g15util.schedule("CalRedraw", 1.0, self.redraw)
         
-        display_date = widget_tree.get_object("DisplayDateCheckbox")
-        display_date.set_active(self.gconf_client.get_bool(self.gconf_key + "/display_date"))
-        date_h = display_date.connect("toggled", self.changed, self.gconf_key + "/display_date")
-        
-        dialog.run()
-        dialog.hide()
-        display_seconds.disconnect(seconds_h)
-        display_date.disconnect(date_h)
-    
     def on_shown(self):
-        if self.timer != None:
-            self.timer.cancel()
         self.hidden = False
         self.redraw()
         
     def on_hidden(self):
-        self.hidden = True
         if self.timer != None:
             self.timer.cancel()
-    
-    def changed(self, widget, key):
-        self.gconf_client.set_bool(key, widget.get_active())
-        self.redraw()
+        self.calendar_date = None
+        self.loaded_minute = -1
         
+    def deactivate(self):
+        self.timer.cancel()
+        self.timer.cancel()
+        self.screen.del_page(self.page)
+        
+    def destroy(self):
+        pass
+    
     def load_month_events(self, now):
-        self.loaded_minute = now.minute
         self.event_days = {}
             
         # Get all the events for this month
@@ -118,70 +113,84 @@ class G15Cal():
                     else:
                         self.event_days[key] = list
                     list.append(parsed_event)
+                    
+    def adjust_calendar_date(self, amount):
+        if self.calendar_date == None:
+            self.calendar_date = datetime.datetime.now()
+        self.calendar_date = self.calendar_date + datetime.timedelta(amount)
+        self.load_month_events(self.calendar_date)
+        self.screen.redraw(self.page) 
+                    
+    def handle_key(self, keys, state, post):
+        if not post and state == g15driver.KEY_STATE_UP and self.screen.get_current_page() == self.page:
+            if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L2 in keys:
+                self.screen.applet.resched_cycle()
+                self.adjust_calendar_date(-7)
+                return True
+            elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L3 in keys:
+                self.screen.applet.resched_cycle()
+                self.adjust_calendar_date(7)
+                return True
+            elif g15driver.G_KEY_LEFT in keys or g15driver.G_KEY_L4 in keys:
+                self.screen.applet.resched_cycle()
+                self.adjust_calendar_date(-1)
+                return True
+            elif g15driver.G_KEY_RIGHT in keys or g15driver.G_KEY_L5 in keys:
+                self.screen.applet.resched_cycle()
+                self.adjust_calendar_date(1)
+                return True
+            elif g15driver.G_KEY_BACK in keys:
+                self.screen.applet.resched_cycle()
+                self.calendar_date = None
+                self.loaded_minute =- -1
+                self.screen.redraw(self.page)
+                return True
+                
+        return False
         
-    def redraw(self):
-        if not self.hidden:
-            self.canvas.clear()
-            time_format = "%H:%M"
-            now = datetime.datetime.now()
-
-            self.canvas.set_font_size(g15draw.FONT_SMALL)
-            self.canvas.draw_text(now.strftime("%H:%M"), (22, 0))
-            self.canvas.draw_text(now.strftime("%a %d %b"), (8, 9))
+    def paint(self, canvas):
+        time_format = "%H:%M"
+        now = datetime.datetime.now()
+        
+        properties = {}
+        properties["time_24"] = now.strftime("%H:%M") 
+        properties["full_time_24"] = now.strftime("%H:%M:%S") 
+        properties["time_12"] = now.strftime("%I:%M %p") 
+        properties["full_time_12"] = now.strftime("%I:%M:%S %p")
+        properties["short_date"] = now.strftime("%a %d %b")
+        properties["full_date"] = now.strftime("%A %d %B")
+        properties["locale_date"] = now.strftime("%x")
+        properties["locale_time"] = now.strftime("%X")
+        properties["year"] = now.strftime("%Y")
+        properties["short_year"] = now.strftime("%y")
+        properties["week"] = now.strftime("%W")
+        properties["month"] = now.strftime("%m")
+        properties["month_name"] = now.strftime("%B")
+        properties["short_month_name"] = now.strftime("%b")
+        properties["day_name"] = now.strftime("%A")
+        properties["short_day_name"] = now.strftime("%a")
+        properties["day_of_year"] = now.strftime("%d")
+        
+        calendar_date = now
+        if self.calendar_date != None:
+            calendar_date = self.calendar_date
             
-            # Only load the events every minute
-            if self.event_days == None or self.loaded_minute != now.minute:
-                self.load_month_events(now)
-                
-            # Draw calendar
-            self.canvas.set_font_size(g15draw.FONT_TINY)
-            cal = calendar.Calendar()
+        properties["cal_year"] = calendar_date.strftime("%Y")
+        properties["cal_month"] = calendar_date.strftime("%m")
+        properties["cal_month_name"] = calendar_date.strftime("%B")
+        properties["cal_short_month_name"] = calendar_date.strftime("%b")
+        properties["cal_year"] = calendar_date.strftime("%Y")
+        properties["cal_short_year"] = calendar_date.strftime("%y")
+        
+        if not str(calendar_date.day) in self.event_days:
+            properties["message"] = "No events"
+        else:
+            properties["events"] = True
+        
+        attributes = {
+                      "now" : calendar_date,
+                      "event_days" : self.event_days
+                      }
+         
             
-            y = 1
-            self.canvas.fill_box((72, 0, self.screen.driver.get_size()[0], 7), color="Black")
-            x = 76
-            for day in [ "M", "T", "W", "T", "F", "S", "S"]:
-                self.canvas.draw_text("%s" % day, (x, y), color="White")
-                x += 12
-                
-            y = 9
-            ld = -1
-            for day in cal.itermonthdates(now.year, now.month):
-                weekday = day.weekday()
-                if weekday < ld:
-                    y += 7
-                ld = weekday
-                x = 72 + ( weekday * 12 )
-                color = "Black"
-                if str(day.day) in self.event_days:
-                    event = self.event_days[str(day.day)]
-                    self.canvas.fill_box((x,y - 1, x + 12, y + 6), color = "Black")
-                    color = "White"
-                self.canvas.draw_text("%2d" % day.day, (x + 1, y), color = color)
-                
-            # Summary for today
-            if str(now.day) in self.event_days:
-                y = 23
-                for event in self.event_days[str(now.day)]:
-                    self.canvas.draw_text(event.summary.value[:14], (0, y))
-                    try :
-                        event.valarm
-                        self.canvas.fill_box((62, y - 1, 69, y + 6), "White")
-                        self.canvas.draw_image_from_file(os.path.join(os.path.dirname(__file__), "bell.gif"), (62, y - 1), size=(7,7))
-                    except AttributeError:
-                        pass
-                    y += 7
-                    if y > self.screen.driver.get_size()[1]:
-                        break
-                        
-            # Separator line
-            self.canvas.draw_line((70, 0, 70, self.screen.driver.get_size()[1]), "Gray")
-            self.canvas.draw_line((0, 21, 70, 21), "Gray")
-                
-                
-            self.screen.draw(self.canvas)
-            
-            self.timer = Timer(1, self.redraw, ())
-            self.timer.name = "CalRedrawTimer"
-            self.timer.setDaemon(True)
-            self.timer.start()
+        self.theme.draw(canvas, properties, attributes)

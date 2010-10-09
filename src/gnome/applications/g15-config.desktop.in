@@ -1,9 +1,9 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=G15 Configuration
-Comment=Configure your Logitech G15 keyboard
+Name=Logitech G Keyboard Configuration
+Comment=Configure your Logitech G15 or G19 keyboard
 Exec=@prefix@/bin/g15-config
-Icon=g15key
+Icon=gnome15
 Terminal=false
 StartupNotify=true
 Type=Application

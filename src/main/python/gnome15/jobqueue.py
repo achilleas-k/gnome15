@@ -14,6 +14,8 @@
     
 import Queue
 import threading
+import traceback
+import sys
 
 class JobQueue():
     
@@ -24,12 +26,14 @@ class JobQueue():
         
     def __init__(self,number_of_workers=1,name="JobQueue"):
         self.work_queue = Queue.Queue()
-        
         for __ in range(number_of_workers):
             t = threading.Thread(target = self.worker)
             t.name = name
             t.setDaemon(True)
             t.start()
+            
+    def clear(self):
+        self.work_queue.clear()
             
     def run(self, item, *args):
         self.work_queue.put(self.JobItem(item, args))
@@ -37,6 +41,9 @@ class JobQueue():
     def worker(self):
         while True:
             item = self.work_queue.get()
-            item.item(*item.args)
+            try:
+                item.item(*item.args)
+            except:
+                traceback.print_exc(file=sys.stderr)
             self.work_queue.task_done()
  

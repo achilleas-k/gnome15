@@ -38,11 +38,10 @@ import getopt
 import optparse
 import wnck
 import subprocess
-import g15_draw as g15draw
 import g15_profile as g15profile
-import g15_daemon as g15daemon
 import g15_config as g15config
-import gtk_driver as gtkdriver
+import g15_macros as g15macros
+import g15_theme as g15theme
 import traceback
 import gconf
 import sys
@@ -71,7 +70,6 @@ except ImportError:
     UseXTest = False
      
 local_dpy = display.Display()
-record_dpy = display.Display()
 window = local_dpy.get_input_focus()._data["focus"];
 
 if UseXTest and not local_dpy.query_extension("XTEST") :
@@ -80,73 +78,62 @@ if UseXTest and not local_dpy.query_extension("XTEST") :
 NAME="Gnome15"
 VERSION=pglobals.version
 
-class RecordThread(Thread):
-    def __init__(self, plugin):
-        Thread.__init__(self)
-        self.setDaemon(True)
-        self.name = "RecordThread"
-        self.plugin = plugin  
-        self.ctx = record_dpy.record_create_context(
-                                0,
-                                [record.AllClients],
-                                [{
-                                  'core_requests': (0, 0),
-                                  'core_replies': (0, 0),
-                                  'ext_requests': (0, 0, 0, 0),
-                                  'ext_replies': (0, 0, 0, 0),
-                                  'delivered_events': (0, 0),
-                                  'device_events': (X.KeyPress, X.MotionNotify),
-                                  'errors': (0, 0),
-                                  'client_started': False,
-                                  'client_died': False,
-                                  }])
+COLOURS = [(0,0,0), (255, 0, 0),(0, 255, 0),(0, 0, 255),(255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
 
-    def disable_record_context(self):
-        if self.ctx != None:            
-            local_dpy.record_disable_context(self.ctx)
-            local_dpy.flush()
+class G15Splash():
+    
+    def __init__(self, screen):
+        self.screen = screen        
+        self.progress = 0.0
+        self.theme = g15theme.G15Theme(pglobals.image_dir, self.screen, "background")
+        self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_EXCLUSIVE, id="Splash")
+        self.screen.redraw(self.page)
         
-    def run(self):      
-        record_dpy.record_enable_context(self.ctx, self.plugin.record_callback)
-        record_dpy.record_free_context(self.ctx)
+    def paint(self, canvas):
+        properties = {
+                      "version": VERSION,
+                      "progress": self.progress
+                      }
+        self.theme.draw(canvas, properties)
+        
+    def complete(self):
+        self.progress = 100
+        self.screen.redraw(self.page)
+        self.screen.set_priority(self.page, g15screen.PRI_LOW)
+        
+    def update_splash(self, value, max):
+        self.progress = ( float(value) / float(max) ) * 100.0
+        self.screen.redraw(self.page)
 
 class G15Applet(gnomeapplet.Applet):
     
-    def __init__(self, applet, iid, parent_window=None):
+    def __init__(self, applet, iid, parent_window=None, configure = False):
         self.__gobject_init__()
         
         self.parent_window = parent_window
         self.applet = applet
-        self.record_thread = None
+        self.applet_icon = 'g15key.png'
         self.active_window = None
+        self.color_no = 1
         self.timeout_interval = 1000
-        self.verbs = [ ( "Props", self.properties ), ( "About", self.about_info ), ("Plugins", self.show_plugins) ]
+        self.verbs = [ ( "Props", self.properties ), ( "Macros", self.macros ), ( "About", self.about_info ) ]
         self.cycle_timer = None
-        self.keyboard_backlight = -1
-        self.contrast = 0
-        self.lcd_backlight = -1
+        self.shutting_down = False
         self.propxml="""
         <popup name="button3">
         <menuitem name="Item 1" verb="Props" label="_Preferences..." pixtype="stock" pixname="gtk-properties"/>
-        <menuitem name="Item 2" verb="Plugins" label="Plugins"/>
+        <menuitem name="Item 2" verb="Macros" label="Macros" pixtype="stock" pixname="input-keyboard"/>
         <menuitem name="Item 3" verb="About" label="_About..." pixtype="stock" pixname="gnome-stock-about"/>
         </popup>
         """
         
         # Key macro recording
-        self.recording_canvas = None
-        self.record_key = None
-        self.key_down = None
-        self.key_field = None
+        self.defeat_profile_change = False
         
         # Load main Glade file
         g15Config = os.path.join(pglobals.glade_dir, 'g15-config.glade')        
         self.widget_tree = gtk.Builder()
         self.widget_tree.add_from_file(g15Config)
-        self.key_field = self.widget_tree.get_object("MacroScript")
-#        self.macro_dialog = self.widget_tree.get_object("MacroScriptDialog")
-#        self.macro_dialog.set_transient_for(self.parent_window)
-        self.script_model = self.widget_tree.get_object("ScriptModel")
         
         # Post gnome initialisation
         self.orientation = self.applet.get_orient()
@@ -164,7 +151,6 @@ class G15Applet(gnomeapplet.Applet):
         self.applet.add(self.container)      
         
         # Image stuff
-        self.logo_pixbuf = gtk.gdk.pixbuf_new_from_file(os.path.join(pglobals.image_dir,'g15key.png'))
         self.image = gtk.Image()
         self.size_changed() 
         self.box.add(self.image)
@@ -172,26 +158,21 @@ class G15Applet(gnomeapplet.Applet):
         # Monitor gconf and configure keyboard based on values
         self.conf_client = gconf.client_get_default()
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
-        self.conf_client.notify_add("/apps/gnome15/keyboard_backlight", self.keyboard_backlight_configuration_changed);
-        self.conf_client.notify_add("/apps/gnome15/lcd_backlight", self.lcd_backlight_configuration_changed);
-        self.conf_client.notify_add("/apps/gnome15/contrast", self.contrast_configuration_changed);
         self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.check_cycle);
         self.conf_client.notify_add("/apps/gnome15/active_profile", self.active_profile_changed);
         self.conf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed);
+        self.conf_client.notify_add("/apps/gnome15/driver", self.driver_changed);
         
         # update info from filesystem
         gobject.timeout_add(self.timeout_interval,self.timeout_callback, self)
         
-        # Start a client that handles keystrokes
-        driver = self.conf_client.get_string("/apps/gnome15/driver")
-        if driver == "gtk":
-            self.driver = gtkdriver.GtkDriver()
-        else:
-            self.driver = g15daemon.G15Daemon()
-        self.driver.connect()
+        self.driver = g15driver.get_driver(self.conf_client, on_close = self.on_driver_close, configure = configure)
+        
+        # Listen for gconf events for the drivers controls
+        for control in self.driver.get_controls():
+            self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed);
         
         # Connect some events   
-        self.widget_tree.get_object("CancelMacroButton").connect("clicked", self.cancel_macro)
         self.applet.connect("button-press-event",self.button_clicked)
         self.applet.connect("delete-event",self.cleanup)
         self.applet.connect("change-orient",self.change_orientation)
@@ -200,40 +181,59 @@ class G15Applet(gnomeapplet.Applet):
         self.applet.connect("scroll-event",self.applet_scroll)
 #        self.macro_dialog.connect("delete-event", self.cancel_macro)
         
-        # Create the screen
-        self.screen = g15screen.G15Screen(self.driver)
-        self.screen.set_mkey(1)
-        self.activate_profile() 
-        
-        # Start all plugins
+        # Create the screen and pluging manager
+        self.screen = g15screen.G15Screen(self) 
         self.plugins = g15plugins.G15Plugins(self.screen)
         self.plugins.start()
-        self.plugins.activate()
         
+        # Show the applet
         self.applet.show_all()
+
+        # Start the driver
+        self.attempt_connection() 
+
+    def attempt_connection(self, delay = 0.0):
+        if self.driver.is_connected():
+            print "WARN: Attempt to reconnect when already connected."
+            return
         
-        # Now start listening for key events and cycle the screen if required
-        self.set_keyboard_backlight_from_configuration()
-        self.set_lcd_backlight_from_configuration()
-        self.set_contrast_from_configuration()
-        self.driver.grab_keyboard(self.key_received)
-        self.check_cycle()
+        if delay != 0.0:
+            self.reconnect_timer = g15util.schedule("ReconnectTimer", delay, self.attempt_connection)
+            return
+                        
+        try :
+            self.driver.connect()    
+            self.splash = G15Splash(self.screen)   
+            self.plugins.activate(self.splash.update_splash)
+            self.screen.set_mkey(1)
+            self.activate_profile() 
         
-        # Start async loop
-        
-#        class AsyncThread(Thread):
-#            def __init__(self):
-#                Thread.__init__(self)
-#                self.setDaemon(True)
-#                self.name = "AsyncIO"
-#                
-#            def run(self):
-#                asyncore.loop(timeout=0.1)                
-#        AsyncThread().start()
+            # Now start listening for key events and cycle the screen if required
+            self.driver.grab_keyboard(self.key_received)
+            self.check_cycle()
+            self.applet_icon = "g15key.png"
+            self.size_changed()
+            self.splash.complete()
+        except Exception as e: 
+            self.error() 
+            if len(e.args) == 2 and isinstance(e.args[0],int) and e.args[0] == 111:
+                self.reconnect_timer = g15util.schedule("ReconnectTimer", 5.0, self.attempt_connection)
+            else:
+                traceback.print_exc(file=sys.stderr)
+                raise e
+            
+    def error(self):         
+        self.applet_icon = "g15key-error.png"
+        self.size_changed()
+
+    def on_driver_close(self):
+        if not self.shutting_down:
+            self.error()
+            self.plugins.deactivate()
+            self.check_cycle()
+            self.attempt_connection(delay = 5.0)
         
     def __del__(self):
-        if self.record_thread != None:
-            self.record_thread.disable_record_context()
         if self.plugins.get_active():
             self.plugins.deactivate()
         if self.plugins.get_started():
@@ -242,7 +242,7 @@ class G15Applet(gnomeapplet.Applet):
         del self.driver
         
     def check_cycle(self, client=None, connection_id=None, entry=None, args=None):
-        active = self.conf_client.get_bool("/apps/gnome15/cycle_screens")
+        active = self.driver.is_connected() and self.conf_client.get_bool("/apps/gnome15/cycle_screens")
         if active and self.cycle_timer == None:
             self.schedule_cycle()
         elif not active and self.cycle_timer != None:
@@ -254,13 +254,12 @@ class G15Applet(gnomeapplet.Applet):
         time = 10
         if val != None:
             time = val.get_int()
-        self.cycle_timer = Timer(time, self.screen_cycle, ())
-        self.cycle_timer.name = "CycleTimer"
-        self.cycle_timer.start()
+        self.cycle_timer = g15util.schedule("CycleTimer", time, self.screen_cycle)
             
     def screen_cycle(self):
-        # Don't cycle while recording
-        if self.record_thread == None:
+        # Don't cycle while recording 
+        # TODO change how this works
+        if not self.defeat_profile_change:
             self.screen.cycle(1)
             self.schedule_cycle()
         
@@ -278,17 +277,38 @@ class G15Applet(gnomeapplet.Applet):
             self.resched_cycle()
             self.screen.cycle(-1)
         elif direction == gtk.gdk.SCROLL_LEFT:
-            backlight = self.conf_client.get_int("/apps/gnome15/keyboard_backlight")
-            backlight -= 1
-            if backlight < 0:
-                backlight = self.driver.get_keyboard_backlight_colours() - 1
-            self.conf_client.set_int("/apps/gnome15/keyboard_backlight", backlight)
-        elif direction == gtk.gdk.SCROLL_RIGHT:            
-            backlight = self.conf_client.get_int("/apps/gnome15/keyboard_backlight")
-            backlight += 1
-            if backlight > self.driver.get_keyboard_backlight_colours() - 1:
-                backlight = 0
-            self.conf_client.set_int("/apps/gnome15/keyboard_backlight", backlight)
+            first_control = self.driver.get_controls()[0]
+            if len(first_control.value) > 1:
+                self.cycle_color(-1, first_control)
+            else:
+                self.cycle_level(-1, first_control)
+        elif direction == gtk.gdk.SCROLL_RIGHT:     
+            first_control = self.driver.get_controls()[0]
+            if len(first_control.value) > 1:
+                self.cycle_color(1, first_control)
+            else:
+                self.cycle_level(1, first_control)
+            
+            
+    def cycle_level(self, val, control):
+        level = self.conf_client.get_int("/apps/gnome15/" + control.id)
+        level += val
+        if level > control.upper - 1:
+            level = control.lower
+        if level < control.lower - 1:
+            level = control.upper
+        self.conf_client.set_int("/apps/gnome15/" + control.id, level)
+        
+    def cycle_color(self, val, control):
+        self.color_no += val
+        if self.color_no < 0:
+            self.color_no = len(COLOURS) -1
+        if self.color_no >= len(COLOURS):
+            self.color_no = 0
+        color = COLOURS[self.color_no]
+        self.conf_client.set_int("/apps/gnome15/" + control.id + "_red", color[0])
+        self.conf_client.set_int("/apps/gnome15/" + control.id + "_green", color[1])
+        self.conf_client.set_int("/apps/gnome15/" + control.id + "_blue", color[2])
         
     def background_changed(self, applet, type, color, pixmap):
         applet.set_style(None)
@@ -303,86 +323,37 @@ class G15Applet(gnomeapplet.Applet):
         
     def size_changed(self, arg1=None, arg2=None):
         size = int(self.applet.get_size() * 0.6)
-        path = os.path.join(pglobals.image_dir,'g15key.png')
+        path = os.path.join(pglobals.image_dir,self.applet_icon)
         pixbuf = gtk.gdk.pixbuf_new_from_file(path)
         pixbuf = pixbuf.scale_simple(32, 32, gtk.gdk.INTERP_BILINEAR);
         self.image.set_from_pixbuf(pixbuf)
         
+    def driver_changed(self, client, connection_id, entry, args):
+        if self.driver.is_connected():
+            self.driver.disconnect()
+        
     def profiles_changed(self, client, connection_id, entry, args):
         pass
         
-    def redraw_screen(self):
-        self.recording_canvas.clear()
-        self.recording_canvas.set_font_size(g15draw.FONT_TINY)
-        active_profile = g15profile.get_active_profile()  
-        self.recording_canvas.fill_box((0, 0, self.driver.get_size()[0], 10), "Black")      
-        self.recording_canvas.draw_text(active_profile.name, (g15draw.CENTER, 2), color="White")
-        
-        if len(self.script_model) == 0:            
-            self.recording_canvas.draw_text("RECORDING M" + str(self.screen.get_mkey()), (g15draw.CENTER, 16))
-            self.recording_canvas.draw_text("Type macro, then press special", (g15draw.CENTER, 24))
-            self.recording_canvas.draw_text("key to assign. MR to cancel.", (g15draw.CENTER, 32))
-        else:
-            y = 10
-            for i in range(len(self.script_model) - 1, -1, -1):
-                self.recording_canvas.draw_text(self.script_model[i][0] + " " + self.script_model[i][1], (g15draw.CENTER, y))
-                y += 8
-                if y > ( self.screen.driver.get_size()[1] - 8 ):
-                    break 
-            
-        self.screen.draw_current_canvas()
-        
-    def key_received(self, key, state):
-        if self.screen.handle_key(key, state, post=False) or self.plugins.handle_key(key, state, post=False):
+    def key_received(self, keys, state):
+        if self.screen.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
             return        
         
         if state == g15driver.KEY_STATE_UP:
-            if key & g15driver.G15_KEY_LIGHT != 0:
+            if g15driver.G_KEY_LIGHT in keys:
                 self.keyboard_backlight = self.keyboard_backlight + 1
                 if self.keyboard_backlight == 3:
                     self.keyboard_backlight = 0
                 self.conf_client.set_int("/apps/gnome15/keyboard_backlight", self.keyboard_backlight)
-            # Memory keys
-            elif key & g15driver.G15_KEY_M1 != 0:
-                self.screen.set_mkey(1)
-                if self.recording_canvas != None:
-                    self.redraw_screen()
-            elif key & g15driver.G15_KEY_M2 != 0:
-                self.screen.set_mkey(2)
-                if self.recording_canvas != None:
-                    self.redraw_screen()
-            elif key & g15driver.G15_KEY_M3 != 0:
-                self.screen.set_mkey(3)
-                if self.recording_canvas != None:
-                    self.redraw_screen()
-            # Set recording
-            elif key & g15driver.G15_KEY_MR != 0:              
-                if self.record_thread != None:
-                    self.cancel_macro(None)
-                else:
-                    self.recording_canvas = self.screen.new_canvas(g15screen.PRI_HIGH)
-                    self.redraw_screen()
-                    self.screen.draw_current_canvas()                                        
-                    self.script_model.clear()
-                    
-                    #Create a recording context; we only want key and mouse events
-                    self.record_thread = RecordThread(self)
-                    self.record_thread.start()    
-#                    gobject.idle_add(self.macro_dialog.show)
-            else:
-                self.last_key = key                    
-                if self.record_thread != None:
-                    self.record_key = g15util.get_key_names(key)
-                    self.done_recording()
-                else:
-                    profile = g15profile.get_active_profile()
-                    if profile != None:
-                        macro = profile.get_macro(self.screen.get_mkey(), key)
-                        if macro != None:
-                            self.send_macro(macro)
+
+            profile = g15profile.get_active_profile()
+            if profile != None:
+                macro = profile.get_macro(self.screen.get_mkey(), keys)
+                if macro != None:
+                    self.send_macro(macro)
                             
-        self.screen.handle_key(key, state, post=True) or self.plugins.handle_key(key, state, post=True)
-                            
+        self.screen.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True)
+        
     def send_macro(self, macro):
         macros = macro.macro.split("\n")
         for macro_text in macros:
@@ -457,42 +428,39 @@ class G15Applet(gnomeapplet.Applet):
                     )
                 window.send_event(event, propagate = True)
                 
-        local_dpy.sync()
-
-       
+        local_dpy.sync() 
+             
+    def control_changed(self, client, connection_id, entry, args):
+        self.driver.set_controls_from_configuration(client)
+        
+    def control_configuration_changed(self, client, connection_id, entry, args):
+        key = entry.key.split("_")
+        for control in self.driver.get_controls():
+            if key[0] == ( "/apps/gnome15/" + control.id ):
+                if isinstance(control.value, int):
+                    control.value = entry.value.get_int()
+                else:
+                    rgb = entry.value.get_string().split(",")
+                    control.value = (int(rgb[0]),int(rgb[1]),int(rgb[2]))
                     
-    def set_keyboard_backlight_from_configuration(self):
-        backlight = self.conf_client.get_int("/apps/gnome15/keyboard_backlight")
-        if backlight != self.keyboard_backlight:
-            self.driver.set_keyboard_backlight(backlight)
-        self.keyboard_backlight = backlight 
-             
-    def set_lcd_backlight_from_configuration(self):
-        backlight = self.conf_client.get_int("/apps/gnome15/lcd_backlight")
-        if backlight != self.lcd_backlight:
-            self.driver.set_lcd_backlight(backlight)
-        self.lcd_backlight = backlight 
-             
-    def set_contrast_from_configuration(self):
-        contrast = self.conf_client.get_int("/apps/gnome15/contrast")
-        if contrast != self.contrast:
-            self.driver.set_contrast(contrast)
-        self.contrast = contrast
+                # There is a bug where changing keyboard colors can crash the daemon
+                # This stops is crashing the UI too
+                try :
+                    self.driver.update_control(control)
+                except:
+                    pass
+                
+                break
+        self.screen.redraw()
         
-    def lcd_backlight_configuration_changed(self, client, connection_id, entry, args):
-        self.set_lcd_backlight_from_configuration()
-        
-    def contrast_configuration_changed(self, client, connection_id, entry, args):
-        self.set_contrast_from_configuration()
-        
-    def keyboard_backlight_configuration_changed(self, client, connection_id, entry, args):
-        self.set_keyboard_backlight_from_configuration()
+    def set_defeat_profile_change(self, defeat):
+        self.defeat_profile_change = defeat
         
     def timeout_callback(self,event=None):
         # Get the currently active window
         try:
             # Don't change profiles while recording
-            if self.record_thread == None:
+            if not self.defeat_profile_change:
                 window = wnck.screen_get_default().get_active_window()
                 choose_profile = None
                 if window != None:
@@ -556,58 +524,25 @@ class G15Applet(gnomeapplet.Applet):
         self.applet.show_all()
         
     def cleanup(self,event):
-        del self.applet  
-        del self.daemon
+        self.shutting_down = True
+        self.driver.disconnect()
 
     def create_menu(self):
         self.applet.setup_menu(self.propxml,self.verbs,None)  
         
-    def show_plugins(self,event,data=None):
-        self.plugins.configure(self.parent_window)
-        
     def properties(self,event,data=None):
         a = g15config.G15Config(self.parent_window)
         a.run() 
-            
-    def cancel_macro(self,event,data=None):
-        self.hide_recorder()
-
-    def hide_recorder(self):
-        if self.record_thread != None:
-            self.record_thread.disable_record_context()
-#        self.macro_dialog.hide()
-        self.key_down = None
-        self.record_key = None
-        self.record_thread = None
-        self.redraw_screen()
-        self.screen.del_canvas(self.recording_canvas)
-        self.recording_canvas = None
-            
-    def done_recording(self):
-        if self.record_key != None:     
-            active_profile = g15profile.get_active_profile()
-            key_name = ", ".join(self.record_key)
-            if len(self.script_model) == 0:                
-                canvas = self.screen.new_canvas(priority=g15screen.PRI_HIGH, hide_after=3.0)[1]
-                canvas.draw_text(key_name + " deleted", (g15draw.CENTER, g15draw.CENTER))
-                self.screen.draw_current_canvas()                
-                active_profile.delete_macro(self.screen.get_mkey(), self.last_key)
-            else:
-                str = ""
-                for row in self.script_model:
-                    if len(str) != 0:                    
-                        str += "\n"
-                    str += row[0] + " " + row[1]          
-                canvas = self.screen.new_canvas(priority=g15screen.PRI_HIGH, hide_after=3.0)[1]
-                canvas.draw_text(key_name + " created", (g15draw.CENTER, g15draw.CENTER))
-                self.screen.draw_current_canvas()                
-                active_profile.create_macro(self.screen.get_mkey(), self.last_key, key_name, str)
-        self.hide_recorder()     
         
-    def about_info(self,event,data=None):
+    def macros(self,event,data=None):
+        a = g15macros.G15Macros(self.parent_window)
+        a.run()
+        
+    def about_info(self,event,data=None):        
+        logo_pixbuf = gtk.gdk.pixbuf_new_from_file(os.path.join(pglobals.image_dir,'g15key.png'))
         about = gnome.ui.About("Gnome15",pglobals.version, "GPL",\
-                               "GNOME Applet to configure a Logitech G15 keyboard",["Brett Smith <tanktarta@blueyonder.co.uk>"],\
-                               ["Brett Smith <tanktarta@blueyonder.co.uk>"],"Brett Smith <tanktarta@blueyonder.co.uk>",self.logo_pixbuf)
+                               "GNOME Applet providing integration with\nthe Logitech G15 and G19 keyboards.",["Brett Smith <tanktarta@blueyonder.co.uk>"],\
+                               ["Brett Smith <tanktarta@blueyonder.co.uk>"],"Brett Smith <tanktarta@blueyonder.co.uk>",logo_pixbuf)
         about.show()
         
     def button_clicked(self,widget,event):
@@ -617,41 +552,5 @@ class G15Applet(gnomeapplet.Applet):
     def button_press(self,widget,event):
         if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3:
             self.create_menu()
-            
-    def lookup_keysym(self, keysym):
-        for name in dir(XK):
-                if name[:3] == "XK_" and getattr(XK, name) == keysym:
-                    return name[3:]
-        return "[%d]" % keysym
-    
-    def record_callback(self, reply):
-        if reply.category != record.FromServer:
-            return
-        if reply.client_swapped:
-            return
-        if not len(reply.data) or ord(reply.data[0]) < 2:
-            # not an event
-            return
-        
-        data = reply.data
-        while len(data):
-            event, data = rq.EventField(None).parse_binary_value(data, record_dpy.display, None, None)
-            if event.type in [X.KeyPress, X.KeyRelease]:
-                pr = event.type == X.KeyPress and "Press" or "Release"
-                delay = 0
-                if self.key_down == None:
-                    self.key_down = time.time()
-                else :
-                    now = time.time()
-                    delay = time.time() - self.key_down
-                    self.script_model.append(["Delay", str(int(delay * 1000))])
-                    self.key_down = now
-                
-                keysym = local_dpy.keycode_to_keysym(event.detail, 0)
-                if not keysym:
-                    self.script_model.append([pr, event.detail])
-                else:
-                    self.script_model.append([pr, self.lookup_keysym(keysym)])
-                self.redraw_screen()
 
 gobject.type_register(G15Applet)

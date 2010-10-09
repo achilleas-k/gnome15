@@ -12,7 +12,6 @@
 ##
 ############################################################################
 
-
 """
 Bitmask values for setting the M key LED lights. See set_mkey_lights()
 """
@@ -27,38 +26,139 @@ Constants for key codes
 KEY_STATE_UP = 0
 KEY_STATE_DOWN = 1
 
-G15_KEY_G1  = 1<<0
-G15_KEY_G2  = 1<<1
-G15_KEY_G3  = 1<<2
-G15_KEY_G4  = 1<<3
-G15_KEY_G5  = 1<<4
-G15_KEY_G6  = 1<<5
-G15_KEY_G7  = 1<<6
-G15_KEY_G8  = 1<<7
-G15_KEY_G9  = 1<<8
-G15_KEY_G10 = 1<<9
-G15_KEY_G11 = 1<<10
-G15_KEY_G12 = 1<<11
-G15_KEY_G13 = 1<<12
-G15_KEY_G14 = 1<<13
-G15_KEY_G15 = 1<<14
-G15_KEY_G16 = 1<<15
-G15_KEY_G17 = 1<<16
-G15_KEY_G18 = 1<<17
+"""
+G keys
 
-G15_KEY_M1  = 1<<18
-G15_KEY_M2  = 1<<19
-G15_KEY_M3  = 1<<20
-G15_KEY_MR  = 1<<21
+G15v1 - G1-G18
+G15v1 - G1-G18
+G13 - G1-22
+G19 - G1-G12
+"""
+G_KEY_G1  = "g1"
+G_KEY_G2  = "g2"
+G_KEY_G3  = "g3"
+G_KEY_G4  = "g4"
+G_KEY_G5  = "g5"
+G_KEY_G6  = "g6"
+G_KEY_G7  = "g7"
+G_KEY_G8  = "g8"
+G_KEY_G9  = "g9"
+G_KEY_G10 = "g10"
+G_KEY_G11 = "g11"
+G_KEY_G12 = "g12"
+G_KEY_G13 = "g13"
+G_KEY_G14 = "g14"
+G_KEY_G15 = "g15"
+G_KEY_G16 = "g16"
+G_KEY_G17 = "g17"
+G_KEY_G18 = "g18"
+G_KEY_G19 = "g19"
+G_KEY_G20 = "g20"
+G_KEY_G21 = "g21"
+G_KEY_G22 = "g22"
 
-G15_KEY_L1  = 1<<22
-G15_KEY_L2  = 1<<23
-G15_KEY_L3  = 1<<24
-G15_KEY_L4  = 1<<25
-G15_KEY_L5  = 1<<26
 
-G15_KEY_LIGHT = 1<<27
+"""
+Display keys
+"""
+G_KEY_BACK = "back"
+G_KEY_DOWN = "down"
+G_KEY_LEFT = "left"
+G_KEY_MENU = "menu"
+G_KEY_OK = "ok"
+G_KEY_RIGHT = "right"
+G_KEY_SETTINGS = "settings"
+G_KEY_UP = "up"
 
+"""
+M keys. On all models
+"""
+G_KEY_M1  = "m1"
+G_KEY_M2  = "m2"
+G_KEY_M3  = "m3"
+G_KEY_MR  = "mr"
+
+"""
+L-Keys. On g15v1, v2, g13 and g19. NOT on g110 
+"""
+G_KEY_L1  = "l1"
+G_KEY_L2  = "l2"
+G_KEY_L3  = "l3"
+G_KEY_L4  = "l4"
+G_KEY_L5  = "l5"
+
+"""
+Light key. On all models
+"""
+G_KEY_LIGHT = "light"
+
+"""
+Multimedia keys
+"""
+G_KEY_WINKEY_SWITCH = "win"
+G_KEY_NEXT = "next"
+G_KEY_PREV = "prev"
+G_KEY_STOP = "stop"
+G_KEY_PLAY = "play"
+G_KEY_MUTE = "mute"
+G_KEY_VOL_UP = "vol-up"
+G_KEY_VOL_DOWN = "vol-down"
+
+"""
+Models
+"""
+MODEL_G15_V1 = "g15v1"
+MODEL_G15_V2 = "g15v2"
+MODEL_G13 = "g13"
+MODEL_G19 = "g19"
+
+HINT_DIMMABLE = 1 << 0
+HINT_SHADEABLE = 1 << 1
+HINT_FOREGROUND = 1 << 2
+HINT_BACKGROUND = 1 << 3
+HINT_SWITCH = 1 << 4
+
+# 16bit 565
+CAIRO_IMAGE_FORMAT=4
+
+import sys
+import os
+import g15_setup as g15setup
+import g15_util as g15util
+
+# Look for modules in the drivers directory too
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "drivers"))
+
+'''
+Called by clients to create the configured driver
+'''
+def get_driver(conf_client, on_close = None, configure = False):
+    driver = conf_client.get_string("/apps/gnome15/driver")
+    if driver == None or driver == "" or configure:
+        driver = config_driver()
+        if driver == None or driver == "":
+            sys.exit()
+    driver_mod = __import__("driver_" + driver)
+    driver = driver_mod.Driver(on_close = on_close)
+    driver.set_controls_from_configuration(conf_client)
+    return driver
+
+'''
+Runs the setup dialog if the driver has not been set
+'''
+def config_driver():
+    return g15setup.G15Setup().run()
+
+class Control():
+    
+    def __init__(self, id, name, value = 0.0, lower = 0.0, upper = 255.0, hint = 0):
+        self.id = id
+        self.hint = hint
+        self.name = name
+        self.lower = lower
+        self.upper = upper
+        self.value = value
+        
 class AbstractDriver(object):
     
     """
@@ -72,6 +172,18 @@ class AbstractDriver(object):
     """
     def get_name(self):
         raise NotImplementedError( "Not implemented" )
+    
+    """
+    Get a list of the model names this driver supports
+    """
+    def get_model_names(self):
+        raise NotImplementedError( "Not implemented" )
+    
+    """
+    Get the model name that this driver is connected to
+    """
+    def get_model_name(self):
+        raise NotImplementedError( "Not implemented" )
         
     """
     Get the size of the screen. Returns a tuple of (width, height)
@@ -80,9 +192,9 @@ class AbstractDriver(object):
         raise NotImplementedError( "Not implemented" )
     
     """
-    Get the grid dimensions of the g-key layout. This is currently only a hint for the Gtk driver
+    Get the grid the extra keys available on this keyboard. This is currently only a hint for the Gtk driver
     """
-    def get_gkey_layout(self):
+    def get_key_layout(self):
         raise NotImplementedError( "Not implemented" )
     
     """
@@ -92,15 +204,10 @@ class AbstractDriver(object):
         raise NotImplementedError( "Not implemented")
     
     """
-    Get the number of colours available for keyboard backlight (or brightness as it is on the G15)
+    Get the all of the controls available. This would include things such as LCD contrast, LCD brightness,
+    keyboard colour, keyboard backlight etc
     """
-    def get_keyboard_backlight_colours(self):
-        raise NotImplementedError( "Not implemented")
-    
-    """
-    How many G keys are there
-    """
-    def get_gkeys(self):
+    def get_controls(self):
         raise NotImplementedError( "Not implemented")
     
     """
@@ -110,54 +217,11 @@ class AbstractDriver(object):
         raise NotImplementedError( "Not implemented" )
     
     """
-    Set whether Gnome15 is the currently active underlying driver screen
-    (if it supports it). The default g15daemon does support this, but gnome15
-    itself only ever requires one screen.
+    Synchronize a control with the keyboard. For example, if the control was for the
+    keyboard colour, the keyboard colour would actually change when this function
+    is invoked
     """
-    def switch_priorities(self):
-        raise NotImplementedError( "Not implemented" )
-        
-    """
-    Get whether Gnome15 is the currently active underlying driver screen
-    (if it supports it). The default g15daemon does support this, but gnome15
-    itself only ever requires one screen. 
-    """
-    def is_foreground(self):
-        raise NotImplementedError( "Not implemented" )
-    
-    """
-    Never let the user select the gnome15 screen. This only really applies to
-    the g15daemon driver implementation which has this concept. See
-    also is_foreground(), switch_priorities() and never_user_selected()
-    """
-    def never_user_selected(self):
-        raise NotImplementedError( "Not implemented" )
-    
-    """
-    Get whether Gnome15 was 'user selected'. This only really applies to
-    the g15daemon driver implementation which has this concept. See
-    also is_foreground(), switch_priorities() and never_user_selected()
-    """
-    def is_user_selected(self):
-        raise NotImplementedError( "Not implemented" )
-    
-    """
-    Set the LCD backlight level. This may be any integer from 0 to 2.
-    """
-    def set_lcd_backlight(self, level):
-        raise NotImplementedError( "Not implemented" )
-       
-    """
-    Set the LCD contrast level. This may be any integer from 0 to 2.
-    """     
-    def set_contrast(self, level):
-        raise NotImplementedError( "Not implemented" )
-    
-    """
-    Set the keyboard backlight level. This may be any integer from 0 to 2, a 24 bit integer
-    or a tuple of RGB depending on what the device supports
-    """     
-    def set_keyboard_backlight(self, level):
+    def update_control(self, control):
         raise NotImplementedError( "Not implemented" )
     
         
@@ -171,9 +235,56 @@ class AbstractDriver(object):
     """
     Start receiving events when the additional keys (G keys, L keys and M keys)
     are pressed and released. The provided callback will be invoked with two
-    arguments, the first being the key code (see the constants G15_KEY_xx)
+    arguments, the first being the key code (see the constants G_KEY_xx)
     and the second being the key state (KEY_STATE_DOWN or KEY_STATE_UP). 
     """    
     def grab_keyboard(self, callback):
         raise NotImplementedError( "Not implemented" )
     
+    """
+    Give the driver a chance to alter a theme's SVG. This has been introduced to work
+    around a problem of Inkscape (the recommended 'IDE' for designing themes),
+    does not saving bitmap font names
+    """
+    def process_svg(self, document):
+        raise NotImplementedError( "Not implemented" )
+        
+    '''
+    Utilities
+    '''
+    def get_control(self, id):
+        for control in self.get_controls():
+            if id == control.id:
+                return control
+            
+    def get_control_for_hint(self, hint):
+        for control in self.get_controls():
+            if ( hint & control.hint ) == hint:
+                return control
+        
+    def set_controls_from_configuration(self, conf_client):
+        for control in self.get_controls():
+            self.set_control_from_configuration(control, conf_client)
+            
+    def set_control_from_configuration(self, control, conf_client):
+        entry = conf_client.get("/apps/gnome15/" + control.id)
+        if entry != None:
+            if isinstance(control.value, int):
+                control.value = entry.get_int()
+            else:
+                rgb = entry.get_string().split(",")
+                control.value = (int(rgb[0]),int(rgb[1]),int(rgb[2]))
+    
+    def get_color_as_ratios(self, hint, default):
+        fg_control = self.get_control_for_hint(hint)
+        fg_rgb = default
+        if fg_control != None:
+            fg_rgb = fg_control.value
+        return ( float(fg_rgb[0]) / 255.0,float(fg_rgb[1]) / 255.0,float(fg_rgb[2]) / 255.0 )
+    
+    def get_color_as_hexrgb(self, hint, default):
+        fg_control = self.get_control_for_hint(hint)
+        fg_rgb = default
+        if fg_control != None:
+            fg_rgb = fg_control.value
+        return g15util.rgb_to_hex(fg_rgb)

@@ -1,1 +1,1 @@
-SUBDIRS = fonts glade images
+SUBDIRS = glade images icons

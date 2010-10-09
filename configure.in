@@ -1,4 +1,4 @@
-AC_INIT(gnome15, 0.0.2)
+AC_INIT(gnome15, 0.0.3)
 AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_applet.py])
 AM_INIT_AUTOMAKE
 
@@ -13,6 +13,47 @@ dnl AC_PROG_INTLTOOL([0.21])
 dnl check for python
 AM_PATH_PYTHON
 
+dnl Dependencies for core applet and tools
+
+AX_PYTHON_MODULE(Image, [])
+AS_IF([test "x${HAVE_PYMOD_IMAGE}" = "xno"],
+     [AC_MSG_ERROR([Requires Python Image Library])])
+     
+AX_PYTHON_MODULE(cairo, [])
+AS_IF([test "x${HAVE_PYMOD_CAIRO}" = "xno"],
+     [AC_MSG_ERROR([Requires Python bindings for the Cairo vector graphics library])])
+          
+AX_PYTHON_MODULE(gtk, [])
+AS_IF([test "x${HAVE_PYMOD_GTK}" = "xno"],
+     [AC_MSG_ERROR([Requires PyGTK, the GTK bindings for Python])])
+
+AX_PYTHON_MODULE(dbus, [])
+AS_IF([test "x${HAVE_PYMOD_DBUS}" = "xno"],
+     [AC_MSG_ERROR([Requires DBUS bindings for Python])])
+     
+AX_PYTHON_MODULE(lxml, [])
+AS_IF([test "x${HAVE_PYMOD_LXML}" = "xno"],
+     [AC_MSG_ERROR([Requires LXML bindings for Python])])
+     
+AX_PYTHON_MODULE(cairo, [])
+AS_IF([test "x${HAVE_PYMOD_CAIRO}" = "xno"],
+     [AC_MSG_ERROR([Requires Cairo bindings for Python])])
+     
+dnl Dependencies for plugins
+ 
+AX_PYTHON_MODULE(alsaaudio, [])
+AS_IF([test "x${HAVE_PYMOD_ALSAAUDIO}" = "xno"],
+     [AC_MSG_ERROR([Requires Alsa bindings for Python])])
+
+AX_PYTHON_MODULE(vobject, [])
+AS_IF([test "x${HAVE_PYMOD_VOBJECT}" = "xno"],
+     [AC_MSG_ERROR([Requires Python vObject])])
+
+AX_PYTHON_MODULE(feedparser, [])
+AS_IF([test "x${HAVE_PYMOD_FEEDPARSER}" = "xno"],
+     [AC_MSG_ERROR([Requires Universal Feed Parser for Python])])
+
+     
 PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
 AC_SUBST(PYGTK_CFLAGS)
 AC_SUBST(PYGTK_LIBS)
@@ -30,18 +71,36 @@ Makefile
 src/Makefile
 src/scripts/Makefile
 src/plugins/Makefile
-src/plugins/clock/Makefile
-src/plugins/rhythmbox/Makefile
-src/plugins/screensaver/Makefile
-src/plugins/volume/Makefile
-src/plugins/weather/Makefile
-src/plugins/macros/Makefile
-src/plugins/sysmon/Makefile
-src/plugins/indicator-me/Makefile
-src/plugins/fx/Makefile
+src/plugins/background/Makefile
+src/plugins/cairo-clock/Makefile
 src/plugins/cal/Makefile
-src/plugins/videoplayer/Makefile
+src/plugins/cal/default/Makefile
+src/plugins/clock/Makefile
+src/plugins/clock/default/Makefile
+src/plugins/fx/Makefile
+src/plugins/indicator-me/Makefile
+src/plugins/indicator-me/default/Makefile
+src/plugins/macro-recorder/Makefile
+src/plugins/macro-recorder/default/Makefile
+src/plugins/macros/Makefile
+src/plugins/macros/default/Makefile
+src/plugins/mpris/Makefile
+src/plugins/mpris/default/Makefile
 src/plugins/notify-lcd/Makefile
+src/plugins/notify-lcd/default/Makefile
+src/plugins/screensaver/Makefile
+src/plugins/screensaver/default/Makefile
+src/plugins/sysmon/Makefile
+src/plugins/sysmon/default/Makefile
+src/plugins/rss/Makefile
+src/plugins/rss/default/Makefile
+src/plugins/sysmon/dials/Makefile
+src/plugins/videoplayer/Makefile
+src/plugins/videoplayer/default/Makefile
+src/plugins/volume/Makefile
+src/plugins/volume/default/Makefile
+src/plugins/weather/Makefile
+src/plugins/weather/default/Makefile
 src/gnome/Makefile
 src/gnome/applications/Makefile
 src/gnome/applications/g15-config.desktop
@@ -51,8 +110,9 @@ src/main/Makefile
 src/main/python/Makefile
 src/main/python/gnome15/Makefile
 src/main/python/gnome15/g15_globals.py
+src/main/python/gnome15/drivers/Makefile
 src/main/resources/Makefile
-src/main/resources/fonts/Makefile
+src/main/resources/icons/Makefile
 src/main/resources/images/Makefile
 src/main/resources/glade/Makefile
 ])

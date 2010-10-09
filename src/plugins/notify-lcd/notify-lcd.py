@@ -20,10 +20,11 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15_daemon as g15daemon
-import gnome15.g15_draw as g15draw
 import gnome15.g15_screen as g15screen
+import gnome15.g15_util as g15util
 import gnome15.g15_globals as pglobals
+import gnome15.g15_theme as g15theme
+import gnome15.g15_driver as g15driver
 import time
 import dbus
 import dbus.service
@@ -32,9 +33,12 @@ import os
 import xdg.IconTheme as icons
 import xdg.Config as config
 import gtk
+import gtk.gdk
 import Image
 import subprocess
 import traceback
+import tempfile
+
 from threading import Timer
 from threading import Thread
 from dbus.exceptions import NameExistsException
@@ -42,10 +46,10 @@ from dbus.exceptions import NameExistsException
 # Plugin details - All of these must be provided
 id="notify-lcd"
 name="Notify"
-description="Take over as the Notification daemon\nand display messages on the LCD"
+description="Take over as the Notification daemon and display messages on the LCD"
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://localhost"
+site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
 has_preferences=True
 
 IF_NAME="org.freedesktop.Notifications"
@@ -54,18 +58,64 @@ BUS_NAME="/org/freedesktop/Notifications"
 def create(gconf_key, gconf_client, screen):
     return G15NotifyLCD(gconf_client, gconf_key, screen)
 
+def show_preferences(parent, gconf_client, gconf_key):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "notify-lcd.glade"))
+    
+    dialog = widget_tree.get_object("NotifyLCDDialog")
+    dialog.set_transient_for(parent)
+    
+    blink_keyboard_on_alert = widget_tree.get_object("BlinkKeyboardOnAlert")
+    blink_keyboard_on_alert.set_active(gconf_client.get_bool(gconf_key + "/blink_keyboard_on_alert"))
+    blink_keyboard_on_alert.connect("toggled", changed, gconf_key + "/blink_keyboard_on_alert", gconf_client)
+    
+    dialog.run()
+    dialog.hide()
+
+def changed(widget, key, gconf_client):
+    gconf_client.set_bool(key, widget.get_active())
+        
 class BlinkThread(Thread):
-    def __init__(self, gconf_client):
+    def __init__(self, gconf_client, screen):
         Thread.__init__(self)
         self.gconf_client = gconf_client
+        self.screen = screen
     
+        
     def run(self):
-        backlight = self.gconf_client.get_int("/apps/gnome15/keyboard_backlight")
-        for i in range(1, 5):
-            for v in [0,1,2,1]:
-                self.gconf_client.set_int("/apps/gnome15/keyboard_backlight", v)
-                time.sleep(0.1)              
-        self.gconf_client.set_int("/apps/gnome15/keyboard_backlight", backlight)
+        controls = []
+        control_values = []
+        for c in self.screen.driver.get_controls():
+            if c.hint & g15driver.HINT_DIMMABLE != 0:
+                controls.append(c)
+                control_values.append(c.value)
+        
+        for j in range(0, 5):
+            # Off
+            for c in controls:
+                if isinstance(c.value,int):
+                    c.value = c.lower
+                else:
+                    c.value = (0, 0, 0)
+                self.screen.driver.update_control(c)
+                
+            time.sleep(0.1)
+                
+            # On
+            for c in controls:
+                if isinstance(c.value,int):
+                    c.value = c.upper
+                else:
+                    c.value = (255, 255, 255)
+                self.screen.driver.update_control(c)
+                
+            time.sleep(0.1)
+            
+        i = 0
+        for c in controls:
+            c.value = control_values[i]
+            self.screen.driver.update_control(c)
+            i += 1
         
             
 
@@ -73,46 +123,40 @@ class G15NotifyLCD(dbus.service.Object):
     
     def __init__(self, gconf_client,gconf_key, screen):
         self.screen = screen;
+        self.last_variant = None
         self.gconf_key = gconf_key
         self.timer = None
         self.session_bus = dbus.SessionBus()
         self.gconf_client = gconf_client
+        self.active = False
+        self.bus = None
 
     def activate(self):
         self.id = 0
+        bus = dbus.SessionBus()
         try:
-            bus_name = dbus.service.BusName(IF_NAME, bus=dbus.SessionBus(), replace_existing=True, allow_replacement=True, do_not_queue=True)
+            bus_name = dbus.service.BusName(IF_NAME, bus=bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
         except NameExistsException:
-            # Already running            
+            # Already running
+            print "Killing previous notification daemon"            
             process = subprocess.Popen(['killall','notify-osd'])
             process.wait()
-            print "Killing previous notification daemon"
-            bus_name = dbus.service.BusName(IF_NAME, bus=dbus.SessionBus(), replace_existing=True, allow_replacement=True, do_not_queue=True)
+            bus_name = dbus.service.BusName(IF_NAME, bus=bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
+        
+        try :
+            dbus.service.Object.__init__(self, bus_name, BUS_NAME)
+        except KeyError:
+            print "Already started?"     
             
-        dbus.service.Object.__init__(self, bus_name, BUS_NAME)     
+        self.active = True
     
     def deactivate(self):
-        pass      
+        # TODO How do we 'unexport' a service?
+        print "Deactivated notify service. Note, the service will be free until applet process finishes"
+        self.active = False
         
     def destroy(self):
         pass 
-    
-    def show_preferences(self, parent):
-        widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "notify-lcd.glade"))
-        
-        dialog = widget_tree.get_object("NotifyLCDDialog")
-        dialog.set_transient_for(parent)
-        
-        blink_keyboard_on_alert = widget_tree.get_object("BlinkKeyboardOnAlert")
-        blink_keyboard_on_alert.set_active(self.gconf_client.get_bool(self.gconf_key + "/blink_keyboard_on_alert"))
-        blink_keyboard_on_alert.connect("toggled", self.changed, self.gconf_key + "/blink_keyboard_on_alert")
-        
-        dialog.run()
-        dialog.hide()
-    
-    def changed(self, widget, key):
-        self.gconf_client.set_bool(key, widget.get_active())
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
     def GetServerInformation(self):
@@ -124,64 +168,95 @@ class G15NotifyLCD(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='susssasa{sv}i', out_signature='u')
     def Notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
-        print app_name,str(id),icon,summary,body,actions, hints, timeout
-        try :
-            self.notify(icon, summary, body, float(timeout) / 1000.0)
-        except Exception as blah:
-            traceback.print_exc()
-        if id == 0:
-            self.id += 1
-            return self.id
-        else:
-            return id
+        if self.active:
+            try :
+                self.notify(icon, summary, body, float(timeout) / 1000.0, hints)
+            except Exception as blah:
+                traceback.print_exc()
+            if id == 0:
+                self.id += 1
+                return self.id
+            else:
+                return id
     
     @dbus.service.method(IF_NAME, in_signature='u', out_signature='')
     def CloseNotification(self, id):
-        print "Closing",id
         self.NotificationClosed(id, 0)
         
     @dbus.service.signal(dbus_interface=IF_NAME, signature='uu')
     def NotificationClosed(self, id, reason):
-        print "Signal",id,reason
+        pass
 
-    def notify(self, icon, summary, body, timeout):
+    def notify(self, icon, summary, body, timeout, hints):
+        
+        self.embedded_image = None
+        if icon == None or icon == "":
+            if "image_data" in hints:
+                image_struct = hints["image_data"]
+                img_width = image_struct[0]
+                img_height = image_struct[1]
+                img_stride = image_struct[2]
+                has_alpha = image_struct[3]
+                bits_per_sample = image_struct[4]
+                channels = image_struct[5]
+                buf = ""
+                for b in image_struct[6]:
+                    buf += chr(b)
+                pixbuf = gtk.gdk.pixbuf_new_from_data(buf, gtk.gdk.COLORSPACE_RGB, has_alpha, bits_per_sample, img_width, img_height, img_stride)
+                fh, self.embedded_image = tempfile.mkstemp(suffix=".png",prefix="notify-lcd")
+                file = os.fdopen(fh)
+                file.close()
+                pixbuf.save(self.embedded_image, "png")
+            else:
+                icon = g15util.get_icon_path(self.gconf_client, "dialog-info", (self.screen.height, self.screen.height))
+            
         
         if self.gconf_client.get_bool(self.gconf_key + "/blink_keyboard_on_alert"):
-            BlinkThread(self.gconf_client).start()
+            BlinkThread(self.gconf_client, self.screen).start()
         
-        canvas = self.screen.get_canvas("NotifyLCD")
+        page = self.screen.get_page("NotifyLCD")
         
         if timeout <= 0.0:
             timeout = 10.0
             
-        if canvas == None:
-            canvas = self.screen.new_canvas(priority=g15screen.PRI_HIGH, id="NotifyLCD")
-            self.hide_timer = self.screen.hide_after(timeout, canvas)
+        # Which theme variant should we use
+        self.last_variant = ""
+        if body == None or body == "":
+            self.last_variant = "nobody"
+            
+        if page == None:
+            self.reload_theme()
+            page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="NotifyLCD", use_cairo=True)
+            self.hide_timer = self.screen.hide_after(timeout, page)
         else:
+            self.reload_theme()
             self.hide_timer.cancel()
-            self.hime_timer = self.screen.set_priority(canvas, g15screen.PRI_HIGH, hide_after = timeout)
+            self.hime_timer = self.screen.set_priority(page, g15screen.PRI_HIGH, hide_after = timeout)
 
         if summary == None:
             summary = "None"
             
-        icon_theme = self.gconf_client.get_string("/desktop/gnome/interface/icon_theme")        
-        canvas.clear()
+        self.summary = summary
+        self.body = body
+        self.icon = icon
         
-        width_available = self.screen.driver.get_size()[0]
-        if icon != None and len(icon) > 0:
-            real_icon_file = icons.getIconPath(icon, theme=icon_theme, size = 32)
-            if real_icon_file != None:
-                width_available -= 45
-                if real_icon_file.endswith(".svg"):
-                    pixbuf = gtk.gdk.pixbuf_new_from_file(real_icon_file)
-                    image = Image.fromstring("RGBA", (pixbuf.get_width(), pixbuf.get_height()), pixbuf.get_pixels())  
-                    canvas.draw_image(image, (self.screen.driver.get_size()[0] - 40, g15draw.CENTER), (40, 40), mask=True)
-                else:              
-                    canvas.draw_image_from_file(real_icon_file, (self.screen.driver.get_size()[0] - 40, g15draw.CENTER), (40, 40))
+        self.screen.redraw(page)
         
-        canvas.set_font_size(g15draw.FONT_SMALL)
-        canvas.draw_text(summary, (0, 2), emboss="White", wrap=False)
-        canvas.set_font_size(g15draw.FONT_TINY)
-        canvas.draw_text(body, (0, 14, width_available, self.screen.driver.get_size()[1] - 14), emboss="White", wrap=True)        
+    def reload_theme(self):        
+        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen, self.last_variant)
+        
+    def paint(self, canvas):
+        width_available = self.screen.width
+        
+        
+        properties = {}        
+        properties["title"] = self.summary
+        properties["message"] = self.body
+        if self.icon != None and len(self.icon) > 0:
+            properties["icon"] = g15util.get_icon_path(self.gconf_client, self.icon)
+        elif self.embedded_image != None:
+            properties["icon"] = self.embedded_image
             
-        self.screen.draw_current_canvas()
+        
+        self.theme.draw(canvas, properties)
+            

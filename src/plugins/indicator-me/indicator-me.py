@@ -20,9 +20,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15_daemon as g15daemon
-import gnome15.g15_draw as g15draw
 import gnome15.g15_screen as g15screen
+import gnome15.g15_util as g15util
+import gnome15.g15_theme as g15theme
 import time
 import dbus
 import os
@@ -35,10 +35,10 @@ from threading import Timer
 # Plugin details - All of these must be provided
 id="indicator-me"
 name="Indicator Me"
-description="Indicator showing user information and status"
+description="Indicator that shows user information and status."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://localhost"
+site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
 has_preferences=False
 
 ''' This simple plugin displays user information and status
@@ -51,7 +51,7 @@ class G15IndicatorMe():
     
     def __init__(self, gconf_client, screen):
         self.screen = screen;
-        self.timer = None
+        self.hide_timer = None
         self.session_bus = None
         self.gconf_client = gconf_client
         self.session_bus = dbus.SessionBus()
@@ -77,43 +77,36 @@ class G15IndicatorMe():
     def user_changed(self, new_icon):
         self.redraw()
         
-    def redraw(self):
-        if self.timer != None:
-            self.timer.cancel()        
+    def redraw(self):    
         
-        canvas = self.screen.get_canvas("Indicator Me")
-        if canvas == None:
-            canvas = self.screen.new_canvas(priority=g15screen.PRI_HIGH, id="Indicator Me")
-            self.hide_timer = self.screen.hide_after(3.0, canvas)
+        page = self.screen.get_page("Indicator Me")
+        if page == None:
+            self.reload_theme()
+            page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="Indicator Me", use_cairo=True)
+            self.hide_timer = self.screen.hide_after(3.0, page)
         else:
             self.hide_timer.cancel()
-            self.hime_timer = self.screen.set_priority(canvas, g15screen.PRI_HIGH, hide_after = 3.0)
+            self.hide_timer = self.screen.set_priority(page, g15screen.PRI_HIGH, hide_after = 3.0)
             
-        icon_theme = self.gconf_client.get_string("/desktop/gnome/interface/icon_theme")        
-        canvas.clear()
-        icon = self.me_service.StatusIcons()
-        real_icon_file = icons.getIconPath(icon, theme=icon_theme, size = 32)
-        if real_icon_file != None:
-            if real_icon_file.endswith(".svg"):
-                pixbuf = gtk.gdk.pixbuf_new_from_file(real_icon_file)
-                image = Image.fromstring("RGBA", (pixbuf.get_width(), pixbuf.get_height()), pixbuf.get_pixels())  
-                canvas.draw_image(image, (0, g15draw.CENTER), (40, 40), mask=True)
-            else:              
-                canvas.draw_image_from_file(real_icon_file, (0, g15draw.CENTER), (40, 40))
-        text = "Unknown"
-        if icon == "user-available-panel":
-            text = "Available"
-        elif icon == "user-away-panel":
-            text = "Away"
-        elif icon == "user-busy-panel":
-            text = "Busy"
-        elif icon == "user-offline-panel":
-            text = "Offline"
-        elif icon == "user-invisible-panel":
-            text = "Invisible"
-        canvas.set_font_size(g15draw.FONT_MEDIUM)
-        canvas.draw_text(text, (48, 2), emboss="White")
-        canvas.set_font_size(g15draw.FONT_SMALL)
-        canvas.draw_text(self.me_service.PrettyUserName(), (48, 22), emboss="White")        
+        self.icon = self.me_service.StatusIcons()
+        self.username = self.me_service.PrettyUserName()
+        self.screen.redraw(page)
+        
+    def reload_theme(self):        
+        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
+
+    def paint(self, canvas):     
+        properties = { "icon" : g15util.get_icon_path(self.gconf_client, self.icon, self.screen.width) }
+        properties["text"] = "Unknown"
+        if self.icon == "user-available-panel":
+            properties["text"] = "Available"
+        elif self.icon == "user-away-panel":
+            properties["text"] = "Away"
+        elif self.icon == "user-busy-panel":
+            properties["text"] = "Busy"
+        elif self.icon == "user-offline-panel":
+            properties["text"] = "Offline"
+        elif self.icon == "user-invisible-panel":
+            properties["text"] = "Invisible"
             
-        self.screen.draw_current_canvas()
+        self.theme.draw(canvas, properties)

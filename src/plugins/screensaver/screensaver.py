@@ -20,8 +20,10 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15_draw as g15draw
 import gnome15.g15_screen as g15screen
+import gnome15.g15_driver as g15driver
+import gnome15.g15_util as g15util
+import gnome15.g15_theme as g15theme
 import datetime
 from threading import Timer
 import gtk
@@ -33,10 +35,10 @@ import os
 # Plugin details - All of these must be provided
 id="screensaver"
 name="Screensaver"
-description="Dim the keyboard and display\na message when the screen saver\nactivates"
+description="Dim the keyboard and display a message when the screen saver activates."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://localhost"
+site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
 has_preferences=True
 
 
@@ -46,6 +48,38 @@ This plugin displays a high priority screen when the screensaver activates
 
 def create(gconf_key, gconf_client, screen):
     return G15ScreenSaver(gconf_key, gconf_client, screen)
+
+def show_preferences(parent, gconf_client, gconf_key):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "screensaver.glade"))
+    
+    dialog = widget_tree.get_object("ScreenSaverDialog")
+    dialog.set_transient_for(parent)
+    
+    dim_keyboard = widget_tree.get_object("DimKeyboardCheckbox")
+    dim_keyboard.set_active(gconf_client.get_bool(gconf_key + "/dim_keyboard"))
+    dim_h = dim_keyboard.connect("toggled", changed, gconf_key + "/dim_keyboard", gconf_client)
+    
+    message_text = widget_tree.get_object("MessageTextView")
+    text_buffer = widget_tree.get_object("TextBuffer")
+    text = gconf_client.get_string(gconf_key + "/message_text")
+    if text == None:
+        text = ""
+    text_buffer.set_text(text)
+    text_h = text_buffer.connect("changed", changed, gconf_key + "/message_text", gconf_client)
+    
+    dialog.run()
+    dialog.hide()
+    dim_keyboard.disconnect(dim_h)
+    text_buffer.disconnect(text_h)
+    
+def changed(widget, key, gconf_client):
+    if key.endswith("/dim_keyboard"):
+        gconf_client.set_bool(key, widget.get_active())
+    else:
+        bounds = widget.get_bounds()
+        gconf_client.set_string(key, widget.get_text(bounds[0],bounds[1]))
+        pass
             
 class G15ScreenSaver():
     
@@ -53,41 +87,15 @@ class G15ScreenSaver():
         self.screen = screen
         self.session_bus = None
         self.in_screensaver = False
-        self.canvas = None
+        self.page = None
         self.gconf_client = gconf_client
-        self.gconf_key = gconf_key
+        self.gconf_key = gconf_key        
+        self.controls = []
+        self.control_values = []
+        for control in screen.driver.get_controls():
+            if control.hint & g15driver.HINT_DIMMABLE != 0 or  control.hint & g15driver.HINT_SHADEABLE != 0:
+                self.controls.append(control)
     
-    def show_preferences(self, parent):
-        widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "screensaver.glade"))
-        
-        dialog = widget_tree.get_object("ScreenSaverDialog")
-        dialog.set_transient_for(parent)
-        
-        dim_keyboard = widget_tree.get_object("DimKeyboardCheckbox")
-        dim_keyboard.set_active(self.gconf_client.get_bool(self.gconf_key + "/dim_keyboard"))
-        dim_h = dim_keyboard.connect("toggled", self.changed, self.gconf_key + "/dim_keyboard")
-        
-        message_text = widget_tree.get_object("MessageTextView")
-        text_buffer = widget_tree.get_object("TextBuffer")
-        text = self.gconf_client.get_string(self.gconf_key + "/message_text")
-        if text == None:
-            text = ""
-        text_buffer.set_text(text)
-        text_h = text_buffer.connect("changed", self.changed, self.gconf_key + "/message_text")
-        
-        dialog.run()
-        dialog.hide()
-        dim_keyboard.disconnect(dim_h)
-        text_buffer.disconnect(text_h)
-        
-    def changed(self, widget, key):
-        if key.endswith("/dim_keyboard"):
-            self.gconf_client.set_bool(key, widget.get_active())
-        else:
-            bounds = widget.get_bounds()
-            self.gconf_client.set_string(key, widget.get_text(bounds[0],bounds[1]))
-            pass
 
     def activate(self):
         if self.session_bus == None:
@@ -103,58 +111,70 @@ class G15ScreenSaver():
         self.activated = True
     
     def deactivate(self):
-        self.remove_canvas()
+        self.remove_page()
         self.activated = False
         
     def destroy(self):
         self.session_bus.remove_signal_receiver(self.screensaver_changed_handler, dbus_interface = "org.gnome.ScreenSaver", signal_name = "ActiveChanged")
         
-        
     ''' Functions specific to plugin
     ''' 
     
-    def remove_canvas(self):
-        if self.canvas != None:
-            self.screen.del_canvas(self.canvas)
-            self.canvas = None
+    def remove_page(self):
+        if self.page != None:
+            self.screen.del_page(self.page)
+            self.page = None
         
     def screensaver_changed_handler(self, value):
         if self.activated:
             self.in_screensaver = bool(value)
             if self.in_screensaver:
-                if self.canvas == None:
-                    self.canvas = self.screen.new_canvas(g15screen.PRI_HIGH, id="Screensaver")
-                    self.screen.draw_current_canvas()
+                self.page = self.screen.get_page("Screensaver")
+                if self.page == None:
+                    self.reload_theme()
+                    self.page = self.screen.new_page(self.paint, g15screen.PRI_EXCLUSIVE, id="Screensaver", use_cairo = True)
+                    self.screen.redraw(self.page)
                 if self.gconf_client.get_bool(self.gconf_key + "/dim_keyboard"):
-                    self.screen.driver.set_keyboard_backlight(0)
-                self.draw()
+                    self.dim_keyboard()
             else:
-                self.remove_canvas()
+                self.remove_page()
                 if self.gconf_client.get_bool(self.gconf_key + "/dim_keyboard"):
-                    self.screen.driver.set_keyboard_backlight(self.gconf_client.get_int("/apps/gnome15/keyboard_backlight"))
+                    self.light_keyboard()
         
-    def draw(self):
-        self.canvas.clear()    
-        text = self.gconf_client.get_string(self.gconf_key + "/message_text")
-        if text == None:
-            text = ""
-        split = text.split("\n")
-        y = 0                        
-        if len(split) == 0:
-            # Draw nothing
-            pass
-        elif len(split) == 1:
-            self.canvas.set_font_size(g15draw.FONT_MEDIUM)
-            self.canvas.draw_text(split[0], (g15draw.CENTER, g15draw.CENTER), emboss="White")
-            y = g15draw.CENTER 
-        elif len(split) == 2:
-            self.canvas.set_font_size(g15draw.FONT_MEDIUM)
-            self.canvas.draw_text(split[0], (g15draw.CENTER, g15draw.TOP), emboss="White")
-            self.canvas.draw_text(split[1], (g15draw.CENTER, g15draw.BOTTOM), emboss="White")
-        else:
-            self.canvas.set_font_size(g15draw.FONT_SMALL)
-            self.canvas.draw_text(split[0], (g15draw.CENTER, g15draw.TOP), emboss="White")
-            self.canvas.draw_text(split[1], (g15draw.CENTER, g15draw.CENTER), emboss="White")
-            self.canvas.draw_text(split[2], (g15draw.CENTER, g15draw.BOTTOM), emboss="White")
+    def dim_keyboard(self):
+        self.control_values = []
+        for c in self.controls:
+            self.control_values.append(c.value)
+            if c.hint & g15driver.HINT_DIMMABLE != 0:
+                if isinstance(c.value,int):
+                    c.value = 0
+                else:
+                    c.value = (0, 0, 0)
+            else:
+                if isinstance(c.value,int):
+                    c.value = int(c.value * 0.1)
+                else:
+                    c.value = (c.value[0] * 0.1,c.value[1] * 0.1,c.value[2] * 0.1)
+            self.screen.driver.update_control(c)
+    
+    def light_keyboard(self):
+        i = 0
+        for c in self.controls:
+            c.value = self.control_values[i]
+            i += 1
+            self.screen.driver.update_control(c)
             
-        self.screen.draw(self.canvas)
+    def reload_theme(self):        
+        text = self.gconf_client.get_string(self.gconf_key + "/message_text")
+        variant = ""
+        if text == None or text == "":
+            variant = "nomessage"
+        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen, variant)
+        
+    def paint(self, canvas):
+        
+        properties = {}
+        properties["message"] = self.gconf_client.get_string(self.gconf_key + "/message_text")
+        properties["icon"] = g15util.get_icon_path(self.gconf_client, "sleep", self.screen.height)
+        
+        self.theme.draw(canvas, properties)

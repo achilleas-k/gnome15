@@ -1,4 +1,4 @@
-bin_SCRIPTS = g15-config 
+bin_SCRIPTS = g15-macros
 scriptsdir = @libdir@/gnome15
 scripts_SCRIPTS = g15-applet
 	

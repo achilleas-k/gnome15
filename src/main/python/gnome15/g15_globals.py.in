@@ -13,7 +13,7 @@ if os.path.exists(image_dir):
     font_dir = os.path.join(package_dir, "..", "..", "resources", "fonts" )
     plugin_dir = os.path.join(package_dir, "..", "..", "..", "plugins" )
 else: 
-    image_dir = "@prefix@/share/pixmaps"
-    glade_dir = "@prefix@/share/gnome15"
+    image_dir = "@prefix@/share/gnome15/images"
+    glade_dir = "@prefix@/share/gnome15/glade"
     font_dir = "@prefix@/share/gnome15"
     plugin_dir = "@prefix@/share/gnome15/plugins"

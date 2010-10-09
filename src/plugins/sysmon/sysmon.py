@@ -21,18 +21,21 @@
 #        +-----------------------------------------------------------------------------+
  
 import gnome15.g15_screen as g15screen 
-import gnome15.g15_draw as g15draw
+import gnome15.g15_theme as g15theme 
+import gnome15.g15_util as g15util
 import datetime
-from threading import Timer
 import time
 import gtk
 import os
 import sys
+import cairo
 
 # Plugin details - All of these must be provided
 id = "sysmon"
 name = "System Monitor"
-description = "Display CPU, Memory, Swap and Net statistics"
+description = "Display CPU, Memory, and Network statistics. Currently, only a summary " \
+        + " of all CPU cores and Network interfaces are displayed. Future versions will " \
+        + " allow detailed statistics to be displayed."        
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = "Copyright (C)2010 Brett Smith"
 site = "http://localhost"
@@ -52,42 +55,167 @@ class G15SysMon():
         self.hidden = False
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
+        self.timer = None
     
     def activate(self):
-        self.timer = None
+        self.properties = None
+        self.cpu_history = []
         self.active = True
         self.last_time_list = None
-        self.last_net_list = None    
+        self.recv_bps = 0.0
+        self.send_bps = 0.0
+        self.last_time = 0
+        self.total = 1.0
+        self.cached = 0
+        self.free = 0
+        self.used = 0
+        self.last_net_list = None
         self.max_send = 1   
-        self.max_recv = 1        
-        self.canvas = self.screen.new_canvas(on_shown=self.on_shown, on_hidden=self.on_hidden, id="System Monitor")
-        self.screen.draw_current_canvas()
-    
-    def deactivate(self):
-        self.hidden = True
+        self.max_recv = 1 
+                      
+        self.reload_theme()
+        self.page = self.screen.new_page(self.paint, id="System Monitor", on_shown=self.on_shown, on_hidden=self.on_hidden, use_cairo=True)
+        self.screen.redraw(self.page)
+            
+    def on_shown(self):
+        self.cancel_refresh()
+        self.refresh()
+            
+    def on_hidden(self):
+        self.cancel_refresh()
+        self.schedule_refresh()
+        
+    def cancel_refresh(self):
         if self.timer != None:
             self.timer.cancel()
-        self.screen.del_canvas(self.canvas)
+            self.timer = None
+        
+    def schedule_refresh(self):
+        refresh_val = None
+        if self.screen.is_visible(self.page):
+            self.timer = g15util.schedule("SysmonRedraw", 1.0, self.refresh)
+    
+    def deactivate(self):
+        self.cancel_refresh()
+        self.screen.del_page(self.page)
         
     def destroy(self):
         pass
     
     ''' Callbacks
     '''
-    
-    def on_shown(self):
-        if self.timer != None:
-            self.timer.cancel()
-        self.hidden = False
-        self.redraw()
         
-    def on_hidden(self):
-        if self.timer != None:
-            self.timer.cancel()
-        self.hidden = True
+    def reload_theme(self):        
+        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
+    
+    def paint(self, canvas):
+        if self.properties != None:
+            size = self.screen.size
+            offset = 30
+            bar_size = float(size[0]) - float(offset) - 60.0
+            self.theme.draw(canvas, self.properties)
+            
+    def build_properties(self): 
+        
+        properties = {}
+        properties["cpu_pc"] = "%3d" % self.cpu
+         
+        properties["mem_total"] = "%f" % self.total
+        properties["mem_free_k"] = "%f" % self.free
+        properties["mem_used_k"] = "%f" % self.used
+        properties["mem_cached_k"] = "%f" % self.cached
+          
+        properties["mem_total_mb"] = "%.2f" % ( self.total / 1024 )
+        properties["mem_free_mb"] = "%.2f" % ( self.free / 1024 ) 
+        properties["mem_used_mb"] = "%.2f" % ( self.used / 1024 ) 
+        properties["mem_cached_mb" ] = "%3d" % ( self.cached / 1024 )
+          
+        properties["mem_total_gb"] = "%.1f" % ( self.total / 1024  / 1024 )
+        properties["mem_free_gb"] = "%.1f" % ( self.free / 1024  / 1024 ) 
+        properties["mem_used_gb"] = "%.1f" % ( self.used / 1024  / 1024 ) 
+        properties["mem_cached_gb" ] = "%.1f" % ( self.cached / 1024 / 1024 )
+        
+        properties["mem_used_pc"] = int(self.used * 100.0 / self.total)
+        properties["mem_cached_pc"] = int(self.cached * 100.0 / self.total)
+        
+        properties["net_recv_pc"] = int(self.recv_bps * 100.0 / self.max_recv)
+        properties["net_send_pc"] = int(self.send_bps * 100.0 / self.max_send)
+        properties["net_recv_mbps"] = "%.2f" % (self.recv_bps / 1024 / 1024)
+        properties["net_send_mbps"] = "%.2f" % (self.send_bps / 1024 / 1024)
+        
+        
+        properties["net_icon"] = g15util.get_icon_path(self.gconf_client, "gnome-fs-network", self.screen.height)
+        properties["cpu_icon"] = g15util.get_icon_path(self.gconf_client, "utilities-system-monitor",  self.screen.height)
+        properties["mem_icon"] = g15util.get_icon_path(self.gconf_client, "media-memory",  self.screen.height)
+        
+        self.properties = properties
+            
     
     ''' Functions specific to plugin
     ''' 
+        
+    def refresh(self):
+        
+        this_time_list = self.get_time_list()   
+        this_net_list = self.get_net_stats()
+        mem = self.get_mem_info()
+        now = time.time()  
+
+        '''
+        CPU
+        '''
+        
+        self.cpu = 0
+        if self.last_time_list != None:
+            working_list = list(this_time_list)
+            for i in range(len(self.last_time_list))  :
+                working_list[i] -= self.last_time_list[i]
+            sum_l = sum(working_list)
+            if sum_l > 0:
+                self.cpu = 100 - (working_list[len(working_list) - 1] * 100.00 / sum_l)
+        self.last_time_list = this_time_list
+        
+        '''
+        Net
+        '''
+     
+        self.recv_bps = 0.0
+        self.send_bps = 0.0
+        if self.last_net_list != None:
+            this_total = self.get_net_total(this_net_list)
+            last_total = self.get_net_total(self.last_net_list)
+            
+            # How many bps
+            time_taken = now - self.last_time
+            self.recv_bps = (this_total[0] - last_total[0]) / time_taken
+            self.send_bps = (this_total[1] - last_total[1]) / time_taken
+            
+        # Adjust the maximums if necessary
+        if self.recv_bps > self.max_recv:
+            self.max_recv = self.recv_bps
+        if self.send_bps > self.max_send:
+            self.max_send = self.send_bps
+                        
+        self.last_net_list = this_net_list
+        
+        '''
+        Memory
+        '''
+        
+        self.total = float(mem['MemTotal'])
+        self.free = float(mem['MemFree'])
+        self.used = self.total - self.free
+        self.cached = float(mem['Cached'])
+        
+        '''
+        Update data sets
+        '''
+        self.cpu_history.append(self.cpu)
+
+        self.build_properties()
+        self.screen.redraw(self.page)
+        self.schedule_refresh()  
+        self.last_time = now
     
     def get_net_stats(self):        
         stat_file = file("/proc/net/dev", "r")
@@ -124,87 +252,3 @@ class G15SysMon():
             mem[split[0][:len(split[0]) - 1]] = split[1]
         stat_file.close()
         return mem
-    
-    def redraw(self):
-        if not self.hidden:
-            
-            size = self.screen.driver.get_size()
-            
-            self.canvas.clear()
-            now = time.time()
-            offset = 30
-            bar_size = float(size[0]) - float(offset) - 60.0
-            
-            # CPU
-            this_time_list = self.get_time_list()
-            cpu_w = 0
-            cpu = 0
-            if self.last_time_list != None:
-                working_list = list(this_time_list)
-                for i in range(len(self.last_time_list))  :
-                    working_list[i] -= self.last_time_list[i]
-                cpu = 100 - (working_list[len(working_list) - 1] * 100.00 / sum(working_list))
-                cpu_w = ( bar_size / 100) * cpu
-                
-            self.canvas.draw_text("CPU:", (0, 0))
-            self.canvas.fill_box((offset, 3, offset + cpu_w, 10))
-            self.canvas.draw_text("%3d%%" % cpu, (g15draw.RIGHT, 0), emboss="White")   
-                
-            self.last_time_list = this_time_list
-            
-            # Net
-            this_net_list = self.get_net_stats()
-            recv_bps = 0.0
-            send_bps = 0.0
-            if self.last_net_list != None:
-                this_total = self.get_net_total(this_net_list)
-                last_total = self.get_net_total(self.last_net_list)
-                    
-                # How many bps
-                time_taken = now - self.last_time
-                recv_bps = (this_total[0] - last_total[0]) / time_taken
-                send_bps = (this_total[1] - last_total[1]) / time_taken
-                
-            # Adjust the maximums if necessary
-            if recv_bps > self.max_recv:
-                self.max_recv = recv_bps
-            if send_bps > self.max_send:
-                self.max_send = send_bps 
-                    
-            # Calculate the current value as percentage of max
-            recv_pc = recv_bps * 100.0 / self.max_recv
-            send_pc = send_bps * 100.0 / self.max_send
-                
-            # Draw the net graph
-            net_w = (bar_size / 100) * recv_pc
-            self.canvas.draw_text("Net:", (0, 11))
-            self.canvas.fill_box((offset, 14, offset + net_w, 17))
-            net_w = (bar_size / 100) * send_pc
-            self.canvas.fill_box((offset, 18, offset + net_w, 21))
-            self.canvas.draw_text("%3.2f / %3.2f" % ((recv_bps / 1024 / 1024), (send_bps / 1024 / 1024)), (g15draw.RIGHT, 11), emboss="White")  
-                
-            self.last_net_list = this_net_list
-            
-            # Draw the memory graph
-            mem = self.get_mem_info()
-            total = float(mem['MemTotal'])
-            free = float(mem['MemFree'])
-            used = total - free
-            cached = float(mem['Cached'])
-            used_pc = used * 100.0 / total
-            cached_pc = cached * 100.0 / total
-            
-            self.canvas.draw_text("Mem:", (0, 22))
-            mem_w = (bar_size / 100) * used_pc
-            self.canvas.fill_box((offset, 25, offset + mem_w, 32))
-            mem_w = (bar_size / 100) * cached_pc
-            self.canvas.fill_box((offset, 25, offset + mem_w, 32), color="Gray")
-            self.canvas.draw_text("%3.2f / %3.2f" % ((used / 1024 / 1024), (total / 1024 / 1024)), (g15draw.RIGHT, 22), emboss="White")
-            
-            # Draw and cycle         
-            self.screen.draw(self.canvas)
-            self.last_time = now
-            self.timer = Timer(1, self.redraw, ())
-            self.timer.name = "SysmonRedrawThread"
-            self.timer.setDaemon(True)
-            self.timer.start()

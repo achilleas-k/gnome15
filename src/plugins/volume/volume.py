@@ -21,7 +21,8 @@
 #        +-----------------------------------------------------------------------------+
  
 import gnome15.g15_screen as g15screen
-import gnome15.g15_draw as g15draw
+import gnome15.g15_util as g15util
+import gnome15.g15_theme as g15theme
 
 import alsaaudio
 import select
@@ -31,10 +32,11 @@ from threading import Thread
 # Plugin details - All of these must be provided
 id="volume"
 name="Volume Monitor"
-description="Popup the current volume when it changes"
+description="Popup the current volume when it changes. Currently only the " \
+        + "the master mixer of the default card is displayed."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://localhost"
+site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
 has_preferences=False
 
 
@@ -44,12 +46,13 @@ fixed number of seconds
 '''
 
 def create(gconf_key, gconf_client, screen):
-    return G15Volume(screen)
+    return G15Volume(screen, gconf_client)
             
 class G15Volume():
     
-    def __init__(self, screen):
+    def __init__(self, screen, gconf_client):
         self.screen = screen
+        self.gconf_client = gconf_client
         self.volume = 0.0
         self.thread = None
         self.mute = False
@@ -72,17 +75,49 @@ class G15Volume():
     def del_canvas(self):
         self.screen.del_canvas(self.canvas)
         self.canvas = None
-    
-    def redraw(self):
         
-        canvas = self.screen.get_canvas("Volume")
-        if canvas == None:
-            canvas = self.screen.new_canvas(priority=g15screen.PRI_HIGH, id="Volume")
-            self.screen.draw_current_canvas()
-            self.hide_timer = self.screen.hide_after(3.0, canvas)
+    def reload_theme(self):        
+        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
+        
+    def paint(self, canvas):
+                    
+        width = self.screen.width
+        height = self.screen.height
+        
+        properties = {}
+        
+        icon = "audio-volume-muted"
+        if not self.mute:
+            if self.volume < 34:
+                icon = "audio-volume-low"
+            elif self.volume < 67:
+                icon = "audio-volume-medium"
+            else:
+                icon = "audio-volume-high"
+        else:
+            properties [ "muted"] = True
+        
+        icon_path = g15util.get_icon_path(self.gconf_client, icon, height)
+        
+        properties["state"] = icon
+        properties["icon"] = icon_path
+        properties["vol_pc"] = self.volume
+        
+        for i in range(0, ( self.volume / 10 ) + 1, 1):            
+            properties["bar" + str(i)] = True
+        
+        self.theme.draw(canvas, properties)
+    
+    def popup(self):
+        
+        page = self.screen.get_page("Volume")
+        if page == None:
+            self.reload_theme()
+            page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="Volume", use_cairo=True)
+            self.hide_timer = self.screen.hide_after(3.0, page)
         else:
             self.hide_timer.cancel()
-            self.hime_timer = self.screen.set_priority(canvas, g15screen.PRI_HIGH, hide_after = 3.0)
+            self.hide_timer = self.screen.set_priority(page, g15screen.PRI_HIGH, hide_after = 3.0)
         
         vol_mixer = alsaaudio.Mixer("Master", cardindex=0)
 
@@ -102,6 +137,7 @@ class G15Volume():
             for ch_mute in mutes:
                 if ch_mute:
                     mute = True
+
         
         # TODO  better way than averaging
         volumes = vol_mixer.getvolume()
@@ -110,21 +146,10 @@ class G15Volume():
             total += vol
         volume = total / len(volumes)
         
-        canvas.clear()
-                    
-        width = self.screen.driver.get_size()[0]
-        height = self.screen.driver.get_size()[1]
+        self.volume = volume                
+        self.mute = mute
         
-        gap = ( height - 25 ) / 2
-        for j in range(0, int(volume / 4) + 1):
-            x = ( width / 2 ) - 25 + ( j * 2 )
-            canvas.draw_line([(x, height - gap), (x, height - gap - j) ])
-            
-        if mute:
-            canvas.set_font_size(size=g15draw.FONT_SMALL)
-            canvas.draw_text("Mute", (g15draw.CENTER, g15draw.CENTER), emboss="White")
-        
-        self.screen.draw(canvas)
+        self.screen.redraw(page)
             
 class VolumeThread(Thread):
     def __init__(self, volume):
@@ -147,7 +172,7 @@ class VolumeThread(Thread):
         try :
             while self.volume.activated:
                 if self.poll.poll(5):
-                    self.volume.redraw()
+                    self.volume.popup()
                     if not self.open.read():
                         break
         finally:

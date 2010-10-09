@@ -18,10 +18,9 @@ import sys
 import os
 import g15_globals as pglobals
 import g15_profile as g15profile
-import g15_daemon as g15daemon
 import gconf
+import g15_plugins as g15plugins
 import g15_driver as g15driver
-import gtk_driver as gtkdriver
 import g15_util as g15util
 import wnck
 
@@ -34,109 +33,207 @@ class G15Config:
     def __init__(self, parent_window=None):
         self.parent_window = parent_window
         
-        # How many macro keys are there?
-        self.keys = 18
+        self.plugin_key = "/apps/gnome15/plugins"
+        self.selected_id = None
         
         # Load main Glade file
         g15Config = os.path.join(pglobals.glade_dir, 'g15-config.glade')        
         self.widget_tree = gtk.Builder()
         self.widget_tree.add_from_file(g15Config)
+
+        # Widgets
+        self.site_label = self.widget_tree.get_object("SiteLabel")
+        self.main_window = self.widget_tree.get_object("MainWindow")
+        self.cycle_screens = self.widget_tree.get_object("CycleScreens")
+        self.cycle_seconds = self.widget_tree.get_object("CycleAdjustment")
+        self.cycle_seconds_widget = self.widget_tree.get_object("CycleSeconds")
+        self.plugin_model = self.widget_tree.get_object("PluginModel")
+        self.plugin_tree = self.widget_tree.get_object("PluginTree")
+        self.plugin_enabled_renderer = self.widget_tree.get_object("PluginEnabledRenderer")
+        
+        # Window 
+        self.main_window.set_transient_for(self.parent_window)
+        self.main_window.set_icon_from_file(os.path.join(pglobals.image_dir,'g15key.png'))
         
         # Monitor gconf
         self.conf_client = gconf.client_get_default()
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
         self.conf_client.notify_add("/apps/gnome15/cycle_seconds", self.cycle_seconds_configuration_changed);
         self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.cycle_screens_configuration_changed);
-        self.conf_client.notify_add("/apps/gnome15/keyboard_backlight", self.keyboard_backlight_configuration_changed);
-        self.conf_client.notify_add("/apps/gnome15/active_profile", self.active_profile_changed);
-        self.conf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed);
+        self.conf_client.notify_add("/apps/gnome15/plugins", self.plugins_changed);
         
-        # Driver
-        driver = self.conf_client.get_string("/apps/gnome15/driver")
-        if driver == "gtk":
-            self.driver = gtkdriver.GtkDriver()
-        else:
-            self.driver = g15daemon.G15Daemon()
-
-        # Widgets
-        self.main_window = self.widget_tree.get_object("MainWindow")
-        self.profiles_tree = self.widget_tree.get_object("ProfilesTree")
-        self.profileNameColumn = self.widget_tree.get_object("ProfileName")
-        self.keyNameColumn = self.widget_tree.get_object("KeyName")
-        self.macroNameColumn = self.widget_tree.get_object("MacroName")
-        self.macroList = self.widget_tree.get_object("MacroList")
-        self.application = self.widget_tree.get_object("ApplicationLocation")
-        self.m1 = self.widget_tree.get_object("M1") 
-        self.m2 = self.widget_tree.get_object("M2") 
-        self.m3 = self.widget_tree.get_object("M3")
-        self.keyboard_backlight = self.widget_tree.get_object("KeyboardBacklightAdjustment")  
-        self.keyboard_backlight.set_upper(self.driver.get_keyboard_backlight_colours())
-        self.contrast = self.widget_tree.get_object("ContrastAdjustment")
-        self.lcd_backlight = self.widget_tree.get_object("LCDBacklightAdjustment")    
-        self.window_name_entry = self.widget_tree.get_object("WindowNameEntry")
-        self.remove_button = self.widget_tree.get_object("RemoveButton")
-        self.activate_on_focus = self.widget_tree.get_object("ActivateProfileOnFocusCheckbox")
-        self.send_delays = self.widget_tree.get_object("SendDelaysCheckbox")
-        self.cycle_screens = self.widget_tree.get_object("CycleScreens")
-        self.cycle_seconds = self.widget_tree.get_object("CycleAdjustment")
-        self.cycle_seconds_widget = self.widget_tree.get_object("CycleSeconds")
-        self.macro_name_renderer = self.widget_tree.get_object("MacroNameRenderer")
-        self.window_label = self.widget_tree.get_object("WindowLabel")
-        self.activate_by_default = self.widget_tree.get_object("ActivateByDefaultCheckbox")
-        
-        # Window 
-        self.main_window.set_transient_for(self.parent_window)
-        self.main_window.set_icon_from_file(os.path.join(pglobals.image_dir,'g15key.png'))
-        
-        # Models        
-        self.macrosModel = self.widget_tree.get_object("MacroModel")
-        self.profiles_model = self.widget_tree.get_object("ProfileModel")
-        
-        self.selected_profile = g15profile.get_active_profile()
-            
         # Configure widgets
-        self.profiles_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)        
-        self.macroList.get_selection().set_mode(gtk.SELECTION_SINGLE)
-        self.set_keyboard_backlight_value_from_configuration()
-        self.set_lcd_backlight_value_from_configuration()
-        self.set_contrast_value_from_configuration()
         self.set_cycle_seconds_value_from_configuration()
         self.set_cycle_screens_value_from_configuration()
         
         # Bind to events
-        self.widget_tree.get_object("AddButton").connect("clicked", self.add_profile)
-        self.remove_button.connect("clicked", self.remove_profile)
-        self.widget_tree.get_object("ActivateButton").connect("clicked", self.activate)
-        self.profiles_tree.connect("cursor-changed", self.select_profile)
-        self.m1.connect("toggled", self.memory_changed)
-        self.m2.connect("toggled", self.memory_changed)
-        self.m3.connect("toggled", self.memory_changed)
-        self.keyboard_backlight.connect("value-changed", self.keyboard_backlight_changed)
-        self.contrast.connect("value-changed", self.contrast_changed)
-        self.lcd_backlight.connect("value-changed", self.lcd_backlight_changed)
         self.cycle_seconds.connect("value-changed", self.cycle_seconds_changed)
-        self.activate_on_focus.connect("toggled", self.activate_on_focus_changed)
-        self.activate_by_default.connect("toggled", self.activate_on_focus_changed)
-        self.send_delays.connect("toggled", self.send_delays_changed)
         self.cycle_screens.connect("toggled", self.cycle_screens_changed)
-        self.window_name_entry.connect("changed", self.window_name_changed)
-        self.macro_name_renderer.connect("edited", self.macro_name_edited)
+        self.site_label.connect("activate", self.open_site)
+        self.plugin_tree.connect("cursor-changed", self.select_plugin)
+        self.plugin_enabled_renderer.connect("toggled", self.toggle_plugin)
+        self.widget_tree.get_object("PreferencesButton").connect("clicked", self.show_preferences)
+        
+        # Driver. We only need this to get the controls. Perhaps they should be moved out of the driver
+        # class and the values stored separately
+        self.driver = g15driver.get_driver(self.conf_client)
+        
+        # Controls
+        self.controls = self.widget_tree.get_object("ControlsBox")
+        driver_controls = self.driver.get_controls()
+        table = gtk.Table(rows = len(driver_controls), columns = 2)
+        table.set_row_spacings(4)
+        row = 0
+        for control in driver_controls:
+            val = control.value
+            if isinstance(val, int):  
+                if control.hint & g15driver.HINT_SWITCH != 0:
+                    check_button = gtk.CheckButton(control.name)
+                    check_button.show()
+                    table.attach(check_button, 0, 2, row, row + 1);                
+                    check_button.connect("toggled", self.control_changed, control)
+                    self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed, [ control, check_button ]);
+                else:                
+                    label = gtk.Label(control.name)
+                    label.show()
+                    table.attach(label, 0, 1, row, row + 1);
+                    
+                    hscale = gtk.HScale()
+                    hscale.set_digits(0)
+                    hscale.set_range(control.lower,control.upper)
+                    hscale.set_value(control.value)
+                    hscale.connect("value-changed", self.control_changed, control)
+                    hscale.show()
+                    
+                    table.attach(hscale, 1, 2, row, row + 1);                
+                    self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed, [ control, hscale ]);
+            else:  
+                label = gtk.Label(control.name)
+                label.show()
+                table.attach(label, 0, 1, row, row + 1);
+                
+                hbox = gtk.HBox()
+                for i in [(0, 0, 0), (255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255) ]:
+                    button = gtk.Button(" ")
+                    button.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(i[0] <<8,i[1]  <<8,i[2]  <<8))
+                    button.connect("clicked", self.color_changed, control, i)
+                    hbox.pack_start(button, False, False, 4)
+                    button.show()
+                color_button = gtk.ColorButton()
+                
+                color_button.connect("color-set", self.color_changed, control, None)
+                color_button.show()
+                color_button.set_color(self.to_color(control.value))
+                hbox.add(color_button)
+                self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed, [ control, color_button]);
+                
+                hbox.show()
+                table.attach(hbox, 1, 2, row, row + 1);
+                
+            row += 1
+            
+        table.show()
+        self.controls.add(table)
+        
+        # Populate model
+        self.load_model()
+        
+    def open_site(self, widget):
+        subprocess.Popen(['xdg-open',widget.get_uri()])
+        
+    def color_from_gconf_value(self, id):
+        entry = self.conf_client.get("/apps/gnome15/" + id)
+        if entry == None:
+            return self.to_color((0,0,0))
+        else:            
+            return self.to_color(self.to_rgb(entry.get_string()))
+        
+    def to_rgb(self, string_rgb):
+        rgb = string_rgb.split(",")
+        return (int(rgb[0]), int(rgb[1]), int(rgb[2]))
+        
+    def to_color(self, rgb):
+        return gtk.gdk.Color(rgb[0] <<8, rgb[1] <<8,rgb[2] <<8)
+        
+    def color_changed(self, widget, control, i):
+        if i == None:
+            col = widget.get_color()     
+            i = ( col.red >> 8, col.green >> 8, col.blue >> 8 )
+        self.conf_client.set_string("/apps/gnome15/" + control.id, "%d,%d,%d" % ( i[0],i[1],i[2]))
+        
+    def control_changed(self, widget, control):
+        if control.hint & g15driver.HINT_SWITCH != 0:
+            val = 0
+            if widget.get_active():
+                val = 1
+            self.conf_client.set_int("/apps/gnome15/" + control.id, val)
+        else:
+            self.conf_client.set_int("/apps/gnome15/" + control.id, int(widget.get_value()))
+        
+    def show_preferences(self, widget):
+        plugin = self.get_selected_plugin()
+        plugin.show_preferences(self.main_window, self.conf_client, self.plugin_key + "/" + plugin.id)
+        
+    def load_model(self):
+        self.plugin_model.clear()
+        for mod in sorted(g15plugins.imported_plugins, key=lambda key: key.name):
+            key = self.plugin_key + "/" + mod.id + "/enabled"
+            enabled = self.conf_client.get_bool(key)
+            self.plugin_model.append([enabled, mod.name, mod.id])
+            if mod.id == self.selected_id:
+                self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(len(self.plugin_model) - 1)))
+        if len(self.plugin_model) > 0 and self.get_selected_plugin() == None:            
+            self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(0)))
+            
+        return 
+            
+            
+        self.select_plugin(None)
+        
+    def get_index_for_plugin_id(self, id):
+        idx = 0
+        for row in self.plugin_model:
+            if row[2] == id:
+                return idx
+            idx = idx + 1
+        return -1
+            
+    def get_row_for_plugin_id(self, id):
+        for row in self.plugin_model:
+            if row[2] == id:
+                return row
+        
+    def get_selected_plugin(self):
+        (model, path) = self.plugin_tree.get_selection().get_selected()
+        if path != None:
+            return g15plugins.get_module_for_id(model[path][2])
+            
+    def toggle_plugin(self, widget, path):
+        plugin = g15plugins.get_module_for_id(self.plugin_model[path][2])
+        if plugin != None:
+            key = self.plugin_key + "/" + plugin.id + "/enabled"
+            self.conf_client.set_bool(key, not self.conf_client.get_bool(key))
+            
+    def select_plugin(self, widget):       
+        plugin = self.get_selected_plugin()
+        if plugin != None:  
+            self.selected_id = plugin.id
+            self.widget_tree.get_object("PluginNameLabel").set_text(plugin.name)
+            self.widget_tree.get_object("DescriptionLabel").set_text(plugin.description)
+            self.widget_tree.get_object("AuthorLabel").set_text(plugin.author)
+            self.widget_tree.get_object("CopyrightLabel").set_text(plugin.copyright)
+            self.widget_tree.get_object("SiteLabel").set_uri(plugin.site)
+            self.widget_tree.get_object("SiteLabel").set_label(plugin.site)
+            self.widget_tree.get_object("PreferencesButton").set_sensitive(plugin.has_preferences)
+        else:
+            self.widget_tree.get_object("PluginNameLabel").set_text("")
+            self.widget_tree.get_object("DescriptionLabel").set_text("")
+            self.widget_tree.get_object("AuthorLabel").set_text("")
+            self.widget_tree.get_object("CopyrightLabel").set_text("")
+            self.widget_tree.get_object("SiteLabel").set_uri("http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/")
+            self.widget_tree.get_object("SiteLabel").set_label("http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/")
+            self.widget_tree.get_object("PreferencesButton").set_sensitive(False)
 
-    def set_keyboard_backlight_value_from_configuration(self):
-        val = self.conf_client.get_int("/apps/gnome15/keyboard_backlight")
-        if val != self.keyboard_backlight.get_value():
-            self.keyboard_backlight.set_value(val)
-            
-    def set_contrast_value_from_configuration(self):
-        val = self.conf_client.get_int("/apps/gnome15/contrast")
-        if val != self.contrast.get_value():
-            self.contrast.set_value(val)
-            
-    def set_lcd_backlight_value_from_configuration(self):
-        val = self.conf_client.get_int("/apps/gnome15/lcd_backlight")
-        if val != self.lcd_backlight.get_value():
-            self.lcd_backlight.set_value(val)
-            
     def set_cycle_seconds_value_from_configuration(self):
         val = self.conf_client.get("/apps/gnome15/cycle_seconds")
         time = 10
@@ -150,24 +247,26 @@ class G15Config:
         self.cycle_seconds_widget.set_sensitive(val)
         if val != self.cycle_screens.get_active():
             self.cycle_screens.set_active(val)
+            
+    def control_configuration_changed(self, client, connection_id, entry, args):
+        widget = args[1]
+        control = args[0]
+        if isinstance(control.value, int):
+            if control.hint & g15driver.HINT_SWITCH != 0:
+                widget.set_active(entry.value.get_int() == 1)
+            else:
+                widget.set_value(entry.value.get_int())
+        else:
+            widget.set_color(self.to_color(self.to_rgb(entry.value.get_string())))
 
-    def active_profile_changed(self, client, connection_id, entry, args):
-        self.load_configurations()
-        
-    def contrast_configuration_changed(self, client, connection_id, entry, args):
-        self.set_contrast_value_from_configuration()
-        
-    def lcd_backlight_configuration_changed(self, client, connection_id, entry, args):
-        self.set_lcd_backlight_value_from_configuration()
-        
-    def keyboard_backlight_configuration_changed(self, client, connection_id, entry, args):
-        self.set_keyboard_backlight_value_from_configuration()
-        
     def cycle_screens_configuration_changed(self, client, connection_id, entry, args):
         self.set_cycle_screens_value_from_configuration()
         
     def cycle_seconds_configuration_changed(self, client, connection_id, entry, args):
         self.set_cycle_seconds_value_from_configuration()
+        
+    def plugins_changed(self, client, connection_id, entry, args):
+        self.load_model()
         
     def cycle_screens_changed(self, widget=None):
         self.conf_client.set_bool("/apps/gnome15/cycle_screens", self.cycle_screens.get_active())
@@ -176,180 +275,10 @@ class G15Config:
         val = int(self.cycle_seconds.get_value())
         self.conf_client.set_int("/apps/gnome15/cycle_seconds", val)
         
-    def send_delays_changed(self, widget=None):
-        self.selected_profile.send_delays = self.send_delays.get_active()
-        self.selected_profile.save()
-        
-    def activate_on_focus_changed(self, widget=None):
-        self.selected_profile.activate_on_focus = widget.get_active()        
-        self.window_name_entry.set_sensitive(self.selected_profile.activate_on_focus)
-        self.selected_profile.save()
-        
-    def window_name_changed(self, widget=None):
-        self.selected_profile.window_name = self.window_name_entry.get_text()
-        self.selected_profile.save()
-        
-    def contrast_changed(self, widget):
-        val = int(self.contrast.get_value())
-        self.conf_client.set_int("/apps/gnome15/contrast", val)
-        
-    def lcd_backlight_changed(self, widget):
-        val = int(self.lcd_backlight.get_value())
-        self.conf_client.set_int("/apps/gnome15/lcd_backlight", val)
-        
-    def keyboard_backlight_changed(self, widget):
-        val = int(self.keyboard_backlight.get_value())
-        self.conf_client.set_int("/apps/gnome15/keyboard_backlight", val)
-        
-    def memory_changed(self, widget):
-        self.load_configuration(self.selected_profile)
-        
-    def select_profile(self, widget):
-        (model, path) = self.profiles_tree.get_selection().get_selected()
-        self.selected_profile = g15profile.get_profile(model[path][2])
-        self.load_configuration(self.selected_profile)
-     
-    def activate(self, widget):
-        (model, path) = self.profiles_tree.get_selection().get_selected()
-        self.make_active(g15profile.get_profile(model[path][2]))
-        
-    def make_active(self, profile): 
-        profile.make_active()
-        self.load_configurations()
-        
-    def remove_profile(self, widget):
-        dialog = self.widget_tree.get_object("ConfirmRemoveProfileDialog") 
-        response = dialog.run()
-        dialog.hide()
-        if response == 1:
-            active_profile = g15profile.get_active_profile()
-            if self.selected_profile.id == active_profile.id:
-                self.makeActive("Default")
-            self.selected_profile.delete()
-            self.load_configurations()
-        
-    def add_profile(self, widget):
-        dialog = self.widget_tree.get_object("AddProfileDialog") 
-        response = dialog.run()
-        dialog.hide()
-        if response == 1:
-            new_profile_name = self.widget_tree.get_object("NewProfileName").get_text()
-            new_profile = g15profile.G15Profile(new_profile_name)
-            g15profile.create_profile(new_profile)
-            self.selected_profile = new_profile
-            self.load_configurations()
-        
-    def get_memory_number(self):
-        if self.m1.get_active():
-            return 1
-        elif self.m2.get_active():
-            return 2
-        elif self.m3.get_active():
-            return 3
-        
-    def load_configurations(self):
-        self.profiles_model.clear()
-        tree_selection = self.profiles_tree.get_selection()
-        active = g15profile.get_active_profile()
-        active_id = -1
-        if active != None:
-            active_id = active.id
-        current_selection = self.selected_profile
-        self.selected_profile = None
-        self.profiles = g15profile.get_profiles()
-        for profile in self.profiles: 
-            weight = 400
-            if profile.id == active_id:
-                weight = 700
-            self.profiles_model.append([profile.name, weight, profile.id])
-            if current_selection != None and profile.id == current_selection.id:
-                tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(len(self.profiles_model) - 1)))
-                self.selected_profile = profile
-        if self.selected_profile != None:                             
-            self.load_configuration(self.selected_profile)             
-        elif len(self.profiles) > 0:            
-            tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(0)))
-        else:
-            default_profile = g15profile.G15Profile("Default")
-            g15profile.create_profile(default_profile)
-            self.load_configurations()
-            
-        
-    def profiles_changed(self, client, connection_id, entry, args):
-        self.load_configurations()
-        
-    def macro_name_edited(self, widget, row, value):
-        macro = self.get_sorted_list()[int(row)] 
-        if value != macro.name:
-            macro.name = value
-            macro.save()
-            self.load_configuration(self.selected_profile)
-        
-    def get_sorted_list(self):
-        return sorted(self.selected_profile.macros[self.get_memory_number() - 1], key=lambda key: key.key)
-        
-    def load_configuration(self, profile): 
-        name = profile.window_name
-        if name == None:
-            name = ""            
-        self.macrosModel.clear()
-        for macro in self.get_sorted_list():
-            self.macrosModel.append([", ".join(g15util.get_key_names(macro.key)), macro.name, macro.key, True])
-        self.activate_on_focus.set_active(profile.activate_on_focus)
-        self.activate_by_default.set_active(profile.activate_on_focus)
-        if profile.window_name != None:
-            self.window_name_entry.set_text(profile.window_name)
-        else:
-            self.window_name_entry.set_text("")
-        self.send_delays.set_active(profile.send_delays)
-        self.window_name_entry.set_sensitive(self.activate_on_focus.get_active())
-        
-        if profile.get_default():
-            self.window_name_entry.set_visible(False)
-            self.activate_on_focus.set_visible(False)
-            self.window_label.set_visible(False)
-            self.activate_by_default.set_visible(True)
-            self.remove_button.set_sensitive(False)
-        else:
-            self.window_name_entry.set_visible(True)
-            self.activate_on_focus.set_visible(True)
-            self.window_label.set_visible(True)
-            self.activate_by_default.set_visible(False)
-            self.remove_button.set_sensitive(True)
-        
-#        self.window_name_entry.set_text(name)
-
     def run(self):
         ''' Set up device list and start main window app.
         '''
         self.id = None                
-        self.load_configurations()
-        self.update_children()
         self.main_window.run()
         self.main_window.hide()
         
-
-    def update_children(self):
-        ''' Update the child widgets to reflect current settings.
-        '''
-        self.adjusting = True
-        self.adjusting = False
-
-################################################################################
-
-if __name__ == '__main__':
-
-    import optparse
-    parser = optparse.OptionParser()
-    parser.add_option("-l", "--local", action="store_true", dest="runlocal",
-        default=False, help="Run from current directory.")
-    (options, args) = parser.parse_args()
-
-    if options.runlocal:
-        pglobals.image_dir =  os.path.join(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), ".."), "images")
-        pglobals.bin_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
-        pglobals.glade_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
-        pglobals.font_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
-   
-    a = G15Config()
-    a.run()
