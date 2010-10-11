@@ -57,6 +57,7 @@ import time
 import g15_plugins as g15plugins
 import dbus, dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
+from g15_exceptions import NotConnectedException
 
 dbus_loop=DBusGMainLoop()
 dbus.set_default_main_loop(dbus_loop)
@@ -174,12 +175,12 @@ class G15Applet(gnomeapplet.Applet):
         
         # Connect some events   
         self.applet.connect("button-press-event",self.button_clicked)
-        self.applet.connect("delete-event",self.cleanup)
+        self.applet.connect("destroy",self.cleanup)
+#        self.applet.connect("delete-event",self.cleanup)
         self.applet.connect("change-orient",self.change_orientation)
         self.applet.connect("change-size",self.size_changed)
         self.applet.connect("change-background",self.background_changed)
         self.applet.connect("scroll-event",self.applet_scroll)
-#        self.macro_dialog.connect("delete-event", self.cancel_macro)
         
         # Create the screen and pluging manager
         self.screen = g15screen.G15Screen(self) 
@@ -204,23 +205,35 @@ class G15Applet(gnomeapplet.Applet):
         try :
             self.driver.connect()    
             self.splash = G15Splash(self.screen)   
-            self.plugins.activate(self.splash.update_splash)
             self.screen.set_mkey(1)
-            self.activate_profile() 
-        
-            # Now start listening for key events and cycle the screen if required
+            self.activate_profile()            
+            g15util.schedule("ActivatePlugins", 0, self.complete_loading)
+        except Exception as e:
+            if self.process_exception(e):
+                raise
+            
+    def process_exception(self, exception):
+        self.error() 
+        if self.should_reconnect(exception):
+            self.reconnect_timer = g15util.schedule("ReconnectTimer", 5.0, self.attempt_connection)
+        else:
+            traceback.print_exc(file=sys.stderr)
+            return True
+            
+    def should_reconnect(self, exception):
+        return isinstance(exception, NotConnectedException) or ( len(exception.args) == 2 and isinstance(exception.args[0],int) and exception.args[0] in [ 111, 104 ] )
+            
+    def complete_loading(self):              
+        try :            
+            self.plugins.activate(self.splash.update_splash) 
             self.driver.grab_keyboard(self.key_received)
             self.check_cycle()
             self.applet_icon = "g15key.png"
             self.size_changed()
             self.splash.complete()
-        except Exception as e: 
-            self.error() 
-            if len(e.args) == 2 and isinstance(e.args[0],int) and e.args[0] == 111:
-                self.reconnect_timer = g15util.schedule("ReconnectTimer", 5.0, self.attempt_connection)
-            else:
-                traceback.print_exc(file=sys.stderr)
-                raise e
+        except Exception as e:
+            if self.process_exception(e):
+                raise
             
     def error(self):         
         self.applet_icon = "g15key-error.png"
@@ -266,7 +279,7 @@ class G15Applet(gnomeapplet.Applet):
     def resched_cycle(self):        
         if self.cycle_timer != None:
             self.cycle_timer.cancel()
-            self.schedule_cycle()
+        self.schedule_cycle()
         
     def applet_scroll(self, widget, event):
         direction = event.direction
@@ -310,22 +323,28 @@ class G15Applet(gnomeapplet.Applet):
         self.conf_client.set_int("/apps/gnome15/" + control.id + "_green", color[1])
         self.conf_client.set_int("/apps/gnome15/" + control.id + "_blue", color[2])
         
-    def background_changed(self, applet, type, color, pixmap):
-        applet.set_style(None)
+    def background_changed(self, applet, bg_type, color, pixmap):
         rc_style = gtk.RcStyle()
-        applet.modify_style(rc_style)
-        if (type == gnomeapplet.COLOR_BACKGROUND):
-            applet.modify_bg(gtk.STATE_NORMAL, color)
-        elif (type == gnomeapplet.PIXMAP_BACKGROUND):
-            style = applet.style
-            style.bg_pixmap[gtk.STATE_NORMAL] = pixmap
-            applet.set_style(style)  
+        self.recreate_icon() 
+        for c in [ self.applet, self.container, self.image, self.box ]:
+            c.set_style(None)
+            c.modify_style(rc_style)
+            if bg_type == gnomeapplet.PIXMAP_BACKGROUND:
+                style = self.applet.get_style()
+                style.bg_pixmap[gtk.STATE_NORMAL] = pixmap
+                c.set_style(style)
+            if bg_type == gnomeapplet.COLOR_BACKGROUND:
+                c.modify_bg(gtk.STATE_NORMAL, color)
+            
         
     def size_changed(self, arg1=None, arg2=None):
-        size = int(self.applet.get_size() * 0.6)
+        self.recreate_icon()
+        
+    def recreate_icon(self):        
+        size = int(self.applet.get_size() * 0.68)
         path = os.path.join(pglobals.image_dir,self.applet_icon)
         pixbuf = gtk.gdk.pixbuf_new_from_file(path)
-        pixbuf = pixbuf.scale_simple(32, 32, gtk.gdk.INTERP_BILINEAR);
+        pixbuf = pixbuf.scale_simple(size, size, gtk.gdk.INTERP_BILINEAR);
         self.image.set_from_pixbuf(pixbuf)
         
     def driver_changed(self, client, connection_id, entry, args):

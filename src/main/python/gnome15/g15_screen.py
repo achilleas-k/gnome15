@@ -79,7 +79,7 @@ class G15Screen():
         self.reverting = { }
         
         # Draw the splash for when no other pages are visible
-        self.jobqueue = jobqueue.JobQueue()
+        self.jobqueue = jobqueue.JobQueue(name="ScreenRedrawQueue")
            
         self.redraw()   
         

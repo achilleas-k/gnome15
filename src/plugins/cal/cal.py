@@ -25,7 +25,9 @@ import gnome15.g15_theme as g15theme
 import gnome15.g15_driver as g15driver
 import gnome15.g15_util as g15util
 import datetime
+import time
 from threading import Timer
+from threading import Thread
 import gtk
 import os
 import sys
@@ -44,10 +46,32 @@ copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
 has_preferences=False
 
-def create(gconf_key, gconf_client, screen):
-    return G15Cal(gconf_key, gconf_client, screen)
+# How often refresh from the evolution calendar. This can be a slow process, so not too often
+REFRESH_INTERVAL = 15 * 60.0
 
-class G15Cal():
+def create(gconf_key, gconf_client, screen):
+    return G15Cal(gconf_key, gconf_client, screen)  
+    
+class StartUp(Thread):
+    def __init__(self, plugin):
+        Thread.__init__(self)
+        self.plugin = plugin
+        self.setDaemon(True)
+        self.start()
+        self.cancelled = False
+        
+    def cancel(self):
+        self.cancelled = True
+        
+    def run(self):            
+        self.plugin.loaded = time.time()
+        self.plugin.load_month_events(datetime.datetime.now())
+        if not self.cancelled:
+            self.plugin.page = self.plugin.screen.new_page(self.plugin.paint, priority=g15screen.PRI_NORMAL, on_shown=self.plugin.on_shown, on_hidden=self.plugin.on_hidden, id="Cal")
+            self.plugin.screen.redraw(self.plugin.page)
+            self.plugin.schedule_redraw()
+
+class G15Cal():  
     
     def __init__(self, gconf_key, gconf_client, screen):
         self.screen = screen
@@ -59,17 +83,18 @@ class G15Cal():
         self.active = True
         self.event_days = None
         self.calendar_date = None
-        self.loaded_minute = 0
+        self.loaded = 0
+        self.page = None
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-        self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_NORMAL, on_shown=self.on_shown, on_hidden=self.on_hidden, id="Cal")
+        
+        # Complete startup in a thread as the calendar may take a while to become available
+        self.startup = StartUp(self)
         
     def redraw(self):
-        now = datetime.datetime.now()
-        
-        # Only load the events every minute
-        if self.calendar_date == None and self.event_days == None or self.loaded_minute != now.minute:
-            self.loaded_minute = now.minute
-            self.load_month_events(now)
+        t = time.time()
+        if t > self.loaded + REFRESH_INTERVAL:
+            self.loaded = t
+            self.load_month_events(datetime.datetime.now())
             
         self.screen.redraw(self.page)
         self.schedule_redraw()
@@ -89,15 +114,19 @@ class G15Cal():
         self.loaded_minute = -1
         
     def deactivate(self):
-        self.timer.cancel()
-        self.timer.cancel()
-        self.screen.del_page(self.page)
+        if self.startup != None:
+            self.startup.cancel()
+        if self.timer != None:
+            self.timer.cancel()
+        if self.page != None:
+            self.screen.del_page(self.page)
         
     def destroy(self):
         pass
     
     def load_month_events(self, now):
         self.event_days = {}
+        print "Loading calendar events"
             
         # Get all the events for this month
         for i in evolution.ecal.list_calendars():
@@ -113,6 +142,8 @@ class G15Cal():
                     else:
                         self.event_days[key] = list
                     list.append(parsed_event)
+                    
+        print "Loaded calendar events"
                     
     def adjust_calendar_date(self, amount):
         if self.calendar_date == None:

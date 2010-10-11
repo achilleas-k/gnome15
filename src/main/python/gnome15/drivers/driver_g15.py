@@ -30,6 +30,7 @@ import socket
 import cairo
 import time
 import ImageMath
+import Image
 from threading import Thread
 from threading import Lock
 import struct
@@ -83,6 +84,12 @@ KEY_MAP = {
         }
 
 
+def fix_sans_style(root):
+    for element in root.iter():
+        style = element.get("style")
+        if style != None:
+            element.set("style", style.replace("font-family:Sans","font-family:Fixed"))
+
 class EventReceive(Thread):
     def __init__(self, socket, callback):
         Thread.__init__(self)
@@ -98,7 +105,7 @@ class EventReceive(Thread):
         self.running = True
         while self.running:
             val = struct.unpack("<L",self.socket.recv(4))[0]            
-            self.callback(val, g15driver.KEY_STATE_DOWN)
+            self.callback(self.convert_from_g15daemon_code(val), g15driver.KEY_STATE_DOWN)
             while True:
                 # The next 4 bytes should be zero?
                 val_2 = struct.unpack("<L",self.socket.recv(4))[0]
@@ -111,19 +118,19 @@ class EventReceive(Thread):
                 if val_3 == 0:
                     break
                 val = val_3                        
-                self.callback(val, g15driver.KEY_STATE_UP)
+                self.callback(self.convert_from_g15daemon_code(val), g15driver.KEY_STATE_UP)
             
             # Final value should be zero, indicating key release             
             val_4 = struct.unpack("<L",self.socket.recv(4))[0]
             if val_4 != 0:
                 print "WARNING: Expected zero keyboard event"
-            self.callback(val, g15driver.KEY_STATE_UP) 
+            self.callback(self.convert_from_g15daemon_code(val), g15driver.KEY_STATE_UP) 
             
-    def convert_from_g19daemon_code(self, code):
+    def convert_from_g15daemon_code(self, code):
         keys = []
         for key in self.reverse_map:
             if code & key != 0:
-                keys.append(key)
+                keys.append(self.reverse_map[key])
         return keys
 
 
@@ -242,38 +249,40 @@ class Driver(g15driver.AbstractDriver):
         else:
             self.thread.callback = callback
         self.socket.send(chr(CLIENT_CMD_KEY_HANDLER),socket.MSG_OOB)
+            
+    def process_svg(self, document):  
+        fix_sans_style(document.getroot())
         
     def paint(self, img):     
         self.lock.acquire()
         try :           
-            back_surface = cairo.ImageSurface (cairo.FORMAT_A1, height, width)
-            back_context = cairo.Context (back_surface)
-            back_context.set_source_surface(img, 0, 0)
-            back_context.paint()
-                        
-#            # Create the 16bit surface (g19 expects 5-6-5)
-#            target_surface = cairo.ImageSurface (4, height, width)
-#            target_context = cairo.Context (target_surface)
-#            target_context.set_operator(cairo.OPERATOR_OVER)
-#            target_context.set_source_surface(back_surface, 0.0, 0.0)
-#            target_context.paint()
-#            
-#            
-#            
-#            # Convert to black and white and invert        
-#            img = ImageMath.eval("convert(img,'1')",img=img)
-#            img = ImageMath.eval("convert(img,'P')",img=img)
-#            img = img.point(lambda i: i >= 250,'1')
-#            img = img.point(lambda i: 1^i)
-#    
-#            # Covert image buffer to string
-#            buf = ""
-#            for x in list(img.getdata()): 
-#                buf += chr(x)
-#                
-#            if len(buf) != MAX_X * MAX_Y:
-#                print "Invalid buffer size"
-#            else:
-#                self.socket.sendall(buf)
+            size = self.get_size()
+            
+            # Paint to 565 image provided into an ARGB image surface for PIL's benefit. PIL doesn't support 565?
+            argb_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, size[0], size[1])
+            argb_context = cairo.Context(argb_surface)
+            argb_context.set_source_surface(img)
+            argb_context.paint()
+            
+            # Now convert the ARGB to a PIL image so it can be converted to a 1 bit monochrome image, with all
+            # colours dithered. It would be nice if Cairo could do this :( Any suggestions? 
+            pil_img = Image.frombuffer("RGBA", size, argb_surface.get_data(), "raw", "RGBA", 0, 1)
+            pil_img = ImageMath.eval("convert(pil_img,'1')",pil_img=pil_img)
+            pil_img = ImageMath.eval("convert(pil_img,'P')",pil_img=pil_img)
+            pil_img = pil_img.point(lambda i: i >= 250,'1')
+            
+            invert_control = self.get_control("invert-lcd")
+            if invert_control.value == 1:            
+                pil_img = pil_img.point(lambda i: 1^i)
+    
+            # Covert image buffer to string
+            buf = ""
+            for x in list(pil_img.getdata()): 
+                buf += chr(x)
+                
+            if len(buf) != MAX_X * MAX_Y:
+                print "Invalid buffer size"
+            else:
+                self.socket.sendall(buf)
         finally:
             self.lock.release()

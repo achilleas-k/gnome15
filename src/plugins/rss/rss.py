@@ -157,7 +157,7 @@ class G15FeedPage():
         self.attributes["entries"] = self.feed.entries
         if self.index > -1:
             self.attributes["selected"] = self.selected_entry
-            self.attributes["selected_idx"] = self.index        
+            self.attributes["selected_idx"] = self.index
         self.screen.redraw(self.page)
         
     def selection_changed(self):        
@@ -219,7 +219,7 @@ class G15RSS():
         return False
         
     def schedule_refresh(self):        
-        self.refresh_timer = g15util.schedule("FeedRefreshTimer", get_update_time(self.gconf_client, self.gconf_key), self.refresh)
+        self.refresh_timer = g15util.schedule("FeedRefreshTimer", get_update_time(self.gconf_client, self.gconf_key) * 60.0, self.refresh)
         
     def refresh(self):
         for page in self.pages:

@@ -27,6 +27,7 @@ keyboard
 
 import gnome15.g15_driver as g15driver
 import gnome15.g15_util as g15util
+from gnome15.g15_exceptions import NotConnectedException
 
 import array
 import socket
@@ -102,21 +103,23 @@ class EventReceive(Thread):
         self.running = True        
         try :
             while self.running:
-                keys = ord(self.socket.recv(1))
-                key_vals = []
-                for i in range(0, keys):
-                    val = KEY_MAP[struct.unpack("<L",self.socket.recv(4))[0]]
-                    key_vals.append(val)
-                if len(key_vals):
-                    self.callback(key_vals, g15driver.KEY_STATE_DOWN)
-                    
-                key_vals = []                    
-                keys = ord(self.socket.recv(1))
-                for i in range(0, keys):
-                    val = KEY_MAP[struct.unpack("<L",self.socket.recv(4))[0]]
-                    key_vals.append(val)
-                if len(key_vals):
-                    self.callback(key_vals, g15driver.KEY_STATE_UP)
+                received = self.socket.recv(1)
+                if received != "":
+                    keys = ord(received)
+                    key_vals = []
+                    for i in range(0, keys):
+                        val = KEY_MAP[struct.unpack("<L",self.socket.recv(4))[0]]
+                        key_vals.append(val)
+                    if len(key_vals):
+                        self.callback(key_vals, g15driver.KEY_STATE_DOWN)
+                        
+                    key_vals = []                    
+                    keys = ord(self.socket.recv(1))
+                    for i in range(0, keys):
+                        val = KEY_MAP[struct.unpack("<L",self.socket.recv(4))[0]]
+                        key_vals.append(val)
+                    if len(key_vals):
+                        self.callback(key_vals, g15driver.KEY_STATE_UP)
         except Exception as e:
             traceback.print_exc(file=sys.stderr)
             self.on_error(e)
@@ -197,15 +200,14 @@ class Driver(g15driver.AbstractDriver):
             self.update_control(control)
             
     def disconnect(self):
-        if not self.is_connected():
-            raise Execption("Already disconnected")
-        self.socket.close()
-        self.socket = None
         if self.thread != None:
             self.thread.running = False
-        self.thread = None
-        if self.on_close != None:
-            self.on_close()
+            self.thread = None
+        if self.is_connected():
+            self.socket.close()
+            self.socket = None
+            if self.on_close != None:
+                self.on_close()
         
     def reconnect(self):
         if self.is_connected():
@@ -264,15 +266,15 @@ class Driver(g15driver.AbstractDriver):
         self.lock.acquire()
         try :
             if not self.is_connected():
-                raise Exception("Not connected")
+                raise NotConnectedException()
             try :
                 self.socket.sendall(buf)
             finally:
                 self.lock.release()
-        except Exception as e:
+        except Exception:
             if self.is_connected():
                 self.disconnect()
-            raise e
+            raise
         
     def paint(self, img):    
         

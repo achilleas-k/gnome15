@@ -17,6 +17,8 @@ import gnome15.g15_driver as g15driver
 import gnome15.g15_util as g15util
 import gnome15.g15_globals as pglobals
 
+import gconf
+
 import gtk
 import gtk.gdk
 import gobject
@@ -36,10 +38,13 @@ class Driver(g15driver.AbstractDriver):
     
     def __init__(self, on_close = None):
         self.lights = 0
-        self.mode = g15driver.MODEL_G15_V1
-#        self.mode = g15driver.MODEL_G19
         self.callback = None
         self.on_close = None
+        self.conf_client = gconf.client_get_default()        
+        self.mode = self.conf_client.get_string("/apps/gnome15/gtk_mode")
+        if self.mode == None or self.mode == "":
+            self.mode = g15driver.MODEL_G19
+        print "GTK driver mode " + self.mode
         
         if self.mode == g15driver.MODEL_G15_V1 or self.mode == g15driver.MODEL_G15_V2 or self.mode == g15driver.MODEL_G13:
             self.controls = g15.controls
@@ -116,14 +121,10 @@ class Driver(g15driver.AbstractDriver):
         return ( size[0] * zoom, size[1] * zoom )
         
     def get_zoom(self):
-        if self.mode == g15driver.MODEL_G15_V1:
-            return 3
-        elif self.mode == g15driver.MODEL_G15_V2:
-            return 3
-        elif self.mode == g15driver.MODEL_G13:
-            return 3
+        if self.mode == g15driver.MODEL_G19:
+            return 1
         else:
-            return 2
+            return 3
         
     def connect(self):
         self.main_window.show_all()
@@ -170,21 +171,17 @@ class Driver(g15driver.AbstractDriver):
             invert_control = self.get_control("invert-lcd")
             if invert_control.value == 1:            
                 pil_img = pil_img.point(lambda i: 1^i)
+                
+            
             
             pil_img = pil_img.convert("RGB")
             gobject.timeout_add(0, self.draw_pixbuf, pil_img)           
         else:
             gobject.timeout_add(0, self.draw_surface, image)
             
-    def process_svg(self, document):
-        root = document.getroot()
-            
-        # Work around for Inkscape not working well with bitmap font names.  
+    def process_svg(self, document):  
         if self.get_bpp() == 1:
-            for element in root.iter():
-                style = element.get("style")
-                if style != None:
-                    element.set("style", style.replace("font-family:Sans","font-family:Fixed"))
+            g15.fix_sans_style(document.getroot())
         
     def draw_surface(self, image):
         # Finally paint the Cairo surface on the GTK widget

@@ -57,7 +57,6 @@ class G15Panel():
         if self.screen.driver.get_bpp() == 1:
             raise Exception("Panel not supported on low-res LCD")
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-        print "Theme bounds",self.theme.bounds
         self.screen.set_available_size((self.screen.width, self.screen.height - self.theme.bounds[3]))
         self.active = True
         self.chained_painter = self.screen.set_foreground_painter(self.paint)

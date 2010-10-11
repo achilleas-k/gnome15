@@ -135,7 +135,7 @@ Called by clients to create the configured driver
 def get_driver(conf_client, on_close = None, configure = False):
     driver = conf_client.get_string("/apps/gnome15/driver")
     if driver == None or driver == "" or configure:
-        driver = config_driver()
+        driver = config_driver(configure)
         if driver == None or driver == "":
             sys.exit()
     driver_mod = __import__("driver_" + driver)
@@ -146,8 +146,11 @@ def get_driver(conf_client, on_close = None, configure = False):
 '''
 Runs the setup dialog if the driver has not been set
 '''
-def config_driver():
-    return g15setup.G15Setup().run()
+def config_driver(configure=False):
+    heading = None
+    if configure:
+        heading = "Choose the keyboard driver you wish to use"
+    return g15setup.G15Setup(heading=heading).run()
 
 class Control():
     

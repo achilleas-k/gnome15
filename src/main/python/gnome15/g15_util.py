@@ -30,18 +30,65 @@ from threading import Timer
 import xdg.IconTheme as icons
 import xdg.Config as config
 from cStringIO import StringIO
+from jobqueue import JobQueue
 
+
+'''
+Task scheduler. Tasks may be added to the queue to execute
+after a specified interval. The timer is done by the gobject
+event loop, which then executes the job on a different thread
+'''
+scheduled_tasks = JobQueue(name="ScheduledTasks")
+class GTimer:    
+    def __init__(self, interval, function, *args):
+        self.source = gobject.timeout_add(int(interval * 1000), self.exec_item, function, *args)
+        
+    def exec_item(self, function, *args):
+        scheduled_tasks.run(function, *args)
+        
+    def cancel(self, *args):
+        gobject.source_remove(self.source)        
+
+def schedule(name, interval, function, *args):
+    timer = GTimer(interval, function, *args)
+    return timer
+
+'''
+General utilities
+'''
+def value_or_empty(d, key):
+    return value_or_default(d, key, [])
+
+def value_or_blank(d, key):
+    return value_or_default(d, key, "")
+
+def value_or_default(d, key, default_value):
+    try :
+        return d[key]
+    except KeyError:
+        return default_value
+
+''' 
+Date / time utilities
+''' 
+def total_seconds(time_delta):
+    return (time_delta.microseconds + (time_delta.seconds + time_delta.days * 24.0 * 3600.0) * 10.0**6.0) / 10.0**6.0
+
+'''
+Various conversions
+'''
 def rgb_to_hex(rgb):
     return '#%02x%02x%02x' % rgb
 
 def degrees_to_radians(degrees):
     return degrees * (math.pi / 180.0)
+
+'''
+Cairo utilities
+'''
     
 def rotate(context, degrees):
     context.rotate(degrees_to_radians(degrees));
-    
-def total_seconds(time_delta):
-    return (time_delta.microseconds + (time_delta.seconds + time_delta.days * 24.0 * 3600.0) * 10.0**6.0) / 10.0**6.0
     
 def rotate_around_center(context, width, height, degrees):    
     context.translate (height * 0.5, width * 0.5);
@@ -86,6 +133,10 @@ def load_surface_from_file(filename, size = None):
         gdk_context.paint()
         gdk_context.scale(1 / scale, 1 / scale)
         return surface, context
+    
+'''
+Icon utilities
+'''
 
 def get_icon_path(gconf_client, icon, size = None):
     icon_theme = gconf_client.get_string("/desktop/gnome/interface/icon_theme")
@@ -115,6 +166,10 @@ def get_icon(gconf_client, icon, size = None):
                 img = img.resize((img.size[0] * scale, img.size[1] * scale),Image.BILINEAR)
                 
         return img
+    
+'''
+Various maths
+'''
         
 def get_scale(target, actual):
     scale = 1.0
@@ -127,6 +182,10 @@ def get_scale(target, actual):
             sy = float(target[1]) / actual[1]
         scale = max(sx, sy)
     return scale
+
+'''
+SVG utilties
+'''
 
 def rotate_element(element, degrees):
     transforms = get_transforms(element)
@@ -274,19 +333,6 @@ def image_to_surface(img):
     arr = array.array('B',img.tostring())
     img_surface = cairo.ImageSurface.create_for_data(arr, cairo.FORMAT_ARGB32, img.size[0], img.size[1])
 
-
-class GTimer:
-    
-    def __init__(self, interval, function, *args):
-        self.source = gobject.timeout_add(interval * 1000, function, *args)
-        
-    def cancel(self):
-        gobject.source_remove(self.source)
-
-def schedule(name, interval, function, *args):
-    timer = GTimer(interval, function, *args)
-    return timer
-    
     
 #    timer = Timer(interval, function, args, kwargs)
 #    timer.name = name
@@ -302,15 +348,3 @@ def get_key_names(keys):
     for key in keys:
         key_names.append((key[:1].upper() + key[1:]).replace('-',' '))
     return key_names
-
-def value_or_empty(d, key):
-    return value_or_default(d, key, [])
-
-def value_or_blank(d, key):
-    return value_or_default(d, key, "")
-
-def value_or_default(d, key, default_value):
-    try :
-        return d[key]
-    except KeyError:
-        return default_value

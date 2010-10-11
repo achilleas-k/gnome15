@@ -1,4 +1,4 @@
-AC_INIT(gnome15, 0.0.3)
+AC_INIT(gnome15, 0.0.3-1)
 AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_applet.py])
 AM_INIT_AUTOMAKE
 
@@ -35,9 +35,30 @@ AX_PYTHON_MODULE(lxml, [])
 AS_IF([test "x${HAVE_PYMOD_LXML}" = "xno"],
      [AC_MSG_ERROR([Requires LXML bindings for Python])])
      
-AX_PYTHON_MODULE(cairo, [])
-AS_IF([test "x${HAVE_PYMOD_CAIRO}" = "xno"],
-     [AC_MSG_ERROR([Requires Cairo bindings for Python])])
+AX_PYTHON_MODULE(gobject, [])
+AS_IF([test "x${HAVE_PYMOD_GOBJECT}" = "xno"],
+     [AC_MSG_ERROR([Requires GObject for Python])])
+     
+AX_PYTHON_MODULE(rsvg, [])
+AS_IF([test "x${HAVE_PYMOD_RSVG}" = "xno"],
+     [AC_MSG_ERROR([Requires RSVG for Python])])
+
+AX_PYTHON_MODULE(pango, [])
+AS_IF([test "x${HAVE_PYMOD_PANGO}" = "xno"],
+     [AC_MSG_ERROR([Requires Pango for Python])])
+     
+AX_PYTHON_MODULE(gnomeapplet, [])
+AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xno"],
+     [AC_MSG_ERROR([Requires GNOME bindings for Python (part of PyGTK)])])
+     
+AX_PYTHON_MODULE(xdg, [])
+AS_IF([test "x${HAVE_PYMOD_XDG}" = "xno"],
+     [AC_MSG_ERROR([Requires PyXDG - Python Freedesktop Library])])     
+     
+AX_PYTHON_MODULE(Xlib, [])
+AS_IF([test "x${HAVE_PYMOD_XLIB}" = "xno"],
+     [AC_MSG_ERROR([Requires Python Xlib - Python Xlib bindings])])
+     
      
 dnl Dependencies for plugins
  

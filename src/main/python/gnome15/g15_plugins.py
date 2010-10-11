@@ -27,20 +27,26 @@ import g15_globals as pglobals
 import gconf
 import gtk
 import traceback
+            
+def list_plugin_dirs(path):
+    plugindirs = []
+    if os.path.exists(path):
+        for dir in os.listdir(path):
+            plugin_path = os.path.join(path, dir)
+            if os.path.isdir(plugin_path):
+                plugindirs.append(plugin_path)
+    else:
+        print "WARNING: Plugin path %s does not exist." % path
+    return plugindirs
 
-pluginpath = pglobals.plugin_dir
-plugindirs = [fname for fname in os.listdir(pluginpath) ]
 imported_plugins = []
-for plugindir in plugindirs:
-    if os.path.isdir(os.path.join(pluginpath, plugindir)):
-        plugindir_path = os.path.join(pluginpath, plugindir)
-        pluginfiles = [fname[:-3] for fname in os.listdir(plugindir_path) if fname == plugindir + ".py"]
-        if not plugindir_path in sys.path:
-            sys.path.insert(0, plugindir_path)
-        for mod in ([__import__(fname) for fname in pluginfiles]):
-            imported_plugins.append(mod)
-            
-            
+for plugindir in list_plugin_dirs(pglobals.plugin_dir) + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")):
+    plugin_name = os.path.basename(plugindir)
+    pluginfiles = [fname[:-3] for fname in os.listdir(plugindir) if fname == plugin_name + ".py"]
+    if not plugindir in sys.path:
+        sys.path.insert(0, plugindir)
+    for mod in ([__import__(fname) for fname in pluginfiles]):
+        imported_plugins.append(mod)
         
 def get_module_for_id(id):
     for mod in imported_plugins:

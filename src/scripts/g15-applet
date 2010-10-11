@@ -40,19 +40,29 @@ if os.path.exists(path):
 import gnome15.g15_applet as g15applet
 import gnome15.g15_globals as pglobals
 
+print "In applet script"
+
 # bonobo factory of pycentrinoApplets
 def g15_applet_factory(applet, iid, parent_window=None, configure = False):
+    print "Creating new applet",applet,iid,parent_window,configure
     applet.set_background_widget(applet)
     app = g15applet.G15Applet(applet,iid,parent_window, configure = configure)
     if parent_window != None:
         parent_window.connect("delete-event", shutdown, app)
+    else:
+        app.applet.connect("delete-event", stop, app)
 	return True
     
-def shutdown(window, evt, applet):
+def stop(window, evt, applet):
+    print "Stopping applet"
     if applet.plugins.get_active():
         applet.plugins.deactivate()
     if applet.plugins.get_started():
         applet.plugins.destroy()
+    
+def shutdown(window, evt, applet):
+    print "Shutting down runtime"
+    stop()
     gtk.main_quit()
     
 # run it in a gtk window

@@ -138,10 +138,17 @@ class G15NotifyLCD(dbus.service.Object):
             bus_name = dbus.service.BusName(IF_NAME, bus=bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
         except NameExistsException:
             # Already running
-            print "Killing previous notification daemon"            
-            process = subprocess.Popen(['killall','notify-osd'])
-            process.wait()
-            bus_name = dbus.service.BusName(IF_NAME, bus=bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
+            print "Killing previous notification daemon"
+            
+            for i in range(0, 6):
+                try :            
+                    process = subprocess.Popen(['killall','notify-osd'])
+                    process.wait()
+                    bus_name = dbus.service.BusName(IF_NAME, bus=bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
+                except NameExistsException:
+                    time.sleep(1.0)
+                    if i == 2:
+                        raise
         
         try :
             dbus.service.Object.__init__(self, bus_name, BUS_NAME)

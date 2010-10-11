@@ -63,16 +63,14 @@ def show_preferences(parent, gconf_client, gconf_key):
     
     display_seconds = widget_tree.get_object("DisplaySecondsCheckbox")
     display_seconds.set_active(gconf_client.get_bool(gconf_key + "/display_seconds"))
-    seconds_h = display_seconds.connect("toggled", changed, gconf_key + "/display_seconds", gconf_client)
+    display_seconds.connect("toggled", changed, gconf_key + "/display_seconds", gconf_client)
     
     display_date = widget_tree.get_object("DisplayDateCheckbox")
     display_date.set_active(gconf_client.get_bool(gconf_key + "/display_date"))
-    date_h = display_date.connect("toggled", changed, gconf_key + "/display_date", gconf_client)
+    display_date.connect("toggled", changed, gconf_key + "/display_date", gconf_client)
     
     dialog.run()
     dialog.hide()
-    display_seconds.disconnect(seconds_h)
-    display_date.disconnect(date_h)
 
 def changed(widget, key, gconf_client):
     '''
@@ -113,7 +111,7 @@ class G15Clock():
         
         '''
         Most plugins will usually want to draw on the screen. To do so, a 'page' is created. We also supply a callback here to
-        perform the redraw. You can also supply 'on_shown' and 'on_hidden' callbacks here to be notified when your
+        perform the painting. You can also supply 'on_shown' and 'on_hidden' callbacks here to be notified when your
         page actually gets shown and hidden
         '''        
         self.page = self.screen.new_page(self.paint, id="Clock")

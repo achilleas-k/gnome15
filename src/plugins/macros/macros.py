@@ -134,6 +134,12 @@ class G15Macro():
         self.notify_handle_2 = self.gconf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed);
         self.reload_theme()        
         self.check_pages()
+
+    def deactivate(self):
+        for macro_page in self.macro_pages:
+            self.screen.del_page(macro_page.page)
+        self.macro_pages = []
+                
         
     def get_active_profile_icon_path(self):
         if self.active_profile == None:
