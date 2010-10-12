@@ -274,7 +274,7 @@ class G15Screen():
             return
             
         # Everything is painted on top of white background
-        surface =  cairo.ImageSurface (4, self.width, self.height)
+        surface =  cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
         canvas = cairo.Context (surface)
         canvas.set_antialias(self.applet.driver.get_antialias())
         rgb = self.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))

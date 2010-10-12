@@ -276,7 +276,7 @@ class Driver(g15driver.AbstractDriver):
                 self.disconnect()
             raise
         
-    def paint(self, img):    
+    def paint(self, img):  
         
         now = time.time()
         
@@ -285,27 +285,51 @@ class Driver(g15driver.AbstractDriver):
         
         # Create a new flipped, rotated image. The G19 expects the image to scan vertically, but
         # the cairo image surface will be horizontal. Rotating then flipping the image is the
-        # quickest way to convert this
-        back_surface = cairo.ImageSurface (g15driver.CAIRO_IMAGE_FORMAT, height, width)
-        back_context = cairo.Context (back_surface)
+        # quickest way to convert this. 16 bit color (5-6-5) is also required. Unfortunately this format
+        # was disabled for a long time, as was only re-enabled in version 1.8.6.
+        img_format = 4 
+        try:
+            back_surface = cairo.ImageSurface (4, height, width)
+        except:
+            # Earlier version of Cairo
+            back_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, height, width)
         
+        back_context = cairo.Context (back_surface)        
         g15util.rotate_around_center(back_context, width, height, 270)
         g15util.flip_horizontal(back_context, width, height)
         back_context.set_source_surface(img, 0, 0)
         back_context.set_operator (cairo.OPERATOR_SOURCE);
         back_context.paint()
-                    
-        # Create the 16bit surface (g19 expects 5-6-5)
-        target_surface = cairo.ImageSurface (4, height, width)
-        target_context = cairo.Context (target_surface)
-        target_context.set_operator(cairo.OPERATOR_OVER)
-        target_context.set_source_surface(back_surface, 0.0, 0.0)
-        target_context.paint()
         
-        buf = target_surface.get_data()        
+        if back_surface.get_format() == cairo.FORMAT_ARGB32:
+            file_str = StringIO()
+            data = back_surface.get_data()
+            for i in range(0, len(data), 4):
+                r = ord(data[i + 2])
+                g = ord(data[i + 1])
+                b = ord(data[i + 0])
+                file_str.write(self.rgb_to_uint16(r, g, b))                
+            buf = file_str.getvalue()
+        else:   
+            buf = str(back_surface.get_data())     
+            
                   
         expected_size = MAX_X * MAX_Y * ( self.get_bpp() / 8 )
         if len(buf) != expected_size:
             print "WARNING: Invalid buffer size, expected",expected_size,"got",len(buf)
         else:
             self.write_out("I" + str(buf))
+            
+    def rgb_to_uint16(self, r, g, b):
+        rBits = r * 32 / 255
+        gBits = g * 64 / 255
+        bBits = b * 32 / 255
+
+        rBits = rBits if rBits <= 31 else 31
+        gBits = gBits if gBits <= 63 else 63
+        bBits = bBits if bBits <= 31 else 31        
+
+        valueH = (rBits << 3) | (gBits >> 3)
+        valueL = (gBits << 5) | bBits
+
+        return chr(valueL & 0xff) + chr(valueH & 0xff)

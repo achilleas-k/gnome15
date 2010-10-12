@@ -1,4 +1,4 @@
-AC_INIT(gnome15, 0.0.3-1)
+AC_INIT(gnome15, 0.0.4)
 AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_applet.py])
 AM_INIT_AUTOMAKE
 
@@ -73,6 +73,10 @@ AS_IF([test "x${HAVE_PYMOD_VOBJECT}" = "xno"],
 AX_PYTHON_MODULE(feedparser, [])
 AS_IF([test "x${HAVE_PYMOD_FEEDPARSER}" = "xno"],
      [AC_MSG_ERROR([Requires Universal Feed Parser for Python])])
+
+AX_PYTHON_MODULE(evolution, [])
+AS_IF([test "x${HAVE_PYMOD_EVOLUTION}" = "xno"],
+     [AC_MSG_ERROR([Requires Evolution Bindings for Python])])
 
      
 PKG_CHECK_MODULES(PYGTK, pygtk-2.0)

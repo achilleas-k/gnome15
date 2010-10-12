@@ -132,6 +132,7 @@ class G15CairoClock():
         
     def load_surfaces(self):
         
+        self.svg_size = None
         self.width = self.screen.width
         self.height = self.screen.height
         
@@ -152,7 +153,12 @@ class G15CairoClock():
             path = self.clock_theme_dir + "/" + i + ".svg"
             if os.path.exists(path):  
                 svg = rsvg.Handle(path)   
-                svg_size = svg.get_dimension_data()[2:4]      
+                if self.svg_size == None:
+                    self.svg_size = svg.get_dimension_data()[2:4]
+                    print "Will use SVG canvas size of",self.svg_size
+                    
+                svg_size = self.svg_size
+                     
                 sx = self.width / svg_size[0]
                 sy = self.height / svg_size[1]
                 scale = min(sx, sy)                      
@@ -237,12 +243,12 @@ class G15CairoClock():
             date_text = datetime.datetime.now().strftime("%d/%m")
             drawing_context.select_font_face("Liberation Sans",
                         cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-            drawing_context.set_font_size(32.0)
+            drawing_context.set_font_size(27.0)
             x_bearing, y_bearing, text_width, text_height = drawing_context.text_extents(date_text)[:4]
             rgb = self.screen.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
             drawing_context.set_source_rgb(rgb[0],rgb[1],rgb[2])            
             tx = ( ( clock_width - text_width ) / 2 ) - x_bearing
-            ty = clock_height * 0.64
+            ty = clock_height * 0.665
             drawing_context.move_to( tx, ty )
 
             drawing_context.show_text(date_text)
@@ -253,9 +259,9 @@ class G15CairoClock():
         m_deg = now.minute * 6 + ( now.second * ( 6.0 / 60.0 ) )
         
         if self.gconf_client.get_bool(self.gconf_key + "/twenty_four_hour"):
-            h_deg = now.hour * 15.0 + ( now.minute * ( 15.0 / 60.0 ) )
+            h_deg = float(now.hour) * 15.0 + (  float ( now.minute * 0.25 ) )
         else:
-            h_deg = ( now.hour % 12 ) * 30.0 + (  + ( now.minute * ( 7.5 / 60.0 ) ) )
+            h_deg = float( now.hour % 12 ) * 30.0 + (  float ( now.minute * 0.5 ) )
             
         self.draw_hand(drawing_context, self.hour_surfaces, clock_width, clock_height, h_deg)
         self.draw_hand(drawing_context, self.minute_surfaces, clock_width, clock_height, m_deg)
