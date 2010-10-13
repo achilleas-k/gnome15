@@ -35,11 +35,11 @@ import array
 
 class Driver(g15driver.AbstractDriver):
 
-    
     def __init__(self, on_close = None):
+        g15driver.AbstractDriver.__init__(self, "gtk")
         self.lights = 0
         self.callback = None
-        self.on_close = None
+        self.on_close = on_close
         self.conf_client = gconf.client_get_default()        
         self.mode = self.conf_client.get_string("/apps/gnome15/gtk_mode")
         if self.mode == None or self.mode == "":
@@ -59,6 +59,7 @@ class Driver(g15driver.AbstractDriver):
             self.key_layout = g19.key_layout
         
         self.area = gtk.Image()
+        self.hboxes = []
         
         zoomed_size = self.get_zoomed_size()
          
@@ -67,7 +68,6 @@ class Driver(g15driver.AbstractDriver):
 
         vbox = gtk.VBox ()            
         vbox.add(self.area)
-        
         
         for row in self.get_key_layout():
             hbox = gtk.HBox()
@@ -83,6 +83,7 @@ class Driver(g15driver.AbstractDriver):
         self.main_window.set_icon_from_file(pglobals.image_dir + "/g15key.png")
         self.main_window.add(vbox)
         self.main_window.connect("delete-event", self.window_closed)
+        self.hboxes.append(self.main_window)
         
     def get_antialias(self):        
         if self.mode == g15driver.MODEL_G15_V1 or self.mode == g15driver.MODEL_G15_V2 or self.mode == g15driver.MODEL_G13: 
@@ -92,13 +93,17 @@ class Driver(g15driver.AbstractDriver):
         
     def disconnect(self):
         self.main_window.hide()
+        if self.on_close != None:
+            self.on_close()
         
     def is_connected(self):
         return self.main_window.get_visible()
         
-    def window_closed(window, evt):
+    def window_closed(self, window, evt):
+        print "Window closed"
         if self.on_close != None:
-            self.on_close()
+            print "Not retrying"
+            self.on_close(retry=False)
     
     def get_model_names(self):
         return [ g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G13, g15driver.MODEL_G19 ]
@@ -128,6 +133,14 @@ class Driver(g15driver.AbstractDriver):
         
     def connect(self):
         self.main_window.show_all()
+        control = self.get_control_for_hint(g15driver.HINT_DIMMABLE)        
+        if isinstance(control.value, int):
+            v = ( 65535 / control.upper ) * control.value
+            for hbox in self.hboxes:
+                hbox.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(v, v, v))
+        else:
+            for hbox in self.hboxes:
+                hbox.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(control.value[0] << 8, control.value[1] << 8, control.value[2] << 8))
     
     def get_name(self):
         return "Gtk"
@@ -186,11 +199,12 @@ class Driver(g15driver.AbstractDriver):
     def draw_surface(self, image):
         # Finally paint the Cairo surface on the GTK widget
         zoom = self.get_zoom()
-        context = self.area.window.cairo_create()        
-        context.set_antialias(self.get_antialias())
-        context.scale(zoom, zoom)
-        context.set_source_surface(image)
-        context.paint()
+        if self.area != None and self.area.window != None:
+            context = self.area.window.cairo_create()        
+            context.set_antialias(self.get_antialias())
+            context.scale(zoom, zoom)
+            context.set_source_surface(image)
+            context.paint()
             
     def draw_pixbuf(self, image):
         size = self.get_size()
@@ -201,17 +215,15 @@ class Driver(g15driver.AbstractDriver):
         pixbuf = pixbuf.scale_simple(zoom * width, zoom * height, 0)
         self.area.set_from_pixbuf(pixbuf)
         
-    def update_control(self, control):
-        if not self.mode == g15driver.MODEL_G19:
-            pass
-        else:
-            pass
-#            hex_col = "#" + hex(control.value)[2:].zfill(6)
-#            map = self.main_window.get_colormap()
-#            colour = map.alloc_color(hex_col)
-#            style = self.main_window.get_style().copy()
-#            style.bg[gtk.STATE_NORMAL] = colour
-#            self.main_window.set_style(style)
+    def update_control(self, control):     
+        if control == self.get_control_for_hint(g15driver.HINT_DIMMABLE):
+            if isinstance(control.value, int):
+                v = ( 65535 / control.upper ) * control.value
+                for hbox in self.hboxes:
+                    hbox.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(v, v, v))
+            else:
+                for hbox in self.hboxes:
+                    hbox.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(control.value[0] << 8, control.value[1] << 8, control.value[2] << 8))
 
     
     def set_mkey_lights(self, lights):

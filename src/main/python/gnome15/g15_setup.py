@@ -63,16 +63,20 @@ class G15Setup:
     def run(self):
         self.id = None                
         response = self.main_window.run()
-        self.main_window.hide()
-        if response == 1:
-            driver = "gtk"
-            for d in [ "gtk", "g19", "g15" ]:
-                if self.widget_tree.get_object(d).get_active():
-                    driver = d
-                    
-            self.conf_client.set_string("/apps/gnome15/driver", driver)        
-            self.conf_client.set_string("/apps/gnome15/gtk_mode", self.mode_model[self.mode_combo.get_active()][0])
-                    
-            return driver
+        while gtk.events_pending():
+            gtk.main_iteration(False)
+        try :
+            if response == 1:
+                driver = "gtk"
+                for d in [ "gtk", "g19", "g15" ]:
+                    if self.widget_tree.get_object(d).get_active():
+                        driver = d
+                        
+                self.conf_client.set_string("/apps/gnome15/driver", driver)        
+                self.conf_client.set_string("/apps/gnome15/gtk_mode", self.mode_model[self.mode_combo.get_active()][0])
+                        
+                return driver
+        finally:            
+            self.main_window.destroy()
         
         

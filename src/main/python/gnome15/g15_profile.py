@@ -70,6 +70,8 @@ def get_active_profile():
     val= conf_client.get("/apps/gnome15/active_profile")
     if val != None:
         return get_profile(val.get_int())
+    else:
+        return get_default_profile()
       
 def get_default_profile():
     return get_profile(0)
@@ -98,9 +100,9 @@ class G15Macro:
         
     def delete(self):        
         conf_client.recursive_unset(self.key_dir)
-        key_list = conf_client.get_list(profle.profile_dir + "/key_list_str_" + str(memory), gconf.VALUE_STRING)
+        key_list = conf_client.get_list(self.profile.profile_dir + "/key_list_str_" + str(self.memory), gconf.VALUE_STRING)
         key_list.remove(self.key_list_key)
-        conf_client.set_list(profle.profile_dir + "/key_list_str_" + str(memory), gconf.VALUE_STRING, key_list)
+        conf_client.set_list(self.profile.profile_dir + "/key_list_str_" + str(self.memory), gconf.VALUE_STRING, key_list)
  
 class G15Profile():
     

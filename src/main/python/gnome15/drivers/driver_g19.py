@@ -103,23 +103,26 @@ class EventReceive(Thread):
         self.running = True        
         try :
             while self.running:
-                received = self.socket.recv(1)
-                if received != "":
-                    keys = ord(received)
-                    key_vals = []
-                    for i in range(0, keys):
-                        val = KEY_MAP[struct.unpack("<L",self.socket.recv(4))[0]]
-                        key_vals.append(val)
-                    if len(key_vals):
-                        self.callback(key_vals, g15driver.KEY_STATE_DOWN)
-                        
-                    key_vals = []                    
-                    keys = ord(self.socket.recv(1))
-                    for i in range(0, keys):
-                        val = KEY_MAP[struct.unpack("<L",self.socket.recv(4))[0]]
-                        key_vals.append(val)
-                    if len(key_vals):
-                        self.callback(key_vals, g15driver.KEY_STATE_UP)
+                try :
+                    received = self.socket.recv(1)
+                    if received != "":
+                        keys = ord(received)
+                        key_vals = []
+                        for i in range(0, keys):
+                            val = KEY_MAP[struct.unpack("<L",self.socket.recv(4))[0]]
+                            key_vals.append(val)
+                        if len(key_vals):
+                            self.callback(key_vals, g15driver.KEY_STATE_DOWN)
+                            
+                        key_vals = []                    
+                        keys = ord(self.socket.recv(1))
+                        for i in range(0, keys):
+                            val = KEY_MAP[struct.unpack("<L",self.socket.recv(4))[0]]
+                            key_vals.append(val)
+                        if len(key_vals):
+                            self.callback(key_vals, g15driver.KEY_STATE_UP)
+                except socket.timeout:
+                    pass
         except Exception as e:
             traceback.print_exc(file=sys.stderr)
             self.on_error(e)
@@ -127,7 +130,7 @@ class EventReceive(Thread):
             
 # Controls
 keyboard_backlight_control = g15driver.Control("backlight-colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-lcd_brightness_control = g15driver.Control("lcd-brightness", "LCD Brightness", 0, 0, 100, hint = g15driver.HINT_SHADEABLE)
+lcd_brightness_control = g15driver.Control("lcd-brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
 foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND)
 background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
 controls = [ keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control]
@@ -151,6 +154,7 @@ key_layout = [
 class Driver(g15driver.AbstractDriver):
 
     def __init__(self, host = 'localhost', port= 15551, on_close = None):
+        g15driver.AbstractDriver.__init__(self, "g19")
         self.init_string="GBUF"
         self.remote_host=host
         self.socket = None
@@ -160,7 +164,7 @@ class Driver(g15driver.AbstractDriver):
         self.thread = None
     
     def get_antialias(self):
-        return cairo.ANTIALIAS_DEFAULT
+        return cairo.ANTIALIAS_SUBPIXEL
         
     def get_size(self):
         return (MAX_X, MAX_Y)
@@ -178,11 +182,10 @@ class Driver(g15driver.AbstractDriver):
         pass
     
     def update_control(self, control):
-        if control == keyboard_backlight_control: 
-            val = ( control.value[0], control.value[1], control.value[2] )
-            self.write_out("B" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
-        elif control == lcd_brightness_control:
-            self.write_out("L" + chr(control.value) );
+        try :
+            self.do_update_control(control)
+        finally:
+            self.lock.release()
     
     def get_model_names(self):
         return [ g15driver.MODEL_G19 ]
@@ -190,16 +193,16 @@ class Driver(g15driver.AbstractDriver):
     def get_model_name(self):
         return g15driver.MODEL_G19
         
-    def connect(self):
+    def connect(self):          
         if self.is_connected():
             raise Exception("Already connected")
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((self.remote_host, self.remote_port))
-        self.socket = s
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.settimeout(4.0)
+        self.socket.connect((self.remote_host, self.remote_port))
         for control in self.get_controls():
-            self.update_control(control)
+            self.do_update_control(control)
             
-    def disconnect(self):
+    def disconnect(self):       
         if self.thread != None:
             self.thread.running = False
             self.thread = None
@@ -217,7 +220,7 @@ class Driver(g15driver.AbstractDriver):
     def __del__(self):
         self.socket.close()
 
-    def set_mkey_lights(self, lights):
+    def set_mkey_lights(self, lights):       
         val = 0
         if lights & g15driver.MKEY_LIGHT_1 != 0:
             val += 0x80
@@ -237,28 +240,11 @@ class Driver(g15driver.AbstractDriver):
             self.thread = EventReceive(self.socket, callback, self.on_receive_error)
             self.thread.start()
         else:
+            self.thread.socket = socket
+            self.thread.on_error = self.on_receive_error
             self.thread.callback = callback
         self.write_out("GK")
         
-        
-    def rgb_to_uint16(self, r, g, b):
-        '''Converts a RGB value to 16bit highcolor (5-6-5).
-
-        @return 16bit highcolor value in little-endian.
-
-        '''
-        rBits = r * 32 / 255
-        gBits = g * 64 / 255
-        bBits = b * 32 / 255
-
-        rBits = rBits if rBits <= 0b00011111 else 0b00011111
-        gBits = gBits if gBits <= 0b00111111 else 0b00111111
-        bBits = bBits if bBits <= 0b00011111 else 0b00011111
-
-        valueH = (rBits << 3) | (gBits >> 3)
-        valueL = ( (gBits << 5) | bBits ) & 0xff
-        return ( valueL, valueH )
-    
     def is_connected(self):
         return self.socket != None
     
@@ -276,8 +262,10 @@ class Driver(g15driver.AbstractDriver):
                 self.disconnect()
             raise
         
-    def paint(self, img):  
-        
+    def paint(self, img):     
+        if not self.is_connected():
+            return
+                
         now = time.time()
         
         width = img.get_width()
@@ -333,3 +321,11 @@ class Driver(g15driver.AbstractDriver):
         valueL = (gBits << 5) | bBits
 
         return chr(valueL & 0xff) + chr(valueH & 0xff)
+    
+            
+    def do_update_control(self, control):
+        if control == keyboard_backlight_control: 
+            val = ( control.value[0], control.value[1], control.value[2] )
+            self.write_out("B" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
+        elif control == lcd_brightness_control:
+            self.write_out("L" + chr(control.value) );

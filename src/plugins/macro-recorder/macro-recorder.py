@@ -152,14 +152,21 @@ class G15MacroRecorder():
         
         properties = {}
         properties["icon"] = g15util.get_icon_path(self.gconf_client, self.icon, self.screen.height)
-        properties["profile"] = active_profile.name
-        properties["profile_icon"] = active_profile.icon
-        properties["memory"] = "M%d" % self.screen.get_mkey()
         
-        if self.message == None:
-            properties["message"] = "Recording on M%s. Type in your macro then press the G-Key to assign it to, or MR to cancel." % self.screen.get_mkey()
+        properties["memory"] = "M%d" % self.screen.get_mkey()
+            
+        if active_profile != None:
+            properties["profile"] = active_profile.name
+            properties["profile_icon"] = active_profile.icon
+            
+            if self.message == None:
+                properties["message"] = "Recording on M%s. Type in your macro then press the G-Key to assign it to, or MR to cancel." % self.screen.get_mkey()
+            else:
+                properties["message"] = self.message
         else:
-            properties["message"] = self.message
+            properties["profile"] = "No Profile"
+            properties["profile_icon"] = ""
+            properties["message"] = "You have no profiles configured. Configure one now using the Macro tool"
             
         self.theme.draw(canvas, properties)  
         

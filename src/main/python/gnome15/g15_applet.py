@@ -108,7 +108,7 @@ class G15Splash():
 
 class G15Applet(gnomeapplet.Applet):
     
-    def __init__(self, applet, iid, parent_window=None, configure = False):
+    def __init__(self, applet, iid, parent_window=None):
         self.__gobject_init__()
         
         self.parent_window = parent_window
@@ -120,6 +120,7 @@ class G15Applet(gnomeapplet.Applet):
         self.verbs = [ ( "Props", self.properties ), ( "Macros", self.macros ), ( "About", self.about_info ) ]
         self.cycle_timer = None
         self.shutting_down = False
+        self.conf_client = gconf.client_get_default()
         self.propxml="""
         <popup name="button3">
         <menuitem name="Item 1" verb="Props" label="_Preferences..." pixtype="stock" pixname="gtk-properties"/>
@@ -156,22 +157,11 @@ class G15Applet(gnomeapplet.Applet):
         self.size_changed() 
         self.box.add(self.image)
         
-        # Monitor gconf and configure keyboard based on values
-        self.conf_client = gconf.client_get_default()
-        self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
-        self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.check_cycle);
-        self.conf_client.notify_add("/apps/gnome15/active_profile", self.active_profile_changed);
-        self.conf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed);
-        self.conf_client.notify_add("/apps/gnome15/driver", self.driver_changed);
         
         # update info from filesystem
         gobject.timeout_add(self.timeout_interval,self.timeout_callback, self)
         
-        self.driver = g15driver.get_driver(self.conf_client, on_close = self.on_driver_close, configure = configure)
-        
-        # Listen for gconf events for the drivers controls
-        for control in self.driver.get_controls():
-            self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed);
+        self.driver = g15driver.get_driver(self.conf_client, on_close = self.on_driver_close)
         
         # Connect some events   
         self.applet.connect("button-press-event",self.button_clicked)
@@ -192,6 +182,17 @@ class G15Applet(gnomeapplet.Applet):
 
         # Start the driver
         self.attempt_connection() 
+        
+        # Monitor gconf and configure keyboard based on values
+        self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
+        self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.check_cycle);
+        self.conf_client.notify_add("/apps/gnome15/active_profile", self.active_profile_changed);
+        self.conf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed);
+        self.conf_client.notify_add("/apps/gnome15/driver", self.driver_changed);
+        
+        # Listen for gconf events for the drivers controls
+        for control in self.driver.get_controls():
+            self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed);
 
     def attempt_connection(self, delay = 0.0):
         if self.driver.is_connected():
@@ -203,11 +204,12 @@ class G15Applet(gnomeapplet.Applet):
             return
                         
         try :
-            self.driver.connect()    
-            self.splash = G15Splash(self.screen)   
+            self.driver.connect()     
+            self.screen.init()  
+            self.splash = G15Splash(self.screen)
             self.screen.set_mkey(1)
             self.activate_profile()            
-            g15util.schedule("ActivatePlugins", 0, self.complete_loading)
+            g15util.schedule("ActivatePlugins", 0.1, self.complete_loading)
         except Exception as e:
             if self.process_exception(e):
                 raise
@@ -239,12 +241,17 @@ class G15Applet(gnomeapplet.Applet):
         self.applet_icon = "g15key-error.png"
         self.size_changed()
 
-    def on_driver_close(self):
+    def on_driver_close(self, retry=True):
         if not self.shutting_down:
+            print "Driver closed"
             self.error()
             self.plugins.deactivate()
-            self.check_cycle()
-            self.attempt_connection(delay = 5.0)
+            if retry:
+                self.check_cycle()
+                self.driver = g15driver.get_driver(self.conf_client, on_close = self.on_driver_close)            
+                self.attempt_connection(delay = 5.0)
+            else:                
+                gtk.main_quit()
         
     def __del__(self):
         if self.plugins.get_active():
@@ -279,7 +286,7 @@ class G15Applet(gnomeapplet.Applet):
     def resched_cycle(self):        
         if self.cycle_timer != None:
             self.cycle_timer.cancel()
-        self.schedule_cycle()
+        self.check_cycle()
         
     def applet_scroll(self, widget, event):
         direction = event.direction
@@ -348,8 +355,15 @@ class G15Applet(gnomeapplet.Applet):
         self.image.set_from_pixbuf(pixbuf)
         
     def driver_changed(self, client, connection_id, entry, args):
-        if self.driver.is_connected():
-            self.driver.disconnect()
+        if self.driver == None or self.driver.id != entry.value.get_string():
+            print "Driver changed."        
+            if self.driver.is_connected() :
+                print "Disconnecting old driver."
+                self.driver.disconnect()
+            else:
+                print "Reconnecting new  driver."        
+                self.driver = g15driver.get_driver(self.conf_client, on_close = self.on_driver_close)
+                self.attempt_connection(0.0)
         
     def profiles_changed(self, client, connection_id, entry, args):
         pass

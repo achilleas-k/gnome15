@@ -59,14 +59,14 @@
      inkscape:pageshadow="2"
      inkscape:zoom="10.783378"
      inkscape:cx="1.106444"
-     inkscape:cy="-14.609792"
+     inkscape:cy="-13.496968"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1265"
      inkscape:window-height="824"
-     inkscape:window-x="2608"
+     inkscape:window-x="2565"
      inkscape:window-y="176"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -90,7 +90,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -114,7 +114,7 @@
        width="12"
        height="5"
        x="7"
-       y="815.875"
+       y="816"
        ry="0"
        title="del !event" />
     <text
@@ -122,9 +122,9 @@
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
        x="13.107143"
        y="820.05359"
-       id="text3814"
        sodipodi:linespacing="125%"
-       title="del event"><tspan
+       title="del event"
+       id="text3814"><tspan
          sodipodi:role="line"
          id="tspan3816"
          x="13.107143"

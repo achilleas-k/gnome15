@@ -212,6 +212,7 @@ class G15Cal():
         properties["cal_short_month_name"] = calendar_date.strftime("%b")
         properties["cal_year"] = calendar_date.strftime("%Y")
         properties["cal_short_year"] = calendar_date.strftime("%y")
+        properties["cal_locale_date"] = calendar_date.strftime("%x")
         
         if not str(calendar_date.day) in self.event_days:
             properties["message"] = "No events"

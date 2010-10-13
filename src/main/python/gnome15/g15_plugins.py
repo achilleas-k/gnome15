@@ -21,11 +21,9 @@
 #        +-----------------------------------------------------------------------------+
  
 import os.path
-import imp
 import sys
 import g15_globals as pglobals
 import gconf
-import gtk
 import traceback
             
 def list_plugin_dirs(path):
@@ -39,9 +37,16 @@ def list_plugin_dirs(path):
         print "WARNING: Plugin path %s does not exist." % path
     return plugindirs
 
+def get_extra_plugin_dirs():
+    plugindirs = []
+    if "G15_PLUGINS" in os.environ:
+        plugindirs += os.environ["G15_PLUGINS"].split(":")
+    return plugindirs
+
 imported_plugins = []
-for plugindir in list_plugin_dirs(pglobals.plugin_dir) + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")):
+for plugindir in list_plugin_dirs(pglobals.plugin_dir) + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + get_extra_plugin_dirs():
     plugin_name = os.path.basename(plugindir)
+    print plugindir,plugin_name
     pluginfiles = [fname[:-3] for fname in os.listdir(plugindir) if fname == plugin_name + ".py"]
     if not plugindir in sys.path:
         sys.path.insert(0, plugindir)
@@ -162,7 +167,8 @@ class G15Plugins():
     
     def deactivate(self):
         self.mgr_active = False
-        print "Deactivating",self.activated
+        print "Deactivating",self.activated           
+        traceback.print_exc(file=sys.stderr)
         for plugin in list(self.activated):
             module = self.plugin_map[plugin]
             print "    ",module.id

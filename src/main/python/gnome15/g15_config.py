@@ -18,6 +18,7 @@ import sys
 import os
 import g15_globals as pglobals
 import g15_profile as g15profile
+import g15_setup as g15setup
 import gconf
 import g15_plugins as g15plugins
 import g15_driver as g15driver
@@ -49,6 +50,7 @@ class G15Config:
         self.cycle_seconds_widget = self.widget_tree.get_object("CycleSeconds")
         self.plugin_model = self.widget_tree.get_object("PluginModel")
         self.plugin_tree = self.widget_tree.get_object("PluginTree")
+        self.driver_button = self.widget_tree.get_object("DriverButton")
         self.plugin_enabled_renderer = self.widget_tree.get_object("PluginEnabledRenderer")
         
         # Window 
@@ -73,6 +75,7 @@ class G15Config:
         self.plugin_tree.connect("cursor-changed", self.select_plugin)
         self.plugin_enabled_renderer.connect("toggled", self.toggle_plugin)
         self.widget_tree.get_object("PreferencesButton").connect("clicked", self.show_preferences)
+        self.widget_tree.get_object("DriverButton").connect("clicked", self.show_setup)
         
         # Driver. We only need this to get the controls. Perhaps they should be moved out of the driver
         # class and the values stored separately
@@ -170,6 +173,10 @@ class G15Config:
         else:
             self.conf_client.set_int("/apps/gnome15/" + control.id, int(widget.get_value()))
         
+    def show_setup(self, widget):        
+        setup = g15setup.G15Setup()
+        driver_name = setup.run()
+    
     def show_preferences(self, widget):
         plugin = self.get_selected_plugin()
         plugin.show_preferences(self.main_window, self.conf_client, self.plugin_key + "/" + plugin.id)

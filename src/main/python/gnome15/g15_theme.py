@@ -317,9 +317,10 @@ class G15Theme:
             pango_context = pangocairo.CairoContext(canvas)
             pango_context.set_antialias(self.screen.driver.get_antialias()) 
             fo = cairo.FontOptions()
-            fo.set_antialias(cairo.ANTIALIAS_NONE)
-            fo.set_hint_style(cairo.HINT_STYLE_NONE)
-            fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
+            fo.set_antialias(self.screen.driver.get_antialias())
+            if self.screen.driver.get_antialias() == cairo.ANTIALIAS_NONE:
+                fo.set_hint_style(cairo.HINT_STYLE_NONE)
+                fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
             
             for text_box in text_boxes:
                 

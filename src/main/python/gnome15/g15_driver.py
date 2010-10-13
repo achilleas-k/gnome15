@@ -132,25 +132,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "drivers"))
 '''
 Called by clients to create the configured driver
 '''
-def get_driver(conf_client, on_close = None, configure = False):
+def get_driver(conf_client, on_close = None):
     driver = conf_client.get_string("/apps/gnome15/driver")
-    if driver == None or driver == "" or configure:
-        driver = config_driver(configure)
-        if driver == None or driver == "":
-            sys.exit()
+    print "Using driver",driver
     driver_mod = __import__("driver_" + driver)
     driver = driver_mod.Driver(on_close = on_close)
     driver.set_controls_from_configuration(conf_client)
     return driver
-
-'''
-Runs the setup dialog if the driver has not been set
-'''
-def config_driver(configure=False):
-    heading = None
-    if configure:
-        heading = "Choose the keyboard driver you wish to use"
-    return g15setup.G15Setup(heading=heading).run()
 
 class Control():
     
@@ -163,6 +151,9 @@ class Control():
         self.value = value
         
 class AbstractDriver(object):
+    
+    def __init__(self, id):
+        self.id = id
     
     """
     Start the driver

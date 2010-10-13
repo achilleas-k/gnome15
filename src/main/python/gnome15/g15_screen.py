@@ -41,7 +41,7 @@ class G15Page():
         self.time = time
         self.value = self.priority * self.time
         self.painter = painter
-        self.cairo = cairo
+        self.cairo = cairo 
         
     def set_priority(self, priority):
         self.priority = priority
@@ -60,6 +60,15 @@ class G15Screen():
         self.applet = applet
         
         # The screen may take a little space for its own purposes
+        self.init()
+        
+        # Draw the splash for when no other pages are visible
+        self.jobqueue = jobqueue.JobQueue(name="ScreenRedrawQueue")
+           
+        self.redraw()   
+        
+    def init(self):
+        self.driver = self.applet.driver
         self.width = self.applet.driver.get_size()[0]
         self.height = self.applet.driver.get_size()[1]
         self.size = ( self.width, self.height )
@@ -73,15 +82,10 @@ class G15Screen():
         self.background_painter_function = None
         self.foreground_painter_function = None
         self.painter_function = None
-        self.driver = applet.driver
         self.timer = None
         self.mkey = 1
         self.reverting = { }
         
-        # Draw the splash for when no other pages are visible
-        self.jobqueue = jobqueue.JobQueue(name="ScreenRedrawQueue")
-           
-        self.redraw()   
         
     def set_available_size(self, size):
         self.available_size = size

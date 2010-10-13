@@ -27,6 +27,7 @@ import gtk
 import gobject
 import gnomeapplet
 import os
+import gconf
 
 # Tell GTK we are using threads
 #gtk.gdk.threads_init()
@@ -39,14 +40,15 @@ if os.path.exists(path):
 
 import gnome15.g15_applet as g15applet
 import gnome15.g15_globals as pglobals
+import gnome15.g15_setup as g15setup
 
 print "In applet script"
 
 # bonobo factory of pycentrinoApplets
-def g15_applet_factory(applet, iid, parent_window=None, configure = False):
-    print "Creating new applet",applet,iid,parent_window,configure
+def g15_applet_factory(applet, iid, parent_window=None):
+    print "Creating new applet",applet,iid,parent_window
     applet.set_background_widget(applet)
-    app = g15applet.G15Applet(applet,iid,parent_window, configure = configure)
+    app = g15applet.G15Applet(applet,iid,parent_window)
     if parent_window != None:
         parent_window.connect("delete-event", shutdown, app)
     else:
@@ -62,22 +64,29 @@ def stop(window, evt, applet):
     
 def shutdown(window, evt, applet):
     print "Shutting down runtime"
-    stop()
+    stop(window, evt, applet)
     gtk.main_quit()
+   
+    
+conf_client = gconf.client_get_default()
+driver_name = conf_client.get_string("/apps/gnome15/driver")
+if driver_name == "" or "-c" in sys.argv:
+    setup = g15setup.G15Setup()
+    driver_name = setup.run()
     
 # run it in a gtk window
-if len(sys.argv) > 1 and "-w" in sys.argv:
-    configure = "-c" in sys.argv
-    main_window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-    main_window.set_title("Gnome15") 
-    main_window.set_icon_from_file(pglobals.image_dir + "/g15key.png")
-    app = gnomeapplet.Applet()
-    g15_applet_factory(app, None, parent_window=main_window, configure = configure)
-    app.reparent(main_window)
-    main_window.show_all()
-    gtk.main()
-else:
-    if __name__ == '__main__':
-        gnomeapplet.bonobo_factory("OAFIID:GNOME_G15Applet_Factory",
-                                    g15applet.G15Applet.__gtype__, 
-                                    "gnome15", "0", g15_applet_factory)
+if driver_name != "":
+    if len(sys.argv) > 1 and "-w" in sys.argv:
+        main_window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        main_window.set_title("Gnome15") 
+        main_window.set_icon_from_file(pglobals.image_dir + "/g15key.png")
+        app = gnomeapplet.Applet()
+        g15_applet_factory(app, None, parent_window=main_window)
+        app.reparent(main_window)
+        main_window.show_all()
+        gtk.main()
+    else:
+        if __name__ == '__main__':
+            gnomeapplet.bonobo_factory("OAFIID:GNOME_G15Applet_Factory",
+                                        g15applet.G15Applet.__gtype__, 
+                                        "gnome15", "0", g15_applet_factory)

@@ -32,6 +32,109 @@ import xdg.Config as config
 from cStringIO import StringIO
 from jobqueue import JobQueue
 
+'''
+GConf stuff
+'''
+
+def configure_colorchooser_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, default_alpha = None):
+    widget = widget_tree.get_object(widget_id)
+    if widget == None:
+        raise Exception("No widget with id %s." % widget_id)
+    val = gconf_client.get_string(gconf_key)
+    if val == None or val == "":
+        col  = to_color(default_value)
+    else:   
+        col = to_color(to_rgb(val))
+    if default_alpha != None:
+        alpha = gconf_client.get_int(gconf_key + "_opacity")
+        widget.set_use_alpha(True)
+        widget.set_alpha(alpha << 8)
+    else:
+        widget.set_use_alpha(False)
+    widget.set_color(col)
+    widget.connect("color-set", color_changed, gconf_client, gconf_key)
+    
+def to_cairo_rgba(gconf_client, key, default):
+    str_val = gconf_client.get_string(key)
+    if str_val == None or str_val == "":
+        val = default
+    else:
+        v = to_rgb(str_val)
+        alpha = gconf_client.get_int(key + "_opacity")
+        val = ( v[0], v[1],v[2], alpha)
+    return (float(val[0]) / 255.0, float(val[1]) / 255.0, float(val[2]) / 255.0, float(val[3]) / 255.0)
+    
+def color_changed(widget, gconf_client, key):
+    val = widget.get_color()
+    gconf_client.set_string(key, "%d,%d,%d" % ( val.red >> 8, val.green >> 8, val.blue >> 8 ))
+    if widget.get_use_alpha():
+        gconf_client.set_int(key + "_opacity", widget.get_alpha() >> 8)
+        
+def to_rgb(string_rgb):
+    rgb = string_rgb.split(",")
+    return (int(rgb[0]), int(rgb[1]), int(rgb[2]))
+        
+def to_color(rgb):
+    return gtk.gdk.Color(rgb[0] <<8, rgb[1] <<8,rgb[2] <<8)
+    
+def spinner_changed(widget, gconf_client, key, model, decimal = False):
+    if decimal:
+        gconf_client.set_float(key, widget.get_value())
+    else:
+        gconf_client.set_int(key, widget.get_value())
+        
+def configure_spinner_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, decimal = False):
+    widget = widget_tree.get_object(widget_id)
+    if widget == None:
+        raise Exception("No widget with id %s." % widget_id)
+    model = widget.get_adjustment()
+    entry = gconf_client.get(gconf_key)
+    val = default_value
+    if entry != None:
+        if decimal:
+            val = entry.get_float()
+        else:
+            val = entry.get_int()
+    model.set_value(val)
+    widget.connect("value-changed", spinner_changed, gconf_client, gconf_key, model)
+    
+def spinner_changed(widget, gconf_client, key, model, decimal = False):
+    if decimal:
+        gconf_client.set_float(key, widget.get_value())
+    else:
+        gconf_client.set_int(key, widget.get_value())
+
+def configure_combo_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree):
+    widget = widget_tree.get_object(widget_id)
+    if widget == None:
+        raise Exception("No widget with id %s." % widget_id)
+    model = widget.get_model()
+    widget.connect("changed", combo_box_changed, gconf_client, gconf_key, model)
+    val = gconf_client.get_string(gconf_key)
+    if val == None or val == "":
+        val = default_value
+    idx = 0
+    for row in model:
+        if row[0] == val:
+            widget.set_active(idx)
+        idx += 1
+    
+def combo_box_changed(widget, gconf_client, key, model):
+    gconf_client.set_string(key, model[widget.get_active()][0])
+        
+def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree):
+    widget = widget_tree.get_object(widget_id)
+    entry = gconf_client.get(gconf_key)
+    if entry != None:
+        widget.set_active(entry.get_bool())
+    else:
+        widget.set_active(default_value)
+    widget.connect("toggled", checkbox_changed, gconf_key, gconf_client)
+    
+def checkbox_changed(widget, key, gconf_client):
+    gconf_client.set_bool(key, widget.get_active())
+    
+    
 
 '''
 Task scheduler. Tasks may be added to the queue to execute
@@ -126,7 +229,7 @@ def load_surface_from_file(filename, size = None):
         scale = get_scale(size, (x, y))        
         surface = cairo.ImageSurface(0, int(x * scale), int(y * scale))
         context = cairo.Context(surface)
-        gdk_context = gtk.gdk.CairoContext(context)
+        gdk_context = gtk.gdk.CairoContext(context) 
         if size != None:
             gdk_context.scale(scale, scale)
         gdk_context.set_source_pixbuf(pixbuf,0,0)

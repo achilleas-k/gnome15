@@ -26,7 +26,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
      inkscape:cx="81.213828"
-     inkscape:cy="29.948309"
+     inkscape:cy="32.091166"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -83,7 +83,7 @@
          sodipodi:role="line"
          id="tspan2991"
          x="33.964287"
-         y="1024.8264">${locale_date}</tspan></text>
+         y="1024.8264">${cal_locale_date}</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.99999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:0.99999993, 0.99999993;stroke-dashoffset:0"
        d="m 0,1027.6479 68.749992,0.1786"

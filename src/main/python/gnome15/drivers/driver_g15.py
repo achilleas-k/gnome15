@@ -104,27 +104,31 @@ class EventReceive(Thread):
     def run(self):
         self.running = True
         while self.running:
-            val = struct.unpack("<L",self.socket.recv(4))[0]            
-            self.callback(self.convert_from_g15daemon_code(val), g15driver.KEY_STATE_DOWN)
-            while True:
-                # The next 4 bytes should be zero?
-                val_2 = struct.unpack("<L",self.socket.recv(4))[0]
-                if val_2 != 0:
-                    print "WARNING: Expected zero keyboard event"
+            try :
+                val = struct.unpack("<L",self.socket.recv(4))[0]            
+                self.callback(self.convert_from_g15daemon_code(val), g15driver.KEY_STATE_DOWN)
+                while True:
+                    # The next 4 bytes should be zero?
+                    val_2 = struct.unpack("<L",self.socket.recv(4))[0]
+                    if val_2 != 0:
+                        print "WARNING: Expected zero keyboard event"
+                    
+                    # If the next 4 bytes are zero, then this is a normal key press / release, if not, a second key was pressed before the first was release
+                    received = self.socket.recv(4)              
+                    val_3 = struct.unpack("<L",received)[0]
+                    if val_3 == 0:
+                        break
+                    val = val_3                        
+                    self.callback(self.convert_from_g15daemon_code(val), g15driver.KEY_STATE_UP)
                 
-                # If the next 4 bytes are zero, then this is a normal key press / release, if not, a second key was pressed before the first was release
-                received = self.socket.recv(4)              
-                val_3 = struct.unpack("<L",received)[0]
-                if val_3 == 0:
-                    break
-                val = val_3                        
-                self.callback(self.convert_from_g15daemon_code(val), g15driver.KEY_STATE_UP)
-            
-            # Final value should be zero, indicating key release             
-            val_4 = struct.unpack("<L",self.socket.recv(4))[0]
-            if val_4 != 0:
-                print "WARNING: Expected zero keyboard event"
-            self.callback(self.convert_from_g15daemon_code(val), g15driver.KEY_STATE_UP) 
+                # Final value should be zero, indicating key release             
+                val_4 = struct.unpack("<L",self.socket.recv(4))[0]
+                if val_4 != 0:
+                    print "WARNING: Expected zero keyboard event"
+                self.callback(self.convert_from_g15daemon_code(val), g15driver.KEY_STATE_UP) 
+            except socket.timeout:
+                # Timeout, allow another pass
+                pass
             
     def convert_from_g15daemon_code(self, code):
         keys = []
@@ -169,6 +173,7 @@ g13_key_layout = [
 class Driver(g15driver.AbstractDriver):
 
     def __init__(self, host = 'localhost', port= 15550, on_close = None):
+        g15driver.AbstractDriver.__init__(self, "g15")
         self.init_string="GBUF"
         self.remote_host=host
         self.lock = Lock()
@@ -211,8 +216,9 @@ class Driver(g15driver.AbstractDriver):
         pass
         
     def disconnect(self):
+        print "Disconnecting G15"
         if not self.is_connected():
-            raise Execption("Already disconnected")
+            raise Exception("Already disconnected")
         self.socket.close()
         self.socket = None
         if self.thread != None:
@@ -231,13 +237,13 @@ class Driver(g15driver.AbstractDriver):
         
     def connect(self):
         if self.is_connected():
-            raise Execption("Already connected")
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((self.remote_host, self.remote_port))
-        if s.recv(16) != "G15 daemon HELLO":
+            raise Exception("Already connected")
+        self.socket  = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.settimeout(5.0)
+        self.socket.connect((self.remote_host, self.remote_port))
+        if self.socket.recv(16) != "G15 daemon HELLO":
             raise Exception("Communication error with server")
-        s.send(self.init_string)
-        self.socket = s
+        self.socket.send(self.init_string)
         
     def set_mkey_lights(self, lights):
         self.socket.send(chr(CLIENT_CMD_MKEY_LIGHTS  + lights),socket.MSG_OOB)
@@ -253,7 +259,10 @@ class Driver(g15driver.AbstractDriver):
     def process_svg(self, document):  
         fix_sans_style(document.getroot())
         
-    def paint(self, img):     
+    def paint(self, img):
+        if not self.is_connected():
+            return
+             
         self.lock.acquire()
         try :           
             size = self.get_size()
@@ -272,7 +281,7 @@ class Driver(g15driver.AbstractDriver):
             pil_img = pil_img.point(lambda i: i >= 250,'1')
             
             invert_control = self.get_control("invert-lcd")
-            if invert_control.value == 1:            
+            if invert_control.value == 0:            
                 pil_img = pil_img.point(lambda i: 1^i)
     
             # Covert image buffer to string
