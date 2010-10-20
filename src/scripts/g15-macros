@@ -28,21 +28,14 @@ path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..","main", 
 if os.path.exists(path):
     sys.path.insert(0, path)
 
-import gnome15.g15_macros
+import gnome15.g15_macros as g15macros
 import gnome15.g15_globals as pglobals
 
 if __name__ == '__main__':
 
     import optparse
     parser = optparse.OptionParser()
-    parser.add_option("-l", "--local", action="store_true", dest="runlocal",
-        default=False, help="Run from current directory.")
     (options, args) = parser.parse_args()
-
-    if options.runlocal:
-        pglobals.image_dir =  os.path.join(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), ".."), "images")
-        pglobals.bin_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
-        pglobals.glade_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
    
-    a = gnome15.g15_macros.G15Macros()
+    a = g15macros.G15Macros()
     a.run()

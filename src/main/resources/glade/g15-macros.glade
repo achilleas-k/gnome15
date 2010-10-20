@@ -10,12 +10,6 @@
       <column type="gchararray"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="WindowModel">
-    <columns>
-      <!-- column-name WindowName -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="PluginModel">
     <columns>
       <!-- column-name PluginEnabled -->
@@ -53,6 +47,14 @@
         <col id="3">False</col>
       </row>
     </data>
+  </object>
+  <object class="GtkListStore" id="WindowModel">
+    <columns>
+      <!-- column-name WindowName -->
+      <column type="gchararray"/>
+      <!-- column-name WindowPath -->
+      <column type="gchararray"/>
+    </columns>
   </object>
   <object class="GtkDialog" id="MainWindow">
     <property name="width_request">560</property>

@@ -23,6 +23,7 @@
 import gnome15.g15_screen as g15screen 
 import gnome15.g15_util as g15util
 import gnome15.g15_theme as g15theme
+import gnome15.g15_driver as g15driver
 import datetime
 from threading import Timer
 import cairo
@@ -50,7 +51,6 @@ class G15Panel():
         self.screen = screen
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
-        self.panel_applets = []
         self.active = False
     
     def activate(self):    
@@ -61,8 +61,6 @@ class G15Panel():
         self.active = True
         self.chained_painter = self.screen.set_foreground_painter(self.paint)
         self.screen.redraw()
-        for panel_applet in self.panel_applets:
-            panel_applet.panel_changed()
             
     def is_active(self):
         return self.active
@@ -72,8 +70,6 @@ class G15Panel():
         self.screen.set_foreground_painter(self.chained_painter)
         self.screen.set_available_size((self.screen.width, self.screen.height + self.theme.bounds[3]))
         self.screen.redraw()
-        for panel_applet in self.panel_applets:
-            panel_applet.panel_changed()
         
     def destroy(self):
         pass
@@ -85,15 +81,26 @@ class G15Panel():
     def paint(self, canvas):
         panel_height = self.theme.bounds[3]
         canvas.save()        
+        
+        canvas.set_source_rgb(*self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 )))
         canvas.translate(0, self.screen.height - panel_height)
-        self.theme.draw(canvas, {})
-        
+        self.theme.draw(canvas, {})        
+            
         gap = panel_height / 10.0
+        widget_size = panel_height - ( gap * 2 )
         
-        for panel_applet in self.panel_applets:
-            canvas.translate(gap, gap)
-            panel_applet.draw_panel_applet(canvas, panel_height - ( gap * 2 ), True)
-            canvas.translate(-gap, -gap)
+        for page in self.screen.pages:
+            if page != self.screen.get_visible_page() and page.panel_painter != None:
+                canvas.translate(gap, gap)
+                canvas.save()         
+                canvas.set_source_rgb(*self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 )))
+                taken_up = page.panel_painter(canvas, widget_size, True)
+                canvas.restore()        
+                if taken_up != None:
+                    canvas.translate(taken_up, 0)
+                    canvas.translate(0, -gap)
+                else:
+                    canvas.translate(-gap, -gap)
             
         canvas.restore()        
         

@@ -30,8 +30,10 @@ import pangocairo
 import g15_driver as g15driver
 import g15_util as g15util
 import xml.sax.saxutils as saxutils
+import base64
 from string import Template
 from copy import deepcopy
+from cStringIO import StringIO
 
 from lxml import etree
 
@@ -160,6 +162,8 @@ class G15Theme:
         return buf
             
     def draw(self, canvas, properties = {}, attributes = {}):
+        # TODO tidy this lot up
+        
         properties = dict(properties)
         document = deepcopy(self.document)
         processing_result = None
@@ -179,12 +183,18 @@ class G15Theme:
         root = document.getroot()
             
         # Remove all elements that are dependent on properties having non blank values
-        for element in root.iter():
+        for element in root.xpath('//svg:*[@title]',namespaces=self.nsmap):
             title = element.get("title")
-            if title != None and title.startswith("del "):
-                arg = title[4:]
-                if ( arg.startswith("!") and ( not arg[1:] in properties or properties[arg[1:]] == "" ) ) or ( not arg.startswith("!") and arg in properties and properties[arg] != ""):
-                    element.getparent().remove(element)
+            if title != None:
+                args = title.split(" ")
+                if args[0] == "del":
+                    var = args[1]
+                    set = True
+                    if var.startswith("!"):
+                        var = var[1:]
+                        set = False
+                    if ( set and var in properties and properties[var] != "") or ( not set and ( not var in properties or properties[var] == "" ) ):
+                        element.getparent().remove(element)
             
                   
         # Set any progress bars (always measure in percentage). Progress bars have
@@ -199,6 +209,19 @@ class G15Theme:
                 element.set("width", str((bounds[2] / 100.0) * value))
             else:
                 print "WARNING: Found progress element with an ID that doesn't end in _progress"
+                
+        # Populate any embedded images
+         
+        for element in root.xpath('//svg:image[@class=\'embedded_image\']',namespaces=self.nsmap):
+            id = element.get("title")
+            if id != None and id in properties:
+                file_str = StringIO()
+                file_str.write("data:image/png;base64,")
+                img_data = StringIO()
+                properties[id].write_to_png(img_data)
+                file_str.write(base64.b64encode(img_data.getvalue()))
+                element.set("{http://www.w3.org/1999/xlink}href", file_str.getvalue())
+                
                 
         # Shadow is a special text effect useful on the G15. It will take 8 copies of a text element, make
         # them the same color as the background, and render them under the original text element at x-1/y-1,
@@ -289,7 +312,7 @@ class G15Theme:
             val = fg_c.value
             fg_h = "#%02x%02x%02x" % ( val[0],val[1],val[2] )
             if root_style != None:
-                root_styles = self.parse_css(text_node.get("style"))
+                root_styles = self.parse_css(root_style)
             else:
                 root_styles = { }
             root_styles["fill"] = fg_h
@@ -351,7 +374,7 @@ class G15Theme:
                 if foreground != None and foreground != "none":
                     buf += " foreground=\"%s\"" % foreground
                     
-                buf += ">%s</span>" % text_box.text
+                buf += ">%s</span>" % saxutils.escape(text_box.text)
                 
                 attr_list = pango.parse_markup(buf)
                 
@@ -376,7 +399,7 @@ class G15Theme:
                     layout.set_alignment(pango.ALIGN_LEFT)
                 
                 # Draw text to canvas
-                rgb = self.screen.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))                
+                rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))                
                 canvas.set_source_rgb(rgb[0], rgb[1], rgb[2])
                 pango_context.save()
                 pango_context.rectangle(text_box.bounds[0], text_box.bounds[1], text_box.bounds[2] * 2, text_box.bounds[3])

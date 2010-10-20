@@ -38,7 +38,7 @@ import Image
 import sys
 import traceback
 from threading import Thread
-from threading import Lock
+from threading import RLock
 import struct
 import base64
 from cStringIO import StringIO
@@ -159,7 +159,7 @@ class Driver(g15driver.AbstractDriver):
         self.remote_host=host
         self.socket = None
         self.on_close = on_close
-        self.lock = Lock()
+        self.lock = RLock()
         self.remote_port=port
         self.thread = None
     
@@ -182,6 +182,7 @@ class Driver(g15driver.AbstractDriver):
         pass
     
     def update_control(self, control):
+        self.lock.acquire()
         try :
             self.do_update_control(control)
         finally:
@@ -253,14 +254,13 @@ class Driver(g15driver.AbstractDriver):
         try :
             if not self.is_connected():
                 raise NotConnectedException()
-            try :
-                self.socket.sendall(buf)
-            finally:
-                self.lock.release()
+            self.socket.sendall(buf)
         except Exception:
             if self.is_connected():
                 self.disconnect()
             raise
+        finally:
+            self.lock.release()
         
     def paint(self, img):     
         if not self.is_connected():

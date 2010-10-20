@@ -56,8 +56,10 @@ def create(gconf_key, gconf_client, screen):
 
 class AbstractMPRISPlayer():
     
-    def __init__(self, gconf_client, screen, players, interface_name, session_bus):
+    def __init__(self, gconf_client, screen, players, interface_name, session_bus, title):
+        self.lock = Lock()
         self.hidden = True
+        self.title = title
         self.session_bus = session_bus
         self.page = None
         self.screen = screen
@@ -67,10 +69,7 @@ class AbstractMPRISPlayer():
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
         self.status = "Stopped"
         self.status_check_timer = None
-        self.lock = Lock()
-        
-        # Start checking the status
-        self.check_status()
+        self.cover_image = None
         
     def check_status(self):        
         try :
@@ -111,30 +110,12 @@ class AbstractMPRISPlayer():
     
     def show_page(self):
         self.load_song_details()
-        self.page = self.screen.new_page(self.paint, on_shown=self.on_shown, on_hidden=self.on_hidden, id="Rhythmbox", use_cairo=True)
-            
-        try:
-            import panel
-            panel.panel_applets.append(self)
-        except:
-            pass
+        self.page = self.screen.new_page(self.paint, on_shown=self.on_shown, on_hidden=self.on_hidden, id="MPRIS", panel_painter = self.paint_thumbnail, thumbnail_painter = self.paint_thumbnail)
+        self.page.set_title(self.title)
         self.screen.redraw(self.page)
         
-    def draw_panel_applet(self, canvas, space, horizontal):
-        if self.page != None:
-            if self.cover_file != None:
-                image, context = g15util.load_surface_from_file(self.cover_file, (space, space))
-                canvas.set_source_surface(image)
-                canvas.paint()
-                canvas.translate(space, 0)
-    
     def hide_page(self):
         self.screen.del_page(self.page)        
-        try:
-            import panel
-            panel.panel_applets.remove(self)
-        except:
-            pass
         
     def on_shown(self):
         self.hidden = False
@@ -149,12 +130,19 @@ class AbstractMPRISPlayer():
             self.theme.draw(canvas, properties) 
         finally:
             self.lock.release()
+    
+    def paint_thumbnail(self, canvas, allocated_size, horizontal):
+        total_width = 0
+        if self.page != None:
+            if self.cover_image != None:
+                size = g15util.paint_thumbnail_image(allocated_size, self.cover_image, canvas)
+                return size
             
     def process_properties(self):
         self.recalc_progress()
         # Find the best icon for the media
         
-        if "art_uti" in self.song_properties and self.song_properties["art_uri"] != "":
+        if "art_uri" in self.song_properties and self.song_properties["art_uri"] != "":
             self.cover_uri = self.song_properties["art_uri"]
         else:   
             cover_art = os.path.expanduser("~/.cache/rhythmbox/covers/" + self.song_properties["artist"] + " - " + self.song_properties["album"] + ".jpg")
@@ -167,10 +155,11 @@ class AbstractMPRISPlayer():
                 if mime_type != None:
                     mime_icon = icons.getIconPath(str(mime_type).replace("/","-"), theme=icon_theme, size=self.screen.height)
                     if mime_icon != None:                    
-                        self.cover_file = mime_icon                    
-                if self.cover_file == None:                      
-                    self.cover_file = icons.getIconPath("audio-player", theme=icon_theme, size=self.screen.height)
-            self.cover_uri = "file://" + urllib.pathname2url(self.cover_file)
+                        self.cover_uri = mime_icon                    
+                if self.cover_uri == None:                      
+                    self.cover_uri = icons.getIconPath("audio-player", theme=icon_theme, size=self.screen.height)
+            self.cover_uri = "file://" + urllib.pathname2url(self.cover_uri)
+        self.cover_image,ctx = g15util.load_surface_from_file(self.cover_uri)
                   
         # Track status
         if self.status == "Stopped":
@@ -208,7 +197,7 @@ class AbstractMPRISPlayer():
         self.song_properties["vol_icon"] = g15util.get_icon_path(self.gconf_client, vol_icon, self.screen.height)
         
         # For the bars on the G15 (the icon is too small, bars are better)
-        for i in range(0, ( self.volume / 10 ) + 1, 1):            
+        for i in range(0, int( self.volume / 10 ) + 1, 1):            
             self.song_properties["bar" + str(i)] = True
             
             
@@ -230,12 +219,16 @@ class AbstractMPRISPlayer():
 class MPRIS1Player(AbstractMPRISPlayer):
     
     def __init__(self, gconf_client, screen, players, interface_name, session_bus):
-        player_obj = session_bus.get_object(interface_name, '/Player')          
-        self.player = dbus.Interface(player_obj, 'org.freedesktop.MediaPlayer')
+        root_obj = session_bus.get_object(interface_name, '/')                    
+        root = dbus.Interface(root_obj, 'org.freedesktop.MediaPlayer')
+        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, interface_name, session_bus, root.Identity())
         
-        session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange") 
+        player_obj = session_bus.get_object(interface_name, '/Player')
+        self.player = dbus.Interface(player_obj, 'org.freedesktop.MediaPlayer')        
+        session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
-        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, interface_name, session_bus)
+        # Start checking the status
+        self.check_status()
         
     def on_stop(self):
         self.session_bus.remove_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
@@ -298,12 +291,18 @@ class MPRIS2Player(AbstractMPRISPlayer):
         # Connect to DBUS        
         player_obj = session_bus.get_object(interface_name, '/org/mpris/MediaPlayer2')     
         self.player = dbus.Interface(player_obj, 'org.mpris.MediaPlayer2.Player')                   
-        self.player_properties = dbus.Interface(player_obj, 'org.freedesktop.DBus.Properties') 
+        self.player_properties = dbus.Interface(player_obj, 'org.freedesktop.DBus.Properties')
+        props = self.player_properties.GetAll("org.mpris.MediaPlayer2")
+        
+        # Configure the initial state 
+        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, interface_name, session_bus, props["Identity"] if "Identity" in props else "MPRIS2")
+        
         session_bus.add_signal_receiver(self.properties_changed_handler, dbus_interface = "org.freedesktop.DBus.Properties", signal_name = "PropertiesChanged") 
         session_bus.add_signal_receiver(self.seeked, dbus_interface = "org.mpris.MediaPlayer2.Player", signal_name = "Seeked")
         
-        # Configure the initial state 
-        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, interface_name, session_bus)
+        # Start checking the status
+        self.check_status()
+        
         
     def on_stop(self): 
         self.session_bus.remove_signal_receiver(self.properties_changed_handler, dbus_interface = "org.freedesktop.DBus.Properties", signal_name = "PropertiesChanged") 
@@ -356,7 +355,10 @@ class MPRIS2Player(AbstractMPRISPlayer):
             self.lock.release()
             
     def get_progress(self):
-        self.elapsed = self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Position") / 1000 / 1000                     
+        if self.status == "Playing":
+            self.elapsed = self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Position") / 1000 / 1000
+        else:
+            self.elapsed = 0.0                     
         self.volume = self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Volume") * 100
     
             

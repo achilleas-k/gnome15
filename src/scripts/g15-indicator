@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+ 
+#        +-----------------------------------------------------------------------------+
+#        | GPL                                                                         |
+#        +-----------------------------------------------------------------------------+
+#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        |                                                                             |
+#        | This program is free software; you can redistribute it and/or               |
+#        | modify it under the terms of the GNU General Public License                 |
+#        | as published by the Free Software Foundation; either version 2              |
+#        | of the License, or (at your option) any later version.                      |
+#        |                                                                             |
+#        | This program is distributed in the hope that it will be useful,             |
+#        | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+#        | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+#        | GNU General Public License for more details.                                |
+#        |                                                                             |
+#        | You should have received a copy of the GNU General Public License           |
+#        | along with this program; if not, write to the Free Software                 |
+#        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+#        +-----------------------------------------------------------------------------+
+
+import sys
+import pygtk
+pygtk.require('2.0')
+import gtk
+import os
+import gconf
+import gobject
+
+# Tell GTK we are using threads
+#gtk.gdk.threads_init()
+gobject.threads_init()
+
+# Allow running from local path
+path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..","main", "python")
+if os.path.exists(path):
+    sys.path.insert(0, path)
+
+import gnome15.g15_indicator as g15indicator
+import gnome15.g15_globals as pglobals
+import gnome15.g15_setup as g15setup
+import gnome15.g15_util as g15util
+import appindicator
+    
+conf_client = gconf.client_get_default()
+driver_name = conf_client.get_string("/apps/gnome15/driver")
+if driver_name == "" or "-c" in sys.argv:
+    setup = g15setup.G15Setup()
+    driver_name = setup.run()
+    
+# run it in a gtk window
+if driver_name != "":
+    if __name__ == "__main__":
+        try :
+            import setproctitle
+            setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
+        except:
+            # Not a big issue
+            pass
+        g15indicator.G15Indicator()                        
+        gtk.main()

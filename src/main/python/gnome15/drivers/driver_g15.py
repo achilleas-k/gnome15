@@ -198,13 +198,13 @@ class Driver(g15driver.AbstractDriver):
         return g15v1_key_layout
     
     def update_control(self, control):
-        level = control.value
-        if level > 2:
-            level = 2
-        elif level < 0:
-            level = 0
-        self.socket.send(chr(CLIENT_CMD_KB_BACKLIGHT  + level),socket.MSG_OOB)
-        pass
+        if control == backlight_control: 
+            level = control.value
+            if level > 2:
+                level = 2
+            elif level < 0:
+                level = 0
+            self.socket.send(chr(CLIENT_CMD_KB_BACKLIGHT  + level),socket.MSG_OOB)
     
     def get_model_names(self):
         return [ g15driver.MODEL_G15_V1 ]
@@ -216,7 +216,6 @@ class Driver(g15driver.AbstractDriver):
         pass
         
     def disconnect(self):
-        print "Disconnecting G15"
         if not self.is_connected():
             raise Exception("Already disconnected")
         self.socket.close()

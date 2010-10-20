@@ -213,7 +213,7 @@ class G15VideoPlayer():
         self.frame_index = 1
         self.frame_wait = 0.04
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-        self.page = self.screen.new_page(self.paint, id="Video Player", on_hidden=self.on_hidden, on_shown=self.on_shown, use_cairo=True)
+        self.page = self.screen.new_page(self.paint, id="Video Player", on_hidden=self.on_hidden, on_shown=self.on_shown)
         self.screen.redraw(self.page)
     
     def deactivate(self):

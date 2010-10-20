@@ -1,6 +1,6 @@
 AC_INIT(gnome15, 0.0.5)
 AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_applet.py])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([tar-ustar])
 
 dnl AM_CONFIG_HEADER(config.h)
 
@@ -13,7 +13,39 @@ dnl AC_PROG_INTLTOOL([0.21])
 dnl check for python
 AM_PATH_PYTHON
 
+dnl AC_ARG_ENABLE([indicator],
+dnl 			[  --enable-indicator	Enable Panel Indicator support],
+dnl 			[case "${enableval}" in
+dnl 				yes)	indicator=true ;;
+dnl 				no)		indicator=false ;;
+dnl 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-indicator]) ;;
+dnl 			esac],[debug=false])
+dnl AM_CONDITIONAL([INDICATOR],	[test x$indicator = xtrue])
+
+dnl AC_ARG_ENABLE([applet],
+dnl 			[  --enable-applet	Enable Panel Applet support],
+dnl 			[case "${enableval}" in
+dnl 				yes)	applet=true ;;
+dnl 			m	no)		applet=false ;;
+dnl 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-applet]) ;;
+dnl 			esac],[debug=false])
+dnl AM_CONDITIONAL([APPLET],	[test x$applet = xtrue])
+
 dnl Dependencies for core applet and tools
+
+AX_PYTHON_MODULE(gnomeapplet, [])
+
+AX_PYTHON_MODULE(appindicator, [])
+AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
+     [appindicator=yes],
+     [test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xyes"],
+     [gnomeapplet=yes])
+     
+AM_CONDITIONAL([APPLET], test x$gnomeapplet = xyes)
+AM_CONDITIONAL([INDICATOR],	test x$appindicator = xyes)
+
+AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xno" -a "x${HAVE_PYMOD_APPINDICATOR}" = "xno"],
+     [AC_MSG_ERROR([Requires Python Application Indicator OR Python Gnome Applet Library])])
 
 AX_PYTHON_MODULE(Image, [])
 AS_IF([test "x${HAVE_PYMOD_IMAGE}" = "xno"],
@@ -47,9 +79,9 @@ AX_PYTHON_MODULE(pango, [])
 AS_IF([test "x${HAVE_PYMOD_PANGO}" = "xno"],
      [AC_MSG_ERROR([Requires Pango for Python])])
      
-AX_PYTHON_MODULE(gnomeapplet, [])
-AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xno"],
-     [AC_MSG_ERROR([Requires GNOME bindings for Python (part of PyGTK)])])
+dnl AX_PYTHON_MODULE(gnomeapplet, [])
+dnl AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xno"],
+dnl     [AC_MSG_ERROR([Requires GNOME bindings for Python (part of PyGTK)])])
      
 AX_PYTHON_MODULE(xdg, [])
 AS_IF([test "x${HAVE_PYMOD_XDG}" = "xno"],
@@ -58,8 +90,14 @@ AS_IF([test "x${HAVE_PYMOD_XDG}" = "xno"],
 AX_PYTHON_MODULE(Xlib, [])
 AS_IF([test "x${HAVE_PYMOD_XLIB}" = "xno"],
      [AC_MSG_ERROR([Requires Python Xlib - Python Xlib bindings])])
+
+AX_PYTHON_MODULE(setproctitle, [])
+AS_IF([test "x${HAVE_PYMOD_SETPROCTITLE}" = "xno"],
+     [AC_MSG_WARN([It is recommend that setproctitle is installed])])
      
      
+AX_PYTHON_MODULE(appindicator, [])
+
 dnl Dependencies for plugins
  
 AX_PYTHON_MODULE(alsaaudio, [])
@@ -111,6 +149,10 @@ src/plugins/macros/Makefile
 src/plugins/macros/default/Makefile
 src/plugins/mpris/Makefile
 src/plugins/mpris/default/Makefile
+src/plugins/menu/Makefile
+src/plugins/menu/default/Makefile
+src/plugins/panel/Makefile
+src/plugins/panel/default/Makefile
 src/plugins/notify-lcd/Makefile
 src/plugins/notify-lcd/default/Makefile
 src/plugins/screensaver/Makefile
@@ -129,8 +171,11 @@ src/plugins/weather/default/Makefile
 src/gnome/Makefile
 src/gnome/applications/Makefile
 src/gnome/applications/g15-config.desktop
+src/gnome/applications/g15-macros.desktop
 src/gnome/servers/Makefile
 src/gnome/servers/GNOME_G15Applet.server
+src/gnome/autostart/Makefile
+src/gnome/autostart/gnome15.desktop
 src/main/Makefile
 src/main/python/Makefile
 src/main/python/gnome15/Makefile
@@ -138,6 +183,36 @@ src/main/python/gnome15/g15_globals.py
 src/main/python/gnome15/drivers/Makefile
 src/main/resources/Makefile
 src/main/resources/icons/Makefile
+src/main/resources/icons/elementary/Makefile
+src/main/resources/icons/elementary/status/Makefile
+src/main/resources/icons/elementary/status/16/Makefile
+src/main/resources/icons/elementary/status/22/Makefile
+src/main/resources/icons/elementary/status/24/Makefile
+src/main/resources/icons/hicolor/Makefile
+src/main/resources/icons/hicolor/22x22/Makefile
+src/main/resources/icons/hicolor/22x22/apps/Makefile
+src/main/resources/icons/hicolor/24x24/Makefile
+src/main/resources/icons/hicolor/24x24/apps/Makefile
+src/main/resources/icons/hicolor/48x48/Makefile
+src/main/resources/icons/hicolor/48x48/apps/Makefile
+src/main/resources/icons/hicolor/64x64/Makefile
+src/main/resources/icons/hicolor/64x64/apps/Makefile
+src/main/resources/icons/hicolor/scalable/Makefile
+src/main/resources/icons/hicolor/scalable/apps/Makefile
+src/main/resources/icons/hicolor/status/Makefile
+src/main/resources/icons/hicolor/status/16/Makefile
+src/main/resources/icons/hicolor/status/22/Makefile
+src/main/resources/icons/hicolor/status/24/Makefile
+src/main/resources/icons/ubuntu-mono-dark/Makefile
+src/main/resources/icons/ubuntu-mono-dark/status/Makefile
+src/main/resources/icons/ubuntu-mono-dark/status/16/Makefile
+src/main/resources/icons/ubuntu-mono-dark/status/22/Makefile
+src/main/resources/icons/ubuntu-mono-dark/status/24/Makefile
+src/main/resources/icons/ubuntu-mono-light/Makefile
+src/main/resources/icons/ubuntu-mono-light/status/Makefile
+src/main/resources/icons/ubuntu-mono-light/status/16/Makefile
+src/main/resources/icons/ubuntu-mono-light/status/22/Makefile
+src/main/resources/icons/ubuntu-mono-light/status/24/Makefile
 src/main/resources/images/Makefile
 src/main/resources/glade/Makefile
 ])

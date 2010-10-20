@@ -23,14 +23,14 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-import wnck
-import sys
 import os
 import g15_globals as pglobals
 import g15_profile as g15profile
 import gconf
 import g15_driver as g15driver
 import g15_util as g15util
+import dbus
+import shutil
 import wnck
 
 # Store the temporary profile icons here (for when the icon comes from a window, the filename is not known
@@ -87,6 +87,7 @@ class G15Macros:
         self.send_delays = self.widget_tree.get_object("SendDelaysCheckbox")
         self.profile_icon = self.widget_tree.get_object("ProfileIcon")
         self.icon_browse_button = self.widget_tree.get_object("BrowseForIcon")
+        self.clear_icon_button = self.widget_tree.get_object("ClearIcon")
         self.macro_properties_button = self.widget_tree.get_object("MacroPropertiesButton")
         self.delete_macro_button = self.widget_tree.get_object("DeleteMacroButton")
         self.memory_bank_label = self.widget_tree.get_object("MemoryBankLabel")
@@ -97,7 +98,7 @@ class G15Macros:
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
-        self.main_window.set_icon_from_file(os.path.join(pglobals.image_dir,'g15key.png'))
+        self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
         
         # Models        
         self.macrosModel = self.widget_tree.get_object("MacroModel")
@@ -111,23 +112,32 @@ class G15Macros:
         
         # Bind to events
         self.widget_tree.get_object("AddButton").connect("clicked", self.add_profile)
-        self.remove_button.connect("clicked", self.remove_profile)
-        self.delete_macro_button.connect("clicked", self.remove_macro)
-        self.macro_properties_button.connect("clicked", self.macro_properties)
-        self.icon_browse_button.connect("clicked", self.browse_for_icon)        
         self.widget_tree.get_object("ActivateButton").connect("clicked", self.activate)
-        self.profiles_tree.connect("cursor-changed", self.select_profile)
+        self.activate_on_focus.connect("toggled", self.activate_on_focus_changed)
+        self.activate_by_default.connect("toggled", self.activate_on_focus_changed)
+        self.clear_icon_button.connect("clicked", self.clear_icon)
+        self.delete_macro_button.connect("clicked", self.remove_macro)
+        self.icon_browse_button.connect("clicked", self.browse_for_icon)
+        self.macro_properties_button.connect("clicked", self.macro_properties)
         self.macro_list.connect("cursor-changed", self.select_macro)
+        self.macro_name_renderer.connect("edited", self.macro_name_edited)
         self.m1.connect("toggled", self.memory_changed)
         self.m2.connect("toggled", self.memory_changed)
         self.m3.connect("toggled", self.memory_changed)
-        self.activate_on_focus.connect("toggled", self.activate_on_focus_changed)
-        self.activate_by_default.connect("toggled", self.activate_on_focus_changed)
+        self.profiles_tree.connect("cursor-changed", self.select_profile)
+        self.remove_button.connect("clicked", self.remove_profile)
         self.send_delays.connect("toggled", self.send_delays_changed)
-        self.macro_name_renderer.connect("edited", self.macro_name_edited)
         self.window_combo.child.connect("changed", self.window_name_changed)
         self.window_combo.connect("changed", self.window_name_changed)
-        self.icon_browse_button.connect("clicked", self.browse_for_icon)
+        
+        # Connection to BAMD for running applications list
+        try :
+            self.session_bus = dbus.SessionBus()
+            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
+        except:
+            print "WARNING: BAMF not available, falling back to WNCK"
+            self.bamf_matcher = None
+            
         
 
     def active_profile_changed(self, client, connection_id, entry, args):
@@ -149,14 +159,28 @@ class G15Macros:
                 self.window_combo.child.set_text(self.window_model[active][0])
         else:
             if widget.get_text() != self.selected_profile.window_name: 
-                self.selected_profile.window_name = widget.get_text()            
-                for window in wnck.screen_get_default().get_windows():
-                    if window.get_name() == self.selected_profile.window_name:
-                        icon = window.get_icon()
-                        if icon != None:
-                            filename = os.path.join(icons_dir,"%d.png" % self.selected_profile.id)
-                            icon.save(filename, "png")
-                            self.selected_profile.icon = filename    
+                self.selected_profile.window_name = widget.get_text()
+                if self.bamf_matcher != None:
+                    for window in self.bamf_matcher.RunningApplications():
+                        app = self.session_bus.get_object("org.ayatana.bamf", window)
+                        view = dbus.Interface(app, 'org.ayatana.bamf.view')
+                        if view.Name() == self.selected_profile.window_name:
+                            icon = view.Icon()
+                            if icon != None:
+                                icon_path = g15util.get_icon_path(self.conf_client, icon)
+                                if icon_path != None:
+                                    # We need to copy the icon as it may be temporary
+                                    copy_path = os.path.join(icons_dir, os.path.basename(icon_path))
+                                    shutil.copy(icon_path, copy_path)
+                                    self.selected_profile.icon = copy_path
+                else:                               
+                    for window in wnck.screen_get_default().get_windows():
+                        if window.get_name() == self.selected_profile.window_name:
+                            icon = window.get_icon()
+                            if icon != None:
+                                filename = os.path.join(icons_dir,"%d.png" % self.selected_profile.id)
+                                icon.save(filename, "png")
+                                self.selected_profile.icon = filename    
                             
                 self.selected_profile.save()
         
@@ -184,6 +208,10 @@ class G15Macros:
         profile.make_active()
         self.load_configurations()
         
+    def clear_icon(self, widget):
+        self.selected_profile.icon = ""            
+        self.selected_profile.save()
+        
     def browse_for_icon(self, widget):
         dialog = gtk.FileChooserDialog("Open..",
                                None,
@@ -192,7 +220,7 @@ class G15Macros:
                                 gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         dialog.set_default_response(gtk.RESPONSE_OK)
         dialog.set_transient_for(self.main_window)
-        
+        dialog.set_filename(self.selected_profile.icon)
         filter = gtk.FileFilter()
         filter.set_name("All files")
         filter.add_pattern("*")
@@ -211,7 +239,6 @@ class G15Macros:
         dialog.add_filter(filter)
         
         response = dialog.run()
-        dialog.hide()
         
         if response == gtk.RESPONSE_OK:
             self.selected_profile.icon = dialog.get_filename()            
@@ -378,8 +405,14 @@ class G15Macros:
             
     def load_windows(self):        
         self.window_model.clear()
-        for window in wnck.screen_get_default().get_windows():
-            self.window_model.append([window.get_name()])
+        if self.bamf_matcher != None:            
+            for window in self.bamf_matcher.RunningApplications():
+                app = self.session_bus.get_object("org.ayatana.bamf", window)
+                view = dbus.Interface(app, 'org.ayatana.bamf.view')
+                self.window_model.append([view.Name(), window])
+        else:
+            for window in wnck.screen_get_default().get_windows():
+                self.window_model.append([window.get_name(), window.get_name()])
 
     def run(self):
         ''' Set up device list and start main window app.

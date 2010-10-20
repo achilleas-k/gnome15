@@ -36,6 +36,7 @@ import urllib2
 import Image
 import gconf
 import cairo
+import pango
 
 
 # Plugin details - All of these must be provided
@@ -115,14 +116,14 @@ class G15Weather():
         self.page = None
         self.change_timer = None
         
-    def paint(self):
-        pass
-    
     def activate(self):
         self.reload_theme()
         self.properties = {}
+        self.attributes = {}
         self.get_weather()
-        self.page = self.screen.new_page(self.paint, id="Weather", use_cairo=True)
+        self.page = self.screen.new_page(self.paint, id="Weather", 
+                                        thumbnail_painter = self.paint_thumbnail,
+                                        panel_painter = self.paint_thumbnail)
         self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self.loc_changed);
         self.refresh_after_interval()
         
@@ -171,6 +172,7 @@ class G15Weather():
     
     def get_weather(self):
         properties = {}
+        attributes = {}
         try :
             loc = get_location(self.gconf_client, self.gconf_key)
             self.weather = pywapi.get_weather_from_google(loc,  hl = ''  )
@@ -181,8 +183,9 @@ class G15Weather():
             if len(current) == 0:
                 # TODO No info for location
                 pass
-            else:                           
-                properties["icon"] = self.translate_icon(current['icon'])        
+            else:                                            
+                attributes["icon"], ctx = g15util.load_surface_from_file(self.translate_icon(current['icon']))
+                properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])        
                 properties["condition"] = current['condition']
                 # TODO configurable
                 
@@ -225,10 +228,12 @@ class G15Weather():
                     y += 1
             
             self.properties = properties
+            self.attributes = attributes
         except Exception as e:
             print e
             self.weather = None
             self.properties = {}
+            self.attributes = {}
         
     def reload_theme(self):        
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
@@ -287,6 +292,21 @@ class G15Weather():
         print "WARNING: Having to resort to using Google weather image http://www.google.com" + icon + ". This may hang up the LCD for a bit"
         
         return "http://www.google.com" + icon
+    
+    def paint_thumbnail(self, canvas, allocated_size, horizontal):
+        total_width = 0
+        if "icon" in self.attributes:
+            size = g15util.paint_thumbnail_image(allocated_size, self.attributes["icon"], canvas)
+            canvas.translate(size, 0)
+            total_width += size
+        if "temp" in self.properties:
+            pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 2)
+            x, y, width, height = g15util.get_extents(layout) 
+            pango_context.move_to(0, (allocated_size / 2) - height / 2)     
+            pango_context.update_layout(layout)
+            pango_context.show_layout(layout)
+            total_width += width + 4
+        return total_width
             
     def paint(self, canvas):
         loc = get_location(self.gconf_client, self.gconf_key)

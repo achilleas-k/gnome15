@@ -105,12 +105,12 @@ class G15Fx():
         # NOTE. This is a quick way of making the animation quicker on a G19. The G19 requires
         # a lot more data, plus there is further latency with the daemon. 
         
-        factor = self.screen.driver.get_bpp()
+        factor = self.screen.driver.get_bpp() * 2
         
         # Create a working surface
         
         
-        img_surface = cairo.ImageSurface (g15driver.CAIRO_IMAGE_FORMAT, self.screen.width, self.screen.height)
+        img_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.screen.width, self.screen.height)
         img_context = cairo.Context(img_surface)
         if effect == "vertical-scroll":
             # Vertical scroll

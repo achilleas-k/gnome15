@@ -437,13 +437,13 @@
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
      inkscape:cx="262.72645"
-     inkscape:cy="205.92479"
+     inkscape:cy="192.54027"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1052"
+     inkscape:window-width="1914"
+     inkscape:window-height="1054"
      inkscape:window-x="1920"
      inkscape:window-y="0"
      inkscape:window-maximized="1">
@@ -473,7 +473,7 @@
      id="layer1"
      transform="translate(0,-812.36218)">
     <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+       style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
        id="rect3925"
        width="180"
        height="29.999994"
@@ -490,7 +490,7 @@
        x="75"
        y="863.36218" />
     <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+       style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
        id="rect3925-2"
        width="180"
        height="29.999994"
@@ -501,13 +501,13 @@
     <rect
        class="progress"
        style="fill:url(#linearGradient3830-4);fill-opacity:1;stroke:none"
-       id="mem_used_pc_progress"
+       id="mem_noncached_pc_progress"
        width="160"
        height="9.9999943"
        x="75"
        y="923.36218" />
     <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+       style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
        id="rect3925-2-8"
        width="179.99997"
        height="29.999994"
@@ -606,7 +606,7 @@
          sodipodi:role="line"
          x="249.20566"
          y="931.28729"
-         id="tspan3976">${mem_used_gb} MB of</tspan></text>
+         id="tspan3976">${mem_noncached_gb} MB of</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:109.00000334%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"

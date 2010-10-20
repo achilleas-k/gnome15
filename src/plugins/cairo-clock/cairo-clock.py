@@ -115,7 +115,10 @@ class G15CairoClock():
             raise Exception("Cairo clock not supported on low-res LCD")       
         self.notify_handler = self.gconf_client.notify_add(self.gconf_key, self.config_changed);   
         self.load_surfaces()         
-        self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_NORMAL, use_cairo=True, on_shown=self.on_shown,on_hidden=self.on_hidden,id="Clock")
+        self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_NORMAL, 
+                                        on_shown=self.on_shown,on_hidden=self.on_hidden,id="Clock",
+                                        thumbnail_painter = self.paint_thumbnail)
+        self.page.set_title("Cairo Clock")
     
     def on_shown(self):
         self.cancel_refresh()
@@ -207,7 +210,21 @@ class G15CairoClock():
         self.screen.redraw(self.page)
         self.schedule_refresh()
         
+    def paint_thumbnail(self, canvas, allocated_size, horizontal):
+        scale = allocated_size / self.height
+        canvas.scale(scale, scale)
+        self._do_paint(canvas, self.width, self.height, False)
+        canvas.scale(1 / scale, 1 / scale)
+        return allocated_size 
+        
     def paint(self, canvas, draw_date = True):
+            
+        width = float(self.screen.width)
+        height = float(self.screen.height)
+            
+        self._do_paint(canvas, width, height, draw_date)
+        
+    def _do_paint(self, canvas, width, height, draw_date = True):
         now = datetime.datetime.now()
         properties = { }
         
@@ -216,11 +233,6 @@ class G15CairoClock():
         if display_seconds:
             time_format = "%H:%M:%S"
             
-        width = float(self.screen.width)
-        height = float(self.screen.height)
-        if self.width != width or self.height != height:            
-            self.load_surfaces()
-        
         clock_width = min(width, height)
         clock_height = min(width, height)
             
@@ -245,7 +257,7 @@ class G15CairoClock():
                         cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
             drawing_context.set_font_size(27.0)
             x_bearing, y_bearing, text_width, text_height = drawing_context.text_extents(date_text)[:4]
-            rgb = self.screen.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+            rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
             drawing_context.set_source_rgb(rgb[0],rgb[1],rgb[2])            
             tx = ( ( clock_width - text_width ) / 2 ) - x_bearing
             ty = clock_height * 0.665

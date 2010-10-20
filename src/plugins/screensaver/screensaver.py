@@ -132,7 +132,7 @@ class G15ScreenSaver():
                 self.page = self.screen.get_page("Screensaver")
                 if self.page == None:
                     self.reload_theme()
-                    self.page = self.screen.new_page(self.paint, g15screen.PRI_EXCLUSIVE, id="Screensaver", use_cairo = True)
+                    self.page = self.screen.new_page(self.paint, g15screen.PRI_EXCLUSIVE, id="Screensaver")
                     self.screen.redraw(self.page)
                 if self.gconf_client.get_bool(self.gconf_key + "/dim_keyboard"):
                     self.dim_keyboard()

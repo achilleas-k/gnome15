@@ -25,6 +25,7 @@ import gnome15.g15_theme as g15theme
 import gnome15.g15_util as g15util
 import datetime
 import gtk
+import pango
 import os
 import sys
 
@@ -63,16 +64,16 @@ def show_preferences(parent, gconf_client, gconf_key):
     
     display_seconds = widget_tree.get_object("DisplaySecondsCheckbox")
     display_seconds.set_active(gconf_client.get_bool(gconf_key + "/display_seconds"))
-    display_seconds.connect("toggled", changed, gconf_key + "/display_seconds", gconf_client)
+    display_seconds.connect("toggled", _changed, gconf_key + "/display_seconds", gconf_client)
     
     display_date = widget_tree.get_object("DisplayDateCheckbox")
     display_date.set_active(gconf_client.get_bool(gconf_key + "/display_date"))
-    display_date.connect("toggled", changed, gconf_key + "/display_date", gconf_client)
+    display_date.connect("toggled", _changed, gconf_key + "/display_date", gconf_client)
     
     dialog.run()
     dialog.hide()
 
-def changed(widget, key, gconf_client):
+def _changed(widget, key, gconf_client):
     '''
     gconf configuration has changed, redraw our canvas
     '''
@@ -98,7 +99,7 @@ class G15Clock():
         for each model that is supported, and optionally a fragement of Python for anything that can't
         be done with the SVG
         '''
-        self.reload_theme()
+        self._reload_theme()
     
     def activate(self):
         self.timer = None
@@ -112,9 +113,13 @@ class G15Clock():
         '''
         Most plugins will usually want to draw on the screen. To do so, a 'page' is created. We also supply a callback here to
         perform the painting. You can also supply 'on_shown' and 'on_hidden' callbacks here to be notified when your
-        page actually gets shown and hidden
+        page actually gets shown and hidden.
+        
+        A thumbnail painter function is also provided. This is used by other plugins want a thumbnail representation
+        of the current screen. For example, this could be used in the 'panel', or the 'menu' plugins 
         '''        
-        self.page = self.screen.new_page(self.paint, id="Clock")
+        self.page = self.screen.new_page(self.paint, id="Clock", thumbnail_painter = self.paint_thumbnail, panel_painter = self.paint_thumbnail)
+        self.page.title = "Simple Clock"
         
         ''' 
         Once created, we should always ask for the screen to be drawn (even if another higher
@@ -126,12 +131,12 @@ class G15Clock():
         '''
         Schedule another redraw if appropriate
         '''        
-        self.schedule_redraw()
+        self._schedule_redraw()
         
         '''
         We want to be notified when the plugin configuration changed, so watch for gconf events
         '''        
-        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self.config_changed);
+        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self._config_changed);
     
     def deactivate(self):
         
@@ -172,28 +177,33 @@ class G15Clock():
         Invoked when this plugins page is active and needs to be redrawn. You should NOT
         call this function yourself, it is called automatically by the screen manager. 
         The function should draw everything as quickly as possible (i.e. not go off to 
-        the internet to gather data or anything like that!)        
+        the internet to gather data or anything like that!)
+         
         '''
+        self.theme.draw(canvas, self._get_properties())
         
-        properties = { }
-        
-        '''
-        Get the details to display and place them as properties which are passed to
-        the theme
-        '''
-        time_format = "%H:%M"
-        if self.gconf_client.get_bool(self.gconf_key + "/display_seconds"):
-            time_format = "%H:%M:%S"
-        properties["time"] = datetime.datetime.now().strftime(time_format)
-            
-        if self.gconf_client.get_bool(self.gconf_key + "/display_date"):
-            properties["date"] = datetime.datetime.now().strftime("%d/%m/%Y")
-            
-        '''
-        Now ask the theme to draw the screen
-        '''
-        self.theme.draw(canvas, properties)
-        
+    '''
+    Paint the thumbnail. You are given the MAXIMUM amount of space that is allocated for
+    the thumbnail, and you must return the amount of space actually take up. Thumbnails
+    can be used for example by the panel plugin, or the menu plugin
+    ''' 
+    def paint_thumbnail(self, canvas, allocated_size, horizontal):
+        if not self.screen.is_visible(self.page):
+            properties = self._get_properties()
+            font_size = allocated_size
+            do_date = self.gconf_client.get_bool(self.gconf_key + "/display_date")
+            if do_date:
+                text = "%s\n%s" % ( properties["time"],properties["date"] ) 
+                font_size /= 3
+            else:
+                text = properties["time"]
+                font_size /= 2
+            pango_context, layout = g15util.create_pango_context(canvas, self.screen, text, align = pango.ALIGN_CENTER, font_desc = "Sans", font_absolute_size =  font_size * pango.SCALE)
+            x, y, width, height = g15util.get_extents(layout) 
+            pango_context.move_to(4, (allocated_size / 2) - height / 2)     
+            pango_context.update_layout(layout)
+            pango_context.show_layout(layout)
+            return width + 8
     
     ''' 
     ***********************************************************
@@ -201,7 +211,7 @@ class G15Clock():
     ***********************************************************    
     ''' 
         
-    def config_changed(self, client, connection_id, entry, args):
+    def _config_changed(self, client, connection_id, entry, args):
         '''
         This is called when the gconf configuration changes. See add_notify and remove_notify in
         the plugin's activate and deactive functions.
@@ -211,7 +221,7 @@ class G15Clock():
         Reload the theme as the layout required may have changed (i.e. with the 'show date' 
         option has been change)
         '''
-        self.reload_theme()
+        self._reload_theme()
         
         '''
         In this case, we temporarily raise the priority of the page. This will force
@@ -221,16 +231,16 @@ class G15Clock():
         '''
         self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
         
-    def redraw(self):
+    def _redraw(self):
         '''
         Invoked by the timer once a second to redraw the screen. If your page is currently activem
         then the paint() functions will now get called. When done, we want to schedule the next
         redraw
         '''
         self.screen.redraw(self.page) 
-        self.schedule_redraw()
+        self._schedule_redraw()
         
-    def schedule_redraw(self):
+    def _schedule_redraw(self):
         '''
         Determine when to schedule the next redraw for. 
         '''        
@@ -247,10 +257,30 @@ class G15Clock():
         '''
         Try not to create threads or timers if possible. Use g15util.schedule() instead
         '''
-        self.timer = g15util.schedule("ClockRedraw", delay, self.redraw)
+        self.timer = g15util.schedule("ClockRedraw", delay, self._redraw)
         
-    def reload_theme(self):        
+    def _reload_theme(self):        
         variant = None
         if self.gconf_client.get_bool(self.gconf_key + "/display_date"):
             variant = "with-date"
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen, variant)
+        
+    '''
+    Get the properties dictionary
+    '''
+    def _get_properties(self):
+        properties = { }
+        
+        '''
+        Get the details to display and place them as properties which are passed to
+        the theme
+        '''
+        time_format = "%H:%M"
+        if self.gconf_client.get_bool(self.gconf_key + "/display_seconds"):
+            time_format = "%H:%M:%S"
+        properties["time"] = datetime.datetime.now().strftime(time_format)
+            
+        if self.gconf_client.get_bool(self.gconf_key + "/display_date"):
+            properties["date"] = datetime.datetime.now().strftime("%d/%m/%Y")
+            
+        return properties

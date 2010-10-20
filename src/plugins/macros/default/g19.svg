@@ -595,6 +595,138 @@
          in2="result91"
          operator="in" />
     </filter>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4196">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4198"
+         width="100"
+         height="30"
+         x="10"
+         y="882.36218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4202">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4204"
+         width="100"
+         height="30"
+         x="110"
+         y="882.36218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4208">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4210"
+         width="108.45059"
+         height="30.598949"
+         x="210"
+         y="882.36218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4208-2">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4210-1"
+         width="108.45059"
+         height="30.598949"
+         x="210"
+         y="882.36218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4202-9">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4204-2"
+         width="100"
+         height="30"
+         x="110"
+         y="882.36218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4196-4">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4198-2"
+         width="100"
+         height="30"
+         x="10"
+         y="882.36218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4196-4-6">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4198-2-2"
+         width="100"
+         height="30"
+         x="10"
+         y="882.36218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4202-9-4">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4204-2-9"
+         width="100"
+         height="30"
+         x="110"
+         y="882.36218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4208-2-3">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4210-1-7"
+         width="108.45059"
+         height="30.598949"
+         x="210"
+         y="882.36218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4196-4-1">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4198-2-0"
+         width="100"
+         height="30"
+         x="10"
+         y="882.36218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4202-9-0">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4204-2-5"
+         width="100"
+         height="30"
+         x="110"
+         y="882.36218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4208-2-0">
+      <rect
+         style="fill:#ff0000;fill-opacity:0.6;stroke:none"
+         id="rect4210-1-3"
+         width="108.45059"
+         height="30.598949"
+         x="210"
+         y="882.36218" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -603,17 +735,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6"
-     inkscape:cx="250.08868"
-     inkscape:cy="25.537645"
+     inkscape:zoom="2.8"
+     inkscape:cx="175.24853"
+     inkscape:cy="131.887"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1242"
      inkscape:window-height="855"
-     inkscape:window-x="2179"
-     inkscape:window-y="106"
+     inkscape:window-x="2026"
+     inkscape:window-y="30"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -640,523 +772,698 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,-812.36218)">
-    <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3031-9"
-       width="250"
-       height="50"
-       x="70"
-       y="10"
-       transform="matrix(0.2,0,0,1,-4,812.36218)"
-       rx="60"
-       ry="12.000001" />
-    <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/macros/default/${icon}"
-       xlink:href="${icon}"
-       height="64"
-       width="64"
-       id="image3050"
-       transform="matrix(0.4765625,0,0,0.4765625,20,832.36218)" />
-    <rect
-       style="fill:#000000;fill-opacity:0.50196081;stroke:none"
-       id="rect3031"
-       width="250"
-       height="50"
-       x="70"
-       y="10"
-       transform="matrix(0.96,0,0,1,2.8,812.36218)"
-       rx="12.5"
-       ry="12.000001" />
-    <text
-       xml:space="preserve"
-       style="font-size:20px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans;fill:#ffffff"
-       x="59.400528"
-       y="39.285713"
-       id="text3801"
-       sodipodi:linespacing="125%"
-       transform="translate(20.599472,813.07647)"><tspan
-         sodipodi:role="line"
-         id="tspan3803"
+    <g
+       id="profileicon">
+      <rect
+         ry="12.000001"
+         rx="60"
+         transform="matrix(0.2,0,0,1,-4,812.36218)"
+         y="10"
+         x="70"
+         height="50"
+         width="250"
+         id="rect3031-9"
+         style="fill:#808080;fill-opacity:0.50196078;stroke:none" />
+      <image
+         sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/macros/default/${icon}"
+         xlink:href="${icon}"
+         transform="matrix(0.4765625,0,0,0.4765625,20,832.36218)"
+         id="image3050"
+         width="64"
+         height="64" />
+    </g>
+    <g
+       id="row1">
+      <g
+         clip-path="url(#clipPath4196)"
+         title="del !key1"
+         id="key1group">
+        <rect
+           style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+           id="key1pressed"
+           width="30"
+           height="30"
+           x="10"
+           y="70"
+           transform="translate(0,812.36218)"
+           rx="12"
+           ry="12.000001"
+           title="del !pressed1" />
+        <rect
+           style="fill:#808080;fill-opacity:0.50196078;stroke:none"
+           id="key1released"
+           width="30"
+           height="30"
+           x="10"
+           y="882.36218"
+           rx="12"
+           ry="12.000001"
+           title="del pressed1" />
+        <text
+           xml:space="preserve"
+           style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="19.015694"
+           y="85"
+           id="key1gkey"
+           sodipodi:linespacing="125%"
+           transform="translate(5.435966,815.36218)"><tspan
+             sodipodi:role="line"
+             id="tspan3813"
+             x="19.015694"
+             y="85">${key1}</tspan></text>
+        <text
+           xml:space="preserve"
+           style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="30.908974"
+           y="85.714287"
+           id="key1text"
+           sodipodi:linespacing="125%"
+           transform="translate(12,816.36218)"
+           inkscape:transform-center-x="-33.30497"><tspan
+             sodipodi:role="line"
+             id="tspan3817"
+             x="30.908974"
+             y="85.714287">${name1}</tspan></text>
+      </g>
+      <g
+         clip-path="url(#clipPath4202)"
+         title="del !key2"
+         id="key2group">
+        <rect
+           style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+           id="key2pressed"
+           width="30"
+           height="30"
+           x="110"
+           y="882.36218"
+           rx="12"
+           ry="12.000001"
+           title="del !pressed2" />
+        <rect
+           title="del pressed2"
+           ry="12.000001"
+           rx="12"
+           y="70"
+           x="10"
+           height="30"
+           width="30"
+           id="key2released"
+           style="fill:#808080;fill-opacity:0.50196078;stroke:none"
+           transform="translate(100,812.36218)" />
+        <text
+           xml:space="preserve"
+           style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="19.015694"
+           y="85"
+           id="key2gkey"
+           sodipodi:linespacing="125%"
+           transform="translate(107.43597,815.36218)"><tspan
+             sodipodi:role="line"
+             id="tspan3813-6"
+             x="19.015694"
+             y="85">${key2}</tspan></text>
+        <text
+           xml:space="preserve"
+           style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="30.908974"
+           y="85.714287"
+           id="key2text"
+           sodipodi:linespacing="125%"
+           transform="translate(114,816.36218)"
+           inkscape:transform-center-x="-33.30497"><tspan
+             sodipodi:role="line"
+             id="tspan3817-3"
+             x="30.908974"
+             y="85.714287">${name2}</tspan></text>
+      </g>
+      <g
+         clip-path="url(#clipPath4208)"
+         title="del !key3"
+         id="key3group">
+        <rect
+           transform="translate(200,812.36218)"
+           style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+           id="key3pressed"
+           width="30"
+           height="30"
+           x="10"
+           y="70"
+           rx="12"
+           ry="12.000001"
+           title="del !pressed3" />
+        <rect
+           transform="translate(200,812.36218)"
+           style="fill:#808080;fill-opacity:0.50196078;stroke:none"
+           id="key3released"
+           width="30"
+           height="30"
+           x="10"
+           y="70"
+           rx="12"
+           ry="12.000001"
+           title="del pressed3" />
+        <text
+           xml:space="preserve"
+           style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="19.015694"
+           y="85"
+           id="key3gkey"
+           sodipodi:linespacing="125%"
+           transform="translate(207.43597,815.36218)"><tspan
+             sodipodi:role="line"
+             id="tspan3813-8"
+             x="19.015694"
+             y="85">${key3}</tspan></text>
+        <text
+           key3text=""
+           xml:space="preserve"
+           style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+           x="30.908974"
+           y="85.714287"
+           id="key3text"
+           sodipodi:linespacing="125%"
+           transform="translate(212,816.36218)"
+           inkscape:transform-center-x="-36.233887"
+           inkscape:transform-center-y="-2.462471"><tspan
+             sodipodi:role="line"
+             id="tspan3817-33"
+             x="30.908974"
+             y="85.714287">${name3}</tspan></text>
+      </g>
+    </g>
+    <g
+       id="heading">
+      <rect
+         transform="matrix(0.96,0,0,1,2.8,812.36218)"
+         ry="12.000001"
+         rx="12.5"
+         y="10"
+         x="70"
+         height="50"
+         width="250"
+         id="rect3031"
+         style="fill:#808080;fill-opacity:0.50196078;stroke:none" />
+      <text
+         transform="translate(20.599472,813.07647)"
+         sodipodi:linespacing="125%"
+         id="text3801"
+         y="39.285713"
          x="59.400528"
-         y="39.285713">${profile}</tspan></text>
-    <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       transform="translate(0,812.36218)"
-       rx="12"
-       ry="12.000001"
-       title="del !key1" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3886);font-family:Bitstream Vera Sans"
-       x="19.015694"
-       y="85"
-       id="text3811"
-       sodipodi:linespacing="125%"
-       transform="translate(5.435966,815.36218)"><tspan
-         sodipodi:role="line"
-         id="tspan3813"
-         x="19.015694"
-         y="85">${key1}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815"
-       sodipodi:linespacing="125%"
-       transform="translate(12,816.36218)"
-       inkscape:transform-center-x="-33.30497"><tspan
-         sodipodi:role="line"
-         id="tspan3817"
-         x="30.908974"
-         y="85.714287">${name1}</tspan></text>
-    <rect
-       transform="translate(100,812.36218)"
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809-4"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       rx="12"
-       ry="12.000001"
-       title="del !key2" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3893);font-family:Bitstream Vera Sans"
-       x="19.015694"
-       y="85"
-       id="text3811-1"
-       sodipodi:linespacing="125%"
-       transform="translate(107.43597,815.36218)"><tspan
-         sodipodi:role="line"
-         id="tspan3813-6"
-         x="19.015694"
-         y="85">${key2}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815-4"
-       sodipodi:linespacing="125%"
-       transform="translate(114,816.36218)"
-       inkscape:transform-center-x="-33.30497"><tspan
-         sodipodi:role="line"
-         id="tspan3817-3"
-         x="30.908974"
-         y="85.714287">${name2}</tspan></text>
-    <rect
-       transform="translate(200,812.36218)"
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809-5"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       rx="12"
-       ry="12.000001"
-       title="del !key3" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3899);font-family:Bitstream Vera Sans"
-       x="19.015694"
-       y="85"
-       id="text3811-4"
-       sodipodi:linespacing="125%"
-       transform="translate(207.43597,815.36218)"><tspan
-         sodipodi:role="line"
-         id="tspan3813-8"
-         x="19.015694"
-         y="85">${key3}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815-7"
-       sodipodi:linespacing="125%"
-       transform="translate(212,816.36218)"
-       inkscape:transform-center-x="-36.233887"
-       inkscape:transform-center-y="-2.462471"><tspan
-         sodipodi:role="line"
-         id="tspan3817-33"
-         x="30.908974"
-         y="85.714287">${name3}</tspan></text>
-    <rect
-       transform="translate(0.09102631,852.64789)"
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809-54"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       rx="12"
-       ry="12.000001"
-       title="del !key4" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3886-7);font-family:Bitstream Vera Sans"
-       x="19.015694"
-       y="85"
-       id="text3811-9"
-       sodipodi:linespacing="125%"
-       transform="translate(5.526996,855.64789)"><tspan
-         sodipodi:role="line"
-         id="tspan3813-2"
-         x="19.015694"
-         y="85">${key4}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815-5"
-       sodipodi:linespacing="125%"
-       transform="translate(12.091026,856.64789)"
-       inkscape:transform-center-x="-33.30497"><tspan
-         sodipodi:role="line"
-         id="tspan3817-7"
-         x="30.908974"
-         y="85.714287">${name4}</tspan></text>
-    <rect
-       transform="translate(100.09103,852.64789)"
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809-4-4"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       rx="12"
-       ry="12.000001"
-       title="del !key5" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3893-3);font-family:Bitstream Vera Sans"
-       x="19.015694"
-       y="85"
-       id="text3811-1-9"
-       sodipodi:linespacing="125%"
-       transform="translate(105.527,855.64789)"><tspan
-         sodipodi:role="line"
-         id="tspan3813-6-9"
-         x="19.015694"
-         y="85">${key5}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815-4-4"
-       sodipodi:linespacing="125%"
-       transform="translate(114.09103,856.64789)"
-       inkscape:transform-center-x="-33.30497"><tspan
-         sodipodi:role="line"
-         id="tspan3817-3-5"
-         x="30.908974"
-         y="85.714287">${name5}</tspan></text>
-    <rect
-       transform="translate(200.09103,852.64789)"
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809-5-9"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       rx="12"
-       ry="12.000001"
-       title="del !key6" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3899-9);font-family:Bitstream Vera Sans"
-       x="19.015694"
-       y="85"
-       id="text3811-4-3"
-       sodipodi:linespacing="125%"
-       transform="translate(205.527,855.64789)"><tspan
-         sodipodi:role="line"
-         id="tspan3813-8-5"
-         x="19.015694"
-         y="85">${key6}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815-7-7"
-       sodipodi:linespacing="125%"
-       transform="translate(212.09103,856.64789)"
-       inkscape:transform-center-x="-36.233887"
-       inkscape:transform-center-y="-2.462471"><tspan
-         sodipodi:role="line"
-         id="tspan3817-33-0"
-         x="30.908974"
-         y="85.714287">${name6}</tspan></text>
-    <rect
-       transform="translate(0.09102644,892.64789)"
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809-54-4"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       rx="12"
-       ry="12.000001"
-       title="del !key7" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3886-7-8);font-family:Bitstream Vera Sans"
-       x="19.015694"
-       y="85"
-       id="text3811-9-9"
-       sodipodi:linespacing="125%"
-       transform="translate(5.526996,895.64789)"><tspan
-         sodipodi:role="line"
-         id="tspan3813-2-0"
-         x="19.015694"
-         y="85">${key7}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815-5-2"
-       sodipodi:linespacing="125%"
-       transform="translate(12.091026,896.64789)"
-       inkscape:transform-center-x="-33.30497"><tspan
-         sodipodi:role="line"
-         id="tspan3817-7-0"
-         x="30.908974"
-         y="85.714287">${name7}</tspan></text>
-    <rect
-       transform="translate(100.09103,892.64789)"
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809-4-4-1"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       rx="12"
-       ry="12.000001"
-       title="del !key8" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3893-3-9);font-family:Bitstream Vera Sans"
-       x="19.015694"
-       y="85"
-       id="text3811-1-9-9"
-       sodipodi:linespacing="125%"
-       transform="translate(105.527,895.64789)"><tspan
-         sodipodi:role="line"
-         id="tspan3813-6-9-6"
-         x="19.015694"
-         y="85">${key8}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815-4-4-2"
-       sodipodi:linespacing="125%"
-       transform="translate(114.09103,896.64789)"
-       inkscape:transform-center-x="-33.30497"><tspan
-         sodipodi:role="line"
-         id="tspan3817-3-5-1"
-         x="30.908974"
-         y="85.714287">${name8}</tspan></text>
-    <rect
-       transform="translate(200.09103,892.64789)"
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809-5-9-2"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       rx="12"
-       ry="12.000001"
-       title="del !key9" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3899-9-2);font-family:Bitstream Vera Sans"
-       x="19.015694"
-       y="85"
-       id="text3811-4-3-0"
-       sodipodi:linespacing="125%"
-       transform="translate(205.527,895.64789)"><tspan
-         sodipodi:role="line"
-         id="tspan3813-8-5-7"
-         x="19.015694"
-         y="85">${key9}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815-7-7-3"
-       sodipodi:linespacing="125%"
-       transform="translate(212.09103,896.64789)"
-       inkscape:transform-center-x="-36.233887"
-       inkscape:transform-center-y="-2.462471"><tspan
-         sodipodi:role="line"
-         id="tspan3817-33-0-1"
-         x="30.908974"
-         y="85.714287">${name9}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:16px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;filter:url(#filter3899-9-7);font-family:Bitstream Vera Sans"
-       x="-1.4359665"
-       y="85"
-       id="text3811-4-3-6"
-       sodipodi:linespacing="125%"
-       transform="translate(215.527,937.64789)" />
-    <text
-       xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="209.28571"
-       y="206.78571"
-       id="text3295"
-       sodipodi:linespacing="125%"
-       transform="translate(0,812.36218)"><tspan
-         sodipodi:role="line"
-         id="tspan3297" /></text>
-    <rect
-       transform="translate(-0.90897,931.64789)"
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809-54-4-5"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       rx="12"
-       ry="12.000001"
-       title="del !key10" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3886-7-8-9);font-family:Bitstream Vera Sans"
-       x="22.199287"
-       y="85"
-       id="text3811-9-9-5"
-       sodipodi:linespacing="125%"
-       transform="translate(4.527,940.64789)"><tspan
-         sodipodi:role="line"
-         id="tspan3813-2-0-8"
-         x="22.199287"
-         y="85">${key10}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815-5-2-7"
-       sodipodi:linespacing="125%"
-       transform="translate(11.09103,935.64789)"
-       inkscape:transform-center-x="-33.30497"><tspan
-         sodipodi:role="line"
-         id="tspan3817-7-0-1"
-         x="30.908974"
-         y="85.714287">${name10}</tspan></text>
-    <rect
-       transform="translate(99.09103,931.64789)"
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809-4-4-1-7"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       rx="12"
-       ry="12.000001"
-       title="del !key11" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3893-3-9-2);font-family:Bitstream Vera Sans"
-       x="22.199287"
-       y="85"
-       id="text3811-1-9-9-0"
-       sodipodi:linespacing="125%"
-       transform="translate(104.527,934.64789)"><tspan
-         sodipodi:role="line"
-         id="tspan3813-6-9-6-6"
-         x="22.199287"
-         y="85">${key11}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815-4-4-2-0"
-       sodipodi:linespacing="125%"
-       transform="translate(113.09103,935.64789)"
-       inkscape:transform-center-x="-33.30497"><tspan
-         sodipodi:role="line"
-         id="tspan3817-3-5-1-4"
-         x="30.908974"
-         y="85.714287">${name11}</tspan></text>
-    <rect
-       transform="translate(199.09103,931.64789)"
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-       id="rect3809-5-9-2-1"
-       width="30"
-       height="30"
-       x="10"
-       y="70"
-       rx="12"
-       ry="12.000001"
-       title="del !key12" />
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3899-9-2-9);font-family:Bitstream Vera Sans"
-       x="22.199287"
-       y="85"
-       id="text3811-4-3-0-3"
-       sodipodi:linespacing="125%"
-       transform="translate(204.527,934.64789)"><tspan
-         sodipodi:role="line"
-         id="tspan3813-8-5-7-0"
-         x="22.199287"
-         y="85">${key12}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="30.908974"
-       y="85.714287"
-       id="text3815-7-7-3-2"
-       sodipodi:linespacing="125%"
-       transform="translate(211.09103,935.64789)"
-       inkscape:transform-center-x="-36.233887"
-       inkscape:transform-center-y="-2.462471"><tspan
-         sodipodi:role="line"
-         id="tspan3817-33-0-1-9"
-         x="30.908974"
-         y="85.714287">${name12}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:20px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="156.63686"
-       y="39.285713"
-       id="text3801-7"
-       sodipodi:linespacing="125%"
-       transform="translate(145.59947,813.07647)"><tspan
-         sodipodi:role="line"
-         id="tspan3803-2"
+         style="font-size:20px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="39.285713"
+           x="59.400528"
+           id="tspan3803"
+           sodipodi:role="line">${profile}</tspan></text>
+      <text
+         transform="translate(145.59947,813.07647)"
+         sodipodi:linespacing="125%"
+         id="text3801-7"
+         y="39.285713"
          x="156.63686"
-         y="39.285713">${memory}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:18px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="86.688759"
-       y="85.714287"
-       id="text3815-4-4-8"
-       sodipodi:linespacing="125%"
-       transform="translate(81.09103,874.64789)"
-       inkscape:transform-center-x="-33.30497"><tspan
-         sodipodi:role="line"
-         id="tspan3817-3-5-8"
-         x="86.688759"
-         y="85.714287">${message}</tspan></text>
+         style="font-size:20px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="39.285713"
+           x="156.63686"
+           id="tspan3803-2"
+           sodipodi:role="line">${memory}</tspan></text>
+    </g>
+    <g
+       transform="translate(0,40)"
+       id="key4group"
+       title="del !key4"
+       clip-path="url(#clipPath4196-4)">
+      <rect
+         title="del !pressed4"
+         ry="12.000001"
+         rx="12"
+         transform="translate(0,812.36218)"
+         y="70"
+         x="10"
+         height="30"
+         width="30"
+         id="key4pressed"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none" />
+      <rect
+         title="del pressed4"
+         ry="12.000001"
+         rx="12"
+         y="882.36218"
+         x="10"
+         height="30"
+         width="30"
+         id="key4released"
+         style="fill:#808080;fill-opacity:0.50196078;stroke:none" />
+      <text
+         transform="translate(5.435966,815.36218)"
+         sodipodi:linespacing="125%"
+         id="key4gkey"
+         y="85"
+         x="19.015694"
+         style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85"
+           x="19.015694"
+           id="tspan3813-3"
+           sodipodi:role="line">${key4}</tspan></text>
+      <text
+         inkscape:transform-center-x="-33.30497"
+         transform="translate(12,816.36218)"
+         sodipodi:linespacing="125%"
+         id="key4text"
+         y="85.714287"
+         x="30.908974"
+         style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85.714287"
+           x="30.908974"
+           id="tspan3817-7"
+           sodipodi:role="line">${name4}</tspan></text>
+    </g>
+    <g
+       transform="translate(0,40)"
+       id="key5group"
+       title="del !key5"
+       clip-path="url(#clipPath4202-9)">
+      <rect
+         title="del !pressed5"
+         ry="12.000001"
+         rx="12"
+         y="882.36218"
+         x="110"
+         height="30"
+         width="30"
+         id="key5pressed"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none" />
+      <rect
+         transform="translate(100,812.36218)"
+         style="fill:#808080;fill-opacity:0.50196078;stroke:none"
+         id="key5released"
+         width="30"
+         height="30"
+         x="10"
+         y="70"
+         rx="12"
+         ry="12.000001"
+         title="del pressed5" />
+      <text
+         transform="translate(107.43597,815.36218)"
+         sodipodi:linespacing="125%"
+         id="key5gkey"
+         y="85"
+         x="19.015694"
+         style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85"
+           x="19.015694"
+           id="tspan3813-6-0"
+           sodipodi:role="line">${key5}</tspan></text>
+      <text
+         inkscape:transform-center-x="-33.30497"
+         transform="translate(114,816.36218)"
+         sodipodi:linespacing="125%"
+         id="key5text"
+         y="85.714287"
+         x="30.908974"
+         style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85.714287"
+           x="30.908974"
+           id="tspan3817-3-2"
+           sodipodi:role="line">${name5}</tspan></text>
+    </g>
+    <g
+       transform="translate(0,40)"
+       id="key6group"
+       title="del !key6"
+       clip-path="url(#clipPath4208-2)">
+      <rect
+         title="del !pressed3"
+         ry="12.000001"
+         rx="12"
+         y="70"
+         x="10"
+         height="30"
+         width="30"
+         id="key6pressed"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+         transform="translate(200,812.36218)" />
+      <rect
+         title="del pressed6"
+         ry="12.000001"
+         rx="12"
+         y="70"
+         x="10"
+         height="30"
+         width="30"
+         id="key6released"
+         style="fill:#808080;fill-opacity:0.50196078;stroke:none"
+         transform="translate(200,812.36218)" />
+      <text
+         transform="translate(207.43597,815.36218)"
+         sodipodi:linespacing="125%"
+         id="key6gkey"
+         y="85"
+         x="19.015694"
+         style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85"
+           x="19.015694"
+           id="tspan3813-8-5"
+           sodipodi:role="line">${key6}</tspan></text>
+      <text
+         inkscape:transform-center-y="-2.462471"
+         inkscape:transform-center-x="-36.233887"
+         transform="translate(212,816.36218)"
+         sodipodi:linespacing="125%"
+         id="key6text"
+         y="85.714287"
+         x="30.908974"
+         style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"
+         key3text=""><tspan
+           y="85.714287"
+           x="30.908974"
+           id="tspan3817-33-2"
+           sodipodi:role="line">${name6}</tspan></text>
+    </g>
+    <g
+       transform="translate(0,79.999997)"
+       id="key7group"
+       title="del !key7"
+       clip-path="url(#clipPath4196-4-6)">
+      <rect
+         title="del !pressed7"
+         ry="12.000001"
+         rx="12"
+         transform="translate(0,812.36218)"
+         y="70"
+         x="10"
+         height="30"
+         width="30"
+         id="key7pressed"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none" />
+      <rect
+         title="del pressed7"
+         ry="12.000001"
+         rx="12"
+         y="882.36218"
+         x="10"
+         height="30"
+         width="30"
+         id="key7released"
+         style="fill:#808080;fill-opacity:0.50196078;stroke:none" />
+      <text
+         transform="translate(5.435966,815.36218)"
+         sodipodi:linespacing="125%"
+         id="key7gkey"
+         y="85"
+         x="19.015694"
+         style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85"
+           x="19.015694"
+           id="tspan3813-3-0"
+           sodipodi:role="line">${key7}</tspan></text>
+      <text
+         inkscape:transform-center-x="-33.30497"
+         transform="translate(12,816.36218)"
+         sodipodi:linespacing="125%"
+         id="key7text"
+         y="85.714287"
+         x="30.908974"
+         style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85.714287"
+           x="30.908974"
+           id="tspan3817-7-1"
+           sodipodi:role="line">${name7}</tspan></text>
+    </g>
+    <g
+       transform="translate(0,79.999997)"
+       id="key8group"
+       title="del !key8"
+       clip-path="url(#clipPath4202-9-4)">
+      <rect
+         title="del !pressed8"
+         ry="12.000001"
+         rx="12"
+         y="882.36218"
+         x="110"
+         height="30"
+         width="30"
+         id="key8pressed"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none" />
+      <rect
+         transform="translate(100,812.36218)"
+         style="fill:#808080;fill-opacity:0.50196078;stroke:none"
+         id="key8released"
+         width="30"
+         height="30"
+         x="10"
+         y="70"
+         rx="12"
+         ry="12.000001"
+         title="del pressed8" />
+      <text
+         transform="translate(107.43597,815.36218)"
+         sodipodi:linespacing="125%"
+         id="key8gkey"
+         y="85"
+         x="19.015694"
+         style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85"
+           x="19.015694"
+           id="tspan3813-6-0-0"
+           sodipodi:role="line">${key8}</tspan></text>
+      <text
+         inkscape:transform-center-x="-33.30497"
+         transform="translate(114,816.36218)"
+         sodipodi:linespacing="125%"
+         id="key8text"
+         y="85.714287"
+         x="30.908974"
+         style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85.714287"
+           x="30.908974"
+           id="tspan3817-3-2-7"
+           sodipodi:role="line">${name8}</tspan></text>
+    </g>
+    <g
+       transform="translate(0,79.999997)"
+       id="key3group-2-3"
+       title="del !key9"
+       clip-path="url(#clipPath4208-2-3)">
+      <rect
+         title="del !pressed9"
+         ry="12.000001"
+         rx="12"
+         y="70"
+         x="10"
+         height="30"
+         width="30"
+         id="key9pressed"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+         transform="translate(200,812.36218)" />
+      <rect
+         title="del pressed9"
+         ry="12.000001"
+         rx="12"
+         y="70"
+         x="10"
+         height="30"
+         width="30"
+         id="key9released"
+         style="fill:#808080;fill-opacity:0.50196078;stroke:none"
+         transform="translate(200,812.36218)" />
+      <text
+         transform="translate(207.43597,815.36218)"
+         sodipodi:linespacing="125%"
+         id="key9gkey"
+         y="85"
+         x="19.015694"
+         style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85"
+           x="19.015694"
+           id="tspan3813-8-5-6"
+           sodipodi:role="line">${key9}</tspan></text>
+      <text
+         inkscape:transform-center-y="-2.462471"
+         inkscape:transform-center-x="-36.233887"
+         transform="translate(212,816.36218)"
+         sodipodi:linespacing="125%"
+         id="key9text"
+         y="85.714287"
+         x="30.908974"
+         style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"
+         key3text=""><tspan
+           y="85.714287"
+           x="30.908974"
+           id="tspan3817-33-2-7"
+           sodipodi:role="line">${name9}</tspan></text>
+    </g>
+    <g
+       transform="translate(0,120)"
+       id="key10group"
+       title="del !key10"
+       clip-path="url(#clipPath4196-4-1)">
+      <rect
+         title="del !pressed10"
+         ry="12.000001"
+         rx="12"
+         transform="translate(0,812.36218)"
+         y="70"
+         x="10"
+         height="30"
+         width="30"
+         id="key10pressed"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none" />
+      <rect
+         title="del pressed10"
+         ry="12.000001"
+         rx="12"
+         y="882.36218"
+         x="10"
+         height="30"
+         width="30"
+         id="key10released"
+         style="fill:#808080;fill-opacity:0.50196078;stroke:none" />
+      <text
+         transform="translate(5.435966,815.36218)"
+         sodipodi:linespacing="125%"
+         id="key10gkey"
+         y="85"
+         x="19.015694"
+         style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85"
+           x="19.015694"
+           id="tspan3813-3-2"
+           sodipodi:role="line">${key10}</tspan></text>
+      <text
+         inkscape:transform-center-x="-33.30497"
+         transform="translate(12,816.36218)"
+         sodipodi:linespacing="125%"
+         id="key10text"
+         y="85.714287"
+         x="30.908974"
+         style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85.714287"
+           x="30.908974"
+           id="tspan3817-7-7"
+           sodipodi:role="line">${name10}</tspan></text>
+    </g>
+    <g
+       transform="translate(0,120)"
+       id="key11group"
+       title="del !key11"
+       clip-path="url(#clipPath4202-9-0)">
+      <rect
+         title="del !pressed11"
+         ry="12.000001"
+         rx="12"
+         y="882.36218"
+         x="110"
+         height="30"
+         width="30"
+         id="key11pressed"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none" />
+      <rect
+         transform="translate(100,812.36218)"
+         style="fill:#808080;fill-opacity:0.50196078;stroke:none"
+         id="key11released"
+         width="30"
+         height="30"
+         x="10"
+         y="70"
+         rx="12"
+         ry="12.000001"
+         title="del pressed11" />
+      <text
+         transform="translate(107.43597,815.36218)"
+         sodipodi:linespacing="125%"
+         id="key11gkey"
+         y="85"
+         x="19.015694"
+         style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85"
+           x="19.015694"
+           id="tspan3813-6-0-6"
+           sodipodi:role="line">${key11}</tspan></text>
+      <text
+         inkscape:transform-center-x="-33.30497"
+         transform="translate(114,816.36218)"
+         sodipodi:linespacing="125%"
+         id="key11text"
+         y="85.714287"
+         x="30.908974"
+         style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85.714287"
+           x="30.908974"
+           id="tspan3817-3-2-4"
+           sodipodi:role="line">${name11}</tspan></text>
+    </g>
+    <g
+       transform="translate(0,120)"
+       id="key12group"
+       title="del !key12"
+       clip-path="url(#clipPath4208-2-0)">
+      <rect
+         title="del !pressed12"
+         ry="12.000001"
+         rx="12"
+         y="70"
+         x="10"
+         height="30"
+         width="30"
+         id="key12pressed"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+         transform="translate(200,812.36218)" />
+      <rect
+         title="del pressed12"
+         ry="12.000001"
+         rx="12"
+         y="70"
+         x="10"
+         height="30"
+         width="30"
+         id="key12released"
+         style="fill:#808080;fill-opacity:0.50196078;stroke:none"
+         transform="translate(200,812.36218)" />
+      <text
+         transform="translate(207.43597,815.36218)"
+         sodipodi:linespacing="125%"
+         id="key12gkey"
+         y="85"
+         x="19.015694"
+         style="font-size:10px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="85"
+           x="19.015694"
+           id="tspan3813-8-5-8"
+           sodipodi:role="line">${key12}</tspan></text>
+      <text
+         inkscape:transform-center-y="-2.462471"
+         inkscape:transform-center-x="-36.233887"
+         transform="translate(212,816.36218)"
+         sodipodi:linespacing="125%"
+         id="key12"
+         y="85.714287"
+         x="30.908974"
+         style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"
+         key3text=""><tspan
+           y="85.714287"
+           x="30.908974"
+           id="tspan3817-33-2-1"
+           sodipodi:role="line">${name12}</tspan></text>
+    </g>
   </g>
 </svg>

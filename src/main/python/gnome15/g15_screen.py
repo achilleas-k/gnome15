@@ -19,22 +19,28 @@
 #        | along with this program; if not, write to the Free Software                 |
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
-  
+    
+PRI_POPUP=999
 PRI_EXCLUSIVE=100
 PRI_HIGH=99
 PRI_NORMAL=50
 PRI_LOW=1
 
 import g15_driver as g15driver
+import g15_util as g15util
 import time
 import threading
 import jobqueue 
 import cairo
 
 class G15Page():
-    def __init__(self, painter, id, priority, time, on_shown=None, on_hidden=None, cairo = False):
+    def __init__(self, plugin, painter, id, priority, time, on_shown=None, on_hidden=None, thumbnail_painter = None, panel_painter = None):
         self.id = id
+        self.plugin = plugin
+        self.title = self.id
         self.time = time
+        self.thumbnail_painter = thumbnail_painter
+        self.panel_painter = panel_painter
         self.on_shown = on_shown
         self.on_hidden = on_hidden
         self.priority = priority
@@ -42,6 +48,11 @@ class G15Page():
         self.value = self.priority * self.time
         self.painter = painter
         self.cairo = cairo 
+        
+    def set_title(self, title):
+        self.title = title   
+        for l in self.plugin.screen_change_listeners:
+            l.title_changed(self, title)
         
     def set_priority(self, priority):
         self.priority = priority
@@ -58,12 +69,14 @@ class G15Screen():
     
     def __init__(self, applet):
         self.applet = applet
+        self.screen_change_listeners = []
         
         # The screen may take a little space for its own purposes
         self.init()
         
         # Draw the splash for when no other pages are visible
-        self.jobqueue = jobqueue.JobQueue(name="ScreenRedrawQueue")
+        self.jobqueue = jobqueue.JobQueue(name="RedrawQueue")
+        self.cyclequeue = jobqueue.JobQueue(name="CycleQueue")
            
         self.redraw()   
         
@@ -74,18 +87,24 @@ class G15Screen():
         self.size = ( self.width, self.height )
         self.available_size = self.size
         
-        self.lock = threading.Lock()
+        self.page_model_lock = threading.RLock()
         self.pages = []
-        self.current_page = None
+        self.visible_page = None
         self.old_canvas = None
         self.transition_function = None
         self.background_painter_function = None
         self.foreground_painter_function = None
         self.painter_function = None
-        self.timer = None
         self.mkey = 1
         self.reverting = { }
         
+    def add_screen_change_listener(self, screen_change_listener):
+        if not screen_change_listener in self.screen_change_listeners:
+            self.screen_change_listeners.append(screen_change_listener)
+        
+    def remove_screen_change_listener(self, screen_change_listener):
+        if screen_change_listener in self.screen_change_listeners:
+            self.screen_change_listeners.remove(screen_change_listener)
         
     def set_available_size(self, size):
         self.available_size = size
@@ -116,35 +135,6 @@ class G15Screen():
                 self.set_mkey(3)
                 
         return False
-            
-    def cycle(self, number, transitions = True):
-        self.jobqueue.run(self.do_cycle, number, transitions)
-        
-    def do_cycle(self, number, transitions = True):
-        if len(self.pages) > 0:
-            
-            norms = []
-            
-            # We only cycle pages of normal priority
-            for page in self.sort():
-                if page.priority == PRI_NORMAL:
-                    norms.append(page)
-            
-            if len(norms) > 0:
-                if number < 0:                    
-                    first_time = norms[0].time
-                    for i in range(0, len(norms) - 1):
-                        norms[i].set_time(norms[i + 1].time)
-                    norms[len(norms) - 1].set_time(first_time)
-                    self.do_redraw(direction="down", transitions=transitions)
-                else:                         
-                    last_time = norms[len(norms) - 1].time
-                    for i in range(len(norms) - 1, 0, -1):
-                        norms[i].set_time(norms[i - 1].time)
-                    norms[0].set_time(last_time)
-                    self.do_redraw(direction="up", transitions=transitions)
-            else:                    
-                self.do_redraw(direction=None, transitions=transitions) 
                 
     def index(self, page):
         i = 0
@@ -158,93 +148,88 @@ class G15Screen():
         for page in self.pages:
             if page.id == id:
                 return page
+            
+    def clear_popup(self):
+        for page in self.pages:
+            if page.priority == PRI_POPUP:
+                # Drop the priority of other popups
+                page.set_priority(PRI_LOW)
+                break
         
-    def new_page(self, painter, priority=PRI_NORMAL, on_shown=None, on_hidden=None, id="Unknown", hide_after=0.0, use_cairo=False):
-        if priority == PRI_EXCLUSIVE:
-            for page in self.pages:
-                if page.priority == PRI_EXCLUSIVE:
-                    print "WARNING: Another page is already exclusive. Lowering %s to HIGH" % id
-                    priority = PRI_HIGH
-                    break
-        page = G15Page(painter, id, priority, time.time(), on_shown, on_hidden, use_cairo)
-        self.pages.append(page)    
-        if hide_after != 0.0:
-            return (self.hide_after(hide_after, draw), draw)
-        return page
+    def new_page(self, painter, priority=PRI_NORMAL, on_shown=None, on_hidden=None, 
+                 id="Unknown", thumbnail_painter = None, panel_painter = None):
+        self.page_model_lock.acquire()
+        try :
+            self.clear_popup()
+            if priority == PRI_EXCLUSIVE:
+                for page in self.pages:
+                    if page.priority == PRI_EXCLUSIVE:
+                        print "WARNING: Another page is already exclusive. Lowering %s to HIGH" % id
+                        priority = PRI_HIGH
+                        break
+            page = G15Page(self, painter, id, priority, time.time(), on_shown, on_hidden, thumbnail_painter, panel_painter)
+            self.pages.append(page)   
+            for l in self.screen_change_listeners:
+                l.new_page(page) 
+            return page
+        finally:
+            self.page_model_lock.release()            
 
     def hide_after(self, hide_after, page):
-        timer = threading.Timer(hide_after, self.del_page, ([page]))
-        timer.setDaemon(True)
-        timer.name = "HideScreenTimer"
-        timer.start()
-        return timer
+        return g15util.schedule("HideScreen", hide_after, self.del_page, page)
     
     def set_priority(self, page, priority, revert_after=0.0, hide_after=0.0, do_redraw = True):
-        if page != None:
-            old_priority = page.priority
-            page.set_priority(priority)
-            if do_redraw:
-                self.redraw()        
-            if revert_after != 0.0:
-                # If the page was already reverting, restore the priority and cancel the timer
-                if page.id in self.reverting:
-                    old_priority = self.reverting[page.id][0]
-                    self.reverting[page.id][1].cancel()
-                    del self.reverting[page.id]                                        
-                    
-                # Start a new timer to revert
-                timer = threading.Timer(revert_after, self.set_priority, ([page, old_priority]))
-                self.reverting[page.id] = (old_priority, timer)
-                timer.start()
-                return timer
-            if hide_after != 0.0:                    
-                return self.hide_after(hide_after, page)
+        self.page_model_lock.acquire()
+        try :
+            if page != None:
+                old_priority = page.priority
+                page.set_priority(priority)
+                if do_redraw:
+                    self.redraw()        
+                if revert_after != 0.0:
+                    # If the page was already reverting, restore the priority and cancel the timer
+                    if page.id in self.reverting:
+                        old_priority = self.reverting[page.id][0]
+                        self.reverting[page.id][1].cancel()
+                        del self.reverting[page.id]                                        
+                        
+                    # Start a new timer to revert                    
+                    timer = g15util.schedule("Revert", hide_after, self.set_priority, page, old_priority)
+                    self.reverting[page.id] = (old_priority, timer)
+                    return timer
+                if hide_after != 0.0:                    
+                    return self.hide_after(hide_after, page)
+        finally:
+            self.page_model_lock.release()   
     
-    def raise_page(self, canvas):
-        self.get_page(canvas).set_time(time.time())
+    def raise_page(self, page):
+        if page.priority == PRI_LOW:
+            page.set_priority(PRI_POPUP)
+        else:
+            page.set_time(time.time())
         self.redraw()
             
     def del_page(self, page):
-        if page != None:
-            if page == self.current_page:
-                callback = page.on_hidden
-                if callback != None:
-                    callback()
-                self.current_page = None
-            if page in self.pages:
-                self.pages.remove(page)
-            else:
-                print "WARNING: Huh, page not in list of known pages. Probably a badly behaving plugin removing a page twice"
-            self.redraw()
+        self.page_model_lock.acquire()
+        try :
+            if page != None:
+                if page == self.visible_page:
+                    callback = page.on_hidden
+                    if callback != None:
+                        callback()
+                    self.visible_page = None
+                self.pages.remove(page)                    
+                self.redraw()                   
+                for l in self.screen_change_listeners:
+                    l.del_page(page) 
+        finally:
+            self.page_model_lock.release()
             
     def is_visible(self, page):
-        return self.get_current_page() == page
-            
-    def get_current_page(self):
-        srt = sorted(self.pages, key=lambda key: key.value, reverse = True)
-        if len(srt) > 0:
-            return srt[0]
-        
-    def sort(self):
-        return sorted(self.pages, key=lambda page: page.value, reverse=True)
+        return self._get_next_page_to_display() == page
     
-    def cycle_to(self, page, transitions = True):
-        self.jobqueue.run(self.do_cycle_to, page, transitions)
-        
-    def do_cycle_to(self, page, transitions = True):
-        dir = 1
-        if self.pages.index(page) > self.pages.index(self.current_page):
-            dir = -1
-        while page != self.current_page:
-            self.do_cycle(dir, transitions)
-            
-    def redraw(self, page = None, direction="up", transitions = True):
-        self.jobqueue.run(self.do_redraw, page, direction, transitions)
-                
-    def do_redraw(self, page = None, direction="up", transitions = True):
-        current_page = self.get_current_page()
-        if page == None or page == current_page:
-            self.draw_page(current_page, direction, transitions)
+    def get_visible_page(self):
+        return self.visible_page
 
     def set_painter(self, painter):
         o_painter = self.painter_function
@@ -266,49 +251,66 @@ class G15Screen():
         self.transition_function = transition
         return o_transition
     
-    def get_default_foreground_as_ratios(self):
-        return self.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 255, 255, 255))
     
-    def get_color_as_ratios(self, hint, default):
-        return self.applet.driver.get_color_as_ratios(hint, default)
+    '''
+    Queued functions. 
+    '''
+    
+    def cycle_to(self, page, transitions = True):
+        self.cyclequeue.clear()
+        self.cyclequeue.run(self._do_cycle_to, page, transitions)
+            
+    def cycle(self, number, transitions = True):
+        self.cyclequeue.clear()
+        self.cyclequeue.run(self._do_cycle, number, transitions) 
+            
+    def redraw(self, page = None, direction="up", transitions = True):
+        current_page = self._get_next_page_to_display()
+        if page == None or page == current_page:
+            # Drop any redraws that are not required
+            self.jobqueue.clear()
+        self.jobqueue.run(self._do_redraw, page, direction, transitions)
+    
+    '''
+    Private functions
+    '''
         
-    def draw_page(self, visible_page, direction="down", transitions = True):        
-        # Don't bother trying to paint if the driver is not connected
+    def _draw_page(self, visible_page, direction="down", transitions = True):
+        
         if not self.applet.driver.is_connected():
             return
-            
-        # Everything is painted on top of white background
+                
         surface =  cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
         canvas = cairo.Context (surface)
         canvas.set_antialias(self.applet.driver.get_antialias())
-        rgb = self.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
+        rgb = self.applet.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
         canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
         canvas.rectangle(0, 0, self.width, self.height)
         canvas.fill()
-        rgb = self.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+        rgb = self.applet.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
         canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
         
         if self.background_painter_function != None:
             self.background_painter_function(canvas)
                 
         old_page = None
-        if visible_page != self.current_page:
-            old_page = self.current_page
-            if self.current_page != None:
-                self.current_page = visible_page
-                callback = self.current_page.on_hidden
+        if visible_page != self.visible_page:
+            old_page = self.visible_page
+            if self.visible_page != None:
+                self.visible_page = visible_page
+                callback = self.visible_page.on_hidden
                 if callback != None:
                     callback()
             else:                
-                self.current_page = visible_page
-            if self.current_page != None:
-                callback = self.current_page.on_shown
+                self.visible_page = visible_page
+            if self.visible_page != None:
+                callback = self.visible_page.on_shown
                 if callback != None:
                     callback()
         
         # Call the screen's painter
-        if self.current_page != None:
-            callback = self.current_page.painter
+        if self.visible_page != None:
+            callback = self.visible_page.painter
             if callback != None:
                 
                 # Scale to the available space, and center
@@ -334,7 +336,7 @@ class G15Screen():
                 
         # Run any transitions
         if transitions and self.transition_function != None and self.old_canvas != None:
-            self.transition_function(self.old_surface, surface, old_page, self.current_page, direction)
+            self.transition_function(self.old_surface, surface, old_page, self.visible_page, direction)
             
         # Now apply any global transformations and paint
         
@@ -345,3 +347,79 @@ class G15Screen():
             
         self.old_canvas = canvas
         self.old_surface = surface
+            
+    
+    def _do_cycle_to(self, page, transitions = True):            
+        self.page_model_lock.acquire()
+        try :
+            dir = 1
+            if page.priority < PRI_NORMAL:
+                self._do_redraw(page, "down", transitions)
+            else:
+                current = self._get_next_page_to_display()
+                if current != None and self.pages.index(page) > self.pages.index(current):
+                    dir = -1
+                while page != current:
+                    self._cycle(dir, transitions)
+                    current = self._get_next_page_to_display()
+                direction = "up"
+                if dir < 0:
+                    direction = "down"
+                self._do_redraw(current, direction=direction, transitions=transitions)
+        finally:
+            self.page_model_lock.release()
+                
+    def _do_cycle(self, number, transitions = True):            
+        self.page_model_lock.acquire()
+        try :
+            self._cycle(number, transitions)
+            dir = "up"
+            if number < 0:
+                dir = "down"
+            self._do_redraw(self._get_next_page_to_display(), direction=dir, transitions=transitions)
+        finally:
+            self.page_model_lock.release()
+            
+    def _cycle(self, number, transitions = True):
+        if len(self.pages) > 0:            
+            norms = []
+            # We only cycle pages of normal priority
+            for page in self._sort():
+                if page.priority == PRI_NORMAL:
+                    norms.append(page)
+            
+            if len(norms) > 0:                    
+                if number < 0:
+                    for n in range(number, 0):                    
+                        first_time = norms[0].time
+                        for i in range(0, len(norms) - 1):
+                            norms[i].set_time(norms[i + 1].time)
+                        norms[len(norms) - 1].set_time(first_time)
+                else:                         
+                    for n in range(0, number):
+                        last_time = norms[len(norms) - 1].time
+                        for i in range(len(norms) - 1, 0, -1):
+                            norms[i].set_time(norms[i - 1].time)
+                        norms[0].set_time(last_time)
+                
+    def _do_redraw(self, page = None, direction="up", transitions = True):   
+        try :           
+            self.page_model_lock.acquire()
+            current_page = self._get_next_page_to_display()
+            if page == None or page == current_page:
+                self._draw_page(current_page, direction, transitions)
+        finally:
+            self.page_model_lock.release()
+        
+    def _sort(self):
+        return sorted(self.pages, key=lambda page: page.value, reverse=True)
+    
+    def _get_next_page_to_display(self):
+        self.page_model_lock.acquire()
+        try :
+            srt = sorted(self.pages, key=lambda key: key.value, reverse = True)
+            if len(srt) > 0:
+                return srt[0]
+        finally:            
+            self.page_model_lock.release()
+    

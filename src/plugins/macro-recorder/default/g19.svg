@@ -61,8 +61,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="101.10937"
-     inkscape:cy="113.13461"
+     inkscape:cx="17.014171"
+     inkscape:cy="119.7006"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -101,32 +101,25 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(-9.5477353,-786.11217)">
-    <g
-       id="g3000"
-       transform="translate(-179,3)">
-      <rect
-         transform="translate(9.5477353,-21.250013)"
-         ry="11.999999"
-         rx="11.999999"
-         y="897.36218"
-         x="190.43784"
-         height="115.20679"
-         width="119.51781"
-         id="rect2985-2"
-         style="fill:#000000;fill-opacity:0.48557691;stroke:#000000;stroke-width:0.90452373;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0" />
-      <image
-         sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/macro-recorder/default/${icon}"
-         xlink:href="${icon}"
-         style="filter:url(#filter3967)"
-         height="95"
-         width="99.562164"
-         id="image4256"
-         x="200.43784"
-         y="907.36218"
-         transform="translate(9.5477353,-21.250013)" />
-    </g>
     <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+       style="fill:#808080;fill-opacity:0.48557690999999997;stroke:#000000;stroke-width:0.90452372999999997;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0;"
+       id="rect2985-2"
+       width="119.51781"
+       height="115.20679"
+       x="20.985577"
+       y="879.11218"
+       rx="11.999999"
+       ry="11.999999" />
+    <image
+       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/macro-recorder/default/${icon}"
+       xlink:href="${icon}"
+       height="95"
+       width="99.562164"
+       id="image4256"
+       x="30.985577"
+       y="889.11218" />
+    <rect
+       style="fill:#808080;fill-opacity:0.50196081;stroke:none"
        id="rect3031-9"
        width="250"
        height="50"
@@ -138,12 +131,12 @@
     <image
        sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/macro-recorder/default/${profile_icon}"
        xlink:href="${profile_icon}"
-       transform="matrix(0.4765625,0,0,0.4765625,28.547735,807.11217)"
-       id="image3050"
+       height="64"
        width="64"
-       height="64" />
+       id="image3050"
+       transform="matrix(0.4765625,0,0,0.4765625,28.547735,807.11217)" />
     <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+       style="fill:#808080;fill-opacity:0.50196078000000000;stroke:none"
        id="rect3031"
        width="250"
        height="50"
@@ -154,7 +147,7 @@
        ry="12.000001" />
     <text
        xml:space="preserve"
-       style="font-size:20px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       style="font-size:20px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
        x="59.400528"
        y="39.285713"
        id="text3801"
@@ -166,7 +159,7 @@
          y="39.285713">${profile}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:20px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       style="font-size:20px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
        x="156.63686"
        y="39.285713"
        id="text3801-7"
@@ -177,7 +170,7 @@
          x="156.63686"
          y="39.285713">${memory}</tspan></text>
     <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+       style="fill:#808080;fill-opacity:0.50196078000000000;stroke:none"
        id="rect3012"
        width="175"
        height="160"

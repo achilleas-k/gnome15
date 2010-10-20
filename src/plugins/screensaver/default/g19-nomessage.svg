@@ -62,7 +62,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
      inkscape:cx="169.04213"
-     inkscape:cy="101.26531"
+     inkscape:cy="107.8313"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -102,7 +102,7 @@
      id="layer1"
      transform="translate(-9.5477353,-786.11217)">
     <rect
-       style="fill:#000000;fill-opacity:0.49411765;stroke:none"
+       style="fill:#696969;fill-opacity:0.49411765000000002;stroke:none"
        id="rect3058"
        width="235"
        height="225"
@@ -114,9 +114,9 @@
     <image
        sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/screensaver/default/${icon}"
        xlink:href="${icon}"
-       transform="matrix(0.85416667,0,0,0.85416667,74.547735,801.11217)"
-       width="240"
+       id="image3055"
        height="240"
-       id="image3055" />
+       width="240"
+       transform="matrix(0.85416667,0,0,0.85416667,74.547735,801.11217)" />
   </g>
 </svg>

@@ -93,13 +93,11 @@ class G15MacroRecorder():
         self.screen = screen
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
-        self.hide_timer = None
         self.record_key = None
         self.record_thread = None
         self.last_keys = None
         self.page = None
         self.key_down = None
-        self.script_model = []
     
     def activate(self):
         self.reload_theme()
@@ -133,12 +131,12 @@ class G15MacroRecorder():
                 
         return False
     
-    def start_recording(self):
-        if self.hide_timer != None:
-            self.hide_timer.cancel()
-            self.hide_recorder(0.0)    
-            
-        self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_EXCLUSIVE,  id="Macro Recorder", use_cairo="True")
+    def start_recording(self):      
+        self.script_model = []      
+        self.page = self.screen.get_page("Macro Recorder")
+        if self.page == None:
+            self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_EXCLUSIVE,  id="Macro Recorder")
+        self.page.title = "Macro Recorder"
         self.icon = "media-record"
         self.message = None
         self.screen.redraw(self.page)
@@ -175,12 +173,12 @@ class G15MacroRecorder():
         self.hide_recorder()
 
     def hide_recorder(self, after = 0.0):
-        if after == 0.0:
+        if after == 0.0:   
+            print "Hiding recorder immediately"
             self.screen.del_page(self.page)
-            self.page = None
-            self.hide_timer = None 
         else:
-            self.hide_timer = self.screen.hide_after(after, self.page)
+            print "Hiding recorder in",after
+            self.screen.hide_after(after, self.page)
             
     def halt_recorder(self):        
         if self.record_thread != None:
@@ -190,15 +188,22 @@ class G15MacroRecorder():
         self.record_thread = None
             
     def done_recording(self):
-        if self.record_keys != None:   
+        if self.record_keys != None:
+            record_keys = self.record_keys    
+            print "Halting recording"
+            self.halt_recorder()   
+              
             active_profile = g15profile.get_active_profile()
-            key_name = ", ".join(g15util.get_key_names(self.record_keys))
+            key_name = ", ".join(g15util.get_key_names(record_keys))
             print list(self.script_model)
             if len(self.script_model) == 0:  
+                print "Deleting macro"
                 self.icon = "edit-delete"
                 self.message = key_name + " deleted"
-                active_profile.delete_macro(self.screen.get_mkey(), self.record_keys)
-                self.screen.redraw(self.page)                
+                active_profile.delete_macro(self.screen.get_mkey(), record_keys)  
+                print "Deleted macro, redrawing"
+                self.screen.redraw(self.page)   
+                print "Deleted macro, redrawn"             
             else:
                 str = ""
                 for row in self.script_model:
@@ -207,9 +212,9 @@ class G15MacroRecorder():
                     str += row[0] + " " + row[1]       
                 self.icon = "tag-new"   
                 self.message = key_name + " created"                
-                active_profile.create_macro(self.screen.get_mkey(), self.record_keys, key_name, str)
+                active_profile.create_macro(self.screen.get_mkey(), record_keys, key_name, str)
                 self.screen.redraw(self.page)
-            self.halt_recorder()
+            print "Hiding recording"
             self.hide_recorder(3.0)    
         else:
             self.hide_recorder()     

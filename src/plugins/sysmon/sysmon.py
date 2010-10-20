@@ -74,7 +74,8 @@ class G15SysMon():
         self.max_recv = 1 
                       
         self.reload_theme()
-        self.page = self.screen.new_page(self.paint, id="System Monitor", on_shown=self.on_shown, on_hidden=self.on_hidden, use_cairo=True)
+        self.page = self.screen.new_page(self.paint, id="System Monitor", on_shown=self.on_shown, on_hidden=self.on_hidden)
+        self.page.set_title("System Monitor")
         self.screen.redraw(self.page)
             
     def on_shown(self):
@@ -124,19 +125,23 @@ class G15SysMon():
         properties["mem_free_k"] = "%f" % self.free
         properties["mem_used_k"] = "%f" % self.used
         properties["mem_cached_k"] = "%f" % self.cached
+        properties["mem_noncached_k"] = "%f" % self.noncached
           
         properties["mem_total_mb"] = "%.2f" % ( self.total / 1024 )
         properties["mem_free_mb"] = "%.2f" % ( self.free / 1024 ) 
         properties["mem_used_mb"] = "%.2f" % ( self.used / 1024 ) 
-        properties["mem_cached_mb" ] = "%3d" % ( self.cached / 1024 )
+        properties["mem_cached_mb" ] = "%3d" % ( self.cached / 1024 ) 
+        properties["mem_noncached_mb" ] = "%3d" % ( self.noncached / 1024 )
           
         properties["mem_total_gb"] = "%.1f" % ( self.total / 1024  / 1024 )
         properties["mem_free_gb"] = "%.1f" % ( self.free / 1024  / 1024 ) 
         properties["mem_used_gb"] = "%.1f" % ( self.used / 1024  / 1024 ) 
-        properties["mem_cached_gb" ] = "%.1f" % ( self.cached / 1024 / 1024 )
+        properties["mem_cached_gb" ] = "%.1f" % ( self.cached / 1024 / 1024 ) 
+        properties["mem_noncached_gb"] = "%.1f" % ( self.noncached / 1024  / 1024 ) 
         
         properties["mem_used_pc"] = int(self.used * 100.0 / self.total)
         properties["mem_cached_pc"] = int(self.cached * 100.0 / self.total)
+        properties["mem_noncached_pc"] = int(self.noncached * 100.0 / self.total)
         
         properties["net_recv_pc"] = int(self.recv_bps * 100.0 / self.max_recv)
         properties["net_send_pc"] = int(self.send_bps * 100.0 / self.max_send)
@@ -206,6 +211,7 @@ class G15SysMon():
         self.free = float(mem['MemFree'])
         self.used = self.total - self.free
         self.cached = float(mem['Cached'])
+        self.noncached = self.total - self.free - self.cached
         
         '''
         Update data sets

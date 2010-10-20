@@ -44,7 +44,6 @@ class Driver(g15driver.AbstractDriver):
         self.mode = self.conf_client.get_string("/apps/gnome15/gtk_mode")
         if self.mode == None or self.mode == "":
             self.mode = g15driver.MODEL_G19
-        print "GTK driver mode " + self.mode
         
         if self.mode == g15driver.MODEL_G15_V1 or self.mode == g15driver.MODEL_G15_V2 or self.mode == g15driver.MODEL_G13:
             self.controls = g15.controls
@@ -80,7 +79,7 @@ class Driver(g15driver.AbstractDriver):
         
         self.main_window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.main_window.set_title("Gnome15") 
-        self.main_window.set_icon_from_file(pglobals.image_dir + "/g15key.png")
+        self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
         self.main_window.add(vbox)
         self.main_window.connect("delete-event", self.window_closed)
         self.hboxes.append(self.main_window)
@@ -100,9 +99,7 @@ class Driver(g15driver.AbstractDriver):
         return self.main_window.get_visible()
         
     def window_closed(self, window, evt):
-        print "Window closed"
         if self.on_close != None:
-            print "Not retrying"
             self.on_close(retry=False)
     
     def get_model_names(self):

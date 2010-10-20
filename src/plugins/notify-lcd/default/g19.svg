@@ -62,14 +62,14 @@
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
      inkscape:cx="13.731178"
-     inkscape:cy="89.901089"
+     inkscape:cy="96.46708"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2409"
+     inkscape:window-x="2405"
      inkscape:window-y="80"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -102,7 +102,7 @@
      id="layer1"
      transform="translate(-9.5477353,-786.11217)">
     <rect
-       style="fill:#000000;fill-opacity:0.48557691;stroke:#000000;stroke-width:0.90452373;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0"
+       style="fill:#696969;fill-opacity:0.48557690999999997;stroke:#000000;stroke-width:0.90452372999999997;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0"
        id="rect2985-2"
        width="119.51781"
        height="115.20679"
@@ -114,15 +114,15 @@
     <image
        sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/notify-lcd/default/${icon}"
        xlink:href="${icon}"
-       transform="translate(9.5477353,-21.250013)"
-       y="907.36218"
-       x="200.43784"
-       id="image4256"
-       width="99.562164"
+       style="filter:url(#filter3967)"
        height="95"
-       style="filter:url(#filter3967)" />
+       width="99.562164"
+       id="image4256"
+       x="200.43784"
+       y="907.36218"
+       transform="translate(9.5477353,-21.250013)" />
     <rect
-       style="fill:#000000;fill-opacity:0.48557691;stroke:#000000;stroke-width:0.90452361;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0"
+       style="fill:#696969;fill-opacity:0.48557690999999997;stroke:#000000;stroke-width:0.90452361000000003;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0"
        id="rect2985-2-0-5"
        width="300"
        height="49.999992"
@@ -144,7 +144,7 @@
          x="155.90094"
          y="862.34979">${title}</tspan></text>
     <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+       style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
        id="rect3012"
        width="170"
        height="114.08372"

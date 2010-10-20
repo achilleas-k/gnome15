@@ -36,6 +36,7 @@ class G15Config:
         
         self.plugin_key = "/apps/gnome15/plugins"
         self.selected_id = None
+        self.conf_client = gconf.client_get_default()
         
         # Load main Glade file
         g15Config = os.path.join(pglobals.glade_dir, 'g15-config.glade')        
@@ -55,10 +56,9 @@ class G15Config:
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
-        self.main_window.set_icon_from_file(os.path.join(pglobals.image_dir,'g15key.png'))
+        self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
         
         # Monitor gconf
-        self.conf_client = gconf.client_get_default()
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
         self.conf_client.notify_add("/apps/gnome15/cycle_seconds", self.cycle_seconds_configuration_changed);
         self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.cycle_screens_configuration_changed);
@@ -119,6 +119,7 @@ class G15Config:
                 for i in [(0, 0, 0), (255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255) ]:
                     button = gtk.Button(" ")
                     button.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(i[0] <<8,i[1]  <<8,i[2]  <<8))
+                    button.modify_bg(gtk.STATE_PRELIGHT, gtk.gdk.Color(i[0] <<8,i[1]  <<8,i[2]  <<8))
                     button.connect("clicked", self.color_changed, control, i)
                     hbox.pack_start(button, False, False, 4)
                     button.show()
@@ -190,10 +191,7 @@ class G15Config:
             if mod.id == self.selected_id:
                 self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(len(self.plugin_model) - 1)))
         if len(self.plugin_model) > 0 and self.get_selected_plugin() == None:            
-            self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(0)))
-            
-        return 
-            
+            self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(0)))            
             
         self.select_plugin(None)
         
@@ -223,6 +221,7 @@ class G15Config:
             
     def select_plugin(self, widget):       
         plugin = self.get_selected_plugin()
+        print "Selected plugin",plugin
         if plugin != None:  
             self.selected_id = plugin.id
             self.widget_tree.get_object("PluginNameLabel").set_text(plugin.name)
@@ -232,14 +231,9 @@ class G15Config:
             self.widget_tree.get_object("SiteLabel").set_uri(plugin.site)
             self.widget_tree.get_object("SiteLabel").set_label(plugin.site)
             self.widget_tree.get_object("PreferencesButton").set_sensitive(plugin.has_preferences)
+            self.widget_tree.get_object("PluginDetails").set_visible(True)
         else:
-            self.widget_tree.get_object("PluginNameLabel").set_text("")
-            self.widget_tree.get_object("DescriptionLabel").set_text("")
-            self.widget_tree.get_object("AuthorLabel").set_text("")
-            self.widget_tree.get_object("CopyrightLabel").set_text("")
-            self.widget_tree.get_object("SiteLabel").set_uri("http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/")
-            self.widget_tree.get_object("SiteLabel").set_label("http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/")
-            self.widget_tree.get_object("PreferencesButton").set_sensitive(False)
+            self.widget_tree.get_object("PluginDetails").set_visible(False)
 
     def set_cycle_seconds_value_from_configuration(self):
         val = self.conf_client.get("/apps/gnome15/cycle_seconds")

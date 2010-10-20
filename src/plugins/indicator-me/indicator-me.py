@@ -82,7 +82,7 @@ class G15IndicatorMe():
         page = self.screen.get_page("Indicator Me")
         if page == None:
             self.reload_theme()
-            page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="Indicator Me", use_cairo=True)
+            page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="Indicator Me")
             self.hide_timer = self.screen.hide_after(3.0, page)
         else:
             self.hide_timer.cancel()

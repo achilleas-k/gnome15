@@ -3,6 +3,8 @@ gnome15dir = $(pkgpythondir)
 gnome15_PYTHON = 		\
 	__init__.py \
 	g15_applet.py \
+	g15_indicator.py \
+	g15_service.py \
 	g15_config.py \
 	g15_driver.py \
 	g15_globals.py \

@@ -18,14 +18,21 @@ THIS HAS TURNED INTO A DUMPING GROUND AND NEEDS REFACTORING
 '''
 
 import g15_driver as g15driver
+import g15_globals as pglobals
 import gtk.gdk
 import gobject
 import array
+import os
 import cairo
+import pangocairo
+import pango
 import struct
 import math
 import Image
 import rsvg
+import urllib
+import base64
+
 from threading import Timer
 import xdg.IconTheme as icons
 import xdg.Config as config
@@ -210,36 +217,105 @@ def flip_hv_centered_on(context, fx, fy, cx, cy):
     context.transform(mtrx)
 
 def load_surface_from_file(filename, size = None):
-    if filename.endswith(".svg"):
-        svg = rsvg.Handle(filename)
-        svg_size = svg.get_dimension_data()[2:4]
-        if size == None:
-            size = svg_size
-        surface = cairo.ImageSurface(0, int(size[0]), int(size[1]))
-        context = cairo.Context(surface)
-        if size != svg_size:
-            scale = get_scale(size, svg_size)
-            context.scale(scale, scale)
-        svg.render_cairo(context)
-        return surface, context
+    if "://" in filename:
+        file = urllib.urlopen(filename)
+        data = file.read()
+        pbl = gtk.gdk.pixbuf_loader_new_with_mime_type(file.info().gettype())
+        pbl.write(data)
+        pixbuf = pbl.get_pixbuf()
+        pbl.close()
+        return pixbuf_to_surface(pixbuf, size)    
     else:
-        pixbuf = gtk.gdk.pixbuf_new_from_file(filename)
-        x = pixbuf.get_width()
-        y = pixbuf.get_height()
-        scale = get_scale(size, (x, y))        
-        surface = cairo.ImageSurface(0, int(x * scale), int(y * scale))
-        context = cairo.Context(surface)
-        gdk_context = gtk.gdk.CairoContext(context) 
-        if size != None:
-            gdk_context.scale(scale, scale)
-        gdk_context.set_source_pixbuf(pixbuf,0,0)
-        gdk_context.paint()
-        gdk_context.scale(1 / scale, 1 / scale)
-        return surface, context
+        if filename.endswith(".svg"):
+            svg = rsvg.Handle(filename)
+            svg_size = svg.get_dimension_data()[2:4]
+            if size == None:
+                size = svg_size
+            surface = cairo.ImageSurface(0, int(size[0]), int(size[1]))
+            context = cairo.Context(surface)
+            if size != svg_size:
+                scale = get_scale(size, svg_size)
+                context.scale(scale, scale)
+            svg.render_cairo(context)
+            return surface, context
+        else:
+            return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
+        
+def pixbuf_to_surface(pixbuf, size):
+    x = pixbuf.get_width()
+    y = pixbuf.get_height()
+    scale = get_scale(size, (x, y))        
+    surface = cairo.ImageSurface(0, int(x * scale), int(y * scale))
+    context = cairo.Context(surface)
+    gdk_context = gtk.gdk.CairoContext(context) 
+    if size != None:
+        gdk_context.scale(scale, scale)
+    gdk_context.set_source_pixbuf(pixbuf,0,0)
+    gdk_context.paint()
+    gdk_context.scale(1 / scale, 1 / scale)
+    return surface, context
     
 '''
 Icon utilities
 '''
+
+def local_icon_or_default(icon_name, size = 128):
+    path = icon_name    
+    if pglobals.dev:
+        last_sz = -1
+        for sz in [ 16, 22, 24, 32, 64, -1 ]:
+            name = "%sx%s" % ( sz, sz )
+            if sz == -1:
+                name = "scalable"
+            sz_dir = os.path.join(pglobals.icons_dir, name)
+            found = None
+            if os.path.exists(sz_dir):
+                for dir in os.listdir(sz_dir):
+                    for e in [ "svg", "png", "gif" ]:
+                        ipath = os.path.join(os.path.join(sz_dir, dir), icon_name + "." + e)
+                        if os.path.exists(ipath):
+                            found = ipath
+                            break
+                    if found != None:
+                        break
+                        
+                if found != None and ( sz == -1 or ( size != None and sz <= size ) ):
+                    path = found
+
+            
+    return path
+
+
+def get_embedded_image_url(path):
+    
+    file_str = StringIO()
+    img_data = StringIO()
+    file_str.write("data:")
+    
+    if isinstance(path, cairo.Surface):
+        # Cairo canvas
+        file_str.write("image/png")
+        path.write_to_png(img_data)
+    else:
+        print path
+        if not "://" in path:
+            # File
+            surface, context = load_surface_from_file(path)
+            file_str.write("image/png")
+            surface.write_to_png(img_data)
+        else:
+            # URL        
+            pagehandler = urllib.urlopen(path)
+            file_str.write(pagehandler.info().gettype())
+            while 1:
+                data = pagehandler.read(512)
+                if not data:
+                    break
+                img_data.write(data)
+    
+    file_str.write(";base64,")
+    file_str.write(base64.b64encode(img_data.getvalue()))
+    return file_str.getvalue()
 
 def get_icon_path(gconf_client, icon, size = None):
     icon_theme = gconf_client.get_string("/desktop/gnome/interface/icon_theme")
@@ -251,7 +327,12 @@ def get_icon_path(gconf_client, icon, size = None):
     real_icon_file = icons.getIconPath(icon, theme=icon_theme, size = i_size)
     if real_icon_file != None:
         return real_icon_file
-
+    
+def get_app_icon(gconf_client, icon, size = 128):
+    icon_path = get_icon_path(gconf_client, icon, size)
+    if icon_path == None:
+        icon_path = gtk.gdk.pixbuf_new_from_file(os.path.join(pglobals.icons_dir, icon + '.svg'))
+    return icon_path
 
 def get_icon(gconf_client, icon, size = None):
     real_icon_file = get_icon_path(gconf_client, icon, size)
@@ -271,6 +352,17 @@ def get_icon(gconf_client, icon, size = None):
         return img
     
 '''
+Thumbnails
+'''
+def paint_thumbnail_image(allocated_size, image, canvas):
+    s = float(allocated_size) / image.get_height()
+    canvas.scale(s, s)
+    canvas.set_source_surface(image)
+    canvas.paint()
+    canvas.scale(1 / s, 1 / s)
+    return image.get_width() * s
+    
+'''
 Various maths
 '''
         
@@ -285,6 +377,46 @@ def get_scale(target, actual):
             sy = float(target[1]) / actual[1]
         scale = max(sx, sy)
     return scale
+
+'''
+Pango
+'''
+             
+def create_pango_context(canvas, screen, text, wrap = None, align = None, width = None, spacing = None, font_desc = None, font_absolute_size = None):
+    pango_context = pangocairo.CairoContext(canvas)
+    
+    # Font options, set anti-alias
+    pango_context.set_antialias(screen.driver.get_antialias()) 
+    fo = cairo.FontOptions()
+    fo.set_antialias(screen.driver.get_antialias())
+    if screen.driver.get_antialias() == cairo.ANTIALIAS_NONE:
+        fo.set_hint_style(cairo.HINT_STYLE_NONE)
+        fo.set_hint_metrics(cairo.HINT_METRICS_OFF)                
+    layout = pango_context.create_layout()            
+    pangocairo.context_set_font_options(layout.get_context(), fo)
+    
+    # Font
+    font_desc = pango.FontDescription("Sans 10" if font_desc == None else font_desc)
+    if font_absolute_size != None:
+        font_desc.set_absolute_size(font_absolute_size)
+    layout.set_font_description(font_desc)
+    
+    # Layout
+    if align != None:
+        layout.set_alignment(align)
+    if spacing != None:
+        layout.set_spacing(spacing)
+    if width != None:
+        layout.set_width(width)
+    if wrap != None:
+        layout.set_wrap(wrap)      
+    layout.set_text(text)
+    canvas.set_source_rgb(*screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 )))
+    return pango_context, layout
+
+def get_extents(layout):
+   text_extents = layout.get_extents()[1]
+   return text_extents[0] / pango.SCALE, text_extents[1] / pango.SCALE, text_extents[2] / pango.SCALE, text_extents[3] / pango.SCALE 
 
 '''
 SVG utilties
@@ -325,7 +457,7 @@ def get_transforms(element, position_only = False):
                 else:
                     list.append(cairo.Matrix(1, 0, 0, 1, float(args[4]),float(args[5])))
             else:
-                print "Unspported transform %s" % name
+                print "WARNING: Unspported transform %s" % name
             start = end_args + 1
                 
     return list
@@ -347,7 +479,7 @@ def get_location(element):
                 name = transform_val[:start_args].lstrip()
                 end_args = transform_val.find(")", start_args)
                 if end_args == -1:
-                    print "Unexpected end of transform arguments"
+                    print "WARNING: Unexpected end of transform arguments"
                     break
                 args = transform_val[start_args + 1:end_args].split(",")
                 if name == "translate":
@@ -355,7 +487,7 @@ def get_location(element):
                 elif name == "matrix":
                     list.append((float(args[4]),float(args[5])))
                 else:
-                    print "Unspported transform %s" % name
+                    print "WARNING: Unspported transform %s" % name
                 start = end_args + 1
         element = element.getparent()
     list.reverse()
@@ -417,6 +549,9 @@ def image_to_pixbuf(im):
     pixbuf = loader.get_pixbuf()  
     loader.close()  
     return pixbuf
+
+def surface_to_pixbuf(surface):
+    return gtk.gdk.pixbuf_new_from_data(surface.get_data(), gtk.gdk.COLORSPACE_RGB, True, 8, surface.get_width(), surface.get_height(), surface.get_width() * 4)
 
 '''
 Convert a PIL image to a Cairo surface 

@@ -77,8 +77,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="-53.681838"
-     inkscape:cy="56.55236"
+     inkscape:cx="-172.61041"
+     inkscape:cy="65.838074"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -115,7 +115,7 @@
      id="layer1"
      transform="translate(0,-812.36218)">
     <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+       style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
        id="rect3925"
        width="300"
        height="30"
@@ -125,7 +125,7 @@
        rx="13.846153"
        ry="12" />
     <rect
-       style="opacity:1;fill:#000000;fill-opacity:0.50196081;stroke:none"
+       style="opacity:1;fill:#696969;fill-opacity:0.50196081000000004;stroke:none"
        id="rect3034"
        width="180"
        height="180"
@@ -146,10 +146,10 @@
     <image
        sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/volume/default/${icon}"
        xlink:href="${icon}"
-       id="image3884"
-       height="140"
-       width="140"
+       y="842.36218"
        x="90"
-       y="842.36218" />
+       width="140"
+       height="140"
+       id="image3884" />
   </g>
 </svg>

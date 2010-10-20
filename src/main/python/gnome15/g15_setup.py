@@ -17,6 +17,7 @@ import gtk
 import sys
 import os
 import g15_globals as pglobals
+import g15_util as g15util
 import gconf
 
 class G15Setup:
@@ -40,7 +41,7 @@ class G15Setup:
 
         # Widgets
         self.main_window = self.widget_tree.get_object("SetupDialog")
-        self.main_window.set_icon_from_file(os.path.join(pglobals.image_dir,'g15key.png'))
+        self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
         
         # Set up based on current configuration (if any), or set to defaults
         driver = self.conf_client.get_string("/apps/gnome15/driver")

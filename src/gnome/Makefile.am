@@ -1,1 +1,1 @@
-SUBDIRS = applications servers
+SUBDIRS = applications servers autostart

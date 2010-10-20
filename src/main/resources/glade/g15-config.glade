@@ -294,7 +294,7 @@
                     <property name="visible">True</property>
                     <property name="left_padding">8</property>
                     <child>
-                      <object class="GtkVBox" id="vbox14">
+                      <object class="GtkVBox" id="PluginDetails">
                         <property name="visible">True</property>
                         <child>
                           <object class="GtkLabel" id="PluginNameLabel">

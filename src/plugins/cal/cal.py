@@ -68,6 +68,7 @@ class StartUp(Thread):
         self.plugin.load_month_events(datetime.datetime.now())
         if not self.cancelled:
             self.plugin.page = self.plugin.screen.new_page(self.plugin.paint, priority=g15screen.PRI_NORMAL, on_shown=self.plugin.on_shown, on_hidden=self.plugin.on_hidden, id="Cal")
+            self.plugin.page.set_title("Evolution Calendar")
             self.plugin.screen.redraw(self.plugin.page)
             self.plugin.schedule_redraw()
 
@@ -153,16 +154,16 @@ class G15Cal():
         self.screen.redraw(self.page) 
                     
     def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP and self.screen.get_current_page() == self.page:
-            if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L2 in keys:
+        if not post and state == g15driver.KEY_STATE_UP and self.screen.get_visible_page() == self.page:
+            if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
                 self.screen.applet.resched_cycle()
                 self.adjust_calendar_date(-7)
                 return True
-            elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L3 in keys:
+            elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
                 self.screen.applet.resched_cycle()
                 self.adjust_calendar_date(7)
                 return True
-            elif g15driver.G_KEY_LEFT in keys or g15driver.G_KEY_L4 in keys:
+            elif g15driver.G_KEY_LEFT in keys or g15driver.G_KEY_L2 in keys:
                 self.screen.applet.resched_cycle()
                 self.adjust_calendar_date(-1)
                 return True

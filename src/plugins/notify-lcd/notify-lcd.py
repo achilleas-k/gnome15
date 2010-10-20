@@ -41,6 +41,7 @@ import tempfile
 
 from threading import Timer
 from threading import Thread
+from threading import RLock
 from dbus.exceptions import NameExistsException
 
 # Plugin details - All of these must be provided
@@ -76,22 +77,26 @@ def changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
         
 class BlinkThread(Thread):
-    def __init__(self, gconf_client, screen):
-        Thread.__init__(self)
+    def __init__(self, gconf_client, screen, control_values):
         self.gconf_client = gconf_client
         self.screen = screen
+        self.cancelled = False
+        self.control_values = control_values
+        Thread.__init__(self)
     
+    def cancel(self):
+        self.cancelled = True
         
     def run(self):
         controls = []
-        control_values = []
         for c in self.screen.driver.get_controls():
             if c.hint & g15driver.HINT_DIMMABLE != 0:
                 controls.append(c)
-                control_values.append(c.value)
         
         for j in range(0, 5):
             # Off
+            if self.cancelled:
+                break
             for c in controls:
                 if isinstance(c.value,int):
                     c.value = c.lower
@@ -103,6 +108,8 @@ class BlinkThread(Thread):
                 
             # On
             for c in controls:
+                if self.cancelled:
+                    break
                 if isinstance(c.value,int):
                     c.value = c.upper
                 else:
@@ -113,7 +120,7 @@ class BlinkThread(Thread):
             
         i = 0
         for c in controls:
-            c.value = control_values[i]
+            c.value = self.control_values[i]
             self.screen.driver.update_control(c)
             i += 1
         
@@ -126,10 +133,14 @@ class G15NotifyLCD(dbus.service.Object):
         self.last_variant = None
         self.gconf_key = gconf_key
         self.timer = None
+        self.hide_timer = None
         self.session_bus = dbus.SessionBus()
         self.gconf_client = gconf_client
         self.active = False
         self.bus = None
+        self.lock = RLock()
+        self.blink_thread = None
+        self.control_values = []
 
     def activate(self):
         self.id = 0
@@ -159,7 +170,7 @@ class G15NotifyLCD(dbus.service.Object):
     
     def deactivate(self):
         # TODO How do we 'unexport' a service?
-        print "Deactivated notify service. Note, the service will be free until applet process finishes"
+        print "Deactivated notify service. Note, the service will not be free until applet process finishes"
         self.active = False
         
     def destroy(self):
@@ -195,59 +206,67 @@ class G15NotifyLCD(dbus.service.Object):
         pass
 
     def notify(self, icon, summary, body, timeout, hints):
-        
-        self.embedded_image = None
-        if icon == None or icon == "":
-            if "image_data" in hints:
-                image_struct = hints["image_data"]
-                img_width = image_struct[0]
-                img_height = image_struct[1]
-                img_stride = image_struct[2]
-                has_alpha = image_struct[3]
-                bits_per_sample = image_struct[4]
-                channels = image_struct[5]
-                buf = ""
-                for b in image_struct[6]:
-                    buf += chr(b)
-                pixbuf = gtk.gdk.pixbuf_new_from_data(buf, gtk.gdk.COLORSPACE_RGB, has_alpha, bits_per_sample, img_width, img_height, img_stride)
-                fh, self.embedded_image = tempfile.mkstemp(suffix=".png",prefix="notify-lcd")
-                file = os.fdopen(fh)
-                file.close()
-                pixbuf.save(self.embedded_image, "png")
+        self.lock.acquire()
+        try :
+            if self.hide_timer != None:
+                self.hide_timer.cancel()
+            
+            self.embedded_image = None
+            if icon == None or icon == "":
+                if "image_data" in hints:
+                    image_struct = hints["image_data"]
+                    img_width = image_struct[0]
+                    img_height = image_struct[1]
+                    img_stride = image_struct[2]
+                    has_alpha = image_struct[3]
+                    bits_per_sample = image_struct[4]
+                    channels = image_struct[5]
+                    buf = ""
+                    for b in image_struct[6]:
+                        buf += chr(b)
+                    pixbuf = gtk.gdk.pixbuf_new_from_data(buf, gtk.gdk.COLORSPACE_RGB, has_alpha, bits_per_sample, img_width, img_height, img_stride)
+                    fh, self.embedded_image = tempfile.mkstemp(suffix=".png",prefix="notify-lcd")
+                    file = os.fdopen(fh)
+                    file.close()
+                    pixbuf.save(self.embedded_image, "png")
+                else:
+                    icon = g15util.get_icon_path(self.gconf_client, "dialog-info", (self.screen.height, self.screen.height))
+                
+            page = self.screen.get_page("NotifyLCD")
+            
+            if timeout <= 0.0:
+                timeout = 10.0
+                
+            # Which theme variant should we use
+            self.last_variant = ""
+            if body == None or body == "":
+                self.last_variant = "nobody"
+                
+            if page == None:
+                self.reload_theme()
+                page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="NotifyLCD")
+                self.hide_timer = self.screen.hide_after(timeout, page)
+                self.control_values = []
+                for c in self.screen.driver.get_controls():
+                    if c.hint & g15driver.HINT_DIMMABLE != 0:
+                        self.control_values.append(c.value)
             else:
-                icon = g15util.get_icon_path(self.gconf_client, "dialog-info", (self.screen.height, self.screen.height))
+                self.reload_theme()
+                self.hide_timer = self.screen.set_priority(page, g15screen.PRI_HIGH, hide_after = timeout)
+                
+            if self.gconf_client.get_bool(self.gconf_key + "/blink_keyboard_on_alert"):
+                self.blink_thread = BlinkThread(self.gconf_client, self.screen, self.control_values).start()
+    
+            if summary == None:
+                summary = "None"
+                
+            self.summary = summary
+            self.body = body
+            self.icon = icon
             
-        
-        if self.gconf_client.get_bool(self.gconf_key + "/blink_keyboard_on_alert"):
-            BlinkThread(self.gconf_client, self.screen).start()
-        
-        page = self.screen.get_page("NotifyLCD")
-        
-        if timeout <= 0.0:
-            timeout = 10.0
-            
-        # Which theme variant should we use
-        self.last_variant = ""
-        if body == None or body == "":
-            self.last_variant = "nobody"
-            
-        if page == None:
-            self.reload_theme()
-            page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="NotifyLCD", use_cairo=True)
-            self.hide_timer = self.screen.hide_after(timeout, page)
-        else:
-            self.reload_theme()
-            self.hide_timer.cancel()
-            self.hime_timer = self.screen.set_priority(page, g15screen.PRI_HIGH, hide_after = timeout)
-
-        if summary == None:
-            summary = "None"
-            
-        self.summary = summary
-        self.body = body
-        self.icon = icon
-        
-        self.screen.redraw(page)
+            self.screen.redraw(page)
+        finally:
+            self.lock.release()
         
     def reload_theme(self):        
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen, self.last_variant)

@@ -24,8 +24,10 @@ class JobQueue():
             self.args = args
             self.item = item
         
-    def __init__(self,number_of_workers=1,name="JobQueue"):
+    def __init__(self,number_of_workers=1,max_jobs=None,name="JobQueue"):
         self.work_queue = Queue.Queue()
+        self.max_jobs = max_jobs
+        self.lock = threading.Lock()
         for __ in range(number_of_workers):
             t = threading.Thread(target = self.worker)
             t.name = name
@@ -33,10 +35,24 @@ class JobQueue():
             t.start()
             
     def clear(self):
-        self.work_queue.clear()
+        try :
+            while True:
+                self.work_queue.get_nowait()
+        except Queue.Empty:
+            pass
             
     def run(self, item, *args):
-        self.work_queue.put(self.JobItem(item, args))
+        self.lock.acquire()
+        try :
+            if self.max_jobs != None:
+                try :
+                    while True:
+                        self.work_queue.get(False)
+                except Queue.Empty:
+                    pass
+            self.work_queue.put(self.JobItem(item, args))
+        finally :
+            self.lock.release()
             
     def worker(self):
         while True:

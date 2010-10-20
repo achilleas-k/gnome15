@@ -50,6 +50,11 @@ def create(gconf_key, gconf_client, screen):
 
 class G15MacroPage():
     def __init__(self, page_no, number_of_pages, plugin):
+        self.page = plugin.screen.new_page(self.paint, id="Macro Info %d" % page_no, 
+                                           on_shown=self.on_shown,on_hidden=self.on_hidden, 
+                                           thumbnail_painter = self.paint_thumbnail, 
+                                           panel_painter = self.paint_thumbnail)
+        self.page.set_title("Macros (page %d)" % ( page_no + 1 ) ) 
         self.page_no = page_no
         self.number_of_pages = number_of_pages
         self.plugin = plugin
@@ -72,6 +77,9 @@ class G15MacroPage():
             if i == 12:
                 i = 0
                 page_no += 1
+                
+        self.icon_path = self.plugin.get_active_profile_icon_path()
+        self.icon, ctx = g15util.load_surface_from_file(self.icon_path)
         
     def on_shown(self):
         self.hidden = False
@@ -85,11 +93,16 @@ class G15MacroPage():
                 return True
         return False
     
+    def paint_thumbnail(self, canvas, allocated_size, horizontal):
+        return g15util.paint_thumbnail_image(allocated_size, self.icon, canvas)
+    
     def paint(self, canvas):
+        
+        print "Redrawing macro page",self.page_no
         
         properties = {}
         properties["profile"] = self.plugin.active_profile.name
-        properties["icon"] = self.plugin.get_active_profile_icon_path()
+        properties["icon"] = self.icon_path
         
         width = self.plugin.screen.width
         
@@ -157,19 +170,32 @@ class G15Macro():
     
     def handle_key(self, keys, state, post):
         if post:
-            if state == g15driver.KEY_STATE_UP:
-                if self.screen.get_mkey() != self.mkey:
-                    self.mkey = self.screen.get_mkey()
-                    self.check_pages()
-                self.pressed = None
-            else:
-                self.pressed = keys            
-                for macro_page in self.macro_pages:
-                    if macro_page.contains_keys(keys):
-                        self.screen.cycle_to(macro_page.page)
-                
-            for macro_page in self.macro_pages:
-                self.screen.redraw(macro_page.page)
+            print "Handling macro key in macros"
+        
+# TODO
+#
+# This locks up the screen when the macro recorder finishes.
+# Apparently caused by the screen cycle
+#
+#            if state == g15driver.KEY_STATE_UP:
+#                print "Clearing pressed key"
+#                if self.screen.get_mkey() != self.mkey:
+#                    print "Changing bank"
+#                    self.mkey = self.screen.get_mkey()
+#                    self.check_pages()
+#                self.pressed = None
+#            else:
+#                print "Checking where to cycle to"
+#                self.pressed = keys            
+#                for macro_page in self.macro_pages:
+#                    if macro_page.contains_keys(keys):
+#                        print "Cycling to",macro_page.page.id
+#                        self.screen.cycle_to(macro_page.page)
+#                        return
+#                
+#            print "Checking where to cycle to"
+#            for macro_page in self.macro_pages:
+#                self.screen.redraw(macro_page.page)
         
     ''' Functions specific to plugin
     ''' 
@@ -184,9 +210,9 @@ class G15Macro():
         
     def check_pages(self):       
         active_profile = g15profile.get_active_profile()    
-        if active_profile == None:
+        if active_profile == None:    
             self.close_all_pages()
-        else:
+        else:    
             active_profile.load()
             macros = active_profile.macros[self.mkey - 1]
             no_pages = max(self.number_of_pages(len(macros), 12), 1)
@@ -196,12 +222,11 @@ class G15Macro():
                 self.current_page = 0
                 for i in range(no_pages -1, -1, -1):                
                     macro_page = G15MacroPage(i, no_pages, self)
-                    page = self.screen.new_page(macro_page.paint, id="Macro Info " + str(i), on_shown=macro_page.on_shown,on_hidden=macro_page.on_hidden, use_cairo=True)
-                    macro_page.page = page
                     self.macro_pages.append(macro_page)
                     
             self.active_profile = active_profile
             
+            print "Redrawing all macro pages"
             for macro_page in self.macro_pages:
                 macro_page.reset(active_profile)
                 self.screen.redraw(macro_page.page)
