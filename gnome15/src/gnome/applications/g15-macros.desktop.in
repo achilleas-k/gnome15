@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Logitech G Keyboard Macros
+Comment=Configure your Logitech G15 or G19 keyboard macros
+Exec=g15-macros
+Icon=gnome15
+Terminal=false
+StartupNotify=true
+Type=Application
+Categories=GNOME;GTK;Utility;Keyboard
+OnlyShowIn=GNOME;

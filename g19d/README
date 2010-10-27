@@ -1,0 +1,17 @@
+g19d 0.1
+========
+
+This daemon is intended as a stop gap until there is kernel support for the g19.
+It was based "Logitech-G19-Linux-Daemon" (http://github.com/MultiCoreNop/Logitech-G19-Linux-Daemon),
+the work of "MultiCoreNop" (http://github.com/MultiCoreNop).
+
+A daemon was added to allow userspace access from the Gnome15 project. See
+http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/ for more information.
+
+
+Requirements
+============
+
+Python 2.6
+PyUSB 0.4
+PIL (Python Image Library, just about any version should be ok)

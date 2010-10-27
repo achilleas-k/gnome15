@@ -1,0 +1,10 @@
+import os
+import sys
+
+name = "@PACKAGE_NAME@"
+version = "@PACKAGE_VERSION@"
+ 
+package_dir = os.path.abspath(os.path.dirname(__file__))
+data_dir = os.path.join(package_dir, "..")
+if not os.path.exists(os.path.join(data_dir, "g19daemon")):
+    data_dir = "@prefix@/share/g19d"

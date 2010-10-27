@@ -1,0 +1,14 @@
+Gnome15 g15daemon driver
+========================
+
+Provides support for the G15 keyboard via g15daemon
+
+Installation
+============
+
+See the 'INSTALL' file.
+
+How to report bugs
+==================
+
+See http://tanktarta.pwp.blueyonder.co.uk/gnome15

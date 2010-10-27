@@ -1,0 +1,265 @@
+#!/usr/bin/env python
+ 
+#        +-----------------------------------------------------------------------------+
+#        | GPL                                                                         |
+#        +-----------------------------------------------------------------------------+
+#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        |                                                                             |
+#        | This program is free software; you can redistribute it and/or               |
+#        | modify it under the terms of the GNU General Public License                 |
+#        | as published by the Free Software Foundation; either version 2              |
+#        | of the License, or (at your option) any later version.                      |
+#        |                                                                             |
+#        | This program is distributed in the hope that it will be useful,             |
+#        | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+#        | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+#        | GNU General Public License for more details.                                |
+#        |                                                                             |
+#        | You should have received a copy of the GNU General Public License           |
+#        | along with this program; if not, write to the Free Software                 |
+#        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+#        +-----------------------------------------------------------------------------+
+
+
+# Based on async example here http://swag.dk/blog/2008/02/21/asynchronous-socket-server-in-python/
+
+import asyncore
+import asynchat
+import socket
+import base64
+import time
+import os
+import sys
+import usb
+import signal
+import struct
+import uinput
+
+
+from g19d.g19 import G19
+from g19d.g19 import G19UsbController
+
+import g19d.g19_keys as g19keys
+import g19d.g19_globals as g19globals
+import g19d.g19_receivers as g19receivers
+
+import logging
+
+LEVELS = {'debug': logging.DEBUG,
+          'info': logging.INFO,
+          'warning': logging.WARNING,
+          'error': logging.ERROR,
+          'critical': logging.CRITICAL}
+
+class Lobby(g19receivers.InputProcessor):
+    def __init__(self, background_image):
+        self.clients = set()
+        self.background_image = background_image
+        
+        self.lg19 = G19(True)
+        
+        # Show the splash
+        self.show_splash()
+        
+        # Start listening for keys
+        self.lg19.add_input_processor(self)
+        self.lg19.start_event_handling()
+        self.device = uinput.Device()
+        self.device.capabilities = {
+                                    uinput.EV_KEY: (uinput.KEY_PLAYPAUSE, uinput.KEY_STOP, uinput.KEY_PREVIOUSSONG,
+                                                    uinput.KEY_NEXTSONG, uinput.KEY_MUTE, uinput.KEY_VOLUMEUP, uinput.KEY_VOLUMEDOWN),
+                                    }
+
+        
+    def process_input(self, input_event):
+        keys_down = input_event.keysDown
+        keys_up = input_event.keysUp
+        
+        keys_down = self.check_mm_key(keys_down, 1)
+        keys_up = self.check_mm_key(keys_up, 0)
+        
+        if len(keys_down) > 0 or len(keys_up) > 0:
+            buf = ""   
+            buf += chr(len(keys_down))
+            for key in keys_down:
+                buf += struct.pack("<L",key)
+            buf += chr(len(keys_up))
+            for key in keys_up:
+                buf += struct.pack("<L",key)
+                
+            logging.debug("Sending keys ->")
+            for c in buf:
+                logging.debug("   %d" % ord(c))
+            
+            self.send_key(buf)
+        
+    def check_mm_key(self, key_list, state):
+        keys = list(key_list)
+        for k in key_list:
+            if k == g19keys.Key.PLAY:
+                self.device.emit(uinput.EV_KEY, uinput.KEY_PLAYPAUSE, state)
+                keys.remove(k)
+            if k == g19keys.Key.STOP:
+                self.device.emit(uinput.EV_KEY, uinput.KEY_STOP, state)
+                keys.remove(k)
+            if k == g19keys.Key.PREV:
+                self.device.emit(uinput.EV_KEY, uinput.KEY_PREVIOUSSONG, state)
+                keys.remove(k)
+            if k == g19keys.Key.NEXT:
+                self.device.emit(uinput.EV_KEY, uinput.KEY_NEXTSONG, state)
+                keys.remove(k)
+            if k == g19keys.Key.MUTE:
+                self.device.emit(uinput.EV_KEY, uinput.KEY_MUTE, state)
+                keys.remove(k)
+            if k == g19keys.Key.SCROLL_DOWN:
+                self.device.emit(uinput.EV_KEY, uinput.KEY_VOLUMEDOWN, state)
+                keys.remove(k)
+            if k == g19keys.Key.SCROLL_UP:
+                self.device.emit(uinput.EV_KEY, uinput.KEY_VOLUMEUP, state)
+                keys.remove(k)
+        return keys
+        
+    def close(self):
+        self.lg19.fill_display_with_color(0, 0, 0)
+        time.sleep(1.0)
+        self.lg19.stop_event_handling()
+        for client in self.clients:
+            client.close()
+            
+    def show_splash(self):        
+        self.lg19.send_frame(self.lg19.convert_image_to_frame(self.background_image))
+ 
+    def leave(self, client):
+        logging.debug('Client left')
+        if client in self.clients:
+            self.clients.remove(client)
+        if len(self.clients) == 0:       
+            logging.debug('No clients left, showing splash')
+            self.show_splash()
+            
+    def send_key(self, buf):
+        logging.debug("Sending data to clients")
+        for client in self.clients:
+            if client.receive_key_events:
+                logging.debug("Sending to %s" % str(client))
+                client.out_buffer += buf
+ 
+    def join(self, client):
+        self.clients.add(client)
+ 
+class Client(asyncore.dispatcher):
+    def __init__(self, conn, lobby):
+        asyncore.dispatcher.__init__(self, sock=conn)
+        self.out_buffer  = ""
+        self.img_buffer = None
+ 
+        self.receive_key_events = False
+        self.lobby = lobby
+        self.lobby.join(self)
+        
+    def handle_close(self):
+        self.lobby.leave(self)
+        self.close()
+ 
+    def handle_read(self):
+        if self.img_buffer != None:
+            recv = self.recv(153600 - len(self.img_buffer))
+            self.img_buffer += recv
+            if len(self.img_buffer) == 153600:       
+                now = time.time()
+                self.lobby.lg19.send_frame(self.img_buffer)       
+                logging.debug('Painted frame, took %s ms' % str(time.time() - now))
+                self.img_buffer = None
+            elif len(self.img_buffer) > 153600:
+                logging.warn('Received bad frame (%d bytes), should be 153600' % len(self.img_buffer))
+        else:
+            cmd = self.recv(1)
+            if cmd == "B":
+                col = self.recv(3)       
+                logging.debug('Setting keyboard backlight to r=%d  g=%d  b=%d' % ( ord(col[0]),ord(col[1]),ord(col[2]) ))
+                self.lobby.lg19.set_bg_color(ord(col[0]),ord(col[1]),ord(col[2]))
+            elif cmd == "L":
+                br = self.recv(1)       
+                logging.debug('Setting LCD brightness to %d' % ord(br))
+                self.lobby.lg19.set_display_brightness(ord(br))
+            elif cmd == "G":
+                logging.debug('Request to receive key events')
+                self.receive_key_events = True
+            elif cmd == "M":
+                br = self.recv(1)
+                logging.debug('Setting M-key lights to %d' % ord(br))
+                self.lobby.lg19.set_enabled_m_keys(ord(br))
+            elif cmd == "I":
+                self.img_buffer = "" 
+            elif cmd == "Q":
+                self.close()
+             
+    def writable(self):
+        return len(self.out_buffer) > 0
+
+    def handle_write(self):
+        logging.debug("Writing %d bytes" % len(self.out_buffer))
+        sent = self.send(self.out_buffer)
+        self.out_buffer = self.out_buffer[sent:]
+        logging.debug("Actually wrote %d bytes, %d left" % ( sent, len(self.out_buffer) )   )
+        
+class G19D(asyncore.dispatcher):
+    def __init__(self, port):
+        asyncore.dispatcher.__init__(self)        
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.set_reuse_addr()
+        logging.debug('Binding to port %d' % port)
+        self.bind(("127.0.0.1", port))
+        logging.debug('Bound to port %d' % port)
+        self.listen(5)
+        self.lobby = None
+        signal.signal(signal.SIGTERM, self.handle_sig_term)
+ 
+    def set_lobby(self, lobby):
+        self.lobby = lobby
+ 
+    def handle_accept(self):
+        sock, addr = self.accept()
+        logging.debug('Got client')
+        client = Client(sock, self.lobby)
+        
+    def handle_sig_term(self, arg0, arg1):
+        self.lobby.close()
+        self.close()
+ 
+if __name__ == '__main__':
+    import optparse
+    parser = optparse.OptionParser()
+    parser.add_option("-p", "--port", dest="port", metavar="PORT",
+        default=15551, help="Port to listen on.")
+    parser.add_option("-b", "--background", dest="background_image", metavar="FILE",
+        default=os.path.join(g19globals.data_dir, "background.png") , help="Background image file (320x240)")
+    parser.add_option("-l", "--log", dest="log_level", metavar="INFO,DEBUG,WARNING,ERROR,CRITICAL",
+        default="warning" , help="Background image file (320x240)")
+    parser.add_option("-f", "--foreground", action="store_true", dest="foreground",
+        default=False, help="Run daemon in foreground.")
+    parser.add_option("-t", "--test", action="store_true", dest="test",
+        default=False, help="Test whether the hardware exists and exit with 0 if it does, otherwise exit with 1.")
+    (options, args) = parser.parse_args()
+    
+    if options.test:
+        lcd_device = G19UsbController._find_device(0x046d, 0xc229)
+        if not lcd_device:
+        	sys.exit(1)
+       	else:
+        	sys.exit(0)    
+    
+    if options.log_level != None:        
+        level = LEVELS.get(options.log_level, logging.NOTSET)
+        logging.basicConfig(level=level)
+    
+    if options.foreground or ( not options.foreground and os.fork() == 0 ):
+        lobby = Lobby(options.background_image)
+        g19d = G19D(options.port)
+        g19d.set_lobby(lobby)
+        try:
+            asyncore.loop(timeout=0.05)
+        except KeyboardInterrupt:
+            # CTRL+C
+            lobby.close()
+

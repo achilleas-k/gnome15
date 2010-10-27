@@ -1,0 +1,26 @@
+AC_INIT(g19d, 0.0.2)
+AC_CONFIG_SRCDIR([g19d/g19.py])
+AM_INIT_AUTOMAKE
+
+AM_MAINTAINER_MODE
+
+dnl check for python
+AM_PATH_PYTHON
+
+AX_PYTHON_MODULE(usb, [])
+AS_IF([test "x${HAVE_PYMOD_USB}" = "xno"],
+     [AC_MSG_ERROR([Requires PyUSB])])
+
+AX_PYTHON_MODULE(Image, [])
+AS_IF([test "x${HAVE_PYMOD_IMAGE}" = "xno"],
+     [AC_MSG_ERROR([Requires Python Image Library])])
+
+AX_PYTHON_MODULE(uinput, [])
+AS_IF([test "x${HAVE_PYMOD_UINPUT}" = "xno"],
+     [AC_MSG_ERROR([Requires Python UINPUT])])
+        
+AC_OUTPUT([
+Makefile
+g19d/Makefile
+g19d/g19_globals.py
+])
