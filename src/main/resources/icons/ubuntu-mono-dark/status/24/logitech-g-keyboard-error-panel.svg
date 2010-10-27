@@ -209,14 +209,14 @@
      inkscape:pageshadow="2"
      inkscape:zoom="15.327746"
      inkscape:cx="1.3471561"
-     inkscape:cy="9.4891703"
+     inkscape:cy="10.337305"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1143"
      inkscape:window-height="734"
-     inkscape:window-x="2129"
-     inkscape:window-y="113"
+     inkscape:window-x="2145"
+     inkscape:window-y="57"
      inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
@@ -238,15 +238,15 @@
     <g
        id="layer1-76"
        inkscape:label="Layer 1"
-       transform="matrix(1.507826,0,0,1.507826,28.467775,-555.80165)">
+       transform="matrix(1.1247276,0,0,1.1425804,24.236317,-168.96016)">
       <text
          sodipodi:linespacing="174%"
          id="text15270"
          y="1063.3165"
          x="-15.68836"
-         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:174.00000095%;letter-spacing:10px;word-spacing:0px;fill:url(#linearGradient15232);fill-opacity:1;stroke:#f50000;stroke-width:0.33160323;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none;font-family:Ubuntu;-inkscape-font-specification:Ubuntu Bold"
+         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:174.00000095%;letter-spacing:10px;word-spacing:0px;fill:url(#linearGradient15232);fill-opacity:1;stroke:#f50000;stroke-width:0.44106534;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none;font-family:Ubuntu;-inkscape-font-specification:Ubuntu Bold"
          xml:space="preserve"><tspan
-           style="fill:url(#linearGradient15232);fill-opacity:1;stroke:#f50000;stroke-width:0.33160323;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none"
+           style="fill:url(#linearGradient15232);fill-opacity:1;stroke:#f50000;stroke-width:0.44106534;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none"
            y="1063.3165"
            x="-15.68836"
            id="tspan15272"
@@ -257,7 +257,7 @@
     </g>
     <g
        id="layer1-7"
-       transform="matrix(1.5081912,0,0,1.5081912,-0.00193791,1026.5749)"
+       transform="matrix(1.125,0,0,1.1428571,3,1030.1122)"
        style="stroke:none">
       <path
          style="fill:#dfd8c8;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.99999887;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"

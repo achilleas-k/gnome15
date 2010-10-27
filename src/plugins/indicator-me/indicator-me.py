@@ -58,44 +58,49 @@ class G15IndicatorMe():
 
     def activate(self):
         self.me_service = self.session_bus.get_object('org.ayatana.indicator.me', '/org/ayatana/indicator/me/service')
-        self.session_bus.add_signal_receiver(self.status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
-        self.session_bus.add_signal_receiver(self.user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")        
+        self.session_bus.add_signal_receiver(self._status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
+        self.session_bus.add_signal_receiver(self._user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")
+        self._reload_theme()
+        self._get_details()     
+        self.page = self.screen.new_page(self._paint, priority=g15screen.PRI_INVISIBLE, id="Indicator Me", panel_painter = self._paint_thumbnail)   
     
     def deactivate(self):
-        self.session_bus.remove_signal_receiver(self.status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
-        self.session_bus.remove_signal_receiver(self.user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")      
+        self.session_bus.remove_signal_receiver(self._status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
+        self.session_bus.remove_signal_receiver(self._user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")      
         
     def destroy(self):
         pass
         
-    ''' Functions specific to plugin
-    ''' 
+    '''
+    Private
+    '''
     
-    def status_icon_changed(self, new_icon):
-        self.redraw()
+    def _status_icon_changed(self, new_icon):
+        self._popup()
         
-    def user_changed(self, new_icon):
-        self.redraw()
+    def _user_changed(self, new_icon):
+        self._popup()
         
-    def redraw(self):    
-        
+    def _popup(self):    
         page = self.screen.get_page("Indicator Me")
-        if page == None:
-            self.reload_theme()
-            page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="Indicator Me")
-            self.hide_timer = self.screen.hide_after(3.0, page)
-        else:
-            self.hide_timer.cancel()
-            self.hide_timer = self.screen.set_priority(page, g15screen.PRI_HIGH, hide_after = 3.0)
-            
-        self.icon = self.me_service.StatusIcons()
-        self.username = self.me_service.PrettyUserName()
+        self._get_details()
+        self.screen.set_priority(page, g15screen.PRI_HIGH, revert_after = 3.0)
         self.screen.redraw(page)
         
-    def reload_theme(self):        
+    def _get_details(self):
+        self.icon = self.me_service.StatusIcons()
+        self.icon_image,ctx = g15util.load_surface_from_file(g15util.get_icon_path(self.gconf_client, self.icon))
+        self.username = self.me_service.PrettyUserName()
+        
+    def _reload_theme(self):        
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
+    
+    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
+        if self.page != None:
+            if self.icon_image != None:
+                return g15util.paint_thumbnail_image(allocated_size, self.icon_image, canvas)
 
-    def paint(self, canvas):     
+    def _paint(self, canvas):     
         properties = { "icon" : g15util.get_icon_path(self.gconf_client, self.icon, self.screen.width) }
         properties["text"] = "Unknown"
         if self.icon == "user-available-panel":

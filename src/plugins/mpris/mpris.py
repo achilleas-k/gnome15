@@ -81,7 +81,7 @@ class AbstractMPRISPlayer():
                 elif self.status == "Paused":
                     if self.page != None:
                         self.load_song_details()
-                        self.screen.redraw(self.page)                    
+                        self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
                     else:
                         self.show_page()
                 elif self.status == "Stopped":
@@ -93,7 +93,7 @@ class AbstractMPRISPlayer():
                     
             self.status_check_timer = g15util.schedule(self.interface_name + " Status Check", 1.0, self.check_status)
         except dbus.DBusException:
-            print "Failed to check status, player must have closed."
+            print "WARNING: Failed to check status, player must have closed."
             self.stop()
     
     def stop(self):
@@ -110,9 +110,13 @@ class AbstractMPRISPlayer():
     
     def show_page(self):
         self.load_song_details()
-        self.page = self.screen.new_page(self.paint, on_shown=self.on_shown, on_hidden=self.on_hidden, id="MPRIS", panel_painter = self.paint_thumbnail, thumbnail_painter = self.paint_thumbnail)
-        self.page.set_title(self.title)
-        self.screen.redraw(self.page)
+        self.page = self.screen.get_page(id="MPRIS%s" % self.title)
+        if self.page == None:
+            self.page = self.screen.new_page(self.paint, on_shown=self.on_shown, on_hidden=self.on_hidden, id="MPRIS%s" % self.title, panel_painter = self.paint_thumbnail, thumbnail_painter = self.paint_thumbnail)
+            self.page.set_title(self.title)
+            self.screen.redraw(self.page)
+        else:
+            self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
         
     def hide_page(self):
         self.screen.del_page(self.page)        
@@ -148,7 +152,7 @@ class AbstractMPRISPlayer():
             cover_art = os.path.expanduser("~/.cache/rhythmbox/covers/" + self.song_properties["artist"] + " - " + self.song_properties["album"] + ".jpg")
             self.cover_uri = None
             if cover_art != None and os.path.exists(cover_art):
-                self.cover_file = cover_art
+                self.cover_uri = cover_art
             else:
                 icon_theme = self.gconf_client.get_string("/desktop/gnome/interface/icon_theme")
                 mime_type = mime.get_type(self.playing_uri)
@@ -316,6 +320,9 @@ class MPRIS2Player(AbstractMPRISPlayer):
         self.screen.redraw()
                 
     def properties_changed_handler(self, something, properties, list):
+        g15util.schedule("ReloadSongProperties", 0, self._reload)
+        
+    def _reload(self):
         self.load_song_details()
         self.screen.redraw()
         
@@ -356,7 +363,10 @@ class MPRIS2Player(AbstractMPRISPlayer):
             
     def get_progress(self):
         if self.status == "Playing":
-            self.elapsed = self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Position") / 1000 / 1000
+            try :
+                self.elapsed = self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Position") / 1000 / 1000
+            except:
+                self.elapsed = 0.0
         else:
             self.elapsed = 0.0                     
         self.volume = self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Volume") * 100

@@ -33,7 +33,7 @@ def list_plugin_dirs(path):
         for dir in os.listdir(path):
             plugin_path = os.path.join(path, dir)
             if os.path.isdir(plugin_path):
-                plugindirs.append(plugin_path)
+                plugindirs.append(os.path.realpath(plugin_path))
     else:
         print "WARNING: Plugin path %s does not exist." % path
     return plugindirs
@@ -41,11 +41,13 @@ def list_plugin_dirs(path):
 def get_extra_plugin_dirs():
     plugindirs = []
     if "G15_PLUGINS" in os.environ:
-        plugindirs += os.environ["G15_PLUGINS"].split(":")
+        for dir in os.environ["G15_PLUGINS"].split(":"):
+            plugindirs += list_plugin_dirs(dir)
     return plugindirs
 
 imported_plugins = []
 for plugindir in list_plugin_dirs(pglobals.plugin_dir) + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + get_extra_plugin_dirs():
+    print "Searching",plugindir,"for plugins"
     plugin_name = os.path.basename(plugindir)
     pluginfiles = [fname[:-3] for fname in os.listdir(plugindir) if fname == plugin_name + ".py"]
     if not plugindir in sys.path:
@@ -93,7 +95,6 @@ class G15Plugins():
     def start(self):
         self.lock.acquire()
         try : 
-            idx = 0
             self.mgr_started = False
             self.started = []
             for mod in imported_plugins:
@@ -143,7 +144,7 @@ class G15Plugins():
         for plugin in self.started:
             can_handle_keys = False
             try :
-                getattr(plugin, "handle_key") != None 
+                getattr(plugin, "handle_key") 
                 can_handle_keys = True
             except AttributeError: 
                 pass
@@ -158,7 +159,6 @@ class G15Plugins():
             self.activated = []
             idx = 0
             for plugin in self.started:
-                module = self.plugin_map[plugin]
                 self._activate_instance(plugin, callback, idx)
                 idx += 1
         finally:
@@ -170,7 +170,6 @@ class G15Plugins():
             self.mgr_active = False
             traceback.print_exc(file=sys.stderr)
             for plugin in list(self.activated):
-                module = self.plugin_map[plugin]
                 plugin.deactivate()
                 self.activated.remove(plugin)
         finally:

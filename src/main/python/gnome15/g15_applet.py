@@ -21,14 +21,12 @@
 #        +-----------------------------------------------------------------------------+
 
 import os 
-import sys
 import pygtk
 pygtk.require('2.0')
 import gtk
 import gtk.gdk
 import g15_service as g15service
 import g15_screen as g15screen
-import g15_util as g15util
 import g15_globals as pglobals
 import gnomeapplet
 
@@ -86,7 +84,13 @@ class G15Applet(gnomeapplet.Applet):
         self.service.screen.add_screen_change_listener(self)
         
     def show_page(self,event, page):        
-        self.service.screen.raise_page(page)   
+        self.service.screen.raise_page(page)
+        
+    def page_changed(self, page):
+        pass   
+        
+    def title_changed(self, page, title):
+        pass   
         
     def new_page(self, page):
         pass
@@ -102,23 +106,18 @@ class G15Applet(gnomeapplet.Applet):
         self.applet_icon = "g15key-error.png"
         self.size_changed()
 
-    def quit():                
+    def quit(self):                
         gtk.main_quit()
-        
-    def applet_scroll(self, widget, event):
-        pass
         
     def applet_scroll(self, widget, event):
         direction = event.direction
         if direction == gtk.gdk.SCROLL_UP:
             if self.service.screen.get_visible_page().priority < g15screen.PRI_HIGH:
                 self.service.screen.clear_popup() 
-                self.service.resched_cycle()
                 self.service.screen.cycle(1)
         elif direction == gtk.gdk.SCROLL_DOWN:
             if self.service.screen.get_visible_page().priority < g15screen.PRI_HIGH:
                 self.service.screen.clear_popup() 
-                self.service.resched_cycle()
                 self.service.screen.cycle(-1)
         elif direction == gtk.gdk.SCROLL_LEFT:
             first_control = self.service.driver.get_controls()[0]

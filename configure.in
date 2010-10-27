@@ -1,4 +1,4 @@
-AC_INIT(gnome15, 0.0.5)
+AC_INIT(gnome15, 0.0.9)
 AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_applet.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 
@@ -162,8 +162,6 @@ src/plugins/sysmon/default/Makefile
 src/plugins/rss/Makefile
 src/plugins/rss/default/Makefile
 src/plugins/sysmon/dials/Makefile
-src/plugins/videoplayer/Makefile
-src/plugins/videoplayer/default/Makefile
 src/plugins/volume/Makefile
 src/plugins/volume/default/Makefile
 src/plugins/weather/Makefile

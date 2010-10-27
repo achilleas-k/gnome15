@@ -30,23 +30,25 @@ import gobject
 import g15_globals as pglobals
 import g15_screen as g15screen
 import g15_driver as g15driver
+import g15_driver_manager as g15drivermanager
 import g15_profile as g15profile
 import g15_config as g15config
 import g15_macros as g15macros
 import g15_theme as g15theme
+import g15_dbus as g15dbus
 import traceback
 import gconf
 import g15_util as g15util
 from Xlib import X, XK, display
 from Xlib.ext import record
 from Xlib.protocol import rq
-import imp
-import wnck
 import time
 import g15_plugins as g15plugins
 import dbus
+from threading import RLock
 from dbus.mainloop.glib import DBusGMainLoop
 from g15_exceptions import NotConnectedException
+
 
 dbus_loop=DBusGMainLoop()
 dbus.set_default_main_loop(dbus_loop)
@@ -78,7 +80,10 @@ class G15Splash():
         self.theme = g15theme.G15Theme(pglobals.image_dir, self.screen, "background")
         self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_EXCLUSIVE, id="Splash", thumbnail_painter = self.paint_thumbnail)
         self.screen.redraw(self.page)
-        self.logo, ctx = g15util.load_surface_from_file(g15util.get_icon_path(gconf_client, "gnome15"))
+        icon_path = g15util.get_icon_path(gconf_client, "gnome15")
+        if icon_path == None:
+            icon_path = os.path.join(pglobals.icons_dir, 'gnome15.svg')
+        self.logo, ctx = g15util.load_surface_from_file(icon_path)
         
     def paint(self, canvas):
         properties = {
@@ -105,6 +110,7 @@ class G15Service():
     def __init__(self, service_host, parent_window=None):
         self.parent_window = parent_window
         self.service_host = service_host
+        self.reschedule_lock = RLock()
         
     def start(self):
         self.active_window = None
@@ -122,10 +128,11 @@ class G15Service():
         self.widget_tree.add_from_file(g15Config)
         
         
-        self.driver = g15driver.get_driver(self.conf_client, on_close = self.on_driver_close)
+        self.driver = g15drivermanager.get_driver(self.conf_client, on_close = self.on_driver_close)
         
         # Create the screen and pluging manager
         self.screen = g15screen.G15Screen(self)
+        self.screen.add_screen_change_listener(self)
         self.plugins = g15plugins.G15Plugins(self.screen)
         self.plugins.start()
 
@@ -134,7 +141,7 @@ class G15Service():
         
         # Monitor gconf and configure keyboard based on values
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
-        self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.check_cycle);
+        self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.resched_cycle);
         self.conf_client.notify_add("/apps/gnome15/active_profile", self.active_profile_changed);
         self.conf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed);
         self.conf_client.notify_add("/apps/gnome15/driver", self.driver_changed);
@@ -148,11 +155,17 @@ class G15Service():
         try :
             self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')   
             self.session_bus.add_signal_receiver(self.application_changed, dbus_interface = "org.ayatana.bamf.matcher", signal_name = "ActiveApplicationChanged")
-            raise Exception("Test")
         except:
             print "WARNING: BAMF not available, falling back to WNCK"
-            gobject.timeout_add(500,self.timeout_callback, self)
-
+            try :                
+                import wnck
+                gobject.timeout_add(500,self.timeout_callback, self)
+            except:
+                print "WARNING: Python Wnck not available either, no automatic profile switching"
+                
+        # Expose Gnome15 functions via DBus
+        self.dbus_service = g15dbus.G15DBUSService() 
+ 
     def attempt_connection(self, delay = 0.0):
         if self.driver.is_connected():
             print "WARN: Attempt to reconnect when already connected."
@@ -190,7 +203,7 @@ class G15Service():
             self.driver.grab_keyboard(self.key_received)
             self.service_host.clear_attention()
             self.splash.complete()
-            self.check_cycle()
+            self.resched_cycle()
         except Exception as e:
             if self.process_exception(e):
                 raise
@@ -200,11 +213,11 @@ class G15Service():
 
     def on_driver_close(self, retry=True):
         if not self.shutting_down:
-            self.service_host.clear_attention()
+            self.service_host.attention()
             self.plugins.deactivate()
             if retry:
-                self.check_cycle()
-                self.driver = g15driver.get_driver(self.conf_client, on_close = self.on_driver_close)            
+                self.resched_cycle()
+                self.driver = g15drivermanager.get_driver(self.conf_client, on_close = self.on_driver_close)            
                 self.attempt_connection(delay = 5.0)
             else:                
                 self.service_host.quit()
@@ -217,35 +230,37 @@ class G15Service():
         del self.key_screen
         del self.driver
         
-    def check_cycle(self, client=None, connection_id=None, entry=None, args=None):
-        active = self.driver.is_connected() and self.conf_client.get_bool("/apps/gnome15/cycle_screens")
-        if active and self.cycle_timer == None:
-            self.schedule_cycle()
-        elif not active and self.cycle_timer != None:
-            self.cancel_schedule()
-            
-    def schedule_cycle(self):
-        val = self.conf_client.get("/apps/gnome15/cycle_seconds")
-        time = 10
-        if val != None:
-            time = val.get_int()
-        self.cycle_timer = g15util.schedule("CycleTimer", time, self.screen_cycle)
+    '''
+    screen listener callbacks
+    '''
+        
+    def title_changed(self, page, title):
+        pass
+        
+    def page_changed(self, page):
+        self.resched_cycle()
+        
+    def new_page(self, page):
+        pass
+    
+    def del_page(self, page):
+        pass
             
     def screen_cycle(self):
         # Don't cycle while recording 
         # TODO change how this works
-        if not self.defeat_profile_change and self.screen.get_visible_page().priority < g15screen.PRI_HIGH:
-            self.screen.cycle(1)
-            self.schedule_cycle()
-            
-    def cancel_schedule(self):
-        if self.cycle_timer != None:
-            self.cycle_timer.cancel()
+        page = self.screen.get_visible_page()
+        if not self.defeat_profile_change and page != None and page.priority < g15screen.PRI_HIGH:
             self.cycle_timer = None
+            self.screen.cycle(1)
         
-    def resched_cycle(self):    
-        self.cancel_schedule()
-        self.check_cycle()
+    def resched_cycle(self): 
+        self.reschedule_lock.acquire()
+        try :
+            self._cancel_schedule()
+            self._check_cycle()
+        finally :
+            self.reschedule_lock.release()
             
     def cycle_level(self, val, control):
         level = self.conf_client.get_int("/apps/gnome15/" + control.id)
@@ -276,7 +291,7 @@ class G15Service():
                 self.attempt_connection(0.0)
         
     def profiles_changed(self, client, connection_id, entry, args):
-        pass
+        self.screen.set_color_for_mkey()
         
     def key_received(self, keys, state):
         if self.screen.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
@@ -425,6 +440,7 @@ class G15Service():
     def timeout_callback(self,event=None):
         try:
             if not self.defeat_profile_change:
+                import wnck
                 window = wnck.screen_get_default().get_active_window()
                 choose_profile = None
                 if window != None:
@@ -460,18 +476,19 @@ class G15Service():
         return 1
 
     def activate_profile(self):
-        profile = g15profile.get_active_profile()
-        self.screen.set_mkey(1)
+        if self.screen.driver.is_connected():
+            self.screen.set_mkey(1)
     
     def deactivate_profile(self):
-        self.screen.set_mkey(0)
+        if self.screen.driver.is_connected():
+            self.screen.set_mkey(0)
         
     def cleanup(self,event):
         self.shutting_down = True
         self.driver.disconnect()  
         
     def properties(self,event,data=None):
-        a = g15config.G15Config(self.parent_window)
+        a = g15config.G15Config(self.parent_window, check_service=False)
         a.run() 
         
     def macros(self,event,data=None):
@@ -483,3 +500,25 @@ class G15Service():
                                "GNOME Applet providing integration with\nthe Logitech G15 and G19 keyboards.",["Brett Smith <tanktarta@blueyonder.co.uk>"],\
                                ["Brett Smith <tanktarta@blueyonder.co.uk>"],"Brett Smith <tanktarta@blueyonder.co.uk>",gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
         about.show()
+        
+    '''
+    Private
+    '''    
+    def _check_cycle(self, client=None, connection_id=None, entry=None, args=None):
+        active = self.driver.is_connected() and self.conf_client.get_bool("/apps/gnome15/cycle_screens")
+        if active and self.cycle_timer == None:
+            self._schedule_cycle()
+        elif not active and self.cycle_timer != None:
+            self._cancel_schedule()            
+            
+    def _cancel_schedule(self):
+        if self.cycle_timer != None:
+            self.cycle_timer.cancel()
+            self.cycle_timer = None            
+            
+    def _schedule_cycle(self):
+        val = self.conf_client.get("/apps/gnome15/cycle_seconds")
+        time = 10
+        if val != None:
+            time = val.get_int()
+        self.cycle_timer = g15util.schedule("CycleTimer", time, self.screen_cycle)

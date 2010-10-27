@@ -45,6 +45,15 @@ from cStringIO import StringIO
 import cairo
 import gtk.gdk
 
+# Driver information (used by driver selection UI)
+name="G19D"
+id="g19"
+description="For use with the Logitech G19 only, this driver uses <i>G19D</i>, " + \
+            "a sub-project of Gnome15. The g19daemon service must be running when " + \
+            "starting Gnome15. This method is intended as a temporary measure until " + \
+            "kernel support is available for this keyboard."
+has_preferences=False
+
 MAX_X=320
 MAX_Y=240
 
@@ -162,6 +171,7 @@ class Driver(g15driver.AbstractDriver):
         self.lock = RLock()
         self.remote_port=port
         self.thread = None
+        self.connected = False
     
     def get_antialias(self):
         return cairo.ANTIALIAS_SUBPIXEL
@@ -200,6 +210,7 @@ class Driver(g15driver.AbstractDriver):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(4.0)
         self.socket.connect((self.remote_host, self.remote_port))
+        self.connected = True
         for control in self.get_controls():
             self.do_update_control(control)
             
@@ -209,7 +220,7 @@ class Driver(g15driver.AbstractDriver):
             self.thread = None
         if self.is_connected():
             self.socket.close()
-            self.socket = None
+            self.connected = False
             if self.on_close != None:
                 self.on_close()
         
@@ -218,9 +229,6 @@ class Driver(g15driver.AbstractDriver):
             self.disconnect()
         self.connect()
         
-    def __del__(self):
-        self.socket.close()
-
     def set_mkey_lights(self, lights):       
         val = 0
         if lights & g15driver.MKEY_LIGHT_1 != 0:
@@ -247,7 +255,7 @@ class Driver(g15driver.AbstractDriver):
         self.write_out("GK")
         
     def is_connected(self):
-        return self.socket != None
+        return self.connected 
     
     def write_out(self, buf):         
         self.lock.acquire()

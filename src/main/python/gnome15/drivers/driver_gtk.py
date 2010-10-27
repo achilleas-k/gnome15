@@ -19,6 +19,7 @@ import gnome15.g15_globals as pglobals
 
 import gconf
 
+import os
 import gtk
 import gtk.gdk
 import gobject
@@ -29,9 +30,24 @@ import driver_g19 as g19
 
 import Image
 import ImageMath
-import StringIO
-import array
 
+# Driver information (used by driver selection UI)
+id="gtk"
+name="GTK"
+description="A special development driver that emulates the G19, " + \
+            "G15v1, G15v2 and G13 as a window on your desktop. This allows " + \
+            "you to develop plugins without having access to a real Logitech " + \
+            "G keyboard"
+has_preferences=True
+
+def show_preferences(parent, gconf_client):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(pglobals.glade_dir, "driver_gtk.glade"))    
+    dialog = widget_tree.get_object("DriverDialog")
+    dialog.set_transient_for(parent)
+    g15util.configure_combo_from_gconf(gconf_client,"/apps/gnome15/gtk_mode", "ModeCombo", g15driver.MODEL_G15_V1, widget_tree)
+    dialog.run()
+    dialog.hide()
 
 class Driver(g15driver.AbstractDriver):
 
@@ -162,7 +178,6 @@ class Driver(g15driver.AbstractDriver):
         size = self.get_size()
         width = size[0]
         height = size[1]
-        zoom = self.get_zoom()
              
         if self.get_bpp() == 1:
             # Paint to 565 image provided into an ARGB image surface for PIL's benefit. PIL doesn't support 565?

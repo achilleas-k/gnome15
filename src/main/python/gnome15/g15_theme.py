@@ -57,7 +57,7 @@ class G15Theme:
         self.theme_name = os.path.basename(dir)
         self.plugin_name = os.path.basename(os.path.dirname(dir))
         
-        module_name = self.get_path_for_variant(dir, variant, "py", fatal = False, prefix = self.plugin_name + "_" + self.theme_name + "_")
+        module_name = self.get_path_for_variant(dir, variant, "py", fatal = False, prefix = self.plugin_name.replace("-","_") + "_" + self.theme_name + "_")
         module = None
         self.instance = None
         if module_name != None:
@@ -214,12 +214,16 @@ class G15Theme:
          
         for element in root.xpath('//svg:image[@class=\'embedded_image\']',namespaces=self.nsmap):
             id = element.get("title")
-            if id != None and id in properties:
+            if id != None and id in properties and properties[id] != None:
                 file_str = StringIO()
                 file_str.write("data:image/png;base64,")
                 img_data = StringIO()
-                properties[id].write_to_png(img_data)
-                file_str.write(base64.b64encode(img_data.getvalue()))
+                val = properties[id]
+                if isinstance(val, cairo.Surface):
+                    val.write_to_png(img_data)
+                    file_str.write(base64.b64encode(img_data.getvalue()))
+                else: 
+                    file_str.write(val)
                 element.set("{http://www.w3.org/1999/xlink}href", file_str.getvalue())
                 
                 

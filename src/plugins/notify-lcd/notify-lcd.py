@@ -38,6 +38,7 @@ import Image
 import subprocess
 import traceback
 import tempfile
+import lxml.html
 
 from threading import Timer
 from threading import Thread
@@ -164,7 +165,7 @@ class G15NotifyLCD(dbus.service.Object):
         try :
             dbus.service.Object.__init__(self, bus_name, BUS_NAME)
         except KeyError:
-            print "Already started?"     
+            print "DBUS notify service failed to start. May already be started."     
             
         self.active = True
     
@@ -208,9 +209,6 @@ class G15NotifyLCD(dbus.service.Object):
     def notify(self, icon, summary, body, timeout, hints):
         self.lock.acquire()
         try :
-            if self.hide_timer != None:
-                self.hide_timer.cancel()
-            
             self.embedded_image = None
             if icon == None or icon == "":
                 if "image_data" in hints:
@@ -232,39 +230,47 @@ class G15NotifyLCD(dbus.service.Object):
                 else:
                     icon = g15util.get_icon_path(self.gconf_client, "dialog-info", (self.screen.height, self.screen.height))
                 
-            page = self.screen.get_page("NotifyLCD")
             
-            if timeout <= 0.0:
-                timeout = 10.0
+#            if timeout <= 0.0:
+#                timeout = 10.0
+            timeout = 10.0
                 
             # Which theme variant should we use
             self.last_variant = ""
             if body == None or body == "":
                 self.last_variant = "nobody"
-                
-            if page == None:
-                self.reload_theme()
-                page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="NotifyLCD")
-                self.hide_timer = self.screen.hide_after(timeout, page)
-                self.control_values = []
-                for c in self.screen.driver.get_controls():
-                    if c.hint & g15driver.HINT_DIMMABLE != 0:
-                        self.control_values.append(c.value)
-            else:
-                self.reload_theme()
-                self.hide_timer = self.screen.set_priority(page, g15screen.PRI_HIGH, hide_after = timeout)
-                
-            if self.gconf_client.get_bool(self.gconf_key + "/blink_keyboard_on_alert"):
-                self.blink_thread = BlinkThread(self.gconf_client, self.screen, self.control_values).start()
     
             if summary == None:
                 summary = "None"
                 
             self.summary = summary
-            self.body = body
+            
+            if body != None and len(body) > 0:
+                # Strip tags
+                body_content = lxml.html.fromstring(body)
+                self.body = body_content.text_content()
+            else:
+                self.body = body
             self.icon = icon
             
+            # Get the page
+            page = self.screen.get_page("NotifyLCD")
+            if page == None:
+                self.control_values = []
+                for c in self.screen.driver.get_controls():
+                    if c.hint & g15driver.HINT_DIMMABLE != 0:
+                        self.control_values.append(c.value)
+                self.reload_theme()
+                page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="NotifyLCD")
+                self.screen.hide_after(timeout, page)
+            else:
+                self.reload_theme()
+                self.screen.raise_page(page)
+                self.screen.hide_after(timeout, page)
             self.screen.redraw(page)
+                
+            if self.gconf_client.get_bool(self.gconf_key + "/blink_keyboard_on_alert"):
+                self.blink_thread = BlinkThread(self.gconf_client, self.screen, list(self.control_values)).start()
         finally:
             self.lock.release()
         

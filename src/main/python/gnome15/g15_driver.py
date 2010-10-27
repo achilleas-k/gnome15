@@ -121,24 +121,7 @@ HINT_SWITCH = 1 << 4
 # 16bit 565
 CAIRO_IMAGE_FORMAT=4
 
-import sys
-import os
-import g15_setup as g15setup
 import g15_util as g15util
-
-# Look for modules in the drivers directory too
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "drivers"))
-
-'''
-Called by clients to create the configured driver
-'''
-def get_driver(conf_client, on_close = None):
-    driver = conf_client.get_string("/apps/gnome15/driver")
-    print "Using driver",driver
-    driver_mod = __import__("driver_" + driver)
-    driver = driver_mod.Driver(on_close = on_close)
-    driver.set_controls_from_configuration(conf_client)
-    return driver
 
 class Control():
     

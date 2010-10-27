@@ -32,6 +32,8 @@ import Image
 import rsvg
 import urllib
 import base64
+import sys
+import traceback
 
 from threading import Timer
 import xdg.IconTheme as icons
@@ -77,7 +79,19 @@ def color_changed(widget, gconf_client, key):
     if widget.get_use_alpha():
         gconf_client.set_int(key + "_opacity", widget.get_alpha() >> 8)
         
-def to_rgb(string_rgb):
+def rgb_to_string(rgb):
+    if rgb == None:
+        return None
+    else:
+        return "%d,%d,%d" % rgb
+    
+def color_to_rgb(color):         
+    i = ( color.red >> 8, color.green >> 8, color.blue >> 8 )
+    return ( i[0],i[1],i[2] )
+        
+def to_rgb(string_rgb, default = None):
+    if string_rgb == None or string_rgb == "":
+        return default
     rgb = string_rgb.split(",")
     return (int(rgb[0]), int(rgb[1]), int(rgb[2]))
         
@@ -104,12 +118,6 @@ def configure_spinner_from_gconf(gconf_client, gconf_key, widget_id, default_val
             val = entry.get_int()
     model.set_value(val)
     widget.connect("value-changed", spinner_changed, gconf_client, gconf_key, model)
-    
-def spinner_changed(widget, gconf_client, key, model, decimal = False):
-    if decimal:
-        gconf_client.set_float(key, widget.get_value())
-    else:
-        gconf_client.set_int(key, widget.get_value())
 
 def configure_combo_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree):
     widget = widget_tree.get_object(widget_id)
@@ -151,6 +159,10 @@ event loop, which then executes the job on a different thread
 scheduled_tasks = JobQueue(name="ScheduledTasks")
 class GTimer:    
     def __init__(self, interval, function, *args):
+        if function == None:
+            sys.stderr.write("WARNING: Attempt to run empty job.")
+            traceback.print_stack()
+            return
         self.source = gobject.timeout_add(int(interval * 1000), self.exec_item, function, *args)
         
     def exec_item(self, function, *args):
@@ -220,14 +232,11 @@ def load_surface_from_file(filename, size = None):
     if "://" in filename:
         file = urllib.urlopen(filename)
         data = file.read()
-        pbl = gtk.gdk.pixbuf_loader_new_with_mime_type(file.info().gettype())
-        pbl.write(data)
-        pixbuf = pbl.get_pixbuf()
-        pbl.close()
-        return pixbuf_to_surface(pixbuf, size)    
-    else:
+        type = file.info().gettype()
         if filename.endswith(".svg"):
-            svg = rsvg.Handle(filename)
+            svg = rsvg.Handle()
+            svg.write(data)
+            print data
             svg_size = svg.get_dimension_data()[2:4]
             if size == None:
                 size = svg_size
@@ -239,7 +248,27 @@ def load_surface_from_file(filename, size = None):
             svg.render_cairo(context)
             return surface, context
         else:
-            return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
+            pbl = gtk.gdk.pixbuf_loader_new_with_mime_type(type)
+            pbl.write(data)
+            pixbuf = pbl.get_pixbuf()
+            pbl.close()
+            return pixbuf_to_surface(pixbuf, size)    
+    else:
+#        if filename.endswith(".svg"):
+#            svg = rsvg.Handle(filename)
+#            svg_size = svg.get_dimension_data()[2:4]
+#            if size == None:
+#                size = svg_size
+#            surface = cairo.ImageSurface(0, int(size[0]), int(size[1]))
+#            context = cairo.Context(surface)
+#            if size != svg_size:
+#                scale = get_scale(size, svg_size)
+#                context.scale(scale, scale)
+#            svg.render_cairo(context)
+#            return surface, context
+#        else:
+#            return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
+        return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
         
 def pixbuf_to_surface(pixbuf, size):
     x = pixbuf.get_width()
@@ -324,9 +353,7 @@ def get_icon_path(gconf_client, icon, size = None):
     i_size = size
     if not isinstance(size, int):
         i_size = max(size[0], size[1])
-    real_icon_file = icons.getIconPath(icon, theme=icon_theme, size = i_size)
-    if real_icon_file != None:
-        return real_icon_file
+    return icons.getIconPath(icon, theme=icon_theme, size = i_size)
     
 def get_app_icon(gconf_client, icon, size = 128):
     icon_path = get_icon_path(gconf_client, icon, size)

@@ -19,24 +19,45 @@
 #        | along with this program; if not, write to the Free Software                 |
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
+ 
 
-import sys
 import os
 import gconf
-import gobject
+import g15_setup as g15setup
 
-gobject.threads_init()
+# Find all drivers
+drivers_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "drivers"))
+imported_drivers = {}
+driverfiles = [fname[:-3] for fname in os.listdir(drivers_dir) if fname.endswith(".py") and fname.startswith("driver_")]
+driver_mods = __import__("gnome15.drivers", fromlist=driverfiles)
+for d in driverfiles:
+    mod = getattr(driver_mods, d)
+    print "Detected driver",mod
+    imported_drivers[d] = mod
+    
+'''
+Get the configured driver, starting the setup dialog if no driver is set, or
+if configuration is force
+'''
 
-# Allow running from local path
-path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..","main", "python")
-if os.path.exists(path):
-    sys.path.insert(0, path)
-
-import gnome15.g15_config as g15config
-import gnome15.g15_setup as g15setup
-import gnome15.g15_globals as pglobals
-import gnome15.g15_driver_manager as g15drivermanager
-
-if g15drivermanager.get_configured_driver("-c" in sys.argv) != None:
-    a = g15config.G15Config()
-    a.run()
+def get_configured_driver(force_config = False):
+    driver_name = gconf.client_get_default().get_string("/apps/gnome15/driver")
+    if driver_name != None and driver_name != "" and not ( "driver_" + driver_name ) in imported_drivers:
+        force_config = True
+    if driver_name == None or driver_name == "" or force_config:
+        setup = g15setup.G15Setup(None, True, driver_name == None or driver_name == "")
+        driver_name = setup.setup()
+    return driver_name if driver_name != None and driver_name != "" else None
+    
+'''
+Called by clients to create the configured driver
+'''
+def get_driver(conf_client, on_close = None):
+    driver = conf_client.get_string("/apps/gnome15/driver")
+    driver_mod_key = "driver_" + driver
+    if not driver_mod_key in imported_drivers:
+        raise Exception("Driver " + driver + " is not available. Do you have to appropriate package installed?")
+    driver_mod = imported_drivers[driver_mod_key]
+    driver = driver_mod.Driver(on_close = on_close)
+    driver.set_controls_from_configuration(conf_client)
+    return driver

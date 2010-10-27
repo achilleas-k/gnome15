@@ -1,1 +1,1 @@
-SUBDIRS = background cairo-clock cal clock fx indicator-me macro-recorder macros notify-lcd  screensaver sysmon videoplayer volume weather rss mpris menu panel
+SUBDIRS = background cairo-clock cal clock fx indicator-me macro-recorder macros notify-lcd screensaver sysmon volume weather rss mpris menu panel

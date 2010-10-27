@@ -1,83 +1,134 @@
 #!/usr/bin/env python
-############################################################################
-##
-## Copyright (C), all rights reserved:
-##      2010 Brett Smith <tanktarta@blueyonder.co.uk>
-##
-## This program is free software; you can redistribute it and/or
-## modify it under the terms of the GNU General Public License version 2
-##
-## Graphics Tablet Applet
-##
-############################################################################
-
+ 
+#        +-----------------------------------------------------------------------------+
+#        | GPL                                                                         |
+#        +-----------------------------------------------------------------------------+
+#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        |                                                                             |
+#        | This program is free software; you can redistribute it and/or               |
+#        | modify it under the terms of the GNU General Public License                 |
+#        | as published by the Free Software Foundation; either version 2              |
+#        | of the License, or (at your option) any later version.                      |
+#        |                                                                             |
+#        | This program is distributed in the hope that it will be useful,             |
+#        | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+#        | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+#        | GNU General Public License for more details.                                |
+#        |                                                                             |
+#        | You should have received a copy of the GNU General Public License           |
+#        | along with this program; if not, write to the Free Software                 |
+#        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+#        +-----------------------------------------------------------------------------+
+ 
 import pygtk
 pygtk.require('2.0')
 import gtk
-import sys
-import os
-import g15_globals as pglobals
 import g15_util as g15util
+import g15_driver_manager as g15drivermanager
 import gconf
+import subprocess
 
-class G15Setup:
+class G15Setup(gtk.Dialog):
     
     adjusting = False
     
-    ''' GUI for configuring wacom-compatible drawing tablets.
-    '''
-    def __init__(self, parent_window=None, heading=None):
-        self.parent_window = parent_window        
+    def __init__(self, parent_window=None, allow_quit = False, first_run = True):
+        
+        if len(g15drivermanager.imported_drivers) == 0:
+            buttons = ( "Quit", gtk.RESPONSE_CLOSE)
+            heading = "No Gnome15 drivers were detected. Make sure you have installed the appropriate driver package for your hardware."
+            icon = "error"
+        else:
+            icon = "input-keyboard"
+            if allow_quit:
+                buttons = ("Apply", gtk.RESPONSE_APPLY, "Quit", gtk.RESPONSE_CLOSE)
+            else:
+                buttons = ("Apply", gtk.RESPONSE_APPLY)
+            if first_run:
+                heading = "This is the first run Gnome15, and you must choose a driver to use. " + \
+                        "Select the option below most appropriate to your setup. "
+            else:
+                heading = "Choose the driver most appropriate for your hardware."
+                
+        gtk.Dialog.__init__(self, "Gnome15 Setup", parent_window, gtk.DIALOG_DESTROY_WITH_PARENT | gtk.DIALOG_NO_SEPARATOR, buttons)
         self.conf_client = gconf.client_get_default()
-        
-        # Load main Glade file
-        g15setup = os.path.join(pglobals.glade_dir, 'g15-setup.glade')        
-        self.widget_tree = gtk.Builder()
-        self.widget_tree.add_from_file(g15setup)
-        
-        # Change the heading maybe
-        if heading != None:
-            self.widget_tree.get_object("HeadingLabel").set_text(heading)
-
-        # Widgets
-        self.main_window = self.widget_tree.get_object("SetupDialog")
-        self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
-        
-        # Set up based on current configuration (if any), or set to defaults
+        self.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
+        self.selected_driver = None
+        self.set_modal(True)
         driver = self.conf_client.get_string("/apps/gnome15/driver")
-        if driver == None or driver == "g19":
+        if driver == None:
             driver = "g19"
-        self.widget_tree.get_object(driver).set_active(True)
-
-        # GTK driver mode        
-        self.mode_model = self.widget_tree.get_object("ModeModel")
-        self.mode_combo = self.widget_tree.get_object("ModeCombo")
-        mode = self.conf_client.get_string("/apps/gnome15/gtk_mode")
-        if mode == None or mode == "":
-            mode = "g15v1"
-        idx = 0
-        for row in self.mode_model:
-            if row[0] == mode:
-                self.mode_combo.set_active(idx)
-            idx += 1
+        if driver in g15drivermanager.imported_drivers:
+            self.selected_driver = g15drivermanager.imported_drivers[driver]
+        elif len(g15drivermanager.imported_drivers) > 0:
+            self.selected_driver = g15drivermanager.imported_drivers.items()[0][1]
+        else:
+            self.selected_driver = None
+        heading_hbox = gtk.HBox()
+        image = gtk.image_new_from_icon_name(icon, 64)
+        image.set_pixel_size(64)
+        heading_hbox.pack_start(image, False, False, 8)
+        heading_label = gtk.Label(heading)
+        heading_label.set_line_wrap(True)
+        heading_hbox.pack_start(heading_label, True, True, 8)
         
-    def run(self):
+        self.vbox.add(heading_hbox)
+        
+        if len(g15drivermanager.imported_drivers) != 0:
+            driver_table = gtk.VBox()
+            driver_table.set_spacing(4)
+            driver_table.set_border_width(8)
+            button_group = None
+            
+            for driver_mod_key in g15drivermanager.imported_drivers:
+                driver_mod = g15drivermanager.imported_drivers[driver_mod_key]
+                button = gtk.RadioButton(button_group, driver_mod.name)
+                button.set_alignment(0.0, 0.5)
+                if driver_mod.id == driver:
+                    button.set_active(True)
+                button.connect("toggled", self.set_driver, driver_mod)
+                if button_group == None:
+                    button_group = button
+                    
+                driver_top = gtk.HBox()
+                driver_top.set_spacing(4)
+                driver_top.pack_start(button, True, True)
+                if driver_mod.has_preferences:
+                    pref_button = gtk.Button("Preferences", stock = gtk.STOCK_PREFERENCES, use_underline = True)
+                    pref_button.connect("clicked", self.driver_preferences, driver_mod)
+                    driver_top.pack_start(pref_button, False, False)
+                    
+                driver_table.pack_start(driver_top, True, True)
+                desc_label = gtk.Label(driver_mod.description)
+                desc_label.set_alignment(0.2, 0.5)
+                desc_label.set_line_wrap(True)
+                desc_label.set_use_markup(True)
+                driver_table.pack_start(desc_label, True, True)
+        
+                self.vbox.add(driver_table)
+        
+        self.show_all()
+
+    def set_driver(self, button, driver_mod):
+        if button.get_active():
+            self.selected_driver = driver_mod    
+        
+    def driver_preferences(self, button, driver_mod):
+        driver_mod.show_preferences(self, self.conf_client)
+        
+    def open_site(self, widget):
+        subprocess.Popen(['xdg-open',widget.get_uri()])
+        
+    def setup(self):
         self.id = None                
-        response = self.main_window.run()
+        response = self.run()
         while gtk.events_pending():
             gtk.main_iteration(False)
         try :
-            if response == 1:
-                driver = "gtk"
-                for d in [ "gtk", "g19", "g15" ]:
-                    if self.widget_tree.get_object(d).get_active():
-                        driver = d
-                        
-                self.conf_client.set_string("/apps/gnome15/driver", driver)        
-                self.conf_client.set_string("/apps/gnome15/gtk_mode", self.mode_model[self.mode_combo.get_active()][0])
-                        
-                return driver
+            if response == gtk.RESPONSE_APPLY:
+                self.conf_client.set_string("/apps/gnome15/driver", self.selected_driver.id)        
+                return self.selected_driver.id
         finally:            
-            self.main_window.destroy()
+            self.destroy()
         
         

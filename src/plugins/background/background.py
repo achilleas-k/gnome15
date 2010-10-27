@@ -20,15 +20,10 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15_screen as g15screen 
 import gnome15.g15_util as g15util
-import datetime
-from threading import Timer
 import cairo
 import gtk
 import os
-import sys
-import time
 import Image
 
 # Plugin details - All of these must be provided
@@ -149,7 +144,6 @@ class G15Background():
                     if self.background_image.size[0] != screen_size[0] or self.background_image.size[1] != screen_size[1]:
                         # TODO resize maintaining aspect            
                         self.background_image = self.background_image.resize((screen_size[0], screen_size[1]), Image.BILINEAR)
-                    bg = self.background_image
                 else:
                     self.background_image = None
          

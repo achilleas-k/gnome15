@@ -22,6 +22,7 @@
  
 import gconf
 import time
+import g15_util as g15util
  
 active_profile = None
 
@@ -111,6 +112,7 @@ class G15Profile():
         self.name = name
         self.icon = icon
         self.macros = []
+        self.mkey_color = {}
         self.profile_dir = "/apps/gnome15/profiles/" + str(self.id)
         for j in range(1, 4):
             conf_client.add_dir(self.profile_dir + "/keys/m" + str(j), gconf.CLIENT_PRELOAD_NONE)
@@ -129,6 +131,16 @@ class G15Profile():
         conf_client.set_string(self.profile_dir + "/icon", self.icon)
         conf_client.set_bool(self.profile_dir + "/activate_on_focus", self.activate_on_focus)
         conf_client.set_bool(self.profile_dir + "/send_delays", self.send_delays)
+        
+        for key in self.mkey_color:
+            col = self.mkey_color[key]
+            conf_client.set_string(self.profile_dir + "/color" + key, "" if col == None else g15util.rgb_to_string(col))
+            
+    def set_mkey_color(self, bank, rgb):
+        self.mkey_color[str(bank)] = rgb
+        
+    def get_mkey_color(self, bank):
+        return self.mkey_color[str(bank)] if str(bank) in self.mkey_color else None
         
     def delete(self):
         profile_list = conf_client.get_list("/apps/gnome15/profile_list", gconf.VALUE_INT)
@@ -175,7 +187,9 @@ class G15Profile():
         
     def load(self):        
         self.macros = []
-        
+        self.mkey_color = {}
+        for i in range(0, 3):
+            self.mkey_color[str(i)] = g15util.to_rgb(conf_client.get_string(self.profile_dir + "/color" + str(i)))
         self.activate_on_focus = conf_client.get_bool(self.profile_dir + "/activate_on_focus")
         self.window_name = conf_client.get_string(self.profile_dir + "/window_name")
         if self.window_name == None:

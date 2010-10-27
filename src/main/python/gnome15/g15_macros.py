@@ -27,6 +27,7 @@ import os
 import g15_globals as pglobals
 import g15_profile as g15profile
 import gconf
+import g15_driver_manager as g15drivermanager
 import g15_driver as g15driver
 import g15_util as g15util
 import dbus
@@ -64,7 +65,7 @@ class G15Macros:
         self.conf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed);
         
         # Driver
-        self.driver = g15driver.get_driver(self.conf_client)
+        self.driver = g15drivermanager.get_driver(self.conf_client)
 
         # Widgets
         self.main_window = self.widget_tree.get_object("MainWindow")
@@ -95,6 +96,7 @@ class G15Macros:
         self.macro_name_field = self.widget_tree.get_object("MacroNameField")
         self.script_model = self.widget_tree.get_object("ScriptModel")
         self.script_label = self.widget_tree.get_object("ScriptLabel")
+        self.memory_bank_vbox = self.widget_tree.get_object("MemoryBankVBox")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -130,15 +132,32 @@ class G15Macros:
         self.window_combo.child.connect("changed", self.window_name_changed)
         self.window_combo.connect("changed", self.window_name_changed)
         
-        # Connection to BAMD for running applications list
+        # If the keyboard has a colour dimmer, allow colours to be assigned to memory banks
+        control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
+        if control != None and not isinstance(control.value, int):
+            hbox = gtk.HBox()
+            self.enable_color_for_m_key = gtk.CheckButton("Set backlight colour")
+            self.enable_color_for_m_key.connect("toggled", self._color_for_mkey_enabled)
+            hbox.pack_start(self.enable_color_for_m_key, True, False)            
+            self.color_button = gtk.ColorButton()
+            self.color_button.set_sensitive(False)                
+            self.color_button.connect("color-set", self._color_changed)
+#            color_button.set_color(self.to_color(control.value))
+            hbox.pack_start(self.color_button, True, False)
+            self.memory_bank_vbox.add(hbox)
+            hbox.show_all()
+        else:
+            self.color_button = None
+            self.enable_color_for_m_key = None
+              
+        
+        # Connection to BAMF for running applications list
         try :
             self.session_bus = dbus.SessionBus()
             self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
         except:
             print "WARNING: BAMF not available, falling back to WNCK"
             self.bamf_matcher = None
-            
-        
 
     def active_profile_changed(self, client, connection_id, entry, args):
         self.load_configurations()
@@ -286,8 +305,7 @@ class G15Macros:
                 last = args[1]
         self.script_label.set_text(script_text)
                         
-            
-        response = dialog.run()
+        dialog.run()
         dialog.hide()
         macro.name = self.macro_name_field.get_text()
         self.load_configurations()
@@ -400,6 +418,17 @@ class G15Macros:
             self.activate_by_default.set_visible(False)
             self.remove_button.set_sensitive(True)
             
+        if self.color_button != None:
+            rgb = profile.get_mkey_color(self.get_memory_number() - 1)
+            if rgb == None:
+                self.enable_color_for_m_key.set_active(False)
+                self.color_button.set_sensitive(False)
+                self.color_button.set_color(g15util.to_color((255, 255, 255)))
+            else:
+                self.color_button.set_sensitive(True)
+                self.color_button.set_color(g15util.to_color(rgb))
+                self.enable_color_for_m_key.set_active(True)
+            
         self.load_windows()
         self.set_available_actions()
             
@@ -429,3 +458,12 @@ class G15Macros:
         '''
         self.adjusting = True
         self.adjusting = False
+        
+    def _color_changed(self, widget):
+        self.selected_profile.set_mkey_color(self.get_memory_number() - 1, 
+                                             g15util.color_to_rgb(widget.get_color()) if self.enable_color_for_m_key.get_active() else None)
+        self.selected_profile.save()
+    
+    def _color_for_mkey_enabled(self, widget):
+        self.color_button.set_sensitive(widget.get_active())        
+        self._color_changed(self.color_button)

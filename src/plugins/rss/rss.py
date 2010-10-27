@@ -133,22 +133,19 @@ class G15FeedPage():
         self.gconf_client = plugin.gconf_client        
         self.gconf_key = plugin.gconf_key
         self.screen = plugin.screen
+        self.icon_surface = None
+        self.icon_embedded = None
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
         self.url = url
         self.index = -1
         self.selected_entry = None
-        self.page = self.screen.new_page(self.paint, id="Feed " + url, thumbnail_painter = self.paint_thumbnail)
         self.reload()
+        self.page = self.screen.new_page(self.paint, id="Feed " + url, thumbnail_painter = self.paint_thumbnail)
+        self.page.set_title(self.feed["feed"]["title"])
+        self.screen.redraw(self.page)
         
     def reload(self):
         self.feed = feedparser.parse(self.url)
-        
-        self.properties = {}
-        self.attributes = {}
-        
-        self.properties["title"] = self.feed["feed"]["title"]
-        self.page.set_title(self.feed["feed"]["title"])
-        
         if "icon" in self.feed["feed"]:
             icon = self.feed["feed"]["icon"]
         elif "image" in self.feed["feed"]:
@@ -156,19 +153,23 @@ class G15FeedPage():
         else:
             icon = g15util.get_icon_path(self.gconf_client, "application-rss+xml", (self.screen.height, self.screen.height) )
             
-        # Store the image surface and the PNG encoded embedded image. The thumbnail uses the surface, the SVG uses
-        # the embedded link
         icon_surface, ctx = g15util.load_surface_from_file(icon)
-        self.attributes["icon"] = icon_surface
-        self.properties["icon"] = g15util.get_embedded_image_url(icon_surface)
-            
+        self.icon_surface = icon_surface
+        self.icon_embedded = g15util.get_embedded_image_url(icon_surface)
+        self.set_properties()
+        
+    def set_properties(self):
+        self.properties = {}
+        self.attributes = {}
+        self.properties["title"] = self.feed["feed"]["title"]
+        self.attributes["icon"] = self.icon_surface
+        self.properties["icon"] = self.icon_embedded
         self.properties["subtitle"] = self.feed["feed"]["subtitle"]
         self.properties["updated"] = "%s %s" % ( time.strftime("%H:%M", self.feed.updated), time.strftime("%a %d %b", self.feed.updated) )
         self.attributes["entries"] = self.feed.entries
         if self.index > -1:
             self.attributes["selected"] = self.selected_entry
             self.attributes["selected_idx"] = self.index
-        self.screen.redraw(self.page)
         
     def selection_changed(self):        
         if self.index > -1 and self.index < len(self.feed.entries):
@@ -176,9 +177,9 @@ class G15FeedPage():
         else:
             self.index = -1
             self.selected_entry = None
-        self.reload()
-        self.screen.redraw(self.page)
+        self.set_properties()
         self.screen.applet.resched_cycle()
+        self.screen.redraw(self.page)
                     
     def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_UP and self.screen.get_visible_page() == self.page:
@@ -238,6 +239,8 @@ class G15RSS():
     def refresh(self):
         for page in self.pages:
             self.pages[page].reload()
+            self.page.set_title(self.feed["feed"]["title"])
+            self.screen.redraw(page)
         self.schedule_refresh()
     
     def deactivate(self):

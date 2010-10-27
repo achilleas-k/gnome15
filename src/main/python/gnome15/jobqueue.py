@@ -42,6 +42,10 @@ class JobQueue():
             pass
             
     def run(self, item, *args):
+        if item == None:
+            sys.stderr.write("WARNING: Attempt to run empty job.")
+            traceback.print_stack()
+            return
         self.lock.acquire()
         try :
             if self.max_jobs != None:
@@ -58,7 +62,8 @@ class JobQueue():
         while True:
             item = self.work_queue.get()
             try:
-                item.item(*item.args)
+                if item != None:
+                    item.item(*item.args)
             except:
                 traceback.print_exc(file=sys.stderr)
             self.work_queue.task_done()

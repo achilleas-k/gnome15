@@ -112,7 +112,6 @@ class G15Menu():
                         self.screen.redraw(self.page)
                         return True           
                     elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
-                        print "Selected ",self.selected.page.id
                         self.screen.raise_page(self.selected.page)
                         self.screen.applet.resched_cycle()
                         self._hide_menu()
@@ -148,6 +147,9 @@ class G15Menu():
     def new_page(self, page):
         self._reload_menu()
         
+    def page_changed(self, page):
+        pass
+        
     def title_changed(self, page, title):
         self._reload_menu()
     
@@ -160,7 +162,7 @@ class G15Menu():
     def _reload_menu(self):
         self.items = []
         for page in self.screen.pages:
-            if page != self.page:
+            if page != self.page and page.priority > g15screen.PRI_INVISIBLE:
                 self.items.append(MenuItem(page))
         self.selected = self.items[0]
         self.screen.redraw(self.page)

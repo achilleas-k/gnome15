@@ -25,9 +25,11 @@ PRI_EXCLUSIVE=100
 PRI_HIGH=99
 PRI_NORMAL=50
 PRI_LOW=1
+PRI_INVISIBLE=0
 
 import g15_driver as g15driver
 import g15_util as g15util
+import g15_profile as g15profile
 import time
 import threading
 import jobqueue 
@@ -97,6 +99,7 @@ class G15Screen():
         self.painter_function = None
         self.mkey = 1
         self.reverting = { }
+        self.hiding = { }
         
     def add_screen_change_listener(self, screen_change_listener):
         if not screen_change_listener in self.screen_change_listeners:
@@ -122,7 +125,8 @@ class G15Screen():
             val = g15driver.MKEY_LIGHT_2
         elif self.mkey == 3:
             val = g15driver.MKEY_LIGHT_3
-        self.applet.driver.set_mkey_lights(val)   
+        self.applet.driver.set_mkey_lights(val)
+        self.set_color_for_mkey()     
     
     def handle_key(self, keys, state, post=False):
         # Requires long press of L1 to cycle
@@ -176,7 +180,14 @@ class G15Screen():
             self.page_model_lock.release()            
 
     def hide_after(self, hide_after, page):
-        return g15util.schedule("HideScreen", hide_after, self.del_page, page)
+        if page.id in self.hiding:
+            # If the page was already hiding, cancel previous timer
+            self.hiding[page.id].cancel()
+            del self.hiding[page.id]       
+                      
+        timer = g15util.schedule("HideScreen", hide_after, self.del_page, page)
+        self.hiding[page.id] = timer
+        return timer
     
     def set_priority(self, page, priority, revert_after=0.0, hide_after=0.0, do_redraw = True):
         self.page_model_lock.acquire()
@@ -194,10 +205,10 @@ class G15Screen():
                         del self.reverting[page.id]                                        
                         
                     # Start a new timer to revert                    
-                    timer = g15util.schedule("Revert", hide_after, self.set_priority, page, old_priority)
+                    timer = g15util.schedule("Revert", revert_after, self.set_priority, page, old_priority)
                     self.reverting[page.id] = (old_priority, timer)
                     return timer
-                if hide_after != 0.0:                    
+                if hide_after != 0.0:       
                     return self.hide_after(hide_after, page)
         finally:
             self.page_model_lock.release()   
@@ -270,6 +281,20 @@ class G15Screen():
             # Drop any redraws that are not required
             self.jobqueue.clear()
         self.jobqueue.run(self._do_redraw, page, direction, transitions)
+        
+    def set_color_for_mkey(self):
+        control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
+        if control != None and not isinstance(control.value, int):
+            profile = g15profile.get_active_profile()
+            if profile != None:
+                rgb = profile.get_mkey_color(self.mkey - 1)
+                if rgb != None:                    
+                    control.value = rgb
+                    self.driver.update_control(control)
+                    return
+            self.driver.set_control_from_configuration(control, self.applet.conf_client)
+            self.driver.update_control(control)
+    
     
     '''
     Private functions
@@ -307,6 +332,10 @@ class G15Screen():
                 callback = self.visible_page.on_shown
                 if callback != None:
                     callback()
+                    
+            for l in self.screen_change_listeners:
+                l.page_changed(self.visible_page)
+            
         
         # Call the screen's painter
         if self.visible_page != None:
@@ -402,9 +431,9 @@ class G15Screen():
                             norms[i].set_time(norms[i - 1].time)
                         norms[0].set_time(last_time)
                 
-    def _do_redraw(self, page = None, direction="up", transitions = True):   
+    def _do_redraw(self, page = None, direction="up", transitions = True):
+        self.page_model_lock.acquire()   
         try :           
-            self.page_model_lock.acquire()
             current_page = self._get_next_page_to_display()
             if page == None or page == current_page:
                 self._draw_page(current_page, direction, transitions)
@@ -418,8 +447,8 @@ class G15Screen():
         self.page_model_lock.acquire()
         try :
             srt = sorted(self.pages, key=lambda key: key.value, reverse = True)
-            if len(srt) > 0:
+            if len(srt) > 0 and srt[0].priority != PRI_INVISIBLE:
                 return srt[0]
         finally:            
             self.page_model_lock.release()
-    
+        

@@ -29,13 +29,9 @@ if os.path.exists(path):
     sys.path.insert(0, path)
 
 import gnome15.g15_macros as g15macros
-import gnome15.g15_globals as pglobals
+import gnome15.g15_driver_manager as g15drivermanager
 
-if __name__ == '__main__':
-
-    import optparse
-    parser = optparse.OptionParser()
-    (options, args) = parser.parse_args()
-   
-    a = g15macros.G15Macros()
-    a.run()
+if g15drivermanager.get_configured_driver("-c" in sys.argv) != None:
+    if __name__ == "__main__":
+        a = g15macros.G15Macros()
+        a.run()

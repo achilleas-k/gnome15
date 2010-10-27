@@ -14,7 +14,7 @@
    height="16"
    id="svg2"
    inkscape:version="0.48.0 r9654"
-   sodipodi:docname="logitech-g-keyboard-panel.svg">
+   sodipodi:docname="logitech-g-keyboard-error-panel.svg">
   <metadata
      id="metadata10">
     <rdf:RDF>
@@ -23,7 +23,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -42,18 +42,19 @@
      showgrid="false"
      inkscape:zoom="22"
      inkscape:cx="7.7833808"
-     inkscape:cy="12.325107"
-     inkscape:window-x="2064"
-     inkscape:window-y="193"
+     inkscape:cy="12.916016"
+     inkscape:window-x="2061"
+     inkscape:window-y="122"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg2" />
   <defs
      id="defs4" />
   <g
-     id="g3819">
+     id="g3819"
+     transform="matrix(0.85714286,0,0,0.85714286,1.1428571,1.1428571)">
     <rect
-       ry="2"
-       rx="2"
+       ry="2.3333333"
+       rx="2.3333333"
        y="1"
        x="1"
        height="14"
@@ -66,7 +67,7 @@
        id="text3757"
        y="13.496772"
        x="2.173162"
-       style="font-size:14.20566653999999929px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Arial;-inkscape-font-specification:Arial Bold"
+       style="font-size:14.20566654px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Arial;-inkscape-font-specification:Arial Bold"
        xml:space="preserve"><tspan
          y="13.496772"
          x="2.173162"

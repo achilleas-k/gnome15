@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.0 r9654"
-   sodipodi:docname="logitechi-g-keyboard-panel.svg">
+   sodipodi:docname="logitech-g-keyboard-panel.svg">
   <defs
      id="defs4">
     <linearGradient
@@ -69,7 +69,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="15.327746"
      inkscape:cx="1.3471561"
-     inkscape:cy="9.4891703"
+     inkscape:cy="10.337305"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -97,7 +97,7 @@
      transform="translate(0,-1028.3622)">
     <g
        id="layer1-7"
-       transform="matrix(1.489551,0,0,1.489551,0.20310575,1027.0244)"
+       transform="matrix(1.125,0,0,1.1428571,3,1030.1122)"
        style="stroke:none">
       <path
          style="fill:#dfd8c8;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"

@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.0 r9654"
-   sodipodi:docname="g15key-error.svg">
+   sodipodi:docname="logitech-g-keyboard-error-panel.svg">
   <defs
      id="defs4">
     <linearGradient
@@ -209,14 +209,14 @@
      inkscape:pageshadow="2"
      inkscape:zoom="15.327746"
      inkscape:cx="1.3471561"
-     inkscape:cy="7.9233823"
+     inkscape:cy="8.7715174"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1143"
      inkscape:window-height="734"
-     inkscape:window-x="13"
-     inkscape:window-y="30"
+     inkscape:window-x="1981"
+     inkscape:window-y="16"
      inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
@@ -238,15 +238,15 @@
     <g
        id="layer1-76"
        inkscape:label="Layer 1"
-       transform="translate(18.87936,-14.082357)">
+       transform="matrix(0.87478813,0,0,0.85693531,17.517135,137.37051)">
       <text
          sodipodi:linespacing="174%"
          id="text15270"
          y="1063.3165"
          x="-15.68836"
-         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:174.00000095%;letter-spacing:10px;word-spacing:0px;fill:url(#linearGradient15232);fill-opacity:1;stroke:#f50000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none;font-family:Ubuntu;-inkscape-font-specification:Ubuntu Bold"
+         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:174.00000095%;letter-spacing:10px;word-spacing:0px;fill:url(#linearGradient15232);fill-opacity:1;stroke:#f50000;stroke-width:0.57749009;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none;font-family:Ubuntu;-inkscape-font-specification:Ubuntu Bold"
          xml:space="preserve"><tspan
-           style="fill:url(#linearGradient15232);fill-opacity:1;stroke:#f50000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none"
+           style="fill:url(#linearGradient15232);fill-opacity:1;stroke:#f50000;stroke-width:0.57749009;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none"
            y="1063.3165"
            x="-15.68836"
            id="tspan15272"
@@ -257,7 +257,7 @@
     </g>
     <g
        id="layer1-7"
-       transform="matrix(1.0002422,0,0,1.0002422,-0.00193791,1035.36)"
+       transform="matrix(0.875,0,0,0.85714286,1,1036.6747)"
        style="stroke:none">
       <path
          style="fill:#dfd8c8;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.99999887;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"

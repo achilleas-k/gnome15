@@ -116,7 +116,7 @@ class G15CairoClock():
         self.notify_handler = self.gconf_client.notify_add(self.gconf_key, self.config_changed);   
         self.load_surfaces()         
         self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_NORMAL, 
-                                        on_shown=self.on_shown,on_hidden=self.on_hidden,id="Clock",
+                                        on_shown=self.on_shown,on_hidden=self.on_hidden,id="Cairo Clock",
                                         thumbnail_painter = self.paint_thumbnail)
         self.page.set_title("Cairo Clock")
     
@@ -158,7 +158,6 @@ class G15CairoClock():
                 svg = rsvg.Handle(path)   
                 if self.svg_size == None:
                     self.svg_size = svg.get_dimension_data()[2:4]
-                    print "Will use SVG canvas size of",self.svg_size
                     
                 svg_size = self.svg_size
                      

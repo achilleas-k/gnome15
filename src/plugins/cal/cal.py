@@ -127,7 +127,6 @@ class G15Cal():
     
     def load_month_events(self, now):
         self.event_days = {}
-        print "Loading calendar events"
             
         # Get all the events for this month
         for i in evolution.ecal.list_calendars():
@@ -143,8 +142,6 @@ class G15Cal():
                     else:
                         self.event_days[key] = list
                     list.append(parsed_event)
-                    
-        print "Loaded calendar events"
                     
     def adjust_calendar_date(self, amount):
         if self.calendar_date == None:

@@ -109,15 +109,14 @@ class G15Volume():
         self.theme.draw(canvas, properties)
     
     def popup(self):
-        
         page = self.screen.get_page("Volume")
         if page == None:
             self.reload_theme()
             page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="Volume")
-            self.hide_timer = self.screen.hide_after(3.0, page)
+            self.screen.hide_after(3.0, page)
         else:
-            self.hide_timer.cancel()
-            self.hide_timer = self.screen.set_priority(page, g15screen.PRI_HIGH, hide_after = 3.0)
+            self.screen.raise_page(page)
+            self.screen.hide_after(3.0, page)
         
         vol_mixer = alsaaudio.Mixer("Master", cardindex=0)
 

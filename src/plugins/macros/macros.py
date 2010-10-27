@@ -24,10 +24,9 @@ import gnome15.g15_profile as g15profile
 import gnome15.g15_driver as g15driver
 import gnome15.g15_util as g15util
 import gnome15.g15_theme as g15theme
+import gnome15.g15_screen as g15screen
 
 import os
-import cairo
-from threading import Timer
 
 # Plugin details - All of these must be provided
 id="macros"
@@ -50,11 +49,7 @@ def create(gconf_key, gconf_client, screen):
 
 class G15MacroPage():
     def __init__(self, page_no, number_of_pages, plugin):
-        self.page = plugin.screen.new_page(self.paint, id="Macro Info %d" % page_no, 
-                                           on_shown=self.on_shown,on_hidden=self.on_hidden, 
-                                           thumbnail_painter = self.paint_thumbnail, 
-                                           panel_painter = self.paint_thumbnail)
-        self.page.set_title("Macros (page %d)" % ( page_no + 1 ) ) 
+        self.page = None
         self.page_no = page_no
         self.number_of_pages = number_of_pages
         self.plugin = plugin
@@ -81,6 +76,13 @@ class G15MacroPage():
         self.icon_path = self.plugin.get_active_profile_icon_path()
         self.icon, ctx = g15util.load_surface_from_file(self.icon_path)
         
+        if self.page == None:                   
+            self.page = self.plugin.screen.new_page(self.paint, id="Macro Info %d" % page_no, 
+                                               on_shown=self.on_shown,on_hidden=self.on_hidden, 
+                                               thumbnail_painter = self.paint_thumbnail, 
+                                               panel_painter = self.paint_thumbnail)
+            self.page.set_title("Macros (page %d)" % ( self.page_no + 1 ) ) 
+        
     def on_shown(self):
         self.hidden = False
         
@@ -97,8 +99,6 @@ class G15MacroPage():
         return g15util.paint_thumbnail_image(allocated_size, self.icon, canvas)
     
     def paint(self, canvas):
-        
-        print "Redrawing macro page",self.page_no
         
         properties = {}
         properties["profile"] = self.plugin.active_profile.name
@@ -169,8 +169,15 @@ class G15Macro():
         pass
     
     def handle_key(self, keys, state, post):
-        if post:
-            print "Handling macro key in macros"
+        if not post and state == g15driver.KEY_STATE_UP:
+            print "Clearing pressed key"
+            if self.screen.get_mkey() != self.mkey:
+                print "Changing bank"
+                self.mkey = self.screen.get_mkey()
+                self.check_pages()
+                if len(self.macro_pages) > 0:
+                    self.screen.set_priority(self.macro_pages[0].page, g15screen.PRI_HIGH, revert_after = 3.0)
+            self.pressed = None
         
 # TODO
 #
@@ -226,7 +233,6 @@ class G15Macro():
                     
             self.active_profile = active_profile
             
-            print "Redrawing all macro pages"
             for macro_page in self.macro_pages:
                 macro_page.reset(active_profile)
                 self.screen.redraw(macro_page.page)

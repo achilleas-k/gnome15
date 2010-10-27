@@ -19,24 +19,21 @@
 #        | along with this program; if not, write to the Free Software                 |
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
+ 
+import dbus
+import g15_globals as pglobals
 
-import sys
-import os
-import gconf
-import gobject
+BUS_NAME="org.gnome15.Gnome15"
+NAME="/org/gnome15/Service"
+IF_NAME="org.gnome15.Service"
 
-gobject.threads_init()
-
-# Allow running from local path
-path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..","main", "python")
-if os.path.exists(path):
-    sys.path.insert(0, path)
-
-import gnome15.g15_config as g15config
-import gnome15.g15_setup as g15setup
-import gnome15.g15_globals as pglobals
-import gnome15.g15_driver_manager as g15drivermanager
-
-if g15drivermanager.get_configured_driver("-c" in sys.argv) != None:
-    a = g15config.G15Config()
-    a.run()
+class G15DBUSService(dbus.service.Object):
+    
+    def __init__(self,  parent_window=None):
+        bus = dbus.SessionBus()
+        bus_name = dbus.service.BusName(BUS_NAME, bus=bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
+        dbus.service.Object.__init__(self, bus_name, NAME)
+    
+    @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
+    def GetServerInformation(self):
+        return ( pglobals.name, "Gnome15 Project", pglobals.version, "1.0" )

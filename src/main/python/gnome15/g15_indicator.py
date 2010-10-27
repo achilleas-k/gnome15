@@ -20,21 +20,17 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import sys
 import pygtk
 pygtk.require('2.0')
 import gtk
 import g15_service as g15service
 import g15_util as g15util
+import g15_screen as g15screen
 import appindicator
-import cairo
-import gconf
 
 class G15Indicator():
     
     def __init__(self,  parent_window=None):
-        
-#        gconf_client = gconf.client_get_default()
         
         ind = appindicator.Indicator("example-simple-client",
                                g15util.local_icon_or_default("logitech-g-keyboard-panel"),
@@ -70,26 +66,19 @@ class G15Indicator():
         self.service.screen.add_screen_change_listener(self)
         
     def show_page(self,event, page):        
-        self.service.screen.raise_page(page)  
-        self.service.screen.applet.resched_cycle() 
+        self.service.screen.cycle_to(page, True)  
+        
+    def page_changed(self, page):
+        pass   
         
     def new_page(self, page):
-#        item = gtk.ImageMenuItem(page.id)
-        item = gtk.MenuItem(page.title)
-        self.page_items[page.id] = item
-        item.connect("activate", self.show_page, page)
-        
-#        if page.thumbnail_painter != None:
-#            img = cairo.ImageSurface(cairo.FORMAT_ARGB32, 32, 32)
-#            thumb_canvas = cairo.Context(img)
-#            if page.thumbnail_painter(thumb_canvas, 32, 32):
-#                img_widget = gtk.Image()
-#                img_widget.set_from_pixbuf(g15util.surface_to_pixbuf(img))
-#                img_widget.show()
+        if page.priority > g15screen.PRI_INVISIBLE:
+            item = gtk.MenuItem(page.title)
+            self.page_items[page.id] = item
+            item.connect("activate", self.show_page, page)
                 
-        item.show_all()
-                
-        self.menu.append(item)
+            item.show_all()
+            self.menu.append(item)
         
     def title_changed(self, page, title):
         item = self.page_items[page.id]

@@ -59,7 +59,7 @@ def show_preferences(parent, gconf_client, gconf_key):
     dialog.run()
     dialog.hide()
     
-effects = [ "vertical-scroll", "horizontal-scroll", "fade" ]
+effects = [ "vertical-scroll", "horizontal-scroll", "fade", "zoom" ]
 
 class G15Fx():
     
@@ -171,6 +171,35 @@ class G15Fx():
                 img_context.set_source_surface(old_surface)
                 img_context.paint_with_alpha(1.0 - ( float(i) / 256.0 ) )
                 self.screen.driver.paint(img_surface)
-            
+        elif effect == "zoom":
+            if direction == "down":                
+                for i in range(1, self.screen.width, factor):
+                    img_context.save()                
+                    img_context.set_source_surface(old_surface)
+                    img_context.paint() 
+                    scale = i / float(self.screen.width)
+                    scaled_width = self.screen.width * scale
+                    scaled_height = self.screen.height * scale
+                    img_context.translate( ( self.screen.width - scaled_width) / 2, ( self.screen.height - scaled_height) / 2)  
+                    img_context.scale(scale, scale)            
+                    img_context.set_source_surface(new_surface)
+                    img_context.paint()               
+                    img_context.restore()             
+                    self.screen.driver.paint(img_surface)
+            else:                
+                for i in range(self.screen.width, 0, factor * -1):
+                    img_context.save()             
+                    img_context.set_source_surface(new_surface)
+                    img_context.paint()               
+                    scale = i / float(self.screen.width)
+                    scaled_width = self.screen.width * scale
+                    scaled_height = self.screen.height * scale
+                    img_context.translate( ( self.screen.width - scaled_width) / 2, ( self.screen.height - scaled_height) / 2)  
+                    img_context.scale(scale, scale)            
+                    img_context.set_source_surface(old_surface)
+                    img_context.paint()               
+                    img_context.restore()  
+                    self.screen.driver.paint(img_surface)
+                
         if self.chained_transition != None:
-            self.chained_transition(old_canvas, new_canvas, old_page, new_page, direction)
+            self.chained_transition(old_surface, new_surface, old_page, new_page, direction)

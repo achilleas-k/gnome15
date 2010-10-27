@@ -14,16 +14,29 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-import sys
+import gobject
+import dbus
 import os
 import g15_globals as pglobals
-import g15_profile as g15profile
 import g15_setup as g15setup
 import gconf
 import g15_plugins as g15plugins
 import g15_driver as g15driver
+import g15_driver_manager as g15drivermanager
 import g15_util as g15util
-import wnck
+import subprocess
+
+
+# Determine if appindicator is available, this decides that nature
+# of the message displayed when the Gnome15 service is not running
+HAS_APPINDICATOR=False
+try :
+    import appindicator
+    HAS_APPINDICATOR=True
+except:
+    pass
+
+PALE_RED = gtk.gdk.Color(213, 65, 54)
 
 class G15Config:
     
@@ -31,7 +44,7 @@ class G15Config:
     
     ''' GUI for configuring wacom-compatible drawing tablets.
     '''
-    def __init__(self, parent_window=None):
+    def __init__(self, parent_window=None, check_service=True):
         self.parent_window = parent_window
         
         self.plugin_key = "/apps/gnome15/plugins"
@@ -53,6 +66,7 @@ class G15Config:
         self.plugin_tree = self.widget_tree.get_object("PluginTree")
         self.driver_button = self.widget_tree.get_object("DriverButton")
         self.plugin_enabled_renderer = self.widget_tree.get_object("PluginEnabledRenderer")
+        self.main_vbox = self.widget_tree.get_object("MainVBox")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -79,7 +93,7 @@ class G15Config:
         
         # Driver. We only need this to get the controls. Perhaps they should be moved out of the driver
         # class and the values stored separately
-        self.driver = g15driver.get_driver(self.conf_client)
+        self.driver = g15drivermanager.get_driver(self.conf_client)
         
         # Controls
         self.controls = self.widget_tree.get_object("ControlsBox")
@@ -136,11 +150,79 @@ class G15Config:
                 
             row += 1
             
-        table.show()
         self.controls.add(table)
+        self.main_window.show_all() 
         
         # Populate model
         self.load_model()
+        
+        # See if the Gnome15 service is running
+        if check_service:
+            self.infobar = gtk.InfoBar()       
+            content = self.infobar.get_content_area()
+            self.warning_label = gtk.Label()
+            self.warning_image = gtk.Image()  
+            content.pack_start(self.warning_image, True, False)
+            content.pack_start(self.warning_label, True, False)
+            if HAS_APPINDICATOR:
+                self.start_button = gtk.Button("Start Service")
+                self.start_button.connect("clicked", self.start_service)
+                content.pack_start(self.start_button, False, False)  
+                self.start_button.show()         
+            self.main_vbox.pack_start(self.infobar, True, True)
+            self.warning_box_shown = False
+            self.infobar.hide_all()
+            
+            self.gnome15_service = None
+            self.check_timer = None        
+            self.session_bus = dbus.SessionBus()
+            self.check_service_status()
+        
+    def check_service_status(self):
+        try :
+            if self.gnome15_service == None:
+                self.gnome15_service = self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service')
+            self.gnome15_service.GetServerInformation()
+            gobject.idle_add(self.hide_warning)
+        except:
+            self.gnome15_service = None
+            if self.warning_box_shown == None or not self.warning_box_shown:
+                if HAS_APPINDICATOR:
+                    gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING, "The Gnome15 service is not running. It is recommended " + \
+                                      "you add <b>g15-indicator</b> as a <i>Startup Application</i>.")                 
+                else:
+                    gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING, "The Gnome15 service is not running. It is recommended " + \
+                                  "you add the Gnome15 applet to a panel..")
+        self.check_timer = g15util.schedule("ServiceStatusCheck", 10.0, self.check_service_status)
+        
+    def hide_warning(self):
+        if self.warning_box_shown == None or self.warning_box_shown:
+            self.warning_box_shown = False    
+            self.infobar.hide_all()
+            self.main_window.check_resize()
+        
+    def start_service(self, widget):
+        self.check_timer.cancel()
+        widget.set_sensitive(False)
+        script = os.path.realpath(os.path.join(pglobals.scripts_dir,'g15-indicator'))
+        os.system(script + " &")
+        self.check_timer = g15util.schedule("ServiceStatusCheck", 5.0, self.check_service_status)
+    
+    def show_message(self, type, text):
+        self.infobar.set_message_type(type)
+        self.start_button.set_sensitive(True)
+        self.warning_label.set_text(text)
+        self.warning_label.set_use_markup(True)
+        self.warning_label.set_line_wrap(True)
+        self.warning_label.set_alignment(0.0, 0.5)
+
+        if type == gtk.MESSAGE_WARNING:
+            self.warning_image.set_from_stock(gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_DIALOG)
+            self.warning_label.modify_fg(gtk.STATE_NORMAL, gtk.gdk.Color(0, 0, 0))
+        
+        self.main_window.check_resize()    
+        self.infobar.show_all()
+        self.warning_box_shown = True
         
     def open_site(self, widget):
         subprocess.Popen(['xdg-open',widget.get_uri()])
@@ -175,8 +257,8 @@ class G15Config:
             self.conf_client.set_int("/apps/gnome15/" + control.id, int(widget.get_value()))
         
     def show_setup(self, widget):        
-        setup = g15setup.G15Setup()
-        driver_name = setup.run()
+        setup = g15setup.G15Setup(None, False, False)
+        setup.setup()
     
     def show_preferences(self, widget):
         plugin = self.get_selected_plugin()
@@ -221,7 +303,6 @@ class G15Config:
             
     def select_plugin(self, widget):       
         plugin = self.get_selected_plugin()
-        print "Selected plugin",plugin
         if plugin != None:  
             self.selected_id = plugin.id
             self.widget_tree.get_object("PluginNameLabel").set_text(plugin.name)

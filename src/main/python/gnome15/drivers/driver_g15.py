@@ -35,6 +35,15 @@ from threading import Thread
 from threading import Lock
 import struct
 
+# Driver information (used by driver selection UI)
+name="G15Daemon"
+id="g15"
+description="For use with the Logitech G15, this driver uses g15daemon, available from " + \
+            "<a href=\"http://www.g15tools.com/\">g15tools</a>. The g15deaemon service " + \
+            "must be installed and running when starting Gnome15."
+has_preferences=False
+
+
 MAX_X=160
 MAX_Y=43
 
@@ -181,6 +190,7 @@ class Driver(g15driver.AbstractDriver):
         self.thread = None
         self.on_close = on_close
         self.socket = None
+        self.connected = False
         
     def get_size(self):
         return (MAX_X, MAX_Y)
@@ -212,12 +222,10 @@ class Driver(g15driver.AbstractDriver):
     def get_model_name(self):
         return g15driver.MODEL_G15_V1
     
-    def process_svg(self, document):
-        pass
-        
     def disconnect(self):
         if not self.is_connected():
             raise Exception("Already disconnected")
+        self.connected = False
         self.socket.close()
         self.socket = None
         if self.thread != None:
@@ -227,7 +235,7 @@ class Driver(g15driver.AbstractDriver):
             self.on_close()
     
     def is_connected(self):
-        return self.socket != None
+        return self.connected
         
     def reconnect(self):
         if self.is_connected():
@@ -242,7 +250,8 @@ class Driver(g15driver.AbstractDriver):
         self.socket.connect((self.remote_host, self.remote_port))
         if self.socket.recv(16) != "G15 daemon HELLO":
             raise Exception("Communication error with server")
-        self.socket.send(self.init_string)
+        self.socket.send(self.init_string)        
+        self.connected = True
         
     def set_mkey_lights(self, lights):
         self.socket.send(chr(CLIENT_CMD_MKEY_LIGHTS  + lights),socket.MSG_OOB)

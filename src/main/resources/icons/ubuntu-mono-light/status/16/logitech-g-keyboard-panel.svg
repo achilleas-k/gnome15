@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.0 r9654"
-   sodipodi:docname="g15key.svg">
+   sodipodi:docname="logitech-g-keyboard-panel.svg">
   <defs
      id="defs4">
     <linearGradient
@@ -69,14 +69,14 @@
      inkscape:pageshadow="2"
      inkscape:zoom="15.327746"
      inkscape:cx="-9.0914302"
-     inkscape:cy="7.9233823"
+     inkscape:cy="8.7715174"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1143"
      inkscape:window-height="734"
-     inkscape:window-x="13"
-     inkscape:window-y="30"
+     inkscape:window-x="2114"
+     inkscape:window-y="74"
      inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
@@ -97,32 +97,13 @@
      transform="translate(0,-1036.3622)">
     <g
        id="layer1-7"
-       transform="matrix(0.99350858,0,0,0.99350858,0.05193125,1035.4204)"
+       transform="matrix(0.875,0,0,0.85714286,1,1036.6747)"
        style="stroke:none">
       <path
          style="fill:#3a3935;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.07727575;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
          d="m 2,0.96875 c -1.108,0 -2,0.892 -2,2 l 0,10 c 0,1.108 0.892,2 2,2 l 12,0 c 1.108,0 2,-0.892 2,-2 l 0,-10 c 0,-1.108 -0.892,-2 -2,-2 l -12,0 z M 8.75,2.9375 c 0.4573273,9.9e-6 0.8547436,0.028427 1.21875,0.09375 0.373326,0.05601 0.707409,0.1347597 0.96875,0.21875 0.270659,0.074676 0.488242,0.1660095 0.65625,0.25 0.177325,0.084009 0.300325,0.1408426 0.375,0.1875 l -0.625,1.75 C 11.045075,5.2788409 10.704492,5.1432577 10.3125,5.03125 9.9298266,4.9099246 9.488577,4.843758 9.03125,4.84375 8.0139118,4.843758 7.3010792,5.1494244 6.84375,5.71875 6.3957468,6.2787566 6.156247,7.0200058 6.15625,8 c -3e-6,0.4760044 0.044247,0.9205039 0.15625,1.3125 0.1119968,0.3826698 0.3072466,0.720003 0.53125,1 0.2239961,0.280002 0.4764959,0.497585 0.8125,0.65625 0.3359952,0.149335 0.7394948,0.218752 1.1875,0.21875 0.2426608,2e-6 0.4569939,0.0093 0.625,0 C 9.6460769,11.1782 9.8068267,11.153 9.9375,11.125 l 0,-3.375 2.15625,0 0,4.8125 c -0.261342,0.102667 -0.671342,0.2005 -1.25,0.3125 -0.578674,0.121333 -1.275673,0.1875 -2.125,0.1875 -0.7280048,0 -1.4026708,-0.11975 -2,-0.34375 -0.5880029,-0.224 -1.0800024,-0.539416 -1.5,-0.96875 -0.4200016,-0.429332 -0.7666679,-0.968415 -1,-1.59375 C 3.9947492,9.53092 3.9062493,8.8026707 3.90625,8 3.9062493,7.1880057 4.0292492,6.4690897 4.28125,5.84375 4.5332487,5.2184243 4.8738317,4.7105915 5.3125,4.28125 5.7511641,3.8425924 6.2557469,3.5052594 6.84375,3.28125 7.4410791,3.0572598 8.0779951,2.9375099 8.75,2.9375 z"
          transform="translate(0,1)"
          id="rect2386"
-         inkscape:connector-curvature="0" />
-    </g>
-    <g
-       id="layer1-0"
-       transform="translate(-16.05,1036.8401)">
-      <path
-         style="opacity:0.6;fill:none;stroke:#eae3d0;stroke-width:4;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible"
-         id="path3185-6"
-         d="m 8.0000001,7 0,-6.0058925 M 4.8427513,3.45 c -5.2338614,2.7421513 -2.8671233,10.6 3.116441,10.6 5.9212327,0 8.5750357,-7.4496051 3.1164397,-10.6"
-         inkscape:connector-curvature="0" />
-      <path
-         style="fill:none;stroke:#3a3935;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible"
-         id="path3716-1"
-         d="m 8.0000001,7 0,-6.0058925"
-         inkscape:connector-curvature="0" />
-      <path
-         style="fill:none;stroke:#3a3935;stroke-width:1.89999998;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible"
-         id="path3341-5"
-         d="m 4.8427513,3.45 c -5.2338614,2.7421513 -2.8671233,10.6 3.116441,10.6 5.9212327,0 8.5750357,-7.4496051 3.1164397,-10.6"
          inkscape:connector-curvature="0" />
     </g>
   </g>
