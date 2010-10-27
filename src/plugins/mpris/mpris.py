@@ -62,6 +62,7 @@ class AbstractMPRISPlayer():
         self.title = title
         self.session_bus = session_bus
         self.page = None
+        self.duration = 0
         self.screen = screen
         self.interface_name = interface_name
         self.players = players
@@ -119,7 +120,8 @@ class AbstractMPRISPlayer():
             self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
         
     def hide_page(self):
-        self.screen.del_page(self.page)        
+        self.screen.del_page(self.page)    
+        self.page = None    
         
     def on_shown(self):
         self.hidden = False
@@ -215,10 +217,10 @@ class AbstractMPRISPlayer():
         raise Exception("Not implemented.")
     
     def get_progress(self):
-        raise Execption("Not implemented.")
+        raise Exception("Not implemented.")
     
     def on_stop(self):
-        raise Execption("Not implemented.")
+        raise Exception("Not implemented.")
     
 class MPRIS1Player(AbstractMPRISPlayer):
     

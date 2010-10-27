@@ -111,6 +111,7 @@ class G15Service():
         self.parent_window = parent_window
         self.service_host = service_host
         self.reschedule_lock = RLock()
+        self.last_error = None
         
     def start(self):
         self.active_window = None
@@ -164,7 +165,7 @@ class G15Service():
                 print "WARNING: Python Wnck not available either, no automatic profile switching"
                 
         # Expose Gnome15 functions via DBus
-        self.dbus_service = g15dbus.G15DBUSService() 
+        self.dbus_service = g15dbus.G15DBUSService(self) 
  
     def attempt_connection(self, delay = 0.0):
         if self.driver.is_connected():
@@ -176,23 +177,19 @@ class G15Service():
             return
                         
         try :
-            self.driver.connect()     
+            self.driver.connect() 
             self.screen.init()  
             self.splash = G15Splash(self.screen, self.conf_client)
             self.screen.set_mkey(1)
             self.activate_profile()            
-            g15util.schedule("ActivatePlugins", 0.1, self.complete_loading)
+            g15util.schedule("ActivatePlugins", 0.1, self.complete_loading)    
+            self.last_error = None
         except Exception as e:
-            if self.process_exception(e):
+            if self._process_exception(e):
                 raise
             
-    def process_exception(self, exception):
-        self.service_host.attention(str(exception)) 
-        if self.should_reconnect(exception):
-            self.reconnect_timer = g15util.schedule("ReconnectTimer", 5.0, self.attempt_connection)
-        else:
-            traceback.print_exc(file=sys.stderr)
-            return True
+    def get_last_error(self):
+        return self.last_error
             
     def should_reconnect(self, exception):
         return isinstance(exception, NotConnectedException) or ( len(exception.args) == 2 and isinstance(exception.args[0],int) and exception.args[0] in [ 111, 104 ] )
@@ -205,7 +202,7 @@ class G15Service():
             self.splash.complete()
             self.resched_cycle()
         except Exception as e:
-            if self.process_exception(e):
+            if self._process_exception(e):
                 raise
             
     def error(self, error_text = None):     
@@ -213,12 +210,10 @@ class G15Service():
 
     def on_driver_close(self, retry=True):
         if not self.shutting_down:
-            self.service_host.attention()
             self.plugins.deactivate()
             if retry:
-                self.resched_cycle()
-                self.driver = g15drivermanager.get_driver(self.conf_client, on_close = self.on_driver_close)            
-                self.attempt_connection(delay = 5.0)
+                self.driver = g15drivermanager.get_driver(self.conf_client, on_close = self.on_driver_close)
+                self._process_exception(NotConnectedException("Keyboard driver disconnected."))
             else:                
                 self.service_host.quit()
         
@@ -254,7 +249,7 @@ class G15Service():
             self.cycle_timer = None
             self.screen.cycle(1)
         
-    def resched_cycle(self): 
+    def resched_cycle(self, arg1 = None, arg2 = None, arg3 = None, arg4 = None): 
         self.reschedule_lock.acquire()
         try :
             self._cancel_schedule()
@@ -488,7 +483,7 @@ class G15Service():
         self.driver.disconnect()  
         
     def properties(self,event,data=None):
-        a = g15config.G15Config(self.parent_window, check_service=False)
+        a = g15config.G15Config(self.parent_window, self)
         a.run() 
         
     def macros(self,event,data=None):
@@ -522,3 +517,13 @@ class G15Service():
         if val != None:
             time = val.get_int()
         self.cycle_timer = g15util.schedule("CycleTimer", time, self.screen_cycle)
+            
+    def _process_exception(self, exception):
+        self.last_error = exception
+        self.service_host.attention(str(exception))
+        self.resched_cycle()             
+        if self.should_reconnect(exception):
+            self.reconnect_timer = g15util.schedule("ReconnectTimer", 5.0, self.attempt_connection)
+        else:
+            traceback.print_exc(file=sys.stderr)
+            return True

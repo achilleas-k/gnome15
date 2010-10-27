@@ -139,8 +139,9 @@ class G15FeedPage():
         self.url = url
         self.index = -1
         self.selected_entry = None
-        self.reload()
-        self.page = self.screen.new_page(self.paint, id="Feed " + url, thumbnail_painter = self.paint_thumbnail)
+        self.reload() 
+        self.page = self.screen.new_page(self.paint, id="Feed " + str(plugin.page_serial), thumbnail_painter = self.paint_thumbnail)
+        plugin.page_serial += 1
         self.page.set_title(self.feed["feed"]["title"])
         self.screen.redraw(self.page)
         
@@ -219,6 +220,7 @@ class G15RSS():
         self.screen = screen;
         self.gconf_key = gconf_key
         self.gconf_client = gconf_client
+        self.page_serial = 1
 
     def activate(self):
         self.pages = {}       

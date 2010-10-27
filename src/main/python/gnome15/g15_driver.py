@@ -145,6 +145,18 @@ class AbstractDriver(object):
         raise NotImplementedError( "Not implemented" )
     
     """
+    Stop the driver
+    """
+    def disconnect(self):
+        raise NotImplementedError( "Not implemented" )
+    
+    """
+    Get if driver is connected
+    """
+    def is_connected(self):
+        raise NotImplementedError( "Not implemented" )
+    
+    """
     Get the name of the driver
     """
     def get_name(self):

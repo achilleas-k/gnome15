@@ -29,11 +29,24 @@ IF_NAME="org.gnome15.Service"
 
 class G15DBUSService(dbus.service.Object):
     
-    def __init__(self,  parent_window=None):
+    def __init__(self, service):
         bus = dbus.SessionBus()
+        self.service = service
         bus_name = dbus.service.BusName(BUS_NAME, bus=bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
         dbus.service.Object.__init__(self, bus_name, NAME)
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
     def GetServerInformation(self):
         return ( pglobals.name, "Gnome15 Project", pglobals.version, "1.0" )
+    
+    @dbus.service.method(IF_NAME, in_signature='', out_signature='s')
+    def GetDriverName(self):
+        return self.service.driver.get_name() if self.service.driver != None else None
+    
+    @dbus.service.method(IF_NAME, in_signature='', out_signature='b')
+    def GetDriverConnected(self):
+        return self.service.driver.is_connected() if self.service.driver != None else False
+    
+    @dbus.service.method(IF_NAME, in_signature='', out_signature='s')
+    def GetLastError(self):
+        return str(self.service.get_last_error())

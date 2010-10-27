@@ -381,26 +381,27 @@ class G15Screen():
     def _do_cycle_to(self, page, transitions = True):            
         self.page_model_lock.acquire()
         try :
-            dir = 1
             if page.priority < PRI_NORMAL:
                 self._do_redraw(page, "down", transitions)
             else:
-                current = self._get_next_page_to_display()
-                if current != None and self.pages.index(page) > self.pages.index(current):
-                    dir = -1
-                while page != current:
-                    self._cycle(dir, transitions)
-                    current = self._get_next_page_to_display()
+                self._flush_reverts_and_hides()
+                # Cycle within pages of the same priority
+                page_list = self._get_pages_of_priority(page.priority)
                 direction = "up"
-                if dir < 0:
+                dir = 1
+                diff = page_list.index(page)
+                if diff >= ( len(page_list) / 2 ):
+                    dir *= -1
                     direction = "down"
-                self._do_redraw(current, direction=direction, transitions=transitions)
+                self._cycle_pages(diff, page_list)
+                self._do_redraw(page, direction=direction, transitions=transitions)
         finally:
             self.page_model_lock.release()
                 
     def _do_cycle(self, number, transitions = True):            
         self.page_model_lock.acquire()
         try :
+            self._flush_reverts_and_hides()
             self._cycle(number, transitions)
             dir = "up"
             if number < 0:
@@ -409,27 +410,31 @@ class G15Screen():
         finally:
             self.page_model_lock.release()
             
+    def _get_pages_of_priority(self, priority):
+        p_pages = []
+        for page in self._sort():
+            if page.priority == PRI_NORMAL:
+                p_pages.append(page)
+        return p_pages
+    
+    def _cycle_pages(self, number, pages):
+        if len(pages) > 0:                    
+            if number < 0:
+                for p in range(number, 0):                    
+                    first_time = pages[0].time
+                    for i in range(0, len(pages) - 1):
+                        pages[i].set_time(pages[i + 1].time)
+                    pages[len(pages) - 1].set_time(first_time)
+            else:                         
+                for p in range(0, number):
+                    last_time = pages[len(pages) - 1].time
+                    for i in range(len(pages) - 1, 0, -1):
+                        pages[i].set_time(pages[i - 1].time)
+                    pages[0].set_time(last_time)
+            
     def _cycle(self, number, transitions = True):
         if len(self.pages) > 0:            
-            norms = []
-            # We only cycle pages of normal priority
-            for page in self._sort():
-                if page.priority == PRI_NORMAL:
-                    norms.append(page)
-            
-            if len(norms) > 0:                    
-                if number < 0:
-                    for n in range(number, 0):                    
-                        first_time = norms[0].time
-                        for i in range(0, len(norms) - 1):
-                            norms[i].set_time(norms[i + 1].time)
-                        norms[len(norms) - 1].set_time(first_time)
-                else:                         
-                    for n in range(0, number):
-                        last_time = norms[len(norms) - 1].time
-                        for i in range(len(norms) - 1, 0, -1):
-                            norms[i].set_time(norms[i - 1].time)
-                        norms[0].set_time(last_time)
+            self._cycle_pages(number,  self._get_pages_of_priority(PRI_NORMAL))
                 
     def _do_redraw(self, page = None, direction="up", transitions = True):
         self.page_model_lock.acquire()   
@@ -439,6 +444,22 @@ class G15Screen():
                 self._draw_page(current_page, direction, transitions)
         finally:
             self.page_model_lock.release()
+            
+    def _flush_reverts_and_hides(self):        
+        self.page_model_lock.acquire()
+        try :
+            for page_id in self.reverting:
+                (old_priority, timer) = self.reverting[page_id]
+                timer.cancel()                
+                self.set_priority(self.get_page(page_id), old_priority)
+            self.reverting = {}
+            for page_id in self.hiding:
+                timer = self.hiding[page_id]
+                timer.cancel()
+                self.del_page(self.get_page(page_id))                
+            self.hiding = {}
+        finally:
+            self.page_model_lock.release()   
         
     def _sort(self):
         return sorted(self.pages, key=lambda page: page.value, reverse=True)

@@ -43,14 +43,7 @@ class G15Applet(gnomeapplet.Applet):
         self.service = g15service.G15Service(self, parent_window)
         
         self.applet_icon = 'g15key.png'
-        self.verbs = [ ( "Props", self.service.properties ), ( "Macros", self.service.macros ), ( "About", self.service.about_info ) ]
-        self.propxml="""
-        <popup name="button3">
-        <menuitem name="Item 1" verb="Props" label="_Preferences..." pixtype="stock" pixname="gtk-properties"/>
-        <menuitem name="Item 2" verb="Macros" label="Macros" pixtype="stock" pixname="input-keyboard"/>
-        <menuitem name="Item 3" verb="About" label="_About..." pixtype="stock" pixname="gnome-stock-about"/>
-        </popup>
-        """
+        
         self.orientation = self.applet.get_orient()
         
         # Widgets for showing icon
@@ -83,9 +76,6 @@ class G15Applet(gnomeapplet.Applet):
         self.service.start()
         self.service.screen.add_screen_change_listener(self)
         
-    def show_page(self,event, page):        
-        self.service.screen.raise_page(page)
-        
     def page_changed(self, page):
         pass   
         
@@ -112,13 +102,11 @@ class G15Applet(gnomeapplet.Applet):
     def applet_scroll(self, widget, event):
         direction = event.direction
         if direction == gtk.gdk.SCROLL_UP:
-            if self.service.screen.get_visible_page().priority < g15screen.PRI_HIGH:
-                self.service.screen.clear_popup() 
-                self.service.screen.cycle(1)
+            self.service.screen.clear_popup() 
+            self.service.screen.cycle(1)
         elif direction == gtk.gdk.SCROLL_DOWN:
-            if self.service.screen.get_visible_page().priority < g15screen.PRI_HIGH:
-                self.service.screen.clear_popup() 
-                self.service.screen.cycle(-1)
+            self.service.screen.clear_popup() 
+            self.service.screen.cycle(-1)
         elif direction == gtk.gdk.SCROLL_LEFT:
             first_control = self.service.driver.get_controls()[0]
             if len(first_control.value) > 1:
@@ -176,11 +164,31 @@ class G15Applet(gnomeapplet.Applet):
         self.driver.disconnect()
 
     def create_menu(self):
-        self.applet.setup_menu(self.propxml,self.verbs,None)  
+        
+        verbs = [ ( "Props", self.service.properties ), ( "Macros", self.service.macros ), ( "About", self.service.about_info ) ]
+        propxml="""
+        <popup name="button3">
+        <menuitem name="Item 1" verb="Props" label="_Preferences..." pixtype="stock" pixname="gtk-properties"/>
+        <menuitem name="Item 2" verb="Macros" label="Macros" pixtype="stock" pixname="input-keyboard"/>
+        <menuitem name="Item 3" verb="About" label="_About..." pixtype="stock" pixname="gnome-stock-about"/>
+        <separator/>
+        """
+        for page in self.service.screen.pages:
+            if page.priority >= g15screen.PRI_NORMAL:
+                propxml += "<menuitem name=\"%s\" verb=\"%s\" label=\"_%s\"/>\n" % ( page.id, page.id, page.title )
+                verbs.append(( page.id, self.show_page_from_menu))
+        propxml +="""
+        </popup>
+        """
+        self.applet.setup_menu(propxml,verbs,None)  
+        
+    def show_page_from_menu(self, event,data=None):
+        self.service.screen.raise_page(self.service.screen.get_page(data))
         
     def button_clicked(self,widget,event):
-        if event.type == gtk.gdk.BUTTON_PRESS and event.button == 1:
-            pass
+        print event
+        if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
+            self.service.properties(None)
         
     def button_press(self,widget,event):
         if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3:

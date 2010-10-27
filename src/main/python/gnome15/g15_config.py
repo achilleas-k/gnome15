@@ -44,11 +44,12 @@ class G15Config:
     
     ''' GUI for configuring wacom-compatible drawing tablets.
     '''
-    def __init__(self, parent_window=None, check_service=True):
+    def __init__(self, parent_window=None, service=None):
         self.parent_window = parent_window
         
         self.plugin_key = "/apps/gnome15/plugins"
         self.selected_id = None
+        self.service = service
         self.conf_client = gconf.client_get_default()
         
         # Load main Glade file
@@ -157,42 +158,51 @@ class G15Config:
         self.load_model()
         
         # See if the Gnome15 service is running
-        if check_service:
-            self.infobar = gtk.InfoBar()       
-            content = self.infobar.get_content_area()
-            self.warning_label = gtk.Label()
-            self.warning_image = gtk.Image()  
-            content.pack_start(self.warning_image, True, False)
-            content.pack_start(self.warning_label, True, False)
-            if HAS_APPINDICATOR:
-                self.start_button = gtk.Button("Start Service")
-                self.start_button.connect("clicked", self.start_service)
-                content.pack_start(self.start_button, False, False)  
-                self.start_button.show()         
-            self.main_vbox.pack_start(self.infobar, True, True)
-            self.warning_box_shown = False
-            self.infobar.hide_all()
-            
-            self.gnome15_service = None
-            self.check_timer = None        
-            self.session_bus = dbus.SessionBus()
-            self.check_service_status()
+        self.infobar = gtk.InfoBar()       
+        content = self.infobar.get_content_area()
+        self.warning_label = gtk.Label()
+        self.warning_image = gtk.Image()  
+        content.pack_start(self.warning_image, False, False)
+        content.pack_start(self.warning_label, True, True)
+        if HAS_APPINDICATOR:
+            self.start_button = gtk.Button("Start Service")
+            self.start_button.connect("clicked", self.start_service)
+            content.pack_start(self.start_button, False, False)  
+            self.start_button.show()         
+        self.main_vbox.pack_start(self.infobar, True, True)
+        self.warning_box_shown = False
+        self.infobar.hide_all()
+        
+        self.gnome15_service = None
+        self.check_timer = None        
+        self.session_bus = dbus.SessionBus()
+        self.check_service_status()
         
     def check_service_status(self):
-        try :
-            if self.gnome15_service == None:
-                self.gnome15_service = self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service')
-            self.gnome15_service.GetServerInformation()
-            gobject.idle_add(self.hide_warning)
-        except:
-            self.gnome15_service = None
-            if self.warning_box_shown == None or not self.warning_box_shown:
+        if self.service == None:
+            try :
+                if self.gnome15_service == None:
+                    self.gnome15_service = self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service')
+                self.gnome15_service.GetServerInformation()
+                if not self.gnome15_service.GetDriverConnected():
+                    gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING, "The Gnome15 desktop service is running, but failed to connect " + \
+                                      "to the keyboard driver. The error message given was <b>%s</b>" % self.gnome15_service.GetLastError(), False)
+                else:
+                    gobject.idle_add(self.hide_warning)
+            except:
+                self.gnome15_service = None
                 if HAS_APPINDICATOR:
-                    gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING, "The Gnome15 service is not running. It is recommended " + \
+                    gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING, "The Gnome15 desktop service is not running. It is recommended " + \
                                       "you add <b>g15-indicator</b> as a <i>Startup Application</i>.")                 
                 else:
-                    gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING, "The Gnome15 service is not running. It is recommended " + \
-                                  "you add the Gnome15 applet to a panel..")
+                    gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING, "The Gnome15 desktop service is not running. It is recommended " + \
+                                  "you add the <b>Gnome15 Applet</b> to a panel.")
+        else:
+            if self.service.driver == None or not self.service.driver.is_connected():
+                gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING,  ( "The Gnome15 desktop service is running, but failed to connect " + \
+                                  "to the keyboard driver. The error message given was <b>%s</b>" % self.service.get_last_error() ), False)
+            else:
+                gobject.idle_add(self.hide_warning)
         self.check_timer = g15util.schedule("ServiceStatusCheck", 10.0, self.check_service_status)
         
     def hide_warning(self):
@@ -208,9 +218,10 @@ class G15Config:
         os.system(script + " &")
         self.check_timer = g15util.schedule("ServiceStatusCheck", 5.0, self.check_service_status)
     
-    def show_message(self, type, text):
+    def show_message(self, type, text, start_service_button = True):
         self.infobar.set_message_type(type)
         self.start_button.set_sensitive(True)
+        self.start_button.set_visible(start_service_button)
         self.warning_label.set_text(text)
         self.warning_label.set_use_markup(True)
         self.warning_label.set_line_wrap(True)
@@ -220,8 +231,10 @@ class G15Config:
             self.warning_image.set_from_stock(gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_DIALOG)
             self.warning_label.modify_fg(gtk.STATE_NORMAL, gtk.gdk.Color(0, 0, 0))
         
-        self.main_window.check_resize()    
+        self.main_window.check_resize()        
         self.infobar.show_all()
+        if not start_service_button:
+            self.start_button.hide()
         self.warning_box_shown = True
         
     def open_site(self, widget):
@@ -307,6 +320,7 @@ class G15Config:
             self.selected_id = plugin.id
             self.widget_tree.get_object("PluginNameLabel").set_text(plugin.name)
             self.widget_tree.get_object("DescriptionLabel").set_text(plugin.description)
+            self.widget_tree.get_object("DescriptionLabel").set_use_markup(True)
             self.widget_tree.get_object("AuthorLabel").set_text(plugin.author)
             self.widget_tree.get_object("CopyrightLabel").set_text(plugin.copyright)
             self.widget_tree.get_object("SiteLabel").set_uri(plugin.site)
