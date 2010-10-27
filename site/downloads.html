@@ -1,0 +1,78 @@
+<html>
+	<head>
+		<link href="gnome15.css" rel="stylesheet" type="text/css">
+		<title>Gnome15 - Gnome integration for the Logitech G Keyboards - Downloads</title>
+	</head>
+	<body>
+		<div id="header">
+			<img src="header.png"/>
+		</div>
+		<div id="toolbar">
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<li>|</li>
+				<li>[Downloads]</li>
+				<li>|</li>
+				<li><a href="docs.html">Help And Documentation</a></li>
+				<li>|</li>
+				<li><a href="g19d.html">G19D</a></li>
+				<li>|</li>
+				<li><a href="https://launchpad.net/gnome15">Project</a></li>
+			</ul>
+		</div>
+		
+		<div class="clear"></div>
+		<h1>Downloads</h1>		
+		<h2>Pre-requisites</h2>
+		<div id="prereq">
+			<p>You will need all of these to compile or run Gnome15. If you use a package for your distribution, these will be downloaded
+			for you. If you wish to compile from source, you will have to obtain and install them yourself.</p> 
+			<ul>
+				<li><a href="http://www.gnome.org/">GNOME</a> - The free desktop.</li>
+				<li><a href="www.python.or">Python</a> - Programming language. Gnome15 was developed with Python 2.6</li>
+				<li><a href="http://www.g15tools.com/">PyGTK</a> - Python GTK bindings (including Python GNOME bindings, Python GObject bindings, RSVG bindings).</li>
+				<li><a href="http://www.freedesktop.org/wiki/Software/DBusBindings">DBUS</a> - Python bindings.</li>
+				<li><a href="http://codespeak.net/lxml/">LXML</a> - XML parser.</li>
+				<li><a href=http://cairographics.org/pycairo/">Python Cairo</a> - Python bindings for the Cairo graphics library. <b>Note, for best performance on the G19 you will need at least Cairo version 1.8.3.</b></li>
+				<li><a href="http://www.pythonware.com/products/pil/">PIL</a> - Python Image Library.</li>
+				<li><a href="http://python-xlib.sourceforge.net/">Python X Library</a> - Interface for Python to the X11 Protocol.</li>
+			</ul>
+			<p>The following libraries are optional, but should be installed for the best experience.</p>
+			<ul>
+				<li><a href="http://code.google.com/p/py-setproctitle/">setproctitle</a> - Allows a process to change its title.</li>
+				<li><a href="https://launchpad.net/ayatana">Python Appindicator</a> - Allows Gnome15 to add an indicator (replaces applet).</li>
+				<li><a href="http://www.pygtk.org/">Python WNCK</a> - Python bindings for the WNCK library (<b>must</b> be installed when BAMF is not available for automatic macro profile switching).</li>
+			</ul>
+			<p>The plugins have some further dependencies</p>
+			<ul>
+				<li><a href="http://live.gnome.org/Conduit/evolution-python">evolution-python</a> - Python Evolution bindings. Used for Calendar plugin.</li>
+				<li><a href="http://vobject.skyhouseconsulting.com/">vobject</a> - Python vCard and vCalendar parser and generator. Used for Calendar plugin.</li>
+				
+				<li><a href="http://pyalsaaudio.sourceforge.net/pyalsaaudio.html">PyAlsa</a> - Python Alsa bindings. Used to monitor mixer events for volume plugin.</li>
+				<li><a href="http://www.mplayerhq.hu/">MPlayer</a> - Movie player. Used by the experimental Video plugin.</li>
+				<li><a href="http://www.fftw.org/">FFTW3</a> - Fourier transform library used by the Impulse15 plugin.</li>
+				<li><a href="http://www.pulseaudio.org/">Pulse</a> - Sound server. Required by Impulse15 plugin.</li>
+			</ul>
+			<p>Finally, at run-time you will need one of the following depending on your hardware:-</p>
+			<ul>
+				<li><a href="g19d.html">G19D</a> - Daemon for G19 keyboard.</li>
+				<li><a href="http://www.g15tools.com/">g15daemon</a> - Daemon for G15 keyboard</li>
+			</ul>
+		</div>
+		<h2>Source</h2>
+		<p>You have two options for obtaining the source. Either check out the <i>trunk</i> branch from the <a href="https://launchpad.net/gnome15">Launchpad</a>
+		project, or download the source :-</p>
+		<ul>
+			<li><a href="gnome15-0.0.9.tar.gz">gnome15-0.0.9.tar.gz</a> Gnome15 core and all plugins except Impulse15.</li>
+		</ul>
+		<p>The Impulse15 plugin contains native portions and is available separately :-</p>
+		<ul>
+			<li><a href="gnome15-impulse15-0.0.2.tar.gz">gnome15-impulse15-0.0.2.tar.gz</a> Impluse15 plugin and native library.</li>
+		</ul>		
+		<h2>Packages</h2>
+		<p><b>Ubuntu 10.10 (Maverick)</b> and <b>Ubuntu 10.4 (Lucid)</b> packages are available in the <a href="https://launchpad.net/~tanktarta/+archive/gnome15">Gnome15 PPA</a>. </p>
+		
+		<h2>Installation</h2>
+		<p>See the <a href="install.html">Installation manual</a> for Installing from both source and the PPA.</p>
+	</body>
+</html>

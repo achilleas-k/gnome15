@@ -1,0 +1,74 @@
+<html>
+	<head>
+		<link href="gnome15.css" rel="stylesheet" type="text/css">
+		<title>Gnome15 - Gnome integration for the Logitech G Keyboards - G19D</title>
+	</head>
+	<body>
+		<div id="header">
+			<img src="header.png"/>
+		</div>
+		<div id="toolbar">
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<li>|</li>
+				<li><a href="downloads.html">Downloads</a></li>
+				<li>|</li>
+				<li><a href="docs.html">Help And Documentation</a></li>
+				<li>|</li>
+				<li>[G19D]</li>
+				<li>|</li>
+				<li><a href="https://launchpad.net/gnome15">Project</a></li>
+			</ul>
+		</div>
+		
+		<div class="clear"></div>
+		<h1>G19D</h1>		
+		<h2>Summary</h2>
+		<p>G19D is a daemon process that must run as root, and provides low level access to the G19 keyboard for
+		Gnome15 through a local TCP/IP socket. It is mostly based on MultiCoreNop's' <i>Logitech-G19-Linux-Daemon</i> which is available from 
+		<a href="http://github.com/MultiCoreNop/Logitech-G19-Linux-Daemon">here</a>, but with a few additions
+		and bug-fixes.</p>
+		<p>It is intended as a temporary solution until there is a more efficient method of communicating
+		with the keyboard. There is kernel patch <a href="http://al.robotfuzz.com/~al/g15/kernel-driver/0001-Logitech-G-series-support.patch">here</a>, 
+		but I can find no other information about it.</p>  
+		<h2>Pre-requisites</h2>
+		<div id="prereq">
+			<p>You will need all of these to compile or run G19D. If you use a package for your distribution, these will be downloaded
+			for you. If you wish to compile from source, you will have to obtain and install them yourself.</p> 
+			<ul>
+				<li><a href="http://www.python.org">Python</a> - Programming language. G19D was developed with Python 2.6</li>
+				<li><a href="http://www.pythonware.com/products/pil/">Python Image Library</a> - Used for the splash screen.</li>
+				<li><a href="http://sourceforge.net/apps/mediawiki/pyusb/index.php?title=Main_Page">PyUSB</a> - Python USB bindings.</li>
+				<li><a href="http://codegrove.org/projects/python-uinput/">Python UINPUT</a> - Python UINPUT bindings. Used to fire multimedia key events. This is 
+				the only library that is not available in the official Ubuntu repositories, although there is a PPA available for it
+				<a href="http://launchpad.net/~tuos/+archive/codegrove">here</a>, or you can get it from the <a href="https://launchpad.net/~tanktarta/+archive/gnome15">Gnome15 PPA</a>.</li>
+			</ul>
+		</div>
+		<h2>Source</h2>
+		<p>Download the source tarball <a href="g19d-0.0.1.tar.gz">g19d-0.0.2.tar.gz</a> and follow the usual source package installation
+		procedure.</p>
+			<pre>./configure --prefix=/usr
+make
+sudo make install
+			</pre> 
+		</ol>
+		<p>This procedure will not install any init scripts, so if you want to run g19d at boot, you will have
+		to edit the appropriate scripts for your distribution.</p>
+		 
+		<h2>Packages</h2>
+		<p>Ubuntu 10.10 and 10.4 packages are available in the <a href="https://launchpad.net/~tanktarta/+archive/gnome15">Gnome15 PPA</a>. </p>
+		<p>First, add the PPA to your sources. You may do this in a number of ways (Synaptic etc), or from the command line:-</p>
+		<pre>sudo add-apt-repository ppa:tanktarta/gnome15
+sudo apt-get update</pre>
+		<p>Now install g19d.</p>
+		<pre>sudo apt-get install g19d</pre> 
+		<p>You will also have to enable the daemon before starting it.</p>
+		<ol>
+			<li>Open /etc/default/g19d in your favourite text editor.</li>
+			<li>Uncomment the <i>G19D_ENABLED</i> line and ensure it is set to 'y'</li>
+			<li>Save the file.</li>
+			<li>Start the daemon :-
+			<pre>sudo service g19d start</pre></li>
+		</ol>
+	</body>
+</html>
