@@ -239,7 +239,7 @@ class G15RSS():
     def refresh(self):
         for page in self.pages:
             self.pages[page].reload()
-            self.page.set_title(self.feed["feed"]["title"])
+            page.set_title(self.feed["feed"]["title"])
             self.screen.redraw(page)
         self.schedule_refresh()
     
