@@ -32,6 +32,7 @@ import subprocess
 HAS_APPINDICATOR=False
 try :
     import appindicator
+    appindicator.__path__
     HAS_APPINDICATOR=True
 except:
     pass

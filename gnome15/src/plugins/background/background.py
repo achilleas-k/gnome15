@@ -134,7 +134,7 @@ class G15Background():
                 self.was_cairo = True
                 if os.path.exists(bg_img):
                     # Load the background
-                    self.background_image, self.bg_context = g15util.load_surface_from_file(bg_img, screen_size)
+                    self.background_image = g15util.load_surface_from_file(bg_img, screen_size)
                 else:
                     self.background_image = None
             else:

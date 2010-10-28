@@ -39,16 +39,16 @@ import g15_dbus as g15dbus
 import traceback
 import gconf
 import g15_util as g15util
-from Xlib import X, XK, display
-from Xlib.ext import record
-from Xlib.protocol import rq
+import Xlib.X 
+import Xlib.XK
+import Xlib.display
+import Xlib.protocol
 import time
 import g15_plugins as g15plugins
 import dbus
 from threading import RLock
 from dbus.mainloop.glib import DBusGMainLoop
 from g15_exceptions import NotConnectedException
-
 
 dbus_loop=DBusGMainLoop()
 dbus.set_default_main_loop(dbus_loop)
@@ -61,7 +61,7 @@ try :
 except ImportError:
     UseXTest = False
      
-local_dpy = display.Display()
+local_dpy = Xlib.display.Display()
 window = local_dpy.get_input_focus()._data["focus"];
 
 if UseXTest and not local_dpy.query_extension("XTEST") :
@@ -71,6 +71,48 @@ NAME="Gnome15"
 VERSION=pglobals.version
 
 COLOURS = [(0,0,0), (255, 0, 0),(0, 255, 0),(0, 0, 255),(255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
+
+special_X_keysyms = {
+    ' ' : "space",
+    '\t' : "Tab",
+    '\n' : "Return",  # for some reason this needs to be cr, not lf
+    '\r' : "Return",
+    '\e' : "Escape",
+    '!' : "exclam",
+    '#' : "numbersign",
+    '%' : "percent",
+    '$' : "dollar",
+    '&' : "ampersand",
+    '"' : "quotedbl",
+    '\'' : "apostrophe",
+    '(' : "parenleft",
+    ')' : "parenright",
+    '*' : "asterisk",
+    '=' : "equal",
+    '+' : "plus",
+    ',' : "comma",
+    '-' : "minus",
+    '.' : "period",
+    '/' : "slash",
+    ':' : "colon",
+    ';' : "semicolon",
+    '<' : "less",
+    '>' : "greater",
+    '?' : "question",
+    '@' : "at",
+    '[' : "bracketleft",
+    ']' : "bracketright",
+    '\\' : "backslash",
+    '^' : "asciicircum",
+    '_' : "underscore",
+    '`' : "grave",
+    '{' : "braceleft",
+    '|' : "bar",
+    '}' : "braceright",
+    '~' : "asciitilde"
+    }
+
+
 
 class G15Splash():
     
@@ -83,7 +125,7 @@ class G15Splash():
         icon_path = g15util.get_icon_path(gconf_client, "gnome15")
         if icon_path == None:
             icon_path = os.path.join(pglobals.icons_dir, 'gnome15.svg')
-        self.logo, ctx = g15util.load_surface_from_file(icon_path)
+        self.logo = g15util.load_surface_from_file(icon_path)
         
     def paint(self, canvas):
         properties = {
@@ -160,6 +202,7 @@ class G15Service():
             print "WARNING: BAMF not available, falling back to WNCK"
             try :                
                 import wnck
+                wnck.__file__
                 gobject.timeout_add(500,self.timeout_callback, self)
             except:
                 print "WARNING: Python Wnck not available either, no automatic profile switching"
@@ -282,7 +325,7 @@ class G15Service():
             if self.driver.is_connected() :
                 self.driver.disconnect()
             else:
-                self.driver = g15driver.get_driver(self.conf_client, on_close = self.on_driver_close)
+                self.driver = g15drivermanager.get_driver(self.conf_client, on_close = self.on_driver_close)
                 self.attempt_connection(0.0)
         
     def profiles_changed(self, client, connection_id, entry, args):

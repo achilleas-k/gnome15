@@ -74,7 +74,7 @@ class G15MacroPage():
                 page_no += 1
                 
         self.icon_path = self.plugin.get_active_profile_icon_path()
-        self.icon, ctx = g15util.load_surface_from_file(self.icon_path)
+        self.icon = g15util.load_surface_from_file(self.icon_path)
         
         if self.page == None:                   
             self.page = self.plugin.screen.new_page(self.paint, id="Macro Info %d" % page_no, 

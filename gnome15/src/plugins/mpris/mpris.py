@@ -165,7 +165,7 @@ class AbstractMPRISPlayer():
                 if self.cover_uri == None:                      
                     self.cover_uri = icons.getIconPath("audio-player", theme=icon_theme, size=self.screen.height)
             self.cover_uri = "file://" + urllib.pathname2url(self.cover_uri)
-        self.cover_image,ctx = g15util.load_surface_from_file(self.cover_uri)
+        self.cover_image = g15util.load_surface_from_file(self.cover_uri)
                   
         # Track status
         if self.status == "Stopped":

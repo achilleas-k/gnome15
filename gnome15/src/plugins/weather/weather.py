@@ -184,7 +184,7 @@ class G15Weather():
                 # TODO No info for location
                 pass
             else:                                            
-                attributes["icon"], ctx = g15util.load_surface_from_file(self.translate_icon(current['icon']))
+                attributes["icon"] = g15util.load_surface_from_file(self.translate_icon(current['icon']))
                 properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])        
                 properties["condition"] = current['condition']
                 # TODO configurable

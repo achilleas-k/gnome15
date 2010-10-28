@@ -287,7 +287,7 @@ class G15VideoPlayer():
                 if len(dir) > 1:
                     dir = dir[1:]
                     file = os.path.join(self.playing.temp_dir, dir[0])
-                    self.surface, context = g15util.load_surface_from_file(file)
+                    self.surface = g15util.load_surface_from_file(file)
                     for path in dir:
                         file = os.path.join(self.playing.temp_dir, path)
                         os.remove(file)

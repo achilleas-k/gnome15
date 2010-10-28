@@ -142,7 +142,8 @@ class G15FeedPage():
         self.reload() 
         self.page = self.screen.new_page(self.paint, id="Feed " + str(plugin.page_serial), thumbnail_painter = self.paint_thumbnail)
         plugin.page_serial += 1
-        self.page.set_title(self.feed["feed"]["title"])
+        print self.feed["feed"]
+        self.page.set_title(self.title)
         self.screen.redraw(self.page)
         
     def reload(self):
@@ -154,18 +155,20 @@ class G15FeedPage():
         else:
             icon = g15util.get_icon_path(self.gconf_client, "application-rss+xml", (self.screen.height, self.screen.height) )
             
-        icon_surface, ctx = g15util.load_surface_from_file(icon)
+        icon_surface = g15util.load_surface_from_file(icon)
         self.icon_surface = icon_surface
         self.icon_embedded = g15util.get_embedded_image_url(icon_surface)
+        self.title = self.feed["feed"]["title"] if "title" in self.feed["feed"] else self.url
+        self.subtitle = self.feed["feed"]["subtitle"] if "subtitle" in self.feed["feed"] else ""
         self.set_properties()
         
     def set_properties(self):
         self.properties = {}
         self.attributes = {}
-        self.properties["title"] = self.feed["feed"]["title"]
+        self.properties["title"] = self.title
         self.attributes["icon"] = self.icon_surface
         self.properties["icon"] = self.icon_embedded
-        self.properties["subtitle"] = self.feed["feed"]["subtitle"]
+        self.properties["subtitle"] = self.subtitle
         self.properties["updated"] = "%s %s" % ( time.strftime("%H:%M", self.feed.updated), time.strftime("%a %d %b", self.feed.updated) )
         self.attributes["entries"] = self.feed.entries
         if self.index > -1:

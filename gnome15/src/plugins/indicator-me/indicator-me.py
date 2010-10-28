@@ -89,7 +89,7 @@ class G15IndicatorMe():
         
     def _get_details(self):
         self.icon = self.me_service.StatusIcons()
-        self.icon_image,ctx = g15util.load_surface_from_file(g15util.get_icon_path(self.gconf_client, self.icon))
+        self.icon_image = g15util.load_surface_from_file(g15util.get_icon_path(self.gconf_client, self.icon))
         self.username = self.me_service.PrettyUserName()
         
     def _reload_theme(self):        

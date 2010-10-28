@@ -246,7 +246,7 @@ def load_surface_from_file(filename, size = None):
                 scale = get_scale(size, svg_size)
                 context.scale(scale, scale)
             svg.render_cairo(context)
-            return surface, context
+            return surface
         else:
             pbl = gtk.gdk.pixbuf_loader_new_with_mime_type(type)
             pbl.write(data)
@@ -282,7 +282,7 @@ def pixbuf_to_surface(pixbuf, size):
     gdk_context.set_source_pixbuf(pixbuf,0,0)
     gdk_context.paint()
     gdk_context.scale(1 / scale, 1 / scale)
-    return surface, context
+    return surface
     
 '''
 Icon utilities
@@ -329,7 +329,7 @@ def get_embedded_image_url(path):
         print path
         if not "://" in path:
             # File
-            surface, context = load_surface_from_file(path)
+            surface = load_surface_from_file(path)
             file_str.write("image/png")
             surface.write_to_png(img_data)
         else:

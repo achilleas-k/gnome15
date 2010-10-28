@@ -20,14 +20,12 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
 
-import os 
 import pygtk
 pygtk.require('2.0')
 import gtk
-import gtk.gdk
+import g15_util as g15util
 import g15_service as g15service
 import g15_screen as g15screen
-import g15_globals as pglobals
 import gnomeapplet
 
 '''
@@ -42,7 +40,7 @@ class G15Applet(gnomeapplet.Applet):
         
         self.service = g15service.G15Service(self, parent_window)
         
-        self.applet_icon = 'g15key.png'
+        self.applet_icon = g15util.local_icon_or_default("logitech-g-keyboard-panel")
         
         self.orientation = self.applet.get_orient()
         
@@ -89,11 +87,11 @@ class G15Applet(gnomeapplet.Applet):
         pass
         
     def clear_attention(self):      
-        self.applet_icon = "g15key.png"
+        self.applet_icon = g15util.local_icon_or_default("logitech-g-keyboard-panel")
         self.size_changed()
         
     def attention(self, message = None):       
-        self.applet_icon = "g15key-error.png"
+        self.applet_icon = g15util.local_icon_or_default("logitech-g-keyboard-error-panel")
         self.size_changed()
 
     def quit(self):                
@@ -139,8 +137,7 @@ class G15Applet(gnomeapplet.Applet):
         
     def recreate_icon(self):        
         size = int(self.applet.get_size() * 0.68)
-        path = os.path.join(pglobals.image_dir,self.applet_icon)
-        pixbuf = gtk.gdk.pixbuf_new_from_file(path)
+        pixbuf = gtk.gdk.pixbuf_new_from_file(self.applet_icon)
         pixbuf = pixbuf.scale_simple(size, size, gtk.gdk.INTERP_BILINEAR);
         self.image.set_from_pixbuf(pixbuf)
         
