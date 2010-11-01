@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="320"
+   height="9"
+   id="svg2"
+   version="1.2"
+   inkscape:version="0.48.0 r9654"
+   sodipodi:docname="g19-separator.svg"
+   style="display:inline">
+  <defs
+     id="defs4">
+    <filter
+       id="filter3967"
+       inkscape:label="Drop shadow"
+       width="1.5"
+       height="1.5"
+       x="-0.25"
+       y="-0.25"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3969"
+         in="SourceAlpha"
+         stdDeviation="4"
+         result="blur" />
+      <feColorMatrix
+         id="feColorMatrix3971"
+         result="bluralpha"
+         type="matrix"
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 " />
+      <feOffset
+         id="feOffset3973"
+         in="bluralpha"
+         dx="0.9"
+         dy="0.9"
+         result="offsetBlur" />
+      <feMerge
+         id="feMerge3975">
+        <feMergeNode
+           id="feMergeNode3977"
+           in="offsetBlur" />
+        <feMergeNode
+           id="feMergeNode3979"
+           in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2999">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3001"
+         width="205"
+         height="21.999977"
+         x="104.54774"
+         y="784.11218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2999-3">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3001-3"
+         width="205"
+         height="21.999977"
+         x="104.54774"
+         y="784.11218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2999-5">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3001-8"
+         width="205"
+         height="21.999977"
+         x="104.54774"
+         y="784.11218" />
+    </clipPath>
+    <filter
+       id="filter3797"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3799"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3801"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3803"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3805"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3807"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2999-5-0">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3001-8-8"
+         width="205"
+         height="21.999977"
+         x="104.54774"
+         y="784.11218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2999-5-09">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3001-8-88"
+         width="205"
+         height="21.999977"
+         x="104.54774"
+         y="784.11218" />
+    </clipPath>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.8"
+     inkscape:cx="101.86377"
+     inkscape:cy="1.3564006"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     borderlayer="false"
+     inkscape:window-width="1429"
+     inkscape:window-height="940"
+     inkscape:window-x="394"
+     inkscape:window-y="39"
+     inkscape:window-maximized="0"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3986"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Deselected Label"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-9.5477352,-802.11216)"
+     style="display:inline"
+     title="del item_selected">
+    <rect
+       style="fill:#696969;fill-opacity:0.50196078;stroke:none"
+       id="rect3051"
+       width="315"
+       height="4"
+       x="9.5477352"
+       y="802.11218"
+       rx="2.0999999"
+       ry="2" />
+  </g>
+  <g
+     inkscape:label="Selected Layer"
+     inkscape:groupmode="layer"
+     id="layer1-5"
+     transform="translate(-9.5477352,-802.11216)"
+     style="display:inline"
+     title="del !item_selected" />
+</svg>

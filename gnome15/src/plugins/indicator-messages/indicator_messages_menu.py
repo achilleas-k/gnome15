@@ -54,15 +54,19 @@ TYPE_ROOT = "root"
 
 
 class IndicatorMessagesMenuItem(dbusmenu.DBUSMenuItem):
-    def __init__(self, id, properties):
-        dbusmenu.DBUSMenuItem.__init__(self, id, properties)
+    def __init__(self, id, properties, menu):
+        dbusmenu.DBUSMenuItem.__init__(self, id, properties, menu)
         
     def set_properties(self, properties):
         dbusmenu.DBUSMenuItem.set_properties(self, properties)        
         self.type = self.properties[TYPE] if TYPE in self.properties else TYPE_ROOT
         
+        # Visible by default
+        if not VISIBLE in self.properties:
+            self.properties[VISIBLE] = True
+        
         # Label
-        if self.type == TYPE_INDICATOR_ITEM:
+        if self.type == TYPE_INDICATOR_ITEM and INDICATOR_LABEL in self.properties:
             self.label = self.properties[INDICATOR_LABEL]
         elif LABEL in self.properties:
             self.label = self.properties[LABEL]
@@ -82,10 +86,10 @@ class IndicatorMessagesMenuItem(dbusmenu.DBUSMenuItem):
         return self.label
         
     def is_app_running(self):
-        return self.properties[APP_RUNNING]
+        return APP_RUNNING in self.properties and self.properties[APP_RUNNING]
         
     def is_visible(self):
-        return self.properties[VISIBLE] if VISIBLE in self.properties else False
+        return VISIBLE in self.properties and self.properties[VISIBLE]
         
     def get_icon(self):
         return self.icon
@@ -94,7 +98,7 @@ class IndicatorMessagesMenuItem(dbusmenu.DBUSMenuItem):
         return self.properties[ICON_NAME] if ICON_NAME in self.properties else None
         
     def get_type(self):
-        return self.properties[TYPE]
+        return self.properties[TYPE] if TYPE in self.properties else None
 
 class IndicatorMessagesMenu(dbusmenu.DBUSMenu):
     
@@ -102,4 +106,4 @@ class IndicatorMessagesMenu(dbusmenu.DBUSMenu):
         dbusmenu.DBUSMenu.__init__(self, session_bus, "org.ayatana.indicator.messages", "/org/ayatana/indicator/messages/menu", "org.ayatana.dbusmenu", on_change)
         
     def create_item(self, id, properties):
-        return IndicatorMessagesMenuItem(id, properties)
+        return IndicatorMessagesMenuItem(id, properties, self)

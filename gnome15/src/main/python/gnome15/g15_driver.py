@@ -123,6 +123,8 @@ CAIRO_IMAGE_FORMAT=4
 
 import g15_util as g15util
 
+seq_no = 0
+
 class Control():
     
     def __init__(self, id, name, value = 0.0, lower = 0.0, upper = 255.0, hint = 0):
@@ -137,6 +139,9 @@ class AbstractDriver(object):
     
     def __init__(self, id):
         self.id = id
+        global seq_no
+        seq_no += 1
+        self.seq = seq_no
     
     """
     Start the driver

@@ -143,6 +143,9 @@ class G15Splash():
         time.sleep(1.0)
         self.screen.set_priority(self.page, g15screen.PRI_LOW)
         
+    def remove(self):
+        self.screen.del_page(self.page)
+        
     def update_splash(self, value, max):
         self.progress = ( float(value) / float(max) ) * 100.0
         self.screen.redraw(self.page)
@@ -153,7 +156,9 @@ class G15Service():
         self.parent_window = parent_window
         self.service_host = service_host
         self.reschedule_lock = RLock()
+        self.connection_lock = RLock()
         self.last_error = None
+        self.loading_complete = False
         
     def start(self):
         self.active_window = None
@@ -211,25 +216,34 @@ class G15Service():
         self.dbus_service = g15dbus.G15DBUSService(self) 
  
     def attempt_connection(self, delay = 0.0):
-        if self.driver.is_connected():
-            print "WARN: Attempt to reconnect when already connected."
-            return
-        
-        if delay != 0.0:
-            self.reconnect_timer = g15util.schedule("ReconnectTimer", delay, self.attempt_connection)
-            return
-                        
+        self.connection_lock.acquire()
         try :
-            self.driver.connect() 
-            self.screen.init()  
-            self.splash = G15Splash(self.screen, self.conf_client)
-            self.screen.set_mkey(1)
-            self.activate_profile()            
-            g15util.schedule("ActivatePlugins", 0.1, self.complete_loading)    
-            self.last_error = None
-        except Exception as e:
-            if self._process_exception(e):
-                raise
+            if self.driver == None:
+                self.driver = g15drivermanager.get_driver(self.conf_client, on_close = self.on_driver_close)
+
+            if self.driver.is_connected():
+                print "WARN: Attempt to reconnect when already connected."
+                return
+            
+            self.loading_complete = False
+            
+            if delay != 0.0:
+                self.reconnect_timer = g15util.schedule("ReconnectTimer", delay, self.attempt_connection)
+                return
+                            
+            try :
+                self.driver.connect() 
+                self.screen.init()  
+                self.splash = G15Splash(self.screen, self.conf_client)
+                self.screen.set_mkey(1)
+                self.activate_profile()            
+                g15util.schedule("ActivatePlugins", 0.1, self.complete_loading)    
+                self.last_error = None
+            except Exception as e:
+                if self._process_exception(e):
+                    raise
+        finally:
+            self.connection_lock.release()
             
     def get_last_error(self):
         return self.last_error
@@ -243,7 +257,9 @@ class G15Service():
             self.driver.grab_keyboard(self.key_received)
             self.service_host.clear_attention()
             self.splash.complete()
-            self.resched_cycle()
+            self.loading_complete = True
+            self.splash.remove()
+            self.splash = None
         except Exception as e:
             if self._process_exception(e):
                 raise
@@ -253,9 +269,11 @@ class G15Service():
 
     def on_driver_close(self, retry=True):
         if not self.shutting_down:
+            if self.splash != None:
+                self.splash.remove()
+                self.splash = None
             self.plugins.deactivate()
             if retry:
-                self.driver = g15drivermanager.get_driver(self.conf_client, on_close = self.on_driver_close)
                 self._process_exception(NotConnectedException("Keyboard driver disconnected."))
             else:                
                 self.service_host.quit()
@@ -285,19 +303,19 @@ class G15Service():
         pass
             
     def screen_cycle(self):
-        # Don't cycle while recording 
-        # TODO change how this works
         page = self.screen.get_visible_page()
-        if not self.defeat_profile_change and page != None and page.priority < g15screen.PRI_HIGH:
-            self.cycle_timer = None
+        if page != None and page.priority < g15screen.PRI_HIGH:
             self.screen.cycle(1)
+        else:
+            self.resched_cycle()
         
-    def resched_cycle(self, arg1 = None, arg2 = None, arg3 = None, arg4 = None): 
+    def resched_cycle(self, arg1 = None, arg2 = None, arg3 = None, arg4 = None):
         self.reschedule_lock.acquire()
-        try :
-            self._cancel_schedule()
+        try:
+            if self.cycle_timer != None:
+                self._cancel_timer()
             self._check_cycle()
-        finally :
+        finally:
             self.reschedule_lock.release()
             
     def cycle_level(self, val, control):
@@ -456,24 +474,27 @@ class G15Service():
         if object_name != "":
             app = self.session_bus.get_object("org.ayatana.bamf", object_name)
             view = dbus.Interface(app, 'org.ayatana.bamf.view')
-            if view.IsActive() == 1 and not self.defeat_profile_change:
-                choose_profile = None
-                title = view.Name()                                    
-                # Active window has changed, see if we have a profile that matches it
-                for profile in g15profile.get_profiles():
-                    if not profile.get_default() and profile.activate_on_focus and len(profile.window_name) > 0 and title.lower().find(profile.window_name.lower()) != -1:
-                        choose_profile = profile 
-                        break
-                    
-                # No applicable profile found. Look for a default profile, and see if it is set to activate by default
-                active_profile = g15profile.get_active_profile()
-                if choose_profile == None:
-                    default_profile = g15profile.get_default_profile()
-                    
-                    if ( active_profile == None or active_profile.id != default_profile.id ) and default_profile.activate_on_focus:
-                        default_profile.make_active()
-                elif active_profile == None or choose_profile.id != active_profile.id:
-                    choose_profile.make_active()
+            try :
+                if view.IsActive() == 1 and not self.defeat_profile_change:
+                    choose_profile = None
+                    title = view.Name()                                    
+                    # Active window has changed, see if we have a profile that matches it
+                    for profile in g15profile.get_profiles():
+                        if not profile.get_default() and profile.activate_on_focus and len(profile.window_name) > 0 and title.lower().find(profile.window_name.lower()) != -1:
+                            choose_profile = profile 
+                            break
+                        
+                    # No applicable profile found. Look for a default profile, and see if it is set to activate by default
+                    active_profile = g15profile.get_active_profile()
+                    if choose_profile == None:
+                        default_profile = g15profile.get_default_profile()
+                        
+                        if ( active_profile == None or active_profile.id != default_profile.id ) and default_profile.activate_on_focus:
+                            default_profile.make_active()
+                    elif active_profile == None or choose_profile.id != active_profile.id:
+                        choose_profile.make_active()
+            except dbus.DBusException:
+                pass
         
     def timeout_callback(self,event=None):
         try:
@@ -523,7 +544,8 @@ class G15Service():
         
     def cleanup(self,event):
         self.shutting_down = True
-        self.driver.disconnect()  
+        if self.driver.is_connected():
+            self.driver.disconnect()  
         
     def properties(self,event,data=None):
         a = g15config.G15Config(self.parent_window, self)
@@ -542,29 +564,34 @@ class G15Service():
     '''
     Private
     '''    
-    def _check_cycle(self, client=None, connection_id=None, entry=None, args=None):
-        active = self.driver.is_connected() and self.conf_client.get_bool("/apps/gnome15/cycle_screens")
-        if active and self.cycle_timer == None:
-            self._schedule_cycle()
-        elif not active and self.cycle_timer != None:
-            self._cancel_schedule()            
+    def _check_cycle(self, client=None, connection_id=None, entry=None, args=None):  
+        self.reschedule_lock.acquire()
+        try:      
+            active = self.driver.is_connected() and self.conf_client.get_bool("/apps/gnome15/cycle_screens")
+            if active and self.cycle_timer == None:
+                val = self.conf_client.get("/apps/gnome15/cycle_seconds")
+                time = 10
+                if val != None:
+                    time = val.get_int()
+                self.cycle_timer = g15util.schedule("CycleTimer", time, self.screen_cycle)
+            elif not active and self.cycle_timer != None:
+                self._cancel_timer()
+        finally:
+            self.reschedule_lock.release()
             
-    def _cancel_schedule(self):
-        if self.cycle_timer != None:
+    def _cancel_timer(self):
+        self.reschedule_lock.acquire()
+        try:      
             self.cycle_timer.cancel()
-            self.cycle_timer = None            
-            
-    def _schedule_cycle(self):
-        val = self.conf_client.get("/apps/gnome15/cycle_seconds")
-        time = 10
-        if val != None:
-            time = val.get_int()
-        self.cycle_timer = g15util.schedule("CycleTimer", time, self.screen_cycle)
+            self.cycle_timer = None  
+        finally:
+            self.reschedule_lock.release()          
             
     def _process_exception(self, exception):
         self.last_error = exception
         self.service_host.attention(str(exception))
-        self.resched_cycle()             
+        self.resched_cycle()   
+        self.driver = None          
         if self.should_reconnect(exception):
             self.reconnect_timer = g15util.schedule("ReconnectTimer", 5.0, self.attempt_connection)
         else:

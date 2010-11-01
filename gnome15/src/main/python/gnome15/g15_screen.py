@@ -24,7 +24,7 @@ PRI_POPUP=999
 PRI_EXCLUSIVE=100
 PRI_HIGH=99
 PRI_NORMAL=50
-PRI_LOW=1
+PRI_LOW=20
 PRI_INVISIBLE=0
 
 import g15_driver as g15driver
@@ -72,6 +72,8 @@ class G15Screen():
     def __init__(self, applet):
         self.applet = applet
         self.screen_change_listeners = []
+        self.local_data = threading.local()
+        self.local_data.surface = None
         
         # The screen may take a little space for its own purposes
         self.init()
@@ -84,10 +86,12 @@ class G15Screen():
         
     def init(self):
         self.driver = self.applet.driver
+        self.content_surface = None
         self.width = self.applet.driver.get_size()[0]
         self.height = self.applet.driver.get_size()[1]
+        self.surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
         self.size = ( self.width, self.height )
-        self.available_size = self.size
+        self.available_size = (0, 0, self.size[0], self.size[1])
         
         self.page_model_lock = threading.RLock()
         self.pages = []
@@ -100,6 +104,7 @@ class G15Screen():
         self.mkey = 1
         self.reverting = { }
         self.hiding = { }
+
         
     def add_screen_change_listener(self, screen_change_listener):
         if not screen_change_listener in self.screen_change_listeners:
@@ -223,7 +228,15 @@ class G15Screen():
     def del_page(self, page):
         self.page_model_lock.acquire()
         try :
-            if page != None:
+            if page != None:                
+                # Remove any timers that might be running on this page
+                if page.id in self.hiding:
+                    self.hiding[page.id].cancel()
+                    del self.hiding[page.id]
+                if page.id in self.reverting:
+                    self.reverting[page.id][1].cancel()
+                    del self.reverting[page.id]                                             
+            
                 if page == self.visible_page:
                     callback = page.on_hidden
                     if callback != None:
@@ -275,12 +288,12 @@ class G15Screen():
         self.cyclequeue.clear()
         self.cyclequeue.run(self._do_cycle, number, transitions) 
             
-    def redraw(self, page = None, direction="up", transitions = True):
+    def redraw(self, page = None, direction="up", transitions = True, redraw_content = True):
         current_page = self._get_next_page_to_display()
-        if page == None or page == current_page:
+        if page != None and page == current_page:
             # Drop any redraws that are not required
             self.jobqueue.clear()
-        self.jobqueue.run(self._do_redraw, page, direction, transitions)
+        self.jobqueue.run(self._do_redraw, page, direction, transitions, redraw_content)
         
     def set_color_for_mkey(self):
         control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
@@ -294,18 +307,42 @@ class G15Screen():
                     return
             self.driver.set_control_from_configuration(control, self.applet.conf_client)
             self.driver.update_control(control)
+            
+    def get_current_surface(self):
+        return self.local_data.surface
     
+    def get_desktop_surface(self):        
+        scale = self.get_desktop_scale()
+        surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width * scale, self.height * scale)
+        ctx = cairo.Context(surface)
+        tx =  ( float(self.width) - ( float(self.available_size[0] * scale ) ) ) / 2.0
+        ctx.translate(-tx, 0)
+        ctx.set_source_surface(self.surface)
+        ctx.paint()
+        return surface
+    
+    def get_desktop_scale(self):
+        sx = float(self.available_size[2]) / float(self.width)
+        sy = float(self.available_size[3]) / float(self.height)
+        return min(sx, sy)
     
     '''
     Private functions
     '''
+    
+    def _draw_page(self, visible_page, direction="down", transitions = True, redraw_content = True):
         
-    def _draw_page(self, visible_page, direction="down", transitions = True):
-        
-        if not self.applet.driver.is_connected():
+        if self.applet.driver == None or not self.applet.driver.is_connected():
             return
-                
-        surface =  cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
+        
+        surface =  self.surface
+        
+        # If the visible page is changing, creating a new surface. Both surfaces are
+        # then passed to any transition functions registered
+        if visible_page != self.visible_page:            
+            surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
+            
+        self.local_data.surface = surface
         canvas = cairo.Context (surface)
         canvas.set_antialias(self.applet.driver.get_antialias())
         rgb = self.applet.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
@@ -319,8 +356,9 @@ class G15Screen():
             self.background_painter_function(canvas)
                 
         old_page = None
-        if visible_page != self.visible_page:
+        if visible_page != self.visible_page:            
             old_page = self.visible_page
+            redraw_content = True
             if self.visible_page != None:
                 self.visible_page = visible_page
                 callback = self.visible_page.on_hidden
@@ -336,27 +374,39 @@ class G15Screen():
             for l in self.screen_change_listeners:
                 l.page_changed(self.visible_page)
             
-        
         # Call the screen's painter
         if self.visible_page != None:
             callback = self.visible_page.painter
             if callback != None:
+                     
+                # Paint the content to a new surface so it can be cached
+                if self.content_surface == None or redraw_content:
+                    self.content_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
+                    content_canvas = cairo.Context(self.content_surface)
+                    callback(content_canvas)
+                
+                tx =  self.available_size[0]
+                ty =  self.available_size[1]
                 
                 # Scale to the available space, and center
-                if self.available_size == self.size:
-                    callback(canvas)
-                else:
-                    # Scale to the available space, and center
-                    sx = float(self.available_size[0]) / float(self.width)
-                    sy = float(self.available_size[1]) / float(self.height)
-                    scale = min(sx, sy)
-                    canvas.save()
-                    tx =  ( float(self.width) - ( float(self.available_size[0] * scale ) ) ) / 2.0
-                    ty =  0
-                    canvas.translate(tx, ty)
-                    canvas.scale(scale, scale)
-                    callback(canvas)
-                    canvas.restore()
+                sx = float(self.available_size[2]) / float(self.width)
+                sy = float(self.available_size[3]) / float(self.height)
+                scale = min(sx, sy)
+                sx = scale
+                sy = scale
+                
+                if tx == 0 and self.available_size[3] != self.size[1]:
+                    sx = 1
+                
+                if ty == 0 and self.available_size[2] != self.size[0]:
+                    sy = 1
+                
+                canvas.save()
+                canvas.translate(tx, ty)
+                canvas.scale(sx, sy)
+                canvas.set_source_surface(self.content_surface)
+                canvas.paint()
+                canvas.restore()
             
             
         # Now paint the screen's foreground
@@ -381,9 +431,15 @@ class G15Screen():
     def _do_cycle_to(self, page, transitions = True):            
         self.page_model_lock.acquire()
         try :
-            if page.priority < PRI_NORMAL:
-                self._do_redraw(page, "down", transitions)
-            else:
+            if page.priority == PRI_LOW:
+                # Visible until the next popup, or it hides itself
+                self.set_priority(page, PRI_POPUP)
+            elif page.priority < PRI_LOW:
+                self.clear_popup()
+                # Up to the page to make itself stay visible
+                self._draw_page(page, "down", transitions)
+            else: 
+                self.clear_popup()
                 self._flush_reverts_and_hides()
                 # Cycle within pages of the same priority
                 page_list = self._get_pages_of_priority(page.priority)
@@ -436,12 +492,12 @@ class G15Screen():
         if len(self.pages) > 0:            
             self._cycle_pages(number,  self._get_pages_of_priority(PRI_NORMAL))
                 
-    def _do_redraw(self, page = None, direction="up", transitions = True):
+    def _do_redraw(self, page = None, direction="up", transitions = True, redraw_content = True):
         self.page_model_lock.acquire()   
         try :           
             current_page = self._get_next_page_to_display()
             if page == None or page == current_page:
-                self._draw_page(current_page, direction, transitions)
+                self._draw_page(current_page, direction, transitions, redraw_content)
         finally:
             self.page_model_lock.release()
             

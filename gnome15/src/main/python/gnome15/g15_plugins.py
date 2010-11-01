@@ -46,7 +46,7 @@ def get_extra_plugin_dirs():
     return plugindirs
 
 imported_plugins = []
-for plugindir in list_plugin_dirs(pglobals.plugin_dir) + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + get_extra_plugin_dirs():
+for plugindir in get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + list_plugin_dirs(pglobals.plugin_dir): 
     print "Searching",plugindir,"for plugins"
     plugin_name = os.path.basename(plugindir)
     pluginfiles = [fname[:-3] for fname in os.listdir(plugindir) if fname == plugin_name + ".py"]
@@ -170,7 +170,11 @@ class G15Plugins():
             self.mgr_active = False
             traceback.print_exc(file=sys.stderr)
             for plugin in list(self.activated):
-                plugin.deactivate()
+                try :
+                    plugin.deactivate()
+                except:
+                    print "WARNING: Failed to deactive plugin properly."           
+                    traceback.print_exc(file=sys.stderr)
                 self.activated.remove(plugin)
         finally:
             self.lock.release()

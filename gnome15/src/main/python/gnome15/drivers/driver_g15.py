@@ -28,7 +28,6 @@ keyboard
 import gnome15.g15_driver as g15driver
 import socket
 import cairo
-import time
 import ImageMath
 import Image
 from threading import Thread
@@ -226,10 +225,10 @@ class Driver(g15driver.AbstractDriver):
         if not self.is_connected():
             raise Exception("Already disconnected")
         self.connected = False
-        self.socket.close()
-        self.socket = None
         if self.thread != None:
             self.thread.running = False
+        self.socket.close()
+        self.socket = None
         self.thread = None
         if self.on_close != None:
             self.on_close()

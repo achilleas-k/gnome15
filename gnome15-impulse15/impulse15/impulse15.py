@@ -26,6 +26,7 @@ import gnome15.g15_driver as g15driver
 import gtk
 import os
 import cairo
+import time
 from ctypes import CDLL
 
 # Load impulse library from current directory
@@ -77,7 +78,9 @@ class G15Impulse():
         self.chained_foreground_painter = None
         self.timer = None
         self.load_config() 
-        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self.config_changed);
+        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self.config_changed)
+        if self.gconf_client.get_string(self.gconf_key + "/paint") != "screen":
+            self.redraw()
     
     def deactivate(self): 
         self.gconf_client.notify_remove(self.notify_handle);
@@ -119,8 +122,6 @@ class G15Impulse():
         self.col2 = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/col2", ( 0, 0, 255, 255 ))
             
         self.peak_heights = [ 0 for i in range( self.bars ) ]
-        print "Mode", self.mode
-        print "Peak heights", len(self.peak_heights)
 
         paint = self.gconf_client.get_string(self.gconf_key + "/paint")
         if paint == "screen":
@@ -141,10 +142,10 @@ class G15Impulse():
                 self.chained_background_painter = self.screen.set_background_painter(self._paint_background)
             self.hide_page()
         
-        self.redraw()
-        
     def config_changed(self, client, connection_id, entry, args):
-        self.load_config()
+        self.stop_redraw()
+        self.load_config()        
+        self.redraw()
             
     def _paint_background(self, canvas):
         if self.chained_background_painter != None:
@@ -167,7 +168,10 @@ class G15Impulse():
             self.chained_foreground_painter = None
     
     def redraw(self):        
-        self.screen.redraw(self.page) 
+        if self.gconf_client.get_string(self.gconf_key + "/paint") == "screen":
+            self.screen.redraw(self.page)
+        else: 
+            self.screen.redraw(redraw_content = False)
         self.schedule_redraw()
         
     def schedule_redraw(self):
@@ -188,7 +192,10 @@ class G15Impulse():
     def paint(self, canvas):
         fft = self.mode == "spectrum"
         
-        audio_sample_array = impulse.getSnapshot( fft )    
+        started_paint = time.time()
+        
+        audio_sample_array = impulse.getSnapshot( fft )
+        sample_done = time.time()    
         width, height = self.screen.size
         
         # TODO disco mode - but i've no idea if this will affect the LED life, so will leave out for now
@@ -275,3 +282,4 @@ class G15Impulse():
             canvas.fill( )
             canvas.stroke( )
         
+        paint_done = time.time()

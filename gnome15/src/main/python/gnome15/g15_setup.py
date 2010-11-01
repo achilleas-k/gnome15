@@ -57,7 +57,9 @@ class G15Setup(gtk.Dialog):
         self.set_modal(True)
         driver = self.conf_client.get_string("/apps/gnome15/driver")
         if driver == None:
-            driver = "g19"
+            driver = "driver_g19"
+        else:
+            driver = "driver_" + driver
         if driver in g15drivermanager.imported_drivers:
             self.selected_driver = g15drivermanager.imported_drivers[driver]
         elif len(g15drivermanager.imported_drivers) > 0:
@@ -84,7 +86,7 @@ class G15Setup(gtk.Dialog):
                 driver_mod = g15drivermanager.imported_drivers[driver_mod_key]
                 button = gtk.RadioButton(button_group, driver_mod.name)
                 button.set_alignment(0.0, 0.5)
-                if driver_mod.id == driver:
+                if driver_mod_key == driver:
                     button.set_active(True)
                 button.connect("toggled", self.set_driver, driver_mod)
                 if button_group == None:
@@ -105,7 +107,7 @@ class G15Setup(gtk.Dialog):
                 desc_label.set_use_markup(True)
                 driver_table.pack_start(desc_label, True, True)
         
-                self.vbox.add(driver_table)
+            self.vbox.add(driver_table)
         
         self.show_all()
 

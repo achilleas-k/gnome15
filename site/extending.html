@@ -50,7 +50,7 @@
 		rendering is usually done using SVG <i>Themes</i>. Some plugins might not display anything
 		until some event occurs, or they may be permanent. 
 		<h3>How Gnome15 Locates Plugins</h3>
-		<p>Plugins are looked for in a two locations. Firstly, in the current user's HOME directory,
+		<p>Plugins are looked for in a two default locations. Firstly, in the current user's HOME directory,
 		under <b>.gnome15/plugins</b>. Secondly, in a global location.  To find out what directory global plugins
 		are installed, you may run the following Python script :-
 		<pre>$ python
@@ -63,7 +63,10 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>></pre>
 		<p>Now you know the location of the global plugins, you should temporarily move the pre-installed clock plugin
 		out of the way.<p>
-		<pre>sudo mv /usr/share/gnome15/plugins/clock /usr/share/gnome15/old_clock_plugin</pre> 
+		<pre>sudo mv /usr/share/gnome15/plugins/clock /usr/share/gnome15/old_clock_plugin</pre>
+		<p>You can also specify a list of directories to search for plugins by setting the environment
+		variable <i>G15_PLUGINS</i> before running the various tools. This is useful when working on the Gnome15 source.</p>
+		<pre>G15_PLUGINS=$HOME/my_plugins g15-indicator</pre>
 		<h3>The Plugin Layout</h3>
 		<p>A plugin's files should be laid out in a particular way :-</p>
 		<img src="plugin-layout.png"/>

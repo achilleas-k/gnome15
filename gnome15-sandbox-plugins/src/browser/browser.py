@@ -25,6 +25,7 @@ import gnome15.g15_theme as g15theme
 import gnome15.g15_driver as g15driver
 import gnome15.g15_screen as g15screen
 import gnome15.g15_globals as g15globals
+import gnome15.g15_gtk as g15gtk
 import subprocess
 import time
 import os
@@ -33,7 +34,8 @@ import gtk
 import gconf
 import cairo
 import traceback
-import webkit
+import gtkmozembed
+import gobject
 
 # Plugin details - All of these must be provided
 id="browser"
@@ -48,48 +50,6 @@ def create(gconf_key, gconf_client, screen):
     return G15Browser(gconf_client, gconf_key, screen)
 
 
-class BrowserPage(webkit.WebView):
-
-    def __init__(self):
-        webkit.WebView.__init__(self)
-        settings = self.get_settings()
-        settings.set_property("enable-developer-extras", True)
-
-        # scale other content besides from text as well
-        self.set_full_content_zoom(True)
-        
-class BrowserWindow(gtk.Window):
-    
-    def __init__(self, screen):
-        gtk.Window.__init__(self)
-        
-        self.browser = BrowserPage()
-        self.browser.load_uri("http://www.tanktarta.pwp.blueyonder.co.uk/gnome15")
-        
-        self.scrolled_window = gtk.ScrolledWindow()
-        self.scrolled_window.props.hscrollbar_policy = gtk.POLICY_AUTOMATIC
-        self.scrolled_window.props.vscrollbar_policy = gtk.POLICY_AUTOMATIC
-        self.scrolled_window.add(self.browser)
-        self.scrolled_window.show_all()
-        
-        vbox = gtk.VBox(spacing=1)
-        vbox.pack_start(self.scrolled_window)
-
-        self.add(vbox)
-        self.set_double_buffered(False)
-        self.set_decorated(False)
-        self.set_default_size(screen.width, screen.height)
-        vbox.show_all()
-        self.connect("expose_event", self.expose)
-        self.show_all()    
-
-    def expose(self, widget, event):
-        print "**Expose**"
-        child = widget.get_child()
-
-        return False
-    
-
 class G15Browser():
     
     def __init__(self, gconf_client, gconf_key, screen):
@@ -97,12 +57,22 @@ class G15Browser():
         self.hidden = False
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
+        self.pixbuf = None
     
     def activate(self):
+        self.offscreen_window = None
         self.page = self.screen.new_page(self.paint, id="Browser", priority = g15screen.PRI_NORMAL)
-        self.browser = BrowserWindow(self.screen)
         self.screen.redraw(self.page)
-    
+        gobject.idle_add(self._create_offscreen_window)
+        
+    def _create_offscreen_window(self):
+        self.moz = gtkmozembed.MozEmbed()        
+        self.offscreen_window = g15gtk.G15Window(self.screen, self.page, 0, 0, self.screen.width, self.screen.height)
+        self.offscreen_window.content.add(self.moz)
+        self.offscreen_window.show_all()
+        self.moz.load_url("http://www.google.com")
+        self.screen.redraw(self.page)
+        
     def deactivate(self):
         self.screen.del_page(self.page)
         
@@ -110,4 +80,8 @@ class G15Browser():
         pass
     
     def paint(self, canvas):
-        pass  
+        if self.offscreen_window != None:
+            pixbuf = self.offscreen_window.get_as_pixbuf()
+            image = g15util.pixbuf_to_surface(pixbuf)
+            canvas.set_source_surface(image)
+            canvas.paint()

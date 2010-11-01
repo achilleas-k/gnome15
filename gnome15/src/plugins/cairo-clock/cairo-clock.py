@@ -119,6 +119,7 @@ class G15CairoClock():
                                         on_shown=self.on_shown,on_hidden=self.on_hidden,id="Cairo Clock",
                                         thumbnail_painter = self.paint_thumbnail)
         self.page.set_title("Cairo Clock")
+        self.screen.redraw(self.page)
     
     def on_shown(self):
         self.cancel_refresh()

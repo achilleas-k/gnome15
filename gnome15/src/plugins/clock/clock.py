@@ -93,6 +93,15 @@ class G15Clock():
         self.hidden = False
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
+    
+    def activate(self):
+        self.timer = None
+        self.load_configuration()
+        
+        '''
+        The activate function is invoked when gnome15 starts up, or the plugin is re-enabled
+        after it has been disabled
+        '''
         
         '''
         Most plugins will delegate their drawing to a 'Theme'. A theme usually consists of an SVG file, one
@@ -100,15 +109,6 @@ class G15Clock():
         be done with the SVG
         '''
         self._reload_theme()
-    
-    def activate(self):
-        self.timer = None
-        
-        '''
-        The activate function is invoked when gnome15 starts up, or the plugin is re-enabled
-        after it has been disabled
-        '''
-        
         
         '''
         Most plugins will usually want to draw on the screen. To do so, a 'page' is created. We also supply a callback here to
@@ -191,19 +191,24 @@ class G15Clock():
         if not self.screen.is_visible(self.page):
             properties = self._get_properties()
             font_size = allocated_size
-            do_date = self.gconf_client.get_bool(self.gconf_key + "/display_date")
-            if do_date:
+            if self.display_date:
                 text = "%s\n%s" % ( properties["time"],properties["date"] ) 
                 font_size /= 3
             else:
                 text = properties["time"]
                 font_size /= 2
-            pango_context, layout = g15util.create_pango_context(canvas, self.screen, text, align = pango.ALIGN_CENTER, font_desc = "Sans", font_absolute_size =  font_size * pango.SCALE)
-            x, y, width, height = g15util.get_extents(layout) 
-            pango_context.move_to(4, (allocated_size / 2) - height / 2)     
+            pango_context, layout = g15util.create_pango_context(canvas, self.screen, text, align = pango.ALIGN_CENTER, font_desc = "Sans", font_absolute_size =  font_size * pango.SCALE / (1 if horizontal else 2))
+            x, y, width, height = g15util.get_extents(layout)
+            if horizontal: 
+                pango_context.move_to(4, (allocated_size / 2) - height / 2)
+            else:      
+                pango_context.move_to((allocated_size / 2) - width / 2, 0)
             pango_context.update_layout(layout)
             pango_context.show_layout(layout)
-            return width + 8
+            if horizontal:
+                return width + 8
+            else:
+                return height + 4
     
     ''' 
     ***********************************************************
@@ -212,6 +217,12 @@ class G15Clock():
     ''' 
         
     def _config_changed(self, client, connection_id, entry, args):
+        
+        '''
+        Load the gconf configuration
+        '''
+        self.load_configuration()
+        
         '''
         This is called when the gconf configuration changes. See add_notify and remove_notify in
         the plugin's activate and deactive functions.
@@ -231,6 +242,10 @@ class G15Clock():
         '''
         self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
         
+    def load_configuration(self):
+        self.display_date = self.gconf_client.get_bool(self.gconf_key + "/display_date")
+        self.display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")
+        
     def _redraw(self):
         '''
         Invoked by the timer once a second to redraw the screen. If your page is currently activem
@@ -245,8 +260,7 @@ class G15Clock():
         Determine when to schedule the next redraw for. 
         '''        
         now = datetime.datetime.now()
-        display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")
-        if display_seconds:
+        if self.display_seconds:
             next_tick = now + datetime.timedelta(0, 1.0)
             next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, int(next_tick.second))
         else:
@@ -261,7 +275,7 @@ class G15Clock():
         
     def _reload_theme(self):        
         variant = None
-        if self.gconf_client.get_bool(self.gconf_key + "/display_date"):
+        if self.display_date:
             variant = "with-date"
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen, variant)
         
@@ -276,11 +290,10 @@ class G15Clock():
         the theme
         '''
         time_format = "%H:%M"
-        if self.gconf_client.get_bool(self.gconf_key + "/display_seconds"):
+        if self.display_seconds:
             time_format = "%H:%M:%S"
-        properties["time"] = datetime.datetime.now().strftime(time_format)
-            
-        if self.gconf_client.get_bool(self.gconf_key + "/display_date"):
+        properties["time"] = datetime.datetime.now().strftime(time_format)            
+        if self.display_date:
             properties["date"] = datetime.datetime.now().strftime("%d/%m/%Y")
             
         return properties

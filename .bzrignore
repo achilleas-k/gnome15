@@ -11,4 +11,6 @@ autom4te.cache
 configure
 GNOME_G15Applet.server
 g15-config.desktop
+g15-macros.desktop
+gnome15.desktop
 aclocal.m4

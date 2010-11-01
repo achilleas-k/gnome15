@@ -21,12 +21,10 @@ import g15_driver as g15driver
 import g15_globals as pglobals
 import gtk.gdk
 import gobject
-import array
 import os
 import cairo
 import pangocairo
 import pango
-import struct
 import math
 import Image
 import rsvg
@@ -35,9 +33,7 @@ import base64
 import sys
 import traceback
 
-from threading import Timer
 import xdg.IconTheme as icons
-import xdg.Config as config
 from cStringIO import StringIO
 from jobqueue import JobQueue
 
@@ -145,6 +141,18 @@ def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_va
     else:
         widget.set_active(default_value)
     widget.connect("toggled", checkbox_changed, gconf_key, gconf_client)
+        
+def configure_adjustment_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree):
+    adj = widget_tree.get_object(widget_id)
+    entry = gconf_client.get(gconf_key)
+    if entry != None:
+        adj.set_value(entry.get_int())
+    else:
+        adj.set_value(default_value)
+    adj.connect("value-changed", adjustment_changed, gconf_key, gconf_client)
+    
+def adjustment_changed(adjustment, key, gconf_client):
+    gconf_client.set_int(key, int(adjustment.get_value()))
     
 def checkbox_changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
@@ -270,7 +278,7 @@ def load_surface_from_file(filename, size = None):
 #            return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
         return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
         
-def pixbuf_to_surface(pixbuf, size):
+def pixbuf_to_surface(pixbuf, size = None):
     x = pixbuf.get_width()
     y = pixbuf.get_height()
     scale = get_scale(size, (x, y))        
@@ -291,7 +299,6 @@ Icon utilities
 def local_icon_or_default(icon_name, size = 128):
     path = icon_name    
     if pglobals.dev:
-        last_sz = -1
         for sz in [ 16, 22, 24, 32, 64, -1 ]:
             name = "%sx%s" % ( sz, sz )
             if sz == -1:
@@ -442,8 +449,8 @@ def create_pango_context(canvas, screen, text, wrap = None, align = None, width 
     return pango_context, layout
 
 def get_extents(layout):
-   text_extents = layout.get_extents()[1]
-   return text_extents[0] / pango.SCALE, text_extents[1] / pango.SCALE, text_extents[2] / pango.SCALE, text_extents[3] / pango.SCALE 
+    text_extents = layout.get_extents()[1]
+    return text_extents[0] / pango.SCALE, text_extents[1] / pango.SCALE, text_extents[2] / pango.SCALE, text_extents[3] / pango.SCALE 
 
 '''
 SVG utilties
@@ -579,31 +586,6 @@ def image_to_pixbuf(im):
 
 def surface_to_pixbuf(surface):
     return gtk.gdk.pixbuf_new_from_data(surface.get_data(), gtk.gdk.COLORSPACE_RGB, True, 8, surface.get_width(), surface.get_height(), surface.get_width() * 4)
-
-'''
-Convert a PIL image to a Cairo surface 
-'''
-def image_to_surface(img):
-#    sio = StringIO()
-#    
-#    # PIL is RGBa. Cairo uses aRGB native endian
-#    for i in img.getdata():
-#        sio.write("%c%c%c%c" % ( i[2],i[1],i[0],i[3]) )
-#    imgd = sio.getvalue()
-
-#    imgd = img.tostring("raw","ARGB",0,1)
-#    arr = array.array('B',imgd)
-#    img_surface = cairo.ImageSurface.create_for_data(arr, g15driver.CAIRO_IMAGE_FORMAT, img.size[0], img.size[1])
-#    return img_surface
-    arr = array.array('B',img.tostring())
-    img_surface = cairo.ImageSurface.create_for_data(arr, cairo.FORMAT_ARGB32, img.size[0], img.size[1])
-
-    
-#    timer = Timer(interval, function, args, kwargs)
-#    timer.name = name
-#    timer.setDaemon(True)
-#    timer.start()
-#    return timer
 
 """
 Get the string name of the key given it's code

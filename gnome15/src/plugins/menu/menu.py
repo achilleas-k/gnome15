@@ -25,15 +25,12 @@ import gnome15.g15_theme as g15theme
 import gnome15.g15_driver as g15driver
 import gnome15.g15_screen as g15screen
 import gnome15.g15_globals as g15globals
-import subprocess
-import time
 import os
 import sys
-import feedparser
-import gtk
-import gconf
 import cairo
 import traceback
+import base64
+from cStringIO import StringIO
 
 # Plugin details - All of these must be provided
 id="menu"
@@ -56,6 +53,21 @@ class MenuItem():
     def __init__(self, page):
         self.page = page
         self.thumbnail = None
+        
+class G15ScreensMenu(g15theme.Menu):
+    def __init__(self):
+        g15theme.Menu.__init__(self, "menu")
+        
+    def render_item(self, item, selected, canvas, properties, attributes, group = False):        
+        item_properties = {}
+        if selected == item:
+            item_properties["item_selected"] = True
+        item_properties["item_name"] = item.page.title 
+        item_properties["item_alt"] = ""
+        item_properties["item_type"] = ""
+        item_properties["item_icon"] = item.thumbnail
+        self.entry_theme.draw(canvas, item_properties)
+        return self.entry_theme.bounds[3]
 
 class G15Menu():
     
@@ -119,17 +131,9 @@ class G15Menu():
                 
         return False
     
-    def paint(self, canvas):        
-        for item in self.items:
-            if item.page.thumbnail_painter != None:
-                img = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.screen.height, self.screen.height)
-                thumb_canvas = cairo.Context(img)
-                try :
-                    if item.page.thumbnail_painter(thumb_canvas, self.screen.height, True):
-                        item.thumbnail = img
-                except :
-                    print "WARNING: Problem with painting thumbnail in %s" % item.page.id                   
-                    traceback.print_exc(file=sys.stderr) 
+    def paint(self, canvas):
+        self.menu.items = self.items
+        self.menu.selected = self.selected
         
         self.theme.draw(canvas, 
                         properties = {
@@ -165,12 +169,29 @@ class G15Menu():
             if page != self.page and page.priority > g15screen.PRI_INVISIBLE:
                 self.items.append(MenuItem(page))
         self.selected = self.items[0]
+               
+        for item in self.items:
+            if item.page.thumbnail_painter != None:
+                img = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.screen.height, self.screen.height)
+                thumb_canvas = cairo.Context(img)
+                try :
+                    if item.page.thumbnail_painter(thumb_canvas, self.screen.height, True):
+                        img_data = StringIO()
+                        img.write_to_png(img_data)
+                        item.thumbnail = base64.b64encode(img_data.getvalue())                    
+                        
+                except :
+                    print "WARNING: Problem with painting thumbnail in %s" % item.page.id                   
+                    traceback.print_exc(file=sys.stderr) 
+                    
         self.screen.redraw(self.page)
         
     def _reload_theme(self):        
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
+        self.theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.screen, "menu-screen")
+        self.menu = G15ScreensMenu()
+        self.theme.add_component(self.menu)
+        self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
         
-    
     def _show_menu(self):        
         self.page = self.screen.new_page(self.paint, id="Menu", priority = g15screen.PRI_EXCLUSIVE)
         self._reload_menu()            

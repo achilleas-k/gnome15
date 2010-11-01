@@ -14,7 +14,7 @@
    id="svg2"
    version="1.2"
    inkscape:version="0.48.0 r9654"
-   sodipodi:docname="default-entry.svg">
+   sodipodi:docname="default-menu-entry.svg">
   <defs
      id="defs4">
     <filter
@@ -71,16 +71,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="3.959798"
-     inkscape:cx="146.22016"
-     inkscape:cy="-61.301385"
+     inkscape:cx="90.646408"
+     inkscape:cy="18.752521"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2409"
-     inkscape:window-y="80"
+     inkscape:window-x="2017"
+     inkscape:window-y="42"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -102,7 +102,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -118,23 +118,34 @@
        y="809.69714"
        id="text2997"
        sodipodi:linespacing="125%"
-       class="shadow"><tspan
+       class="shadow"
+       title="del item_selected"><tspan
          sodipodi:role="line"
          id="tspan2999"
          x="9.0496883"
-         y="809.69714">${ent_month_year} ${ent_time_24}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:5.9999752px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="55.049915"
-       y="809.69379"
-       id="text3001"
-       sodipodi:linespacing="125%"
-       transform="scale(0.9999959,1.0000041)"
-       class="shadow"><tspan
-         sodipodi:role="line"
-         id="tspan3003"
-         x="55.049915"
-         y="809.69379">${ent_title}</tspan></text>
+         y="809.69714">${item_name} </tspan></text>
+    <g
+       id="g3787"
+       title="del !item_selected"
+       transform="matrix(0.84423489,0,0,1,1.4096257,0)">
+      <rect
+         y="805.11218"
+         x="9.5477352"
+         height="6"
+         width="160"
+         id="rect3017"
+         style="fill:#000000;fill-opacity:0.9901962;stroke:none" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text2997-3"
+         y="809.69714"
+         x="9.0496883"
+         style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+         xml:space="preserve"><tspan
+           y="809.69714"
+           x="9.0496883"
+           id="tspan2999-1"
+           sodipodi:role="line">${item_name} </tspan></text>
+    </g>
   </g>
 </svg>

@@ -9,12 +9,12 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="160"
-   height="6"
+   width="320"
+   height="28"
    id="svg2"
    version="1.2"
    inkscape:version="0.48.0 r9654"
-   sodipodi:docname="default-entry.svg">
+   sodipodi:docname="g19-menu-entry.svg">
   <defs
      id="defs4">
     <filter
@@ -70,17 +70,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.959798"
-     inkscape:cx="90.646408"
-     inkscape:cy="15.469525"
+     inkscape:zoom="2.8"
+     inkscape:cx="189.33188"
+     inkscape:cy="-61.092309"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2017"
-     inkscape:window-y="42"
+     inkscape:window-x="2405"
+     inkscape:window-y="83"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -110,41 +110,51 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-9.5477352,-805.11218)">
+     transform="translate(-9.5477352,-783.11216)">
+    <rect
+       style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+       id="rect3000-5-4"
+       width="270"
+       height="24.999979"
+       x="9.5477352"
+       y="783.11218"
+       rx="6"
+       ry="6"
+       title="del !ent_selected" />
+    <rect
+       style="fill:#696969;fill-opacity:0.50196078;stroke:none"
+       id="rect3000-5"
+       width="270"
+       height="24.999979"
+       x="9.5477352"
+       y="783.11218"
+       rx="6"
+       ry="6"
+       title="del selected" />
     <text
        xml:space="preserve"
-       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="9.0496883"
-       y="809.69714"
-       id="text2997"
+       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="107.22406"
+       y="798.28217"
+       id="text2999"
        sodipodi:linespacing="125%"
-       class="shadow"
-       title="del item_selected"><tspan
+       clip-path="url(#clipPath2999)"
+       transform="translate(-22,1)"><tspan
          sodipodi:role="line"
-         id="tspan2999"
-         x="9.0496883"
-         y="809.69714">${item_name} </tspan></text>
-    <g
-       id="g3787"
-       title="del !item_selected">
-      <rect
-         y="805.11218"
-         x="9.5477352"
-         height="6"
-         width="160"
-         id="rect3017"
-         style="fill:#000000;fill-opacity:0.9901962;stroke:none" />
-      <text
-         sodipodi:linespacing="125%"
-         id="text2997-3"
-         y="809.69714"
-         x="9.0496883"
-         style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-         xml:space="preserve"><tspan
-           y="809.69714"
-           x="9.0496883"
-           id="tspan2999-1"
-           sodipodi:role="line">${item_name} </tspan></text>
-    </g>
+         id="tspan3001"
+         x="107.22406"
+         y="798.28217">${ent_title}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.1091404px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="17.616716"
+       y="673.33795"
+       id="text2999-4"
+       sodipodi:linespacing="125%"
+       transform="scale(0.8424284,1.1870445)"><tspan
+         sodipodi:role="line"
+         id="tspan3001-8"
+         x="17.616716"
+         y="673.33795">${ent_month_year} ${ent_time_24}</tspan></text>
   </g>
 </svg>

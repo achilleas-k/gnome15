@@ -25,25 +25,17 @@ Main implementation of a G15Driver that uses g15daemon to control and query the
 keyboard
 """
 
+from cStringIO import StringIO
+from gnome15.g15_exceptions import NotConnectedException
+from threading import RLock, Thread
+import cairo
 import gnome15.g15_driver as g15driver
 import gnome15.g15_util as g15util
-from gnome15.g15_exceptions import NotConnectedException
-
-import array
 import socket
-import time
-import math
-import ImageMath
-import Image
+import struct
 import sys
 import traceback
-from threading import Thread
-from threading import RLock
-import struct
-import base64
-from cStringIO import StringIO
-import cairo
-import gtk.gdk
+
 
 # Driver information (used by driver selection UI)
 name="G19D"
@@ -171,7 +163,6 @@ class Driver(g15driver.AbstractDriver):
         self.lock = RLock()
         self.remote_port=port
         self.thread = None
-        self.connected = False
     
     def get_antialias(self):
         return cairo.ANTIALIAS_SUBPIXEL
@@ -207,22 +198,24 @@ class Driver(g15driver.AbstractDriver):
     def connect(self):          
         if self.is_connected():
             raise Exception("Already connected")
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.settimeout(4.0)
-        self.socket.connect((self.remote_host, self.remote_port))
-        self.connected = True
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(4.0)
+        s.connect((self.remote_host, self.remote_port))
+        self.socket = s
         for control in self.get_controls():
             self.do_update_control(control)
             
-    def disconnect(self):       
-        if self.thread != None:
-            self.thread.running = False
-            self.thread = None
-        if self.is_connected():
+    def disconnect(self):  
+        if self.is_connected():  
+            if self.thread != None:
+                self.thread.running = False
+                self.thread = None
             self.socket.close()
-            self.connected = False
+            self.socket = None
             if self.on_close != None:
                 self.on_close()
+        else:
+            raise Exception("Not connected")
         
     def reconnect(self):
         if self.is_connected():
@@ -242,20 +235,19 @@ class Driver(g15driver.AbstractDriver):
         self.write_out("M" + chr(val))
         
     def on_receive_error(self, exception):
-        self.disconnect()
+        if self.is_connected():
+            self.disconnect()
         
     def grab_keyboard(self, callback):
         if self.thread == None:
             self.thread = EventReceive(self.socket, callback, self.on_receive_error)
             self.thread.start()
         else:
-            self.thread.socket = socket
-            self.thread.on_error = self.on_receive_error
-            self.thread.callback = callback
+            raise Exception("Already grabbing keyboard")
         self.write_out("GK")
         
     def is_connected(self):
-        return self.connected 
+        return self.socket != None 
     
     def write_out(self, buf):         
         self.lock.acquire()
@@ -274,8 +266,6 @@ class Driver(g15driver.AbstractDriver):
         if not self.is_connected():
             return
                 
-        now = time.time()
-        
         width = img.get_width()
         height = img.get_height()
         
@@ -283,7 +273,6 @@ class Driver(g15driver.AbstractDriver):
         # the cairo image surface will be horizontal. Rotating then flipping the image is the
         # quickest way to convert this. 16 bit color (5-6-5) is also required. Unfortunately this format
         # was disabled for a long time, as was only re-enabled in version 1.8.6.
-        img_format = 4 
         try:
             back_surface = cairo.ImageSurface (4, height, width)
         except:
@@ -333,7 +322,6 @@ class Driver(g15driver.AbstractDriver):
             
     def do_update_control(self, control):
         if control == keyboard_backlight_control: 
-            val = ( control.value[0], control.value[1], control.value[2] )
             self.write_out("B" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
         elif control == lcd_brightness_control:
             self.write_out("L" + chr(control.value) );

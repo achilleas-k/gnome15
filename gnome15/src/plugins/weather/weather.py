@@ -21,21 +21,15 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15_driver as g15driver
 import gnome15.g15_screen as g15screen
 import gnome15.g15_theme as g15theme
 import gnome15.g15_util as g15util
 import datetime
-import time
 from threading import Timer
 import gtk
 import os
-import sys
 import pywapi
-import urllib2
-import Image
 import gconf
-import cairo
 import pango
 
 
@@ -124,14 +118,15 @@ class G15Weather():
         self.page = self.screen.new_page(self.paint, id="Weather", 
                                         thumbnail_painter = self.paint_thumbnail,
                                         panel_painter = self.paint_thumbnail)
-        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self.loc_changed);
+        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self.loc_changed)
+        self.screen.redraw(self.page)
         self.refresh_after_interval()
         
     def refresh_after_interval(self):
         val = self.gconf_client.get_int(self.gconf_key + "/update")
         if val == 0:
             val = 3600
-        self.timer = g15util.schedule("WeattherRefreshTimer", val * 60.0, self.refresh)
+        self.timer = g15util.schedule("WeatherRefreshTimer", val * 60.0, self.refresh)
         
     def loc_changed(self, client, connection_id, entry, args):
         # Only actually go and refresh after the value hasn't changed for a few seconds
@@ -181,13 +176,15 @@ class G15Weather():
             current = self.weather['current_conditions']
             
             if len(current) == 0:
-                # TODO No info for location
-                pass
+                properties["message"] = "No weather data for location:-\n%s" % loc
             else:                                            
-                attributes["icon"] = g15util.load_surface_from_file(self.translate_icon(current['icon']))
-                properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])        
+                properties["message"] = ""
+                t_icon = self.translate_icon(current['icon'])
+                print t_icon
+                if t_icon != None:
+                    attributes["icon"] = g15util.load_surface_from_file(t_icon)
+                    properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])        
                 properties["condition"] = current['condition']
-                # TODO configurable
                 
                 properties["temp_c"] = "%3.1f °C" % float(current['temp_c'])
                 properties["temp_f"] = "%3.1f °F" % float(current['temp_f'])
@@ -204,7 +201,6 @@ class G15Weather():
                 y = 1
                 for forecast in self.weather['forecasts']:        
                     properties["condition" + str(y)] = forecast['condition']
-                    # TODO configurable
                     lo_f = float(forecast['low'])
                     lo_c = ( ( lo_f - 32 ) / 9 ) * 5
                     lo_k = lo_c + 273.15
@@ -252,7 +248,9 @@ class G15Weather():
         images/weather/haze.gif
         '''
         theme_icon = None
-        if icon == "/ig/images/weather/chance_of_rain.gif":
+        if icon == None or icon == "":
+            return None
+        elif icon == "/ig/images/weather/chance_of_rain.gif":
             theme_icon = "weather-showers-scattered"
         elif icon == "/ig/images/weather/sunny.gif" or icon == "/ig/images/weather/haze.gif": 
             theme_icon = "weather-clear"
@@ -294,19 +292,28 @@ class G15Weather():
         return "http://www.google.com" + icon
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        total_width = 0
+        total_taken = 0
         if "icon" in self.attributes:
             size = g15util.paint_thumbnail_image(allocated_size, self.attributes["icon"], canvas)
-            canvas.translate(size, 0)
-            total_width += size
+            if horizontal:
+                canvas.translate(size, 0)
+            else:
+                canvas.translate(0, size)
+            total_taken += size
         if "temp" in self.properties:
-            pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 2)
-            x, y, width, height = g15util.get_extents(layout) 
-            pango_context.move_to(0, (allocated_size / 2) - height / 2)     
+            if horizontal: 
+                pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 2)
+                x, y, width, height = g15util.get_extents(layout)
+                pango_context.move_to(0, (allocated_size / 2) - height / 2)
+                total_taken += width + 4
+            else:  
+                pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 4)
+                x, y, width, height = g15util.get_extents(layout)
+                pango_context.move_to((allocated_size / 2) - width / 2, 0)
+                total_taken += height + 4     
             pango_context.update_layout(layout)
             pango_context.show_layout(layout)
-            total_width += width + 4
-        return total_width
+        return total_taken
             
     def paint(self, canvas):
         loc = get_location(self.gconf_client, self.gconf_key)

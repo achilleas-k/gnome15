@@ -28,19 +28,19 @@ import g15_util as g15util
 import g15_screen as g15screen
 import appindicator
 
-class G15Indicator():
+class G15Indicator(appindicator.Indicator):
     
     def __init__(self,  parent_window=None):
         
-        ind = appindicator.Indicator("example-simple-client",
+        appindicator.Indicator.__init__(self, "gnome15",
                                g15util.local_icon_or_default("logitech-g-keyboard-panel"),
                                appindicator.CATEGORY_HARDWARE)
-        ind.set_status (appindicator.STATUS_ACTIVE)
+        self.set_status (appindicator.STATUS_ACTIVE)
         
-        self.ind = ind
         self.page_items = {}        
-        self.ind.set_attention_icon(g15util.local_icon_or_default("logitech-g-keyboard-error-panel"))
+        self.set_attention_icon(g15util.local_icon_or_default("logitech-g-keyboard-error-panel"))
         self.service = g15service.G15Service(self, parent_window)
+        self.default_message = "Logitech G Keyboard"
                 
         # Indicator menu
         self.menu = gtk.Menu()
@@ -60,7 +60,7 @@ class G15Indicator():
         self.menu.append(gtk.MenuItem())
         
         self.menu.show_all()
-        self.ind.set_menu(self.menu)
+        self.set_menu(self.menu)
         
         self.service.start()
         self.service.screen.add_screen_change_listener(self)
@@ -72,7 +72,7 @@ class G15Indicator():
         pass   
         
     def new_page(self, page):
-        if page.priority > g15screen.PRI_INVISIBLE:
+        if page.priority >= g15screen.PRI_LOW:
             item = gtk.MenuItem(page.title)
             self.page_items[page.id] = item
             item.connect("activate", self.show_page, page)
@@ -85,20 +85,21 @@ class G15Indicator():
         item.set_label(title)
     
     def del_page(self, page):
-        item = self.page_items[page.id]
-        self.menu.remove(item)
-        item.destroy()
-        del self.page_items[page.id]
-        self.menu.show_all()
+        if page.id in self.page_items:
+            item = self.page_items[page.id]
+            self.menu.remove(item)
+            item.destroy()
+            del self.page_items[page.id]
+            self.menu.show_all()
         
     def scroll (self, indicator_object, delta, direction):
         print delta,direction
         
     def clear_attention(self):
-        self.ind.set_status (appindicator.STATUS_ACTIVE)
+        self.set_status (appindicator.STATUS_ACTIVE)
         
     def attention(self, message = None):
-        self.ind.set_status (appindicator.STATUS_ATTENTION)
+        self.set_status (appindicator.STATUS_ATTENTION)
 
     def quit(self):                
         gtk.main_quit()

@@ -27,7 +27,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="3.959798"
      inkscape:cx="97.163807"
-     inkscape:cy="19.856386"
+     inkscape:cy="23.139382"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -59,18 +59,20 @@
     </rdf:RDF>
   </metadata>
   <g
-     inkscape:label="Layer 1"
+     inkscape:label="Weather Layer"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(0,-1009.3622)">
+     transform="translate(0,-1009.3622)"
+     style="display:inline"
+     title="del message">
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/weather/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15/src/plugins/weather/default/${icon}"
        xlink:href="${icon}"
-       id="image3051"
-       width="43"
-       height="43"
+       y="1009.4643"
        x="0"
-       y="1009.4643" />
+       height="43"
+       width="43"
+       id="image3051" />
     <text
        xml:space="preserve"
        style="font-size:7.99999952px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
@@ -157,7 +159,7 @@
          y="923.84399">${day_letter3}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:8.00000004px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans;font-stretch:normal;font-variant:normal;writing-mode:lr"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="94.207253"
        y="924.04352"
        id="text3849-8-1"
@@ -243,5 +245,23 @@
          x="4.1728444"
          y="1069.0935"
          style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;stroke:none;font-family:Sans;-inkscape-font-specification:Sans">${condition}</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Message Layer"
+     style="display:inline"
+     title="del !message">
+    <text
+       xml:space="preserve"
+       style="font-size:7.99999762px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="82.960945"
+       y="21.33593"
+       id="text3013"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3015"
+         x="82.960945"
+         y="21.33593">${message}</tspan></text>
   </g>
 </svg>

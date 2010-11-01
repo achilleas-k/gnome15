@@ -1,11 +1,8 @@
 themedir = $(datadir)/gnome15/plugins/rss/default
-theme_DATA = rss_default_common.py \
-	default.svg \
-	default-entry.svg \
-	rss_default_default.py \
+theme_DATA = default.svg \
+	default-menu-entry.svg \
 	g19.svg \
-	g19-entry.svg \
-	rss_default_g19.py 
+	g19-menu-entry.svg
 
 EXTRA_DIST =  			\
 	$(theme_DATA)

@@ -58,6 +58,7 @@ class AbstractMPRISPlayer():
     
     def __init__(self, gconf_client, screen, players, interface_name, session_bus, title):
         self.lock = Lock()
+        self.stopped = False
         self.hidden = True
         self.title = title
         self.session_bus = session_bus
@@ -100,6 +101,7 @@ class AbstractMPRISPlayer():
     def stop(self):
         self.lock.acquire()
         try :
+            self.stopped = True
             self.on_stop()
             if self.status_check_timer != None:
                 self.status_check_timer.cancel()
@@ -138,7 +140,6 @@ class AbstractMPRISPlayer():
             self.lock.release()
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        total_width = 0
         if self.page != None:
             if self.cover_image != None:
                 size = g15util.paint_thumbnail_image(allocated_size, self.cover_image, canvas)
@@ -331,35 +332,36 @@ class MPRIS2Player(AbstractMPRISPlayer):
     def load_song_details(self):
         self.lock.acquire()
         try :
-            properties = self.player_properties.GetAll("org.mpris.MediaPlayer2.Player")
-            meta_data = properties["Metadata"]
+            if not self.stopped:
+                properties = self.player_properties.GetAll("org.mpris.MediaPlayer2.Player")
+                meta_data = properties["Metadata"]
+                
+                # Format properties that need formatting
+                bitrate = g15util.value_or_default(meta_data,"xesam:audioBitrate", 0)
+                if bitrate == 0:
+                    bitrate == ""
+                else:
+                    bitrate = str(bitrate / 1024)
+                
+                self.playing_uri = g15util.value_or_blank(meta_data,"xesam:url")            
+                                    
+                # General properties                    
+                self.song_properties = {
+                                        "status": self.status,
+                                        "uri": self.playing_uri,
+                                        "title": g15util.value_or_blank(meta_data,"xesam:title"),
+                                        "art_uri": g15util.value_or_blank(meta_data,"mpris:artUrl"),
+                                        "genre": ",".join(list(g15util.value_or_empty(meta_data,"xesam:genre"))),
+                                        "track_no": g15util.value_or_blank(meta_data,"xesam:trackNumber"),
+                                        "artist": ",".join(list(g15util.value_or_empty(meta_data,"xesam:artist"))),
+                                        "album": g15util.value_or_blank(meta_data,"xesam:album"),
+                                        "bitrate": bitrate,
+                                        "rating": g15util.value_or_default(meta_data,"xesam:userRating", 0.0),
+                                        "album_artist": ",".join(list(g15util.value_or_empty(meta_data,"xesam:albumArtist"))),
+                                        }
             
-            # Format properties that need formatting
-            bitrate = g15util.value_or_default(meta_data,"xesam:audioBitrate", 0)
-            if bitrate == 0:
-                bitrate == ""
-            else:
-                bitrate = str(bitrate / 1024)
-            
-            self.playing_uri = g15util.value_or_blank(meta_data,"xesam:url")            
-                                
-            # General properties                    
-            self.song_properties = {
-                                    "status": self.status,
-                                    "uri": self.playing_uri,
-                                    "title": g15util.value_or_blank(meta_data,"xesam:title"),
-                                    "art_uri": g15util.value_or_blank(meta_data,"mpris:artUrl"),
-                                    "genre": ",".join(list(g15util.value_or_empty(meta_data,"xesam:genre"))),
-                                    "track_no": g15util.value_or_blank(meta_data,"xesam:trackNumber"),
-                                    "artist": ",".join(list(g15util.value_or_empty(meta_data,"xesam:artist"))),
-                                    "album": g15util.value_or_blank(meta_data,"xesam:album"),
-                                    "bitrate": bitrate,
-                                    "rating": g15util.value_or_default(meta_data,"xesam:userRating", 0.0),
-                                    "album_artist": ",".join(list(g15util.value_or_empty(meta_data,"xesam:albumArtist"))),
-                                    }
-        
-            self.duration = g15util.value_or_default(meta_data, "mpris:length", 0) / 1000 / 1000
-            self.process_properties()
+                self.duration = g15util.value_or_default(meta_data, "mpris:length", 0) / 1000 / 1000
+                self.process_properties()
         finally:
             self.lock.release()
             

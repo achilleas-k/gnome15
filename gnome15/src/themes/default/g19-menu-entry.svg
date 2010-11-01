@@ -118,6 +118,50 @@
          in="SourceGraphic"
          operator="over" />
     </filter>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2999-5-0">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3001-8-8"
+         width="205"
+         height="21.999977"
+         x="104.54774"
+         y="784.11218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2999-5-09">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3001-8-88"
+         width="205"
+         height="21.999977"
+         x="104.54774"
+         y="784.11218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2999-5-6">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3001-8-3"
+         width="205"
+         height="21.999977"
+         x="104.54774"
+         y="784.11218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2999-5-0-7">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3001-8-8-9"
+         width="205"
+         height="21.999977"
+         x="104.54774"
+         y="784.11218" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -126,17 +170,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.959798"
-     inkscape:cx="153.03869"
-     inkscape:cy="-45.138965"
+     inkscape:zoom="2.8"
+     inkscape:cx="181.94493"
+     inkscape:cy="16.593634"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="layer1-5-7"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2262"
-     inkscape:window-y="42"
+     inkscape:window-x="2027"
+     inkscape:window-y="114"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -163,19 +207,19 @@
     </rdf:RDF>
   </metadata>
   <g
-     inkscape:label="Deselected Label"
+     inkscape:label="Selected Layer"
      inkscape:groupmode="layer"
-     id="layer1"
-     transform="translate(-9.5477352,-783.11216)"
-     style="display:inline"
-     title="del item_selected">
+     id="layer1-5"
+     transform="translate(-9,-783)"
+     title="del !item_selected"
+     style="display:inline">
     <rect
-       style="fill:#696969;fill-opacity:0.50196078;stroke:none"
-       id="rect3000-5-4"
-       width="315"
-       height="24.999979"
-       x="12.547735"
-       y="783.11218"
+       style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+       id="rect3000-5-4-5"
+       width="272"
+       height="22.999977"
+       x="9"
+       y="783"
        rx="6"
        ry="6" />
     <text
@@ -183,64 +227,91 @@
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="107.22406"
        y="798.28217"
-       id="text2999"
+       id="text2999-0"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath2999)"
-       transform="translate(-76,0)"><tspan
+       clip-path="url(#clipPath2999-5)"
+       transform="translate(-54.672419,-8.3652344e-5)"><tspan
          sodipodi:role="line"
-         id="tspan3001"
+         id="tspan3001-7"
          x="107.22406"
          y="798.28217">${item_name}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
+       x="176.15961"
+       y="798.28217"
+       id="text2999-0-1"
+       sodipodi:linespacing="125%"
+       clip-path="url(#clipPath2999-5-0)"
+       transform="matrix(1.0000023,0,0,1,99.82929,-8.3652344e-5)"><tspan
+         sodipodi:role="line"
+         id="tspan3001-7-9"
+         x="176.15961"
+         y="798.28217">${item_alt}</tspan></text>
     <image
        class="embedded_image"
        y="785.11218"
-       x="264.54773"
-       height="22"
-       width="22"
-       id="item_icon-3"
+       x="19.547737"
+       height="19"
+       width="19"
+       id="item_icon-3-9"
        style="display:inline"
        xlink:href="/home/tanktarta/dummy.png"
        sodipodi:absref="/home/tanktarta/dummy.png"
        title="item_icon" />
   </g>
   <g
-     inkscape:label="Selected Layer"
+     inkscape:label="Deselected Layer"
      inkscape:groupmode="layer"
-     id="layer1-5"
-     transform="translate(-9.5477352,-783.11216)"
-     style="display:inline"
-     title="del !item_selected">
+     id="layer1-5-7"
+     transform="translate(-9,-783)"
+     title="del item_selected"
+     style="display:inline">
     <rect
-       style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
-       id="rect3000-5-4-5"
-       width="315"
-       height="25"
-       x="12.547735"
-       y="783.11218"
+       style="fill:#808080;fill-opacity:0.50196078;stroke:none"
+       id="rect3000-5-4-5-4"
+       width="272"
+       height="22.999977"
+       x="9"
+       y="783"
        rx="6"
        ry="6" />
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans;"
+       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="107.22406"
        y="798.28217"
-       id="text2999-0"
+       id="text2999-0-9"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath2999-5)"
-       transform="translate(-76,0)"><tspan
+       clip-path="url(#clipPath2999-5-6)"
+       transform="translate(-54.672419,-8.3652344e-5)"><tspan
          sodipodi:role="line"
-         id="tspan3001-7"
+         id="tspan3001-7-1"
          x="107.22406"
          y="798.28217">${item_name}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
+       x="176.15961"
+       y="798.28217"
+       id="text2999-0-1-7"
+       sodipodi:linespacing="125%"
+       clip-path="url(#clipPath2999-5-0-7)"
+       transform="matrix(1.0000023,0,0,1,99.82929,-8.3652344e-5)"><tspan
+         sodipodi:role="line"
+         id="tspan3001-7-9-0"
+         x="176.15961"
+         y="798.28217">${item_alt}</tspan></text>
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/menu/default/dummy.png"
-       xlink:href="dummy.png"
-       width="64"
-       height="64"
-       x="243"
-       y="765"
        class="embedded_image"
-       title="item_icon"
-       id="item_item-2" />
+       y="785.11218"
+       x="19.547737"
+       height="19"
+       width="19"
+       id="item_icon-3-9-6"
+       style="display:inline"
+       xlink:href="/home/tanktarta/dummy.png"
+       sodipodi:absref="/home/tanktarta/dummy.png"
+       title="item_icon" />
   </g>
 </svg>

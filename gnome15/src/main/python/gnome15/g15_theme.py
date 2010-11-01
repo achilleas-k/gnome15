@@ -29,6 +29,7 @@ import pango
 import pangocairo
 import g15_driver as g15driver
 import g15_util as g15util
+import g15_gtk as g15gtk
 import xml.sax.saxutils as saxutils
 import base64
 from string import Template
@@ -45,6 +46,125 @@ class TextBox():
         self.text = "" 
         self.css = { }
         self.transforms = []
+        
+class Component():
+        
+    def __init__(self, id):
+        self.id = id
+        self.theme = None
+        
+    def configure(self, theme):
+        self.theme = theme
+        self.on_configure()
+        
+    def on_configure(self):
+        raise Exception("Not implemented.")
+        
+    def draw(self, canvas, element, properties, attributes):
+        raise Exception("Not implemented.")
+
+class Scrollbar(Component):
+    
+    def __init__(self, id, values_callback):
+        Component.__init__(self, id)
+        self.values_callback = values_callback
+        
+    def on_configure(self):
+        pass
+        
+    def draw(self, canvas, element, properties, attributes):        
+        if self.theme != None:
+            max, view_size, position = self.values_callback(properties, attributes)
+            knob = element.xpath('//svg:*[@class=\'knob\']',namespaces=self.theme.nsmap)[0]
+            track = element.xpath('//svg:*[@class=\'track\']',namespaces=self.theme.nsmap)[0]
+            track_bounds = g15util.get_bounds(track)
+            knob_bounds = g15util.get_bounds(knob)
+            scale = max / view_size
+            knob.set("y", str( int( knob_bounds[1] + ( position / scale ) ) ) )
+            knob.set("height", str(int(track_bounds[3] / scale )))
+        
+class Menu(Component):
+    def __init__(self, id):
+        Component.__init__(self, id)
+        self.items = []
+        self.base = 0
+        self.selected = None
+        
+    def on_configure(self):
+        self.view_element = self.theme.get_element(self.id)
+        if self.view_element == None:
+            raise Exception("No element in SVG with ID of %s. Required for Menu component" % self.id)
+        self.view_bounds  = g15util.get_actual_bounds(self.view_element)
+        self.entry_theme = G15Theme(self.theme.dir, self.theme.screen, "menu-entry")
+        
+    def get_scroll_values(self, properties, attributes):
+        max = 0
+        for item in self.items:
+            max += self.get_item_height(item, True)
+        return max, self.view_bounds[3], self.base
+        
+    def get_item_height(self, item, group = False):
+        return self.entry_theme.bounds[3]
+    
+    
+    def draw(self, canvas, element, properties, attributes):
+        # Get the Y position of the selected item
+        y = 0 
+        selected_y = -1
+        for item in self.items:
+            ih = self.get_item_height(item, True)
+            if item == self.selected:
+                selected_y = y
+            y += ih
+                
+        new_base = self.base
+                
+        # How much vertical space there is
+        v_space = self.view_bounds[3]
+            
+        # If the position of the selected item is offscreen below, change the offset so it is just visible
+        if self.selected != None:
+            ih = self.get_item_height(self.selected, True)
+            if selected_y >= new_base + v_space - ih:
+                new_base = ( selected_y + ih ) - v_space
+            # If the position of the selected item is offscreen above base, change the offset so it is just visible
+            elif selected_y < new_base:
+                new_base = selected_y
+                
+        if new_base != self.base:
+            if new_base < self.base:
+                self.base -=  max(1, ( self.base - new_base ) / 10)
+            else:
+                self.base += max(1, ( new_base - self.base ) / 10)
+            g15util.schedule("ScrollTo", 0.05, self.theme.screen.redraw)
+        
+        canvas.save()
+        
+        # Clip to the max size of the viewport        
+        canvas.rectangle(self.view_bounds[0], self.view_bounds[1], self.view_bounds[2], self.view_bounds[3])
+        canvas.clip() 
+        
+        # Move to the base
+        canvas.translate(self.view_bounds[0], -self.base + self.view_bounds[1])
+        
+        # This will handle two levels of menus
+        y = -self.base
+        for item in self.items:
+            y = self._do_item(item, self.selected, canvas, y, properties, attributes,  True)
+                
+        canvas.restore() 
+        
+    def _do_item(self, item, selected, canvas, y, properties, attributes, group = False):        
+        # Don't draw items that are not visible
+        ih = self.get_item_height(item, group)
+        if y >= -ih and y <= self.view_bounds[3] + ih:
+            self.render_item(item, selected, canvas, properties, attributes, group)
+        canvas.translate(0, ih)
+        y += ih
+        return y
+        
+    def render_item(self, item, selected, canvas, properties, attributes, group = False):
+        raise Exception("Not implemented.")
 
 class G15Theme:
     
@@ -56,6 +176,8 @@ class G15Theme:
         self.variant = variant
         self.theme_name = os.path.basename(dir)
         self.plugin_name = os.path.basename(os.path.dirname(dir))
+        self.offscreen_windows = []
+        self.components = {}
         
         module_name = self.get_path_for_variant(dir, variant, "py", fatal = False, prefix = self.plugin_name.replace("-","_") + "_" + self.theme_name + "_")
         module = None
@@ -160,6 +282,25 @@ class G15Theme:
         for style in styles:
             buf += style + ":" + styles[style] + ";"
         return buf
+    
+    def add_component(self, component):
+        component.configure(self)
+        self.components[component.id] = component
+
+    def add_window(self, id, page):
+        # Get the bounds of the GTK element and remove it from the SVG
+        element = self.document.getroot().xpath('//svg:*[@id=\'%s\']' % id,namespaces=self.nsmap)[0]
+        offscreen_bounds = g15util.get_actual_bounds(element)
+        element.getparent().remove(element)
+        window = g15gtk.G15Window(self.screen, page, offscreen_bounds[0], offscreen_bounds[1], offscreen_bounds[2], offscreen_bounds[3])
+        self.offscreen_windows.append((window, offscreen_bounds))
+        return window
+    
+    def get_element(self, id, root = None):
+        if root == None:
+            root = self.document.getroot()
+        els = root.xpath('//svg:*[@id=\'%s\']' % str(id),namespaces=self.nsmap)
+        return els[0] if len(els) > 0 else None
             
     def draw(self, canvas, properties = {}, attributes = {}):
         # TODO tidy this lot up
@@ -193,9 +334,16 @@ class G15Theme:
                     if var.startswith("!"):
                         var = var[1:]
                         set = False
-                    if ( set and var in properties and properties[var] != "") or ( not set and ( not var in properties or properties[var] == "" ) ):
+                    if ( set and var in properties and properties[var] != "" and properties[var] != False ) or ( not set and ( not var in properties or properties[var] == "" or properties[var] == False ) ):
                         element.getparent().remove(element)
             
+        # Process any components
+        for component_id in self.components.keys():
+            component_elements = root.xpath('//svg:*[@id=\'%s\']' % component_id,namespaces=self.nsmap)
+            if len(component_elements) > 0:
+                self.components[component_id].draw(canvas, component_elements[0], properties, attributes)
+            else:
+                print "WARNING: Cannot find SVG element for component %s" % component_id
                   
         # Set any progress bars (always measure in percentage). Progress bars have
         # their width attribute altered 
@@ -358,9 +506,9 @@ class G15Theme:
                 font_weight = css["font-weight"]
                 font_style = css["font-style"]
                 text_align = css["text-align"]
-                line_height = "80%"
-                if "line-height" in css:
-                    line_height = css["line-height"]
+#                line_height = "80%"
+#                if "line-height" in css:
+#                    line_height = css["line-height"]
                 if "fill" in css:
                     foreground = css["fill"]
                 else:
@@ -415,6 +563,17 @@ class G15Theme:
                 pango_context.show_layout(layout)
                 
                 pango_context.restore()
+                
+        # Paint all GTK components that may have been added
+        for offscreen_window, offscreen_bounds in self.offscreen_windows:
+            pixbuf = offscreen_window.get_as_pixbuf()
+            if pixbuf != None:
+                image = g15util.pixbuf_to_surface(pixbuf)
+                canvas.save()
+                canvas.translate(offscreen_bounds[0], offscreen_bounds[1])
+                canvas.set_source_surface(image)
+                canvas.paint()
+                canvas.restore()
         
         # Give the python portion of the theme chance to draw stuff over the SVG
         if self.instance != None:

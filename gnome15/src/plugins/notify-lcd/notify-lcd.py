@@ -176,6 +176,14 @@ class G15NotifyLCD(dbus.service.Object):
         
     def destroy(self):
         pass 
+                    
+    def handle_key(self, keys, state, post):
+        if not post and state == g15driver.KEY_STATE_UP:            
+            page = self.screen.get_page("NotifyLCD")
+            if page != None:            
+                if g15driver.G_KEY_BACK in keys or g15driver.G_KEY_L3 in keys:
+                    self.screen.del_page(page)
+                    return True
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
     def GetServerInformation(self):
@@ -189,7 +197,7 @@ class G15NotifyLCD(dbus.service.Object):
     def Notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
         if self.active:
             try :
-                self.notify(icon, summary, body, float(timeout) / 1000.0, hints)
+                self.notify(icon, summary, body, float(timeout) / 1000.0, actions, hints)
             except Exception as blah:
                 traceback.print_exc()
             if id == 0:
@@ -206,8 +214,9 @@ class G15NotifyLCD(dbus.service.Object):
     def NotificationClosed(self, id, reason):
         pass
 
-    def notify(self, icon, summary, body, timeout, hints):
+    def notify(self, icon, summary, body, timeout, actions, hints):
         self.lock.acquire()
+        print actions
         try :
             self.embedded_image = None
             if icon == None or icon == "":

@@ -125,7 +125,33 @@ class G15RSSPreferences():
         urls = self.gconf_client.get_list(self.gconf_key + "/urls", gconf.VALUE_STRING)
         if url in urls:
             urls.remove(url)
-            self.gconf_client.set_list(self.gconf_key + "/urls", gconf.VALUE_STRING, urls)        
+            self.gconf_client.set_list(self.gconf_key + "/urls", gconf.VALUE_STRING, urls)   
+        
+class G15FeedsMenu(g15theme.Menu):
+    def __init__(self):
+        g15theme.Menu.__init__(self, "menu")
+        
+    def render_item(self, entry, selected, canvas, properties, attributes, group = False):
+        
+        element_properties = dict(properties)
+        element_properties["ent_selected"] = entry == selected
+        element_properties["ent_title"] = entry.title
+        element_properties["ent_link"] = entry.link
+        element_properties["ent_description"] = entry.description
+        
+        element_properties["ent_locale_date_time"] = time.strftime("%x %X", entry.date_parsed)            
+        element_properties["ent_locale_time"] = time.strftime("%X", entry.date_parsed)            
+        element_properties["ent_locale_date"] = time.strftime("%x", entry.date_parsed)
+        element_properties["ent_time_24"] = time.strftime("%H:%M", entry.date_parsed) 
+        element_properties["ent_full_time_24"] = time.strftime("%H:%M:%S", entry.date_parsed) 
+        element_properties["ent_time_12"] = time.strftime("%I:%M %p", entry.date_parsed) 
+        element_properties["ent_full_time_12"] = time.strftime("%I:%M:%S %p", entry.date_parsed)
+        element_properties["ent_short_date"] = time.strftime("%a %d %b", entry.date_parsed)
+        element_properties["ent_full_date"] = time.strftime("%A %d %B", entry.date_parsed)
+        element_properties["ent_month_year"] = time.strftime("%m/%y", entry.date_parsed)
+                        
+        self.entry_theme.draw(canvas, element_properties)
+        return self.entry_theme.bounds[3]     
         
 class G15FeedPage():
     
@@ -142,8 +168,10 @@ class G15FeedPage():
         self.reload() 
         self.page = self.screen.new_page(self.paint, id="Feed " + str(plugin.page_serial), thumbnail_painter = self.paint_thumbnail)
         plugin.page_serial += 1
-        print self.feed["feed"]
         self.page.set_title(self.title)
+        self.menu = G15FeedsMenu()
+        self.theme.add_component(self.menu)
+        self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
         self.screen.redraw(self.page)
         
     def reload(self):
@@ -187,21 +215,21 @@ class G15FeedPage():
                     
     def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_UP and self.screen.get_visible_page() == self.page:
-            if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L2 in keys:
+            if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
                 if self.index < 0:
                     self.index = len(self.feed.entries) - 1
                 else:
                     self.index -= 1
                 self.selection_changed()
                 return True
-            elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L3 in keys:
+            elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
                 if self.index >= len(self.feed.entries):
                     self.index = 0
                 else:
                     self.index += 1
                 self.selection_changed()
                 return True
-            elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L4 in keys:
+            elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
                 if self.selected_entry != None:
                     subprocess.Popen(['xdg-open', self.selected_entry.link])
                     
@@ -215,6 +243,8 @@ class G15FeedPage():
             return g15util.paint_thumbnail_image(allocated_size, self.attributes["icon"], canvas)
         
     def paint(self, canvas):
+        self.menu.items = self.feed.entries
+        self.menu.selected = self.selected_entry
         self.theme.draw(canvas, self.properties, self.attributes)
     
 class G15RSS():

@@ -83,8 +83,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="33.934229"
-     inkscape:cy="102.528"
+     inkscape:cx="-50.16097"
+     inkscape:cy="109.09399"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -142,13 +142,13 @@
        rx="11.999999"
        ry="12.000001" />
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/rss/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15/src/plugins/rss/default/${icon}"
        xlink:href="${icon}"
-       height="65.999985"
-       width="64"
-       y="805.11218"
+       id="image4256"
        x="245.54773"
-       id="image4256" />
+       y="805.11218"
+       width="64"
+       height="65.999985" />
     <text
        xml:space="preserve"
        style="font-size:28px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
@@ -186,5 +186,48 @@
          id="tspan3788-8"
          x="25.225403"
          y="870.28473">${updated}</tspan></text>
+    <rect
+       style="fill:#696969;fill-opacity:0.50196078;stroke:none"
+       id="rect3000-6"
+       width="25.591402"
+       height="134.32259"
+       x="293.61224"
+       y="886.78961"
+       rx="4"
+       ry="4" />
+    <g
+       transform="matrix(0.73118278,0,0,0.69582031,81.899938,309.08067)"
+       id="viewScrollbar"
+       class="scrollbar">
+      <rect
+         ry="5.7486095"
+         rx="5.4705882"
+         y="836.11218"
+         x="304.54773"
+         height="179.99998"
+         width="5.0000038"
+         id="rect3000-6-4"
+         style="fill:#696969;fill-opacity:0.50196078;stroke:none"
+         class="track" />
+      <rect
+         ry="5.74861"
+         rx="5.4705882"
+         y="836.11218"
+         x="294.54773"
+         height="30"
+         width="25"
+         id="rect3017"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+         class="knob" />
+    </g>
+    <rect
+       style="fill:none;fill-opacity:0.50196078000000000;stroke:none"
+       id="menu"
+       width="270"
+       height="134.99997"
+       x="19.547735"
+       y="886.11218"
+       rx="11.999998"
+       ry="12.000001" />
   </g>
 </svg>

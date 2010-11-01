@@ -166,6 +166,7 @@ class VolumeThread(Thread):
         
     def stop_monitoring(self):
         self.open.close()
+        self.mixer.close()
         
     def run(self):
         try :
