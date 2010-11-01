@@ -19,4 +19,4 @@ libtool.m4
 *.la
 *.lo
 .deps
-ltmail.sh
+ltmain.sh
