@@ -14,3 +14,9 @@ g15-config.desktop
 g15-macros.desktop
 gnome15.desktop
 aclocal.m4
+libtool.m4
+*.o
+*.la
+*.lo
+.deps
+ltmail.sh
