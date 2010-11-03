@@ -1,0 +1,314 @@
+<html>
+	<head>
+		<link href="gnome15.css" rel="stylesheet" type="text/css">
+		<title>Gnome15 - Gnome integration for the Logitech G Keyboards - Help And Documentation</title>
+	</head>
+	<body>
+		<div id="header">
+			<img src="header.png"/>
+		</div>
+		<div id="toolbar">
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<li>|</li>
+				<li><a href="downloads.html">Downloads</a></li>
+				<li>|</li>
+				<li>[Help And Documentation]</li>
+				<li>|</li>
+				<li><a href="g19d.html">G19D</a></li>
+				<li>|</li>
+				<li><a href="https://launchpad.net/gnome15">Project</a></li>
+			</ul>
+		</div>
+		<div id="subtoolbar">
+			<ul>
+				<li><a href="docs.html">Summary</a></li>
+				<li>|</li>
+				<li><a href="install.html">Installation</a></li>
+				<li>|</li>
+				<li><a href="faq.html">FAQ</a></li>
+				<li>|</li>
+				<li>[]<a href="plugins.html">Plugin Gallery</a></li>
+				<li>|</li>
+				<li><a href="extending.html">Plugin Tutorial</a></li>
+			</ul>
+		</div>
+		
+		<div class="clear"></div>
+		<h1>Plugin Gallery</h1>
+		<h2>Plugins</h2>
+		<h4>Media Related</h4>
+		<ul>
+			<li><a href="#mpris">Media Player</a></li>
+			<li><a href="#volume">Volume Monitor</a></li>
+			<li><a href="#impulse15">Impulse15</a></li>
+		</ul>
+		<h4>Appearance and Behavior</h4>
+		<ul>
+			<li><a href="#wallpaper">Wallpaper</a></li>
+			<li><a href="#panel">Panel</a></li>
+			<li><a href="#fx">Special Effects</a></li>
+		</ul>
+		<h2>Media Related</h2>
+		<p>Plugins used for Music, Video and other media related functions.</p>
+		<h3><a name="mpris">Media Player</a></h3>
+		<div class="plugin_main">
+			<div class="plugin_images">
+				<img class="plugin_image_g15" src="rhythmbox.png"/>
+				<img class="plugin_image" src="g19-mpris.png"/>
+			</div>
+			<div class="plugin_table">
+				<table>
+					<tr>
+						<td class="plugin_label">Models supported:</td>
+						<td class="plugin_detail">G15, G19</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Keys:</td>
+						<td class="plugin_detail">None supported</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Download:</td>
+						<td class="plugin_detail">Part of main distribution. See <a href="downloads.html">here</a>.</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Other requirements:</td>
+						<td class="plugin_detail">Any media player that supports either <a href="http://xmms2.org/wiki/MPRIS">MPRIS1</a> or
+						 <a href="http://www.mpris.org/2.0/spec/">MPRIS2</a> DBus protocol. This currently includes :-
+						 <ul>
+						 	<li>Rhythmbox</li>
+						 	<li>VLC</li>
+						 	<li>XMMS2</li>
+						 	<li>Banshee</li>
+						 	<li>Exaile</li>
+						 	<li>.. and more</li>
+						 </ul>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="plugin_description">
+				 <p>The plugin can handle multiple players at once, with one screen given to each. Details displayed 
+				 include :-</p>
+				 <ul>
+				 	<li>Track name</li>
+				 	<li>Artist name</li>
+				 	<li>Album name</li>
+				 	<li>Genre</li>
+				 	<li>Bit rate</li>
+				 	<li>Track length</li>
+				 	<li>Elapsed time</li>
+				 	<li>Player volume</li>
+				 	<li>Pause state</li>
+				 </ul>
+			</div>
+		</div>
+		<hr/>
+		<h3><a name="volume">Volume</a></h3>
+		<div class="plugin_main">
+			<div class="plugin_images">
+				<img class="plugin_image_g15" src="volume.png"/>
+				<img class="plugin_image" src="g19-volume.png"/>
+			</div>
+			<div class="plugin_table">
+				<table>
+					<tr>
+						<td class="plugin_label">Models supported:</td>
+						<td class="plugin_detail">G15, G19</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Keys:</td>
+						<td class="plugin_detail">None supported</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Download:</td>
+						<td class="plugin_detail">Part of main distribution. See <a href="downloads.html">here</a>.</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Other requirements:</td>
+						<td class="plugin_detail">ALSA audio system.
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="plugin_description">
+				 <p>Will popup a screen showing the current volume when the volume is changed. At present,
+				 this only works with the master mixer on the default device.</p>
+				 <p>The screen will be displayed for 3 seconds after the last volume change event.</p>
+			</div>
+		</div>
+		<hr/>
+		<h3><a name="impulse15">Impulse15</a></h3>
+		<div class="plugin_main">
+			<div class="plugin_images">
+				<img class="plugin_image_g15" src="impulse15.png"/>
+				<img class="plugin_image" src="g19-impulse15.png"/>
+			</div>
+			<div class="plugin_table">
+				<table>
+					<tr>
+						<td class="plugin_label">Models supported:</td>
+						<td class="plugin_detail">G15, G19</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Keys:</td>
+						<td class="plugin_detail">None supported</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Download:</td>
+						<td class="plugin_detail">Separate official Gnome15 plugin. See <a href="downloads.html">here</a>.</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Other requirements:</td>
+						<td class="plugin_detail">Pulse Audio.
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="plugin_description">
+				 <p>Based on the <a href="http://impulse.ian-halpern.com/">Impulse</a> screenlet, this plugin will display
+				 a spectrum analyser to visualise any sound on the default device.</p>
+				 <p>The analyser may either be allocated
+				 its own screen, it or may be configured to display in either the foreground or the background of every
+				 other screen.</p>
+				 <p>The colours may be configured and two displays modes are available, one of which has animated
+				 falling peaks.</p>
+				 <p class="warning">
+				 	Note, this plugin is fairly CPU intensive. Improvements are slowly being made, but it probably as 
+				 	good as it is going to get until the underlying drivers and how Gnome15 communicates with them 
+				 	is changed. 
+				 </p>
+			</div>
+		</div>
+		<hr/>
+		<h2>Appearance and Behaviour</h2>
+		<p>Plugins that change the way Gnome15 looks or acts.</p>
+		<h3><a name="wallpaper">Wallpaper</a></h3>
+		<div class="plugin_main">
+			<div class="plugin_table">
+				<table>
+					<tr>
+						<td class="plugin_label">Models supported:</td>
+						<td class="plugin_detail">G19 (works on G15, but would require specially crafted 2 color images)</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Keys:</td>
+						<td class="plugin_detail">None supported</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Download:</td>
+						<td class="plugin_detail">Part of main distribution. See <a href="downloads.html">here</a>.</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Other requirements:</td>
+						<td class="plugin_detail">None</td>
+					</tr>
+				</table>
+			</div>
+			<div class="plugin_description">
+				 <p>Simple draws an images as the background of every screen. Supports all image formats
+				 supported by GTK.</p>
+			</div>
+		</div>
+		<hr/>
+		<h3><a name="panel">Panel</a></h3>
+		<div class="plugin_main">
+			<div class="plugin_images">
+				<img class="plugin_image" src="g19-panel.png"/>
+			</div>
+			<div class="plugin_table">
+				<table>
+					<tr>
+						<td class="plugin_label">Models supported:</td>
+						<td class="plugin_detail">G19 only</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Keys:</td>
+						<td class="plugin_detail">None supported</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Download:</td>
+						<td class="plugin_detail">Part of main distribution. See <a href="downloads.html">here</a>.</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Other requirements:</td>
+						<td class="plugin_detail">None</td>
+					</tr>
+				</table>
+			</div>
+			<div class="plugin_description">
+				 <p>Reserves an area of the screen (top, bottom, left or right) that may be used as 
+				 an area for other plugins to place permanently visible information. The panel size
+				 is configurable, as its background colour and opacity.</p>
+				 <p>Because the space available for content will decrease, the content will be resized
+				 maintaing aspect ratio. This means you will end up with an amount unusable space
+				 on every screen. <i>Stretch Content</i> may be set to make the content area take all
+				 available space.</p>
+			</div>
+		</div>
+		<hr/>
+		<h3><a name="fx">Special Effects</a></h3>
+		<div class="plugin_main">
+			<div class="plugin_table">
+				<table>
+					<tr>
+						<td class="plugin_label">Models supported:</td>
+						<td class="plugin_detail">G15, G19</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Keys:</td>
+						<td class="plugin_detail">None supported</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Download:</td>
+						<td class="plugin_detail">Part of main distribution. See <a href="downloads.html">here</a>.</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Other requirements:</td>
+						<td class="plugin_detail">None</td>
+					</tr>
+				</table>
+			</div>
+			<div class="plugin_description">
+				 <p>Adds transition effects when switching between screens.</p>
+				 <ul>
+				 	<li>Slide - Works horizontally or vertically. Sensitive to direction of screen being switched to.</li> 
+				 	<li>Zoom - Sensitive to direction of screen being switched to.</li> 
+				 	<li>Fade.</li>
+				 	<li>Random - Each transitions is randomly chosen from all of the above.</li>  
+				 </ul>
+			</div>
+		</div>
+		<hr/>
+		<h2>You</h2>
+		<p>Plugins that for all things personal to you and your communication with others.</p>
+		<h3><a name="wallpaper">Wallpaper</a></h3>
+		<div class="plugin_main">
+			<div class="plugin_table">
+				<table>
+					<tr>
+						<td class="plugin_label">Models supported:</td>
+						<td class="plugin_detail">G19 (works on G15, but would require specially crafted 2 color images)</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Keys:</td>
+						<td class="plugin_detail">None supported</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Download:</td>
+						<td class="plugin_detail">Part of main distribution. See <a href="downloads.html">here</a>.</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Other requirements:</td>
+						<td class="plugin_detail">None</td>
+					</tr>
+				</table>
+			</div>
+			<div class="plugin_description">
+				 <p>Simple draws an images as the background of every screen. Supports all image formats
+				 supported by GTK.</p>
+			</div>
+		</div>
+		<hr/>
+	</body>
+</html>

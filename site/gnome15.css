@@ -124,3 +124,33 @@ body {
 	padding-top: 2px;
 	font-size: small;
 }
+
+.plugin_label {
+	vertical-align: top;
+	font-size: small;
+}
+
+.plugin_details {
+	vertical-align: top;
+	font-size: small;
+	font-weight: bold;
+}
+
+.plugin_image, .plugin_image_g15 {
+	margin: 1em;
+	float: right;
+	clear: right;
+}
+
+.warning {
+	font-size: small;
+	font-style: italic;
+}
+
+hr {
+	clear: both;
+}
+
+.plugin_image_g15 {
+	border: 1px solid black;
+}
