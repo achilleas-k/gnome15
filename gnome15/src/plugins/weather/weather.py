@@ -180,7 +180,6 @@ class G15Weather():
             else:                                            
                 properties["message"] = ""
                 t_icon = self.translate_icon(current['icon'])
-                print t_icon
                 if t_icon != None:
                     attributes["icon"] = g15util.load_surface_from_file(t_icon)
                     properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])        
@@ -279,10 +278,10 @@ class G15Weather():
             theme_icon += "-night"
             
         if theme_icon != None:
-            icon_path = g15util.get_icon_path(self.gconf_client, theme_icon)
+            icon_path = g15util.get_icon_path(theme_icon)
             if icon_path == None and ( now.hour > 18 or now.hour < 4):
                 # Try the day icons
-                icon_path = g15util.get_icon_path(self.gconf_client, theme_icon[:len(theme_icon) - 6])
+                icon_path = g15util.get_icon_path(theme_icon[:len(theme_icon) - 6])
                 
             if icon_path != None:
                 return icon_path

@@ -1,4 +1,4 @@
-AC_INIT(gnome15, 0.2.0)
+AC_INIT(gnome15, 0.2.1)
 AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_applet.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 
@@ -188,20 +188,21 @@ src/main/resources/icons/elementary/status/16/Makefile
 src/main/resources/icons/elementary/status/22/Makefile
 src/main/resources/icons/elementary/status/24/Makefile
 src/main/resources/icons/hicolor/Makefile
+src/main/resources/icons/hicolor/16x16/Makefile
+src/main/resources/icons/hicolor/16x16/status/Makefile
 src/main/resources/icons/hicolor/22x22/Makefile
 src/main/resources/icons/hicolor/22x22/apps/Makefile
+src/main/resources/icons/hicolor/22x22/status/Makefile
 src/main/resources/icons/hicolor/24x24/Makefile
 src/main/resources/icons/hicolor/24x24/apps/Makefile
+src/main/resources/icons/hicolor/24x24/status/Makefile
 src/main/resources/icons/hicolor/48x48/Makefile
 src/main/resources/icons/hicolor/48x48/apps/Makefile
 src/main/resources/icons/hicolor/64x64/Makefile
 src/main/resources/icons/hicolor/64x64/apps/Makefile
 src/main/resources/icons/hicolor/scalable/Makefile
 src/main/resources/icons/hicolor/scalable/apps/Makefile
-src/main/resources/icons/hicolor/status/Makefile
-src/main/resources/icons/hicolor/status/16/Makefile
-src/main/resources/icons/hicolor/status/22/Makefile
-src/main/resources/icons/hicolor/status/24/Makefile
+src/main/resources/icons/hicolor/scalable/status/Makefile
 src/main/resources/icons/ubuntu-mono-dark/Makefile
 src/main/resources/icons/ubuntu-mono-dark/status/Makefile
 src/main/resources/icons/ubuntu-mono-dark/status/16/Makefile

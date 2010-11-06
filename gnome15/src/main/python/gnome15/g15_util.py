@@ -32,10 +32,25 @@ import urllib
 import base64
 import sys
 import traceback
+import gconf
 
 import xdg.IconTheme as icons
 from cStringIO import StringIO
 from jobqueue import JobQueue
+
+'''
+Look for icons locally as well if running from source
+'''
+if pglobals.dev:
+    path = os.path.realpath(os.path.expanduser(pglobals.icons_dir))
+    icons.icondirs.append(path)
+    
+'''
+Executing stuff
+'''
+
+def run_script(script):    
+    os.system("python \"" + os.path.realpath(os.path.join(pglobals.scripts_dir,script)) + "\" &")
 
 '''
 GConf stuff
@@ -132,8 +147,12 @@ def configure_combo_from_gconf(gconf_client, gconf_key, widget_id, default_value
     
 def combo_box_changed(widget, gconf_client, key, model):
     gconf_client.set_string(key, model[widget.get_active()][0])
+    
+def boolean_conf_value_change(client, connection_id, entry, args):
+    widget, key = args
+    widget.set_active( entry.get_value().get_bool())
         
-def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree):
+def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, watch_changes = False):
     widget = widget_tree.get_object(widget_id)
     entry = gconf_client.get(gconf_key)
     if entry != None:
@@ -141,6 +160,8 @@ def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_va
     else:
         widget.set_active(default_value)
     widget.connect("toggled", checkbox_changed, gconf_key, gconf_client)
+    if watch_changes:
+        return gconf_client.notify_add(gconf_key, boolean_conf_value_change,( widget, gconf_key ));
         
 def configure_adjustment_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree):
     adj = widget_tree.get_object(widget_id)
@@ -237,6 +258,9 @@ def flip_hv_centered_on(context, fx, fy, cx, cy):
     context.transform(mtrx)
 
 def load_surface_from_file(filename, size = None):
+    if filename == None:
+        print "WARNING: Empty filename requested"
+        return None
     if "://" in filename:
         file = urllib.urlopen(filename)
         data = file.read()
@@ -244,7 +268,6 @@ def load_surface_from_file(filename, size = None):
         if filename.endswith(".svg"):
             svg = rsvg.Handle()
             svg.write(data)
-            print data
             svg_size = svg.get_dimension_data()[2:4]
             if size == None:
                 size = svg_size
@@ -297,30 +320,7 @@ Icon utilities
 '''
 
 def local_icon_or_default(icon_name, size = 128):
-    path = icon_name    
-    if pglobals.dev:
-        for sz in [ 16, 22, 24, 32, 64, -1 ]:
-            name = "%sx%s" % ( sz, sz )
-            if sz == -1:
-                name = "scalable"
-            sz_dir = os.path.join(pglobals.icons_dir, name)
-            found = None
-            if os.path.exists(sz_dir):
-                for dir in os.listdir(sz_dir):
-                    for e in [ "svg", "png", "gif" ]:
-                        ipath = os.path.join(os.path.join(sz_dir, dir), icon_name + "." + e)
-                        if os.path.exists(ipath):
-                            found = ipath
-                            break
-                    if found != None:
-                        break
-                        
-                if found != None and ( sz == -1 or ( size != None and sz <= size ) ):
-                    path = found
-
-            
-    return path
-
+    return get_icon_path(icon_name, size)
 
 def get_embedded_image_url(path):
     
@@ -333,7 +333,6 @@ def get_embedded_image_url(path):
         file_str.write("image/png")
         path.write_to_png(img_data)
     else:
-        print path
         if not "://" in path:
             # File
             surface = load_surface_from_file(path)
@@ -353,7 +352,8 @@ def get_embedded_image_url(path):
     file_str.write(base64.b64encode(img_data.getvalue()))
     return file_str.getvalue()
 
-def get_icon_path(gconf_client, icon, size = None):
+def get_icon_path(icon = None, size = None):
+    gconf_client = gconf.client_get_default()
     icon_theme = gconf_client.get_string("/desktop/gnome/interface/icon_theme")
     if size == None:
         size = 128
@@ -363,13 +363,13 @@ def get_icon_path(gconf_client, icon, size = None):
     return icons.getIconPath(icon, theme=icon_theme, size = i_size)
     
 def get_app_icon(gconf_client, icon, size = 128):
-    icon_path = get_icon_path(gconf_client, icon, size)
+    icon_path = get_icon_path(icon, size)
     if icon_path == None:
         icon_path = gtk.gdk.pixbuf_new_from_file(os.path.join(pglobals.icons_dir, icon + '.svg'))
     return icon_path
 
 def get_icon(gconf_client, icon, size = None):
-    real_icon_file = get_icon_path(gconf_client, icon, size)
+    real_icon_file = get_icon_path(icon, size)
     if real_icon_file != None:
         if real_icon_file.endswith(".svg"):
             pixbuf = gtk.gdk.pixbuf_new_from_file(real_icon_file)            
@@ -584,7 +584,18 @@ def image_to_pixbuf(im):
     loader.close()  
     return pixbuf
 
-def surface_to_pixbuf(surface):
+def surface_to_pixbuf(surface):  
+    file1 = StringIO()
+    surface.write_to_png(file1) 
+    contents = file1.getvalue()  
+    file1.close()  
+    loader = gtk.gdk.PixbufLoader("png")  
+    loader.write(contents, len(contents))  
+    pixbuf = loader.get_pixbuf()  
+    loader.close()  
+    return pixbuf
+
+def Xsurface_to_pixbuf(surface):
     return gtk.gdk.pixbuf_new_from_data(surface.get_data(), gtk.gdk.COLORSPACE_RGB, True, 8, surface.get_width(), surface.get_height(), surface.get_width() * 4)
 
 """

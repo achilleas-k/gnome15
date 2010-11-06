@@ -23,10 +23,11 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-import g15_util as g15util
+import g15_globals as g15globals
 import g15_service as g15service
 import g15_screen as g15screen
 import gnomeapplet
+import gconf
 
 '''
 This is the Gnome panel applet version of Gnome15. 
@@ -34,19 +35,24 @@ This is the Gnome panel applet version of Gnome15.
 class G15Applet(gnomeapplet.Applet):
     
     def __init__(self, applet, iid, parent_window=None):
-        self.__gobject_init__()
+        gnomeapplet.Applet.__init__(self)
+        self.icon_theme = gtk.icon_theme_get_default()
+        if g15globals.dev:
+            self.icon_theme.prepend_search_path(g15globals.icons_dir)
+            
         self.parent_window = parent_window
         self.applet = applet
+        self.attention_required = False
         
         self.service = g15service.G15Service(self, parent_window)
-        
-        self.applet_icon = g15util.local_icon_or_default("logitech-g-keyboard-panel")
-        
+        self.conf_client = gconf.client_get_default()
+        self.conf_client.add_dir('/desktop/gnome/interface', gconf.CLIENT_PRELOAD_NONE)
+        self.conf_client.notify_add("/desktop/gnome/interface/icon_theme", self._theme_changed)
         self.orientation = self.applet.get_orient()
         
         # Widgets for showing icon
         self.container = gtk.EventBox()
-        self.container.set_visible_window(False)
+#        self.container.set_visible_window(False)
         self.container.connect("button-press-event",self.button_press)
         self.box = None
         if self.orientation == gnomeapplet.ORIENT_UP or self.orientation == gnomeapplet.ORIENT_DOWN:
@@ -56,16 +62,17 @@ class G15Applet(gnomeapplet.Applet):
         self.container.add(self.box)
         self.applet.add(self.container)      
         self.image = gtk.Image()
-        self.size_changed() 
-        self.box.add(self.image)
+        self._size_changed() 
+        self.box.pack_start(self.image, True, True)
         
         # Connect some events   
         self.applet.connect("button-press-event",self.button_clicked)
         self.applet.connect("destroy",self.cleanup)
         self.applet.connect("change-orient",self.change_orientation)
-        self.applet.connect("change-size",self.size_changed)
+        self.applet.connect("change-size",self._size_changed)
         self.applet.connect("change-background",self.background_changed)
         self.applet.connect("scroll-event",self.applet_scroll)
+        self.connect("configure-event", self._size_allocated)
         
         # Show the applet
         self.applet.show_all()
@@ -87,12 +94,12 @@ class G15Applet(gnomeapplet.Applet):
         pass
         
     def clear_attention(self):      
-        self.applet_icon = g15util.local_icon_or_default("logitech-g-keyboard-panel")
-        self.size_changed()
+        self.attention_required = False
+        self._size_changed()
         
-    def attention(self, message = None):       
-        self.applet_icon = g15util.local_icon_or_default("logitech-g-keyboard-error-panel")
-        self.size_changed()
+    def attention(self, message = None):
+        self.attention_required = True
+        self._size_changed()
 
     def quit(self):                
         gtk.main_quit()
@@ -120,7 +127,7 @@ class G15Applet(gnomeapplet.Applet):
         
     def background_changed(self, applet, bg_type, color, pixmap):
         rc_style = gtk.RcStyle()
-        self.recreate_icon() 
+        self._recreate_icon() 
         for c in [ self.applet, self.container, self.image, self.box ]:
             c.set_style(None)
             c.modify_style(rc_style)
@@ -130,16 +137,6 @@ class G15Applet(gnomeapplet.Applet):
                 c.set_style(style)
             if bg_type == gnomeapplet.COLOR_BACKGROUND:
                 c.modify_bg(gtk.STATE_NORMAL, color)
-            
-        
-    def size_changed(self, arg1=None, arg2=None):
-        self.recreate_icon()
-        
-    def recreate_icon(self):        
-        size = int(self.applet.get_size() * 0.68)
-        pixbuf = gtk.gdk.pixbuf_new_from_file(self.applet_icon)
-        pixbuf = pixbuf.scale_simple(size, size, gtk.gdk.INTERP_BILINEAR);
-        self.image.set_from_pixbuf(pixbuf)
         
     def change_orientation(self,arg1,data):
         self.orientation = self.applet.get_orient()
@@ -158,9 +155,44 @@ class G15Applet(gnomeapplet.Applet):
         
     def cleanup(self,event):
         self.shutting_down = True
-        self.driver.disconnect()
+        if self.service.driver != None:
+            self.service.driver.disconnect()  
+        
+    def show_page_from_menu(self, event,data=None):
+        self.service.screen.raise_page(self.service.screen.get_page(data))
+        
+    def button_clicked(self,widget,event):
+        if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
+            self.service.properties(None)
+        
+    def button_press(self,widget,event):
+        if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3 :
+            self._create_menu()
+    
+    '''
+    Private
+    '''
+    
+    def _theme_changed(self, client, connection_id, entry, args):
+        self._recreate_icon()
+        
+    def _size_allocated(self, arg1=None, arg2=None):
+        return True
+        
+    def _size_changed(self, arg1=None, arg2=None):
+        self._recreate_icon()
+        return True
+        
+    def _recreate_icon(self):   
+        if self.attention_required:       
+            pixbuf = self.icon_theme.load_icon("logitech-g-keyboard-error-applet", 128, 0)
+        else:       
+            pixbuf = self.icon_theme.load_icon("logitech-g-keyboard-applet", 128, 0)
+        size = int(self.applet.get_size() * 0.8)
+        pixbuf = pixbuf.scale_simple(size, size, gtk.gdk.INTERP_BILINEAR)
+        self.image.set_from_pixbuf(pixbuf)
 
-    def create_menu(self):
+    def _create_menu(self):
         
         verbs = [ ( "Props", self.service.properties ), ( "Macros", self.service.macros ), ( "About", self.service.about_info ) ]
         propxml="""
@@ -177,16 +209,4 @@ class G15Applet(gnomeapplet.Applet):
         propxml +="""
         </popup>
         """
-        self.applet.setup_menu(propxml,verbs,None)  
-        
-    def show_page_from_menu(self, event,data=None):
-        self.service.screen.raise_page(self.service.screen.get_page(data))
-        
-    def button_clicked(self,widget,event):
-        print event
-        if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
-            self.service.properties(None)
-        
-    def button_press(self,widget,event):
-        if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3:
-            self.create_menu()
+        self.applet.setup_menu(propxml,verbs,None)

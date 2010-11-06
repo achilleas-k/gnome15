@@ -47,7 +47,6 @@ def get_extra_plugin_dirs():
 
 imported_plugins = []
 for plugindir in get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + list_plugin_dirs(pglobals.plugin_dir): 
-    print "Searching",plugindir,"for plugins"
     plugin_name = os.path.basename(plugindir)
     pluginfiles = [fname[:-3] for fname in os.listdir(plugindir) if fname == plugin_name + ".py"]
     if not plugindir in sys.path:
@@ -159,6 +158,7 @@ class G15Plugins():
             self.activated = []
             idx = 0
             for plugin in self.started:
+                mod = self.plugin_map[plugin]
                 self._activate_instance(plugin, callback, idx)
                 idx += 1
         finally:

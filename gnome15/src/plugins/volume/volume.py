@@ -97,7 +97,7 @@ class G15Volume():
         else:
             properties [ "muted"] = True
         
-        icon_path = g15util.get_icon_path(self.gconf_client, icon, height)
+        icon_path = g15util.get_icon_path(icon, height)
         
         properties["state"] = icon
         properties["icon"] = icon_path

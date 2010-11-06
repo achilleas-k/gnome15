@@ -89,15 +89,16 @@ class G15ScreenSaver():
         self.in_screensaver = False
         self.page = None
         self.gconf_client = gconf_client
-        self.gconf_key = gconf_key        
-        self.controls = []
-        self.control_values = []
-        for control in screen.driver.get_controls():
-            if control.hint & g15driver.HINT_DIMMABLE != 0 or  control.hint & g15driver.HINT_SHADEABLE != 0:
-                self.controls.append(control)
+        self.gconf_key = gconf_key  
     
 
-    def activate(self):
+    def activate(self):      
+        self.controls = []
+        self.control_values = []
+        for control in self.screen.driver.get_controls():
+            if control.hint & g15driver.HINT_DIMMABLE != 0 or  control.hint & g15driver.HINT_SHADEABLE != 0:
+                self.controls.append(control)
+                
         if self.session_bus == None:
             try:
                 self.session_bus = dbus.SessionBus()
@@ -175,6 +176,6 @@ class G15ScreenSaver():
         
         properties = {}
         properties["message"] = self.gconf_client.get_string(self.gconf_key + "/message_text")
-        properties["icon"] = g15util.get_icon_path(self.gconf_client, "sleep", self.screen.height)
+        properties["icon"] = g15util.get_icon_path("sleep", self.screen.height)
         
         self.theme.draw(canvas, properties)

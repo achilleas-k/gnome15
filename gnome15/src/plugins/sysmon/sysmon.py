@@ -201,9 +201,9 @@ class G15SysMon():
         properties["net_send_mbps"] = "%.2f" % (self.send_bps / 1024 / 1024)
         
         
-        properties["net_icon"] = g15util.get_icon_path(self.gconf_client, "gnome-fs-network", self.screen.height)
-        properties["cpu_icon"] = g15util.get_icon_path(self.gconf_client, "utilities-system-monitor",  self.screen.height)
-        properties["mem_icon"] = g15util.get_icon_path(self.gconf_client, "media-memory",  self.screen.height)
+        properties["net_icon"] = g15util.get_icon_path("gnome-fs-network", self.screen.height)
+        properties["cpu_icon"] = g15util.get_icon_path("utilities-system-monitor",  self.screen.height)
+        properties["mem_icon"] = g15util.get_icon_path("media-memory",  self.screen.height)
         
         self.properties = properties
         

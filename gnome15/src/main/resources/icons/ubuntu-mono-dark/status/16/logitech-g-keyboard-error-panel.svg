@@ -208,15 +208,15 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="15.327746"
-     inkscape:cx="1.3471561"
-     inkscape:cy="8.7715174"
+     inkscape:cx="-9.4502566"
+     inkscape:cy="10.337305"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1143"
      inkscape:window-height="734"
-     inkscape:window-x="1981"
-     inkscape:window-y="16"
+     inkscape:window-x="550"
+     inkscape:window-y="130"
      inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
@@ -235,6 +235,15 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,-1036.3622)">
+    <rect
+       style="opacity:0.59999999999999998;fill:#3a3935;fill-opacity:1;stroke:none"
+       id="rect2992"
+       width="16"
+       height="14"
+       x="0"
+       y="1037.3622"
+       rx="2"
+       ry="2" />
     <g
        id="layer1-76"
        inkscape:label="Layer 1"

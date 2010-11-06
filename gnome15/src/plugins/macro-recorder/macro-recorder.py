@@ -149,7 +149,7 @@ class G15MacroRecorder():
         active_profile = g15profile.get_active_profile()
         
         properties = {}
-        properties["icon"] = g15util.get_icon_path(self.gconf_client, self.icon, self.screen.height)
+        properties["icon"] = g15util.get_icon_path(self.icon, self.screen.height)
         
         properties["memory"] = "M%d" % self.screen.get_mkey()
             
@@ -192,7 +192,6 @@ class G15MacroRecorder():
               
             active_profile = g15profile.get_active_profile()
             key_name = ", ".join(g15util.get_key_names(record_keys))
-            print list(self.script_model)
             if len(self.script_model) == 0:  
                 self.icon = "edit-delete"
                 self.message = key_name + " deleted"

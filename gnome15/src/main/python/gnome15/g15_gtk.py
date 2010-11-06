@@ -66,32 +66,26 @@ class G15Window(gtk.OffscreenWindow):
     def _do_handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_UP:
             if g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L3 in keys:
-                print "Moving to next widget"
                 self.content.get_toplevel().child_focus(gtk.DIR_TAB_FORWARD)
                 pass
             elif g15driver.G_KEY_UP in keys:
-                print "Moving to preview widget"
                 self.content.get_toplevel().child_focus(gtk.DIR_TAB_BACKWARD)
             if g15driver.G_KEY_LEFT in keys or g15driver.G_KEY_RIGHT in keys or g15driver.G_KEY_L3 in keys:
                 self._change_widget(keys)
                 pass
                 
     def _change_widget(self, keys):
-        print "Changing widget"
         focussed = self.get_focus()
-        print "  Focussed", focussed
         if focussed != None:
             if isinstance(focussed, gtk.HScale):
                 adj = focussed.get_adjustment()
                 ps = adj.get_page_size()
                 if ps == 0:
                     ps = 10
-                print "Adj",adj,"Page size",ps,"Val",adj.get_value()
                 if g15driver.G_KEY_LEFT in keys:
                     adj.set_value(adj.get_value() - ps)
                 else:
                     adj.set_value(adj.get_value() + ps)
-                print "After Adj",adj,"Page size",ps,"Val",adj.get_value()
         
     def show_all(self):
         gtk.OffscreenWindow.show_all(self)
@@ -115,15 +109,12 @@ class G15Window(gtk.OffscreenWindow):
             # print 'Your screen supports alpha channels!'
             supports_alpha = True
             
-        print "Supports alpha",supports_alpha
-    
         # Now we have a colormap appropriate for the screen, use it
         self.set_colormap(colormap)
     
         return False
         
     def _transparent_expose(self, widget, event):
-        print "**Transparent expose**"
         cr = widget.window.cairo_create()
         cr.set_operator(cairo.OPERATOR_OVER)
         cr.set_source_surface(self.surface)
@@ -136,7 +127,6 @@ class G15Window(gtk.OffscreenWindow):
 #        ctx.rectangle(self.area_x, self.area_y, self.area_width, self.area_height)
 #        ctx.clip()
         scale = 1.0 / self.screen.get_desktop_scale()
-        print "Desktop scale",scale
         tx = ( ( float(self.screen.width) - ( float(self.screen.width) * scale) ) ) / 2.0        
         ctx.translate(-self.area_x, -self.area_y)
         ctx.scale(scale, scale)
@@ -145,7 +135,6 @@ class G15Window(gtk.OffscreenWindow):
         ctx.paint()
         
     def _expose(self, widget, event):
-        print "**Expose**"
         
 #        cr = widget.window.cairo_create()
 #        cr.set_operator(cairo.OPERATOR_CLEAR)
@@ -167,7 +156,6 @@ class G15Window(gtk.OffscreenWindow):
         return self.pixbuf
         
     def _damage(self, widget, event):
-        print "**Damage**"
         self.redraw_surface()
         self._do_capture()
         return False
@@ -176,11 +164,8 @@ class G15Window(gtk.OffscreenWindow):
         self.lock = Lock()
         
     def _do_capture(self):
-        print "Getting pixbuf"
         pixbuf = gtk.gdk.Pixbuf( gtk.gdk.COLORSPACE_RGB, False, 8, self.area_width, self.area_height)
-        print "Getting from drawable",pixbuf.get_width(),"x",pixbuf.get_height()
         pixbuf.get_from_drawable(self.content.window, self.content.get_colormap(), 0, 0, 0, 0, self.area_width, self.area_height)
-        print "Creating surface"
         self.pixbuf = pixbuf 
         if self.lock != None:
             self.lock.release()

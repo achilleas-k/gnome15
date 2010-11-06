@@ -186,7 +186,7 @@ class G15Macros:
                         if view.Name() == self.selected_profile.window_name:
                             icon = view.Icon()
                             if icon != None:
-                                icon_path = g15util.get_icon_path(self.conf_client, icon)
+                                icon_path = g15util.get_icon_path(icon)
                                 if icon_path != None:
                                     # We need to copy the icon as it may be temporary
                                     copy_path = os.path.join(icons_dir, os.path.basename(icon_path))

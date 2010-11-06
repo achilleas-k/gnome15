@@ -76,9 +76,9 @@ class G15Menu():
         self.hidden = False
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
-        self._reload_theme()
     
     def activate(self):
+        self._reload_theme()
         self.timer = None
         self.page = None
         self.selected = None
@@ -138,7 +138,7 @@ class G15Menu():
         self.theme.draw(canvas, 
                         properties = {
                                       "title" : g15globals.name,
-                                      "icon" : g15util.get_icon_path(self.gconf_client, "gnome-main-menu")
+                                      "icon" : g15util.get_icon_path("gnome-main-menu")
                                       }, 
                         attributes = {
                                       "items" : self.items,

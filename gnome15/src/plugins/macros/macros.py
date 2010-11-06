@@ -96,7 +96,8 @@ class G15MacroPage():
         return False
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        return g15util.paint_thumbnail_image(allocated_size, self.icon, canvas)
+        if self.icon != None:
+            g15util.paint_thumbnail_image(allocated_size, self.icon, canvas)
     
     def paint(self, canvas):
         
@@ -160,7 +161,7 @@ class G15Macro():
         icon = self.active_profile.icon
         if icon == None or icon == "":
             icon = "preferences-desktop-keyboard-shortcuts"
-        return g15util.get_icon_path(self.gconf_client, icon, self.screen.height)
+        return g15util.get_icon_path(icon, self.screen.height)
         
     def reload_theme(self):        
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
@@ -170,9 +171,7 @@ class G15Macro():
     
     def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_UP:
-            print "Clearing pressed key"
             if self.screen.get_mkey() != self.mkey:
-                print "Changing bank"
                 self.mkey = self.screen.get_mkey()
                 self.check_pages()
                 if len(self.macro_pages) > 0:

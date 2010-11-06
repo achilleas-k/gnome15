@@ -6,7 +6,7 @@
                         <item value="IDL:Bonobo/GenericFactory:1.0"/>
                         <item value="IDL:Bonobo/Unknown:1.0"/>
                 </oaf_attribute>
-                <oaf_attribute name="name" type="string" value="G15 Applet Factory"/>
+                <oaf_attribute name="name" type="string" value="Logitech G Keyboard Applet Factory"/>
                 <oaf_attribute name="description" type="string" value="Applet providing Gnome integration for Logitech G15 and G19 keyboards"/>
         </oaf_server>
 
@@ -18,7 +18,7 @@
                         <item value="IDL:Bonobo/Control:1.0"/>
                         <item value="IDL:Bonobo/Unknown:1.0"/>
                 </oaf_attribute>
-                <oaf_attribute name="name" type="string" value="G15 Applet"/>
+                <oaf_attribute name="name" type="string" value="Logitech G Keyboard Applet"/>
                 <oaf_attribute name="description" type="string" value="Applet providing Gnome integration for Logitech G15 and G19 keyboards"/>
                 <oaf_attribute name="panel:category" type="string" value="System &amp; Hardware"/>
                 <oaf_attribute name="panel:icon" type="string" value="gnome15.png"/>

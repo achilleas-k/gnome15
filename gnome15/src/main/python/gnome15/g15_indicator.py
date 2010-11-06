@@ -23,24 +23,34 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
+import g15_globals as g15globals
 import g15_service as g15service
 import g15_util as g15util
 import g15_screen as g15screen
 import appindicator
+import gconf
 
 class G15Indicator(appindicator.Indicator):
     
     def __init__(self,  parent_window=None):
         
+        self.icon_theme = gtk.icon_theme_get_default()
+        if g15globals.dev:
+            self.icon_theme.prepend_search_path(g15globals.icons_dir)
+            
         appindicator.Indicator.__init__(self, "gnome15",
-                               g15util.local_icon_or_default("logitech-g-keyboard-panel"),
+                               g15util.get_icon_path("logitech-g-keyboard-panel", 128), 
                                appindicator.CATEGORY_HARDWARE)
         self.set_status (appindicator.STATUS_ACTIVE)
-        
         self.page_items = {}        
-        self.set_attention_icon(g15util.local_icon_or_default("logitech-g-keyboard-error-panel"))
+        self._set_icons()
         self.service = g15service.G15Service(self, parent_window)
+        self.conf_client = gconf.client_get_default()
+        self.conf_client.add_dir('/desktop/gnome/interface', gconf.CLIENT_PRELOAD_NONE)
+        self.conf_client.notify_add("/desktop/gnome/interface/icon_theme", self._theme_changed)      
+        self.conf_client.notify_add("/apps/gnome15/indicate_only_on_error", self._indicator_options_changed)
         self.default_message = "Logitech G Keyboard"
+        self.clear_attention()
                 
         # Indicator menu
         self.menu = gtk.Menu()
@@ -92,14 +102,28 @@ class G15Indicator(appindicator.Indicator):
             del self.page_items[page.id]
             self.menu.show_all()
         
-    def scroll (self, indicator_object, delta, direction):
-        print delta,direction
-        
     def clear_attention(self):
-        self.set_status (appindicator.STATUS_ACTIVE)
+        if self.conf_client.get_bool("/apps/gnome15/indicate_only_on_error"):
+            self.set_status (appindicator.STATUS_PASSIVE)
+        else:
+            self.set_status (appindicator.STATUS_ACTIVE)
         
     def attention(self, message = None):
         self.set_status (appindicator.STATUS_ATTENTION)
 
     def quit(self):                
         gtk.main_quit()
+        
+    '''
+    Private
+    '''
+    def _indicator_options_changed(self, client, connection_id, entry, args):
+        if self.get_status() == appindicator.STATUS_PASSIVE or self.get_status() == appindicator.STATUS_ACTIVE:
+            self.clear_attention()
+    
+    def _theme_changed(self, client, connection_id, entry, args):
+        self._set_icons()
+        
+    def _set_icons(self):
+        self.set_icon(g15util.get_icon_path("logitech-g-keyboard-panel", 128))        
+        self.set_attention_icon(g15util.get_icon_path("logitech-g-keyboard-error-panel", 128))

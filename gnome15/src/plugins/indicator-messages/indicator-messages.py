@@ -77,7 +77,7 @@ class G15DBusMenu(g15theme.Menu):
         item_properties["item_type"] = item.get_type()
         icon_name = item.get_icon_name()
         if icon_name != None:
-            item_properties["item_icon"] = g15util.load_surface_from_file(g15util.get_icon_path(self.theme.screen.applet.conf_client, icon_name))
+            item_properties["item_icon"] = g15util.load_surface_from_file(g15util.get_icon_path(icon_name))
         else:
             item_properties["item_icon"] = item.get_icon()
             
@@ -167,10 +167,10 @@ class G15IndicatorMessages():
     def _attention_changed(self, attention):
         self.attention = attention
         if self.attention == 1:
-            self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(self.gconf_client, "indicator-messages-new"))
+            self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages-new"))
             self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 5.0)
         else:
-            self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(self.gconf_client, "indicator-messages"))
+            self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages"))
             self.screen.redraw()
         
     '''
@@ -244,7 +244,7 @@ class G15IndicatorMessages():
         self.theme.draw(canvas, 
                         properties = {
                                       "title" : "Messages",
-                                      "icon" : g15util.get_icon_path(self.gconf_client, "indicator-messages-new" if self.attention else "indicator-messages"),
+                                      "icon" : g15util.get_icon_path("indicator-messages-new" if self.attention else "indicator-messages"),
                                       "attention": self.attention
                                       }, 
                         attributes = {

@@ -52,26 +52,6 @@ REFRESH_INTERVAL = 15 * 60.0
 def create(gconf_key, gconf_client, screen):
     return G15Cal(gconf_key, gconf_client, screen)  
     
-class StartUp(Thread):
-    def __init__(self, plugin):
-        Thread.__init__(self)
-        self.plugin = plugin
-        self.setDaemon(True)
-        self.start()
-        self.cancelled = False
-        
-    def cancel(self):
-        self.cancelled = True
-        
-    def run(self):            
-        self.plugin.loaded = time.time()
-        self.plugin.load_month_events(datetime.datetime.now())
-        if not self.cancelled:
-            self.plugin.page = self.plugin.screen.new_page(self.plugin.paint, priority=g15screen.PRI_NORMAL, on_shown=self.plugin.on_shown, on_hidden=self.plugin.on_hidden, id="Cal")
-            self.plugin.page.set_title("Evolution Calendar")
-            self.plugin.screen.redraw(self.plugin.page)
-            self.plugin.schedule_redraw()
-
 class G15Cal():  
     
     def __init__(self, gconf_key, gconf_client, screen):
@@ -87,9 +67,13 @@ class G15Cal():
         self.loaded = 0
         self.page = None
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-        
-        # Complete startup in a thread as the calendar may take a while to become available
-        self.startup = StartUp(self)
+            
+        self.loaded = time.time()
+        self.load_month_events(datetime.datetime.now())
+        self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_NORMAL, on_shown=self.on_shown, on_hidden=self.on_hidden, id="Calendar")
+        self.page.set_title("Evolution Calendar")
+        self.screen.redraw(self.page)
+        self.schedule_redraw()
         
     def redraw(self):
         t = time.time()
@@ -115,8 +99,6 @@ class G15Cal():
         self.loaded_minute = -1
         
     def deactivate(self):
-        if self.startup != None:
-            self.startup.cancel()
         if self.timer != None:
             self.timer.cancel()
         if self.page != None:

@@ -48,6 +48,7 @@ class G15Config:
     def __init__(self, parent_window=None, service=None):
         self.parent_window = parent_window
         
+        self.notify_handles = []
         self.plugin_key = "/apps/gnome15/plugins"
         self.selected_id = None
         self.service = service
@@ -76,13 +77,18 @@ class G15Config:
         
         # Monitor gconf
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
-        self.conf_client.notify_add("/apps/gnome15/cycle_seconds", self.cycle_seconds_configuration_changed);
-        self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.cycle_screens_configuration_changed);
-        self.conf_client.notify_add("/apps/gnome15/plugins", self.plugins_changed);
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/cycle_seconds", self.cycle_seconds_configuration_changed));
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.cycle_screens_configuration_changed));
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/plugins", self.plugins_changed));
         
         # Configure widgets
-        self.set_cycle_seconds_value_from_configuration()
-        self.set_cycle_screens_value_from_configuration()
+        self.set_cycle_seconds_value_from_configuration()        
+
+        # Indicator options        
+        if HAS_APPINDICATOR:  
+            self.notify_handles.append(g15util.configure_checkbox_from_gconf(self.conf_client, "/apps/gnome15/indicate_only_on_error", "OnlyShowIndicatorOnError", False, self.widget_tree, True))
+        else:
+            self.widget_tree.get_object("OnlyShowIndicatorOnError").set_visible(False)
         
         # Bind to events
         self.cycle_seconds.connect("value-changed", self.cycle_seconds_changed)
@@ -111,7 +117,7 @@ class G15Config:
                     check_button.show()
                     table.attach(check_button, 0, 2, row, row + 1);                
                     check_button.connect("toggled", self.control_changed, control)
-                    self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed, [ control, check_button ]);
+                    self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed, [ control, check_button ]));
                 else:                
                     label = gtk.Label(control.name)
                     label.show()
@@ -179,6 +185,10 @@ class G15Config:
         self.session_bus = dbus.SessionBus()
         self.check_service_status()
         
+    def __del__(self):
+        for h in self.notify_handles:
+            self.conf_client.notify_remove(h)
+        
     def check_service_status(self):
         if self.service == None:
             try :
@@ -215,8 +225,7 @@ class G15Config:
     def start_service(self, widget):
         self.check_timer.cancel()
         widget.set_sensitive(False)
-        script = os.path.realpath(os.path.join(pglobals.scripts_dir,'g15-indicator'))
-        os.system(script + " &")
+        g15util.run_script("g15-indicator")
         self.check_timer = g15util.schedule("ServiceStatusCheck", 5.0, self.check_service_status)
     
     def show_message(self, type, text, start_service_button = True):
@@ -378,4 +387,3 @@ class G15Config:
         self.id = None                
         self.main_window.run()
         self.main_window.hide()
-        

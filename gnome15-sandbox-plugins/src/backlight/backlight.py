@@ -78,7 +78,7 @@ class G15Backlight():
         color = backlight_control.value
         properties = {
                       "title" : "Set Backlight",
-                      "icon" : g15util.get_icon_path(self.gconf_client, "system-config-display"),
+                      "icon" : g15util.get_icon_path("system-config-display"),
                       "r" : color[0],
                       "g" : color[1],
                       "b" : color[2]

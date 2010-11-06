@@ -75,16 +75,11 @@ class G15Screen():
         self.local_data = threading.local()
         self.local_data.surface = None
         
-        # The screen may take a little space for its own purposes
-        self.init()
-        
         # Draw the splash for when no other pages are visible
         self.jobqueue = jobqueue.JobQueue(name="RedrawQueue")
         self.cyclequeue = jobqueue.JobQueue(name="CycleQueue")
-           
-        self.redraw()   
         
-    def init(self):
+    def start(self):
         self.driver = self.applet.driver
         self.content_surface = None
         self.width = self.applet.driver.get_size()[0]
@@ -104,6 +99,8 @@ class G15Screen():
         self.mkey = 1
         self.reverting = { }
         self.hiding = { }
+           
+        self.redraw()   
 
         
     def add_screen_change_listener(self, screen_change_listener):

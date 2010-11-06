@@ -32,7 +32,6 @@ driverfiles = [fname[:-3] for fname in os.listdir(drivers_dir) if fname.endswith
 driver_mods = __import__("gnome15.drivers", fromlist=driverfiles)
 for d in driverfiles:
     mod = getattr(driver_mods, d)
-    print "Detected driver",mod
     imported_drivers[d] = mod
     
 '''

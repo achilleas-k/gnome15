@@ -89,7 +89,7 @@ class G15IndicatorMe():
         
     def _get_details(self):
         self.icon = self.me_service.StatusIcons()
-        self.icon_image = g15util.load_surface_from_file(g15util.get_icon_path(self.gconf_client, self.icon))
+        self.icon_image = g15util.load_surface_from_file(g15util.get_icon_path(self.icon))
         self.username = self.me_service.PrettyUserName()
         
     def _reload_theme(self):        
@@ -101,7 +101,7 @@ class G15IndicatorMe():
                 return g15util.paint_thumbnail_image(allocated_size, self.icon_image, canvas)
 
     def _paint(self, canvas):     
-        properties = { "icon" : g15util.get_icon_path(self.gconf_client, self.icon, self.screen.width) }
+        properties = { "icon" : g15util.get_icon_path(self.icon, self.screen.width) }
         properties["text"] = "Unknown"
         if self.icon == "user-available-panel":
             properties["text"] = "Available"

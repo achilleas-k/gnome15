@@ -44,6 +44,8 @@ import g19d.g19_globals as g19globals
 import g19d.g19_receivers as g19receivers
 
 import logging
+logging.basicConfig()
+logger = logging.getLogger()
 
 LEVELS = {'debug': logging.DEBUG,
           'info': logging.INFO,
@@ -52,11 +54,12 @@ LEVELS = {'debug': logging.DEBUG,
           'critical': logging.CRITICAL}
 
 class Lobby(g19receivers.InputProcessor):
-    def __init__(self, background_image):
+    def __init__(self, background_image, reset):
         self.clients = set()
+        self.reset = reset
         self.background_image = background_image
         
-        self.lg19 = G19(True)
+        self.lg19 = G19(reset)
         
         # Show the splash
         self.show_splash()
@@ -64,16 +67,19 @@ class Lobby(g19receivers.InputProcessor):
         # Start listening for keys
         self.lg19.add_input_processor(self)
         self.lg19.start_event_handling()
-        self.device = uinput.Device()
-        self.device.capabilities = {
-                                    uinput.EV_KEY: (uinput.KEY_PLAYPAUSE, uinput.KEY_STOP, uinput.KEY_PREVIOUSSONG,
-                                                    uinput.KEY_NEXTSONG, uinput.KEY_MUTE, uinput.KEY_VOLUMEUP, uinput.KEY_VOLUMEDOWN),
-                                    }
+        #self.device = uinput.Device()
+        #self.device.capabilities = {
+                                    #uinput.EV_KEY: (uinput.KEY_PLAYPAUSE, uinput.KEY_STOP, uinput.KEY_PREVIOUSSONG,
+                                     #               uinput.KEY_NEXTSONG, uinput.KEY_MUTE, uinput.KEY_VOLUMEUP, uinput.KEY_VOLUMEDOWN),
+                                    #}
 
         
     def process_input(self, input_event):
+            
         keys_down = input_event.keysDown
         keys_up = input_event.keysUp
+        
+        logger.info("Processing input, keys_down = %d, keys_up = %d" % ( len(keys_down), len(keys_up)))
         
         keys_down = self.check_mm_key(keys_down, 1)
         keys_up = self.check_mm_key(keys_up, 0)
@@ -87,35 +93,38 @@ class Lobby(g19receivers.InputProcessor):
             for key in keys_up:
                 buf += struct.pack("<L",key)
                 
-            logging.debug("Sending keys ->")
+            logger.info("Sending keys ->")
             for c in buf:
-                logging.debug("   %d" % ord(c))
+                logger.info("   %d" % ord(c))
             
             self.send_key(buf)
+        else:
+            logger.info("Not sending any keys to clients")
+        
         
     def check_mm_key(self, key_list, state):
         keys = list(key_list)
         for k in key_list:
             if k == g19keys.Key.PLAY:
-                self.device.emit(uinput.EV_KEY, uinput.KEY_PLAYPAUSE, state)
+                #self.device.emit(uinput.EV_KEY, uinput.KEY_PLAYPAUSE, state)
                 keys.remove(k)
             if k == g19keys.Key.STOP:
-                self.device.emit(uinput.EV_KEY, uinput.KEY_STOP, state)
+                #self.device.emit(uinput.EV_KEY, uinput.KEY_STOP, state)
                 keys.remove(k)
             if k == g19keys.Key.PREV:
-                self.device.emit(uinput.EV_KEY, uinput.KEY_PREVIOUSSONG, state)
+                #self.device.emit(uinput.EV_KEY, uinput.KEY_PREVIOUSSONG, state)
                 keys.remove(k)
             if k == g19keys.Key.NEXT:
-                self.device.emit(uinput.EV_KEY, uinput.KEY_NEXTSONG, state)
+                #self.device.emit(uinput.EV_KEY, uinput.KEY_NEXTSONG, state)
                 keys.remove(k)
             if k == g19keys.Key.MUTE:
-                self.device.emit(uinput.EV_KEY, uinput.KEY_MUTE, state)
+                #self.device.emit(uinput.EV_KEY, uinput.KEY_MUTE, state)
                 keys.remove(k)
             if k == g19keys.Key.SCROLL_DOWN:
-                self.device.emit(uinput.EV_KEY, uinput.KEY_VOLUMEDOWN, state)
+                #self.device.emit(uinput.EV_KEY, uinput.KEY_VOLUMEDOWN, state)
                 keys.remove(k)
             if k == g19keys.Key.SCROLL_UP:
-                self.device.emit(uinput.EV_KEY, uinput.KEY_VOLUMEUP, state)
+                #self.device.emit(uinput.EV_KEY, uinput.KEY_VOLUMEUP, state)
                 keys.remove(k)
         return keys
         
@@ -130,18 +139,18 @@ class Lobby(g19receivers.InputProcessor):
         self.lg19.send_frame(self.lg19.convert_image_to_frame(self.background_image))
  
     def leave(self, client):
-        logging.debug('Client left')
+        logger.info('Client left')
         if client in self.clients:
             self.clients.remove(client)
         if len(self.clients) == 0:       
-            logging.debug('No clients left, showing splash')
+            logger.info('No clients left, showing splash')
             self.show_splash()
             
     def send_key(self, buf):
-        logging.debug("Sending data to clients")
+        logger.info("Sending data to clients")
         for client in self.clients:
             if client.receive_key_events:
-                logging.debug("Sending to %s" % str(client))
+                logger.info("Sending to %s" % str(client))
                 client.out_buffer += buf
  
     def join(self, client):
@@ -168,26 +177,26 @@ class Client(asyncore.dispatcher):
             if len(self.img_buffer) == 153600:       
                 now = time.time()
                 self.lobby.lg19.send_frame(self.img_buffer)       
-                logging.debug('Painted frame, took %s ms' % str(time.time() - now))
+                logger.debug('Painted frame, took %s ms' % str(time.time() - now))
                 self.img_buffer = None
             elif len(self.img_buffer) > 153600:
-                logging.warn('Received bad frame (%d bytes), should be 153600' % len(self.img_buffer))
+                logger.warn('Received bad frame (%d bytes), should be 153600' % len(self.img_buffer))
         else:
             cmd = self.recv(1)
             if cmd == "B":
                 col = self.recv(3)       
-                logging.debug('Setting keyboard backlight to r=%d  g=%d  b=%d' % ( ord(col[0]),ord(col[1]),ord(col[2]) ))
+                logger.info('Setting keyboard backlight to r=%d  g=%d  b=%d' % ( ord(col[0]),ord(col[1]),ord(col[2]) ))
                 self.lobby.lg19.set_bg_color(ord(col[0]),ord(col[1]),ord(col[2]))
             elif cmd == "L":
                 br = self.recv(1)       
-                logging.debug('Setting LCD brightness to %d' % ord(br))
+                logger.info('Setting LCD brightness to %d' % ord(br))
                 self.lobby.lg19.set_display_brightness(ord(br))
             elif cmd == "G":
-                logging.debug('Request to receive key events')
+                logger.info('Request to receive key events')
                 self.receive_key_events = True
             elif cmd == "M":
                 br = self.recv(1)
-                logging.debug('Setting M-key lights to %d' % ord(br))
+                logger.info('Setting M-key lights to %d' % ord(br))
                 self.lobby.lg19.set_enabled_m_keys(ord(br))
             elif cmd == "I":
                 self.img_buffer = "" 
@@ -198,19 +207,19 @@ class Client(asyncore.dispatcher):
         return len(self.out_buffer) > 0
 
     def handle_write(self):
-        logging.debug("Writing %d bytes" % len(self.out_buffer))
+        logger.debug("Writing %d bytes" % len(self.out_buffer))
         sent = self.send(self.out_buffer)
         self.out_buffer = self.out_buffer[sent:]
-        logging.debug("Actually wrote %d bytes, %d left" % ( sent, len(self.out_buffer) )   )
+        logger.debug("Actually wrote %d bytes, %d left" % ( sent, len(self.out_buffer) )   )
         
 class G19D(asyncore.dispatcher):
     def __init__(self, port):
         asyncore.dispatcher.__init__(self)        
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
-        logging.debug('Binding to port %d' % port)
+        logger.info('Binding to port %d' % port)
         self.bind(("127.0.0.1", port))
-        logging.debug('Bound to port %d' % port)
+        logger.info('Bound to port %d' % port)
         self.listen(5)
         self.lobby = None
         signal.signal(signal.SIGTERM, self.handle_sig_term)
@@ -220,7 +229,7 @@ class G19D(asyncore.dispatcher):
  
     def handle_accept(self):
         sock, addr = self.accept()
-        logging.debug('Got client')
+        logger.info('Got client')
         client = Client(sock, self.lobby)
         
     def handle_sig_term(self, arg0, arg1):
@@ -238,6 +247,8 @@ if __name__ == '__main__':
         default="warning" , help="Background image file (320x240)")
     parser.add_option("-f", "--foreground", action="store_true", dest="foreground",
         default=False, help="Run daemon in foreground.")
+    parser.add_option("-r", "--reset", action="store_true", dest="reset",
+        default=False, help="Reset device before intialisation.")
     parser.add_option("-t", "--test", action="store_true", dest="test",
         default=False, help="Test whether the hardware exists and exit with 0 if it does, otherwise exit with 1.")
     (options, args) = parser.parse_args()
@@ -249,12 +260,13 @@ if __name__ == '__main__':
        	else:
         	sys.exit(0)    
     
-    if options.log_level != None:        
+    level = logging.NOTSET
+    if options.log_level != None:      
         level = LEVELS.get(options.log_level, logging.NOTSET)
-        logging.basicConfig(level=level)
+        logger.setLevel(level = level)
     
     if options.foreground or ( not options.foreground and os.fork() == 0 ):
-        lobby = Lobby(options.background_image)
+        lobby = Lobby(options.background_image, options.reset)
         g19d = G19D(options.port)
         g19d.set_lobby(lobby)
         try:

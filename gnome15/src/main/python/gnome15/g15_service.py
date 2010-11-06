@@ -47,6 +47,7 @@ import time
 import g15_plugins as g15plugins
 import dbus
 from threading import RLock
+from threading import Thread
 from dbus.mainloop.glib import DBusGMainLoop
 from g15_exceptions import NotConnectedException
 
@@ -122,7 +123,7 @@ class G15Splash():
         self.theme = g15theme.G15Theme(pglobals.image_dir, self.screen, "background")
         self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_EXCLUSIVE, id="Splash", thumbnail_painter = self.paint_thumbnail)
         self.screen.redraw(self.page)
-        icon_path = g15util.get_icon_path(gconf_client, "gnome15")
+        icon_path = g15util.get_icon_path("gnome15")
         if icon_path == None:
             icon_path = os.path.join(pglobals.icons_dir, 'gnome15.svg')
         self.logo = g15util.load_surface_from_file(icon_path)
@@ -150,36 +151,37 @@ class G15Splash():
         self.progress = ( float(value) / float(max) ) * 100.0
         self.screen.redraw(self.page)
 
-class G15Service():
+class G15Service(Thread):
     
     def __init__(self, service_host, parent_window=None):
+        Thread.__init__(self)
+        
         self.parent_window = parent_window
         self.service_host = service_host
         self.reschedule_lock = RLock()
         self.connection_lock = RLock()
         self.last_error = None
         self.loading_complete = False
-        
-    def start(self):
+        self.control_handles = []
         self.active_window = None
         self.color_no = 1
         self.cycle_timer = None
         self.shutting_down = False
         self.conf_client = gconf.client_get_default()
-        
-        # Key macro recording
         self.defeat_profile_change = False
+        self.screen = g15screen.G15Screen(self)
+        
+    def run(self):
+        
+        # Get the driver. If it is not configured, configuration will be required at this point
+        self.driver = g15drivermanager.get_driver(self.conf_client, on_close = self.on_driver_close)
         
         # Load main Glade file
         g15Config = os.path.join(pglobals.glade_dir, 'g15-config.glade')        
         self.widget_tree = gtk.Builder()
         self.widget_tree.add_from_file(g15Config)
         
-        
-        self.driver = g15drivermanager.get_driver(self.conf_client, on_close = self.on_driver_close)
-        
         # Create the screen and pluging manager
-        self.screen = g15screen.G15Screen(self)
         self.screen.add_screen_change_listener(self)
         self.plugins = g15plugins.G15Plugins(self.screen)
         self.plugins.start()
@@ -193,10 +195,6 @@ class G15Service():
         self.conf_client.notify_add("/apps/gnome15/active_profile", self.active_profile_changed);
         self.conf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed);
         self.conf_client.notify_add("/apps/gnome15/driver", self.driver_changed);
-        
-        # Listen for gconf events for the drivers controls
-        for control in self.driver.get_controls():
-            self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed);
             
         # Monitor active application    
         self.session_bus = dbus.SessionBus()
@@ -233,7 +231,11 @@ class G15Service():
                             
             try :
                 self.driver.connect() 
-                self.screen.init()  
+                
+                for control in self.driver.get_controls():
+                    self.control_handles.append(self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed));
+                
+                self.screen.start()  
                 self.splash = G15Splash(self.screen, self.conf_client)
                 self.screen.set_mkey(1)
                 self.activate_profile()            
@@ -258,8 +260,9 @@ class G15Service():
             self.service_host.clear_attention()
             self.splash.complete()
             self.loading_complete = True
-            self.splash.remove()
-            self.splash = None
+            if self.splash != None:
+                self.splash.remove()
+                self.splash = None
         except Exception as e:
             if self._process_exception(e):
                 raise
@@ -272,6 +275,11 @@ class G15Service():
             if self.splash != None:
                 self.splash.remove()
                 self.splash = None
+        
+            for handle in self.control_handles:
+                self.conf_client.notify_remove(handle);
+            self.control_handles = []
+        
             self.plugins.deactivate()
             if retry:
                 self._process_exception(NotConnectedException("Keyboard driver disconnected."))
@@ -548,12 +556,10 @@ class G15Service():
             self.driver.disconnect()  
         
     def properties(self,event,data=None):
-        a = g15config.G15Config(self.parent_window, self)
-        a.run() 
+        g15util.run_script("g15-config")
         
     def macros(self,event,data=None):
-        a = g15macros.G15Macros(self.parent_window)
-        a.run()
+        g15util.run_script("g15-macros")
         
     def about_info(self,event,data=None):  
         about = gnome.ui.About("Gnome15",pglobals.version, "GPL",\
@@ -567,7 +573,7 @@ class G15Service():
     def _check_cycle(self, client=None, connection_id=None, entry=None, args=None):  
         self.reschedule_lock.acquire()
         try:      
-            active = self.driver.is_connected() and self.conf_client.get_bool("/apps/gnome15/cycle_screens")
+            active = self.driver != None and self.driver.is_connected() and self.conf_client.get_bool("/apps/gnome15/cycle_screens")
             if active and self.cycle_timer == None:
                 val = self.conf_client.get("/apps/gnome15/cycle_seconds")
                 time = 10
@@ -593,6 +599,7 @@ class G15Service():
         self.resched_cycle()   
         self.driver = None          
         if self.should_reconnect(exception):
+            traceback.print_exc(file=sys.stderr)
             self.reconnect_timer = g15util.schedule("ReconnectTimer", 5.0, self.attempt_connection)
         else:
             traceback.print_exc(file=sys.stderr)

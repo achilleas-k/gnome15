@@ -29,7 +29,6 @@ import pango
 import pangocairo
 import g15_driver as g15driver
 import g15_util as g15util
-import g15_gtk as g15gtk
 import xml.sax.saxutils as saxutils
 import base64
 from string import Template
@@ -292,6 +291,7 @@ class G15Theme:
         element = self.document.getroot().xpath('//svg:*[@id=\'%s\']' % id,namespaces=self.nsmap)[0]
         offscreen_bounds = g15util.get_actual_bounds(element)
         element.getparent().remove(element)
+        import g15_gtk as g15gtk
         window = g15gtk.G15Window(self.screen, page, offscreen_bounds[0], offscreen_bounds[1], offscreen_bounds[2], offscreen_bounds[3])
         self.offscreen_windows.append((window, offscreen_bounds))
         return window

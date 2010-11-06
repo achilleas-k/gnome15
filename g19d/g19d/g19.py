@@ -5,6 +5,9 @@ import threading
 import time
 import usb
 import Image as Img
+import logging
+
+logger = logging.getLogger()
 
 class G19(object):
     '''Simple access to Logitech G19 features.
@@ -103,8 +106,10 @@ class G19(object):
         self.__usbDeviceMutex.acquire()
         val = []
         try:
+            logger.debug('Reading G/M keys')
             val = list(self.__usbDevice.handleIf1.interruptRead(
                 0x83, maxLen, 10))
+            logger.debug('Read G/M keys')
         except usb.USBError:
             pass
         finally:
@@ -120,7 +125,9 @@ class G19(object):
         self.__usbDeviceMutex.acquire()
         val = []
         try:
+            logger.debug('Reading menu keys')
             val = list(self.__usbDevice.handleIf0.interruptRead(0x81, 2, 10))
+            logger.debug('Read menu keys')
         except usb.USBError:
             pass
         finally:
@@ -136,7 +143,9 @@ class G19(object):
         self.__usbDeviceMutex.acquire()
         val = []
         try:
+            logger.debug('Reading multimedia keys')
             val = list(self.__usbDevice.handleIfMM.interruptRead(0x82, 2, 10))
+            logger.debug('Read multimedia keys')
         except usb.USBError:
             pass
         finally:

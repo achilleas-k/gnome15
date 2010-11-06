@@ -55,7 +55,7 @@ class Theme():
                 properties["time_24"] = "99:99"
                 try :
                     event.valarm            
-                    properties["icon"] = g15util.get_icon_path(self.screen.applet.conf_client, "dialog-warning", (self.event_theme.bounds[3], self.event_theme.bounds[3]))
+                    properties["icon"] = g15util.get_icon_path("dialog-warning", (self.event_theme.bounds[3], self.event_theme.bounds[3]))
                 except AttributeError:            
                     properties["icon"] = ""
                 

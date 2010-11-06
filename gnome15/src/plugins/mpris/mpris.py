@@ -171,7 +171,7 @@ class AbstractMPRISPlayer():
         # Track status
         if self.status == "Stopped":
             self.song_properties["stopped"] = True
-            self.song_properties["icon"] = g15util.get_icon_path(self.gconf_client, "media-stop", self.screen.height)
+            self.song_properties["icon"] = g15util.get_icon_path("media-stop", self.screen.height)
             self.song_properties["title"] = "No track playing"
             self.song_properties["time_text"] = ""
         else:
@@ -201,7 +201,7 @@ class AbstractMPRISPlayer():
             vol_icon = "audio-volume-medium"
         elif self.volume >= 67.0:
             vol_icon = "audio-volume-high"
-        self.song_properties["vol_icon"] = g15util.get_icon_path(self.gconf_client, vol_icon, self.screen.height)
+        self.song_properties["vol_icon"] = g15util.get_icon_path(vol_icon, self.screen.height)
         
         # For the bars on the G15 (the icon is too small, bars are better)
         for i in range(0, int( self.volume / 10 ) + 1, 1):            
