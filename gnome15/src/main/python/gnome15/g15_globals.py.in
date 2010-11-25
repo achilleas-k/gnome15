@@ -10,13 +10,13 @@ image_dir = os.path.join(package_dir, "..", "..", "resources", "images" )
 dev = False
 if os.path.exists(image_dir):
 	dev = True 
-	glade_dir = os.path.join(package_dir, "..", "..", "resources", "glade")
-	font_dir = os.path.join(package_dir, "..", "..", "resources", "fonts")
-	icons_dir = os.path.join(package_dir, "..", "..", "resources", "icons")
-	themes_dir = os.path.join(package_dir, "..", "..", "resources", "themes")
-	plugin_dir = os.path.join(package_dir, "..", "..", "..", "plugins")
-	scripts_dir = os.path.join(package_dir, "..", "..", "..", "scripts")
-	themes_dir = os.path.join(package_dir, "..", "..", "..", "themes")
+	glade_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "glade"))
+	font_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "fonts"))
+	icons_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "icons"))
+	themes_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "themes"))
+	plugin_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "plugins"))
+	scripts_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "scripts"))
+	themes_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "themes"))
 else: 
 	image_dir = "@prefix@/share/gnome15/images"
 	glade_dir = "@prefix@/share/gnome15/glade"

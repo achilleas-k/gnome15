@@ -26,7 +26,6 @@ import gnome15.g15_theme as g15theme
 import time
 import dbus
 import os
-import xdg.IconTheme as icons
 import xdg.Config as config
 import gtk
 import Image

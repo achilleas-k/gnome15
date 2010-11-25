@@ -25,32 +25,34 @@ pygtk.require('2.0')
 import gtk
 import g15_globals as g15globals
 import g15_service as g15service
-import g15_util as g15util
 import g15_screen as g15screen
+import g15_util as g15util
 import appindicator
 import gconf
+
+icon_theme = gtk.icon_theme_get_default()
+if g15globals.dev:
+    icon_theme.prepend_search_path(g15globals.icons_dir)
 
 class G15Indicator(appindicator.Indicator):
     
     def __init__(self,  parent_window=None):
         
-        self.icon_theme = gtk.icon_theme_get_default()
-        if g15globals.dev:
-            self.icon_theme.prepend_search_path(g15globals.icons_dir)
-            
         appindicator.Indicator.__init__(self, "gnome15",
-                               g15util.get_icon_path("logitech-g-keyboard-panel", 128), 
+                               self._get_icon_path("logitech-g-keyboard-panel"), 
                                appindicator.CATEGORY_HARDWARE)
         self.set_status (appindicator.STATUS_ACTIVE)
         self.page_items = {}        
         self._set_icons()
         self.service = g15service.G15Service(self, parent_window)
         self.conf_client = gconf.client_get_default()
-        self.conf_client.add_dir('/desktop/gnome/interface', gconf.CLIENT_PRELOAD_NONE)
-        self.conf_client.notify_add("/desktop/gnome/interface/icon_theme", self._theme_changed)      
         self.conf_client.notify_add("/apps/gnome15/indicate_only_on_error", self._indicator_options_changed)
         self.default_message = "Logitech G Keyboard"
         self.clear_attention()
+        
+        # Watch for icon theme changes        
+        gtk_icon_theme = gtk.icon_theme_get_default()
+        gtk_icon_theme.connect("changed", self._theme_changed)
                 
         # Indicator menu
         self.menu = gtk.Menu()
@@ -121,9 +123,18 @@ class G15Indicator(appindicator.Indicator):
         if self.get_status() == appindicator.STATUS_PASSIVE or self.get_status() == appindicator.STATUS_ACTIVE:
             self.clear_attention()
     
-    def _theme_changed(self, client, connection_id, entry, args):
+    def _theme_changed(self, theme):
         self._set_icons()
         
     def _set_icons(self):
-        self.set_icon(g15util.get_icon_path("logitech-g-keyboard-panel", 128))        
-        self.set_attention_icon(g15util.get_icon_path("logitech-g-keyboard-error-panel", 128))
+        self.set_icon(self._get_icon_path("logitech-g-keyboard-panel"))        
+        self.set_attention_icon(self._get_icon_path("logitech-g-keyboard-error-panel"))
+        
+    def _get_icon_path(self, icon_name):
+        if g15globals.dev:
+            # Because the icons aren't installed in this mode, they must be provided
+            # using the full filename. Unfortunately this means scaling may be a bit
+            # blurry in the indicator applet
+            return g15util.get_icon_path(icon_name, 128)
+        else:
+            return icon_name

@@ -23,17 +23,10 @@
 import gnome15.g15_screen as g15screen
 import gnome15.g15_util as g15util
 import gnome15.g15_theme as g15theme
-import datetime
-import time
-from threading import Timer
 from threading import Lock
 import dbus
-import Image
 import os
-import sys
 
-import xdg.IconTheme as icons
-import xdg.Config as config
 import xdg.Mime as mime
 import urllib
 
@@ -157,16 +150,18 @@ class AbstractMPRISPlayer():
             if cover_art != None and os.path.exists(cover_art):
                 self.cover_uri = cover_art
             else:
-                icon_theme = self.gconf_client.get_string("/desktop/gnome/interface/icon_theme")
                 mime_type = mime.get_type(self.playing_uri)
                 if mime_type != None:
-                    mime_icon = icons.getIconPath(str(mime_type).replace("/","-"), theme=icon_theme, size=self.screen.height)
+                    mime_icon = g15util.get_icon_path(str(mime_type).replace("/","-"), size=self.screen.height)
                     if mime_icon != None:                    
                         self.cover_uri = mime_icon                    
                 if self.cover_uri == None:                      
-                    self.cover_uri = icons.getIconPath("audio-player", theme=icon_theme, size=self.screen.height)
-            self.cover_uri = "file://" + urllib.pathname2url(self.cover_uri)
-        self.cover_image = g15util.load_surface_from_file(self.cover_uri)
+                    self.cover_uri = g15util.get_icon_path(["audio-player", "applications-multimedia" ], size=self.screen.height)
+            if self.cover_uri != None:            
+                self.cover_uri = "file://" + urllib.pathname2url(self.cover_uri)
+        self.cover_image = None
+        if self.cover_uri != None:
+            self.cover_image = g15util.load_surface_from_file(self.cover_uri)
                   
         # Track status
         if self.status == "Stopped":
@@ -261,7 +256,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
             # Format properties that need formatting
             bitrate = g15util.value_or_default(meta_data,"audio-bitrate", 0)
             if str(bitrate) == "0":
-                bitrate == ""            
+                bitrate = ""            
             self.playing_uri = g15util.value_or_blank(meta_data,"location")
             self.duration = g15util.value_or_default(meta_data,"time", 0)
             if self.duration == 0:
@@ -339,7 +334,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
                 # Format properties that need formatting
                 bitrate = g15util.value_or_default(meta_data,"xesam:audioBitrate", 0)
                 if bitrate == 0:
-                    bitrate == ""
+                    bitrate = ""
                 else:
                     bitrate = str(bitrate / 1024)
                 

@@ -181,15 +181,20 @@ class G15FeedPage():
         elif "image" in self.feed["feed"]:
             icon = self.feed["feed"]["image"]["url"]
         else:
-            icon = g15util.get_icon_path("application-rss+xml", (self.screen.height, self.screen.height) )
+            icon = g15util.get_icon_path("application-rss+xml", self.screen.height )
             
         if icon == None:
             self.icon_surface = None
             self.icon_embedded = None
         else:
-            icon_surface = g15util.load_surface_from_file(icon)
-            self.icon_surface = icon_surface
-            self.icon_embedded = g15util.get_embedded_image_url(icon_surface)
+            try :
+                icon_surface = g15util.load_surface_from_file(icon)
+                self.icon_surface = icon_surface
+                self.icon_embedded = g15util.get_embedded_image_url(icon_surface)
+            except:
+                print "WARNING: Failed to get icon %s" % str(icon)
+                self.icon_surface = None
+                self.icon_embedded = None
         self.title = self.feed["feed"]["title"] if "title" in self.feed["feed"] else self.url
         self.subtitle = self.feed["feed"]["subtitle"] if "subtitle" in self.feed["feed"] else ""
         self.set_properties()

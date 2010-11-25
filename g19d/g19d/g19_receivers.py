@@ -283,8 +283,8 @@ class G19Receiver(Runnable):
         else:            
             logger.debug('No menu keys pressed')
 
-        if not gotData:
-            time.sleep(0.1)
+#        if not gotData:
+#            time.sleep(0.1)
 
     def list_all_input_processors(self):
         '''Returns a list of all input processors currently registered to this

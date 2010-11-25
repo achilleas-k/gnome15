@@ -287,7 +287,7 @@ class G15Screen():
             
     def redraw(self, page = None, direction="up", transitions = True, redraw_content = True):
         current_page = self._get_next_page_to_display()
-        if page != None and page == current_page:
+        if page != None and page == current_page and self.visible_page == page:
             # Drop any redraws that are not required
             self.jobqueue.clear()
         self.jobqueue.run(self._do_redraw, page, direction, transitions, redraw_content)

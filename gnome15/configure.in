@@ -1,4 +1,4 @@
-AC_INIT(gnome15, 0.2.1)
+AC_INIT(gnome15, 0.3.0)
 AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_applet.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 
@@ -35,14 +35,26 @@ dnl Dependencies for core applet and tools
 
 AX_PYTHON_MODULE(gnomeapplet, [])
 
+dnl Determine if indicator is available
 AX_PYTHON_MODULE(appindicator, [])
 AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
-     [appindicator=yes],
-     [test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xyes"],
+     [appindicator=yes])
+AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xyes"],
      [gnomeapplet=yes])
      
 AM_CONDITIONAL([APPLET], test x$gnomeapplet = xyes)
 AM_CONDITIONAL([INDICATOR],	test x$appindicator = xyes)
+
+dnl Determine if pyinputevent is available. If it is, kernel driver can be built
+AX_PYTHON_MODULE(pyinputevent, [])
+AS_IF([test "x${HAVE_PYMOD_PYINPUTEVENT}" = "xyes"],
+     [pyinputevent=yes])
+     
+AM_CONDITIONAL([PYINPUTEVENT], test x$pyinputevent = xyes)
+AS_IF([test "x${HAVE_PYMOD_PYINPUTEVENT}" = "xno" ],
+     [AC_MSG_WARN([Kernel driver requires pyinputevent. This driver will be skipped])])
+
+dnl Required modules
 
 AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xno" -a "x${HAVE_PYMOD_APPINDICATOR}" = "xno"],
      [AC_MSG_ERROR([Requires Python Application Indicator OR Python Gnome Applet Library])])
@@ -83,10 +95,6 @@ dnl AX_PYTHON_MODULE(gnomeapplet, [])
 dnl AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xno"],
 dnl     [AC_MSG_ERROR([Requires GNOME bindings for Python (part of PyGTK)])])
      
-AX_PYTHON_MODULE(xdg, [])
-AS_IF([test "x${HAVE_PYMOD_XDG}" = "xno"],
-     [AC_MSG_ERROR([Requires PyXDG - Python Freedesktop Library])])     
-     
 AX_PYTHON_MODULE(Xlib, [])
 AS_IF([test "x${HAVE_PYMOD_XLIB}" = "xno"],
      [AC_MSG_ERROR([Requires Python Xlib - Python Xlib bindings])])
@@ -95,9 +103,6 @@ AX_PYTHON_MODULE(setproctitle, [])
 AS_IF([test "x${HAVE_PYMOD_SETPROCTITLE}" = "xno"],
      [AC_MSG_WARN([It is recommend that setproctitle is installed])])
      
-     
-AX_PYTHON_MODULE(appindicator, [])
-
 dnl Dependencies for plugins
  
 AX_PYTHON_MODULE(alsaaudio, [])
@@ -182,11 +187,6 @@ src/main/python/gnome15/g15_globals.py
 src/main/python/gnome15/drivers/Makefile
 src/main/resources/Makefile
 src/main/resources/icons/Makefile
-src/main/resources/icons/elementary/Makefile
-src/main/resources/icons/elementary/status/Makefile
-src/main/resources/icons/elementary/status/16/Makefile
-src/main/resources/icons/elementary/status/22/Makefile
-src/main/resources/icons/elementary/status/24/Makefile
 src/main/resources/icons/hicolor/Makefile
 src/main/resources/icons/hicolor/16x16/Makefile
 src/main/resources/icons/hicolor/16x16/status/Makefile
@@ -203,16 +203,6 @@ src/main/resources/icons/hicolor/64x64/apps/Makefile
 src/main/resources/icons/hicolor/scalable/Makefile
 src/main/resources/icons/hicolor/scalable/apps/Makefile
 src/main/resources/icons/hicolor/scalable/status/Makefile
-src/main/resources/icons/ubuntu-mono-dark/Makefile
-src/main/resources/icons/ubuntu-mono-dark/status/Makefile
-src/main/resources/icons/ubuntu-mono-dark/status/16/Makefile
-src/main/resources/icons/ubuntu-mono-dark/status/22/Makefile
-src/main/resources/icons/ubuntu-mono-dark/status/24/Makefile
-src/main/resources/icons/ubuntu-mono-light/Makefile
-src/main/resources/icons/ubuntu-mono-light/status/Makefile
-src/main/resources/icons/ubuntu-mono-light/status/16/Makefile
-src/main/resources/icons/ubuntu-mono-light/status/22/Makefile
-src/main/resources/icons/ubuntu-mono-light/status/24/Makefile
 src/main/resources/images/Makefile
 src/main/resources/glade/Makefile
 src/man/Makefile

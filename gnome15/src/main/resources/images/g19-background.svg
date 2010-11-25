@@ -406,6 +406,22 @@
        x2="320"
        y2="932.36218"
        gradientUnits="userSpaceOnUse" />
+    <filter
+       id="filter3076"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3078"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3080"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -416,15 +432,15 @@
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
      inkscape:cx="99.992155"
-     inkscape:cy="172.23718"
+     inkscape:cy="180.80861"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1327"
      inkscape:window-height="862"
-     inkscape:window-x="2269"
-     inkscape:window-y="189"
+     inkscape:window-x="74"
+     inkscape:window-y="37"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -537,5 +553,16 @@
        x="50"
        y="150"
        transform="translate(0,812.36218)" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;filter:url(#filter3076);enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="163"
+       y="985.36218"
+       id="text3072"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3074"
+         x="163"
+         y="985.36218">${text}</tspan></text>
   </g>
 </svg>

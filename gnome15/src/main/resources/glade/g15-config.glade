@@ -74,10 +74,12 @@
                         <child>
                           <object class="GtkAlignment" id="alignment1">
                             <property name="visible">True</property>
+                            <property name="top_padding">8</property>
                             <property name="left_padding">12</property>
                             <child>
                               <object class="GtkVBox" id="vbox11">
                                 <property name="visible">True</property>
+                                <property name="spacing">4</property>
                                 <child>
                                   <object class="GtkCheckButton" id="CycleScreens">
                                     <property name="label" translatable="yes">Cycle screens</property>
@@ -185,6 +187,7 @@
                         <child>
                           <object class="GtkAlignment" id="alignment3">
                             <property name="visible">True</property>
+                            <property name="top_padding">8</property>
                             <property name="left_padding">12</property>
                             <child>
                               <object class="GtkHBox" id="hbox1">

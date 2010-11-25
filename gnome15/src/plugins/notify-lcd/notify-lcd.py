@@ -30,8 +30,6 @@ import dbus
 import dbus.service
 import dbus.exceptions
 import os
-import xdg.IconTheme as icons
-import xdg.Config as config
 import gtk
 import gtk.gdk
 import Image
@@ -72,7 +70,10 @@ def show_preferences(parent, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "notify-lcd.glade"))
     dialog = widget_tree.get_object("NotifyLCDDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_keyboard_on_alert", "BlinkKeyboardOnAlert", False, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/respect_timeout", "RespectTimeout", False, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_actions", "AllowActions", False, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_cancel", "AllowCancel", False, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/enable_sounds", "EnableSounds", True, widget_tree, True)
     dialog.run()
     dialog.hide()
 
@@ -171,12 +172,22 @@ class G15NotifyService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='as')
     def GetCapabilities(self):
-        return [ "body", "body-images", "icon-static", "actions" ]
+        caps = [ "body", "body-images", "icon-static" ]
+        if self.gconf_client.get_bool(self.gconf_key + "/allow_actions"):
+            caps.append("actions")
+        enable_sounds = self.gconf_client.get(self.gconf_key + "/enable_sounds")
+        if self._get_enable_sounds():
+            caps.append("sounds")
     
     @dbus.service.method(IF_NAME, in_signature='susssasa{sv}i', out_signature='u')
     def Notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
         if self._active:
-            message = G15Message(self.id, icon, summary, body, float(timeout) / 1000.0, actions, hints)
+            timeout = float(timeout) / 1000.0
+            if not self.gconf_client.get_bool(self.gconf_key + "/respect_timeout"):
+                timeout = 10.0                
+            if not self.gconf_client.get_bool(self.gconf_key + "/allow_actions"):
+                actions = None
+            message = G15Message(self.id, icon, summary, body, timeout, actions, hints)
             self._message_queue.append(message)
             self.id += 1
             if len(self._message_queue) == 1:
@@ -192,7 +203,7 @@ class G15NotifyService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='u', out_signature='')
     def CloseNotification(self, id):
-        if len(self._message_queue) > 0:
+        if self.gconf_client.get_bool(self.gconf_key + "/allow_cancel") and len(self._message_queue) > 0:
             message = self._message_queue[0]
             if message.id == id:
                 self._cancel_timer()
@@ -235,6 +246,9 @@ class G15NotifyService(dbus.service.Object):
     ''' 
     Private
     '''       
+    def _get_enable_sounds(self):
+        enable_sounds = self.gconf_client.get(self.gconf_key + "/enable_sounds")
+        return enable_sounds == None or enable_sounds.get_bool()
         
     def _reload_theme(self):        
         self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen, self._last_variant)
@@ -287,7 +301,7 @@ class G15NotifyService(dbus.service.Object):
                     file.close()
                     pixbuf.save(message.embedded_image, "png")
                 else:
-                    icon = g15util.get_icon_path("dialog-info", (self._screen.height, self._screen.height))
+                    icon = g15util.get_icon_path("dialog-info", self._screen.height)
             
                 
             # Which theme variant should we use
@@ -317,6 +331,10 @@ class G15NotifyService(dbus.service.Object):
             self._timer = g15util.schedule("Notification", message.timeout, self._hide_notification)
                 
             self._screen.redraw(page)
+            
+            # Play sound
+            if self._get_enable_sounds() and "sound-file" in message.hints and ( not "suppress-sound" in message.hints or not message.hints["suppress-sound"]):
+                print "Will play sound",message.hints["sound-file"] 
                 
             if self._gconf_client.get_bool(self._gconf_key + "/blink_keyboard_on_alert"):
                 self._blink_thread = BlinkThread(self._gconf_client, self._screen.driver, list(self._control_values)).start()

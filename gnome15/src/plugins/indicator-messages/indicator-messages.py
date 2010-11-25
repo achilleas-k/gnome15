@@ -29,8 +29,6 @@ import gobject
 import time
 import dbus
 import os
-import xdg.IconTheme as icons
-import xdg.Config as config
 import gtk
 import Image
 import indicator_messages_menu as messagesmenu

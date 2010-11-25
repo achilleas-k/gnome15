@@ -32,18 +32,16 @@ import urllib
 import base64
 import sys
 import traceback
-import gconf
 
-import xdg.IconTheme as icons
 from cStringIO import StringIO
 from jobqueue import JobQueue
 
 '''
 Look for icons locally as well if running from source
 '''
+gtk_icon_theme = gtk.icon_theme_get_default()
 if pglobals.dev:
-    path = os.path.realpath(os.path.expanduser(pglobals.icons_dir))
-    icons.icondirs.append(path)
+    gtk_icon_theme.prepend_search_path(pglobals.icons_dir)
     
 '''
 Executing stuff
@@ -352,15 +350,20 @@ def get_embedded_image_url(path):
     file_str.write(base64.b64encode(img_data.getvalue()))
     return file_str.getvalue()
 
-def get_icon_path(icon = None, size = None):
-    gconf_client = gconf.client_get_default()
-    icon_theme = gconf_client.get_string("/desktop/gnome/interface/icon_theme")
-    if size == None:
-        size = 128
-    i_size = size
-    if not isinstance(size, int):
-        i_size = max(size[0], size[1])
-    return icons.getIconPath(icon, theme=icon_theme, size = i_size)
+def get_icon_path(icon = None, size = 128):
+    if isinstance(icon, list):
+        for i in icon:
+            p = get_icon_path(i, size)
+            if p != None:
+                return p
+    else:
+        icon = gtk_icon_theme.lookup_icon(icon, size, 0)
+        if icon != None:
+            if icon.get_filename() == None:
+                print "WARNING: Found icon %s (%d), but no filename was available" % ( icon, size )
+            return icon.get_filename()
+        else:
+            print "WARNING: Icon %s (%d) not found" % ( icon, size )
     
 def get_app_icon(gconf_client, icon, size = 128):
     icon_path = get_icon_path(icon, size)

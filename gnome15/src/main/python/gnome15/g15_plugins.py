@@ -195,7 +195,7 @@ class G15Plugins():
             instance.activate()
             self.activated.append(instance)
             if callback != None:
-                callback(idx, len(self.started))
+                callback(idx, len(self.started), mod.name)
         except Exception as e:
             print "Failed to activate plugin %s. %s" % ( mod.id, str(e))   
             self.conf_client.set_bool(self.plugin_key + "/" + mod.id + "/enabled", False)              

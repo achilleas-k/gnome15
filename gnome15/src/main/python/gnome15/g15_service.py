@@ -32,8 +32,6 @@ import g15_screen as g15screen
 import g15_driver as g15driver
 import g15_driver_manager as g15drivermanager
 import g15_profile as g15profile
-import g15_config as g15config
-import g15_macros as g15macros
 import g15_theme as g15theme
 import g15_dbus as g15dbus
 import traceback
@@ -120,6 +118,7 @@ class G15Splash():
     def __init__(self, screen, gconf_client):
         self.screen = screen        
         self.progress = 0.0
+        self.text = "Starting up .."
         self.theme = g15theme.G15Theme(pglobals.image_dir, self.screen, "background")
         self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_EXCLUSIVE, id="Splash", thumbnail_painter = self.paint_thumbnail)
         self.screen.redraw(self.page)
@@ -131,7 +130,8 @@ class G15Splash():
     def paint(self, canvas):
         properties = {
                       "version": VERSION,
-                      "progress": self.progress
+                      "progress": self.progress,
+                      "text": self.text
                       }
         self.theme.draw(canvas, properties)
         
@@ -147,15 +147,17 @@ class G15Splash():
     def remove(self):
         self.screen.del_page(self.page)
         
-    def update_splash(self, value, max):
+    def update_splash(self, value, max, text = None):
         self.progress = ( float(value) / float(max) ) * 100.0
         self.screen.redraw(self.page)
+        if text != None:
+            self.text = text
 
 class G15Service(Thread):
     
     def __init__(self, service_host, parent_window=None):
         Thread.__init__(self)
-        
+        self.splash = None
         self.parent_window = parent_window
         self.service_host = service_host
         self.reschedule_lock = RLock()
@@ -181,7 +183,7 @@ class G15Service(Thread):
         self.widget_tree = gtk.Builder()
         self.widget_tree.add_from_file(g15Config)
         
-        # Create the screen and pluging manager
+        # Create the screen and plugin manager
         self.screen.add_screen_change_listener(self)
         self.plugins = g15plugins.G15Plugins(self.screen)
         self.plugins.start()
@@ -189,7 +191,7 @@ class G15Service(Thread):
         # Start the driver
         self.attempt_connection() 
         
-        # Monitor gconf and configure keyboard based on values
+        # Monitor gconf
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
         self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.resched_cycle);
         self.conf_client.notify_add("/apps/gnome15/active_profile", self.active_profile_changed);
@@ -235,8 +237,11 @@ class G15Service(Thread):
                 for control in self.driver.get_controls():
                     self.control_handles.append(self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed));
                 
-                self.screen.start()  
-                self.splash = G15Splash(self.screen, self.conf_client)
+                self.screen.start()
+                if self.splash == None:
+                    self.splash = G15Splash(self.screen, self.conf_client)
+                else:
+                    self.splash.update_splash(0, 100, "Starting up ..")
                 self.screen.set_mkey(1)
                 self.activate_profile()            
                 g15util.schedule("ActivatePlugins", 0.1, self.complete_loading)    
@@ -573,7 +578,8 @@ class G15Service(Thread):
     def _check_cycle(self, client=None, connection_id=None, entry=None, args=None):  
         self.reschedule_lock.acquire()
         try:      
-            active = self.driver != None and self.driver.is_connected() and self.conf_client.get_bool("/apps/gnome15/cycle_screens")
+            cycle_screens = self.conf_client.get_bool("/apps/gnome15/cycle_screens")
+            active = self.driver != None and self.driver.is_connected() and cycle_screens
             if active and self.cycle_timer == None:
                 val = self.conf_client.get("/apps/gnome15/cycle_seconds")
                 time = 10

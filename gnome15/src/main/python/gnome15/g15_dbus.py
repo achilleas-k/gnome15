@@ -20,7 +20,7 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import dbus
+import dbus.service
 import g15_globals as pglobals
 
 BUS_NAME="org.gnome15.Gnome15"

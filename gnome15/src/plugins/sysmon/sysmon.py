@@ -201,9 +201,10 @@ class G15SysMon():
         properties["net_send_mbps"] = "%.2f" % (self.send_bps / 1024 / 1024)
         
         
-        properties["net_icon"] = g15util.get_icon_path("gnome-fs-network", self.screen.height)
-        properties["cpu_icon"] = g15util.get_icon_path("utilities-system-monitor",  self.screen.height)
-        properties["mem_icon"] = g15util.get_icon_path("media-memory",  self.screen.height)
+        # TODO we should ship some more appropriate default icons
+        properties["net_icon"] = g15util.get_icon_path([ "network-transmit-receive", "gnome-fs-network" ], self.screen.height)
+        properties["cpu_icon"] = g15util.get_icon_path( [ "utilities-system-monitor", "gnome-cpu-frequency-applet", "computer" ],  self.screen.height)
+        properties["mem_icon"] = g15util.get_icon_path( [ "media-memory", "media-flash" ],  self.screen.height)
         
         self.properties = properties
         

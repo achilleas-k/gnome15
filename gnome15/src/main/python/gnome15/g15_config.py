@@ -81,14 +81,13 @@ class G15Config:
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.cycle_screens_configuration_changed));
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/plugins", self.plugins_changed));
         
-        # Configure widgets
-        self.set_cycle_seconds_value_from_configuration()        
+        # Configure widgets        
 
         # Indicator options        
         if HAS_APPINDICATOR:  
             self.notify_handles.append(g15util.configure_checkbox_from_gconf(self.conf_client, "/apps/gnome15/indicate_only_on_error", "OnlyShowIndicatorOnError", False, self.widget_tree, True))
         else:
-            self.widget_tree.get_object("OnlyShowIndicatorOnError").set_visible(False)
+            self.widget_tree.get_object("OnlyShowIndicatorOnError").destroy()
         
         # Bind to events
         self.cycle_seconds.connect("value-changed", self.cycle_seconds_changed)
@@ -98,7 +97,7 @@ class G15Config:
         self.plugin_enabled_renderer.connect("toggled", self.toggle_plugin)
         self.widget_tree.get_object("PreferencesButton").connect("clicked", self.show_preferences)
         self.widget_tree.get_object("DriverButton").connect("clicked", self.show_setup)
-        
+                
         # Driver. We only need this to get the controls. Perhaps they should be moved out of the driver
         # class and the values stored separately
         self.driver = g15drivermanager.get_driver(self.conf_client)
@@ -161,8 +160,10 @@ class G15Config:
         self.controls.add(table)
         self.main_window.show_all() 
         
-        # Populate model
+        # Populate model and configure other components
         self.load_model()
+        self.set_cycle_screens_value_from_configuration()
+        self.set_cycle_seconds_value_from_configuration()
         
         # See if the Gnome15 service is running
         self.infobar = gtk.InfoBar()       
@@ -171,6 +172,7 @@ class G15Config:
         self.warning_image = gtk.Image()  
         content.pack_start(self.warning_image, False, False)
         content.pack_start(self.warning_label, True, True)
+        self.start_button = None
         if HAS_APPINDICATOR:
             self.start_button = gtk.Button("Start Service")
             self.start_button.connect("clicked", self.start_service)
@@ -230,8 +232,9 @@ class G15Config:
     
     def show_message(self, type, text, start_service_button = True):
         self.infobar.set_message_type(type)
-        self.start_button.set_sensitive(True)
-        self.start_button.set_visible(start_service_button)
+        if self.start_button != None:
+            self.start_button.set_sensitive(True)
+            self.start_button.set_visible(start_service_button)
         self.warning_label.set_text(text)
         self.warning_label.set_use_markup(True)
         self.warning_label.set_line_wrap(True)
@@ -243,7 +246,7 @@ class G15Config:
         
         self.main_window.check_resize()        
         self.infobar.show_all()
-        if not start_service_button:
+        if self.start_button != None and not start_service_button:
             self.start_button.hide()
         self.warning_box_shown = True
         
