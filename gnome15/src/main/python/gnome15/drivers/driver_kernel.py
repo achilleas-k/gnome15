@@ -151,17 +151,26 @@ class KeyboardReceiveThread(Thread):
         
     def deactivate(self):
         self._run = False
+        print "Ungrabbing keys"
+        for dev in self.devices:
+            try :
+                fcntl.ioctl(dev.fileno(), EVIOCGRAB, 0)
+            except Exception as e:
+                print e
+            self.fds[dev.fileno()].close()
         
     def run(self):        
         poll = select.poll()
-        fds = {}
+        self.fds = {}
+        print "Grabbing keys"
         for dev in self.devices:
             poll.register(dev, select.POLLIN | select.POLLPRI)
             fcntl.ioctl(dev.fileno(), EVIOCGRAB, 1)
-            fds[dev.fileno()] = dev
+            self.fds[dev.fileno()] = dev
+        print "Waiting for key events"
         while self._run:
             for x,e in poll.poll():
-                dev = fds[x]
+                dev = self.fds[x]
                 dev.read()
 
 class ForwardDevice(SimpleDevice):
@@ -370,11 +379,15 @@ class Driver(g15driver.AbstractDriver):
             self.key_thread = None
     
     def _write_to_led(self, name, value):
-        file = open(self.led_path_prefix + name + "/brightness", "w")
+        path = self.led_path_prefix + name + "/brightness"
         try :
-            file.write("%d\n" % value)
-        finally :
-            file.close()
+            file = open(path, "w")
+            try :
+                file.write("%d\n" % value)
+            finally :
+                file.close()            
+        except IOError:
+            print "WARNING: Failed to write to LED device. This is probably a permissions problem. Check that %s is writable by your user." % path
 
     @staticmethod
     def _find_device(idVendor, idProduct):

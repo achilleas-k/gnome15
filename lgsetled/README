@@ -1,0 +1,17 @@
+lgsetled
+========
+
+A simple tool that can read and write the status of the LED
+lights on Logitech G13, G15 and G19 keyboards by writing to
+the files in /sys. The executable must be SETUID as these
+files are owned by root.
+
+Installation
+============
+
+See the 'INSTALL' file.
+
+How to report bugs
+==================
+
+See http://tanktarta.pwp.blueyonder.co.uk/gnome15

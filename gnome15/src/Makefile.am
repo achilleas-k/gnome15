@@ -1,1 +1,1 @@
-SUBDIRS = scripts plugins gnome main man themes
+SUBDIRS = scripts plugins gnome main man themes udev

@@ -353,7 +353,7 @@ class G15Service(Thread):
         
     def driver_changed(self, client, connection_id, entry, args):
         if self.driver == None or self.driver.id != entry.value.get_string():
-            if self.driver.is_connected() :
+            if self.driver != None and self.driver.is_connected() :
                 self.driver.disconnect()
             else:
                 self.driver = g15drivermanager.get_driver(self.conf_client, on_close = self.on_driver_close)
@@ -462,23 +462,24 @@ class G15Service(Thread):
         
     def control_configuration_changed(self, client, connection_id, entry, args):
         key = entry.key.split("_")
-        for control in self.driver.get_controls():
-            if key[0] == ( "/apps/gnome15/" + control.id ):
-                if isinstance(control.value, int):
-                    control.value = entry.value.get_int()
-                else:
-                    rgb = entry.value.get_string().split(",")
-                    control.value = (int(rgb[0]),int(rgb[1]),int(rgb[2]))
+        if self.driver != None:
+            for control in self.driver.get_controls():
+                if key[0] == ( "/apps/gnome15/" + control.id ):
+                    if isinstance(control.value, int):
+                        control.value = entry.value.get_int()
+                    else:
+                        rgb = entry.value.get_string().split(",")
+                        control.value = (int(rgb[0]),int(rgb[1]),int(rgb[2]))
+                        
+                    # There is a bug where changing keyboard colors can crash the daemon
+                    # This stops is crashing the UI too
+                    try :
+                        self.driver.update_control(control)
+                    except:
+                        pass
                     
-                # There is a bug where changing keyboard colors can crash the daemon
-                # This stops is crashing the UI too
-                try :
-                    self.driver.update_control(control)
-                except:
-                    pass
-                
-                break
-        self.screen.redraw()
+                    break
+            self.screen.redraw()
         
     def set_defeat_profile_change(self, defeat):
         self.defeat_profile_change = defeat

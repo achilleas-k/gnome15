@@ -114,7 +114,7 @@ class fb_device():
     
     def close(self):
         if self.buffer != None:
-            self.buffer().close()
+            self.buffer.close()
             self.buffer = None
         os.close(self.device_file)
     
