@@ -65,6 +65,8 @@ class AbstractMPRISPlayer():
         self.status = "Stopped"
         self.status_check_timer = None
         self.cover_image = None
+        self.thumb_image = None
+        self.song_properties = {}
         
     def check_status(self):        
         try :
@@ -134,8 +136,8 @@ class AbstractMPRISPlayer():
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None:
-            if self.cover_image != None:
-                size = g15util.paint_thumbnail_image(allocated_size, self.cover_image, canvas)
+            if self.thumb_image != None:
+                size = g15util.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
                 return size
             
     def process_properties(self):
@@ -160,6 +162,7 @@ class AbstractMPRISPlayer():
             if self.cover_uri != None:            
                 self.cover_uri = "file://" + urllib.pathname2url(self.cover_uri)
         self.cover_image = None
+        self.thumb_image = None
         if self.cover_uri != None:
             self.cover_image = g15util.load_surface_from_file(self.cover_uri)
                   
@@ -169,10 +172,14 @@ class AbstractMPRISPlayer():
             self.song_properties["icon"] = g15util.get_icon_path("media-stop", self.screen.height)
             self.song_properties["title"] = "No track playing"
             self.song_properties["time_text"] = ""
-        else:
-            if self.status == "Playing":                
+        else:            
+            if self.status == "Playing":
+                if self.screen.driver.get_bpp() == 1:
+                    self.thumb_image = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "play.gif"))
                 self.song_properties["playing"] = True
-            else:                
+            else:
+                if self.screen.driver.get_bpp() == 1:
+                    self.thumb_image = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "pause.gif"))                
                 self.song_properties["paused"] = True
             self.song_properties["icon"] = self.cover_uri
             
@@ -236,6 +243,9 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.session_bus.remove_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def track_changed_handler(self, detail):
+        g15util.schedule("LoadTrackDetails", 1.0, self.load_and_draw)
+        
+    def load_and_draw(self):
         self.load_song_details()
         self.screen.redraw()
         

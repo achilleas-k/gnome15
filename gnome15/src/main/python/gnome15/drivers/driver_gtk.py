@@ -80,14 +80,14 @@ g19_key_layout = [
 
 # Controls
 
-g19_keyboard_backlight_control = g15driver.Control("backlight-colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-g19_lcd_brightness_control = g15driver.Control("lcd-brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
+g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
 g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND)
 g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
 g19_controls = [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control]
 
-g15_backlight_control = g15driver.Control("keyboard-backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-g15_invert_control = g15driver.Control("invert-lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
+g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
 g15_controls = [ g15_backlight_control, g15_invert_control ]  
 
 def show_preferences(parent, gconf_client):
@@ -204,7 +204,7 @@ class Driver(g15driver.AbstractDriver):
             pil_img = ImageMath.eval("convert(pil_img,'P')",pil_img=pil_img)
             pil_img = pil_img.point(lambda i: i >= 250,'1')
             
-            invert_control = self.get_control("invert-lcd")
+            invert_control = self.get_control("invert_lcd")
             if invert_control.value == 1:            
                 pil_img = pil_img.point(lambda i: 1^i)
             

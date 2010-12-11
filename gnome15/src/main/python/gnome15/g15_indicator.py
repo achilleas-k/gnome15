@@ -34,6 +34,7 @@ icon_theme = gtk.icon_theme_get_default()
 if g15globals.dev:
     icon_theme.prepend_search_path(g15globals.icons_dir)
 
+
 class G15Indicator(appindicator.Indicator):
     
     def __init__(self,  parent_window=None):

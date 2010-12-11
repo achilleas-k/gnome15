@@ -80,7 +80,7 @@ class G15MacroPage():
             self.page = self.plugin.screen.new_page(self.paint, id="Macro Info %d" % page_no, 
                                                on_shown=self.on_shown,on_hidden=self.on_hidden, 
                                                thumbnail_painter = self.paint_thumbnail, 
-                                               panel_painter = self.paint_thumbnail)
+                                               panel_painter = None if self.plugin.screen.driver.get_bpp() == 1 else self.paint_thumbnail)
             self.page.set_title("Macros (page %d)" % ( self.page_no + 1 ) ) 
         
     def on_shown(self):
@@ -97,7 +97,7 @@ class G15MacroPage():
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.icon != None:
-            g15util.paint_thumbnail_image(allocated_size, self.icon, canvas)
+            return g15util.paint_thumbnail_image(allocated_size, self.icon, canvas)
     
     def paint(self, canvas):
         

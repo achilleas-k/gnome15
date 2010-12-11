@@ -182,20 +182,26 @@ class G15Weather():
                 t_icon = self.translate_icon(current['icon'])
                 if t_icon != None:
                     attributes["icon"] = g15util.load_surface_from_file(t_icon)
-                    properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])        
+                    properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])
+                mono_thumb = self.get_mono_thumb_icon(current['icon'])        
+                if mono_thumb != None:
+                    attributes["mono_thumb_icon"] = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
                 properties["condition"] = current['condition']
                 
-                properties["temp_c"] = "%3.1f °C" % float(current['temp_c'])
-                properties["temp_f"] = "%3.1f °F" % float(current['temp_f'])
-                properties["temp_k"] = "%3.1f °K" % ( float(current['temp_c']) + 273.15 )
+                properties["temp_c"] = "%3.1f°C" % float(current['temp_c'])
+                properties["temp_f"] = "%3.1f°F" % float(current['temp_f'])
+                properties["temp_k"] = "%3.1f°K" % ( float(current['temp_c']) + 273.15 )
                 
                 units = self.gconf_client.get_int(self.gconf_key + "/units")
                 if units == CELSIUS:                 
-                    properties["temp"] = properties["temp_c"]
+                    properties["temp"] = properties["temp_c"]              
+                    properties["temp_short"] = "%2.0f°" % float(current['temp_c'])
                 elif units == FARANHEIT:                
-                    properties["temp"] = properties["temp_f"]
+                    properties["temp"] = properties["temp_f"]              
+                    properties["temp_short"] = "%2.0f°" % float(current['temp_f'])
                 else:                
                     properties["temp"] = properties["temp_k"]
+                    properties["temp_short"] = "%2.0f°" % ( float(current['temp_c']) + 273.15 )
                     
                 y = 1
                 for forecast in self.weather['forecasts']:        
@@ -208,14 +214,14 @@ class G15Weather():
                     hi_k = lo_c + 273.15
                     
                     if units == CELSIUS:                 
-                        properties["hi" + str(y)] = "%3.0f °C" % hi_c
-                        properties["lo" + str(y)] = "%3.0f °C" % lo_c
+                        properties["hi" + str(y)] = "%3.0f°C" % hi_c
+                        properties["lo" + str(y)] = "%3.0f°C" % lo_c
                     elif units == FARANHEIT:                         
-                        properties["hi" + str(y)] = "%3.0f °F" % hi_f
-                        properties["lo" + str(y)] = "%3.0f °F" % lo_f
+                        properties["hi" + str(y)] = "%3.0f°F" % hi_f
+                        properties["lo" + str(y)] = "%3.0f°F" % lo_f
                     else:                                  
-                        properties["hi" + str(y)] = "%3.0f °K" % hi_k
-                        properties["lo" + str(y)] = "%3.0f °K" % lo_k
+                        properties["hi" + str(y)] = "%3.0f°K" % hi_k
+                        properties["lo" + str(y)] = "%3.0f°K" % lo_k
 
                     properties["day" + str(y)] = forecast['day_of_week']
                     properties["day_letter" + str(y)] = forecast['day_of_week'][:1]
@@ -233,6 +239,30 @@ class G15Weather():
     def reload_theme(self):        
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
         
+    def get_mono_thumb_icon(self, icon):
+        if icon == None or icon == "":
+            return None
+        elif icon == "/ig/images/weather/chance_of_rain.gif":
+            theme_icon = "weather-showers-scattered"
+        elif icon == "/ig/images/weather/sunny.gif" or icon == "/ig/images/weather/haze.gif": 
+            return "mono-sunny.gif"
+        elif icon == "/ig/images/weather/mostly_sunny.gif":
+            return "mono-few-clouds.gif"
+        elif icon == "/ig/images/weather/partly_cloudy.gif":
+            return "mono-clouds.gif"
+        elif icon == "/ig/images/weather/mostly_cloudy.gif" or icon == "/ig/images/weather/cloudy.gif":
+            return "mono-more-clouds.gif"
+        elif icon == "/ig/images/weather/rain.gif":
+            return "mono-rain.gif"
+        elif icon == "/ig/images/weather/mist.gif" or icon == "/ig/images/weather/fog.gif":
+            return "mono-fog.gif"
+        elif icon == "/ig/images/weather/chance_of_snow.gif" or icon == "/ig/images/weather/snow.gif" or icon == "/ig/images/weather/sleet.gif" or icon == "/ig/images/weather/flurries.gif":
+            return "mono-snow.gif"
+        elif icon == "/ig/images/weather/storm.gif" or icon == "/ig/images/weather/chance_of_storm.gif":
+            return "mono-dark-clouds.gif"
+        elif icon == "/ig/images/weather/thunderstorm.gif" or icon == "/ig/images/weather/chance_of_tstorm.gif":
+            return "mono-tunder.gif"
+        
     def translate_icon(self, icon):
         
         '''
@@ -247,29 +277,39 @@ class G15Weather():
         images/weather/haze.gif
         '''
         theme_icon = None
+        mono_thumb_icon = None
         if icon == None or icon == "":
             return None
         elif icon == "/ig/images/weather/chance_of_rain.gif":
             theme_icon = "weather-showers-scattered"
         elif icon == "/ig/images/weather/sunny.gif" or icon == "/ig/images/weather/haze.gif": 
             theme_icon = "weather-clear"
+            mono_thumb_icon = "mono-sunny.gif"
         elif icon == "/ig/images/weather/mostly_sunny.gif":
             theme_icon = "weather-few-clouds"
+            mono_thumb_icon = "mono-few-clouds.gif"
         elif icon == "/ig/images/weather/partly_cloudy.gif":
             theme_icon = "weather-clouds"
+            mono_thumb_icon = "mono-clouds.gif"
         elif icon == "/ig/images/weather/mostly_cloudy.gif" or icon == "/ig/images/weather/cloudy.gif":
             theme_icon = "weather-overcast"
+            mono_thumb_icon = "mono-more-clouds.gif"
         elif icon == "/ig/images/weather/rain.gif":
             theme_icon = "weather-showers"
+            mono_thumb_icon = "mono-rain.gif"
         elif icon == "/ig/images/weather/mist.gif" or icon == "/ig/images/weather/fog.gif":
             theme_icon = "weather-fog"
+            mono_thumb_icon = "mono-fog.gif"
         elif icon == "/ig/images/weather/chance_of_snow.gif" or icon == "/ig/images/weather/snow.gif" or icon == "/ig/images/weather/sleet.gif" or icon == "/ig/images/weather/flurries.gif":
             theme_icon = "weather-snow"
+            mono_thumb_icon = "mono-snow.gif"
         elif icon == "/ig/images/weather/storm.gif" or icon == "/ig/images/weather/chance_of_storm.gif":
             # TODO is this too extreme?
+            mono_thumb_icon = "mono-dark-clouds.gif"
             theme_icon = "weather-severe-alert"
         elif icon == "/ig/images/weather/thunderstorm.gif" or icon == "/ig/images/weather/chance_of_tstorm.gif":
             # TODO is this right?
+            mono_thumb_icon = "mono-tunder.gif"
             theme_icon = "weather-storm"
             
         now = datetime.datetime.now()
@@ -292,26 +332,38 @@ class G15Weather():
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         total_taken = 0
-        if "icon" in self.attributes:
-            size = g15util.paint_thumbnail_image(allocated_size, self.attributes["icon"], canvas)
-            if horizontal:
-                canvas.translate(size, 0)
-            else:
-                canvas.translate(0, size)
-            total_taken += size
-        if "temp" in self.properties:
-            if horizontal: 
-                pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 2)
+        if self.screen.driver.get_bpp() == 1:
+            if "mono_thumb_icon" in self.attributes:
+                size = g15util.paint_thumbnail_image(allocated_size, self.attributes["mono_thumb_icon"], canvas)
+                canvas.translate(size + 2, 0)
+                total_taken += size + 2
+            if "temp_short" in self.properties:
+                pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp_short"], font_desc = "Fixed", font_absolute_size =  6 * pango.SCALE / 2)
                 x, y, width, height = g15util.get_extents(layout)
-                pango_context.move_to(0, (allocated_size / 2) - height / 2)
-                total_taken += width + 4
-            else:  
-                pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 4)
-                x, y, width, height = g15util.get_extents(layout)
-                pango_context.move_to((allocated_size / 2) - width / 2, 0)
-                total_taken += height + 4     
-            pango_context.update_layout(layout)
-            pango_context.show_layout(layout)
+                total_taken += width
+                pango_context.update_layout(layout)
+                pango_context.show_layout(layout)
+        else:
+            if "icon" in self.attributes:
+                size = g15util.paint_thumbnail_image(allocated_size, self.attributes["icon"], canvas)
+                if horizontal:
+                    canvas.translate(size, 0)
+                else:
+                    canvas.translate(0, size)
+                total_taken += size
+            if "temp" in self.properties:
+                if horizontal: 
+                    pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 2)
+                    x, y, width, height = g15util.get_extents(layout)
+                    pango_context.move_to(0, (allocated_size / 2) - height / 2)
+                    total_taken += width + 4
+                else:  
+                    pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 4)
+                    x, y, width, height = g15util.get_extents(layout)
+                    pango_context.move_to((allocated_size / 2) - width / 2, 0)
+                    total_taken += height + 4     
+                pango_context.update_layout(layout)
+                pango_context.show_layout(layout)
         return total_taken
             
     def paint(self, canvas):

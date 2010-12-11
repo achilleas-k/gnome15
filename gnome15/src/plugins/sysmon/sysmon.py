@@ -22,8 +22,11 @@
  
 import gnome15.g15_theme as g15theme 
 import gnome15.g15_util as g15util
+import gnome15.g15_driver as g15driver
 import time
 import os
+import socket
+import shlex
 
 # Plugin details - All of these must be provided
 id = "sysmon"
@@ -54,6 +57,10 @@ class G15SysMon():
     
     def activate(self):
         self.properties = None
+        self.cpu_no = 0
+        self.cpu_list = self._get_cpu_list()
+        self.net_list = []
+        self.net_no = 0
         self.cpu_history = []
         self.active = True
         self.last_time_list = None
@@ -79,6 +86,22 @@ class G15SysMon():
         
     def destroy(self):
         pass
+                    
+    def handle_key(self, keys, state, post):
+        if not post and state == g15driver.KEY_STATE_UP and self.screen.get_visible_page() == self.page:
+            if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
+                self.last_time_list = None
+                self.cpu_no += 1
+                if self.cpu_no == len(self.cpu_list):
+                    self.cpu_no = 0
+                self._reschedule_refresh()
+                return True
+            if g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
+                self.net_no += 1
+                if self.net_no == len(self.net_list):
+                    self.net_no = 0
+                self._reschedule_refresh()
+                return True
     
     ''' Private
     '''
@@ -91,10 +114,12 @@ class G15SysMon():
             self.theme.draw(canvas, self.properties) 
             
     def _on_shown(self):
-        self._cancel_refresh()
-        self._refresh()
+        self._reschedule_refresh()
             
     def _on_hidden(self):
+        self._reschedule_refresh()
+            
+    def _reschedule_refresh(self):
         self._cancel_refresh()
         self._schedule_refresh()
         
@@ -109,10 +134,17 @@ class G15SysMon():
         
     def _get_stats(self):
         
-        this_time_list = self._get_time_list()   
-        this_net_list = self._get_net_stats()
+        # Get current CPU states
+        this_time_list = self._get_time_list(self.cpu_list[self.cpu_no])
+        
+        # Current net status   
+        this_net_list, self.net_list = self._get_net_stats()
+        if self.net_no > ( len (self.net_list) - 1):
+            self.net_no = 0
+            
+        # Memory
         mem = self._get_mem_info()
-        now = time.time()  
+        now = time.time()
 
         '''
         CPU
@@ -121,11 +153,21 @@ class G15SysMon():
         self.cpu = 0
         if self.last_time_list != None:
             working_list = list(this_time_list)
+            
+            ''' Work out the number of if time units the CPU has spent on each task type since the last
+            time we checked
+            '''
             for i in range(len(self.last_time_list))  :
                 working_list[i] -= self.last_time_list[i]
+                
+            '''
+            Worked out what percentage of the time the CPU was not 'idle' (the last element in the list)
+            '''
             sum_l = sum(working_list)
+            val = working_list[len(working_list)- 1]
             if sum_l > 0:
-                self.cpu = 100 - (working_list[len(working_list) - 1] * 100.00 / sum_l)
+                self.cpu = 100 - (val  * 100.00 / sum_l)
+                
         self.last_time_list = this_time_list
         
         '''
@@ -134,12 +176,17 @@ class G15SysMon():
      
         self.recv_bps = 0.0
         self.send_bps = 0.0
+
         if self.last_net_list != None:
-            this_total = self._get_net_total(this_net_list)
-            last_total = self._get_net_total(self.last_net_list)
-            
+            time_taken = now - self.last_time        
+            if self.net_no == 0:
+                this_total = self._get_net_total(this_net_list)
+                last_total = self._get_net_total(self.last_net_list)            
+            else:
+                this_total = self._get_net(this_net_list[self.net_list[self.net_no]])
+                last_total = self._get_net(self.last_net_list[self.net_list[self.net_no]])
+                    
             # How many bps
-            time_taken = now - self.last_time
             self.recv_bps = (this_total[0] - last_total[0]) / time_taken
             self.send_bps = (this_total[1] - last_total[1]) / time_taken
             
@@ -206,6 +253,17 @@ class G15SysMon():
         properties["cpu_icon"] = g15util.get_icon_path( [ "utilities-system-monitor", "gnome-cpu-frequency-applet", "computer" ],  self.screen.height)
         properties["mem_icon"] = g15util.get_icon_path( [ "media-memory", "media-flash" ],  self.screen.height)
         
+        try :
+            properties["info"] = socket.gethostname()
+        except :
+            properties["info"] = "System"
+        
+        properties["cpu_no"] = self.cpu_list[self.cpu_no].upper()
+        properties["next_cpu_no"] =  self.cpu_list[self.cpu_no + 1].upper() if self.cpu_no < ( len(self.cpu_list) - 1) else self.cpu_list[0].upper()
+        
+        properties["net_no"] = self.net_list[self.net_no].upper()
+        properties["next_net_no"] =  self.net_list[self.net_no + 1].upper() if self.net_no < ( len(self.net_list) - 1) else self.net_list[0].upper()
+        
         self.properties = properties
         
     def _refresh(self):
@@ -219,19 +277,48 @@ class G15SysMon():
         stat_file.readline()
         stat_file.readline()
         ifs = { }
+        nets = [ "Net" ]
         for if_line in stat_file:
             split = if_line.split()
-            ifs[split[0][:len(split[0]) - 1]] = [ int(split[1]), int(split[9]) ]
+            if_name = split[0][:len(split[0]) - 1]
+            ifs[if_name] = [ int(split[1]), int(split[9]) ]
+            nets.append(if_name)
         stat_file.close()
-        return ifs
+        return ifs, nets        
     
-    def _get_time_list(self):
+    def _get_cpu_list(self):
         stat_file = file("/proc/stat", "r")
-        time_list = stat_file.readline().split(" ")[2:6]
-        stat_file.close()
-        for i in range(len(time_list))  :
-            time_list[i] = int(time_list[i])
-        return time_list
+        try :
+            cpus = []
+            for line in stat_file:
+                if line.startswith("cpu"):
+                    cpus.append(line.split(" ")[0])
+            return cpus
+        finally :
+            stat_file.close()
+    
+    '''
+    Returns a 4 element list containing the amount of time the CPU has 
+    spent performing the different types of work
+    
+    0 user
+    1 nice
+    2 system
+    3 idle
+    
+    Values are in USER_HZ or Jiffies
+    ''' 
+    def _get_time_list(self, cpu):
+        stat_file = file("/proc/stat", "r")
+        try :
+            for line in stat_file:
+                if line.startswith("%s " % cpu):
+                    time_list = shlex.split(line)[1:5]
+                    for i in range(len(time_list))  :
+                        time_list[i] = int(time_list[i])
+                    return time_list
+        finally :
+            stat_file.close()
     
     def _get_net_total(self, list):
         totals = (0, 0)
@@ -241,11 +328,18 @@ class G15SysMon():
             totals = (totals[0], totals[1] + card[1])
         return totals
     
+    def _get_net(self, card):
+        totals = (card[0], card[1])
+        return totals
+    
     def _get_mem_info(self):
         mem = { }
         stat_file = file("/proc/meminfo", "r")
-        for mem_line in stat_file:
-            split = mem_line.split()
-            mem[split[0][:len(split[0]) - 1]] = split[1]
-        stat_file.close()
+        try :
+            for mem_line in stat_file:
+                split = mem_line.split()
+                mem[split[0][:len(split[0]) - 1]] = split[1]
+        finally:
+            stat_file.close()
+            
         return mem

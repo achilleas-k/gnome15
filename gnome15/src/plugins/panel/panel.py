@@ -25,6 +25,7 @@ import gnome15.g15_driver as g15driver
 import gnome15.g15_util as g15util
 import os
 import gtk
+import cairo
 
 # Plugin details - All of these must be provided
 id="panel"
@@ -59,8 +60,6 @@ class G15Panel():
         self.active = False
     
     def activate(self):    
-        if self.screen.driver.get_bpp() == 1:
-            raise Exception("Panel not supported on low-res LCD")
         self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self._config_changed);
         self._set_available_screen_size()
         self.active = True
@@ -89,6 +88,10 @@ class G15Panel():
         self.screen.redraw()
         
     def _set_available_screen_size(self):
+        # Scaling of any sort on the 1 bit display is a bit pointless        
+        if self.screen.driver.get_bpp() == 1:
+            return
+        
         x = 0
         y = 0
         pos = self._get_panel_position()
@@ -112,6 +115,10 @@ class G15Panel():
             self.screen.set_available_size((x, y, self.screen.width - panel_height, self.screen.height))
     
     def _get_panel_size(self):
+        # Panel is fixed size on the 1 bit display        
+        if self.screen.driver.get_bpp() == 1:
+            return 8
+        
         panel_size = self.gconf_client.get_int(self.gconf_key + "/size")
         if panel_size == 0:
             panel_size = 24
@@ -126,55 +133,83 @@ class G15Panel():
     def paint(self, canvas):
         panel_height = self._get_panel_size()
         position = self._get_panel_position()
-            
-        canvas.save()        
         
-#        if position == "bottom":
-#            canvas.translate(0, self.screen.height - panel_height)
-#        elif position == "right":
-#            canvas.translate(self.screen.width - panel_height, 0)
-        
-        # Paint panel background
-            
-        gap = panel_height / 10.0                
-        widget_size = panel_height - ( gap * 2 )
-        canvas.set_source_rgba(*g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/color", ( 128, 128, 128, 128 )) )
-        if position == "top" or position == "bottom":            
-            if position == "bottom":
-                canvas.translate(0, self.screen.height - panel_height)            
-            canvas.rectangle(0, 0, self.screen.width, panel_height)
-            canvas.fill()            
-            for page in self.screen.pages:
-                if page != self.screen.get_visible_page() and page.panel_painter != None:
-                    canvas.translate(gap, gap)
-                    canvas.save()         
-                    canvas.set_source_rgb(*self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 )))
-                    taken_up = page.panel_painter(canvas, widget_size, True)
-                    canvas.restore()        
-                    if taken_up != None:
-                        canvas.translate(taken_up, 0)
-                        canvas.translate(0, -gap)
-                    else:
-                        canvas.translate(-gap, -gap)
+        # Panel is in one position on the 1 bit display     
+        if self.screen.driver.get_bpp() == 1:
+            gap = 1
+            inset = 1
+            widget_size = panel_height
+            bg = None
+            position = "top"
+            align = "end"
         else:
-            if position == "right":
-                canvas.translate(self.screen.width - panel_height, 0)
-            canvas.rectangle(0, 0, panel_height, self.screen.height)
-            canvas.fill()
+            inset = 0
+            align = "start"
+            gap = panel_height / 10.0
+            bg = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/color", ( 128, 128, 128, 128 ))                
+        widget_size = panel_height - ( gap * 2 )
+            
+        # Paint the panel in memory first so it can be aligned easily
+        if position == "top" or position == "bottom":
+            panel_img = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.screen.width, panel_height)
+        else:
+            panel_img = cairo.ImageSurface(cairo.FORMAT_ARGB32, panel_height, self.screen.height)
+        panel_canvas = cairo.Context (panel_img)
+            
+        actual_size = 0
+        if position == "top" or position == "bottom":
+            panel_canvas.translate(0, gap)            
+            for page in self.screen.pages:                
+                if page != self.screen.get_visible_page() and page.panel_painter != None:
+                    if actual_size > 0:
+                        panel_canvas.translate(inset + gap, 0)
+                        actual_size += inset + gap
+                    panel_canvas.save()         
+                    panel_canvas.set_source_rgb(*self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 )))
+                    taken_up = page.panel_painter(panel_canvas, widget_size, True)
+                    panel_canvas.restore()        
+                    if taken_up != None:
+                        panel_canvas.translate(taken_up, 0)
+                        actual_size += taken_up
+        else:
+            panel_canvas.translate(gap, 0)           
             for page in self.screen.pages:
                 if page != self.screen.get_visible_page() and page.panel_painter != None:
-                    canvas.translate(gap, gap)
-                    canvas.save()         
-                    canvas.set_source_rgb(*self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 )))
-                    taken_up = page.panel_painter(canvas, widget_size, False)
-                    canvas.restore()        
+                    if actual_size > 0:
+                        panel_canvas.translate(0, inset + gap)
+                        actual_size += inset + gap
+                    panel_canvas.save()         
+                    panel_canvas.set_source_rgb(*self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 )))
+                    taken_up = page.panel_painter(panel_canvas, widget_size, False)
+                    panel_canvas.restore()        
                     if taken_up != None:
-                        canvas.translate(0, taken_up)
-                        canvas.translate(-gap, 0)
-                    else:
-                        canvas.translate(-gap, -gap)
-                
-            
+                        panel_canvas.translate(0, taken_up)
+                        actual_size += taken_up
+                        
+        # Position the panel
+        canvas.save()
+        
+        if position == "bottom":
+            canvas.translate(0 if align == "start" else self.screen.width - actual_size - gap, self.screen.height - panel_height)
+        elif position == "right":
+            canvas.translate(self.screen.width - panel_height, 0 if align == "start" else self.screen.height - actual_size - gap)
+        elif position == "top":
+            canvas.translate(0 if align == "start" else self.screen.width - actual_size - gap, 0)
+        elif position == "left":
+            canvas.translate(0, 0 if align == "start" else self.screen.height - actual_size - gap)
+        
+        # Paint background
+        if bg != None:
+            canvas.set_source_rgba(*bg)
+            if position == "top" or position == "bottom":
+                canvas.rectangle(0, 0, self.screen.width, panel_height)
+            else:
+                canvas.rectangle(0, 0, panel_height, self.screen.height)
+            canvas.fill()
+               
+        # Now actually paint the panel
+        canvas.set_source_surface(panel_img)
+        canvas.paint()
         canvas.restore()        
         
         if self.chained_painter != None:

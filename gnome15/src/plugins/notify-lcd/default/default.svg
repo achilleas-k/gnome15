@@ -27,15 +27,15 @@
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
      inkscape:cx="60.831916"
-     inkscape:cy="18.608259"
+     inkscape:cy="16.108259"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      borderlayer="false"
      inkscape:window-width="1398"
-     inkscape:window-height="755"
-     inkscape:window-x="2108"
-     inkscape:window-y="144"
+     inkscape:window-height="620"
+     inkscape:window-x="2030"
+     inkscape:window-y="1"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -44,6 +44,22 @@
        visible="true"
        enabled="true"
        snapvisiblegridlinesonly="true" />
+    <sodipodi:guide
+       position="0,0"
+       orientation="0,160"
+       id="guide3016" />
+    <sodipodi:guide
+       position="160,0"
+       orientation="-43,0"
+       id="guide3018" />
+    <sodipodi:guide
+       position="160,43"
+       orientation="0,-160"
+       id="guide3020" />
+    <sodipodi:guide
+       position="0,43"
+       orientation="43,0"
+       id="guide3022" />
   </sodipodi:namedview>
   <metadata
      id="metadata7">
@@ -62,13 +78,6 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,-1009.3622)">
-    <rect
-       style="fill-opacity:1;stroke:none"
-       id="rect2990"
-       width="160"
-       height="9"
-       x="0"
-       y="1009.3622" />
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans;font-stretch:normal;font-variant:normal;writing-mode:lr"
@@ -78,42 +87,90 @@
        sodipodi:linespacing="125%"
        text-rendering="optimizeLegibility" />
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/notify-lcd/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/notify-lcd/default/${icon}"
        xlink:href="${icon}"
-       height="34"
-       width="34"
-       y="1018.3622"
-       x="126"
+       height="29"
+       width="29"
+       y="1019.3622"
+       x="129"
        id="image3051" />
     <rect
        style="fill:#696969;fill-opacity:1;stroke:none"
        id="message"
        width="126"
-       height="34"
+       height="22"
        x="-1.0217938e-07"
-       y="1018.5409"
+       y="1019.3623"
        class="textbox" />
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
-       x="-0.058663368"
-       y="1022.6122"
+       x="-0.49804688"
+       y="1024.1141"
        id="message_text"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3763"
-         x="-0.058663368"
-         y="1022.6122">${body}</tspan></text>
+         x="-0.49804688"
+         y="1024.1141">${body}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="-0.62339568"
-       y="1017.3265"
+       style="font-size:8.00003338px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="0.33593473"
+       y="1016.0575"
        id="text2993"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan2995"
-         x="-0.62339568"
-         y="1017.3265">${title}</tspan></text>
+         x="0.33593473"
+         y="1016.0575">${title}</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 0.5,1018.8622 160,0"
+       id="path3041"
+       inkscape:connector-curvature="0" />
+    <rect
+       class="progress"
+       style="fill-opacity:1;stroke:none"
+       id="remaining_progress"
+       width="160"
+       height="4"
+       x="0"
+       y="1048.3622" />
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="0.41113281"
+       y="1047.2772"
+       id="text3032"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3034"
+         x="0.41113281"
+         y="1047.2772">L2 Clear</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="57.827148"
+       y="1047.2777"
+       id="text3032-4"
+       sodipodi:linespacing="125%"
+       title="del !action"><tspan
+         sodipodi:role="line"
+         id="tspan3034-7"
+         x="57.827148"
+         y="1047.2777">L3 ${action1}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="124.46191"
+       y="1047.2772"
+       id="text3032-4-4"
+       sodipodi:linespacing="125%"
+       title="del !next"><tspan
+         sodipodi:role="line"
+         id="tspan3034-7-4"
+         x="124.46191"
+         y="1047.2772">L4 Next</tspan></text>
   </g>
 </svg>

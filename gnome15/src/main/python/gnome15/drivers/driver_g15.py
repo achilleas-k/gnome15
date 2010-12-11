@@ -146,8 +146,8 @@ class EventReceive(Thread):
         return keys
 
 
-backlight_control = g15driver.Control("keyboard-backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-invert_control = g15driver.Control("invert-lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
+backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
 controls = [ backlight_control, invert_control ]  
 
 g15v1_key_layout = [
@@ -287,7 +287,7 @@ class Driver(g15driver.AbstractDriver):
             pil_img = ImageMath.eval("convert(pil_img,'P')",pil_img=pil_img)
             pil_img = pil_img.point(lambda i: i >= 250,'1')
             
-            invert_control = self.get_control("invert-lcd")
+            invert_control = self.get_control("invert_lcd")
             if invert_control.value == 0:            
                 pil_img = pil_img.point(lambda i: 1^i)
     

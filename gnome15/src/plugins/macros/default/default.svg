@@ -25,17 +25,17 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="3.959798"
-     inkscape:cx="-14.017611"
-     inkscape:cy="6.6849699"
+     inkscape:cx="76.896117"
+     inkscape:cy="20.953375"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="966"
-     inkscape:window-x="0"
-     inkscape:window-y="38"
-     inkscape:window-maximized="1"
+     inkscape:window-width="1267"
+     inkscape:window-height="831"
+     inkscape:window-x="2388"
+     inkscape:window-y="197"
+     inkscape:window-maximized="0"
      inkscape:snap-global="false">
     <inkscape:grid
        type="xygrid"
@@ -74,35 +74,30 @@
          id="tspan3817-3-5-8"
          x="79"
          y="1032.3622">${message}</tspan></text>
-    <rect
-       style="fill:#000000;fill-opacity:1;stroke:#00647e;stroke-width:0.40000001;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:0.52525252;stroke-dasharray:none"
-       id="rect2986"
-       width="160"
-       height="10"
-       x="0"
-       y="1009.3622" />
     <text
        xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="3.5761442"
-       y="1016.9866"
+       style="font-size:8.00004864px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="15.335837"
+       y="1015.7042"
        id="text3756"
-       sodipodi:linespacing="125%"><tspan
+       sodipodi:linespacing="125%"
+       transform="scale(1.000006,0.999994)"><tspan
          sodipodi:role="line"
          id="tspan3758"
-         x="3.5761442"
-         y="1016.9866">${profile}</tspan></text>
+         x="15.335837"
+         y="1015.7042">${profile}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="155.62692"
-       y="1016.9866"
+       style="font-size:7.99998569px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
+       x="0.37500292"
+       y="1015.6338"
        id="text3756-8"
-       sodipodi:linespacing="125%"><tspan
+       sodipodi:linespacing="125%"
+       transform="scale(0.9999982,1.0000018)"><tspan
          sodipodi:role="line"
          id="tspan3758-0"
-         x="155.62692"
-         y="1016.9866">${memory}</tspan></text>
+         x="0.37500292"
+         y="1015.6338">${memory}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
@@ -463,5 +458,10 @@
        x="105.68148"
        y="1041.8622"
        title="del !pressed12" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 0.5,1018.8622 160,0"
+       id="path3041"
+       inkscape:connector-curvature="0" />
   </g>
 </svg>

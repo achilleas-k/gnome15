@@ -25,8 +25,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="7.9195959"
-     inkscape:cx="117.55494"
-     inkscape:cy="27.169287"
+     inkscape:cx="4.6311685"
+     inkscape:cy="30.452283"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -84,7 +84,7 @@
          y="1016.0591">${title}</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 0.5,1018.8622 160,0"
+       d="m 0.5,1017.8622 160,0"
        id="path3041"
        inkscape:connector-curvature="0" />
     <rect
@@ -97,7 +97,8 @@
        rx="6"
        ry="6" />
     <g
-       id="viewScrollbar">
+       id="viewScrollbar"
+       transform="translate(-1,0)">
       <rect
          y="1021.3622"
          x="157"

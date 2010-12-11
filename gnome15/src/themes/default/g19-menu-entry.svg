@@ -15,7 +15,7 @@
    id="svg2"
    version="1.2"
    inkscape:version="0.48.0 r9654"
-   sodipodi:docname="g19-entry.svg"
+   sodipodi:docname="g19-menu-entry.svg"
    style="display:inline">
   <defs
      id="defs4">
@@ -162,6 +162,28 @@
          x="104.54774"
          y="784.11218" />
     </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3820">
+      <rect
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3822"
+         width="175"
+         height="15"
+         x="103.67242"
+         y="786.00006" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3831">
+      <rect
+         style="fill:#ff0000;fill-opacity:1;stroke:none;display:inline"
+         id="rect3833"
+         width="175"
+         height="15"
+         x="103.67242"
+         y="788.00006" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -171,10 +193,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="181.94493"
-     inkscape:cy="16.593634"
+     inkscape:cx="121.40922"
+     inkscape:cy="21.236491"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1-5-7"
+     inkscape:current-layer="layer1-5"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
@@ -229,7 +251,7 @@
        y="798.28217"
        id="text2999-0"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath2999-5)"
+       clip-path="url(#clipPath3831)"
        transform="translate(-54.672419,-8.3652344e-5)"><tspan
          sodipodi:role="line"
          id="tspan3001-7"
@@ -283,7 +305,7 @@
        y="798.28217"
        id="text2999-0-9"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath2999-5-6)"
+       clip-path="url(#clipPath3820)"
        transform="translate(-54.672419,-8.3652344e-5)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-1"

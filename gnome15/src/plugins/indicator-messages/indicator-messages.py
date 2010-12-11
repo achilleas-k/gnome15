@@ -164,11 +164,18 @@ class G15IndicatorMessages():
         
     def _attention_changed(self, attention):
         self.attention = attention
+        
         if self.attention == 1:
-            self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages-new"))
+            if self.screen.driver.get_bpp() == 1:
+                self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
+            else:
+                self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages-new"))
             self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 5.0)
         else:
-            self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages"))
+            if self.screen.driver.get_bpp() == 1:
+                self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
+            else:
+                self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages"))
             self.screen.redraw()
         
     '''
@@ -227,14 +234,13 @@ class G15IndicatorMessages():
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None:
             if self.thumb_icon != None:
-                size = g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+                return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
                 return size
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
         if self.page != None:
             if self.thumb_icon != None and self.attention == 1:
-                size = g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
-                return size
+                return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
 
     def _paint(self, canvas):  
         self.menu.items = self.items

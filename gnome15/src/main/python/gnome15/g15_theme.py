@@ -132,9 +132,9 @@ class Menu(Component):
                 
         if new_base != self.base:
             if new_base < self.base:
-                self.base -=  max(1, ( self.base - new_base ) / 10)
+                self.base -= max(1, int(( self.base - new_base ) / 10))
             else:
-                self.base += max(1, ( new_base - self.base ) / 10)
+                self.base += max(1, int(( new_base - self.base ) / 10))
             g15util.schedule("ScrollTo", 0.05, self.theme.screen.redraw)
         
         canvas.save()
@@ -354,7 +354,7 @@ class G15Theme:
                 value = float(properties[id[:-9]])
                 if value == 0:
                     value = 0.1
-                element.set("width", str((bounds[2] / 100.0) * value))
+                element.set("width", str(int((bounds[2] / 100.0) * value)))
             else:
                 print "WARNING: Found progress element with an ID that doesn't end in _progress"
                 

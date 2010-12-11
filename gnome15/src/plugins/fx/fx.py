@@ -38,8 +38,8 @@ import random
 id="fx"
 name="Special Effect"
 description="This plugin introduces special effects when switching between screens. " \
-  + "Currently 2 main types of effect are provided, a sliding effect (in both directions) " \
-  + "and a fading effect. On a monochrome LCD such as the G15's, the fade appears as more " \
+  + "Currently 3 main types of effect are provided, a sliding effect (in both directions) " \
+  + "a fading effect and a zoom effect . On a monochrome LCD such as the G15's, the fade appears as more " \
   + "of a 'disolve' effect." \
   
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
@@ -56,6 +56,7 @@ def show_preferences(parent, gconf_client, gconf_key):
     dialog = widget_tree.get_object("FxDialog")
     dialog.set_transient_for(parent)    
     g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/transition_effect", "TransitionCombo", "random", widget_tree)
+    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/anim_speed", "AnimationSpeedAdjustment", 5.0, widget_tree)
     dialog.run()
     dialog.hide()
     
@@ -92,8 +93,11 @@ class G15Fx():
         if effect == "":
             effect = "random"
         if effect == "random":
-            effect = effects[int(random.random() * len(effects))]    
-        
+            effect = effects[int(random.random() * len(effects))]
+            
+        # Animation speed
+        speed_entry =  self.gconf_client.get(self.gconf_key + "/anim_speed")
+        speed = 5.0 if speed_entry == None else speed_entry.get_float()
         
         # Don't transition for high priority screens
         if new_page == None or old_page == None or new_page.priority == g15screen.PRI_HIGH:
@@ -114,7 +118,7 @@ class G15Fx():
         img_context = cairo.Context(img_surface)
         if effect == "vertical-scroll":
             # Vertical scroll
-            step = 1 * factor      
+            step = max( int(speed), 1 )      
             if direction == "down":                
                 for i in range(0, self.screen.height, step):
                     img_context.save()
@@ -126,6 +130,7 @@ class G15Fx():
                     img_context.paint()
                     img_context.restore()
                     self.screen.driver.paint(img_surface)
+                    self.anim_delay(speed)
             else:                
                 for i in range(0, self.screen.height, step):
                     img_context.save() 
@@ -137,10 +142,11 @@ class G15Fx():
                     img_context.paint()
                     img_context.restore()
                     self.screen.driver.paint(img_surface)
+                    self.anim_delay(speed)
                 
         elif effect == "horizontal-scroll":    
             # Horizontal scroll
-            step = ( width / height ) * factor
+            step = max( ( width / height ) * speed, 1 )
             if direction == "down":                
                 for i in range(0, self.screen.width, step):
                     img_context.save()
@@ -152,6 +158,7 @@ class G15Fx():
                     img_context.paint()
                     img_context.restore()
                     self.screen.driver.paint(img_surface)
+                    self.anim_delay(speed)
             else:                
                 for i in range(0, self.screen.width, step):
                     img_context.save() 
@@ -163,17 +170,20 @@ class G15Fx():
                     img_context.paint()
                     img_context.restore()
                     self.screen.driver.paint(img_surface)
+                    self.anim_delay(speed)
         elif effect == "fade":
-            step = factor      
+            step = max( int(speed), 1 )
             for i in range(0, 256, step):                
                 img_context.set_source_surface(new_surface)
                 img_context.paint_with_alpha(float(i) / 256.0)                
                 img_context.set_source_surface(old_surface)
                 img_context.paint_with_alpha(1.0 - ( float(i) / 256.0 ) )
                 self.screen.driver.paint(img_surface)
+                self.anim_delay(speed)
         elif effect == "zoom":
-            if direction == "down":                
-                for i in range(1, self.screen.width, factor):
+            step = max( int(speed), 1 )
+            if direction == "down":               
+                for i in range(1, self.screen.width, step):
                     img_context.save()                
                     img_context.set_source_surface(old_surface)
                     img_context.paint() 
@@ -186,6 +196,7 @@ class G15Fx():
                     img_context.paint()               
                     img_context.restore()             
                     self.screen.driver.paint(img_surface)
+                    self.anim_delay(speed)
             else:                
                 for i in range(self.screen.width, 0, factor * -1):
                     img_context.save()             
@@ -200,6 +211,11 @@ class G15Fx():
                     img_context.paint()               
                     img_context.restore()  
                     self.screen.driver.paint(img_surface)
+                    self.anim_delay(speed)
                 
         if self.chained_transition != None:
             self.chained_transition(old_surface, new_surface, old_page, new_page, direction)
+
+    def anim_delay(self, speed):
+        if speed < 1.0:
+            time.sleep( ( 1.0 - speed ) / 50.0 )

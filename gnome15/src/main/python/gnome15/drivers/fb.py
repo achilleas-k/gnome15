@@ -123,7 +123,8 @@ class fb_device():
     
     def get_screen_size(self):
         variable_info = self.get_var_info()
-        return variable_info.xres * variable_info.yres * variable_info.bits_per_pixel / 8
+#        return variable_info.xres * variable_info.yres * variable_info.bits_per_pixel / 8
+        return 1376
     
     def dump(self):
         

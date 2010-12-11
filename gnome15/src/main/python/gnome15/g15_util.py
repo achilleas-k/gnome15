@@ -35,6 +35,7 @@ import traceback
 
 from cStringIO import StringIO
 from jobqueue import JobQueue
+from threading import Thread
 
 '''
 Look for icons locally as well if running from source
@@ -53,7 +54,7 @@ def run_script(script):
 '''
 GConf stuff
 '''
-
+        
 def configure_colorchooser_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, default_alpha = None):
     widget = widget_tree.get_object(widget_id)
     if widget == None:
@@ -165,41 +166,56 @@ def configure_adjustment_from_gconf(gconf_client, gconf_key, widget_id, default_
     adj = widget_tree.get_object(widget_id)
     entry = gconf_client.get(gconf_key)
     if entry != None:
-        adj.set_value(entry.get_int())
+        if isinstance(default_value, int):
+            adj.set_value(entry.get_int())
+        else:
+            adj.set_value(entry.get_float())
     else:
         adj.set_value(default_value)
-    adj.connect("value-changed", adjustment_changed, gconf_key, gconf_client)
+    adj.connect("value-changed", adjustment_changed, gconf_key, gconf_client, isinstance(default_value, int))
     
-def adjustment_changed(adjustment, key, gconf_client):
-    gconf_client.set_int(key, int(adjustment.get_value()))
+def adjustment_changed(adjustment, key, gconf_client, integer = True):
+    if integer:
+        gconf_client.set_int(key, int(adjustment.get_value()))
+    else:
+        gconf_client.set_float(key, adjustment.get_value())
     
 def checkbox_changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
     
-    
-
 '''
 Task scheduler. Tasks may be added to the queue to execute
 after a specified interval. The timer is done by the gobject
 event loop, which then executes the job on a different thread
 '''
-scheduled_tasks = JobQueue(name="ScheduledTasks")
+
+queues = {
+    "default": JobQueue(name="default")
+          }
+
 class GTimer:    
-    def __init__(self, interval, function, *args):
+    def __init__(self, task_queue, interval, function, *args):
         if function == None:
             sys.stderr.write("WARNING: Attempt to run empty job.")
             traceback.print_stack()
             return
+        
+        self.task_queue = task_queue
         self.source = gobject.timeout_add(int(interval * 1000), self.exec_item, function, *args)
         
     def exec_item(self, function, *args):
-        scheduled_tasks.run(function, *args)
+        self.task_queue.run(function, *args)
         
     def cancel(self, *args):
-        gobject.source_remove(self.source)        
-
+        gobject.source_remove(self.source)
+        
 def schedule(name, interval, function, *args):
-    timer = GTimer(interval, function, *args)
+    return queue("default", name, interval, function, *args)
+
+def queue(queue_name, name, interval, function, *args):
+    if not queue_name in queues:
+        queues[queue_name] = JobQueue(name=queue_name)
+    timer = GTimer(queues[queue_name], interval, function, *args)
     return timer
 
 '''

@@ -32,14 +32,16 @@ import cairo
 import re
 import usb
 import fb
+import Image
+import ImageMath
 
 
 # Driver information (used by driver selection UI)
-id="kernel"
-name="Kernel Drivers"
-description="Requires ali123's Logitech Kernel drivers. This method requires no other " + \
+id = "kernel"
+name = "Kernel Drivers"
+description = "Requires ali123's Logitech Kernel drivers. This method requires no other " + \
             "daemons to be running, and works with the G13, G15 and G19 keyboards. " 
-has_preferences=True
+has_preferences = True
 
 # Key layouts
 g15v1_key_layout = [
@@ -49,14 +51,14 @@ g15v1_key_layout = [
                   [ g15driver.G_KEY_G10, g15driver.G_KEY_G11, g15driver.G_KEY_G12 ],
                   [ g15driver.G_KEY_G13, g15driver.G_KEY_G14, g15driver.G_KEY_G15 ],
                   [ g15driver.G_KEY_G16, g15driver.G_KEY_G17, g15driver.G_KEY_G18 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4,  g15driver.G_KEY_L5 ],
+                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4, g15driver.G_KEY_L5 ],
                   [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
                   ]
 
 g15v2_key_layout = [
                   [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
                   [ g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4,  g15driver.G_KEY_L5 ],
+                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4, g15driver.G_KEY_L5 ],
                   [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
                   ]          
 
@@ -65,7 +67,7 @@ g13_key_layout = [
                   [ g15driver.G_KEY_G8, g15driver.G_KEY_G9, g15driver.G_KEY_G10, g15driver.G_KEY_G11, g15driver.G_KEY_G12, g15driver.G_KEY_G13, g15driver.G_KEY_G14 ],
                   [ g15driver.G_KEY_G15, g15driver.G_KEY_G16, g15driver.G_KEY_G17, g15driver.G_KEY_G18, g15driver.G_KEY_G19 ],
                   [ g15driver.G_KEY_G20, g15driver.G_KEY_G21, g15driver.G_KEY_G22 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4,  g15driver.G_KEY_L5 ],
+                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4, g15driver.G_KEY_L5 ],
                   [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
                   ]
 g19_key_layout = [
@@ -108,20 +110,48 @@ g19_key_map = {
                "67" : g15driver.G_KEY_G9,
                "68" : g15driver.G_KEY_G10,
                "87" : g15driver.G_KEY_G11,
-               "88" : g15driver.G_KEY_G12,
+               "88" : g15driver.G_KEY_G12
                }
 
-# Controls
+g15_key_map = {
+               "191" : g15driver.G_KEY_M1,
+               "192" : g15driver.G_KEY_M2,
+               "193" : g15driver.G_KEY_M3,
+               "194" : g15driver.G_KEY_MR,
+               "30" : g15driver.G_KEY_L1,
+               "48" : g15driver.G_KEY_L2,
+               "46" : g15driver.G_KEY_L3,
+               "32" : g15driver.G_KEY_L4,
+               "18" : g15driver.G_KEY_L5,
+               "33" : g15driver.G_KEY_LIGHT,
+               }
 
-g19_keyboard_backlight_control = g15driver.Control("backlight-colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-g19_lcd_brightness_control = g15driver.Control("lcd-brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
-g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND)
-g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
+usb_device_ids = { 
+                  g15driver.MODEL_G19 : (0x046d, 0xc229),
+                  g15driver.MODEL_G15_V1 : (0x046d, 0xc222),
+                  g15driver.MODEL_G13 : (0x046d, 0xc21c),
+                   }
+                  
+# Controls
+led_light_names = {
+                  g15driver.MODEL_G19 : ["orange:m1", "orange:m2", "orange:m3", "red:mr" ],
+                  g15driver.MODEL_G15_V1 : ["orange:m1", "orange:m2", "orange:m3", "blue:mr" ],
+                  g15driver.MODEL_G13 : ["red:m1", "red:m2", "red:m3", "blue:mr" ],
+                   }
+            
+
+g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint=g15driver.HINT_SHADEABLE)
+g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint=g15driver.HINT_FOREGROUND)
+g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint=g15driver.HINT_BACKGROUND)
 g19_controls = [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control]
 
-g15_backlight_control = g15driver.Control("keyboard-backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-g15_invert_control = g15driver.Control("invert-lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
-g15_controls = [ g15_backlight_control, g15_invert_control ]  
+g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 0, 0, 2, hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+#g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 0, 0, 1, hint=g15driver.HINT_SWITCH)
+g15_lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 48, hint=g15driver.HINT_SHADEABLE)
+g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint=g15driver.HINT_SWITCH)
+g15_controls = [ g15_backlight_control, g15_invert_control, g15_lcd_backlight_control, g15_lcd_contrast_control ]  
 
 # Other constants
 EVIOCGRAB = 0x40044590
@@ -133,11 +163,12 @@ def show_preferences(parent, gconf_client):
     dialog.set_transient_for(parent)  
     device_model = widget_tree.get_object("DeviceModel")
     device_model.clear()
+    device_model.append(["auto"])
     for dir in os.listdir("/dev"):
         if dir.startswith("fb"):
             device_model.append(["/dev/" + dir])    
-    g15util.configure_combo_from_gconf(gconf_client,"/apps/gnome15/fb_device", "DeviceCombo", "/dev/fb0", widget_tree)
-    g15util.configure_combo_from_gconf(gconf_client,"/apps/gnome15/fb_mode", "ModeCombo", "auto", widget_tree)
+    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/fb_device", "DeviceCombo", "/dev/fb0", widget_tree)
+    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/fb_mode", "ModeCombo", "auto", widget_tree)
     dialog.run()
     dialog.hide()
     
@@ -151,7 +182,6 @@ class KeyboardReceiveThread(Thread):
         
     def deactivate(self):
         self._run = False
-        print "Ungrabbing keys"
         for dev in self.devices:
             try :
                 fcntl.ioctl(dev.fileno(), EVIOCGRAB, 0)
@@ -162,14 +192,12 @@ class KeyboardReceiveThread(Thread):
     def run(self):        
         poll = select.poll()
         self.fds = {}
-        print "Grabbing keys"
         for dev in self.devices:
             poll.register(dev, select.POLLIN | select.POLLPRI)
             fcntl.ioctl(dev.fileno(), EVIOCGRAB, 1)
             self.fds[dev.fileno()] = dev
-        print "Waiting for key events"
         while self._run:
-            for x,e in poll.poll():
+            for x, e in poll.poll():
                 dev = self.fds[x]
                 dev.read()
 
@@ -223,7 +251,7 @@ class ForwardDevice(SimpleDevice):
 
 class Driver(g15driver.AbstractDriver):
 
-    def __init__(self, on_close = None):
+    def __init__(self, on_close=None):
         g15driver.AbstractDriver.__init__(self, "kernel")
         self.fb = None
         self.on_close = on_close
@@ -272,7 +300,7 @@ class Driver(g15driver.AbstractDriver):
     def get_zoomed_size(self):
         size = self.get_size()
         zoom = self.get_zoom()
-        return ( size[0] * zoom, size[1] * zoom )
+        return (size[0] * zoom, size[1] * zoom)
         
     def get_zoom(self):
         if self.mode == g15driver.MODEL_G19:
@@ -282,26 +310,33 @@ class Driver(g15driver.AbstractDriver):
         
     def connect(self):
         if self.is_connected():
-            raise Exception("Already connected")      
+            raise Exception("Already connected")
         self.notify_h = self.conf_client.notify_add("/apps/gnome15/fb_mode", self._mode_changed);
+        
+        # Check hardware again
         self._init_driver()
-         
-        self.device_name = self.conf_client.get_string("/apps/gnome15/fb_device")
-        if self.device_name == None or self.device_name == "":
-            self.device_name = "/dev/fb0"
-        self.device_name = "/dev/fb1"
-        print "Opening",self.device_name
+
+        # Sanity check        
+        if self.mode == "":
+            raise usb.USBError("No supported logitech keyboards found on USB bus")
+        if self.device == None:
+            raise usb.USBError("WARNING: Found no " + self.model + " Logitech keyboard, Giving up")
+        if self.fb_mode == None or self.device_name == None:
+            raise usb.USBError("No matching framebuffer device found")
+        if self.fb_mode != self.framebuffer_mode:
+            raise usb.USBError("Unexpected framebuffer mode %s, expected %s" % (self.fb_mode, self.framebuffer_mode))
+        
+        # Open framebuffer
+        print "Using framebuffer",self.device_name
         self.fb = fb.fb_device(self.device_name)
-        print "Opened",self.device_name
-        self.fb.dump() 
+        self.fb.dump()
         self.var_info = self.fb.get_var_info()
-        print "Screen bytes: " + str( self.fb.get_screen_size())    
         
     def get_name(self):
         return "Linux Kernel Driver"
         
     def get_size(self):
-        return ( self.var_info.xres, self.var_info.yres )
+        return (self.var_info.xres, self.var_info.yres)
         
     def get_bpp(self):
         return self.var_info.bits_per_pixel
@@ -313,53 +348,117 @@ class Driver(g15driver.AbstractDriver):
         
         width = img.get_width()
         height = img.get_height()
-
-        try:
-            back_surface = cairo.ImageSurface (4, width, height)
-        except:
-            # Earlier version of Cairo
-            back_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
-        back_context = cairo.Context (back_surface)
-        back_context.set_source_surface(img, 0, 0)
-        back_context.set_operator (cairo.OPERATOR_SOURCE);
-        back_context.paint()
         
-        if back_surface.get_format() == cairo.FORMAT_ARGB32:
-            file_str = StringIO()
-            data = back_surface.get_data()
-            for i in range(0, len(data), 4):
-                r = ord(data[i + 2])
-                g = ord(data[i + 1])
-                b = ord(data[i + 0])
-                file_str.write(self.rgb_to_uint16(r, g, b))                
-            buf = file_str.getvalue()
-        else:   
-            buf = str(back_surface.get_data())
+        if self.get_model_name() == g15driver.MODEL_G19:
+            try:
+                back_surface = cairo.ImageSurface (4, width, height)
+            except:
+                # Earlier version of Cairo
+                back_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
+            back_context = cairo.Context (back_surface)
+            back_context.set_source_surface(img, 0, 0)
+            back_context.set_operator (cairo.OPERATOR_SOURCE);
+            back_context.paint()
+                
+            if back_surface.get_format() == cairo.FORMAT_ARGB32:
+                file_str = StringIO()
+                data = back_surface.get_data()
+                for i in range(0, len(data), 4):
+                    r = ord(data[i + 2])
+                    g = ord(data[i + 1])
+                    b = ord(data[i + 0])
+                    file_str.write(self.rgb_to_uint16(r, g, b))                
+                buf = file_str.getvalue()
+            else:   
+                buf = str(back_surface.get_data())
+        else:
+            size = self.get_size()
+            
+            argb_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, size[0], size[1])
+            argb_context = cairo.Context(argb_surface)
+            argb_context.set_source_surface(img)
+            argb_context.paint()
+            
+            # Now convert the ARGB to a PIL image so it can be converted to a 1 bit monochrome image, with all
+            # colours dithered. It would be nice if Cairo could do this :( Any suggestions? 
+            pil_img = Image.frombuffer("RGBA", size, argb_surface.get_data(), "raw", "RGBA", 0, 1)
+            pil_img = ImageMath.eval("convert(pil_img,'1')",pil_img=pil_img)
+            pil_img = ImageMath.eval("convert(pil_img,'P')",pil_img=pil_img)
+            pil_img = pil_img.point(lambda i: i >= 250,'1')
+            
+            if g15_invert_control.value == 0:            
+                pil_img = pil_img.point(lambda i: 1^i)
+#            pil_img = pil_img.convert("L")
+                
+#            data = list(pil_img.getdata())
+#            data_len = len(data)
+#            print "Data",data_len,data
+#            buf = ""
+#            for x in range(0, data_len, 8):
+#                v = 0
+#                i = 128 
+#                for y in range(x + 7, -1, -1):
+#                    j = data[y]
+#                    v += i if j == 1 else 0
+#                    i /= 2                    
+#                buf += chr(v)
+#            buf = str(pil_img.getdata())
 
-        self.fb.buffer[0:] = buf
+            buf = ""
+#            for x in range(0, len(self.fb.buffer)):
+#                if x < 100: 
+#                    buf += chr(255)
+#                else:
+#                    buf += chr(0)
+                   
+            l = len(self.fb.buffer)
+            for x in range(0, l - 1):
+                buf += chr(255)
+#                if x < l / 2: 
+#                    buf += chr(85)
+#                else: 
+#                    buf += chr(170)
+
+#        print "Buffer len",len(buf),"expect",len(self.fb.buffer)
+        self.fb.buffer[0:len(buf)] = buf
             
     def process_svg(self, document):  
         if self.get_bpp() == 1:
             for element in document.getroot().iter():
                 style = element.get("style")
                 if style != None:
-                    element.set("style", style.replace("font-family:Sans","font-family:Fixed"))
+                    element.set("style", style.replace("font-family:Sans", "font-family:Fixed"))
                     
     def update_control(self, control):
         if control == g19_keyboard_backlight_control:
             self._write_to_led("red:bl", control.value[0])
             self._write_to_led("green:bl", control.value[1])
-            self._write_to_led("blue:bl", control.value[2])
+            self._write_to_led("blue:bl", control.value[2])            
+        elif control == g15_backlight_control:
+            self._write_to_led("blue:keys", control.value)          
+        elif control == g15_lcd_backlight_control:
+            self._write_to_led("white:screen", control.value)          
+        elif control == g15_lcd_contrast_control:
+            self._write_to_led("contrast:screen", control.value)
+        elif control == g15_invert_control:
+            pass
+        else:
+            print "WARNING: Setting the control " + control.id + " is not yet supported on this model. " + \
+            "Please report this as a bug, providing the contents of your /sys/class/led" + \
+            "directory and the keyboard model you use."
     
     def set_mkey_lights(self, lights):
-        self.lights = lights      
-        if self.mode == g15driver.MODEL_G19:  
-            self._write_to_led("orange:m1", lights & g15driver.MKEY_LIGHT_1 != 0)        
-            self._write_to_led("orange:m2", lights & g15driver.MKEY_LIGHT_2 != 0)        
-            self._write_to_led("orange:m3", lights & g15driver.MKEY_LIGHT_3 != 0)        
-            self._write_to_led("red:mr", lights & g15driver.MKEY_LIGHT_MR != 0)
+        self.lights = lights
+        if self.mode in led_light_names:
+            leds = led_light_names[self.mode] 
+            self._write_to_led(leds[0], lights & g15driver.MKEY_LIGHT_1 != 0)        
+            self._write_to_led(leds[1], lights & g15driver.MKEY_LIGHT_2 != 0)        
+            self._write_to_led(leds[2], lights & g15driver.MKEY_LIGHT_3 != 0)        
+            self._write_to_led(leds[3], lights & g15driver.MKEY_LIGHT_MR != 0)
         else:
-            print "WARNING: Setting MKey lights on keyboards other than G19 not yet supported."
+            print "WARNING: Setting MKey lights on " + self.mode + " not yet supported. " + \
+            "Please report this as a bug, providing the contents of your /sys/class/led" + \
+            "directory and the keyboard model you use."
     
     def grab_keyboard(self, callback):
         if self.key_thread != None:
@@ -379,7 +478,8 @@ class Driver(g15driver.AbstractDriver):
             self.key_thread = None
     
     def _write_to_led(self, name, value):
-        path = self.led_path_prefix + name + "/brightness"
+        print "Writing",value,"to LED",name
+        path = self.led_path_prefix[0] + "/" + self.led_path_prefix[1] + name + "/brightness"
         try :
             file = open(path, "w")
             try :
@@ -387,7 +487,8 @@ class Driver(g15driver.AbstractDriver):
             finally :
                 file.close()            
         except IOError:
-            print "WARNING: Failed to write to LED device. This is probably a permissions problem. Check that %s is writable by your user." % path
+            # Fallback to lgsetled
+            os.system("lgsetled -s -f %s %d" % (self.led_path_prefix[1] + name, value))
 
     @staticmethod
     def _find_device(idVendor, idProduct):
@@ -411,40 +512,47 @@ class Driver(g15driver.AbstractDriver):
     def _init_driver(self):      
         self.mode = self.conf_client.get_string("/apps/gnome15/fb_mode")
         if self.mode == None or self.mode == "" or self.mode == "auto":
-            device = self._find_device(0x046d, 0xc229)
-            print "Looking for G19"
-            if not device:
-                print "No recognised devices, G19 giving up"
-                raise usb.USBError("No logitech keyboards found on USB bus")
-            else:
-                self.mode = g15driver.MODEL_G19
+            self.mode = ""
+            for model in usb_device_ids:
+                id = usb_device_ids[model]
+                self.device = self._find_device(id[0], id[1])
+                if self.device:
+                    self.mode = model
+                    break
+                    
+        else:
+            id = usb_device_ids[self.mode]
+            self.device = self._find_device(id[0], id[1])
         
         self.key_map = None
         if self.mode == g15driver.MODEL_G15_V1 or self.mode == g15driver.MODEL_G15_V2 or self.mode == g15driver.MODEL_G13:
-            self.controls = g15_controls
+            self.framebuffer_mode = "GFB_MONO"
+            self.controls = g15_controls        
             if self.mode == g15driver.MODEL_G15_V1:
+                led_prefix = "g15"
+                keydev_pattern = "G15_Keyboard_G15.*if*"
                 self.key_layout = g15v1_key_layout
+                self.key_map = g15_key_map      
             elif self.mode == g15driver.MODEL_G15_V2:
+                led_prefix = "g15"
                 self.key_layout = g15v2_key_layout
             elif self.mode == g15driver.MODEL_G13:
+                led_prefix = "g13"
                 self.key_layout = g13_key_layout
-        else:            
+        else:         
+            led_prefix = "g19"
+            self.framebuffer_mode = "GFB_QVGA"   
             self.controls = g19_controls
             self.key_layout = g19_key_layout
-            self.key_map = g19_key_map
-            
-        keydev_pattern = "Logitech_" + self.mode.upper() + "_Gaming_Keyboard"
+            self.key_map = g19_key_map            
+            keydev_pattern = "Logitech_G19_Gaming_Keyboard.*if*"
             
         # Try and find the paths for the LED devices.
-        # Note :-
-        # 1) 'mode' might not be the right thing to use here. Need to check what the prefix is for other devices
-        # 2) I am told these files may be in different places on different kernels / distros
-        # 3) Currently permissions are likely to be wrong and must be manually adjusted         
-        self.led_path_prefix = self._find_led_path_prefix(self.mode)
+        # Note, I am told these files may be in different places on different kernels / distros. Will
+        # just have to see how it goes for now
+        self.led_path_prefix = self._find_led_path_prefix(led_prefix)
         if self.led_path_prefix == None:
             print "WARNING: Could not find control files for LED lights. Some features won't work"
-        else:
-            print "Control files for LED lights are prefixed with " + self.led_path_prefix
             
         # Try and find the paths for the keyboard devices
         self.keyboard_devices = []
@@ -452,14 +560,38 @@ class Driver(g15driver.AbstractDriver):
         for p in os.listdir(dir):
             if re.search(keydev_pattern, p):
                 self.keyboard_devices.append(dir + "/" + p)
-        print "Keyboard devices =",self.keyboard_devices
+                
+        # Determine the framebuffer device to use
+        self.device_name = self.conf_client.get_string("/apps/gnome15/fb_device")
+        self.fb_mode = None
+        if self.device_name == None or self.device_name == "" or self.device_name == "auto":
+            for fb in os.listdir("/sys/class/graphics"):
+                if fb != "fbcon":
+                    f = open("/sys/class/graphics/" + fb + "/name", "r")
+                    try :
+                        fb_mode = f.readline().replace("\n", "")
+                        if fb_mode == self.framebuffer_mode:
+                            self.fb_mode = fb_mode
+                            self.device_name = "/dev/" + fb
+                            break
+                    finally :
+                        f.close() 
+        else:
+            f = open("/sys/class/graphics/" + os.path.basename(self.device_name) + "/name", "r")
+            try :
+                self.fb_mode = f.readline()
+            finally :
+                f.close()
+        
                         
     def _find_led_path_prefix(self, led_model):
         if led_model != None:
-            for dir in ["/sys/class/leds" ]: 
-                for p in os.listdir(dir):
-                    if p.startswith(led_model + "_"):
-                        number = p.split("_")[1].split(":")[0]
-                        return dir + "/" + led_model + "_" + number + ":"
+            if os.path.exists("/sys/class/leds"):
+                for dir in ["/sys/class/leds" ]: 
+                    if os.path.isdir(dir):
+                        for p in os.listdir(dir):
+                            if p.startswith(led_model + "_"):
+                                number = p.split("_")[1].split(":")[0]
+                                return (dir, led_model + "_" + number + ":")
                 
         

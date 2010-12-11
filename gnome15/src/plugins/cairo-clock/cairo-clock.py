@@ -238,7 +238,7 @@ class G15CairoClock():
             
         time = datetime.datetime.now().strftime(time_format)
         
-        drawing_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, clock_width, clock_height)
+        drawing_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, int(clock_width), int(clock_height))
         drawing_context = cairo.Context(drawing_surface)
         
         # Below hands          

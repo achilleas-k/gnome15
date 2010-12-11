@@ -175,6 +175,7 @@ class G15ScreenSaver():
     def paint(self, canvas):
         
         properties = {}
+        properties["title"] = "Workstation Locked"
         properties["message"] = self.gconf_client.get_string(self.gconf_key + "/message_text")
         properties["icon"] = g15util.get_icon_path("sleep", self.screen.height)
         

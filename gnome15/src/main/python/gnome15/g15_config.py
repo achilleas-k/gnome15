@@ -49,6 +49,7 @@ class G15Config:
         self.parent_window = parent_window
         
         self.notify_handles = []
+        self.control_notify_handles = []
         self.plugin_key = "/apps/gnome15/plugins"
         self.selected_id = None
         self.service = service
@@ -97,73 +98,14 @@ class G15Config:
         self.plugin_enabled_renderer.connect("toggled", self.toggle_plugin)
         self.widget_tree.get_object("PreferencesButton").connect("clicked", self.show_preferences)
         self.widget_tree.get_object("DriverButton").connect("clicked", self.show_setup)
-                
-        # Driver. We only need this to get the controls. Perhaps they should be moved out of the driver
-        # class and the values stored separately
-        self.driver = g15drivermanager.get_driver(self.conf_client)
         
-        # Controls
-        self.controls = self.widget_tree.get_object("ControlsBox")
-        driver_controls = self.driver.get_controls()
-        table = gtk.Table(rows = len(driver_controls), columns = 2)
-        table.set_row_spacings(4)
-        row = 0
-        for control in driver_controls:
-            val = control.value
-            if isinstance(val, int):  
-                if control.hint & g15driver.HINT_SWITCH != 0:
-                    check_button = gtk.CheckButton(control.name)
-                    check_button.show()
-                    table.attach(check_button, 0, 2, row, row + 1);                
-                    check_button.connect("toggled", self.control_changed, control)
-                    self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed, [ control, check_button ]));
-                else:                
-                    label = gtk.Label(control.name)
-                    label.show()
-                    table.attach(label, 0, 1, row, row + 1);
-                    
-                    hscale = gtk.HScale()
-                    hscale.set_digits(0)
-                    hscale.set_range(control.lower,control.upper)
-                    hscale.set_value(control.value)
-                    hscale.connect("value-changed", self.control_changed, control)
-                    hscale.show()
-                    
-                    table.attach(hscale, 1, 2, row, row + 1);                
-                    self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed, [ control, hscale ]);
-            else:  
-                label = gtk.Label(control.name)
-                label.show()
-                table.attach(label, 0, 1, row, row + 1);
-                
-                hbox = gtk.HBox()
-                for i in [(0, 0, 0), (255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255) ]:
-                    button = gtk.Button(" ")
-                    button.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(i[0] <<8,i[1]  <<8,i[2]  <<8))
-                    button.modify_bg(gtk.STATE_PRELIGHT, gtk.gdk.Color(i[0] <<8,i[1]  <<8,i[2]  <<8))
-                    button.connect("clicked", self.color_changed, control, i)
-                    hbox.pack_start(button, False, False, 4)
-                    button.show()
-                color_button = gtk.ColorButton()
-                
-                color_button.connect("color-set", self.color_changed, control, None)
-                color_button.show()
-                color_button.set_color(self.to_color(control.value))
-                hbox.add(color_button)
-                self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed, [ control, color_button]);
-                
-                hbox.show()
-                table.attach(hbox, 1, 2, row, row + 1);
-                
-            row += 1
-            
-        self.controls.add(table)
-        self.main_window.show_all() 
+        # Add the custom controls
+        self._add_controls()
         
         # Populate model and configure other components
         self.load_model()
-        self.set_cycle_screens_value_from_configuration()
         self.set_cycle_seconds_value_from_configuration()
+        self.set_cycle_screens_value_from_configuration()
         
         # See if the Gnome15 service is running
         self.infobar = gtk.InfoBar()       
@@ -285,6 +227,7 @@ class G15Config:
     def show_setup(self, widget):        
         setup = g15setup.G15Setup(None, False, False)
         setup.setup()
+        self._add_controls()
     
     def show_preferences(self, widget):
         plugin = self.get_selected_plugin()
@@ -390,3 +333,106 @@ class G15Config:
         self.id = None                
         self.main_window.run()
         self.main_window.hide()
+        
+    def create_color_icon(self, color):
+        draw = gtk.Image()
+        pixmap = gtk.gdk.Pixmap(None, 16, 16, 24)
+        cr = pixmap.cairo_create()
+        cr.set_source_rgb(float(color[0]) / 255.0, float(color[1]) / 255.0, float(color[2]) / 255.0)
+        cr.rectangle(0, 0, 16, 16)
+        cr.fill()
+        draw.set_from_pixmap(pixmap, None)
+        return draw
+        
+    def _add_controls(self):
+                
+        # Remove previous notify handles
+        for nh in self.control_notify_handles:
+            self.conf_client.notify_remove(nh)            
+        
+        # Driver. We only need this to get the controls. Perhaps they should be moved out of the driver
+        # class and the values stored separately
+        self.driver = g15drivermanager.get_driver(self.conf_client)
+        
+        # Controls
+        driver_controls = self.driver.get_controls()
+        
+        # Slider and Color controls
+        controls = self.widget_tree.get_object("ControlsBox")
+        for c in controls.get_children():
+            controls.remove(c)            
+        table = gtk.Table(rows = len(driver_controls), columns = 2)
+        table.set_row_spacings(4)
+        row = 0
+        for control in driver_controls:
+            val = control.value
+            if isinstance(val, int):  
+                if control.hint & g15driver.HINT_SWITCH == 0:
+                    label = gtk.Label(control.name)
+                    label.set_alignment(0.0, 0.5)
+                    label.show()
+                    table.attach(label, 0, 1, row, row + 1,  xoptions = gtk.FILL, xpadding = 8, ypadding = 4);
+                    
+                    hscale = gtk.HScale()
+                    hscale.set_value_pos(gtk.POS_RIGHT)
+                    hscale.set_digits(0)
+                    hscale.set_range(control.lower,control.upper)
+                    hscale.set_value(control.value)
+                    hscale.connect("value-changed", self.control_changed, control)
+                    hscale.show()
+                    
+                    table.attach(hscale, 1, 2, row, row + 1, xoptions = gtk.EXPAND | gtk.FILL);                
+                    self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed, [ control, hscale ]);
+            else:  
+                label = gtk.Label(control.name)
+                label.set_alignment(0.0, 0.5)
+                label.show()
+                table.attach(label, 0, 1, row, row + 1,  xoptions = gtk.FILL, xpadding = 8, ypadding = 4);
+                
+                hbox = gtk.Toolbar()
+                hbox.set_style(gtk.TOOLBAR_ICONS)
+                for i in [(0, 0, 0), (255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255) ]:
+                    button = gtk.Button()
+                    button.set_image(self.create_color_icon(i))
+#                    button.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(i[0] <<8,i[1]  <<8,i[2]  <<8))
+#                    button.modify_bg(gtk.STATE_PRELIGHT, gtk.gdk.Color(i[0] <<8,i[1]  <<8,i[2]  <<8))
+                    button.connect("clicked", self.color_changed, control, i)
+                    hbox.add(button)
+                    button.show()
+                color_button = gtk.ColorButton()
+                
+                color_button.connect("color-set", self.color_changed, control, None)
+                color_button.show()
+                color_button.set_color(self.to_color(control.value))
+                hbox.add(color_button)
+                self.control_notify_handles.append(self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed, [ control, color_button]));
+                
+                hbox.show()
+                table.attach(hbox, 1, 2, row, row + 1);
+                
+            row += 1
+        controls.add(table)
+          
+        # Switch controls  
+        controls = self.widget_tree.get_object("SwitchesBox")
+        for c in controls.get_children():
+            controls.remove(c)
+        table.set_row_spacings(4)
+        row = 0
+        for control in driver_controls:
+            val = control.value
+            if isinstance(val, int):  
+                if control.hint & g15driver.HINT_SWITCH != 0:
+                    check_button = gtk.CheckButton(control.name)
+                    check_button.set_alignment(0.0, 0.0)
+                    check_button.show()
+                    controls.pack_start(check_button, False, False, 4)  
+                    check_button.connect("toggled", self.control_changed, control)
+                    self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed, [ control, check_button ]));
+                    row += 1
+        
+        # Show everything
+        self.main_window.show_all()
+        
+        if row == 0:
+            self.widget_tree.get_object("SwitchesFrame").hide() 

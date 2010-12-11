@@ -185,28 +185,47 @@ class G15Clock():
     '''
     Paint the thumbnail. You are given the MAXIMUM amount of space that is allocated for
     the thumbnail, and you must return the amount of space actually take up. Thumbnails
-    can be used for example by the panel plugin, or the menu plugin
+    can be used for example by the panel plugin, or the menu plugin. If you want to
+    support monochrome devices such as the G15, you will have to take into account
+    the amount of space you have (i.e. 6 pixels high maximum and limited width)
     ''' 
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         if not self.screen.is_visible(self.page):
             properties = self._get_properties()
-            font_size = allocated_size
-            if self.display_date:
-                text = "%s\n%s" % ( properties["time"],properties["date"] ) 
-                font_size /= 3
+            # Don't display the date or seconds on mono displays, not enough room as it is
+            if self.screen.driver.get_bpp() == 1:
+                text = properties["time_nosec"]
+                font_size = 8
+                factor = 2
+                font_name = "Fixed"
+                x = 1
+                gap = 1
             else:
-                text = properties["time"]
-                font_size /= 2
-            pango_context, layout = g15util.create_pango_context(canvas, self.screen, text, align = pango.ALIGN_CENTER, font_desc = "Sans", font_absolute_size =  font_size * pango.SCALE / (1 if horizontal else 2))
+                factor = 1 if horizontal else 2
+                font_name = "Sans"
+                if self.display_date:
+                    text = "%s\n%s" % ( properties["time"],properties["date"] ) 
+                    font_size = allocated_size / 3
+                else:
+                    text = properties["time"]
+                    font_size = allocated_size / 2
+                x = 4
+                gap = 8
+                
+            pango_context, layout = g15util.create_pango_context(canvas, self.screen, text, align = pango.ALIGN_CENTER, font_desc = font_name, font_absolute_size =  font_size * pango.SCALE / factor)
             x, y, width, height = g15util.get_extents(layout)
             if horizontal: 
-                pango_context.move_to(4, (allocated_size / 2) - height / 2)
+                if self.screen.driver.get_bpp() == 1:
+                    y = 0
+                else:
+                    y = (allocated_size / 2) - height / 2
+                pango_context.move_to(x, y)
             else:      
                 pango_context.move_to((allocated_size / 2) - width / 2, 0)
             pango_context.update_layout(layout)
             pango_context.show_layout(layout)
             if horizontal:
-                return width + 8
+                return width + gap
             else:
                 return height + 4
     
@@ -290,6 +309,7 @@ class G15Clock():
         the theme
         '''
         time_format = "%H:%M"
+        properties["time_nosec"] = datetime.datetime.now().strftime(time_format)
         if self.display_seconds:
             time_format = "%H:%M:%S"
         properties["time"] = datetime.datetime.now().strftime(time_format)            

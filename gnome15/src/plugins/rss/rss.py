@@ -225,14 +225,14 @@ class G15FeedPage():
     def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_UP and self.screen.get_visible_page() == self.page:
             if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
-                if self.index < 0:
+                if self.index == 0:
                     self.index = len(self.feed.entries) - 1
                 else:
                     self.index -= 1
                 self.selection_changed()
                 return True
             elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
-                if self.index >= len(self.feed.entries):
+                if self.index >= len(self.feed.entries) - 1:
                     self.index = 0
                 else:
                     self.index += 1

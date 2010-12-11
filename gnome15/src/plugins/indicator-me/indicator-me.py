@@ -96,7 +96,7 @@ class G15IndicatorMe():
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None:
-            if self.icon_image != None:
+            if self.icon_image != None and self.screen.driver.get_bpp() != 1:
                 return g15util.paint_thumbnail_image(allocated_size, self.icon_image, canvas)
 
     def _paint(self, canvas):     
