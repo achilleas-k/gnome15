@@ -15,7 +15,7 @@
 				<li>|</li>
 				<li>[Help And Documentation]</li>
 				<li>|</li>
-				<li><a href="g19d.html">G19D</a></li>
+				<li><a href="subprojects.html">Sub-projects</a></li>
 				<li>|</li>
 				<li><a href="https://launchpad.net/gnome15">Project</a></li>
 			</ul>
@@ -35,7 +35,7 @@
 		</div>
 		
 		<div class="clear"></div>
-		<h1>Plugin Gallery</h1>
+		<h1>Plugin Gallery</h1> 
 		<h2>Plugins</h2>
 		<h4>Media Related</h4>
 		<ul>
@@ -48,6 +48,12 @@
 			<li><a href="#wallpaper">Wallpaper</a></li>
 			<li><a href="#panel">Panel</a></li>
 			<li><a href="#fx">Special Effects</a></li>
+		</ul>
+		<h4>You</h4>
+		<ul>
+			<li><a href="#indicator_me">Indicator Me</a></li>
+			<li><a href="#indicator_messages">Indicator Messages</a></li>
+			<li><a href="#lcdbiff">POP3 / IMAP Email Notification</a></li>
 		</ul>
 		<h2>Media Related</h2>
 		<p>Plugins used for Music, Video and other media related functions.</p>
@@ -101,6 +107,8 @@
 				 	<li>Player volume</li>
 				 	<li>Pause state</li>
 				 </ul>
+				 <p>If the <a href="#panel">Panel</a> is available, the album art will also be added as an icon
+				 when playing (G19), or a small Play/Pause icon will be visible (G15).</p> 
 			</div>
 		</div>
 		<hr/>
@@ -183,44 +191,17 @@
 		<hr/>
 		<h2>Appearance and Behaviour</h2>
 		<p>Plugins that change the way Gnome15 looks or acts.</p>
-		<h3><a name="wallpaper">Wallpaper</a></h3>
-		<div class="plugin_main">
-			<div class="plugin_table">
-				<table>
-					<tr>
-						<td class="plugin_label">Models supported:</td>
-						<td class="plugin_detail">G19 (works on G15, but would require specially crafted 2 color images)</td>
-					</tr>
-					<tr>
-						<td class="plugin_label">Keys:</td>
-						<td class="plugin_detail">None supported</td>
-					</tr>
-					<tr>
-						<td class="plugin_label">Download:</td>
-						<td class="plugin_detail">Part of main distribution. See <a href="downloads.html">here</a>.</td>
-					</tr>
-					<tr>
-						<td class="plugin_label">Other requirements:</td>
-						<td class="plugin_detail">None</td>
-					</tr>
-				</table>
-			</div>
-			<div class="plugin_description">
-				 <p>Simple draws an images as the background of every screen. Supports all image formats
-				 supported by GTK.</p>
-			</div>
-		</div>
-		<hr/>
 		<h3><a name="panel">Panel</a></h3>
 		<div class="plugin_main">
 			<div class="plugin_images">
+				<img class="plugin_image" src="panel.png"/>
 				<img class="plugin_image" src="g19-panel.png"/>
 			</div>
 			<div class="plugin_table">
 				<table>
 					<tr>
 						<td class="plugin_label">Models supported:</td>
-						<td class="plugin_detail">G19 only</td>
+						<td class="plugin_detail">G15, G19</td>
 					</tr>
 					<tr>
 						<td class="plugin_label">Keys:</td>
@@ -237,8 +218,17 @@
 				</table>
 			</div>
 			<div class="plugin_description">
-				 <p>Reserves an area of the screen (top, bottom, left or right) that may be used as 
-				 an area for other plugins to place permanently visible information. The panel size
+				<p>Reserves an area of the screen that may be used as 
+				 an area for other plugins to place permanently visible information. There are 
+				 two modes depending on the device being used.</p>
+				 <h4>G15</h4>
+				 <p>Due to the restricted nature of this display, the panel always occupies the upper
+				 right corner of the display, and grows towards the center.</p>
+				 <p>Plugins are allocated a 6 pixel high area to be able to add small icons. Not all
+				 of the plugins will support this display (indicator me for example currently doesn't).</p>
+				 <p>Panel preferences have no effect in this mode.</p> 
+				 <h4>G19</h4>
+				 <p>May reserve any edge of the screen, top, bottom, left or right. The panel size
 				 is configurable, as its background colour and opacity.</p>
 				 <p>Because the space available for content will decrease, the content will be resized
 				 maintaing aspect ratio. This means you will end up with an amount unusable space
@@ -280,15 +270,13 @@
 			</div>
 		</div>
 		<hr/>
-		<h2>You</h2>
-		<p>Plugins that for all things personal to you and your communication with others.</p>
 		<h3><a name="wallpaper">Wallpaper</a></h3>
 		<div class="plugin_main">
 			<div class="plugin_table">
 				<table>
 					<tr>
 						<td class="plugin_label">Models supported:</td>
-						<td class="plugin_detail">G19 (works on G15, but would require specially crafted 2 color images)</td>
+						<td class="plugin_detail">G19, G15 (see below)</td>
 					</tr>
 					<tr>
 						<td class="plugin_label">Keys:</td>
@@ -305,8 +293,135 @@
 				</table>
 			</div>
 			<div class="plugin_description">
-				 <p>Simple draws an images as the background of every screen. Supports all image formats
+				 <p>Simply draws an images as the background of every screen. Supports all image formats
 				 supported by GTK.</p>
+				 <p>While this works on the G15, you are unlikely to get a satisfactory effect with it.</p>
+			</div>
+		</div>
+		<hr/>
+		<h2>You</h2>
+		<p>Plugins that for all things personal to you and your communication with others.</p>
+		<h3><a name="indicator_me">Indicator Me</a></h3>
+		<div class="plugin_main">
+			<div class="plugin_images">
+				<img class="plugin_image_g15" src="indicator-me.png"/>
+				<img class="plugin_image" src="g19-indicator-me.png"/>
+			</div>
+			<div class="plugin_table">
+				<table>
+					<tr>
+						<td class="plugin_label">Models supported:</td>
+						<td class="plugin_detail">G19, G15 (see below)</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Keys:</td>
+						<td class="plugin_detail">None supported</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Download:</td>
+						<td class="plugin_detail">Part of main distribution. See <a href="downloads.html">here</a>.</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Other requirements:</td>
+						<td class="plugin_detail">None</td>
+					</tr>
+				</table>
+			</div>
+			<div class="plugin_description">
+				 <p>Will popup a high priority screen when you presence changes (i.e. Away, Offline, Available etc). 
+				 A permanent icon will also be added to the <a href="#panel">Panel</a> when it is enabled (G19) indicating current status.</p>
+				 <p>This plugin may be expanded in the future to mimic more functions of the desktop Indicator Me
+				 applet, such as changing status and allowing lanching of other applications such as Ubuntu One.</p>
+			</div>
+		</div>
+		<hr/>
+		<h3><a name="lcdbiff">POP3 / IMAP Email Notification</a></h3>
+		<div class="plugin_main">
+			<div class="plugin_images">
+				<img class="plugin_image_g15" src="lcdbiff.png"/>
+				<img class="plugin_image" src="g19-lcdbiff.png"/>
+			</div>
+			<div class="plugin_table">
+				<table>
+					<tr>
+						<td class="plugin_label">Models supported:</td>
+						<td class="plugin_detail">G19, G15 (see below)</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Keys: </td>
+						<td class="plugin_detail">G19 - Up, Down, Ok<br/>G15 - L3 (Up), L4 (Down), L5 (Ok)</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Download:</td>
+						<td class="plugin_detail">Part of main distribution. See <a href="downloads.html">here</a>.</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Other requirements:</td>
+						<td class="plugin_detail">None</td>
+					</tr>
+				</table>
+			</div>
+			<div class="plugin_description">
+				 <p>Intended for use on systems that do no support the <a href="#indicator_messages"/>Indicator Messages</a>
+				 plugin as an alternative to showing your current email status.</p>
+				<p>This plugin provides a screen showing the number of unread emails for each of the configured
+				accounts. This is presented as a menu that may be navigated using the keyboard's
+				special keys. <i>Note, currently selecting an item simply opens the default email client. It 
+				does not select the highlighted account.</i>.</p>
+				<p>The POP3 and IMAP protocols may be used, with SSL support for both. Passwords are
+				stored in the Gnome Keyring, so you will be may be prompted to unlock it. Upon the
+				first connection, you will then be prompted for the email account password, which will then
+				be stored in the keyring if correct.</p>
+				<p>The plugin also adds an icon to the <a href="#panel">Panel</a> if available, showing
+				the current <i>Attention</i> status. If there is an unread message, the icon will change color (G19),
+				or appear (G15).</p>
+			</div>
+		</div>
+		<hr/>
+		<h3><a name="indicator_messages">Indicator Messages</a></h3>
+		<div class="plugin_main">
+			<div class="plugin_images">
+				<img class="plugin_image_g15" src="indicator-messages.png"/>
+				<img class="plugin_image" src="g19-indicator-messages.png"/>
+			</div>
+			<div class="plugin_table">
+				<table>
+					<tr>
+						<td class="plugin_label">Models supported:</td>
+						<td class="plugin_detail">G19, G15 (see below)</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Keys: </td>
+						<td class="plugin_detail">G19 - Up, Down, Ok<br/>G15 - L3 (Up), L4 (Down), L5 (Ok)</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Download:</td>
+						<td class="plugin_detail">Part of main distribution. See <a href="downloads.html">here</a>.</td>
+					</tr>
+					<tr>
+						<td class="plugin_label">Other requirements:</td>
+						<td class="plugin_detail">Distribution that uses the <i>Indicator</i> system, i.e. Ubuntu 10.4 or above.</td>
+					</tr>
+				</table>
+			</div>
+			<div class="plugin_description">
+				 <p>Provides an alternative to the default <a href="https://launchpad.net/indicator-messages">Messaging Menu</a> functionality 
+				 of Ubuntu 10.4 and above. From launchpad summary :-</p>
+				<p><i>A place on the user's desktop that collects messages that
+				need a response. This menu provides a condenced and collected view of
+				all of those messages for quick access, but without making them annoying
+				in times that you want to ignore them.</i></p>
+				<p>This feature is made use of by a number of applications including Gwibber,
+				Evolution, Empathy, Popper Email Notification and others. Anything that might
+				produce messages for you to read.</p>
+				<p>This plugin provides a screen with a menu that may be navigated using the keyboard's
+				special keys. Selecting an item will perform the action specified by the application that
+				created the item, opening a chat window for example.</p>
+				<p>When a new message is received, the plugin will temporarily raise this screen to
+				high priority and automatically scroll to and select the newly arrived item.</p>
+				<p>The plugin also adds an icon to the <a href="#panel">Panel</a> if available, showing
+				the current <i>Attention</i> status. If there is an unread message, the icon will change color (G19),
+				or appear (G15).</p>
 			</div>
 		</div>
 		<hr/>

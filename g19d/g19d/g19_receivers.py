@@ -241,19 +241,18 @@ class G19Receiver(Runnable):
         gotData = False
         processors = self.list_all_input_processors()
 
-        data = self.__g19.read_multimedia_keys()
-        if data:
-            logger.info('MM keys data %s' % len(data))
-            evt = self.__state.packet_received_mm(data)
-            if evt:
-                for proc in processors:
-                    if proc.process_input(evt):
-                        break
-            else:
-                logger.info('MM keys ignored')
-            gotData = True
-        else:            
-            logger.debug('No menu keys pressed')
+        if self.__g19.enable_mm_keys:
+            data = self.__g19.read_multimedia_keys()        
+            if data:
+                logger.info('MM keys data %s' % len(data))
+                evt = self.__state.packet_received_mm(data)
+                if evt:
+                    for proc in processors:
+                        if proc.process_input(evt):
+                            break
+                else:
+                    logger.info('MM keys ignored')
+                gotData = True
 
         data = self.__g19.read_g_and_m_keys()
         if data:
@@ -266,8 +265,6 @@ class G19Receiver(Runnable):
             else:
                 logger.info('G/M keys ignored')
             gotData = True
-        else:            
-            logger.debug('No menu keys pressed')
 
         data = self.__g19.read_display_menu_keys()
         if data:
@@ -280,11 +277,9 @@ class G19Receiver(Runnable):
             else:
                 logger.info('Menu keys ignored')
             gotData = True
-        else:            
-            logger.debug('No menu keys pressed')
 
-#        if not gotData:
-#            time.sleep(0.1)
+        if not gotData:
+            time.sleep(0.05)
 
     def list_all_input_processors(self):
         '''Returns a list of all input processors currently registered to this

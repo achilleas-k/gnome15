@@ -16,7 +16,7 @@
 				<li>|</li>
 				<li>[Help And Documentation]</li>
 				<li>|</li>
-				<li><a href="g19d.html">G19D</a></li>
+				<li><a href="subprojects.html">Sub-projects</a></li>
 				<li>|</li>
 				<li><a href="https://launchpad.net/gnome15">Project</a></li>
 			</ul>
@@ -49,7 +49,7 @@ sudo apt-get update</pre>
 		<pre>sudo apt-get install gnome15</pre>
 		<p>This will install the Gnome15 core and all of its dependencies.</p> 
 		<h3>Drivers</h3>
-		<p>You will also have to install the appropriate driver package for your hardware. Currently 3 drivers
+		<p>You will also have to install the appropriate driver package for your hardware. Currently 4 drivers
 		are available.</p>
 		<h4>G19</h4>
 		<p>The G19 driver uses <a href="g19d.html">g19d</a> to access the keyboard hardware.</p>
@@ -62,8 +62,8 @@ sudo apt-get update</pre>
 			<li>Start the daemon :-
 			<pre>sudo service g19d start</pre></li>
 		</ol>
-		<h4>G15</h4>
-		<p>The G15 driver uses <a href="http://www.g15tools.com/">g15daemon</a> to access the keyboard hardware.</p>
+		<h4>G15, G13 and Z-10</h4>
+		<p>The G15 and variants driver uses <a href="http://www.g15tools.com/">g15daemon</a> to access the keyboard hardware.</p>
 		<pre>sudo apt-get install gnome15-g15d</pre>
 		<p>This will download and install the driver and its dependencies. You will also have to enable the daemon before starting it.</p>
 		<ol>
@@ -77,6 +77,19 @@ sudo apt-get update</pre>
 		<p>The GTK driver is a special development driver that emulates either the G13, G15v1, G15v2 or G19 as
 		a window on your desktop. You can use this to develop plugins and themes for hardware you do not have.</p>
 		<pre>sudo apt-get install gnome15-gtk</pre>
+		<h4>Kernel</h4>
+		<p>The Gnome15 kernel driver is currently in development, and currently requires you patch your Linux kernel
+		for it to work. See <a href="kernel.html">here</a> for more information.</p>
+		<pre>sudo apt-get install gnome15-gtk</pre>
+		<p>There are 
+		<h3>Other Packages</h3>
+		<p>There are some additional packages available that extend Gnome15.</p>
+		<ul>
+			<li>gnome15-impulse15. The <a href="plugins.html#impulse15">Impulse15</a> plugin.</li> 
+			<li>gnome15-accessibility-icons. Adds Gnome15 icons to Accessiblity icon theme.</li> 
+			<li>gnome15-elementary-icons. Adds Gnome15 icons to Elementary icon theme.</li> 
+			<li>gnome15-mono-icons. Adds Gnome15 icons to Ubuntu Mono icon theme.</li>
+		</ul>
 		<h2>Installing From the Source</h2>
 		<p>First make sure you have all of the dependencies installed (these are listed on the <a href="download.html">page</a>). A large number of these should be in
 		your distributions repository. For any that aren't you will have to download and install those from source

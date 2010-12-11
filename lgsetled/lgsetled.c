@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "sgmfh:")) != -1) {
+	while ((c = getopt(argc, argv, "sgmf:")) != -1) {
 		switch (c) {
 		case 's':
 			op = SET;
@@ -35,9 +35,6 @@ int main(int argc, char **argv) {
 			op = GET_MAX;
 			break;
 		case 'f':
-			filename = optarg;
-			break;
-		case 'h':
 			filename = optarg;
 			break;
 		case '?':

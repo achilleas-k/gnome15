@@ -4,6 +4,8 @@ h1, h2, h3, h4 {
 
 body {
 	width: 800px;
+	background-color: white;
+	color: black;
 	margin-left: auto;
 	margin-right: auto;
 	font-family: "Arial";

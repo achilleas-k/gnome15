@@ -29,6 +29,7 @@ import socket
 import base64
 import time
 import os
+import re
 import sys
 import usb
 import signal
@@ -54,12 +55,24 @@ LEVELS = {'debug': logging.DEBUG,
           'critical': logging.CRITICAL}
 
 class Lobby(g19receivers.InputProcessor):
-    def __init__(self, background_image, reset):
+    def __init__(self, options):
         self.clients = set()
-        self.reset = reset
-        self.background_image = background_image
+        self.reset = options.reset
+        self.background_image = options.background_image
         
-        self.lg19 = G19(reset)
+        # Enable UINPUT if multimedia key support is required
+        self.mm_keys = ( options.force_enable_mm_keys or self.is_mm_support_required() ) and not options.force_disable_mm_keys
+        if self.mm_keys:
+            logger.info("Enabling UINPUT multimedia key support")
+            self.device = uinput.Device()
+            self.device.capabilities = {
+                                        uinput.EV_KEY: (uinput.KEY_PLAYPAUSE, uinput.KEY_STOP, uinput.KEY_PREVIOUSSONG,
+                                                        uinput.KEY_NEXTSONG, uinput.KEY_MUTE, uinput.KEY_VOLUMEUP, uinput.KEY_VOLUMEDOWN),
+                                        }
+        else:
+            logger.info("Letting kernel handle multimedia key support")
+        
+        self.lg19 = G19(self.reset, self.mm_keys)
         
         # Show the splash
         self.show_splash()
@@ -67,13 +80,21 @@ class Lobby(g19receivers.InputProcessor):
         # Start listening for keys
         self.lg19.add_input_processor(self)
         self.lg19.start_event_handling()
-        #self.device = uinput.Device()
-        #self.device.capabilities = {
-                                    #uinput.EV_KEY: (uinput.KEY_PLAYPAUSE, uinput.KEY_STOP, uinput.KEY_PREVIOUSSONG,
-                                     #               uinput.KEY_NEXTSONG, uinput.KEY_MUTE, uinput.KEY_VOLUMEUP, uinput.KEY_VOLUMEDOWN),
-                                    #}
-
         
+    def is_mm_support_required(self):
+        keyboard_devices = []
+        dir = "/dev/input/by-id"
+        for p in os.listdir(dir):
+            if re.search("G19_Gaming_Keyboard", p):
+                keyboard_devices.append(dir + "/" + p)
+                
+        if len(keyboard_devices) == 0:
+            logger.info("Found no UINPUT device, will enable multimedia key support if not explicitly disabled")
+            return True
+        else:
+            logger.info("Found UINPUT device, will not enable multimedia key support unless explicitly enabled")
+            return False
+
     def process_input(self, input_event):
             
         keys_down = input_event.keysDown
@@ -81,8 +102,9 @@ class Lobby(g19receivers.InputProcessor):
         
         logger.info("Processing input, keys_down = %d, keys_up = %d" % ( len(keys_down), len(keys_up)))
         
-        keys_down = self.check_mm_key(keys_down, 1)
-        keys_up = self.check_mm_key(keys_up, 0)
+        if self.mm_keys:
+            keys_down = self.check_mm_key(keys_down, 1)
+            keys_up = self.check_mm_key(keys_up, 0)
         
         if len(keys_down) > 0 or len(keys_up) > 0:
             buf = ""   
@@ -106,25 +128,25 @@ class Lobby(g19receivers.InputProcessor):
         keys = list(key_list)
         for k in key_list:
             if k == g19keys.Key.PLAY:
-                #self.device.emit(uinput.EV_KEY, uinput.KEY_PLAYPAUSE, state)
+                self.device.emit(uinput.EV_KEY, uinput.KEY_PLAYPAUSE, state)
                 keys.remove(k)
             if k == g19keys.Key.STOP:
-                #self.device.emit(uinput.EV_KEY, uinput.KEY_STOP, state)
+                self.device.emit(uinput.EV_KEY, uinput.KEY_STOP, state)
                 keys.remove(k)
             if k == g19keys.Key.PREV:
-                #self.device.emit(uinput.EV_KEY, uinput.KEY_PREVIOUSSONG, state)
+                self.device.emit(uinput.EV_KEY, uinput.KEY_PREVIOUSSONG, state)
                 keys.remove(k)
             if k == g19keys.Key.NEXT:
-                #self.device.emit(uinput.EV_KEY, uinput.KEY_NEXTSONG, state)
+                self.device.emit(uinput.EV_KEY, uinput.KEY_NEXTSONG, state)
                 keys.remove(k)
             if k == g19keys.Key.MUTE:
-                #self.device.emit(uinput.EV_KEY, uinput.KEY_MUTE, state)
+                self.device.emit(uinput.EV_KEY, uinput.KEY_MUTE, state)
                 keys.remove(k)
             if k == g19keys.Key.SCROLL_DOWN:
-                #self.device.emit(uinput.EV_KEY, uinput.KEY_VOLUMEDOWN, state)
+                self.device.emit(uinput.EV_KEY, uinput.KEY_VOLUMEDOWN, state)
                 keys.remove(k)
             if k == g19keys.Key.SCROLL_UP:
-                #self.device.emit(uinput.EV_KEY, uinput.KEY_VOLUMEUP, state)
+                self.device.emit(uinput.EV_KEY, uinput.KEY_VOLUMEUP, state)
                 keys.remove(k)
         return keys
         
@@ -249,6 +271,10 @@ if __name__ == '__main__':
         default=False, help="Run daemon in foreground.")
     parser.add_option("-r", "--reset", action="store_true", dest="reset",
         default=False, help="Reset device before intialisation.")
+    parser.add_option("-m", "--mm", action="store_true", dest="force_enable_mm_keys",
+        default=False, help="Force enabling of multimedia key support (default to automatic).")
+    parser.add_option("-d", "--disablemm", action="store_true", dest="force_disable_mm_keys",
+        default=False, help="Force disbling of multimedia key support (default to automatic).")
     parser.add_option("-t", "--test", action="store_true", dest="test",
         default=False, help="Test whether the hardware exists and exit with 0 if it does, otherwise exit with 1.")
     (options, args) = parser.parse_args()
@@ -266,7 +292,7 @@ if __name__ == '__main__':
         logger.setLevel(level = level)
     
     if options.foreground or ( not options.foreground and os.fork() == 0 ):
-        lobby = Lobby(options.background_image, options.reset)
+        lobby = Lobby(options)
         g19d = G19D(options.port)
         g19d.set_lobby(lobby)
         try:

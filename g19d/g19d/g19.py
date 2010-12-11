@@ -5,9 +5,6 @@ import threading
 import time
 import usb
 import Image as Img
-import logging
-
-logger = logging.getLogger()
 
 class G19(object):
     '''Simple access to Logitech G19 features.
@@ -16,9 +13,10 @@ class G19(object):
 
     '''
 
-    def __init__(self, resetOnStart=False):
+    def __init__(self, resetOnStart=False, enable_mm_keys=False):
         '''Initializes and opens the USB device.'''
-        self.__usbDevice = G19UsbController(resetOnStart)
+        self.enable_mm_keys = enable_mm_keys
+        self.__usbDevice = G19UsbController(resetOnStart, enable_mm_keys)
         self.__usbDeviceMutex = threading.Lock()
         self.__keyReceiver = G19Receiver(self)
         self.__threadDisplay = None
@@ -106,10 +104,8 @@ class G19(object):
         self.__usbDeviceMutex.acquire()
         val = []
         try:
-            logger.debug('Reading G/M keys')
             val = list(self.__usbDevice.handleIf1.interruptRead(
                 0x83, maxLen, 10))
-            logger.debug('Read G/M keys')
         except usb.USBError:
             pass
         finally:
@@ -125,9 +121,7 @@ class G19(object):
         self.__usbDeviceMutex.acquire()
         val = []
         try:
-            logger.debug('Reading menu keys')
             val = list(self.__usbDevice.handleIf0.interruptRead(0x81, 2, 10))
-            logger.debug('Read menu keys')
         except usb.USBError:
             pass
         finally:
@@ -140,12 +134,13 @@ class G19(object):
         @return Read data or empty list.
 
         '''
+        if not self.enable_mm_keys:
+            return False
+        
         self.__usbDeviceMutex.acquire()
         val = []
         try:
-            logger.debug('Reading multimedia keys')
             val = list(self.__usbDevice.handleIfMM.interruptRead(0x82, 2, 10))
-            logger.debug('Read multimedia keys')
         except usb.USBError:
             pass
         finally:
@@ -308,7 +303,8 @@ class G19UsbController(object):
 
     '''
 
-    def __init__(self, resetOnStart=False):
+    def __init__(self, resetOnStart=False, enable_mm_keys=False):
+        self.enable_mm_keys = enable_mm_keys
         self.__lcd_device = self._find_device(0x046d, 0xc229)
         if not self.__lcd_device:
             raise usb.USBError("G19 LCD not found on USB bus")
@@ -321,23 +317,13 @@ class G19UsbController(object):
             self.handleIf0 = self.__lcd_device.open()
 
         self.handleIf1 = self.__lcd_device.open()
-        self.handleIfMM = self.__kbd_device.open()
+        
         config = self.__lcd_device.configurations[0]
         iface0 = config.interfaces[0][0]
         iface1 = config.interfaces[1][0]
 
         try:
-            self.handleIfMM.setConfiguration(1)
-        except usb.USBError:
-            pass
-
-        try:
             self.handleIf1.detachKernelDriver(iface1)
-        except usb.USBError:
-            pass
-
-        try:
-            self.handleIfMM.detachKernelDriver(1)
         except usb.USBError:
             pass
 
@@ -345,7 +331,18 @@ class G19UsbController(object):
         self.handleIf1.setConfiguration(1)
         self.handleIf0.claimInterface(iface0)
         self.handleIf1.claimInterface(iface1)
-        self.handleIfMM.claimInterface(1)
+        
+        if self.enable_mm_keys:
+            self.handleIfMM = self.__kbd_device.open()
+            try:
+                self.handleIfMM.setConfiguration(1)
+            except usb.USBError:
+                pass
+            try:
+                self.handleIfMM.detachKernelDriver(1)
+            except usb.USBError:
+                pass
+            self.handleIfMM.claimInterface(1)
 
     @staticmethod
     def _find_device(idVendor, idProduct):
