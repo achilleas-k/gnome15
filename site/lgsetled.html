@@ -1,0 +1,65 @@
+<html>
+	<head>
+		<link href="gnome15.css" rel="stylesheet" type="text/css">
+		<title>Gnome15 - Gnome integration for the Logitech G Keyboards - lgsetled</title>
+	</head>
+	<body>
+		<div id="header">
+			<img src="header.png"/>
+		</div>
+		<div id="toolbar">
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<li>|</li>
+				<li><a href="downloads.html">Downloads</a></li>
+				<li>|</li>
+				<li><a href="docs.html">Help And Documentation</a></li>
+				<li>|</li>
+				<li>[Sub-projects]</li>
+				<li>|</li>
+				<li><a href="https://launchpad.net/gnome15">Project</a></li>
+			</ul>
+		</div>
+		
+		<div id="subtoolbar">
+			<ul>
+				<li><a href="subprojects.html">Summary</a></li>
+				<li>|</li>
+				<li><a href="g19d.html">G19D</a></li>
+				<li>|</li>
+				<li><a href="lgsetled.html">[lgsetled]</a></li>
+				<li>|</li>
+				<li><a href="kernel.html">Kernel Driver</a></li>
+			</ul>
+		</div>
+		
+		<div class="clear"></div>
+		<h1>lgsetled</h1>		
+		<h2>Summary</h2>
+		<p>lgsetled is a small C program whose job it is to set the brightness of various LEDs on Logitech G
+		keyboards managed by the kernel driver. The kernel exposes these lights as files in <i>/sys/class/leds</i>,
+		but they are owned by root. As Gnome15 communicates directly with the keyboard when using the kernel
+		drivers, it must be able to write to these files. For this reason lgsetled must be installed with
+		<b>SETUID</b> permissions.</p>  
+		<h2>Pre-requisites</h2>
+		<div id="prereq">
+			<p>A <a href="kernel.html">patched kernel</a>.
+		</div>
+		<h2>Source</h2>
+		<p>Download the source tarball <a href="lgsetled-0.0.1.tar.gz">lgsetled-0.0.1.tar.gz</a> and follow the usual source package installation
+		procedure.</p>
+			<pre>./configure --prefix=/usr
+make
+sudo make install
+			</pre> 
+		</ol>
+		 
+		<h2>Packages</h2>
+		<p>Ubuntu 10.10 and 10.4 packages are available in the <a href="https://launchpad.net/~tanktarta/+archive/gnome15">Gnome15 PPA</a>. </p>
+		<p>First, add the PPA to your sources. You may do this in a number of ways (Synaptic etc), or from the command line:-</p>
+		<pre>sudo add-apt-repository ppa:tanktarta/gnome15
+sudo apt-get update</pre>
+		<p>Now install lgsetled.</p>
+		<pre>sudo apt-get install lgsetled</pre> 
+	</body>
+</html>

@@ -1,0 +1,131 @@
+<html>
+	<head>
+		<link href="gnome15.css" rel="stylesheet" type="text/css">
+		<title>Gnome15 - Gnome integration for the Logitech G Keyboards - lgsetled</title>
+	</head>
+	<body>
+		<div id="header">
+			<img src="header.png"/>
+		</div>
+		<div id="toolbar">
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<li>|</li>
+				<li><a href="downloads.html">Downloads</a></li>
+				<li>|</li>
+				<li><a href="docs.html">Help And Documentation</a></li>
+				<li>|</li>
+				<li>[Sub-projects]</li>
+				<li>|</li>
+				<li><a href="https://launchpad.net/gnome15">Project</a></li>
+			</ul>
+		</div>
+		
+		<div id="subtoolbar">
+			<ul>
+				<li><a href="subprojects.html">Summary</a></li>
+				<li>|</li>
+				<li><a href="g19d.html">G19D</a></li>
+				<li>|</li>
+				<li><a href="lgsetled.html">lgsetled</a></li>
+				<li>|</li>
+				<li><a href="kernel.html">[Kernel Driver]</a></li>
+			</ul>
+		</div>
+		
+		<div class="clear"></div>
+		<h1>Gnome15 Kernel Driver</h1>		
+		<h2>Summary</h2>
+		<p>This is an effort to make Gnome15 work with ali1234's kernel <a href="http://al.robotfuzz.com/~al/g15/kernel-driver/0001-Logitech-G-series-support.patch">patch</a>.
+		This driver will offer a number of advantages.
+		</p>  
+		<ul>
+			<li>Single unified driver for all Logitech G Keyboards.</li>
+			<li>Gnome15 writes directly to the device, making it a <b>lot</b> faster. To give you an idea of the improvement,
+			the animation delay option had to be added to special effects plugin so you can actually see the effects!</li>
+			<li>No additional daemon need to be running, so again less resources used.</li>  
+		</ul>
+		<p>However, there are some cons too. For one, installation is currently considerably harder as the drivers are
+		not yet part of the main Linux kernel. You could also encounter some permission problems if your system is
+		not configured correctly by the Gnome15 packages.</p>
+		<p><span style="color: red">Note, the Gnome15 kernel driver currently only supports the G19 to a useable state. Support for the 
+		G15 is about half complete. No work has yet been done for the G13.</span>  
+		<h2>Obtaining The Patch</h2> 
+		<p>First off download the patch. There is a copy hosted on this site <a href="lg.patch">here</a> that already
+		has the mail headers stripped from it, or you can download it from the original location <a href="http://al.robotfuzz.com/~al/g15/kernel-driver/0001-Logitech-G-series-support.patch">here</a>.
+		<p>The maintainer off this patch hangs out on <i>#lg4l</i> on <i>irc.freenode.net</i>.
+		<h2>Patching Your Kernel</h2>
+		<p>This is the hard bit! This best way to do this will vary greatly depending on your distribution. You MUST
+		consult your distro's documentation and the internet before continuing. You could easily end up not being 
+		able to boot. You have been warned.</p>
+		<p>The only guidance I can give is a quick run down of what I did on my system to compile the drivers.
+		This was on Ubuntu 10.10 (64 bit).</p> 
+		<p>I followed the Ubuntu <a href="https://help.ubuntu.com/community/Kernel/Compile">Kernel/Compile</a> guide 
+		<b>to the letter</b>. The only deviation was at the section <b>Modify the source for your needs</b>, at 
+		which point I patched the kernel source.</p>
+		<pre>
+cd /usr/src/linux-2.6.35
+patch -p 1 &lt; /home/user/lg.patch
+		</pre> 
+		<p>.. and then continued with guide. Once the new kernel was installed, the system was rebooted.
+		Upon reboot, there were two new modules loaded (hid_g19 and hid_gfb), a new framebuffer device /dev/fb1, new UINPUT devices, and some files
+		in /sys/class/leds. This was on a G19. A G15 didn't seem to automatically load the module, so it 
+		had to be manually loaded :-</p>
+		<pre>
+modprobe hid_g15
+		</pre>
+		<h2>Configuring Permissions</h2>
+		<p>To be able to directly access the keyboard hardware, Gnome15 must have permission to do so. There
+		are 3 main classes of device that must be accessed. The Gnome15 packages try to deal
+		with this for you, but it is worth knowing what happens in case it goes wrong!</p>
+		<h3>The Framebuffer (LCD)</h3>
+		<p>The LCD will be presented as a standard Linux framebuffer device, and so will be availabe as 
+		as a device in <i>/dev/fb<b>X</b></i>, where <b>X</b> is the console number (probably at least 1, 0 will be your
+		console). Gnome15 must be able to write to this device file.</p>
+		<p>On Ubuntu, these devices are set with group of <b>video</b>. Make your user part of the
+		video group (and logout and in again), and Gnome15 will be able to write to the device.</p>  
+		<h3>uinput (The Extra Keys)</h3>
+		<p>The additional keys are handled by the uinput system. The kernel driver will create device files
+		in <i>/dev/input</i> with names of <b>eventX</b> (<b>X</b> could be anything). Gnome15 currently locates 
+		the most likely device by looking at the symlinks <i>/dev/input/by-id</i>. This matching is a bit weak
+		and will probably have to change. If other elements of your keyboard work, but the extra keys
+		don't, it could be because Gnome15 can't find the correct uinput device (look at the log output for
+		clues).</p>
+		<p>The permissions of these files are handled by the udev system. Rules are installed to
+		<i>/lib/udev/rules.d/40-gnome15.rules</i> which will set the group ownership of these files
+		to <b>video</b>, i.e. the same group the framebuffer requires meaning only one group need be
+		set. The are probably arguments against doing this!</p> 
+		<h3>LEDs (Backlight, Contrast etc)</h3> 
+		<p>These are presented as directories in /sys/class/leds. Each of these directories has <i>brightness</i>
+		file that may be written to or read from to set or get the current brightness of the LED. For controls
+		that are color, 3 LED directories will be visible - red, green and blue.</p>
+		<p>The problem with these files is that as part of /sys, they are owned by root. I have found 
+		reference to something also resetting ownership of these files if they are changed as well.</p>
+		<p>To overcome this, the <a href="lgsetled.html">lgsetled</a> tool was created, which runs with
+		SETUID root permission and whose only job is to write to these <i>brightness</i> files. Gnome15
+		then calls this program to change the LED state.</p>
+		<h2>Installing Gnome15 Kernel Driver</h2>
+		<p>The Gnome15 "kernel" driver is part of the core package, so you do not need anything else. 
+		However, this driver has an additional dependency of <b>pyinputevent</b>. To obtain this, you can
+		install from the Gnome15 PPA :-</p>
+		<pre>
+sudo apt-get install pyinputevent
+		</pre>
+		<p>Alternatively, there is a distutils source package available from this site <a href="pyinputevent-0.1.tar.gz">here</a>,
+		or you can obtain it via Git from the original author <a href="https://github.com/rmt/pyinputevent">here</a>.
+		The origins of this library are explained at the <a href="http://blog.corporatism.org/blog/2010/02/">authors blog</a>.</p>
+		<p>If you are building Gnome15 itself from source, make sure you have this dependency installed before
+		running ./configure, or the driver will not be built.</p>
+		<p>If you are installing from the PPA, all that remains is to install the driver package.</p>
+		<pre>
+sudo apt-get install gnome15-kernel
+		</pre>
+		<h2>Configuring Gnome15</h2>
+		<p>All you should need to do in Gnome15 is select the kernel driver. Run <b>g15-config</b> and
+		click the <i>Change Driver</i> button. Choose the <i>Kernel</i> option.</p> 
+		<p>Gnome15 will attempt to automatically detect which keyboard model you, and the number of 
+		the framebuffer device. However, if it gets this wrong or if you have multiple Logitech G 
+		devices plugged in, you can manually choose the model and framebuffer device in the <i>Preferences</i>
+		dialog for this driver.</p>		 
+	</body>
+</html>
