@@ -72,7 +72,7 @@ class Lobby(g19receivers.InputProcessor):
         else:
             logger.info("Letting kernel handle multimedia key support")
         
-        self.lg19 = G19(self.reset, self.mm_keys)
+        self.lg19 = G19(self.reset, self.mm_keys, options.timeout)
         
         # Show the splash
         self.show_splash()
@@ -85,7 +85,7 @@ class Lobby(g19receivers.InputProcessor):
         keyboard_devices = []
         dir = "/dev/input/by-id"
         for p in os.listdir(dir):
-            if re.search("G19_Gaming_Keyboard", p):
+            if re.search("G19_Gaming_Keyboard.*if??", p):
                 keyboard_devices.append(dir + "/" + p)
                 
         if len(keyboard_devices) == 0:
@@ -277,6 +277,8 @@ if __name__ == '__main__':
         default=False, help="Force disbling of multimedia key support (default to automatic).")
     parser.add_option("-t", "--test", action="store_true", dest="test",
         default=False, help="Test whether the hardware exists and exit with 0 if it does, otherwise exit with 1.")
+    parser.add_option("-T", "--timeout", action="store_true", dest="timeout",
+        default=10000, help="Timeout to use for writes to the USB device.")
     (options, args) = parser.parse_args()
     
     if options.test:

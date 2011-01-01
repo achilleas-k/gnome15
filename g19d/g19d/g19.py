@@ -13,9 +13,10 @@ class G19(object):
 
     '''
 
-    def __init__(self, resetOnStart=False, enable_mm_keys=False):
+    def __init__(self, resetOnStart=False, enable_mm_keys=False, write_timeout = 10000):
         '''Initializes and opens the USB device.'''
         self.enable_mm_keys = enable_mm_keys
+        self.__write_timeout = write_timeout
         self.__usbDevice = G19UsbController(resetOnStart, enable_mm_keys)
         self.__usbDeviceMutex = threading.Lock()
         self.__keyReceiver = G19Receiver(self)
@@ -166,7 +167,7 @@ class G19(object):
         self.__usbDeviceMutex.acquire()
         try:
             self.__usbDevice.handleIf1.controlMsg(
-                rtype, 0x09, colorData, 0x308, 0x01, 1000)
+                rtype, 0x09, colorData, 0x308, 0x01, self.__write_timeout)
         finally:
             self.__usbDeviceMutex.release()
 
@@ -194,7 +195,7 @@ class G19(object):
 
         self.__usbDeviceMutex.acquire()
         try:
-            self.__usbDevice.handleIf0.bulkWrite(2, frame, 1000)
+            self.__usbDevice.handleIf0.bulkWrite(2, frame, self.__write_timeout)
         finally:
             self.__usbDeviceMutex.release()
 
@@ -222,7 +223,7 @@ class G19(object):
         self.__usbDeviceMutex.acquire()
         try:
             self.__usbDevice.handleIf1.controlMsg(
-                rtype, 0x09, [5, keys], 0x305, 0x01, 10000)
+                rtype, 0x09, [5, keys], 0x305, 0x01, self.__write_timeout)
         finally:
             self.__usbDeviceMutex.release()
 
@@ -236,25 +237,9 @@ class G19(object):
         rtype = usb.TYPE_VENDOR | usb.RECIP_INTERFACE
         self.__usbDeviceMutex.acquire()
         try:
-            self.__usbDevice.handleIf1.controlMsg(rtype, 0x0a, data, 0x0, 0x0)
+            self.__usbDevice.handleIf1.controlMsg(rtype, 0x0a, data, 0x0, 0x0, self.__write_timeout)
         finally:
             self.__usbDeviceMutex.release()
-
-    def set_display_colorful(self):
-        '''This is an example how to create an image having a green to red
-        transition from left to right and a black to blue from top to bottom.
-
-        '''
-        data = []
-        for i in range(320 * 240 * 2):
-            data.append(0)
-        for x in range(320):
-            for y in range(240):
-                data[2*(x*240+y)] = self.rgb_to_uint16(
-                    255 * x / 320, 255 * (320 - x) / 320, 255 * y / 240) >> 8
-                data[2*(x*240+y)+1] = self.rgb_to_uint16(
-                    255 * x / 320, 255 * (320 - x) / 320, 255 * y / 240) & 0xff
-        self.send_frame(data)
 
     def start_event_handling(self):
         '''Start event processing (aka keyboard driver).

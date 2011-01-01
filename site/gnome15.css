@@ -113,6 +113,21 @@ body {
 	width: 160px;
 }
 
+.distro {
+	clear: both;
+	padding-bottom: 16px;
+}
+
+.distrologo {
+	padding-right: 20px;
+	float: left;
+}
+
+.distrodetails {
+	padding-top: 8px;
+	font-size: small;
+}
+
 .section {
 	margin: 16px;
 }
@@ -124,7 +139,7 @@ body {
 
 .versiontext {
 	padding-top: 2px;
-	font-size: small;
+	font-size: 10px;
 }
 
 .plugin_label {
