@@ -64,6 +64,7 @@ class G15Config:
         self.site_label = self.widget_tree.get_object("SiteLabel")
         self.main_window = self.widget_tree.get_object("MainWindow")
         self.cycle_screens = self.widget_tree.get_object("CycleScreens")
+        self.cycle_screens_options = self.widget_tree.get_object("CycleScreensOptions")
         self.cycle_seconds = self.widget_tree.get_object("CycleAdjustment")
         self.cycle_seconds_widget = self.widget_tree.get_object("CycleSeconds")
         self.plugin_model = self.widget_tree.get_object("PluginModel")
@@ -228,6 +229,7 @@ class G15Config:
         setup = g15setup.G15Setup(None, False, False)
         setup.setup()
         self._add_controls()
+        self.load_model()
     
     def show_preferences(self, widget):
         plugin = self.get_selected_plugin()
@@ -237,10 +239,11 @@ class G15Config:
         self.plugin_model.clear()
         for mod in sorted(g15plugins.imported_plugins, key=lambda key: key.name):
             key = self.plugin_key + "/" + mod.id + "/enabled"
-            enabled = self.conf_client.get_bool(key)
-            self.plugin_model.append([enabled, mod.name, mod.id])
-            if mod.id == self.selected_id:
-                self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(len(self.plugin_model) - 1)))
+            if self.driver.get_model_name() in g15plugins.get_supported_models(mod):
+                enabled = self.conf_client.get_bool(key)
+                self.plugin_model.append([enabled, mod.name, mod.id])
+                if mod.id == self.selected_id:
+                    self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(len(self.plugin_model) - 1)))
         if len(self.plugin_model) > 0 and self.get_selected_plugin() == None:            
             self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(0)))            
             
@@ -272,12 +275,13 @@ class G15Config:
             
     def select_plugin(self, widget):       
         plugin = self.get_selected_plugin()
-        if plugin != None:  
+        if plugin != None:
             self.selected_id = plugin.id
             self.widget_tree.get_object("PluginNameLabel").set_text(plugin.name)
             self.widget_tree.get_object("DescriptionLabel").set_text(plugin.description)
             self.widget_tree.get_object("DescriptionLabel").set_use_markup(True)
             self.widget_tree.get_object("AuthorLabel").set_text(plugin.author)
+            self.widget_tree.get_object("SupportedLabel").set_text(", ".join(g15plugins.get_supported_models(plugin)).upper())
             self.widget_tree.get_object("CopyrightLabel").set_text(plugin.copyright)
             self.widget_tree.get_object("SiteLabel").set_uri(plugin.site)
             self.widget_tree.get_object("SiteLabel").set_label(plugin.site)
@@ -434,5 +438,9 @@ class G15Config:
         # Show everything
         self.main_window.show_all()
         
+        if self.driver.get_bpp() == 0:            
+            self.cycle_screens.hide()
+            self.cycle_screens_options.hide()
+            
         if row == 0:
             self.widget_tree.get_object("SwitchesFrame").hide() 

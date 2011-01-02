@@ -105,12 +105,23 @@ G_KEY_VOL_UP = "vol-up"
 G_KEY_VOL_DOWN = "vol-down"
 
 """
+G110 only
+"""
+G_KEY_MIC_MUTE = "mic-mute"
+G_KEY_HEADPHONES_MUTE = "headphones-mute"
+
+"""
 Models
 """
 MODEL_G15_V1 = "g15v1"
 MODEL_G15_V2 = "g15v2"
 MODEL_G13 = "g13"
 MODEL_G19 = "g19"
+MODEL_G510 = "g510"
+MODEL_G110 = "g110"
+MODEL_Z10 = "z10"
+
+MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G110, MODEL_Z10 ]
 
 HINT_DIMMABLE = 1 << 0
 HINT_SHADEABLE = 1 << 1

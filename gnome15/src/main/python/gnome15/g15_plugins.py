@@ -23,6 +23,7 @@
 import os.path
 import sys
 import g15_globals as pglobals
+import g15_driver as g15driver
 import gconf
 import traceback
 import threading
@@ -62,6 +63,19 @@ def get_module_for_id(id):
     for mod in imported_plugins:
         if mod.id == id:
             return mod
+        
+def get_supported_models(plugin):
+    supported_models = []
+    try:
+        supported_models += plugin.supported_models
+    except:
+        supported_models += g15driver.MODELS
+    try:
+        for p in plugin.unsupported_models:
+            supported_models.remove(p)
+    except:
+        pass        
+    return supported_models
 
 class G15Plugins():
     def __init__(self, screen):
@@ -83,7 +97,6 @@ class G15Plugins():
     def get_plugin(self, id):
         if id in self.module_map:
             return self.module_map[id]
-        
     
     def get_started(self):
         return self.mgr_started
@@ -106,7 +119,8 @@ class G15Plugins():
                 if self.conf_client.get_bool(key):
                     try :
                         instance = self._create_instance(mod, plugin_dir_key)
-                        self.started.append(instance)
+                        if self.screen.applet.driver.get_model_name() in get_supported_models(mod):
+                            self.started.append(instance)
                     except Exception as e:
                         self.conf_client.set_bool(key, False)
                         print "Failed to load plugin %s. %s" % ( mod.id, str(e))                    

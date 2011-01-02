@@ -48,6 +48,7 @@ author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = "Copyright (C)2010 Brett Smith"
 site = "http://localhost"
 has_preferences = False
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10 ]
 
 ''' 
 This simple plugin displays system statistics

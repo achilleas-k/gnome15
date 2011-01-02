@@ -41,6 +41,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith, Ian Halpern"
 site="https://launchpad.net/impulse.bzr"
 has_preferences=True
+unsupported_models = [ g15driver.MODEL_G110 ]
 
 
 def create(gconf_key, gconf_client, screen):

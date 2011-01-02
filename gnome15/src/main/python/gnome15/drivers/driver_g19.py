@@ -31,6 +31,7 @@ from threading import RLock, Thread
 import cairo
 import gnome15.g15_driver as g15driver
 import gnome15.g15_util as g15util
+import gnome15.g15_devices as g15devices
 import socket
 import struct
 import sys
@@ -136,21 +137,6 @@ foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (
 background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
 controls = [ keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control]
 
-# Keyboard layout (mainly for GTK driver)
-key_layout = [
-              [ g15driver.G_KEY_G1, g15driver.G_KEY_G7 ],
-              [ g15driver.G_KEY_G2, g15driver.G_KEY_G8 ],
-              [ g15driver.G_KEY_G3, g15driver.G_KEY_G9 ],
-              [ g15driver.G_KEY_G4, g15driver.G_KEY_G10 ],
-              [ g15driver.G_KEY_G5, g15driver.G_KEY_G11 ],
-              [ g15driver.G_KEY_G6, g15driver.G_KEY_G12 ],
-              [ g15driver.G_KEY_G6, g15driver.G_KEY_G12 ],
-              [ g15driver.G_KEY_UP ],
-              [ g15driver.G_KEY_LEFT, g15driver.G_KEY_OK, g15driver.G_KEY_RIGHT ],
-              [ g15driver.G_KEY_DOWN ],
-              [ g15driver.G_KEY_MENU, g15driver.G_KEY_BACK, g15driver.G_KEY_SETTINGS ],
-              [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ],
-              ]
 
 class Driver(g15driver.AbstractDriver):
 
@@ -163,6 +149,7 @@ class Driver(g15driver.AbstractDriver):
         self.lock = RLock()
         self.remote_port=port
         self.thread = None
+        self._init_driver()
     
     def get_antialias(self):
         return cairo.ANTIALIAS_SUBPIXEL
@@ -171,13 +158,13 @@ class Driver(g15driver.AbstractDriver):
         return (MAX_X, MAX_Y)
         
     def get_bpp(self):
-        return 16
+        return self.device.bpp
     
     def get_controls(self):
         return controls
     
     def get_key_layout(self):
-        return key_layout
+        return self.device.model_name
     
     def process_svg(self, document):
         pass
@@ -193,11 +180,14 @@ class Driver(g15driver.AbstractDriver):
         return [ g15driver.MODEL_G19 ]
     
     def get_model_name(self):
-        return g15driver.MODEL_G19
+        return self.device.model_name
         
     def connect(self):          
         if self.is_connected():
             raise Exception("Already connected")
+        
+        self._init_driver()
+        
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(4.0)
         s.connect((self.remote_host, self.remote_port))
@@ -325,3 +315,8 @@ class Driver(g15driver.AbstractDriver):
             self.write_out("B" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
         elif control == lcd_brightness_control:
             self.write_out("L" + chr(control.value) );
+            
+    def _init_driver(self):        
+        self.device = g15devices.find_device()
+        if self.device == None or self.device.model_name != g15driver.MODEL_G19:
+            raise Exception("Could not find a G19 keyboard")

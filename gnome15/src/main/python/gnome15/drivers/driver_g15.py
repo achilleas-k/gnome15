@@ -37,14 +37,12 @@ import struct
 # Driver information (used by driver selection UI)
 name="G15Daemon"
 id="g15"
-description="For use with the Logitech G15, this driver uses g15daemon, available from " + \
+description="For use with the Logitech G15v1, G15v2, G13, G510 and G110. This driver uses g15daemon, available from " + \
             "<a href=\"http://www.g15tools.com/\">g15tools</a>. The g15deaemon service " + \
-            "must be installed and running when starting Gnome15."
+            "must be installed and running when starting Gnome15. Note, you may have to patch " + \
+            "g15daemon and tools for support for newer models."
 has_preferences=False
 
-
-MAX_X=160
-MAX_Y=43
 
 CLIENT_CMD_KB_BACKLIGHT = 0x08
 CLIENT_CMD_CONTRAST = 0x40
@@ -90,6 +88,21 @@ KEY_MAP = {
         
         g15driver.G_KEY_LIGHT : 1<<27
         }
+
+
+color_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+color_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
+
+controls = {
+  g15driver.MODEL_G15_V1 : [ backlight_control, invert_control ], 
+  g15driver.MODEL_G15_V2 : [ backlight_control, invert_control ],
+  g15driver.MODEL_G13 : [ backlight_control, invert_control ],
+  g15driver.MODEL_G510 : [ color_backlight_control, invert_control ],
+  g15driver.MODEL_Z10 : [ backlight_control, invert_control ],
+  g15driver.MODEL_G110 : [ color_backlight_control ],
+            }   
 
 
 def fix_sans_style(root):
@@ -143,40 +156,7 @@ class EventReceive(Thread):
         for key in self.reverse_map:
             if code & key != 0:
                 keys.append(self.reverse_map[key])
-        return keys
-
-
-backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
-controls = [ backlight_control, invert_control ]  
-
-g15v1_key_layout = [
-                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
-                  [ g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6 ],
-                  [ g15driver.G_KEY_G7, g15driver.G_KEY_G8, g15driver.G_KEY_G9 ],
-                  [ g15driver.G_KEY_G10, g15driver.G_KEY_G11, g15driver.G_KEY_G12 ],
-                  [ g15driver.G_KEY_G13, g15driver.G_KEY_G14, g15driver.G_KEY_G15 ],
-                  [ g15driver.G_KEY_G16, g15driver.G_KEY_G17, g15driver.G_KEY_G18 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4,  g15driver.G_KEY_L5 ],
-                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
-                  ]
-
-g15v2_key_layout = [
-                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
-                  [ g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4,  g15driver.G_KEY_L5 ],
-                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
-                  ]          
-
-g13_key_layout = [
-                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3, g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6, g15driver.G_KEY_G7 ],
-                  [ g15driver.G_KEY_G8, g15driver.G_KEY_G9, g15driver.G_KEY_G10, g15driver.G_KEY_G11, g15driver.G_KEY_G12, g15driver.G_KEY_G13, g15driver.G_KEY_G14 ],
-                  [ g15driver.G_KEY_G15, g15driver.G_KEY_G16, g15driver.G_KEY_G17, g15driver.G_KEY_G18, g15driver.G_KEY_G19 ],
-                  [ g15driver.G_KEY_G20, g15driver.G_KEY_G21, g15driver.G_KEY_G22 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4,  g15driver.G_KEY_L5 ],
-                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
-                  ]          
-          
+        return keys    
 
 class Driver(g15driver.AbstractDriver):
 
@@ -190,21 +170,22 @@ class Driver(g15driver.AbstractDriver):
         self.on_close = on_close
         self.socket = None
         self.connected = False
+        self._init_driver()
         
     def get_size(self):
-        return (MAX_X, MAX_Y)
+        return self.device.lcd_size
         
     def get_bpp(self):
-        return 1
+        return self.device.bpp
     
     def get_controls(self):
-        return controls
+        return controls[self.device.model_name]
     
     def get_antialias(self):
         return cairo.ANTIALIAS_NONE
     
     def get_key_layout(self):
-        return g15v1_key_layout
+        return self.device.key_layout
     
     def update_control(self, control):
         if control == backlight_control: 
@@ -216,10 +197,10 @@ class Driver(g15driver.AbstractDriver):
             self.socket.send(chr(CLIENT_CMD_KB_BACKLIGHT  + level),socket.MSG_OOB)
     
     def get_model_names(self):
-        return [ g15driver.MODEL_G15_V1 ]
+        return [ g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G110, g15driver.MODEL_G510, g15driver.MODEL_G13 ]
     
     def get_model_name(self):
-        return g15driver.MODEL_G15_V1
+        return self.device.model_name
     
     def disconnect(self):
         if not self.is_connected():
@@ -244,6 +225,9 @@ class Driver(g15driver.AbstractDriver):
     def connect(self):
         if self.is_connected():
             raise Exception("Already connected")
+        
+        self._init_driver()
+            
         self.socket  = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(5.0)
         self.socket.connect((self.remote_host, self.remote_port))
@@ -269,8 +253,12 @@ class Driver(g15driver.AbstractDriver):
     def paint(self, img):
         if not self.is_connected():
             return
+        
+        # Just return if the device has no LCD
+        if self.device.bpp == 0:
+            return None
              
-        self.lock.acquire()
+        self.lock.acquire()        
         try :           
             size = self.get_size()
             
@@ -302,3 +290,8 @@ class Driver(g15driver.AbstractDriver):
                 self.socket.sendall(buf)
         finally:
             self.lock.release()
+            
+    def _init_driver(self):        
+        self.device = g15devices.find_device()
+        if self.device == None or not self.device.model_name in self.get_model_names():
+            raise Exception("No device supported by the g15daemon driver could be found.")

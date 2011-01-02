@@ -22,6 +22,7 @@
  
 import gnome15.g15_theme as g15theme
 import gnome15.g15_screen as g15screen
+import gnome15.g15_driver as g15driver
 import os
 
 # Plugin details - All of these must be provided
@@ -32,6 +33,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
 has_preferences=False
+unsupported_models = [ g15driver.MODEL_G110 ]
 
 def create(gconf_key, gconf_client, screen):
     return G15NM(gconf_client, gconf_key, screen)

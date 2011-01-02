@@ -332,6 +332,10 @@ class G15Screen():
         if self.applet.driver == None or not self.applet.driver.is_connected():
             return
         
+        # Do not paint if the device has no LCD (i.e. G110)
+        if self.applet.driver.get_bpp() == 0:
+            return
+        
         surface =  self.surface
         
         # If the visible page is changing, creating a new surface. Both surfaces are

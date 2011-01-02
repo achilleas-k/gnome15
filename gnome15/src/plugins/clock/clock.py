@@ -23,6 +23,7 @@
 import gnome15.g15_screen as g15screen 
 import gnome15.g15_theme as g15theme 
 import gnome15.g15_util as g15util
+import gnome15.g15_driver as g15driver
 import datetime
 import gtk
 import pango
@@ -38,6 +39,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
 has_preferences=True
+unsupported_models = [ g15driver.MODEL_G110 ]
 
 # 
 # This simple plugin displays a digital clock. It also demonstrates

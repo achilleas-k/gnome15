@@ -21,6 +21,7 @@
 #        +-----------------------------------------------------------------------------+
  
 import gnome15.g15_util as g15util
+import gnome15.g15_driver as g15driver
 import cairo
 import gtk
 import os
@@ -34,6 +35,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
 has_preferences=True
+unsupported_models = [ g15driver.MODEL_G110 ]
 
 def create(gconf_key, gconf_client, screen):
     return G15Background(gconf_key, gconf_client, screen)

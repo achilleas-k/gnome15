@@ -24,6 +24,7 @@ import gnome15.g15_screen as g15screen
 import gnome15.g15_driver as g15driver
 import gnome15.g15_util as g15util
 import gnome15.g15_theme as g15theme
+import gnome15.g15_driver_manager as g15drivermanager
 import datetime
 from threading import Timer
 import gtk
@@ -60,6 +61,10 @@ def show_preferences(parent, gconf_client, gconf_key):
     dim_keyboard.set_active(gconf_client.get_bool(gconf_key + "/dim_keyboard"))
     dim_h = dim_keyboard.connect("toggled", changed, gconf_key + "/dim_keyboard", gconf_client)
     
+    driver = g15drivermanager.get_driver(gconf_client)
+    if driver.get_bpp() == 0:
+        widget_tree.get_object("MessageFrame").hide()
+        
     message_text = widget_tree.get_object("MessageTextView")
     text_buffer = widget_tree.get_object("TextBuffer")
     text = gconf_client.get_string(gconf_key + "/message_text")
@@ -131,14 +136,15 @@ class G15ScreenSaver():
             self.in_screensaver = bool(value)
             if self.in_screensaver:
                 self.page = self.screen.get_page("Screensaver")
-                if self.page == None:
+                if self.screen.applet.driver.get_bpp() != 0 and self.page == None:
                     self.reload_theme()
                     self.page = self.screen.new_page(self.paint, g15screen.PRI_EXCLUSIVE, id="Screensaver")
                     self.screen.redraw(self.page)
                 if self.gconf_client.get_bool(self.gconf_key + "/dim_keyboard"):
                     self.dim_keyboard()
             else:
-                self.remove_page()
+                if self.screen.applet.driver.get_bpp() != 0:
+                    self.remove_page()
                 if self.gconf_client.get_bool(self.gconf_key + "/dim_keyboard"):
                     self.light_keyboard()
         
