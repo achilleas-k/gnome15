@@ -606,7 +606,7 @@
          sodipodi:role="line"
          x="249.20566"
          y="920.28729"
-         id="tspan3976">${mem_noncached_gb} MB of</tspan></text>
+         id="tspan3976">${mem_noncached_gb} GB of</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:109.00000334%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
@@ -617,7 +617,7 @@
          sodipodi:role="line"
          x="258.20566"
          y="933.28729"
-         id="tspan3976-0">${mem_total_gb} MB</tspan></text>
+         id="tspan3976-0">${mem_total_gb} GB</tspan></text>
     <g
        id="g3117"
        transform="translate(-32,-7.2467048)">
