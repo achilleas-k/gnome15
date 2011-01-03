@@ -278,14 +278,16 @@ class G15RSS():
                 return True
         return False
         
-    def schedule_refresh(self):        
-        self.refresh_timer = g15util.schedule("FeedRefreshTimer", get_update_time(self.gconf_client, self.gconf_key) * 60.0, self.refresh)
+    def schedule_refresh(self):
+        schedule_seconds = get_update_time(self.gconf_client, self.gconf_key) * 60.0
+        self.refresh_timer = g15util.schedule("FeedRefreshTimer", schedule_seconds, self.refresh)
         
     def refresh(self):
-        for page in self.pages:
-            self.pages[page].reload()
-            page.set_title(self.feed["feed"]["title"])
-            self.screen.redraw(page)
+        for page_id in self.pages:
+            page = self.pages[page_id]        
+            page.reload()
+            page.page.set_title(page.feed["feed"]["title"])
+            self.screen.redraw(page.page)
         self.schedule_refresh()
     
     def deactivate(self):
