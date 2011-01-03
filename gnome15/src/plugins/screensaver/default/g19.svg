@@ -134,15 +134,14 @@
        id="g3769"
        transform="translate(-3.0351563e-7,4.6435548e-6)">
       <text
-         transform="translate(-21.013208,794.8533)"
          sodipodi:linespacing="125%"
          id="text3764"
-         y="166.25887"
-         x="105.56094"
-         style="font-size:18px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         y="961.11218"
+         x="24.547737"
+         style="font-size:18px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
          xml:space="preserve"><tspan
-           y="166.25887"
-           x="105.56094"
+           y="961.11218"
+           x="24.547737"
            id="tspan3766"
            sodipodi:role="line">${message}</tspan></text>
     </g>
