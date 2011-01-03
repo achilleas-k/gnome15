@@ -168,6 +168,9 @@ class G15Applet(gnomeapplet.Applet):
     def button_press(self,widget,event):
         if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3 :
             self._create_menu()
+        elif event.type == gtk.gdk.BUTTON_PRESS and event.button == 1 :
+            self._create_and_display_screens_menu(widget, event)
+
     
     '''
     Private
@@ -200,13 +203,43 @@ class G15Applet(gnomeapplet.Applet):
         <menuitem name="Item 1" verb="Props" label="_Preferences..." pixtype="stock" pixname="gtk-properties"/>
         <menuitem name="Item 2" verb="Macros" label="Macros" pixtype="stock" pixname="input-keyboard"/>
         <menuitem name="Item 3" verb="About" label="_About..." pixtype="stock" pixname="gnome-stock-about"/>
-        <separator/>
-        """
-        for page in self.service.screen.pages:
-            if page.priority >= g15screen.PRI_NORMAL:
-                propxml += "<menuitem name=\"%s\" verb=\"%s\" label=\"_%s\"/>\n" % ( page.id, page.id, page.title )
-                verbs.append(( page.id, self.show_page_from_menu))
-        propxml +="""
         </popup>
         """
         self.applet.setup_menu(propxml,verbs,None)
+        
+    def  _create_and_display_screens_menu(self, widget, event):
+        menu = gtk.Menu()         
+        for page in self.service.screen.pages:
+             if page.priority >= g15screen.PRI_NORMAL:
+                 item = gtk.MenuItem(page.title)
+                 item.connect("activate", self.show_page_from_menu, page.id)
+                 item.show()
+                 menu.append(item)
+        menu.attach_to_widget(widget, None)
+        menu.popup(None, None, self._screens_menu_position, event.button, event.time, None)
+
+    def _screens_menu_position(self, menu, data=None):
+        orig_x,orig_y = self.applet.window.get_origin()
+        applet_width = self.applet.get_allocation().width
+        applet_height = self.applet.get_allocation().height
+        menu_width, menu_height = menu.size_request()
+        screen_width = gtk.gdk.screen_width()
+        screen_height = gtk.gdk.screen_height()
+
+        if self.orientation == gnomeapplet.ORIENT_UP :
+            x = orig_x
+            y = orig_y - menu_height
+        elif self.orientation == gnomeapplet.ORIENT_DOWN :
+            x = orig_x
+            y = orig_y + applet_height
+        elif self.orientation == gnomeapplet.ORIENT_LEFT :
+            x = orig_x - menu_width
+            y = orig_y
+        elif self.orientation == gnomeapplet.ORIENT_RIGHT :
+            x = orig_x + applet_width
+            y = orig_y
+
+        x = min(screen_width - menu_width - 1, x)
+        y = min(screen_height - menu_height - 1, y)
+
+        return (x, y , gtk.TRUE)
