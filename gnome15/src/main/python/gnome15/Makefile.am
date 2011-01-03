@@ -12,7 +12,6 @@ gnome15_PYTHON = 		\
 	g15_driver_manager.py \
 	g15_globals.py \
 	g15_setup.py \
-	g15_macros.py \
 	g15_plugins.py \
 	g15_profile.py \
 	g15_exceptions.py \

@@ -1,8 +1,8 @@
 
 if INDICATOR
-bin_SCRIPTS = g15-macros g15-config g15-indicator
+bin_SCRIPTS = g15-config g15-indicator
 else
-bin_SCRIPTS = g15-macros g15-config
+bin_SCRIPTS = g15-config
 endif
 
 if APPLET

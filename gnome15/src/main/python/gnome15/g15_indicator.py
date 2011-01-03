@@ -62,10 +62,6 @@ class G15Indicator(appindicator.Indicator):
         item.connect("activate", self.service.properties)
         self.menu.append(item)
         
-        item = gtk.MenuItem("Macros")
-        item.connect("activate", self.service.macros)
-        self.menu.append(item)
-        
         item = gtk.MenuItem("About")
         item.connect("activate", self.service.about_info)
         self.menu.append(item)

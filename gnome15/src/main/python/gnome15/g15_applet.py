@@ -197,12 +197,11 @@ class G15Applet(gnomeapplet.Applet):
 
     def _create_menu(self):
         
-        verbs = [ ( "Props", self.service.properties ), ( "Macros", self.service.macros ), ( "About", self.service.about_info ) ]
+        verbs = [ ( "Props", self.service.properties ), ( "About", self.service.about_info ) ]
         propxml="""
         <popup name="button3">
         <menuitem name="Item 1" verb="Props" label="_Preferences..." pixtype="stock" pixname="gtk-properties"/>
-        <menuitem name="Item 2" verb="Macros" label="Macros" pixtype="stock" pixname="input-keyboard"/>
-        <menuitem name="Item 3" verb="About" label="_About..." pixtype="stock" pixname="gnome-stock-about"/>
+        <menuitem name="Item 2" verb="About" label="_About..." pixtype="stock" pixname="gnome-stock-about"/>
         </popup>
         """
         self.applet.setup_menu(propxml,verbs,None)

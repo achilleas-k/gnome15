@@ -192,7 +192,6 @@ src/udev/Makefile
 src/gnome/Makefile
 src/gnome/applications/Makefile
 src/gnome/applications/g15-config.desktop
-src/gnome/applications/g15-macros.desktop
 src/gnome/servers/Makefile
 src/gnome/servers/GNOME_G15Applet.server
 src/gnome/autostart/Makefile

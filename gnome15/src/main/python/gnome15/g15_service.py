@@ -561,9 +561,6 @@ class G15Service(Thread):
     def properties(self, event, data=None):
         g15util.run_script("g15-config")
         
-    def macros(self, event, data=None):
-        g15util.run_script("g15-macros")
-        
     def about_info(self, event, data=None):  
         about = gnome.ui.About("Gnome15", pglobals.version, "GPL", \
                                "GNOME Applet providing integration with\nthe Logitech G15 and G19 keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
