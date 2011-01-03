@@ -132,10 +132,11 @@ class EventReceive(Thread):
             
 # Controls
 keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+default_keyboard_backlight_control = g15driver.Control("default_backlight_colour", "Boot Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
 foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND)
 background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
-controls = [ keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control]
+controls = [ keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control]
 
 
 class Driver(g15driver.AbstractDriver):
@@ -313,6 +314,8 @@ class Driver(g15driver.AbstractDriver):
     def do_update_control(self, control):
         if control == keyboard_backlight_control: 
             self.write_out("B" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
+        elif control == default_keyboard_backlight_control: 
+            self.write_out("C" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
         elif control == lcd_brightness_control:
             self.write_out("L" + chr(control.value) );
             

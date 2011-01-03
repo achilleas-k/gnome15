@@ -209,6 +209,10 @@ class Client(asyncore.dispatcher):
                 col = self.recv(3)       
                 logger.info('Setting keyboard backlight to r=%d  g=%d  b=%d' % ( ord(col[0]),ord(col[1]),ord(col[2]) ))
                 self.lobby.lg19.set_bg_color(ord(col[0]),ord(col[1]),ord(col[2]))
+            elif cmd == "C":
+                col = self.recv(3)       
+                logger.info('Setting power-on keyboard backlight to r=%d  g=%d  b=%d' % ( ord(col[0]),ord(col[1]),ord(col[2]) ))
+                self.lobby.lg19.save_default_bg_color(ord(col[0]),ord(col[1]),ord(col[2]))
             elif cmd == "L":
                 br = self.recv(1)       
                 logger.info('Setting LCD brightness to %d' % ord(br))

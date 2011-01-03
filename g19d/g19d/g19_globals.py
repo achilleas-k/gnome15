@@ -2,7 +2,7 @@ import os
 import sys
 
 name = "g19d"
-version = "0.0.5"
+version = "0.0.6"
  
 package_dir = os.path.abspath(os.path.dirname(__file__))
 data_dir = os.path.join(package_dir, "..")
