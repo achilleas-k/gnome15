@@ -26,6 +26,7 @@ import g15_driver as g15driver
 import g15_driver_manager as g15drivermanager
 import g15_util as g15util
 import subprocess
+import wnck
 
 
 # Determine if appindicator is available, this decides that nature
