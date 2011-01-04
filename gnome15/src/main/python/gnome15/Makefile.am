@@ -6,6 +6,7 @@ gnome15_PYTHON = 		\
 	g15_indicator.py \
 	g15_service.py \
 	g15_config.py \
+	g15_devices.py \
 	g15_dbus.py \
 	g15_gtk.py \
 	g15_driver.py \
