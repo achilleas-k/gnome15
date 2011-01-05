@@ -28,12 +28,11 @@ import os
 import socket
 import shlex
 
-# Plugin details - All of these must be provided
 id = "sysmon"
 name = "System Monitor"
-description = "Display CPU, Memory, and Network statistics. Currently, only a summary " \
-        + " of all CPU cores and Network interfaces are displayed. Future versions will " \
-        + " allow detailed statistics to be displayed."        
+description = "Display CPU, Memory, and Network statistics. Either a summary of each system's stats is displayed, or " + \
+            "you may cycle through the CPU and Network interfaces using Up and Down on the G19, or L3 and L4 on all " + \
+            "other supported models."        
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = "Copyright (C)2010 Brett Smith"
 site = "http://localhost"
@@ -41,7 +40,7 @@ has_preferences = False
 unsupported_models = [ g15driver.MODEL_G110 ]
 
 ''' 
-This simple plugin displays system statistics
+This plugin displays system statistics
 '''
 
 def create(gconf_key, gconf_client, screen):
@@ -58,23 +57,36 @@ class G15SysMon():
     
     def activate(self):
         self.properties = None
-        self.cpu_no = 0
-        self.cpu_list = self._get_cpu_list()
-        self.net_list = []
-        self.net_no = 0
-        self.cpu_history = []
         self.active = True
         self.last_time_list = None
+        self.last_time = 0
+        
+        # CPU
+        self.cpu_no = 0
+        self.cpu_list = self._get_cpu_list()
+        cpu = self.gconf_client.get_string(self.gconf_key + "/cpu")
+        if cpu and (cpu in self.cpu_list):
+            self.cpu_no = self.cpu_list.index(cpu)
+        self.cpu_history = []
+
+        # Net
+        ifs, self.net_list = self._get_net_stats()
+        net = self.gconf_client.get_string(self.gconf_key + "/net")
+        if net and (net in self.net_list):
+            self.net_no = self.net_list.index(net)
         self.recv_bps = 0.0
         self.send_bps = 0.0
-        self.last_time = 0
+        self.last_net_list = None
+        self.max_send = 1   
+        self.max_recv = 1
+        
+        # Memory
         self.total = 1.0
         self.cached = 0
         self.free = 0
         self.used = 0
-        self.last_net_list = None
-        self.max_send = 1   
-        self.max_recv = 1 
+        
+        # Initial stats load and create the page 
         self._get_stats()
         self._reload_theme()
         self.page = self.screen.new_page(self._paint, id="System Monitor", on_shown=self._on_shown, on_hidden=self._on_hidden)
@@ -95,12 +107,15 @@ class G15SysMon():
                 self.cpu_no += 1
                 if self.cpu_no == len(self.cpu_list):
                     self.cpu_no = 0
+                self.gconf_client.set_string(self.gconf_key + "/cpu", self.cpu_list[self.cpu_no])
                 self._reschedule_refresh()
                 return True
             if g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
                 self.net_no += 1
                 if self.net_no == len(self.net_list):
                     self.net_no = 0
+                    
+                self.gconf_client.set_string(self.gconf_key + "/net", self.net_list[self.net_no])
                 self._reschedule_refresh()
                 return True
     
@@ -155,7 +170,7 @@ class G15SysMon():
         if self.last_time_list != None:
             working_list = list(this_time_list)
             
-            ''' Work out the number of if time units the CPU has spent on each task type since the last
+            ''' Work out the number of time units the CPU has spent on each task type since the last
             time we checked
             '''
             for i in range(len(self.last_time_list))  :
