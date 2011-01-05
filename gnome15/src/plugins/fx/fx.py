@@ -105,11 +105,7 @@ class G15Fx():
             return
         
         width = self.screen.width
-        height = self.screen.height
-        
-        # NOTE. This is a quick way of making the animation quicker on a G19. The G19 requires
-        # a lot more data, plus there is further latency with the daemon. 
-        
+        height = self.screen.height        
         
         # Create a working surface
         img_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.screen.width, self.screen.height)
