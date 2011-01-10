@@ -167,26 +167,16 @@ class Menu(Component):
 
 class G15Theme:
     
-    def __init__(self, dir, screen, variant = None):
+    def __init__(self, dir, screen, variant = None, svg_text = None):
+        
+        self.instance = None
         self.screen = screen
         self.driver = screen.driver
         self.svg_processor = None
         self.dir = dir
         self.variant = variant
-        self.theme_name = os.path.basename(dir)
-        self.plugin_name = os.path.basename(os.path.dirname(dir))
         self.offscreen_windows = []
         self.components = {}
-        
-        module_name = self.get_path_for_variant(dir, variant, "py", fatal = False, prefix = self.plugin_name.replace("-","_") + "_" + self.theme_name + "_")
-        module = None
-        self.instance = None
-        if module_name != None:
-            if not dir in sys.path:
-                sys.path.insert(0, dir)
-            module = __import__(os.path.basename(module_name)[:-3])
-            self.instance = module.Theme(self.screen, self)
-            
         self.nsmap = {
             'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd',
             'cc': 'http://web.resource.org/cc/',
@@ -197,9 +187,30 @@ class G15Theme:
             'inkscape': 'http://www.inkscape.org/namespaces/inkscape'
             }
         
+        if self.dir != None:
+            self.theme_name = os.path.basename(dir)
+            self.plugin_name = os.path.basename(os.path.dirname(dir))
+            
+            module_name = self.get_path_for_variant(dir, variant, "py", fatal = False, prefix = self.plugin_name.replace("-","_") + "_" + self.theme_name + "_")
+            module = None
+            if module_name != None:
+                if not dir in sys.path:
+                    sys.path.insert(0, dir)
+                module = __import__(os.path.basename(module_name)[:-3])
+                self.instance = module.Theme(self.screen, self)
+                
+            path = self.get_path_for_variant(self.dir, self.variant, "svg")
+            self.document = etree.parse(path)
+        elif svg_text != None:
+            print "**************"
+            print svg_text
+            print "**************"            
+            self.document = etree.ElementTree(etree.fromstring(svg_text))
+        else:
+            raise Exception("Must either supply theme directory or SVG text")
+            
+        
         # TODO stop parsing everytime, take a copy
-        path = self.get_path_for_variant(self.dir, self.variant, "svg")
-        self.document = etree.parse(path)
         self.driver.process_svg(self.document)
         self.bounds = g15util.get_bounds(self.document.getroot())
 
@@ -429,9 +440,10 @@ class G15Theme:
                 t =list_transforms[0]
                 for i in range(1, len(list_transforms)):
                     t = t.multiply(list_transforms[i])
-                args = str(t)[13:-1].split(", ")
-                
-                text_box.bounds = ( float(args[4]), float(args[5]), float(element.get("width")), float(element.get("height")))
+                    
+                xx, yx, xy, yy, x0, y0 = t
+
+                text_box.bounds = ( x0, y0, float(element.get("width")), float(element.get("height")))
                 
                 # Remove the textnod SVG element
                 text_node.getparent().remove(text_node)

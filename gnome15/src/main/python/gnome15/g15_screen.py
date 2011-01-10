@@ -340,7 +340,9 @@ class G15Screen():
         
         # If the visible page is changing, creating a new surface. Both surfaces are
         # then passed to any transition functions registered
-        if visible_page != self.visible_page:            
+        if visible_page != self.visible_page: 
+            if visible_page.priority == PRI_NORMAL:   
+                self.applet.conf_client.set_string("/apps/gnome15/last_page", visible_page.id)      
             surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
             
         self.local_data.surface = surface

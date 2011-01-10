@@ -157,6 +157,7 @@ class G15Service(Thread):
     
     def __init__(self, service_host, parent_window=None):
         Thread.__init__(self)
+        self.first_page = None
         self.splash = None
         self.parent_window = parent_window
         self.service_host = service_host
@@ -226,6 +227,7 @@ class G15Service(Thread):
                 return
             
             self.loading_complete = False
+            self.first_page = self.conf_client.get_string("/apps/gnome15/last_page")
             
             if delay != 0.0:
                 self.reconnect_timer = g15util.schedule("ReconnectTimer", delay, self.attempt_connection)
@@ -262,6 +264,10 @@ class G15Service(Thread):
     def complete_loading(self):              
         try :            
             self.plugins.activate(self.splash.update_splash) 
+            if self.first_page != None:
+                page = self.screen.get_page(self.first_page)
+                if page:
+                    self.screen.raise_page(page)
             self.driver.grab_keyboard(self.key_received)
             self.service_host.clear_attention()
             self.splash.complete()
