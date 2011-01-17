@@ -170,10 +170,10 @@ class Driver(g15driver.AbstractDriver):
     def process_svg(self, document):
         pass
     
-    def update_control(self, control):
+    def on_update_control(self, control):
         self.lock.acquire()
         try :
-            self.do_update_control(control)
+            self._do_update_control(control)
         finally:
             self.lock.release()
     
@@ -194,7 +194,7 @@ class Driver(g15driver.AbstractDriver):
         s.connect((self.remote_host, self.remote_port))
         self.socket = s
         for control in self.get_controls():
-            self.do_update_control(control)
+            self._do_update_control(control)
             
     def disconnect(self):  
         if self.is_connected():  
@@ -311,7 +311,7 @@ class Driver(g15driver.AbstractDriver):
         return chr(valueL & 0xff) + chr(valueH & 0xff)
     
             
-    def do_update_control(self, control):
+    def _do_update_control(self, control):
         if control == keyboard_backlight_control: 
             self.write_out("B" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
         elif control == default_keyboard_backlight_control: 

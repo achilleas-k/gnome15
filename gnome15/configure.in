@@ -159,6 +159,7 @@ src/plugins/cal/default/Makefile
 src/plugins/clock/Makefile
 src/plugins/clock/default/Makefile
 src/plugins/fx/Makefile
+src/plugins/g15daemon-server/Makefile
 src/plugins/indicator-me/Makefile
 src/plugins/indicator-messages/Makefile
 src/plugins/indicator-me/default/Makefile
@@ -171,6 +172,7 @@ src/plugins/mpris/Makefile
 src/plugins/mpris/default/Makefile
 src/plugins/menu/Makefile
 src/plugins/panel/Makefile
+src/plugins/processes/Makefile
 src/plugins/notify-lcd/Makefile
 src/plugins/notify-lcd/default/Makefile
 src/plugins/screensaver/Makefile

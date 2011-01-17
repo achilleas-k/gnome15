@@ -237,7 +237,7 @@ class Driver(g15driver.AbstractDriver):
             else:
                 self._draw_pixbuf()
         
-    def update_control(self, control):  
+    def on_update_control(self, control):  
         if self.event_box != None: 
             if control == self.get_control_for_hint(g15driver.HINT_DIMMABLE):
                 if isinstance(control.value, int):

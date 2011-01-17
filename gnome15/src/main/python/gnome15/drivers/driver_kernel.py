@@ -429,7 +429,7 @@ class Driver(g15driver.AbstractDriver):
                 if style != None:
                     element.set("style", style.replace("font-family:Sans", "font-family:Fixed"))
                     
-    def update_control(self, control):
+    def on_update_control(self, control):
         if control == g19_keyboard_backlight_control:
             self._write_to_led("red:bl", control.value[0])
             self._write_to_led("green:bl", control.value[1])

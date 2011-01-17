@@ -28,6 +28,8 @@ import traceback
 import pango
 import pangocairo
 import g15_driver as g15driver
+import g15_globals as pglobals
+import g15_screen as g15screen
 import g15_util as g15util
 import xml.sax.saxutils as saxutils
 import base64
@@ -164,10 +166,38 @@ class Menu(Component):
         
     def render_item(self, item, selected, canvas, properties, attributes, group = False):
         raise Exception("Not implemented.")
+    
+class ConfirmationScreen():
+    
+    def __init__(self, screen, title, text, icon, callback, arg):
+        self.screen = screen      
+        self.theme = G15Theme(os.path.join(pglobals.themes_dir, "default"), screen, "confirmation-screen")
+        self.properties = { 
+                           "title": title,
+                           "text": text,
+                           "icon": icon
+                      }
+        self.arg = arg
+        self.callback = callback
+               
+        self.page = self.screen.new_page(self._paint, g15screen.PRI_HIGH)
+        self.screen.redraw(self.page)           
+        self.page.key_handlers.append(self)
+        
+    def handle_key(self, keys, state, post):
+        if not post and state == g15driver.KEY_STATE_UP:             
+            if g15driver.G_KEY_RIGHT in keys:
+                self.screen.del_page(self.page)
+            elif g15driver.G_KEY_LEFT in keys:
+                self.callback(self.arg)  
+                self.screen.del_page(self.page)
+        
+    def _paint(self, canvas):
+        self.theme.draw(canvas, self.properties)
 
 class G15Theme:
     
-    def __init__(self, dir, screen, variant = None, svg_text = None):
+    def __init__(self, dir, screen, variant = None, svg_text = None, prefix = None):
         
         self.instance = None
         self.screen = screen
@@ -189,9 +219,9 @@ class G15Theme:
         
         if self.dir != None:
             self.theme_name = os.path.basename(dir)
-            self.plugin_name = os.path.basename(os.path.dirname(dir))
             
-            module_name = self.get_path_for_variant(dir, variant, "py", fatal = False, prefix = self.plugin_name.replace("-","_") + "_" + self.theme_name + "_")
+            prefix_path = prefix if prefix != None else os.path.basename(os.path.dirname(dir)).replace("-", "_")+ "_" + self.theme_name + "_"
+            module_name = self.get_path_for_variant(dir, variant, "py", fatal = False, prefix = prefix_path)
             module = None
             if module_name != None:
                 if not dir in sys.path:
@@ -442,7 +472,6 @@ class G15Theme:
                     t = t.multiply(list_transforms[i])
                     
                 xx, yx, xy, yy, x0, y0 = t
-
                 text_box.bounds = ( x0, y0, float(element.get("width")), float(element.get("height")))
                 
                 # Remove the textnod SVG element

@@ -30,6 +30,7 @@ import sys
 import cairo
 import traceback
 import base64
+import time
 from cStringIO import StringIO
 
 # Plugin details - All of these must be provided
@@ -88,6 +89,7 @@ class G15Processes():
     def deactivate(self):
         if self.page != None:
             self._hide_menu()
+            
         
     def destroy(self):
         pass
@@ -114,9 +116,9 @@ class G15Processes():
                     self.screen.redraw(self.page)
                     return True           
                 elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
-                    self.screen.raise_page(self.selected.page)
-                    self.screen.applet.resched_cycle()
-                    self._hide_menu()
+                    if self.selected != None:
+                        g15theme.ConfirmationScreen(self.screen, "Kill Process", "Are you sure you want to kill %d" % self.selected.process_id,  g15util.get_icon_path("utilities-system-monitor"), self._kill_process, self.selected.process_id)
+                    
                     return True
                 elif g15driver.G_KEY_UP in keys or g15driver.G_KEY_SETTINGS in keys:
                     self.screen.set_priority(self.page, g15screen.PRI_NORMAL)
@@ -125,6 +127,15 @@ class G15Processes():
                     self.screen.set_priority(self.page, g15screen.PRI_HIGH)
                 
         return False
+    
+    def _kill_process(self, process_id):
+        os.system("kill %d" % process_id)
+        time.sleep(0.5)
+        if os.path.exists("/proc/%d" % process_id):
+            time.sleep(5.0)
+            if os.path.exists("/proc/%d" % process_id):
+                os.system("kill -9 %d" % process_id)
+        self._reload_menu()        
     
     def paint(self, canvas):
         self.menu.items = self.items
@@ -146,26 +157,37 @@ class G15Processes():
     def _reload_menu(self):
         self.items = []
         
+        sel_pid = 0 if self.selected == None else self.selected.process_id 
+        
         for process_id in os.listdir("/proc"):
             if process_id.isdigit():
-                stat_file = file("/proc/%s/cmdline" % process_id, "r")
                 try :
-                    line = stat_file.readline().split("\0")
-                    name = line[0]
-                    if name != "":
-                        if self.mode == "all":
-                            self.items.append(MenuItem(int(process_id), name))
-                        else:
-                            owner_stat = os.stat("/proc/%s/cmdline" % process_id)
-                            owner_uid = owner_stat[4]
-                            if owner_uid == os.getuid():
+                    stat_file = file("/proc/%s/cmdline" % process_id, "r")
+                    try :
+                        line = stat_file.readline().split("\0")
+                        name = line[0]
+                        if name != "":
+                            if self.mode == "all":
                                 self.items.append(MenuItem(int(process_id), name))
-                            
-                            
-                finally :
-                    stat_file.close()
+                            else:
+                                owner_stat = os.stat("/proc/%s/cmdline" % process_id)
+                                owner_uid = owner_stat[4]
+                                if owner_uid == os.getuid():
+                                    pid = int(process_id)
+                                    item = MenuItem(pid, name)
+                                    self.items.append(item)
+                                    if pid == sel_pid:
+                                        self.selected = item
+                                
+                                
+                    finally :
+                        stat_file.close()
+                except :
+                    # In case the process disappears
+                    pass
             
-        self.selected = self.items[0]
+        if self.selected == None:
+            self.selected = self.items[0]
         self.screen.redraw(self.page)
         
     def _reload_theme(self):        
@@ -176,8 +198,17 @@ class G15Processes():
         
     def _show_menu(self):        
         self.page = self.screen.new_page(self.paint, id=name, priority = g15screen.PRI_NORMAL)
-        self._reload_menu()            
+        self._reload_menu()  
+        self._schedule_refresh()          
     
     def _hide_menu(self):     
         self.screen.del_page(self.page)
         self.page = None
+        self.timer.cancel()
+        
+    def _refresh(self):
+        self._reload_menu()
+        self._schedule_refresh()
+        
+    def _schedule_refresh(self):
+        self.timer = g15util.schedule("ProcessesRefresh", 5.0, self._refresh)

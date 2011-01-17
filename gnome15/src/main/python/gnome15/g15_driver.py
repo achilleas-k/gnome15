@@ -118,10 +118,11 @@ MODEL_G15_V2 = "g15v2"
 MODEL_G13 = "g13"
 MODEL_G19 = "g19"
 MODEL_G510 = "g510"
+MODEL_G510_AUDIO = "g510audio"
 MODEL_G110 = "g110"
 MODEL_Z10 = "z10"
 
-MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G110, MODEL_Z10 ]
+MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G510_AUDIO, MODEL_G110, MODEL_Z10 ]
 
 HINT_DIMMABLE = 1 << 0
 HINT_SHADEABLE = 1 << 1
@@ -153,6 +154,7 @@ class AbstractDriver(object):
         global seq_no
         seq_no += 1
         self.seq = seq_no
+        self.control_update_listeners = []
     
     """
     Start the driver
@@ -225,10 +227,18 @@ class AbstractDriver(object):
     Synchronize a control with the keyboard. For example, if the control was for the
     keyboard colour, the keyboard colour would actually change when this function
     is invoked
+    
+    Subclasses should not override this function, instead they should implement
+    on_update_control()
     """
     def update_control(self, control):
-        raise NotImplementedError( "Not implemented" )
+        for l in self.control_update_listeners:
+            l.control_updated(control)
+        self.on_update_control(control)
     
+    def on_update_control(self, control):
+        raise NotImplementedError( "Not implemented" )
+                
         
     """
     Set the M key LCD lights. The value is a bitmask made up of MKEY_LIGHT1,

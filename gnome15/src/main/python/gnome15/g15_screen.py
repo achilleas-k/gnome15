@@ -49,7 +49,8 @@ class G15Page():
         self.time = time
         self.value = self.priority * self.time
         self.painter = painter
-        self.cairo = cairo 
+        self.cairo = cairo
+        self.key_handlers = []
         
     def set_title(self, title):
         self.title = title   
@@ -131,6 +132,12 @@ class G15Screen():
         self.set_color_for_mkey()     
     
     def handle_key(self, keys, state, post=False):
+        visible = self.get_visible_page()
+        if visible != None:
+            for h in visible.key_handlers:
+                if h.handle_key(keys, state, post):
+                    return True
+        
         # Requires long press of L1 to cycle
         if not post and state == g15driver.KEY_STATE_UP:
             if g15driver.G_KEY_M1 in keys:

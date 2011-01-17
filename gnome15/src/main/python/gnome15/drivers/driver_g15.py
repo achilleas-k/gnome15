@@ -187,7 +187,7 @@ class Driver(g15driver.AbstractDriver):
     def get_key_layout(self):
         return self.device.key_layout
     
-    def update_control(self, control):
+    def on_update_control(self, control):
         if control == backlight_control: 
             level = control.value
             if level > 2:
