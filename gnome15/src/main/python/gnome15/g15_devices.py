@@ -121,11 +121,11 @@ class Device():
         self.bpp = device_info[2]
         self.lcd_size = device_info[3]
 
-def find_device():
+def find_device(models):
     for lg_model in device_list:
         id = device_list[lg_model][0]
         device = _find_device(id[0], id[1])
-        if device:
+        if device and lg_model in models:
             return Device(device, lg_model)
         
 def _find_device(idVendor, idProduct):

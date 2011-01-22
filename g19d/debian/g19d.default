@@ -1,0 +1,13 @@
+# Defaults for g19d initscript
+# sourced by /etc/init.d/g19d
+# installed at /etc/default/g19d by the maintainer scripts
+
+#
+# This is a POSIX shell fragment
+#
+
+# Uncomment this to enable G19 support and restart the service
+# G19D_ENABLED=y
+
+# Additional options that are passed to the Daemon.
+DAEMON_ARGS="-l INFO"

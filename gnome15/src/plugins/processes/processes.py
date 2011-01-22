@@ -122,9 +122,6 @@ class G15Processes():
                     return True
                 elif g15driver.G_KEY_UP in keys or g15driver.G_KEY_SETTINGS in keys:
                     self.screen.set_priority(self.page, g15screen.PRI_NORMAL)
-            else:          
-                if g15driver.G_KEY_UP in keys or g15driver.G_KEY_SETTINGS in keys:
-                    self.screen.set_priority(self.page, g15screen.PRI_HIGH)
                 
         return False
     

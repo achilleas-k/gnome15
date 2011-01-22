@@ -320,6 +320,6 @@ class Driver(g15driver.AbstractDriver):
             self.write_out("L" + chr(control.value) );
             
     def _init_driver(self):        
-        self.device = g15devices.find_device()
-        if self.device == None or self.device.model_name != g15driver.MODEL_G19:
+        self.device = g15devices.find_device([g15driver.MODEL_G19])
+        if self.device == None:
             raise Exception("Could not find a G19 keyboard")

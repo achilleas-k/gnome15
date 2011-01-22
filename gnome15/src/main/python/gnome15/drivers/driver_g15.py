@@ -26,6 +26,7 @@ keyboard
 """
 
 import gnome15.g15_driver as g15driver
+import gnome15.g15_devices as g15devices
 import socket
 import cairo
 import ImageMath
@@ -33,6 +34,7 @@ import Image
 from threading import Thread
 from threading import Lock
 import struct
+import time
 
 # Driver information (used by driver selection UI)
 name="G15Daemon"
@@ -54,6 +56,7 @@ CLIENT_CMD_SWITCH_PRIORITIES = ord('p')
 CLIENT_CMD_NEVER_SELECT = ord('n')
 CLIENT_CMD_IS_FOREGROUND = ord('v')
 CLIENT_CMD_IS_USER_SELECTED = ord('u')
+CLIENT_CMD_KB_BACKLIGHT_COLOR = ord('r')
 
 KEY_MAP = {
         g15driver.G_KEY_G1  : 1<<0,
@@ -92,7 +95,6 @@ KEY_MAP = {
 
 color_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-color_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
 controls = {
@@ -187,14 +189,27 @@ class Driver(g15driver.AbstractDriver):
     def get_key_layout(self):
         return self.device.key_layout
     
-    def on_update_control(self, control):
-        if control == backlight_control: 
-            level = control.value
+    def on_update_control(self, control): 
+        level = control.value
+        if control == backlight_control:
             if level > 2:
                 level = 2
             elif level < 0:
                 level = 0
             self.socket.send(chr(CLIENT_CMD_KB_BACKLIGHT  + level),socket.MSG_OOB)
+        elif control == color_backlight_control:
+            self.lock.acquire()        
+            try :           
+                self.socket.send(chr(CLIENT_CMD_KB_BACKLIGHT_COLOR),socket.MSG_OOB | socket.MSG_DONTWAIT)
+                time.sleep(0.1);
+                self.socket.send(chr(level[0]),socket.MSG_OOB)
+                time.sleep(0.1);
+                self.socket.send(chr(level[1]),socket.MSG_OOB)
+                time.sleep(0.1);
+                self.socket.send(chr(level[2]),socket.MSG_OOB)
+            finally:
+                self.lock.release()
+            
     
     def get_model_names(self):
         return [ g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G110, g15driver.MODEL_G510, g15driver.MODEL_G13 ]
@@ -284,7 +299,7 @@ class Driver(g15driver.AbstractDriver):
             for x in list(pil_img.getdata()): 
                 buf += chr(x)
                 
-            if len(buf) != MAX_X * MAX_Y:
+            if len(buf) != self.device.lcd_size[0] * self.device.lcd_size[1]:
                 print "Invalid buffer size"
             else:
                 self.socket.sendall(buf)
@@ -292,6 +307,6 @@ class Driver(g15driver.AbstractDriver):
             self.lock.release()
             
     def _init_driver(self):        
-        self.device = g15devices.find_device()
-        if self.device == None or not self.device.model_name in self.get_model_names():
+        self.device = g15devices.find_device(self.get_model_names())
+        if self.device == None:
             raise Exception("No device supported by the g15daemon driver could be found.")

@@ -593,11 +593,14 @@ def get_bounds(element):
 Convert a PIL image to a GDK pixbuf  
 '''
 def image_to_pixbuf(im, type = "ppm"):  
+    p_type = type
+    if type == "ppm":
+        p_type = "pnm"
     file1 = StringIO()  
     im.save(file1, type)  
     contents = file1.getvalue()  
     file1.close()  
-    loader = gtk.gdk.PixbufLoader(type)  
+    loader = gtk.gdk.PixbufLoader(p_type)  
     loader.write(contents, len(contents))  
     pixbuf = loader.get_pixbuf()  
     loader.close()  

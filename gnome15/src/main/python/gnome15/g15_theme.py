@@ -186,9 +186,9 @@ class ConfirmationScreen():
         
     def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_UP:             
-            if g15driver.G_KEY_RIGHT in keys:
+            if g15driver.G_KEY_RIGHT in keys or g15driver.G_KEY_L4 in keys:
                 self.screen.del_page(self.page)
-            elif g15driver.G_KEY_LEFT in keys:
+            elif g15driver.G_KEY_LEFT in keys or g15driver.G_KEY_L2 in keys:
                 self.callback(self.arg)  
                 self.screen.del_page(self.page)
         

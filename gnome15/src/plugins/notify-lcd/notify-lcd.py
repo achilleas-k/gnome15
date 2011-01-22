@@ -57,6 +57,9 @@ unsupported_models = [ g15driver.MODEL_G110 ]
 IF_NAME="org.freedesktop.Notifications"
 BUS_NAME="/org/freedesktop/Notifications"
 
+# List of processes to try and kill so the notification DBUS server can be replaced
+OTHER_NOTIFY_DAEMON_PROCESS_NAMES = [ 'notify-osd', 'notification-daemon' ]
+
 # NotificationClosed reasons
 NOTIFICATION_EXPIRED = 1
 NOTIFICATION_DISMISSED = 2
@@ -184,7 +187,10 @@ Queued notification message
 class G15Message():
     
     def __init__(self, id, icon, summary, body, timeout, actions, hints):
-        self.id = id
+        self.id  = id
+        self.set_details(icon, summary, body, timeout, actions, hints)
+    
+    def set_details(self, icon, summary, body, timeout, actions, hints):
         self.icon = icon
         self.summary = "None" if summary == None else summary
         if body != None and len(body) > 0:
@@ -202,6 +208,30 @@ class G15Message():
                 self.actions.append((actions[j], actions[j + 1]))
         self.hints = hints
         self.embedded_image = None
+        
+        if self.icon == None or self.icon == "":
+            if "image_data" in self.hints:
+                image_struct = self.hints["image_data"]
+                img_width = image_struct[0]
+                img_height = image_struct[1]
+                img_stride = image_struct[2]
+                has_alpha = image_struct[3]
+                bits_per_sample = image_struct[4]
+                channels = image_struct[5]
+                buf = ""
+                for b in image_struct[6]:
+                    buf += chr(b)
+                pixbuf = gtk.gdk.pixbuf_new_from_data(buf, gtk.gdk.COLORSPACE_RGB, has_alpha, bits_per_sample, img_width, img_height, img_stride)
+                fh, self.embedded_image = tempfile.mkstemp(suffix=".png",prefix="notify-lcd")
+                file = os.fdopen(fh)
+                file.close()
+                pixbuf.save(self.embedded_image, "png")
+            else:
+                self.icon = g15util.get_icon_path("dialog-info", 1024)
+    
+    def close(self):
+        if self.embedded_image != None:
+            os.remove(self.embedded_image)
    
 '''
 DBus service implementing the freedesktop notification specification
@@ -220,6 +250,7 @@ class G15NotifyService(dbus.service.Object):
         self._blink_thread = None
         self._control_values = []
         self._message_queue = []
+        self._message_map = {}
         self._current_message = None
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
@@ -244,18 +275,35 @@ class G15NotifyService(dbus.service.Object):
                     timeout = 10.0                
                 if not self._gconf_client.get_bool(self._gconf_key + "/allow_actions"):
                     actions = None
-                message = G15Message(self.id, icon, summary, body, timeout, actions, hints)
-                self._message_queue.append(message)
-                self.id += 1
-                if len(self._message_queue) == 1:
-                    try :                
-                        self._notify()                         
-                    except Exception as blah:
-                        traceback.print_exc()
-                else:                               
-                    page = self._screen.get_page("NotifyLCD")
-                    if page != None:
-                        self._screen.redraw(page)
+                
+                # If a message with this ID is already queued, replace it's details
+                if id in self._message_map:
+                    message = self._message_map[id]
+                    message.set_details(icon, summary, body, timeout, actions, hints) 
+                    
+                    # If this message is the visible one, then reset the timer
+                    if message == self._message_queue[0]:
+                        self._start_timer(message)
+                    else:                        
+                        page = self._screen.get_page("NotifyLCD")
+                        if page != None:
+                            self._screen.redraw(page)
+                else:
+                    # Otherwise queue a new message
+                    message = G15Message(self.id, icon, summary, body, timeout, actions, hints)
+                    self._message_queue.append(message)
+                    self._message_map[self.id] = message                
+                    self.id += 1
+                    
+                    if len(self._message_queue) == 1:
+                        try :                
+                            self._notify()                         
+                        except Exception as blah:
+                            traceback.print_exc()
+                    else:                               
+                        page = self._screen.get_page("NotifyLCD")
+                        if page != None:
+                            self._screen.redraw(page)
                 return message.id                         
         except Exception as blah:
             traceback.print_exc()
@@ -268,6 +316,7 @@ class G15NotifyService(dbus.service.Object):
                 self._cancel_timer()
                 self._move_to_next(NOTIFICATION_CLOSED)
             else:
+                del self._message_map[id]
                 for m in self._message_queue:
                     if m.id == id:
                         self._message_queue.remove(m)
@@ -285,7 +334,10 @@ class G15NotifyService(dbus.service.Object):
         pass
     
     def clear(self):
+        for message in self._message_queue:
+            message.close()
         self._message_queue = []
+        self._message_map = {}
         self._cancel_timer()
         page = self._screen.get_page("NotifyLCD")
         if page != None:
@@ -338,29 +390,8 @@ class G15NotifyService(dbus.service.Object):
         self._theme.draw(canvas, properties)
 
     def _notify(self):
-        # If there are no more messages, hide the current page
         if len(self._message_queue) != 0:   
-            message = self._message_queue[0]     
-            self._embedded_image = None
-            if message.icon == None or message.icon == "":
-                if "image_data" in message.hints:
-                    image_struct = message.hints["image_data"]
-                    img_width = image_struct[0]
-                    img_height = image_struct[1]
-                    img_stride = image_struct[2]
-                    has_alpha = image_struct[3]
-                    bits_per_sample = image_struct[4]
-                    channels = image_struct[5]
-                    buf = ""
-                    for b in image_struct[6]:
-                        buf += chr(b)
-                    pixbuf = gtk.gdk.pixbuf_new_from_data(buf, gtk.gdk.COLORSPACE_RGB, has_alpha, bits_per_sample, img_width, img_height, img_stride)
-                    fh, message.embedded_image = tempfile.mkstemp(suffix=".png",prefix="notify-lcd")
-                    file = os.fdopen(fh)
-                    file.close()
-                    pixbuf.save(message.embedded_image, "png")
-                else:
-                    icon = g15util.get_icon_path("dialog-info", self._screen.height)
+            message = self._message_queue[0] 
             
                 
             # Which theme variant should we use
@@ -384,10 +415,8 @@ class G15NotifyService(dbus.service.Object):
                 self._reload_theme()
                 self._screen.raise_page(page)
                 
-            self._cancel_redraw()
-            self._displayed_notification = time.time()
+            self._start_timer(message)            
             self._redraw_timer = g15util.schedule("Notification", 0.1, self._do_redraw)
-            self._timer = g15util.schedule("Notification", message.timeout, self._hide_notification)
                 
             self._screen.redraw(page)
             
@@ -419,7 +448,9 @@ class G15NotifyService(dbus.service.Object):
         
     def _move_to_next(self, reason = NOTIFICATION_DISMISSED):        
         message = self._message_queue[0]
+        message.close()
         del self._message_queue[0]
+        del self._message_map[message.id]
         self.NotificationClosed(message.id, reason)
         if len(self._message_queue) != 0:
             self._notify()  
@@ -428,6 +459,11 @@ class G15NotifyService(dbus.service.Object):
                   
     def _hide_notification(self): 
         self._move_to_next(NOTIFICATION_EXPIRED)
+        
+    def _start_timer(self, message):
+        self._cancel_timer() 
+        self._displayed_notification = time.time()                       
+        self._timer = g15util.schedule("Notification", message.timeout, self._hide_notification)
     
     
 '''
@@ -447,8 +483,9 @@ class G15NotifyLCD():
         # Already running
         for i in range(0, 6):
             try :            
-                process = subprocess.Popen(['killall','notify-osd'])
-                process.wait()
+                for pn in OTHER_NOTIFY_DAEMON_PROCESS_NAMES:
+                    process = subprocess.Popen(['killall', '--quiet', pn])
+                    process.wait()
                 self._bus_name = dbus.service.BusName(IF_NAME, bus=bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
                 break
             except NameExistsException:

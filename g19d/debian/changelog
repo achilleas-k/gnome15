@@ -1,0 +1,40 @@
+g19d (0.0.7-1) maverick; urgency=low
+
+  * Added a bit more logging.
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sat, 22 Jan 2011 21:43:41 +0100
+ 
+g19d (0.0.6-1) maverick; urgency=low
+
+  * Allow default keyboard backlight color to be set
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon,  3 Jan 2011 21:07:41 +0100
+ 
+g19d (0.0.5-1) maverick; urgency=low
+
+  * Added -T <timeout> option. Changed default from 1 second to 20 seconds.
+  * More specific about matching device /dev/input/by-id when looking for
+  	multimedia key devices.
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue,  7 Dec 2010 23:29:51 +0100
+ 
+ g19d (0.0.4-1) maverick; urgency=low
+
+  * Multimedia key support disabled automatically if handled by kernel
+    This should fix the hanging problem that occurs. Support may be 
+    forced on using the -m option, or disabled using -d
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue,  7 Dec 2010 23:29:51 +0100
+ 
+g19d (0.0.2-3) maverick; urgency=low
+
+  * Added -t option to test if hardware exists
+  * The service is now disabled by default. /etc/default/g19d must be edited
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon, 11 Oct 2010 18:00:01 +0100
+ 
+ g19d (0.0.1-9) maverick; urgency=low
+
+  * update-python-modules now run before service is started
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon, 04 Oct 2010 21:13:36 +0100

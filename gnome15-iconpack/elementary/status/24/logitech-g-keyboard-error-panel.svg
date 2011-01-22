@@ -365,15 +365,15 @@
      borderopacity="1.0"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:zoom="16.386533"
-     inkscape:cx="-5.1986078"
-     inkscape:cy="8.7117458"
+     inkscape:zoom="8.1932665"
+     inkscape:cx="-24.73218"
+     inkscape:cy="17.750124"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1143"
      inkscape:window-height="734"
-     inkscape:window-x="13"
+     inkscape:window-x="63"
      inkscape:window-y="30"
      inkscape:window-maximized="0" />
   <metadata
@@ -384,7 +384,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -397,7 +397,7 @@
        id="layer1-7"
        transform="matrix(1.4946442,0,0,1.4946442,-39.909467,1028.5188)" />
     <g
-       transform="matrix(1.4946442,0,0,1.4946442,0.04386387,-521.29417)"
+       transform="matrix(1.0954803,0,0,1.0985673,3.3299036,-106.37217)"
        id="layer1-6"
        inkscape:label="Layer 1">
       <g
@@ -414,9 +414,9 @@
          id="text15270-5"
          y="1049.2343"
          x="3.191"
-         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:174.00000095%;letter-spacing:10px;word-spacing:0px;fill:url(#linearGradient14457);fill-opacity:1;stroke:#f50000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none;font-family:Ubuntu;-inkscape-font-specification:Ubuntu Bold"
+         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:174.00000095%;letter-spacing:10px;word-spacing:0px;fill:url(#linearGradient14457);fill-opacity:1;stroke:#f50000;stroke-width:0.68122756;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none;font-family:Ubuntu;-inkscape-font-specification:Ubuntu Bold"
          xml:space="preserve"><tspan
-           style="fill:url(#linearGradient14457);fill-opacity:1;stroke:#f50000;stroke-width:0.5;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none"
+           style="fill:url(#linearGradient14457);fill-opacity:1;stroke:#f50000;stroke-width:0.68122756;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none"
            y="1049.2343"
            x="3.191"
            id="tspan15272-0"
@@ -425,7 +425,7 @@
     <g
        id="layer1-0"
        inkscape:label="Layer 1"
-       transform="matrix(1.9168563,0,0,1.9168563,-10.493658,-954.88335)">
+       transform="matrix(1.4049352,0,0,1.4088942,-4.3934378,-425.06132)">
       <g
          transform="matrix(1.494802,0,0,1.494802,0.04158389,1026.1849)"
          id="layer1-7-4">

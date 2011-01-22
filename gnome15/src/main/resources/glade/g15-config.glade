@@ -60,7 +60,7 @@
   </object>
   <object class="GtkDialog" id="MainWindow">
     <property name="width_request">600</property>
-    <property name="height_request">480</property>
+    <property name="height_request">540</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Logitech G Keyboard Configuration</property>
     <property name="window_position">center</property>
@@ -820,6 +820,7 @@ the following title has focus</property>
                         </child>
                       </object>
                       <packing>
+                        <property name="padding">4</property>
                         <property name="position">0</property>
                       </packing>
                     </child>

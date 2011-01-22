@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.0 r9654"
-   sodipodi:docname="g15key-error.svg">
+   sodipodi:docname="logitech-g-keyboard-error-panel.svg">
   <defs
      id="defs4">
     <linearGradient
@@ -156,7 +156,8 @@
        y1="1038.9584"
        x2="7.8573594"
        y2="1049.3608"
-       gradientUnits="userSpaceOnUse" />
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.79205066,0,0,0.79205067,1.6959705,217.27951)" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -173,8 +174,8 @@
      showgrid="false"
      inkscape:window-width="1143"
      inkscape:window-height="734"
-     inkscape:window-x="13"
-     inkscape:window-y="30"
+     inkscape:window-x="2070"
+     inkscape:window-y="178"
      inkscape:window-maximized="0" />
   <metadata
      id="metadata7">
@@ -194,7 +195,7 @@
      transform="translate(0,-1036.3622)">
     <g
        id="layer1-7"
-       transform="translate(0,1035.3622)">
+       transform="matrix(0.7920629,0,0,0.79203837,1.6959968,1037.3227)">
       <path
          style="opacity:0.6;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
          d="m 2,2.96875 c -1.108,0 -2,0.892 -2,2 l 0,10 c 0,1.108 0.892,2 2,2 l 12,0 c 1.108,0 2,-0.892 2,-2 l 0,-10 c 0,-1.108 -0.892,-2 -2,-2 l -12,0 z M 8.75,4.9375 c 0.457327,9.9e-6 0.854744,0.028427 1.21875,0.09375 0.373326,0.05601 0.707409,0.1347597 0.96875,0.21875 0.270659,0.074676 0.488242,0.1347595 0.65625,0.21875 0.177325,0.084009 0.300325,0.1408426 0.375,0.1875 l -0.625,1.75 C 11.045075,7.2475909 10.704492,7.1120077 10.3125,7 9.929827,6.8786746 9.488577,6.843758 9.03125,6.84375 8.013912,6.843758 7.301079,7.1181744 6.84375,7.6875 6.395747,8.2475066 6.156247,9.0200058 6.15625,10 c -3e-6,0.476004 0.04425,0.920504 0.15625,1.3125 0.111997,0.38267 0.307247,0.688753 0.53125,0.96875 0.223996,0.280002 0.476496,0.497585 0.8125,0.65625 0.335995,0.149335 0.739495,0.250002 1.1875,0.25 0.242661,2e-6 0.456994,-0.02191 0.625,-0.03125 0.177327,-0.0093 0.338077,-0.0345 0.46875,-0.0625 l 0,-3.375 2.15625,0 0,4.8125 c -0.261342,0.102667 -0.671342,0.2005 -1.25,0.3125 -0.578674,0.121333 -1.275673,0.1875 -2.125,0.1875 -0.728005,0 -1.402671,-0.11975 -2,-0.34375 -0.588003,-0.224 -1.080002,-0.539416 -1.5,-0.96875 -0.420002,-0.429332 -0.766668,-0.968415 -1,-1.59375 C 3.994749,11.49967 3.906249,10.802671 3.90625,10 3.906249,9.1880057 4.029249,8.4690897 4.28125,7.84375 4.533249,7.2184243 4.873832,6.6793415 5.3125,6.25 5.751164,5.8113424 6.255747,5.4740094 6.84375,5.25 7.441079,5.0260098 8.077995,4.9375099 8.75,4.9375 z"
@@ -209,15 +210,16 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:174.00000094999998623%;letter-spacing:10px;word-spacing:0px;fill:url(#linearGradient15232);fill-opacity:1;stroke:#f50000;font-family:Ubuntu;-inkscape-font-specification:Ubuntu Bold;stroke-opacity:0.10196079000000000;stroke-width:0.50000001000000005;stroke-miterlimit:4;stroke-dasharray:none;opacity:1"
-       x="3.191"
-       y="1049.2343"
+       style="font-size:11.08870888px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;line-height:174.00000095%;letter-spacing:7.92050648px;word-spacing:0px;fill:url(#linearGradient15232);fill-opacity:1;stroke:#f50000;stroke-width:0.39602533;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none;font-family:Ubuntu;-inkscape-font-specification:Ubuntu Bold"
+       x="4.2234039"
+       y="1048.3263"
        id="text15270"
-       sodipodi:linespacing="174%"><tspan
+       sodipodi:linespacing="174%"
+       transform="scale(1.0000155,0.99998451)"><tspan
          sodipodi:role="line"
          id="tspan15272"
-         x="3.191"
-         y="1049.2343"
-         style="fill-opacity:1;fill:url(#linearGradient15232);stroke:#f50000;stroke-opacity:0.10196079000000000;stroke-width:0.50000001000000005;stroke-miterlimit:4;stroke-dasharray:none">G</tspan></text>
+         x="4.2234039"
+         y="1048.3263"
+         style="fill:url(#linearGradient15232);fill-opacity:1;stroke:#f50000;stroke-width:0.39602533;stroke-miterlimit:4;stroke-opacity:0.10196078;stroke-dasharray:none">G</tspan></text>
   </g>
 </svg>

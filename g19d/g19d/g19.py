@@ -5,6 +5,8 @@ import threading
 import time
 import usb
 import Image as Img
+import logging
+logger = logging.getLogger()
 
 class G19(object):
     '''Simple access to Logitech G19 features.
@@ -290,16 +292,17 @@ class G19UsbController(object):
 
     def __init__(self, resetOnStart=False, enable_mm_keys=False):
         self.enable_mm_keys = enable_mm_keys
+        logger.info("Looking for LCD device")
         self.__lcd_device = self._find_device(0x046d, 0xc229)
         if not self.__lcd_device:
             raise usb.USBError("G19 LCD not found on USB bus")
-        self.__kbd_device = self._find_device(0x046d, 0xc228)
-        if not self.__kbd_device:
-            raise usb.USBError("G19 keyboard not found on USB bus")
         self.handleIf0 = self.__lcd_device.open()
         if resetOnStart:
+            logger.info("Resetting LCD device")
             self.handleIf0.reset()
+            logger.info("Re-opening LCD device")
             self.handleIf0 = self.__lcd_device.open()
+            logger.info("Re-opened LCD device")
 
         self.handleIf1 = self.__lcd_device.open()
         
@@ -308,26 +311,61 @@ class G19UsbController(object):
         iface1 = config.interfaces[1][0]
 
         try:
-            self.handleIf1.detachKernelDriver(iface1)
+            logger.debug("Detaching kernel driver for LCD device")
+            self.handleIf0.detachKernelDriver(iface0)
+            logger.debug("Detached kernel driver for LCD device")
         except usb.USBError:
-            pass
+            logger.debug("Detaching kernel driver for LCD device failed.")
+        try:
+            logger.debug("Detaching kernel driver for backlight device")
+            self.handleIf1.detachKernelDriver(iface1)
+            logger.debug("Detached kernel driver for backlight device")
+        except usb.USBError:
+            logger.debug("Detaching kernel driver for backlight device failed.")
 
+        logger.debug("Setting configuration")
         self.handleIf0.setConfiguration(1)
         self.handleIf1.setConfiguration(1)
+        
+        logger.debug("Claiming LCD interface")
         self.handleIf0.claimInterface(iface0)
+        logger.info("Claimed LCD interface")
+        logger.debug("Claiming backlight interface")
         self.handleIf1.claimInterface(iface1)
+        logger.info("Claimed backlight interface")
         
         if self.enable_mm_keys:
+            logger.debug("Looking for multimedia keys device")
+            self.__kbd_device = self._find_device(0x046d, 0xc228)
+            if not self.__kbd_device:
+                raise usb.USBError("G19 keyboard not found on USB bus")
             self.handleIfMM = self.__kbd_device.open()
+            
+            if resetOnStart:
+                logger.debug("Resetting multimedia keys device")
+                self.handleIfMM.reset()
+                logger.debug("Re-opening multimedia keys device")
+                self.handleIfMM = self.__kbd_device.open()
+                logger.debug("Re-opened multimedia keys device")
+                
+        
+            config = self.__kbd_device.configurations[0]
+            ifacMM = config.interfaces[1][0]
+        
             try:
                 self.handleIfMM.setConfiguration(1)
             except usb.USBError:
                 pass
             try:
-                self.handleIfMM.detachKernelDriver(1)
+                logger.debug("Detaching kernel driver for multimedia keys device")
+                self.handleIfMM.detachKernelDriver(ifacMM)
+                logger.debug("Detached kernel driver for multimedia keys device")
             except usb.USBError:
-                pass
+                logger.debug("Detaching kernel driver for multimedia keys device failed.")
+            
+            logger.debug("Claiming multimedia interface")
             self.handleIfMM.claimInterface(1)
+            logger.info("Claimed multimedia keys interface")
 
     @staticmethod
     def _find_device(idVendor, idProduct):

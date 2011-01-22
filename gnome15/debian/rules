@@ -1,0 +1,125 @@
+#!/usr/bin/make -f
+
+DEB_PYTHON_SYSTEM = pysupport
+BUILDDIR := debian/build
+DESTDIR := ${CURDIR}/${BUILDDIR}
+
+#This is commented out because it is easier to let debhelper handle this as postinst and prerm fragments get generated.
+#Just need to copy the rules from the source gnome15 package when they get updated (can this be fixed somehow)   
+#DEB_CONFIGURE_EXTRA_FLAGS := --enable-udev=/lib/udev/rules.d
+
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/python-autotools.mk
+
+build: build-stamp
+
+build-stamp: configure 
+	dh_testdir
+	$(MAKE)
+	touch $@
+
+clean::
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	dh_auto_clean
+	dh_clean
+	rm -rf ${BUILDDIR} 
+        
+installbasic:
+	dh_auto_install DESTDIR=${DESTDIR} 
+
+install: installbasic
+	$(MAKE) install DESTDIR=${DESTDIR}
+	
+# Build architecture-independent files here.
+binary-indep: gnome15 gnome15-g15daemon gnome15-g19d gnome15-gtk gnome15-kernel
+
+# Build architecture-dependent files here.
+gnome15:
+	dh_testdir
+	dh_testroot
+	dh_installdirs -p$@
+	dh_installchangelogs -p$@ ChangeLog
+	dh_installdocs -p$@
+	dh_install --package=$@ -Xdriver_gtk -Xdriver_g19 -Xdriver_g15 -Xdriver_kernel
+	dh_installmenu
+	dh_installman -p$@
+	dh_compress -p$@
+	dh_fixperms -p$@
+	dh_pysupport -p$@ 
+	dh_installdeb -p$@
+	dh_gencontrol -p$@
+	dh_md5sums -p$@
+	dh_builddeb -p$@
+	
+gnome15-g15daemon:
+	dh_testdir
+	dh_testroot
+	dh_installdirs -p$@
+	dh_installchangelogs -p$@ ChangeLog
+	dh_installdocs -p$@
+	dh_install --package=$@
+	dh_compress -p$@
+	dh_fixperms -p$@
+	dh_pysupport -p$@ 
+	dh_installdeb -p$@
+	dh_gencontrol -p$@
+	dh_md5sums -p$@
+	dh_builddeb -p$@
+	
+gnome15-g19d:
+	dh_testdir
+	dh_testroot
+	dh_installdirs -p$@
+	dh_installchangelogs -p$@ ChangeLog
+	dh_installdocs -p$@
+	dh_install --package=$@
+	dh_compress -p$@
+	dh_fixperms -p$@
+	dh_pysupport -p$@ 
+	dh_installdeb -p$@
+	dh_gencontrol -p$@
+	dh_md5sums -p$@
+	dh_builddeb -p$@
+	
+gnome15-gtk:
+	dh_testdir
+	dh_testroot
+	dh_installdirs -p$@
+	dh_installchangelogs -p$@ ChangeLog
+	dh_installdocs -p$@
+	dh_install --package=$@
+	dh_compress -p$@
+	dh_fixperms -p$@
+	dh_pysupport -p$@ 
+	dh_installdeb -p$@
+	dh_gencontrol -p$@
+	dh_md5sums -p$@
+	dh_builddeb -p$@
+	
+gnome15-kernel:
+	dh_testdir
+	dh_testroot
+	dh_installdirs -p$@
+	dh_installchangelogs -p$@ ChangeLog
+	dh_installdocs -p$@
+	dh_install --package=$@
+	dh_compress -p$@
+	dh_fixperms -p$@
+	dh_pysupport -p$@ 
+	dh_installdeb -p$@
+	dh_gencontrol -p$@
+	dh_md5sums -p$@
+	dh_builddeb -p$@
+	
+# Build architecture-dependent files here.
+# Caution: the -a option is for rule acting on ALL architecture DEPENDENT
+# packages at this WHOLE file, not only at where it is written.
+
+# build and install are implicit, but THIS package source needs 2 cycles.
+# so the first cycle is implicity and this entry is for the second cycle. 
+binary: build install binary-arch binary-indep
+.PHONY: build build-stamp clean clean-patched binary-indep binary-arch binarydocs binary install configure configure-stamp installdocs installbasic unpatch patchsource patch-stamp
+

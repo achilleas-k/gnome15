@@ -1,0 +1,53 @@
+Source: gnome15
+Section: gnome
+Priority: optional
+Maintainer: Brett Smith <tanktarta@blueyonder.co.uk>
+Build-Depends: cdbs, debhelper (>= 7), autotools-dev, python-support, python-gobject, python-gnome2, python-gtk2, python-gtk2-dev, python-dbus, python-cairo (>= 1.8.3), python-lxml, python-imaging, python-evolution, python-vobject, python-alsaaudio, python-feedparser, python-rsvg, python-gnomeapplet, python-xdg, pkg-config, python-xlib, python-setproctitle, python-appindicator, python-wnck, python-gnomekeyring, pyinputevent
+Standards-Version: 3.8.4
+Homepage: http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/
+
+Package: gnome15
+Architecture: all
+Depends: ${python:Depends}, python-gobject, python-gnome2, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-evolution, python-vobject, python-alsaaudio, python-feedparser, python-rsvg, cairo-clock, python-xlib, python-setproctitle, python-appindicator, python-wnck, libgtk2.0-bin, python-gnomekeyring
+Recommends: gnome15-g19d | gnome15-g15daemon | gnome15-gtk | gnome15-kernel
+Provides: ${python:Provides}
+Description: Panel applet for the Logitech "G" keyboards
+ Gnome15 provides a panel applet, configuration tool, macro 
+ system and plugin framework for the Logitech G series
+ keyboards, currently including the G15 and G19.  The 
+ intention is to provide the best integration with the
+ Gnome desktop possible, using the standard protocols and
+ libraries where possible.
+
+Package: gnome15-g15daemon
+Architecture: all
+Depends: ${python:Depends}, gnome15, g15daemon (>= 1.9.5.4~svn529-1)
+Provides: ${python:Provides}
+Description: Adds support for the Logitech G15 to Gnome15
+ Gnome15 driver for the Logitech G15, making use of
+ g15aemon.
+ 
+Package: gnome15-g19d
+Architecture: all
+Depends: ${python:Depends}, gnome15, g19d
+Provides: ${python:Provides}
+Description: Adds support for the Logitech G19 to Gnome15
+ Gnome15 driver for the Logitech G19, making use of
+ G19D.
+ 
+Package: gnome15-gtk
+Architecture: all
+Depends: ${python:Depends}, gnome15
+Provides: ${python:Provides}
+Description: GTK Logitech keyboard emulator driver 
+ Special driver that emulates the G13, G15v1, G15v2 and
+ G19 as a window on your desktop. Allows development of
+ plugins and themes without access to real hardware.
+
+Package: gnome15-kernel
+Architecture: all
+Depends: ${python:Depends}, gnome15, pyinputevent, lgsetled
+Provides: ${python:Provides}
+Description: Gnome15 Kernel driver
+ Requires ali1234's kernel drivers. No additional processes
+ need be running. Supports G13, G15 and G19

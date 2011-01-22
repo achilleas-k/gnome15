@@ -26,7 +26,7 @@ import g15_driver as g15driver
 import g15_driver_manager as g15drivermanager
 import g15_util as g15util
 import subprocess
-import wnck
+import shutil
 
 
 # Determine if appindicator is available, this decides that nature
@@ -38,6 +38,11 @@ try :
     HAS_APPINDICATOR=True
 except:
     pass
+
+# Store the temporary profile icons here (for when the icon comes from a window, the filename is not known
+icons_dir = os.path.join(os.path.join(os.path.expanduser("~"),".gnome15"),"profile-icons")
+if not os.path.exists(icons_dir):
+    os.makedirs(icons_dir)
 
 PALE_RED = gtk.gdk.Color(213, 65, 54)
 
@@ -465,7 +470,8 @@ class G15Config:
                                     copy_path = os.path.join(icons_dir, os.path.basename(icon_path))
                                     shutil.copy(icon_path, copy_path)
                                     self.selected_profile.icon = copy_path
-                else:                               
+                else:                    
+                    import wnck           
                     for window in wnck.screen_get_default().get_windows():
                         if window.get_name() == self.selected_profile.window_name:
                             icon = window.get_icon()
@@ -713,6 +719,7 @@ class G15Config:
                 view = dbus.Interface(app, 'org.ayatana.bamf.view')
                 self.window_model.append([view.Name(), window])
         else:
+            import wnck
             for window in wnck.screen_get_default().get_windows():
                 self.window_model.append([window.get_name(), window.get_name()])
         

@@ -1,0 +1,129 @@
+gnome15 (0.4.0-1) maverick; urgency=low
+
+  * Feature: Support latest models supported by g15daemon. Will require a patched g15tools suite. 
+  * Bug: Plugin will now only appear in g15-config if supported by the current model.
+  * Bug: Plugin will now only load in g15-indicator or g15-applet if supported by the current model.
+  * Bug: sysmon plugin: Erroneous memory unit in g19 keyboards.
+  * Bug: screensaver plugin: erroneous text alignment.
+  * Bug: applet: display "screens" list with left click.
+  * Bug: rss plugin: now correctly refreshes at configured interval
+  * Feature: sysmon plugin: remembers last CPU / NET selected
+  * Feature: last selected screen will be reselected when Gnome15 restarts
+  * Feature: DBUS API. Create and draw new screens over DBUS
+  * Feature: Allow boot-up keyboard color to be set (g19d driver only)
+  * Feature: g15-macros no longer exists. Functionality has been merged with g15-config
+  * Bug: Problem drawing theme files that require text boxes on locales that use "," as a decimal point
+  * Feature: New G15Daemon plugin. Allows g15daemon scripts to run on a G19.
+  * Bug: Notify plugin now cleans up the mess of image files it left in /tmp. 
+  * Bug: Notify plugin now correctly replaces messages with the same ID. This improves the problem with Rhythmbox hanging when tracks change, although does not fix it completely. 
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon,  3 Jan 2010 23:38:47 +0000
+ 
+ gnome15 (0.3.1-1) maverick; urgency=low
+
+  * Cycle screens options gets set correctly upon starting g15-config
+  * LCDBiff plugin actually counts IMAP mails now
+  * Fixed crash in LCDBiff when accessing gnome keyring
+  * Panel now has some support for G15 and other monochrome displays. 
+  * Many theme fixes and adjustments for G15 and other monochrome displays. Main
+    change was re-arranging to accomodate the panel, but other stuff was fixed 
+    along the way.
+  * System Monitor plugin can now show specific CPU or Network Interface details 
+    cycle with Up/Down on the G19, and L3/L4 on others
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Thu,  9 Dec 2010 23:59:01 +0000
+ 
+ gnome15 (0.3.0-7) maverick; urgency=low
+
+  * Fixed blurry indicator icons
+  * Added kernel driver (requires kernel patch)
+  * Screen cycle option set correctly
+  * Possible fix for G19D and multimedia keys locking system
+  * New POP3/IMAP plugin (alpha)
+  * Driver changes update the controls visible in configuration tool
+  * Re-arranged keyboard controls in configuration tool
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun,  7 Nov 2010 16:40:21 +0000
+
+gnome15 (0.2.1-1) maverick; urgency=low
+
+  * Slight changes to icons
+  * Fixed problem where gnome15 fails to start on older GTK versions
+  * Notify plugin now completely implemented specification
+  * Indicator may be hidden when there are no errors
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sat,  6 Nov 2010 11:31:34 +0000
+
+gnome15 (0.2.0-1) maverick; urgency=low
+
+  * Added Indicator Messages plugin
+  * Ability to use GTK components in plugins
+  * Improved scrolling component (used by indicator messages, menu and rss)
+  * Impulse15 Performance improvements
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon,  1 Nov 2010 21:30:08 +0000
+
+gnome15 (0.1.1-1) maverick; urgency=low
+
+  * Indicator label removed
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Fri, 29 Oct 2010 00:20:31 +0100
+
+gnome15 (0.1.0-1) maverick; urgency=low
+
+  * Assign keyboard backlight color to profile / memory bank
+  * Applet shows active screens in same way as indicator
+  * Stability fixes
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Thu, 28 Oct 2010 21:14:47 +0100
+
+gnome15 (0.0.9-3) maverick; urgency=low
+
+  * Drivers now in separate packages (drivers now pluggable to support this)
+  * Video player removed to sandbox plugins package
+  * Media player sometimes not starting
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sat, 23 Oct 2010 23:20:20 +0100
+
+gnome15 (0.0.8-1) maverick; urgency=low
+
+  * More icon corrections
+  * High priority screens work properly again
+  * Correct handling of pause in media player plugin
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Thu, 21 Oct 2010 19:05:41 +0100
+
+gnome15 (0.0.7-1) maverick; urgency=low
+
+  * Corrected indicator icon sizes
+  * Update icon cache during installation
+
+gnome15 (0.0.5-1) maverick; urgency=low
+
+  * Indicator now used instead of applet. 
+  * New menu plugin
+  * New panel plugin
+  * New spectrum analyser plugin (based on "Impulse" screenlet)
+  * Stability fixes. 
+  * Driver can now be changed at runtime without restart
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Wed, 20 Oct 2010 13:01:15 +0100
+
+gnome15 (0.0.4-2) maverick; urgency=low
+
+  * Handles more Cairo clock themes
+  * Lowered Cairo version requirement. This is at the expense of taking a lot
+    of CPU, so having at least Cairo 1.8.3 is best.
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon, 11 Oct 2010 23:00:00 +0100
+
+gnome15 (0.0.3-8) maverick; urgency=low
+
+  * First packaged release
+  * G19 support
+  * SVG theme support
+  * Rhythmbox plugin replaced by MPRIS plugin (supports more players)
+  * RSS plugin
+  * More bug fixes and minor features
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon, 04 Oct 2010 20:28:00 +0100
