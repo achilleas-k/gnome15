@@ -1,0 +1,17 @@
+gnome15-impulse15 (0.0.4-1) maverick; urgency=low
+
+  * Updated to latest Impulse code. Added extra customisation options
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun, 24 Oct 2010 23:30:21 +0100
+
+gnome15-impulse15 (0.0.2-3) maverick; urgency=low
+
+  * Added option to display on foreground or background
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun, 24 Oct 2010 23:30:21 +0100
+
+gnome15-impulse15 (0.0.1-1) maverick; urgency=low
+
+  * Initial release
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue, 12 Oct 2010 21:20:11 +0100

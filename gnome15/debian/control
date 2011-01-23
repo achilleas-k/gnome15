@@ -21,7 +21,7 @@ Description: Panel applet for the Logitech "G" keyboards
 
 Package: gnome15-g15daemon
 Architecture: all
-Depends: ${python:Depends}, gnome15, g15daemon (>= 1.9.5.4~svn529-1)
+Depends: ${python:Depends}, gnome15, g15daemon (>= 1.9.5.4-1~svn529)
 Provides: ${python:Provides}
 Description: Adds support for the Logitech G15 to Gnome15
  Gnome15 driver for the Logitech G15, making use of

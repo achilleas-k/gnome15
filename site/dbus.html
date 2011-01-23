@@ -1,0 +1,129 @@
+<html>
+	<head>
+		<link href="gnome15.css" rel="stylesheet" type="text/css">
+		<title>Gnome15 - Gnome integration for the Logitech G Keyboards - DBUS</title>
+	</head>
+	<body>
+		<div id="header">
+			<img src="header.png"/>
+		</div>
+		<div id="toolbar">
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<li>|</li>
+				<li><a href="downloads.html">Downloads</a></li>
+				<li>|</li>
+				<li>[Help And Documentation]</li>
+				<li>|</li>
+				<li><a href="subprojects.html">Sub-projects</a></li>
+				<li>|</li>
+				<li><a href="https://launchpad.net/gnome15">Project</a></li>
+			</ul>
+		</div>
+		<div id="subtoolbar">
+			<ul>
+				<li><a href="docs.html">Summary</a></li>
+				<li>|</li>
+				<li><a href="install.html">Installation</a></li>
+				<li>|</li>
+				<li><a href="faq.html">FAQ</a></li>
+				<li>|</li>
+				<li><a href="plugins.html">Plugin Gallery</a></li>
+				<li>|</li>
+				<li><a href="extending.html">Plugin Tutorial</a></li>
+				<li>|</li>
+				<li>[DBUS API]</li>
+			</ul>
+		</div>
+		
+		<div class="clear"></div>
+		<h1>DBUS</h1>
+		<p>As from version 0.4.0, some features of Gnome15 are now exposed as a <a href="http://www.freedesktop.org/wiki/Software/dbus">DBUS</a> API.
+		This will allow you to integrate with Gnome15 from any language that has a <a href="http://www.freedesktop.org/wiki/Software/DBusBindings">DBUS Binding</a>.</p>
+		<p>The API is in its infancy at the moment, but will become complete (and fully documented) before version 1.0.</p>
+		<p>The basic steps are :-
+		</p>
+		<ol>
+			<li>Create a new page.</li>
+			<li>Set the page's SVG.</li>
+			<li>Set the replacement properties.</li>
+			<li>Draw the page.</li>
+			<li>Repeat steps 3-5.</li>
+			<li>Destroy the page.</li>
+		</ol>
+		<p>
+		Future versions will also have a simple drawing API (i.e no need for an SVG theme file), keyboard events and many of the other
+		features available to the standard Python plugins.
+		</p>
+		<h2>Example Using Bash Script</h2>
+		<p>Until the documentation is ready, here is a quick example of using the <b>dbus-send</b> command to create a simple "Hello World"
+		using a bash script and the <b>dbus-send</b> command.</p>
+		<pre>#!/bin/bash
+
+# DBUS names
+
+BUS_NAME=org.gnome15.Gnome15
+NAME="/org/gnome15/Service"
+IF_NAME="org.gnome15.Service"
+
+# The theme text
+
+SVG=$(cat &lt;&lt;EOF
+&lt;svg xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   width="320"
+   height="240"
+   id="svg2"
+   version="1.1"&gt;
+  &lt;defs
+     id="defs4" /&gt;
+  &lt;g
+     id="layer1"
+     transform="translate(0,-812.36218)"&gt;
+    &lt;text
+       xml:space="preserve"
+       style="font-size:35.27605218px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="217.7132"
+       y="710.9259"
+       id="text4014"
+       transform="matrix(0.73491181,0,0,0.85727643,0,352.45774)"&gt;&lt;tspan
+         id="tspan4016"
+         x="217.7132"
+         y="710.9259"&gt;Hello \${logname}&lt;/tspan&gt;&lt;/text&gt;
+    &lt;path
+       style="fill:#950000;fill-opacity:1;stroke:#000000;stroke-opacity:1"
+       id="path2992"
+       d="M 60.312432,65.003797 A 15,17.5 0 1 1 59.999994,65"
+       transform="translate(94.687568,917.35838)"/&gt;
+  &lt;/g&gt;
+&lt;/svg&gt;
+EOF
+)
+
+# Helper function
+
+do_dbus() {
+	METHOD="$1"
+	shift
+	dbus-send --dest="${BUS_NAME}" ${NAME} ${IF_NAME}.${METHOD} "$@"
+} 
+
+do_dbus GetServerInformation
+do_dbus CreatePage string:HelloWorld string:'Hello World!'
+do_dbus SetPageThemeSVG string:HelloWorld string:"${SVG}"
+do_dbus SetPageThemeProperty string:HelloWorld string:logname string:"$(logname)"
+do_dbus RaisePage string:HelloWorld
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+	do_dbus SetPageThemeProperty string:HelloWorld string:logname string:"$(logname) - $i"
+	do_dbus RedrawPage string:HelloWorld
+	sleep 1
+done
+do_dbus DestroyPage string:HelloWorld
+
+		</pre>
+	</body>
+</html>

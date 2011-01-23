@@ -25,6 +25,8 @@
 
 double *im_getSnapshot( int fft );
 
+void im_setSourceIndex( uint32_t index );
+
 void im_start( void );
 
 void im_stop( void );

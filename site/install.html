@@ -32,15 +32,18 @@
 				<li><a href="plugins.html">Plugin Gallery</a></li>
 				<li>|</li>
 				<li><a href="extending.html">Plugin Tutorial</a></li>
+				<li>|</li>
+				<li><a href="dbus.html">DBUS API</a></li>
 			</ul>
 		</div>
 		
 		<div class="clear"></div>
 		<h1>Installation</h1>
-		<p>Currently there are two ways to install Gnome15. If you have Ubuntu 10.10, you can use a PPA
-		to install Gnome15 and its dependencies. This is the easiest method.</p>
-		<p>If not, you will have to install from source.</p>
-		<h2>Installing From the PPA</h2>
+		<p>Currently there are two ways to install Gnome15. If you have Ubuntu 10.4 or 10.10, you can use a <a href="#ppa">PPA</a>
+		to install Gnome15 and its dependencies. This is the easiest method if you have this distribution.</p>
+		<p>Also, there may packages available for your distribution. See the <a href="downloads.html">downloads</a> page.</p>
+		<p>Everyone else will have to <a href="#source">Install from source.</a></p>
+		<h2><a name="ppa">Installing From the PPA</a></h2>
 		<p>Add the <b>ppa:tanktarta/gnome15</b> to your software sources, and install the <b>gnome15</b> package.  
 		You may do this in a number of ways (Synaptic etc), or from the command line:-</p>
 		<pre>sudo add-apt-repository ppa:tanktarta/gnome15
@@ -62,7 +65,7 @@ sudo apt-get update</pre>
 			<li>Start the daemon :-
 			<pre>sudo service g19d start</pre></li>
 		</ol>
-		<h4>G15, G13 and Z-10</h4>
+		<h4>G15, G13, Z-10, G110, G510</h4>
 		<p>The G15 and variants driver uses <a href="http://www.g15tools.com/">g15daemon</a> to access the keyboard hardware.</p>
 		<pre>sudo apt-get install gnome15-g15d</pre>
 		<p>This will download and install the driver and its dependencies. You will also have to enable the daemon before starting it.</p>
@@ -74,7 +77,7 @@ sudo apt-get update</pre>
 			<pre>sudo service g15daemon start</pre></li>
 		</ol>
 		<h4>GTK</h4>
-		<p>The GTK driver is a special development driver that emulates either the G13, G15v1, G15v2 or G19 as
+		<p>The GTK driver is a special development driver that emulates all supported models
 		a window on your desktop. You can use this to develop plugins and themes for hardware you do not have.</p>
 		<pre>sudo apt-get install gnome15-gtk</pre>
 		<h4>Kernel</h4>
@@ -90,7 +93,7 @@ sudo apt-get update</pre>
 			<li>gnome15-elementary-icons. Adds Gnome15 icons to Elementary icon theme.</li> 
 			<li>gnome15-mono-icons. Adds Gnome15 icons to Ubuntu Mono icon theme.</li>
 		</ul>
-		<h2>Installing From the Source</h2>
+		<h2><a name="source">Installing From the Source</a></h2>
 		<p>First make sure you have all of the dependencies installed (these are listed on the <a href="download.html">page</a>). A large number of these should be in
 		your distributions repository. For any that aren't you will have to download and install those from source
 		as well.</p>
@@ -144,17 +147,7 @@ sudo make install</pre>
 			<li>Run the command <b>g15-config</b>.</li>
 			<li>Choose  <i>Logitech Keyboard Configuration</i> in the Ubuntu <i>System Preferences</i> 
 			menu (or <i>Control Centre</i> if you have that installed).</li>
-		</ul>
-		<h2>Other Tools</h2>
-		<p>The final tool available is the macro configuration application <b>g15-macros</b>. Again, there
-		are a number of ways you may access this :-
-		<ul>
-			<li>When available, right click the panel applet and choose <i>Macros</i>.</li>
-			<li>When available, left click the panel indicator and choose <i>Macros</i>.</li>
-			<li>Run the command <b>g15-macros</b>.</li>
-			<li>Choose <i>Logitech Keyboard Macros</i> in <i>Accessories -&gt; Logitech Keyboard Macros</i>.</li>
-		</ul>
-		
+		</ul>	
 		
 	</body>
 </html>
