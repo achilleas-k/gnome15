@@ -68,11 +68,14 @@ do_dbus RaisePage string:HelloWorld
 
 for i in 1 2 3 4 5 6 7 8 9 10
 do
-        # This demonstrates using the drawing functions. Create a new surface
-        # everytime you want to redraw. Call DrawSurface when all drawn,
-        # then redraw the page 
+    # This demonstrates using the drawing functions. Create a new surface
+    # everytime you want to redraw. Call DrawSurface when all drawn,
+    # then redraw the page 
 
     do_dbus NewSurface string:HelloWorld
+    
+    # Draw some shapes and lines
+    
     do_dbus Foreground string:HelloWorld int16:0 int16:255: int16:0 int16:255
     do_dbus Rectangle string:HelloWorld double:40 double:0 double:80 double:80 boolean:true
     do_dbus Foreground string:HelloWorld int16:0 int16:0: int16:255 int16:255
@@ -81,17 +84,25 @@ do
     do_dbus Line string:HelloWorld double:210 double:80 double:130 double:0
     do_dbus Foreground string:HelloWorld int16:255 int16:0: int16:255 int16:128
     do_dbus Circle string:HelloWorld double:260 double:40 double:40 boolean:true
+    
+    # Set the font and draw some text. The text is given a bounding box, and is wrapped within this box and aligned as requested
     do_dbus SetFont string:HelloWorld double:20.0 string:"Sans" string:"normal" string:"normal"
     do_dbus Foreground string:HelloWorld int16:0 int16:255: int16:255 int16:255
-    do_dbus DrawSurface string:HelloWorld
     do_dbus Text string:HelloWorld string:"Using Drawing Functions!! $i" double:0 double:60 double:320 double:80 string:center
+    
+    # Draw some images. Image path may be an icon name or an absolute path. You can also send
+    # raw image data.
+    
     do_dbus Image string:HelloWorld string:utilities-system-monitor double:140 double:60 double:40 double:40
-    do_dbus ImageData string:HelloWorld array:byte:"$(cat /usr/share/pixmaps/gnome-logo-icon.png)" double:280 double:30
+    #do_dbus ImageData string:HelloWorld array:byte:0,5,213,7,etc.. double:280 double:30
+    
+    # Draw the surface
+    do_dbus DrawSurface string:HelloWorld
 
-        # This demonstrates using theme properties
+    # This demonstrates using theme properties
     do_dbus SetPageThemeProperty string:HelloWorld string:ticker string:"$i"
 
-        # Now redraw the page, this sends it to the LCD
+    # Now redraw the page, this sends it to the LCD
     do_dbus RedrawPage string:HelloWorld
     sleep 1
 done
