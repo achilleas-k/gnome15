@@ -303,3 +303,10 @@ class AbstractDriver(object):
         if fg_control != None:
             fg_rgb = fg_control.value
         return g15util.rgb_to_hex(fg_rgb)
+    
+    def get_color(self, hint, default):
+        fg_control = self.get_control_for_hint(hint)
+        fg_rgb = default
+        if fg_control != None:
+            fg_rgb = fg_control.value
+        return fg_rgb

@@ -210,6 +210,8 @@ class Driver(g15driver.AbstractDriver):
             finally:
                 self.lock.release()
             
+    def get_name(self):
+        return "g15daemon driver"
     
     def get_model_names(self):
         return [ g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G110, g15driver.MODEL_G510, g15driver.MODEL_G13 ]

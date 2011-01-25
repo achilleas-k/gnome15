@@ -44,7 +44,7 @@
                               <object class="GtkToolbar" id="toolbar1">
                                 <property name="visible">True</property>
                                 <child>
-                                  <object class="GtkToolButton" id="NewURL">
+                                  <object class="GtkToolButton" id="NewPPA">
                                     <property name="visible">True</property>
                                     <property name="label" translatable="yes">toolbutton1</property>
                                     <property name="use_underline">True</property>
@@ -56,7 +56,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkToolButton" id="RemoveURL">
+                                  <object class="GtkToolButton" id="RemovePPA">
                                     <property name="visible">True</property>
                                     <property name="label" translatable="yes">toolbutton2</property>
                                     <property name="use_underline">True</property>

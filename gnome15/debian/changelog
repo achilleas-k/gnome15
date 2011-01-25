@@ -1,3 +1,9 @@
+gnome15 (0.4.1-1) maverick; urgency=low
+
+  * Bug: DBUS API was broken. It is now fixed, and with more functions implemented. The example script has been updated to reflect this. 
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon, 24 Jan 2010 23:58:47 +0000
+ 
 gnome15 (0.4.0-1) maverick; urgency=low
 
   * Feature: Support latest models supported by g15daemon. Will require a patched g15tools suite. 

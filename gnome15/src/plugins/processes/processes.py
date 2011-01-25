@@ -117,7 +117,8 @@ class G15Processes():
                     return True           
                 elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
                     if self.selected != None:
-                        g15theme.ConfirmationScreen(self.screen, "Kill Process", "Are you sure you want to kill %d" % self.selected.process_id,  g15util.get_icon_path("utilities-system-monitor"), self._kill_process, self.selected.process_id)
+                        g15theme.ConfirmationScreen(self.screen, "Kill Process", "Are you sure you want to kill %d" % self.selected.process_id,  
+                                                    g15util.get_icon_path("utilities-system-monitor"), self._kill_process, self.selected.process_id)
                     
                     return True
                 elif g15driver.G_KEY_UP in keys or g15driver.G_KEY_SETTINGS in keys:

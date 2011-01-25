@@ -176,6 +176,9 @@ class Driver(g15driver.AbstractDriver):
             self._do_update_control(control)
         finally:
             self.lock.release()
+            
+    def get_name(self):
+        return "G19D Network Daemon Driver"
     
     def get_model_names(self):
         return [ g15driver.MODEL_G19 ]

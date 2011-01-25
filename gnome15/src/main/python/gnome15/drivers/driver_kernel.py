@@ -284,6 +284,9 @@ class Driver(g15driver.AbstractDriver):
     
     def get_model_names(self):
         return [ g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G13, g15driver.MODEL_G19 ]
+            
+    def get_name(self):
+        return "Linux Logitech Kernel Driver"
     
     def get_model_name(self):
         return self.mode

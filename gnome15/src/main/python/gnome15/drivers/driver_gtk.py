@@ -150,6 +150,9 @@ class Driver(g15driver.AbstractDriver):
     
     def get_model_names(self):
         return g15driver.MODELS
+            
+    def get_name(self):
+        return "GTK Keyboard Emulator Driver"
     
     def get_model_name(self):
         return self.device.model_name

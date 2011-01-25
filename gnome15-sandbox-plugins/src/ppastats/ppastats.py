@@ -29,6 +29,8 @@ import os
 import feedparser
 import gtk
 import gconf
+from launchpadlib.launchpad import Launchpad
+
 
 # Plugin details - All of these must be provided
 id="ppstats"
@@ -44,7 +46,7 @@ def create(gconf_key, gconf_client, screen):
     return G15PPAStats(gconf_client, gconf_key, screen)
 
 def show_preferences(parent, gconf_client, gconf_key):
-    G15PPStatsPreferences(parent, gconf_client, gconf_key)
+    G15PPAStatsPreferences(parent, gconf_client, gconf_key)
 
 def changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
@@ -65,9 +67,9 @@ class G15PPAStatsPreferences():
         widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "ppastats.glade"))
         
         # Feeds
-        self.feed_model = widget_tree.get_object("FeedModel")
+        self.feed_model = widget_tree.get_object("PPAModel")
         self.reload_model()
-        self.feed_list = widget_tree.get_object("FeedList")
+        self.feed_list = widget_tree.get_object("PPAList")
         self.url_renderer = widget_tree.get_object("URLRenderer")
         
         # Updates
@@ -78,11 +80,11 @@ class G15PPAStatsPreferences():
         # Connect to events
         self.update_adjustment.connect("value-changed", self.update_time_changed)
         self.url_renderer.connect("edited", self.url_edited)
-        widget_tree.get_object("NewURL").connect("clicked", self.new_url)
-        widget_tree.get_object("RemoveURL").connect("clicked", self.remove_url)
+        widget_tree.get_object("NewPPA").connect("clicked", self.new_url)
+        widget_tree.get_object("RemovePPA").connect("clicked", self.remove_url)
         
         # Show dialog
-        dialog = widget_tree.get_object("RSSDialog")
+        dialog = widget_tree.get_object("PPADialog")
         dialog.set_transient_for(parent)
         
         ah = gconf_client.notify_add(gconf_key + "/urls", self.urls_changed);
@@ -120,14 +122,15 @@ class G15PPAStatsPreferences():
     def remove_url(self, widget):        
         (model, path) = self.feed_list.get_selection().get_selected()
         url = model[path][0]
-        urls = self.gconf_client.get_list(self.gconf_key + "/urls", gconf.VALUE_STRING)
+        urls = self.gconf_client.get_list(self.gconf_key + "/projects", gconf.VALUE_STRING)
         if url in urls:
             urls.remove(url)
-            self.gconf_client.set_list(self.gconf_key + "/urls", gconf.VALUE_STRING, urls)   
+            self.gconf_client.set_list(self.gconf_key + "/projects", gconf.VALUE_STRING, urls)   
         
 class G15PPAPage():
     
-    def __init__(self, plugin, url):            
+    def __init__(self, plugin, url):
+        self.launchpad = plugin.launchpad            
         self.gconf_client = plugin.gconf_client        
         self.gconf_key = plugin.gconf_key
         self.screen = plugin.screen
@@ -139,9 +142,10 @@ class G15PPAPage():
         self.page = self.screen.new_page(self.paint, id="PPA " + str(plugin.page_serial), thumbnail_painter = self.paint_thumbnail)
         plugin.page_serial += 1
         self.screen.redraw(self.page)
+        self.project = self.launchpad.projects[self.url]
+        print self.project
         
     def reload(self):
-        self.feed = feedparser.parse(self.url)
         self.icon = g15util.get_icon_path("application-rss+xml", self.screen.height )
         self.title = "PPA"
     
@@ -155,7 +159,7 @@ class G15PPAPage():
         attributes["icon"] = self.icon
         self.theme.draw(canvas, properties, attributes)
     
-class G15PPA():
+class G15PPAStats():
     
     def __init__(self, gconf_client,gconf_key, screen):
         self.screen = screen;
@@ -164,22 +168,17 @@ class G15PPA():
         self.page_serial = 1
 
     def activate(self):
+        
+        self.cache_dir = os.path.expanduser("~/.gnome2/gnome15/ppastats")
+        self.launchpad = Launchpad.login_anonymously("just testing", "production", self.cache_dir)
+        bug_one = self.launchpad.bugs[1]
+        print "Bug one",bug_one.title
+        
         self.pages = {}       
-        self.schedule_refresh() 
-        self.update_time_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/update_time", self.update_time_changed)
-        self.ppas_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/ppas", self.urls_changed)
-        self.load_ppas()
-        
-    def schedule_refresh(self):
-        schedule_seconds = get_update_time(self.gconf_client, self.gconf_key) * 60.0
-        self.refresh_timer = g15util.schedule("PPARefreshTimer", schedule_seconds, self.refresh)
-        
-    def refresh(self):
-        for page_id in self.pages:
-            page = self.pages[page_id]        
-            page.reload()
-            self.screen.redraw(page.page)
-        self.schedule_refresh()
+        self.update_time_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/update_time", self._update_time_changed)
+        self.ppas_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/ppas", self._ppas_changed)
+        self._load_ppas()
+        self._schedule_refresh()
     
     def deactivate(self):
         self.gconf_client.notify_remove(self.update_time_changed_handle);
@@ -189,16 +188,31 @@ class G15PPA():
         self.pages = {}
         
     def destroy(self):
-        pass 
+        pass  
     
-    def update_time_changed(self, client, connection_id, entry, args):
+    '''
+    Private
+    '''
+        
+    def _schedule_refresh(self):
+        schedule_seconds = get_update_time(self.gconf_client, self.gconf_key) * 60.0
+        self.refresh_timer = g15util.schedule("PPARefreshTimer", schedule_seconds, self._refresh)
+        
+    def _refresh(self):
+        for page_id in self.pages:
+            page = self.pages[page_id]        
+            page.reload()
+            self.screen.redraw(page.page)
+        self._schedule_refresh()
+    
+    def _update_time_changed(self, client, connection_id, entry, args):
         self.refresh_timer.cancel()
-        self.schedule_refresh()
+        self._schedule_refresh()
     
-    def ppas_changed(self, client, connection_id, entry, args):
-        self.load_ppas()
+    def _ppas_changed(self, client, connection_id, entry, args):
+        self._load_ppas()
     
-    def load_ppas(self):
+    def _load_ppas(self):
         ppa_list = self.gconf_client.get_list(self.gconf_key + "/ppas", gconf.VALUE_STRING)
         
         # Add new pages
