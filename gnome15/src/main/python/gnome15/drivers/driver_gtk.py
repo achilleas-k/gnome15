@@ -263,7 +263,7 @@ class Driver(g15driver.AbstractDriver):
         if self.is_connected():
             gobject.idle_add(self.disconnect)
         else:
-            print "WARNING: Mode change would cause disconnect when already connected.", entry
+            logger.warnging("Mode change would cause disconnect when already connected. %s" % str(entry) )
         
     def _draw_surface(self):
         # Finally paint the Cairo surface on the GTK widget

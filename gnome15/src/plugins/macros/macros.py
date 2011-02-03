@@ -27,6 +27,8 @@ import gnome15.g15_theme as g15theme
 import gnome15.g15_screen as g15screen
 
 import os
+import logging
+logger = logging.getLogger("macros")
 
 # Plugin details - All of these must be provided
 id="macros"

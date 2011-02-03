@@ -209,13 +209,3 @@ class G15Profile():
 # Create the default
 create_default()
 
-if __name__ == '__main__':
-
-    import optparse
-    parser = optparse.OptionParser()
-#    parser.add_option("-d", "--delete", action="store_true", dest="delete",
-#        default=False, help="Delete a profile.")
-    (options, args) = parser.parse_args()
-
-    for profile in get_profiles():
-        print profile.id," name =",profile.name," ->"

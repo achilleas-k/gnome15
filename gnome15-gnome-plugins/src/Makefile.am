@@ -1,0 +1,1 @@
+SUBDIRS = cal indicator-me indicator-messages screensaver lcdbiff 

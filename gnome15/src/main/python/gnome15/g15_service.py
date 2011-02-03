@@ -24,7 +24,6 @@ import sys
 import pygtk
 pygtk.require('2.0')
 import gtk
-import gnome.ui
 import os.path
 import gobject
 import g15_globals as pglobals
@@ -47,11 +46,13 @@ import dbus
 import glib
 from threading import RLock
 from threading import Thread
-from dbus.mainloop.glib import threads_init
 from g15_exceptions import NotConnectedException
 
-dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-glib.set_application_name(pglobals.name)
+loop = gobject.MainLoop()
+
+# Logging
+import logging
+logger = logging.getLogger("service")
 
 # Determine whether to use XTest for sending key events to X
 UseXTest = True
@@ -124,7 +125,7 @@ class G15Splash():
         self.screen.redraw(self.page)
         icon_path = g15util.get_icon_path("gnome15")
         if icon_path == None:
-            icon_path = os.path.join(pglobals.icons_dir, 'gnome15.svg')
+            icon_path = os.path.join(pglobals.icons_dir,"hicolor", "apps", "scalable", "gnome15.svg")
         self.logo = g15util.load_surface_from_file(icon_path)
         
     def paint(self, canvas):
@@ -158,6 +159,8 @@ class G15Service(Thread):
     def __init__(self, service_host, parent_window=None):
         Thread.__init__(self)
         self.first_page = None
+        self.attention_message = pglobals.name
+        self.attention = False
         self.splash = None
         self.parent_window = parent_window
         self.service_host = service_host
@@ -168,14 +171,40 @@ class G15Service(Thread):
         self.control_handles = []
         self.active_window = None
         self.color_no = 1
+        self.driver = None
         self.cycle_timer = None
         self.shutting_down = False
+        self.starting_up = True
         self.conf_client = gconf.client_get_default()
         self.defeat_profile_change = False
         self.screen = g15screen.G15Screen(self)
+        self.service_listeners = []
+                
+        # Expose Gnome15 functions via DBus
+        logger.debug("Starting the DBUS service")
+        self.dbus_service = g15dbus.G15DBUSService(self) 
+        
+        self.start();
+        
+        logger.debug("Starting GLib loop")
+        loop.run()
+        logger.debug("Exited GLib loop")
+        
+    def shutdown(self):
+        self.shutting_down = True
+        for listener in self.service_listeners:
+            listener.shutting_down()
+        self.plugins.deactivate()
+        if self.driver.is_connected():
+            self.driver.disconnect() 
+        self.dbus_service.stop()
+        loop.quit() 
+        g15util.stop_all_schedulers()
         
     def run(self):
-        
+        for listener in self.service_listeners:
+            listener.starting_up()
+                    
         # Get the driver. If it is not configured, configuration will be required at this point
         self.driver = g15drivermanager.get_driver(self.conf_client, on_close=self.on_driver_close)
         
@@ -193,6 +222,7 @@ class G15Service(Thread):
         self.attempt_connection() 
         
         # Monitor gconf
+        logger.debug("Watching some GConf settings")
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
         self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.resched_cycle);
         self.conf_client.notify_add("/apps/gnome15/active_profile", self.active_profile_changed);
@@ -200,30 +230,33 @@ class G15Service(Thread):
         self.conf_client.notify_add("/apps/gnome15/driver", self.driver_changed);
             
         # Monitor active application    
+        logger.debug("Attempting to set up BAMF")
         self.session_bus = dbus.SessionBus()
         try :
             self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')   
             self.session_bus.add_signal_receiver(self.application_changed, dbus_interface="org.ayatana.bamf.matcher", signal_name="ActiveApplicationChanged")
         except:
-            print "WARNING: BAMF not available, falling back to WNCK"
+            logger.warning("BAMF not available, falling back to WNCK")
             try :                
                 import wnck
                 wnck.__file__
                 gobject.timeout_add(500, self.timeout_callback, self)
             except:
-                print "WARNING: Python Wnck not available either, no automatic profile switching"
+                logger.warning("Python Wnck not available either, no automatic profile switching")
                 
-        # Expose Gnome15 functions via DBus
-        self.dbus_service = g15dbus.G15DBUSService(self) 
+        self.starting_up = False
+        for listener in self.service_listeners:
+            listener.started_up()
  
     def attempt_connection(self, delay=0.0):
+        logger.debug("Attempting connection")
         self.connection_lock.acquire()
         try :
             if self.driver == None:
                 self.driver = g15drivermanager.get_driver(self.conf_client, on_close=self.on_driver_close)
 
             if self.driver.is_connected():
-                print "WARN: Attempt to reconnect when already connected."
+                logger.warning("WARN: Attempt to reconnect when already connected.")
                 return
             
             self.loading_complete = False
@@ -237,7 +270,7 @@ class G15Service(Thread):
                 self.driver.connect() 
                 
                 for control in self.driver.get_controls():
-                    print "Watching", "/apps/gnome15/" + control.id
+                    logger.debug("Watching %s" % ( "/apps/gnome15/" + control.id) )
                     self.control_handles.append(self.conf_client.notify_add("/apps/gnome15/" + control.id, self.control_configuration_changed));
                 
                 self.screen.start()
@@ -246,9 +279,13 @@ class G15Service(Thread):
                 else:
                     self.splash.update_splash(0, 100, "Starting up ..")
                 self.screen.set_mkey(1)
-                self.activate_profile()            
-                g15util.schedule("ActivatePlugins", 0.1, self.complete_loading)    
+                self.activate_profile()
                 self.last_error = None
+                for listener in self.service_listeners:
+                    listener.driver_connected(self.driver)
+                             
+                self.complete_loading()
+
             except Exception as e:
                 if self._process_exception(e):
                     raise
@@ -262,14 +299,19 @@ class G15Service(Thread):
         return isinstance(exception, NotConnectedException) or (len(exception.args) == 2 and isinstance(exception.args[0], int) and exception.args[0] in [ 111, 104 ])
             
     def complete_loading(self):              
-        try :            
+        try :           
+            logger.debug("Activating plugins") 
             self.plugins.activate(self.splash.update_splash) 
             if self.first_page != None:
                 page = self.screen.get_page(self.first_page)
                 if page:
                     self.screen.raise_page(page)
+                    
+            logger.debug("Grabbing keyboard")
             self.driver.grab_keyboard(self.key_received)
-            self.service_host.clear_attention()
+            
+            self.clear_attention()
+                
             self.splash.complete()
             self.loading_complete = True
             if self.splash != None:
@@ -279,20 +321,25 @@ class G15Service(Thread):
             if self._process_exception(e):
                 raise
             
-    def error(self, error_text=None):     
-        self.service_host.attention(error_text)
+    def error(self, error_text=None): 
+        self.attention(error_text)
 
     def on_driver_close(self, retry=True):
+        if self.splash != None:
+            self.splash.remove()
+            self.splash = None
+    
+        for handle in self.control_handles:
+            self.conf_client.notify_remove(handle);
+        self.control_handles = []
+    
+        self.plugins.deactivate()
+
+        for listener in self.service_listeners:
+            listener.driver_disconnected(self.driver)
+                
+                
         if not self.shutting_down:
-            if self.splash != None:
-                self.splash.remove()
-                self.splash = None
-        
-            for handle in self.control_handles:
-                self.conf_client.notify_remove(handle);
-            self.control_handles = []
-        
-            self.plugins.deactivate()
             if retry:
                 self._process_exception(NotConnectedException("Keyboard driver disconnected."))
             else:                
@@ -339,6 +386,7 @@ class G15Service(Thread):
             self.reschedule_lock.release()
             
     def cycle_level(self, val, control):
+        logger.debug("Cycling of %s level by %d" % (control.id, val))
         level = self.conf_client.get_int("/apps/gnome15/" + control.id)
         level += val
         if level > control.upper - 1:
@@ -348,15 +396,14 @@ class G15Service(Thread):
         self.conf_client.set_int("/apps/gnome15/" + control.id, level)
         
     def cycle_color(self, val, control):
+        logger.debug("Cycling of %s color by %d" % (control.id, val))
         self.color_no += val
         if self.color_no < 0:
             self.color_no = len(COLOURS) - 1
         if self.color_no >= len(COLOURS):
             self.color_no = 0
         color = COLOURS[self.color_no]
-        self.conf_client.set_int("/apps/gnome15/" + control.id + "_red", color[0])
-        self.conf_client.set_int("/apps/gnome15/" + control.id + "_green", color[1])
-        self.conf_client.set_int("/apps/gnome15/" + control.id + "_blue", color[2])
+        self.conf_client.set_string("/apps/gnome15/" + control.id, "%d,%d,%d" % (color[0], color[1], color[2] ) )
         
     def driver_changed(self, client, connection_id, entry, args):
         if self.driver == None or self.driver.id != entry.value.get_string():
@@ -415,7 +462,7 @@ class G15Service(Thread):
         keysym = self.get_keysym(ch)
         keycode = local_dpy.keysym_to_keycode(keysym)
         if keycode == 0 :
-            print "Sorry, can't map", ch
+            logger.warning("Sorry, can't map", ch)
     
         if False:
             shift_mask = Xlib.X.ShiftMask
@@ -469,7 +516,7 @@ class G15Service(Thread):
         
     def control_configuration_changed(self, client, connection_id, entry, args):
         key = os.path.basename(entry.key)
-        print "Controls changed", key
+        logger.debug("Controls changed %s", str(key))
         if self.driver != None:
             for control in self.driver.get_controls():
                 if key == control.id:
@@ -535,9 +582,8 @@ class G15Service(Thread):
                     choose_profile.make_active()
             
         except Exception as exception:
+            logger.warning("Failed to activate profile for active window")
             traceback.print_exc(file=sys.stdout)
-            print "Failed to activate profile for active window"
-            print type(exception)
             
         gobject.timeout_add(500, self.timeout_callback, self)
         
@@ -552,26 +598,30 @@ class G15Service(Thread):
         return 1
 
     def activate_profile(self):
+        logger.debug("Activating profile")
         if self.screen.driver.is_connected():
             self.screen.set_mkey(1)
     
     def deactivate_profile(self):
+        logger.debug("De-activating profile")
         if self.screen.driver.is_connected():
             self.screen.set_mkey(0)
         
-    def cleanup(self, event):
-        self.shutting_down = True
-        if self.driver.is_connected():
-            self.driver.disconnect()  
-        
-    def properties(self, event, data=None):
-        g15util.run_script("g15-config")
-        
-    def about_info(self, event, data=None):  
-        about = gnome.ui.About("Gnome15", pglobals.version, "GPL", \
-                               "GNOME Applet providing integration with\nthe Logitech G15 and G19 keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
-                               ["Brett Smith <tanktarta@blueyonder.co.uk>"], "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
-        about.show()
+    def clear_attention(self):
+        logger.debug("Clearing attention")
+        self.attention = False
+        for listener in self.service_listeners:
+            listener.attention_cleared()
+            
+    def request_attention(self, message = None):
+        logger.debug("Requesting attention '%s'" % message)
+        self.attention = True
+        if message != None:
+            self.attention_message = message
+            
+        for listener in self.service_listeners:
+            listener.attention_requested(message)
+
         
     '''
     Private
@@ -602,7 +652,7 @@ class G15Service(Thread):
             
     def _process_exception(self, exception):
         self.last_error = exception
-        self.service_host.attention(str(exception))
+        self.request_attention(str(exception))
         self.resched_cycle()   
         self.driver = None          
         if self.should_reconnect(exception):

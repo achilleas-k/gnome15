@@ -96,17 +96,14 @@ class G15Window(gtk.OffscreenWindow):
 
     def screen_changed(self, widget, old_screen=None):
         global supports_alpha
-        # print "screen changed"
         
         # To check if the display supports alpha channels, get the colormap
         screen = self.get_screen()
         colormap = screen.get_rgba_colormap()
         if colormap == None:
-            # print 'Your screen does not support alpha channels!'
             colormap = screen.get_rgb_colormap()
             supports_alpha = False
         else:
-            # print 'Your screen supports alpha channels!'
             supports_alpha = True
             
         # Now we have a colormap appropriate for the screen, use it

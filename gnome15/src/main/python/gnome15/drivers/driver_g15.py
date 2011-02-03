@@ -35,6 +35,8 @@ from threading import Thread
 from threading import Lock
 import struct
 import time
+import logging
+logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
 name="G15Daemon"
@@ -134,7 +136,7 @@ class EventReceive(Thread):
                     # The next 4 bytes should be zero?
                     val_2 = struct.unpack("<L",self.socket.recv(4))[0]
                     if val_2 != 0:
-                        print "WARNING: Expected zero keyboard event"
+                        logger.warning("Expected zero keyboard event")
                     
                     # If the next 4 bytes are zero, then this is a normal key press / release, if not, a second key was pressed before the first was release
                     received = self.socket.recv(4)              
@@ -147,7 +149,7 @@ class EventReceive(Thread):
                 # Final value should be zero, indicating key release             
                 val_4 = struct.unpack("<L",self.socket.recv(4))[0]
                 if val_4 != 0:
-                    print "WARNING: Expected zero keyboard event"
+                    logger.warning("Expected zero keyboard event")
                 self.callback(self.convert_from_g15daemon_code(val), g15driver.KEY_STATE_UP) 
             except socket.timeout:
                 # Timeout, allow another pass
@@ -302,7 +304,7 @@ class Driver(g15driver.AbstractDriver):
                 buf += chr(x)
                 
             if len(buf) != self.device.lcd_size[0] * self.device.lcd_size[1]:
-                print "Invalid buffer size"
+                logger.warning("Invalid buffer size")
             else:
                 self.socket.sendall(buf)
         finally:

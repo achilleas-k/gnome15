@@ -1,1 +1,1 @@
-SUBDIRS = applications servers autostart
+SUBDIRS = applications autostart dbus

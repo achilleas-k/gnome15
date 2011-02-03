@@ -27,6 +27,10 @@ import g15_driver as g15driver
 import gconf
 import traceback
 import threading
+
+# Logging
+import logging
+logger = logging.getLogger("plugins")
             
 def list_plugin_dirs(path):
     plugindirs = []
@@ -36,7 +40,7 @@ def list_plugin_dirs(path):
             if os.path.isdir(plugin_path):
                 plugindirs.append(os.path.realpath(plugin_path))
     else:
-        print "WARNING: Plugin path %s does not exist." % path
+        logger.debug("Plugin path %s does not exist." % path)
     return plugindirs
 
 def get_extra_plugin_dirs():
@@ -56,7 +60,7 @@ for plugindir in get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("
         for mod in ([__import__(fname) for fname in pluginfiles]):
             imported_plugins.append(mod)
     except Exception as e:
-        print "Failed to load plugin module %s. %s" % ( plugindir, str(e))                    
+        logger.error("Failed to load plugin module %s. %s" % ( plugindir, str(e) ) )                    
         traceback.print_exc(file=sys.stderr) 
         
 def get_module_for_id(id):
@@ -105,6 +109,7 @@ class G15Plugins():
         return self.mgr_active
             
     def start(self):
+        logger.info("Starting plugin manager")
         self.lock.acquire()
         try : 
             self.mgr_started = False
@@ -119,14 +124,15 @@ class G15Plugins():
                 if self.conf_client.get_bool(key):
                     try :
                         instance = self._create_instance(mod, plugin_dir_key)
-                        if self.screen.applet.driver.get_model_name() in get_supported_models(mod):
+                        if self.screen.service.driver.get_model_name() in get_supported_models(mod):
                             self.started.append(instance)
                     except Exception as e:
                         self.conf_client.set_bool(key, False)
-                        print "Failed to load plugin %s. %s" % ( mod.id, str(e))                    
+                        logger.error("Failed to load plugin %s. %s" % ( mod.id, str(e) ) )                    
                         traceback.print_exc(file=sys.stderr) 
         finally:
             self.lock.release()
+        logger.info("Started plugin manager")
                 
     def plugin_changed(self, client, connection_id, entry, args):
         self.lock.acquire()
@@ -166,6 +172,7 @@ class G15Plugins():
         return False
     
     def activate(self, callback = None):
+        logger.info("Activating plugins")
         self.lock.acquire()
         try :
             self.mgr_active = True
@@ -173,25 +180,30 @@ class G15Plugins():
             idx = 0
             for plugin in self.started:
                 mod = self.plugin_map[plugin]
+                logger.debug("Activating %s" % mod.id)
                 self._activate_instance(plugin, callback, idx)
                 idx += 1
         finally:
             self.lock.release()
+        logger.debug("Activated plugins")
     
     def deactivate(self):
+        logger.info("De-activating plugins")
         self.lock.acquire()
         try :
             self.mgr_active = False
             traceback.print_exc(file=sys.stderr)
             for plugin in list(self.activated):
+                logger.debug("De-activating %s" % self.plugin_map[plugin].id)
                 try :
                     plugin.deactivate()
                 except:
-                    print "WARNING: Failed to deactive plugin properly."           
+                    logger.warning("Failed to deactive plugin properly.")           
                     traceback.print_exc(file=sys.stderr)
                 self.activated.remove(plugin)
         finally:
             self.lock.release()
+        logger.info("De-activated plugins")
     
     def destroy(self):
         for plugin in self.started:
@@ -211,12 +223,13 @@ class G15Plugins():
             if callback != None:
                 callback(idx, len(self.started), mod.name)
         except Exception as e:
-            print "Failed to activate plugin %s. %s" % ( mod.id, str(e))   
+            logger.error("Failed to activate plugin %s. %s" % ( mod.id, str(e)))   
             self.conf_client.set_bool(self.plugin_key + "/" + mod.id + "/enabled", False)              
             traceback.print_exc(file=sys.stderr)
         
             
     def _create_instance(self, module, key):
+        logger.info("Loading %s" % module.id)
         instance = module.create(key, self.conf_client, screen=self.screen)
         self.module_map[module.id] = instance
         self.plugin_map[instance] = module

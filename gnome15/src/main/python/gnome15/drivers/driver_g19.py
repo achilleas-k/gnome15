@@ -21,7 +21,7 @@
 #        +-----------------------------------------------------------------------------+
 
 """
-Main implementation of a G15Driver that uses g15daemon to control and query the
+Main implementation of a G19 Driver that uses g19d to control and query the
 keyboard
 """
 
@@ -36,7 +36,8 @@ import socket
 import struct
 import sys
 import traceback
-
+import logging
+logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
 name="G19D"
@@ -132,7 +133,7 @@ class EventReceive(Thread):
             
 # Controls
 keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-default_keyboard_backlight_control = g15driver.Control("default_backlight_colour", "Boot Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+default_keyboard_backlight_control = g15driver.Control("default_backlight_colour", "Boot Keyboard Backlight Colour", (0, 0, 0))
 lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
 foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND)
 background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
@@ -295,7 +296,7 @@ class Driver(g15driver.AbstractDriver):
                   
         expected_size = MAX_X * MAX_Y * ( self.get_bpp() / 8 )
         if len(buf) != expected_size:
-            print "WARNING: Invalid buffer size, expected",expected_size,"got",len(buf)
+            logger.warning("Invalid buffer size, expected %d, got %d" % ( expected_size, len(buf) ) )
         else:
             self.write_out("I" + str(buf))
             

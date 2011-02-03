@@ -1,0 +1,5 @@
+gnome15-systemtray (0.0.1-1) maverick; urgency=low
+
+  * First release of Gnome15 system tray icon
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun, 30 Jan 2010 19:28:11 +0100

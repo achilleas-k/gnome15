@@ -17,6 +17,7 @@ import gtk
 import gobject
 import dbus
 import os
+import sys
 import g15_globals as pglobals
 import g15_setup as g15setup
 import g15_profile as g15profile
@@ -27,6 +28,8 @@ import g15_driver_manager as g15drivermanager
 import g15_util as g15util
 import subprocess
 import shutil
+import logging
+logger = logging.getLogger("config")
 
 
 # Determine if appindicator is available, this decides that nature
@@ -46,6 +49,22 @@ if not os.path.exists(icons_dir):
 
 PALE_RED = gtk.gdk.Color(213, 65, 54)
 
+
+BUS_NAME="org.gnome15.Configuration"
+NAME="/org/gnome15/Config"
+IF_NAME="org.gnome15.Config"
+
+class G15ConfigService(dbus.service.Object):
+    
+    def __init__(self, bus, window):
+        bus_name = dbus.service.BusName(BUS_NAME, bus=bus, replace_existing=False, allow_replacement=False, do_not_queue=True)
+        dbus.service.Object.__init__(self, bus_name, NAME)
+        self.window = window
+        
+    @dbus.service.method(IF_NAME, in_signature='', out_signature='')
+    def Present(self):
+        self.window.present()
+
 class G15Config:
     
     adjusting = False
@@ -55,6 +74,7 @@ class G15Config:
     def __init__(self, parent_window=None, service=None):
         self.parent_window = parent_window
         
+        self._signal_handles = []
         self.notify_handles = []
         self.control_notify_handles = []
         self.plugin_key = "/apps/gnome15/plugins"
@@ -66,10 +86,18 @@ class G15Config:
         g15Config = os.path.join(pglobals.glade_dir, 'g15-config.glade')        
         self.widget_tree = gtk.Builder()
         self.widget_tree.add_from_file(g15Config)
+        self.main_window = self.widget_tree.get_object("MainWindow")
+        
+        # Make sure there is only one g15config running
+        self.session_bus = dbus.SessionBus()
+        try :
+            G15ConfigService(self.session_bus, self.main_window)
+        except dbus.exceptions.NameExistsException:
+            self.session_bus.get_object(BUS_NAME, NAME).Present()
+            sys.exit(0)
 
         # Widgets
         self.site_label = self.widget_tree.get_object("SiteLabel")
-        self.main_window = self.widget_tree.get_object("MainWindow")
         self.cycle_screens = self.widget_tree.get_object("CycleScreens")
         self.cycle_screens_options = self.widget_tree.get_object("CycleScreensOptions")
         self.cycle_seconds = self.widget_tree.get_object("CycleAdjustment")
@@ -112,7 +140,7 @@ class G15Config:
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
-        self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
+        self.main_window.set_icon_from_file(g15util.get_icon_path("gnome15"))
         
         # Monitor gconf
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
@@ -190,10 +218,9 @@ class G15Config:
         
         # Connection to BAMF for running applications list
         try :
-            self.session_bus = dbus.SessionBus()
             self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
         except:
-            print "WARNING: BAMF not available, falling back to WNCK"
+            logger.warning("BAMF not available, falling back to WNCK")
             self.bamf_matcher = None
         
         # See if the Gnome15 service is running
@@ -204,50 +231,67 @@ class G15Config:
         content.pack_start(self.warning_image, False, False)
         content.pack_start(self.warning_label, True, True)
         self.start_button = None
-        if HAS_APPINDICATOR:
-            self.start_button = gtk.Button("Start Service")
-            self.start_button.connect("clicked", self.start_service)
-            content.pack_start(self.start_button, False, False)  
-            self.start_button.show()         
+
+        self.start_button = gtk.Button("Start Service")
+        self.start_button.connect("clicked", self.start_service)
+        content.pack_start(self.start_button, False, False)  
+        self.start_button.show()         
         self.main_vbox.pack_start(self.infobar, True, True)
         self.warning_box_shown = False
         self.infobar.hide_all()
         
         self.gnome15_service = None
-        self.check_timer = None        
-        self.session_bus = dbus.SessionBus()
-        self.check_service_status()
+
+        # Watch for Gnome15 starting and stopping
+        try :
+            self._connect()
+        except dbus.exceptions.DBusException:
+            self._disconnect()
+        self.session_bus.add_signal_receiver(self._name_owner_changed,
+                                     dbus_interface='org.freedesktop.DBus',
+                                     signal_name='NameOwnerChanged')  
+        
+    def _name_owner_changed(self, name, old_owner, new_owner):
+        if name == "org.gnome15.Gnome15":
+            if old_owner == "":
+                self._connect()
+            else:
+                self._disconnect()
         
     def __del__(self):
         for h in self.notify_handles:
             self.conf_client.notify_remove(h)
+            
+    def _disconnect(self):
+        self.show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is not running. It is recommended " + \
+                                  "you add <b>g15-desktop-service</b> as a <i>Startup Application</i>.")
+        for sig in self._signal_handles:
+            self.session_bus.remove_signal_receiver(sig)
+        self._signal_handles = []
         
-    def check_service_status(self):
-        if self.service == None:
-            try :
-                if self.gnome15_service == None:
-                    self.gnome15_service = self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service')
-                self.gnome15_service.GetServerInformation()
-                if not self.gnome15_service.GetDriverConnected():
-                    gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING, "The Gnome15 desktop service is running, but failed to connect " + \
-                                      "to the keyboard driver. The error message given was <b>%s</b>" % self.gnome15_service.GetLastError(), False)
-                else:
-                    gobject.idle_add(self.hide_warning)
-            except:
-                self.gnome15_service = None
-                if HAS_APPINDICATOR:
-                    gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING, "The Gnome15 desktop service is not running. It is recommended " + \
-                                      "you add <b>g15-indicator</b> as a <i>Startup Application</i>.")                 
-                else:
-                    gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING, "The Gnome15 desktop service is not running. It is recommended " + \
-                                  "you add the <b>Gnome15 Applet</b> to a panel.")
+    def _connect(self):
+        self.gnome15_service = self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service')
+        self.driver_service =  self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Driver')
+        self._status_change()
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Service", signal_name='StartingUp'))
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Service", signal_name='StartedUp'))
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Service", signal_name='ShuttingDown'))  
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Service", signal_name='ShuttingDown'))  
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Driver", signal_name='Connected'))  
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Driver", signal_name='Disconnected'))
+        
+    def _status_change(self):
+        if self.gnome15_service.IsStartingUp():            
+            self.show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is starting up. Please wait", False)
+        elif self.gnome15_service.IsShuttingDown():            
+            self.show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is shutting down.", False)
         else:
-            if self.service.driver == None or not self.service.driver.is_connected():
-                gobject.idle_add(self.show_message, gtk.MESSAGE_WARNING,  ( "The Gnome15 desktop service is running, but failed to connect " + \
-                                  "to the keyboard driver. The error message given was <b>%s</b>" % self.service.get_last_error() ), False)
+            if not self.driver_service.IsConnected():
+                self.show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is running, but failed to connect " + \
+                                  "to the keyboard driver. The error message given was <b>%s</b>" % self.gnome15_service.GetLastError(), False)
             else:
-                gobject.idle_add(self.hide_warning)
-        self.check_timer = g15util.schedule("ServiceStatusCheck", 10.0, self.check_service_status)
+                self.hide_warning()
+        
         
     def hide_warning(self):
         if self.warning_box_shown == None or self.warning_box_shown:
@@ -256,10 +300,8 @@ class G15Config:
             self.main_window.check_resize()
         
     def start_service(self, widget):
-        self.check_timer.cancel()
         widget.set_sensitive(False)
-        g15util.run_script("g15-indicator")
-        self.check_timer = g15util.schedule("ServiceStatusCheck", 5.0, self.check_service_status)
+        g15util.run_script("g15-desktop-service", ["-f"])
     
     def show_message(self, type, text, start_service_button = True):
         self.infobar.set_message_type(type)

@@ -104,7 +104,7 @@ class G15Menu():
                 if self.screen.get_visible_page() == self.page:                    
                     if g15driver.G_KEY_MENU in keys or g15driver.G_KEY_L2 in keys:
                         self._hide_menu()
-                        self.screen.applet.resched_cycle()
+                        self.screen.service.resched_cycle()
                         return True
                     elif g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
                         i = self.items.index(self.selected)
@@ -112,7 +112,7 @@ class G15Menu():
                         if i < 0:
                             i = len(self.items) - 1
                         self.selected = self.items[i]
-                        self.screen.applet.resched_cycle()
+                        self.screen.service.resched_cycle()
                         self.screen.redraw(self.page)
                         return True
                     elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
@@ -121,12 +121,12 @@ class G15Menu():
                         if i >= len(self.items):
                             i = 0
                         self.selected = self.items[i]
-                        self.screen.applet.resched_cycle()
+                        self.screen.service.resched_cycle()
                         self.screen.redraw(self.page)
                         return True           
                     elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
                         self.screen.raise_page(self.selected.page)
-                        self.screen.applet.resched_cycle()
+                        self.screen.service.resched_cycle()
                         self._hide_menu()
                         return True                
                 
@@ -182,7 +182,7 @@ class G15Menu():
                         item.thumbnail = base64.b64encode(img_data.getvalue())                    
                         
                 except :
-                    print "WARNING: Problem with painting thumbnail in %s" % item.page.id                   
+                    logger.warning("Problem with painting thumbnail in %s" % item.page.id)                   
                     traceback.print_exc(file=sys.stderr) 
                     
         self.screen.redraw(self.page)

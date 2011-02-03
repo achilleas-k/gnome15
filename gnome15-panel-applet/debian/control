@@ -1,0 +1,16 @@
+Source: gnome15-panel-applet
+Section: gnome
+Priority: optional
+Maintainer: Brett Smith <tanktarta@blueyonder.co.uk>
+Build-Depends: cdbs (>=0.4.73), debhelper (>= 7), autotools-dev, python-support, gnome15, python-dev, python-gnome2
+Standards-Version: 3.8.4
+Homepage: http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/
+
+Package: gnome15-panel-applet
+Architecture: any
+Depends: ${misc:Depends}, ${python:Depends}, gnome15, python-gnome2
+Provides: ${python:Provides}
+Description: A GNOME panel applet for controlling and monitoring Gnome15.
+ The applet can be used to select the currently visible screen,
+ cycle the keyboard colours or level, as well as launch the configuration
+ user interface. 

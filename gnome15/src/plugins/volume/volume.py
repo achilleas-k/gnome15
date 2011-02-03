@@ -28,6 +28,11 @@ import gnome15.g15_driver as g15driver
 import alsaaudio
 import select
 import os
+import gtk
+import time
+import logging
+logger = logging.getLogger("volume")
+
 from threading import Thread
 
 # Plugin details - All of these must be provided
@@ -38,7 +43,7 @@ description="Popup the current volume when it changes. Currently only the " \
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
-has_preferences=False
+has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110 ]
 
 
@@ -48,51 +53,72 @@ fixed number of seconds
 '''
 
 def create(gconf_key, gconf_client, screen):
-    return G15Volume(screen, gconf_client)
+    return G15Volume(screen, gconf_client, gconf_key)
+
+def show_preferences(parent, gconf_client, gconf_key):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "volume.glade"))    
+    dialog = widget_tree.get_object("VolumeDialog") 
+    model = widget_tree.get_object("DeviceModel")   
+    for mixer in alsaaudio.mixers():
+        model.append([mixer])
+    dialog.set_transient_for(parent)    
+    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/mixer", "DeviceCombo", "Master", widget_tree)
+    dialog.run()
+    dialog.hide()
             
 class G15Volume():
     
-    def __init__(self, screen, gconf_client):
-        self.screen = screen
-        self.gconf_client = gconf_client
-        self.volume = 0.0
-        self.thread = None
-        self.mute = False
+    def __init__(self, screen, gconf_client, gconf_key):
+        self._screen = screen
+        self._gconf_client = gconf_client
+        self._gconf_key = gconf_key
+        self._volume = 0.0
+        self._thread = None
+        self._mute = False
 
     def activate(self):
-        self.activated = True
-        self.thread = VolumeThread(self).start()
+        self._activated = True
+        self._start_monitoring()
+        self._notify_handler = self._gconf_client.notify_add(self._gconf_key, self._config_changed); 
     
     def deactivate(self):
-        self.activated = False
-        if self.thread != None:
-            self.thread.stop_monitoring()
+        self._activated = False
+        self._stop_monitoring()
+        self._gconf_client.notify_remove(self._notify_handler)
         
     def destroy(self):
         pass
         
     ''' Functions specific to plugin
     ''' 
+    def _start_monitoring(self):        
+        self._thread = VolumeThread(self).start()
     
-    def del_canvas(self):
-        self.screen.del_canvas(self.canvas)
-        self.canvas = None
+    def _config_changed(self):    
+        self._stop_monitoring()
+        time.sleep(1.0)
+        self._start_monitoring()
+            
+    def _stop_monitoring(self):
+        if self._thread != None:
+            self._thread.stop_monitoring()
+    
+    def _reload_theme(self):        
+        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen)
         
-    def reload_theme(self):        
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-        
-    def paint(self, canvas):
+    def _paint(self, canvas):
                     
-        width = self.screen.width
-        height = self.screen.height
+        width = self._screen.width
+        height = self._screen.height
         
         properties = {}
         
         icon = "audio-volume-muted"
-        if not self.mute:
-            if self.volume < 34:
+        if not self._mute:
+            if self._volume < 34:
                 icon = "audio-volume-low"
-            elif self.volume < 67:
+            elif self._volume < 67:
                 icon = "audio-volume-medium"
             else:
                 icon = "audio-volume-high"
@@ -103,81 +129,102 @@ class G15Volume():
         
         properties["state"] = icon
         properties["icon"] = icon_path
-        properties["vol_pc"] = self.volume
+        properties["vol_pc"] = self._volume
         
-        for i in range(0, ( self.volume / 10 ) + 1, 1):            
+        for i in range(0, ( self._volume / 10 ) + 1, 1):            
             properties["bar" + str(i)] = True
         
         self.theme.draw(canvas, properties)
     
-    def popup(self):
-        page = self.screen.get_page("Volume")
+    def _popup(self):
+        page = self._screen.get_page("Volume")
         if page == None:
-            self.reload_theme()
-            page = self.screen.new_page(self.paint, priority=g15screen.PRI_HIGH, id="Volume")
-            self.screen.hide_after(3.0, page)
+            self._reload_theme()
+            page = self._screen.new_page(self._paint, priority=g15screen.PRI_HIGH, id="Volume")
+            self._screen.hide_after(3.0, page)
         else:
-            self.screen.raise_page(page)
-            self.screen.hide_after(3.0, page)
+            self._screen.raise_page(page)
+            self._screen.hide_after(3.0, page)
         
-        vol_mixer = alsaaudio.Mixer("Master", cardindex=0)
-
-        # Handle mute        
-        mute = False
-        mutes = None
+        
+        mixer_name = self._gconf_client.get_string(self._gconf_key + "/mixer")
+        if not mixer_name or mixer_name == "":
+            mixer_name = "Master"
+            
+        logger.info("Opening mixer %s" % mixer_name)
+        
+        vol_mixer = alsaaudio.Mixer(mixer_name, cardindex=0)
+        
         try :
-            mutes = vol_mixer.getmute()
-        except alsaaudio.ALSAAudioError:
-            # Some pulse weirdness maybe?
-            mute_mixer = alsaaudio.Mixer("PCM", cardindex=0)
-            try :
-                mutes = mute_mixer.getmute()
-            except alsaaudio.ALSAAudioError:
-                print "WARNING: No mute switch found"
-        if mutes != None:        
-            for ch_mute in mutes:
-                if ch_mute:
-                    mute = True
-
         
-        # TODO  better way than averaging
-        volumes = vol_mixer.getvolume()
+            # Handle mute        
+            mute = False
+            mutes = None
+            try :
+                mutes = vol_mixer.getmute()
+            except alsaaudio.ALSAAudioError:
+                # Some pulse weirdness maybe?
+                mute_mixer = alsaaudio.Mixer("PCM", cardindex=0)
+                try :
+                    mutes = mute_mixer.getmute()
+                except alsaaudio.ALSAAudioError:
+                    logger.warning("No mute switch found")
+            if mutes != None:        
+                for ch_mute in mutes:
+                    if ch_mute:
+                        mute = True
+    
+            
+            # TODO  better way than averaging
+            volumes = vol_mixer.getvolume()
+        finally :
+            vol_mixer.close()
+            if mute_mixer:
+                mute_mixer.close()
+            
         total = 0
         for vol in volumes:
             total += vol
         volume = total / len(volumes)
         
-        self.volume = volume                
-        self.mute = mute
+        self._volume = volume                
+        self._mute = mute
         
-        self.screen.redraw(page)
+        self._screen.redraw(page)
             
 class VolumeThread(Thread):
     def __init__(self, volume):
         Thread.__init__(self)
         self.name = "VolumeThread"
         self.setDaemon(True)
-        self.volume = volume
-        self.mixer = alsaaudio.Mixer("Master", cardindex=0)
-        self.poll_desc = self.mixer.polldescriptors()
-        self.poll = select.poll()
-        self.fd = self.poll_desc[0][0]
-        self.event_mask = self.poll_desc[0][1]
-        self.open = os.fdopen(self.fd)
-        self.poll.register(self.open, select.POLLIN)
+        self._volume = volume
         
-    def stop_monitoring(self):
-        self.open.close()
-        self.mixer.close()
+        mixer_name = volume._gconf_client.get_string(volume._gconf_key + "/mixer")
+        if not mixer_name or mixer_name == "":
+            mixer_name = "Master"
+            
+        logger.info("Opening mixer %s" % mixer_name)
+        
+        self._mixer = alsaaudio.Mixer(mixer_name, cardindex=0)
+        self._poll_desc = self._mixer.polldescriptors()
+        self._poll = select.poll()
+        self._fd = self._poll_desc[0][0]
+        self._event_mask = self._poll_desc[0][1]
+        self._open = os.fdopen(self._fd)
+        self._poll.register(self._open, select.POLLIN)
+        
+    def _stop_monitoring(self):
+        self._open.close()
+        self._mixer.close()
         
     def run(self):
         try :
-            while self.volume.activated:
-                if self.poll.poll(5):
-                    self.volume.popup()
-                    if not self.open.read():
+            while self._volume._activated:
+                if self._poll.poll(5):
+                    g15util.schedule("popupVolume", 0, self._volume._popup)
+                    if not self._open.read():
                         break
         finally:
-            self.poll.unregister(self.open)
-            self.open.close()
+            self._poll.unregister(self._open)
+            self._open.close()
  

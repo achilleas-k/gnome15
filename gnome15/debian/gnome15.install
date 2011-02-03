@@ -7,5 +7,6 @@ usr/share/gnome15/plugins/*
 usr/share/gnome15/themes/*
 usr/share/icons/*
 usr/share/man/*
+usr/share/dbus-1/services/*
 usr/lib/python2.6/dist-packages/gnome15/*.py
 usr/lib/python2.6/dist-packages/gnome15/drivers/__init__.py

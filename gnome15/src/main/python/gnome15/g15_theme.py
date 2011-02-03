@@ -33,10 +33,11 @@ import g15_screen as g15screen
 import g15_util as g15util
 import xml.sax.saxutils as saxutils
 import base64
+import logging
+logger = logging.getLogger("theme")
 from string import Template
 from copy import deepcopy
 from cStringIO import StringIO
-
 from lxml import etree
 
 BASE_PX=18.0
@@ -232,9 +233,6 @@ class G15Theme:
             path = self.get_path_for_variant(self.dir, self.variant, "svg")
             self.document = etree.parse(path)
         elif svg_text != None:
-            print "**************"
-            print svg_text
-            print "**************"            
             self.document = etree.ElementTree(etree.fromstring(svg_text))
         else:
             raise Exception("Must either supply theme directory or SVG text")
@@ -314,7 +312,7 @@ class G15Theme:
             if len(style_args) > 1:
                 styles[style_args[0].rstrip()] = style_args[1].lstrip().rstrip()
             else:
-                print "WARNING: Malformed CSS style %s." % style
+                logger.warning("Malformed CSS style %s." % style)
         return styles
     
     def format_styles(self, styles):
@@ -384,7 +382,7 @@ class G15Theme:
             if len(component_elements) > 0:
                 self.components[component_id].draw(canvas, component_elements[0], properties, attributes)
             else:
-                print "WARNING: Cannot find SVG element for component %s" % component_id
+                logger.warning("Cannot find SVG element for component %s" % component_id)
                   
         # Set any progress bars (always measure in percentage). Progress bars have
         # their width attribute altered 
@@ -397,7 +395,7 @@ class G15Theme:
                     value = 0.1
                 element.set("width", str(int((bounds[2] / 100.0) * value)))
             else:
-                print "WARNING: Found progress element with an ID that doesn't end in _progress"
+                logger.warning("Found progress element with an ID that doesn't end in _progress")
                 
         # Populate any embedded images
          
@@ -434,7 +432,7 @@ class G15Theme:
                         styles = self.parse_css(shadowed.get("style"))
                         if styles == None:
                             styles = {}
-                        styles["fill"] = self.screen.applet.driver.get_color_as_hexrgb(g15driver.HINT_BACKGROUND, (255, 255,255))
+                        styles["fill"] = self.screen.service.driver.get_color_as_hexrgb(g15driver.HINT_BACKGROUND, (255, 255,255))
                         shadowed.set("style", self.format_styles(styles))
                         element.addprevious(shadowed)
                         idx += 1
@@ -524,7 +522,6 @@ class G15Theme:
             svg.write(xml)
         except:
             traceback.print_exc(file=sys.stderr)
-            print xml
         
         svg.close()
         svg.render_cairo(canvas)

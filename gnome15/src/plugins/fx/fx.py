@@ -105,7 +105,7 @@ class G15Fx():
             return
         
         width = self.screen.width
-        height = self.screen.height        
+        height = self.screen.height  
         
         # Create a working surface
         img_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.screen.width, self.screen.height)
@@ -142,7 +142,7 @@ class G15Fx():
             # Horizontal scroll
             step = max( ( width / height ) * speed, 1 )
             if direction == "down":                
-                for i in range(0, self.screen.width, step):
+                for i in range(0, self.screen.width, int(step)):
                     img_context.save()
                     img_context.translate(-i, 0)                
                     img_context.set_source_surface(old_surface)
@@ -154,7 +154,7 @@ class G15Fx():
                     self.screen.driver.paint(img_surface)
                     self.anim_delay(speed)
             else:                
-                for i in range(0, self.screen.width, step):
+                for i in range(0, self.screen.width, int(step)):
                     img_context.save() 
                     img_context.translate(-(self.screen.width - i), 0)                
                     img_context.set_source_surface(new_surface)
@@ -192,7 +192,7 @@ class G15Fx():
                     self.screen.driver.paint(img_surface)
                     self.anim_delay(speed)
             else:                
-                for i in range(self.screen.width, 0, step):
+                for i in range(self.screen.width, 0, step * -1):
                     img_context.save()             
                     img_context.set_source_surface(new_surface)
                     img_context.paint()               

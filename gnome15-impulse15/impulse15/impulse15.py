@@ -70,20 +70,21 @@ class G15Impulse():
         self.hidden = False
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
+        self.active = False
         
-
-    
     def activate(self):
+        self.active = True
         self.page = None
         self.chained_background_painter = None
         self.chained_foreground_painter = None
+        self.visible = False
         self.timer = None
         self.load_config() 
         self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self.config_changed)
-        if self.gconf_client.get_string(self.gconf_key + "/paint") != "screen":
-            self.redraw()
+        self.redraw()
     
     def deactivate(self): 
+        self.active = False
         self.gconf_client.notify_remove(self.notify_handle);
         self.hide_page()
         self._clear_background_painter()
@@ -95,10 +96,12 @@ class G15Impulse():
             self.screen.del_page(self.page)
             self.page = None
         
-    def on_shown(self):       
-        self.redraw()        
+    def on_shown(self):
+        self.visible = True 
+        self.schedule_redraw()     
         
     def on_hidden(self):
+        self.visible = False
         self.stop_redraw()
         
     def stop_redraw(self):  
@@ -113,6 +116,9 @@ class G15Impulse():
         self.mode = self.gconf_client.get_string(self.gconf_key + "/mode")
         if self.mode == None or self.mode == "":
             self.mode = "spectrum"
+        self.paint_mode = self.gconf_client.get_string(self.gconf_key + "/paint")
+        if self.paint_mode == None or self.mode == "":
+            self.paint_mode = "screen"
             
 # TODO check why this must be 32
 #        self.bars = self.gconf_client.get_int(self.gconf_key + "/bars")
@@ -169,14 +175,16 @@ class G15Impulse():
             self.chained_foreground_painter = None
     
     def redraw(self):        
-        if self.gconf_client.get_string(self.gconf_key + "/paint") == "screen":
+        if self.paint_mode == "screen" and self.visible:
             self.screen.redraw(self.page)
-        else: 
+            self.schedule_redraw()
+        elif self.paint_mode != "screen": 
             self.screen.redraw(redraw_content = False)
-        self.schedule_redraw()
+            self.schedule_redraw()
         
     def schedule_redraw(self):
-        self.timer = g15util.schedule("ImpulseRedraw", 0.1, self.redraw)
+        if self.active:
+            self.timer = g15util.schedule("ImpulseRedraw", 0.1, self.redraw)
         
     def avg(self, list):
         cols = []
@@ -223,7 +231,6 @@ class G15Impulse():
                 bar_height = bar_amp_norm * height + 3
     
                 peak_index = int( ( i - 1 ) / ( l / n_bars ) )
-                #print peak_index
     
                 if bar_height > self.peak_heights[ peak_index ]:
                     self.peak_heights[ peak_index ] = bar_height

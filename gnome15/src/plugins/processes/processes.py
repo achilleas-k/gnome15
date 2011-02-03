@@ -103,7 +103,7 @@ class G15Processes():
                     if i < 0:
                         i = len(self.items) - 1
                     self.selected = self.items[i]
-                    self.screen.applet.resched_cycle()
+                    self.screen.service.resched_cycle()
                     self.screen.redraw(self.page)
                     return True
                 elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
@@ -112,7 +112,7 @@ class G15Processes():
                     if i >= len(self.items):
                         i = 0
                     self.selected = self.items[i]
-                    self.screen.applet.resched_cycle()
+                    self.screen.service.resched_cycle()
                     self.screen.redraw(self.page)
                     return True           
                 elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:

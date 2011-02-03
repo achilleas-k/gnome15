@@ -29,6 +29,8 @@ import os
 import feedparser
 import gtk
 import gconf
+import logging
+logger = logging.getLogger("rss")
 
 # Plugin details - All of these must be provided
 id="rss"
@@ -193,7 +195,7 @@ class G15FeedPage():
                 self.icon_surface = icon_surface
                 self.icon_embedded = g15util.get_embedded_image_url(icon_surface)
             except:
-                print "WARNING: Failed to get icon %s" % str(icon)
+                logger.warning("Failed to get icon %s" % str(icon))
                 self.icon_surface = None
                 self.icon_embedded = None
         self.title = self.feed["feed"]["title"] if "title" in self.feed["feed"] else self.url
@@ -220,7 +222,7 @@ class G15FeedPage():
             self.index = -1
             self.selected_entry = None
         self.set_properties()
-        self.screen.applet.resched_cycle()
+        self.screen.service.resched_cycle()
         self.screen.redraw(self.page)
                     
     def handle_key(self, keys, state, post):

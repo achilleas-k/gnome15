@@ -1,5 +1,5 @@
-AC_INIT(gnome15, 0.4.1)
-AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_applet.py])
+AC_INIT(gnome15, 0.5.0)
+AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_service.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 
 dnl AM_CONFIG_HEADER(config.h)
@@ -33,18 +33,6 @@ dnl AM_CONDITIONAL([APPLET],	[test x$applet = xtrue])
 
 dnl Dependencies for core applet and tools
 
-AX_PYTHON_MODULE(gnomeapplet, [])
-
-dnl Determine if indicator is available
-AX_PYTHON_MODULE(appindicator, [])
-AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
-     [appindicator=yes])
-AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xyes"],
-     [gnomeapplet=yes])
-     
-AM_CONDITIONAL([APPLET], test x$gnomeapplet = xyes)
-AM_CONDITIONAL([INDICATOR],	test x$appindicator = xyes)
-
 dnl Determine if pyinputevent is available. If it is, kernel driver can be built
 AX_PYTHON_MODULE(pyinputevent, [])
 AS_IF([test "x${HAVE_PYMOD_PYINPUTEVENT}" = "xyes"],
@@ -64,9 +52,6 @@ AS_IF([test "x${HAVE_PYMOD_PYINPUTEVENT}" = "xno" ],
      [AC_MSG_WARN([Kernel driver requires pyinputevent. This driver will be skipped])])
 
 dnl Required modules
-
-AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xno" -a "x${HAVE_PYMOD_APPINDICATOR}" = "xno"],
-     [AC_MSG_ERROR([Requires Python Application Indicator OR Python Gnome Applet Library])])
 
 AX_PYTHON_MODULE(Image, [])
 AS_IF([test "x${HAVE_PYMOD_IMAGE}" = "xno"],
@@ -100,10 +85,6 @@ AX_PYTHON_MODULE(pango, [])
 AS_IF([test "x${HAVE_PYMOD_PANGO}" = "xno"],
      [AC_MSG_ERROR([Requires Pango for Python])])
      
-dnl AX_PYTHON_MODULE(gnomeapplet, [])
-dnl AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xno"],
-dnl     [AC_MSG_ERROR([Requires GNOME bindings for Python (part of PyGTK)])])
-     
 AX_PYTHON_MODULE(Xlib, [])
 AS_IF([test "x${HAVE_PYMOD_XLIB}" = "xno"],
      [AC_MSG_ERROR([Requires Python Xlib - Python Xlib bindings])])
@@ -113,27 +94,14 @@ AS_IF([test "x${HAVE_PYMOD_SETPROCTITLE}" = "xno"],
      [AC_MSG_WARN([It is recommend that setproctitle is installed])])
      
 dnl Dependencies for plugins
- 
-AX_PYTHON_MODULE(gnomekeyring, [])
-AS_IF([test "x${HAVE_PYMOD_GNOMEKEYRING}" = "xno"],
-     [AC_MSG_ERROR([Requires Gnome Keyring bindings for Python])])
 
 AX_PYTHON_MODULE(alsaaudio, [])
 AS_IF([test "x${HAVE_PYMOD_ALSAAUDIO}" = "xno"],
      [AC_MSG_ERROR([Requires Alsa bindings for Python])])
 
-AX_PYTHON_MODULE(vobject, [])
-AS_IF([test "x${HAVE_PYMOD_VOBJECT}" = "xno"],
-     [AC_MSG_ERROR([Requires Python vObject])])
-
 AX_PYTHON_MODULE(feedparser, [])
 AS_IF([test "x${HAVE_PYMOD_FEEDPARSER}" = "xno"],
      [AC_MSG_ERROR([Requires Universal Feed Parser for Python])])
-
-AX_PYTHON_MODULE(evolution, [])
-AS_IF([test "x${HAVE_PYMOD_EVOLUTION}" = "xno"],
-     [AC_MSG_ERROR([Requires Evolution Bindings for Python])])
-
      
 PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
 AC_SUBST(PYGTK_CFLAGS)
@@ -154,16 +122,10 @@ src/scripts/Makefile
 src/plugins/Makefile
 src/plugins/background/Makefile
 src/plugins/cairo-clock/Makefile
-src/plugins/cal/Makefile
-src/plugins/cal/default/Makefile
 src/plugins/clock/Makefile
 src/plugins/clock/default/Makefile
 src/plugins/fx/Makefile
 src/plugins/g15daemon-server/Makefile
-src/plugins/indicator-me/Makefile
-src/plugins/indicator-messages/Makefile
-src/plugins/indicator-me/default/Makefile
-src/plugins/lcdbiff/Makefile
 src/plugins/macro-recorder/Makefile
 src/plugins/macro-recorder/default/Makefile
 src/plugins/macros/Makefile
@@ -175,8 +137,6 @@ src/plugins/panel/Makefile
 src/plugins/processes/Makefile
 src/plugins/notify-lcd/Makefile
 src/plugins/notify-lcd/default/Makefile
-src/plugins/screensaver/Makefile
-src/plugins/screensaver/default/Makefile
 src/plugins/sysmon/Makefile
 src/plugins/sysmon/default/Makefile
 src/plugins/rss/Makefile
@@ -194,10 +154,9 @@ src/udev/Makefile
 src/gnome/Makefile
 src/gnome/applications/Makefile
 src/gnome/applications/g15-config.desktop
-src/gnome/servers/Makefile
-src/gnome/servers/GNOME_G15Applet.server
 src/gnome/autostart/Makefile
 src/gnome/autostart/gnome15.desktop
+src/gnome/dbus/Makefile
 src/main/Makefile
 src/main/python/Makefile
 src/main/python/gnome15/Makefile

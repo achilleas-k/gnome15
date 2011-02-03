@@ -1,0 +1,14 @@
+pyg19
+=====
+
+This library provides support for the Logitech G19 until there is kernel support available.
+It was based "Logitech-G19-Linux-Daemon" (http://github.com/MultiCoreNop/Logitech-G19-Linux-Daemon),
+the work of "MultiCoreNop" (http://github.com/MultiCoreNop).
+
+
+Requirements
+============
+
+Python 2.6
+PyUSB 0.4
+PIL (Python Image Library, just about any version should be ok)

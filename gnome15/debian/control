@@ -2,22 +2,21 @@ Source: gnome15
 Section: gnome
 Priority: optional
 Maintainer: Brett Smith <tanktarta@blueyonder.co.uk>
-Build-Depends: cdbs, debhelper (>= 7), autotools-dev, python-support, python-gobject, python-gnome2, python-gtk2, python-gtk2-dev, python-dbus, python-cairo (>= 1.8.3), python-lxml, python-imaging, python-evolution, python-vobject, python-alsaaudio, python-feedparser, python-rsvg, python-gnomeapplet, python-xdg, pkg-config, python-xlib, python-setproctitle, python-appindicator, python-wnck, python-gnomekeyring, pyinputevent
+Build-Depends: cdbs, debhelper (>= 7), autotools-dev, python-support, python-gobject, python-gtk2, python-gtk2-dev, python-dbus, python-cairo (>= 1.8.3), python-lxml, python-imaging, python-evolution, python-vobject, python-alsaaudio, python-feedparser, python-rsvg, python-gnomeapplet, python-xdg, pkg-config, python-xlib, python-setproctitle, python-appindicator, python-wnck, pyinputevent 
 Standards-Version: 3.8.4
 Homepage: http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/
 
 Package: gnome15
 Architecture: all
-Depends: ${python:Depends}, python-gobject, python-gnome2, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-evolution, python-vobject, python-alsaaudio, python-feedparser, python-rsvg, cairo-clock, python-xlib, python-setproctitle, python-appindicator, python-wnck, libgtk2.0-bin, python-gnomekeyring
+Depends: ${python:Depends}, python-gobject, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, cairo-clock, python-xlib, python-setproctitle, python-wnck, libgtk2.0-bin 
 Recommends: gnome15-g19d | gnome15-g15daemon | gnome15-gtk | gnome15-kernel
 Provides: ${python:Provides}
-Description: Panel applet for the Logitech "G" keyboards
- Gnome15 provides a panel applet, configuration tool, macro 
- system and plugin framework for the Logitech G series
- keyboards, currently including the G15 and G19.  The 
- intention is to provide the best integration with the
- Gnome desktop possible, using the standard protocols and
- libraries where possible.
+Description: Desktop service for the Logitech "G" keyboards
+ This is the core of Gnome15, which provides macro handling, a
+ configuration GUI and a plugin framework for the Logitech G 
+ series keyboards.  The intention is to provide the best 
+ integration with the GNOME desktop possible, using the
+ standard protocols and libraries where possible.
 
 Package: gnome15-g15daemon
 Architecture: all

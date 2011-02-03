@@ -33,9 +33,18 @@ import base64
 import sys
 import traceback
 
+# Logging
+import logging
+logger = logging.getLogger("util")
+
 from cStringIO import StringIO
-from jobqueue import JobQueue
+import jobqueue
 from threading import Thread
+
+''' 
+Default scheduler
+'''
+scheduler = jobqueue.JobScheduler()
 
 '''
 Look for icons locally as well if running from source
@@ -48,8 +57,15 @@ if pglobals.dev:
 Executing stuff
 '''
 
-def run_script(script):    
-    os.system("python \"" + os.path.realpath(os.path.join(pglobals.scripts_dir,script)) + "\" &")
+def run_script(script, args = None, background = True):
+    a = ""
+    if args:
+        for arg in args:
+            a += "\"%s\"" % arg
+    p = os.path.realpath(os.path.join(pglobals.scripts_dir,script))
+    logger.info("Running '%s'" % p)
+    os.system("python \"%s\" %s %s" % ( p, a, " &" if background else "" ))
+
 
 '''
 GConf stuff
@@ -189,34 +205,20 @@ after a specified interval. The timer is done by the gobject
 event loop, which then executes the job on a different thread
 '''
 
-queues = {
-    "default": JobQueue(name="default")
-          }
+def clear_jobs(queue_name = None):
+    scheduler.clear_jobs(queue_name)
 
-class GTimer:    
-    def __init__(self, task_queue, interval, function, *args):
-        if function == None:
-            sys.stderr.write("WARNING: Attempt to run empty job.")
-            traceback.print_stack()
-            return
-        
-        self.task_queue = task_queue
-        self.source = gobject.timeout_add(int(interval * 1000), self.exec_item, function, *args)
-        
-    def exec_item(self, function, *args):
-        self.task_queue.run(function, *args)
-        
-    def cancel(self, *args):
-        gobject.source_remove(self.source)
-        
-def schedule(name, interval, function, *args):
-    return queue("default", name, interval, function, *args)
+def execute(queue_name, job_name, function, *args):
+    scheduler.execute(queue_name, job_name, function, *args)
 
-def queue(queue_name, name, interval, function, *args):
-    if not queue_name in queues:
-        queues[queue_name] = JobQueue(name=queue_name)
-    timer = GTimer(queues[queue_name], interval, function, *args)
-    return timer
+def schedule(job_name, interval, function, *args):
+    return scheduler.schedule(job_name, interval, function, *args)
+
+def queue(queue_name, job_name, interval, function, *args):    
+    return scheduler.queue(queue_name, job_name, interval, function, *args)
+
+def stop_all_schedulers():
+    scheduler.stop_all()
 
 '''
 General utilities
@@ -273,7 +275,7 @@ def flip_hv_centered_on(context, fx, fy, cx, cy):
 
 def load_surface_from_file(filename, size = None):
     if filename == None:
-        print "WARNING: Empty filename requested"
+        logger.warning("Empty filename requested")
         return None
     if "://" in filename:
         file = urllib.urlopen(filename)
@@ -367,6 +369,7 @@ def get_embedded_image_url(path):
     return file_str.getvalue()
 
 def get_icon_path(icon = None, size = 128):
+    o_icon = icon
     if isinstance(icon, list):
         for i in icon:
             p = get_icon_path(i, size)
@@ -376,10 +379,10 @@ def get_icon_path(icon = None, size = 128):
         icon = gtk_icon_theme.lookup_icon(icon, size, 0)
         if icon != None:
             if icon.get_filename() == None:
-                print "WARNING: Found icon %s (%d), but no filename was available" % ( icon, size )
+                logger.warning("Found icon %s (%d), but no filename was available" % ( o_icon, size ))
             return icon.get_filename()
         else:
-            print "WARNING: Icon %s (%d) not found" % ( icon, size )
+            logger.warning("Icon %s (%d) not found" % ( o_icon, size ))
     
 def get_app_icon(gconf_client, icon, size = 128):
     icon_path = get_icon_path(icon, size)
@@ -510,7 +513,7 @@ def get_transforms(element, position_only = False):
                 else:
                     list.append(cairo.Matrix(1, 0, 0, 1, float(args[4]),float(args[5])))
             else:
-                print "WARNING: Unspported transform %s" % name
+                logger.warning("Unspported transform %s" % name)
             start = end_args + 1
                 
     return list
@@ -532,7 +535,7 @@ def get_location(element):
                 name = transform_val[:start_args].lstrip()
                 end_args = transform_val.find(")", start_args)
                 if end_args == -1:
-                    print "WARNING: Unexpected end of transform arguments"
+                    logger.warning("Unexpected end of transform arguments")
                     break
                 args = transform_val[start_args + 1:end_args].split(",")
                 if name == "translate":
@@ -540,7 +543,7 @@ def get_location(element):
                 elif name == "matrix":
                     list.append((float(args[4]),float(args[5])))
                 else:
-                    print "WARNING: Unspported transform %s" % name
+                    logger.warning("WARNING: Unsupported transform %s" % name)
                 start = end_args + 1
         element = element.getparent()
     list.reverse()

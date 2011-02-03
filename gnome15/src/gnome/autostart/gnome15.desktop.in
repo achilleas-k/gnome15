@@ -1,15 +1,15 @@
 [Desktop Entry]
 Version=1.0
 Encoding=UTF-8
-Name=Gnome15
+Name=Gnome15 Desktop Service
 Icon=gnome15
-Comment=Logitech G series keyboard GNOME integration.
-Exec=g15-indicator
+Comment=Logitech G series keyboard desktop service.
+Exec=g15-desktop-service
 Terminal=false
 Type=Application
 Categories=
 GenericName=
-X-GNOME-Autostart-Delay=8
+#X-GNOME-Autostart-Delay=8
 #AutostartCondition=GNOME /desktop/gnome/gnome15/enabled
 #X-GNOME-Autostart-Phase=Applications
 #X-GNOME-AutoRestart=true

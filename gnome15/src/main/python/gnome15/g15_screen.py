@@ -34,11 +34,16 @@ import time
 import threading
 import jobqueue 
 import cairo
+import pangocairo
+import pango
+import xml.sax.saxutils as saxutils
+import logging
+logger = logging.getLogger("screen")
 
 class G15Page():
-    def __init__(self, plugin, painter, id, priority, time, on_shown=None, on_hidden=None, thumbnail_painter = None, panel_painter = None):
+    def __init__(self, screen, painter, id, priority, time, on_shown=None, on_hidden=None, thumbnail_painter = None, panel_painter = None):
         self.id = id
-        self.plugin = plugin
+        self.screen = screen
         self.title = self.id
         self.time = time
         self.thumbnail_painter = thumbnail_painter
@@ -52,9 +57,21 @@ class G15Page():
         self.cairo = cairo
         self.key_handlers = []
         
+        self.theme = None
+        self.properties = {}
+        self.back_buffer = None
+        self.buffer = None
+        self.back_context = None
+        self.font_size = 12.0
+        self.font_family = "Sans"
+        self.font_style = "normal"
+        self.font_weight = "normal"
+        
+        self.new_surface()
+        
     def set_title(self, title):
         self.title = title   
-        for l in self.plugin.screen_change_listeners:
+        for l in self.screen.screen_change_listeners:
             l.title_changed(self, title)
         
     def set_priority(self, priority):
@@ -68,23 +85,155 @@ class G15Page():
     def get_val(self):
         return self.time * self.priority
     
+    def new_surface(self):
+        sw = self.screen.driver.get_size()[0]
+        sh = self.screen.driver.get_size()[1]
+        self.back_buffer = cairo.ImageSurface (cairo.FORMAT_ARGB32,sw, sh)
+        self.back_context = cairo.Context(self.back_buffer)
+        self.set_line_width(1.0)
+        
+        rgb = self.screen.driver.get_color(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+        self.foreground(rgb[0],rgb[1],rgb[2], 255)
+        
+    def draw_surface(self):
+        self.buffer = self.back_buffer
+        
+    def foreground(self, r, g, b, a = 255):
+        self.foreground_rgb = (r, g, b, a)
+        self.back_context.set_source_rgba(float(r) / 255.0, float(g) / 255.0, float(b) / 255.0, float(a) / 255.0)
+        
+    def save(self):
+        self.back_context.save()
+        
+    def restore(self):
+        self.back_context.restore()
+        
+    def set_line_width(self, line_width):
+        self.back_context.set_line_width(line_width)
+        
+    def arc(self, x, y, radius, angle1, angle2, fill = False):
+        self.back_context.arc(x, y, radius, g15util.degrees_to_radians(angle1), g15util.degrees_to_radians(angle2))
+        if fill:
+            self.back_context.fill()
+        else:
+            self.back_context.stroke()
+        
+    def line(self, x1, y1, x2, y2):
+        self.back_context.line_to(x1, y1)
+        self.back_context.line_to(x2, y2)
+        self.back_context.stroke()
+        
+    def image(self, image, x, y):
+        self.back_context.translate(x, y)
+        self.back_context.set_source_surface(image)
+        self.back_context.paint()
+        self.back_context.translate(-x, -y)
+        
+    def rectangle(self, x, y, width, height, fill = False):
+        self.back_context.rectangle(x, y, width, height)
+        if fill:
+            self.back_context.fill()
+        else:
+            self.back_context.stroke()
+        
+    def paint(self, canvas):
+        if self.painter != None:
+            self.painter(canvas)
+        
+        # Paint the theme
+        if self.theme != None:
+            canvas.save()
+            self.theme.draw(canvas, self.properties)
+            canvas.restore()
+            
+        # Paint the canvas
+        if self.buffer != None:
+            canvas.save()
+            canvas.set_source_surface(self.buffer)
+            canvas.paint()
+            canvas.restore()
+            
+    def set_font(self, font_size = None, font_family = None, font_style = None, font_weight = None):
+        if font_size:
+            self.font_size = font_size
+        if font_family:
+            self.font_family = font_family
+        if font_style:
+            self.font_style = font_style
+        if font_weight:
+            self.font_weight = font_weight
+            
+    def text(self, text, x, y, width, height, text_align = "left"):
+        driver = self.screen.driver
+        pango_context = pangocairo.CairoContext(self.back_context)
+        pango_context.set_antialias(driver.get_antialias()) 
+        fo = cairo.FontOptions()
+        fo.set_antialias(driver.get_antialias())
+        if driver.get_antialias() == cairo.ANTIALIAS_NONE:
+            fo.set_hint_style(cairo.HINT_STYLE_NONE)
+            fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
+        
+        buf = "<span"
+        if self.font_size != None:
+            buf += " size=\"%d\"" % ( int(self.font_size * 1000) ) 
+        if self.font_style != None:
+            buf += " style=\"%s\"" % self.font_style
+        if self.font_weight != None:
+            buf += " weight=\"%s\"" % self.font_weight
+        if self.font_family != None:
+            buf += " font_family=\"%s\"" % self.font_family                
+        if self.foreground_rgb != None:
+            buf += " foreground=\"%s\"" % g15util.rgb_to_hex(self.foreground_rgb[0:3])
+            
+        buf += ">%s</span>" % saxutils.escape(text)
+        attr_list = pango.parse_markup(buf)
+        
+        # Create the layout
+        layout = pango_context.create_layout()
+        
+        pangocairo.context_set_font_options(layout.get_context(), fo)      
+        layout.set_attributes(attr_list[0])
+        layout.set_width(int(pango.SCALE * width))
+        layout.set_wrap(pango.WRAP_WORD_CHAR)      
+        layout.set_text(text)
+        spacing = 0
+        layout.set_spacing(spacing)
+        
+        # Alignment
+        if text_align == "right":
+            layout.set_alignment(pango.ALIGN_RIGHT)
+        elif text_align == "center":
+            layout.set_alignment(pango.ALIGN_CENTER)
+        else:
+            layout.set_alignment(pango.ALIGN_LEFT)
+        
+        # Draw text to canvas
+        self.back_context.set_source_rgb(self.foreground_rgb[0], self.foreground_rgb[1], self.foreground_rgb[2])
+        pango_context.save()
+        pango_context.rectangle(x, y, width, height)
+        pango_context.clip()  
+                  
+        pango_context.move_to(x, y)    
+        pango_context.update_layout(layout)
+        pango_context.show_layout(layout)        
+        pango_context.restore()
+    
 class G15Screen():
     
-    def __init__(self, applet):
-        self.applet = applet
+    def __init__(self, service):
+        self.service = service
         self.screen_change_listeners = []
         self.local_data = threading.local()
         self.local_data.surface = None
-        
-        # Draw the splash for when no other pages are visible
-        self.jobqueue = jobqueue.JobQueue(name="RedrawQueue")
-        self.cyclequeue = jobqueue.JobQueue(name="CycleQueue")
+        self.key_handlers = []
         
     def start(self):
-        self.driver = self.applet.driver
+        logger.debug("Starting screen")
+        self.driver = self.service.driver
         self.content_surface = None
-        self.width = self.applet.driver.get_size()[0]
-        self.height = self.applet.driver.get_size()[1]
+        self.width = self.service.driver.get_size()[0]
+        self.height = self.service.driver.get_size()[1]
+        
         self.surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
         self.size = ( self.width, self.height )
         self.available_size = (0, 0, self.size[0], self.size[1])
@@ -128,10 +277,16 @@ class G15Screen():
             val = g15driver.MKEY_LIGHT_2
         elif self.mkey == 3:
             val = g15driver.MKEY_LIGHT_3
-        self.applet.driver.set_mkey_lights(val)
+        self.service.driver.set_mkey_lights(val)
         self.set_color_for_mkey()     
     
     def handle_key(self, keys, state, post=False):
+        # Event first goes to this objects key handlers
+        for h in self.key_handlers:
+            if h.handle_key(keys, state, post):
+                return True
+
+        # Next it goes to the visible page         
         visible = self.get_visible_page()
         if visible != None:
             for h in visible.key_handlers:
@@ -171,13 +326,14 @@ class G15Screen():
         
     def new_page(self, painter, priority=PRI_NORMAL, on_shown=None, on_hidden=None, 
                  id="Unknown", thumbnail_painter = None, panel_painter = None):
+        logger.info("Creating new page with %s of priority %d" % (id, priority))
         self.page_model_lock.acquire()
         try :
             self.clear_popup()
             if priority == PRI_EXCLUSIVE:
                 for page in self.pages:
                     if page.priority == PRI_EXCLUSIVE:
-                        print "WARNING: Another page is already exclusive. Lowering %s to HIGH" % id
+                        logger.warning("Another page is already exclusive. Lowering %s to HIGH" % id)
                         priority = PRI_HIGH
                         break
             page = G15Page(self, painter, id, priority, time.time(), on_shown, on_hidden, thumbnail_painter, panel_painter)
@@ -285,21 +441,25 @@ class G15Screen():
     '''
     
     def cycle_to(self, page, transitions = True):
-        self.cyclequeue.clear()
-        self.cyclequeue.run(self._do_cycle_to, page, transitions)
+        g15util.clear_jobs("cycleQueue")
+        g15util.execute("cycleQueue", "cycleTo", self._do_cycle_to, page, transitions)
             
     def cycle(self, number, transitions = True):
-        self.cyclequeue.clear()
-        self.cyclequeue.run(self._do_cycle, number, transitions) 
+        g15util.clear_jobs("cycleQueue")
+        g15util.execute("cycleQueue", "doCycle", self._do_cycle, number, transitions)
             
     def redraw(self, page = None, direction="up", transitions = True, redraw_content = True):
+        if page:
+            logger.debug("Redrawing %s" % page.id)
+        else:
+            logger.debug("Redrawing current page")
         current_page = self._get_next_page_to_display()
         
-        if page != None and page == current_page and self.visible_page == page:
-            # Drop any redraws that are not required
-            self.jobqueue.clear()
+#        if page != None and page == current_page and self.visible_page == page:
+#            # Drop any redraws that are not required
+#            g15util.clear_jobs("redrawQueue")
             
-        self.jobqueue.run(self._do_redraw, page, direction, transitions, redraw_content)
+        g15util.execute("redrawQueue", "redraw", self._do_redraw, page, direction, transitions, redraw_content)
         
     def set_color_for_mkey(self):
         control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
@@ -311,7 +471,7 @@ class G15Screen():
                     control.value = rgb
                     self.driver.update_control(control)
                     return
-            self.driver.set_control_from_configuration(control, self.applet.conf_client)
+            self.driver.set_control_from_configuration(control, self.service.conf_client)
             self.driver.update_control(control)
             
     def get_current_surface(self):
@@ -338,11 +498,11 @@ class G15Screen():
     
     def _draw_page(self, visible_page, direction="down", transitions = True, redraw_content = True):
         
-        if self.applet.driver == None or not self.applet.driver.is_connected():
+        if self.service.driver == None or not self.service.driver.is_connected():
             return
         
         # Do not paint if the device has no LCD (i.e. G110)
-        if self.applet.driver.get_bpp() == 0:
+        if self.service.driver.get_bpp() == 0:
             return
         
         surface =  self.surface
@@ -350,18 +510,19 @@ class G15Screen():
         # If the visible page is changing, creating a new surface. Both surfaces are
         # then passed to any transition functions registered
         if visible_page != self.visible_page: 
+            logger.debug("Page has changed, recreating surface")
             if visible_page.priority == PRI_NORMAL:   
-                self.applet.conf_client.set_string("/apps/gnome15/last_page", visible_page.id)      
+                self.service.conf_client.set_string("/apps/gnome15/last_page", visible_page.id)      
             surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
             
         self.local_data.surface = surface
         canvas = cairo.Context (surface)
-        canvas.set_antialias(self.applet.driver.get_antialias())
-        rgb = self.applet.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
+        canvas.set_antialias(self.service.driver.get_antialias())
+        rgb = self.service.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
         canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
         canvas.rectangle(0, 0, self.width, self.height)
         canvas.fill()
-        rgb = self.applet.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+        rgb = self.service.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
         canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
         
         if self.background_painter_function != None:
@@ -373,7 +534,7 @@ class G15Screen():
             redraw_content = True
             if self.visible_page != None:
                 self.visible_page = visible_page
-                callback = self.visible_page.on_hidden
+                callback = old_page.on_hidden
                 if callback != None:
                     callback()
             else:                
@@ -388,37 +549,37 @@ class G15Screen():
             
         # Call the screen's painter
         if self.visible_page != None:
-            callback = self.visible_page.painter
-            if callback != None:
+            logger.debug("Drawing page %s (direction = %s, transitions = %s, redraw_content = %s" % ( self.visible_page.id, direction, str(transitions), str(redraw_content)))
+        
                      
-                # Paint the content to a new surface so it can be cached
-                if self.content_surface == None or redraw_content:
-                    self.content_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
-                    content_canvas = cairo.Context(self.content_surface)
-                    callback(content_canvas)
-                
-                tx =  self.available_size[0]
-                ty =  self.available_size[1]
-                
-                # Scale to the available space, and center
-                sx = float(self.available_size[2]) / float(self.width)
-                sy = float(self.available_size[3]) / float(self.height)
-                scale = min(sx, sy)
-                sx = scale
-                sy = scale
-                
-                if tx == 0 and self.available_size[3] != self.size[1]:
-                    sx = 1
-                
-                if ty == 0 and self.available_size[2] != self.size[0]:
-                    sy = 1
-                
-                canvas.save()
-                canvas.translate(tx, ty)
-                canvas.scale(sx, sy)
-                canvas.set_source_surface(self.content_surface)
-                canvas.paint()
-                canvas.restore()
+            # Paint the content to a new surface so it can be cached
+            if self.content_surface == None or redraw_content:
+                self.content_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
+                content_canvas = cairo.Context(self.content_surface)
+                self.visible_page.paint(content_canvas)
+            
+            tx =  self.available_size[0]
+            ty =  self.available_size[1]
+            
+            # Scale to the available space, and center
+            sx = float(self.available_size[2]) / float(self.width)
+            sy = float(self.available_size[3]) / float(self.height)
+            scale = min(sx, sy)
+            sx = scale
+            sy = scale
+            
+            if tx == 0 and self.available_size[3] != self.size[1]:
+                sx = 1
+            
+            if ty == 0 and self.available_size[2] != self.size[0]:
+                sy = 1
+            
+            canvas.save()
+            canvas.translate(tx, ty)
+            canvas.scale(sx, sy)
+            canvas.set_source_surface(self.content_surface)
+            canvas.paint()
+            canvas.restore()
             
             
         # Now paint the screen's foreground
@@ -434,7 +595,7 @@ class G15Screen():
         if self.painter_function != None:
             self.painter_function(surface)
         else:
-            self.applet.driver.paint(surface)
+            self.service.driver.paint(surface)
             
         self.old_canvas = canvas
         self.old_surface = surface

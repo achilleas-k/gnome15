@@ -74,6 +74,8 @@ class G15SysMon():
         net = self.gconf_client.get_string(self.gconf_key + "/net")
         if net and (net in self.net_list):
             self.net_no = self.net_list.index(net)
+        else:
+            self.net_no = 0
         self.recv_bps = 0.0
         self.send_bps = 0.0
         self.last_net_list = None

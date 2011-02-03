@@ -44,6 +44,11 @@ from threading import Thread
 from threading import RLock
 from dbus.exceptions import NameExistsException
 
+# Logging
+import logging
+logger = logging.getLogger("notify")
+
+
 # Plugin details - All of these must be provided
 id="notify-lcd"
 name="Notify"
@@ -58,7 +63,7 @@ IF_NAME="org.freedesktop.Notifications"
 BUS_NAME="/org/freedesktop/Notifications"
 
 # List of processes to try and kill so the notification DBUS server can be replaced
-OTHER_NOTIFY_DAEMON_PROCESS_NAMES = [ 'notify-osd', 'notification-daemon' ]
+OTHER_NOTIFY_DAEMON_PROCESS_NAMES = [ 'notify-osd', 'notification-daemon', 'knotify4' ]
 
 # NotificationClosed reasons
 NOTIFICATION_EXPIRED = 1
@@ -221,13 +226,19 @@ class G15Message():
                 buf = ""
                 for b in image_struct[6]:
                     buf += chr(b)
-                pixbuf = gtk.gdk.pixbuf_new_from_data(buf, gtk.gdk.COLORSPACE_RGB, has_alpha, bits_per_sample, img_width, img_height, img_stride)
-                fh, self.embedded_image = tempfile.mkstemp(suffix=".png",prefix="notify-lcd")
-                file = os.fdopen(fh)
-                file.close()
-                pixbuf.save(self.embedded_image, "png")
+                    
+                try :
+                    pixbuf = gtk.gdk.pixbuf_new_from_data(buf, gtk.gdk.COLORSPACE_RGB, has_alpha, bits_per_sample, img_width, img_height, img_stride)
+                    fh, self.embedded_image = tempfile.mkstemp(suffix=".png",prefix="notify-lcd")
+                    file = os.fdopen(fh)
+                    file.close()
+                    pixbuf.save(self.embedded_image, "png")
+                except :
+                    # Sometimes the image data seems to be bad
+                    logger.warn("Failed to decode notification image")
+                    self.icon = g15util.get_icon_path("dialog-information", 1024)
             else:
-                self.icon = g15util.get_icon_path("dialog-info", 1024)
+                self.icon = g15util.get_icon_path("dialog-information", 1024)
     
     def close(self):
         if self.embedded_image != None:
@@ -240,6 +251,7 @@ class G15NotifyService(dbus.service.Object):
     
     def __init__(self, gconf_client,gconf_key, screen):
         self.id = 1
+        self._lock = RLock()
         self._gconf_client = gconf_client
         self._gconf_key = gconf_key
         self._displayed_notification = 0
@@ -259,15 +271,21 @@ class G15NotifyService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='as')
     def GetCapabilities(self):
+        logger.debug("Getting capabilities")
         caps = [ "body", "body-images", "icon-static" ]
         if self._gconf_client.get_bool(self._gconf_key + "/allow_actions"):
             caps.append("actions")
         enable_sounds = self._gconf_client.get(self._gconf_key + "/enable_sounds")
         if self._get_enable_sounds():
             caps.append("sounds")
+            
+            
+        logger.debug("Got capabilities %s" % str(caps))
+        return caps
     
     @dbus.service.method(IF_NAME, in_signature='susssasa{sv}i', out_signature='u')
     def Notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
+        logger.debug("Notify app=%s id=%s '%s'", app_name, id, summary)
         try :                
             if self._active:
                 timeout = float(timeout) / 1000.0
@@ -309,19 +327,24 @@ class G15NotifyService(dbus.service.Object):
             traceback.print_exc()
     
     @dbus.service.method(IF_NAME, in_signature='u', out_signature='')
-    def CloseNotification(self, id):
-        if self._gconf_client.get_bool(self._gconf_key + "/allow_cancel") and len(self._message_queue) > 0:
-            message = self._message_queue[0]
-            if message.id == id:
-                self._cancel_timer()
-                self._move_to_next(NOTIFICATION_CLOSED)
-            else:
-                del self._message_map[id]
-                for m in self._message_queue:
-                    if m.id == id:
-                        self._message_queue.remove(m)
-                        self.NotificationClosed(id, NOTIFICATION_CLOSED)
-                        break
+    def CloseNotification(self, id):        
+        logger.debug("Closing notification " % id)
+        self._lock.acquire()
+        try :
+            if self._gconf_client.get_bool(self._gconf_key + "/allow_cancel") and len(self._message_queue) > 0:
+                message = self._message_queue[0]
+                if message.id == id:
+                    self._cancel_timer()
+                    self._move_to_next(NOTIFICATION_CLOSED)
+                else:
+                    del self._message_map[id]
+                    for m in self._message_queue:
+                        if m.id == id:
+                            self._message_queue.remove(m)
+                            self.NotificationClosed(id, NOTIFICATION_CLOSED)
+                            break
+        finally :
+            self._lock.release()
         
     @dbus.service.signal(dbus_interface=IF_NAME,
                          signature='us')
@@ -334,14 +357,18 @@ class G15NotifyService(dbus.service.Object):
         pass
     
     def clear(self):
-        for message in self._message_queue:
-            message.close()
-        self._message_queue = []
-        self._message_map = {}
-        self._cancel_timer()
-        page = self._screen.get_page("NotifyLCD")
-        if page != None:
-            self._screen.del_page(page)  
+        self._lock.acquire()
+        try :
+            for message in self._message_queue:
+                message.close()
+            self._message_queue = []
+            self._message_map = {}
+            self._cancel_timer()
+            page = self._screen.get_page("NotifyLCD")
+            if page != None:
+                self._screen.del_page(page)  
+        finally:
+            self._lock.release()
     
     def next(self):
         self._cancel_timer()
@@ -385,7 +412,7 @@ class G15NotifyService(dbus.service.Object):
         time_displayed = time.time() - self._displayed_notification
         remaining = self._current_message.timeout - time_displayed
         remaining_pc = ( remaining / self._current_message.timeout ) * 100.0
-        properties["remaining"] = remaining_pc 
+        properties["remaining"] = int(remaining_pc / 10) * 10 
                     
         self._theme.draw(canvas, properties)
 
@@ -415,14 +442,12 @@ class G15NotifyService(dbus.service.Object):
                 self._reload_theme()
                 self._screen.raise_page(page)
                 
-            self._start_timer(message)            
-            self._redraw_timer = g15util.schedule("Notification", 0.1, self._do_redraw)
-                
-            self._screen.redraw(page)
+            self._start_timer(message)         
+            self._do_redraw()
             
             # Play sound
             if self._get_enable_sounds() and "sound-file" in message.hints and ( not "suppress-sound" in message.hints or not message.hints["suppress-sound"]):
-                print "WARNING: Will play sound",message.hints["sound-file"] 
+                logger.debug("Will play sound",message.hints["sound-file"]) 
                 os.system("aplay '%s' &" % message.hints["sound-file"])
                 
             if self._gconf_client.get_bool(self._gconf_key + "/blink_keyboard"):
@@ -436,7 +461,7 @@ class G15NotifyService(dbus.service.Object):
         page = self._screen.get_page("NotifyLCD")
         if page != None:
             self._screen.redraw(page)
-            self._redraw_timer = g15util.schedule("Notification", 0.1, self._do_redraw)
+            self._redraw_timer = g15util.schedule("Notification", 1.0, self._do_redraw)
           
     def _cancel_redraw(self):
         if self._redraw_timer != None:
@@ -446,16 +471,21 @@ class G15NotifyService(dbus.service.Object):
         if self._timer != None:
             self._timer.cancel()
         
-    def _move_to_next(self, reason = NOTIFICATION_DISMISSED):        
-        message = self._message_queue[0]
-        message.close()
-        del self._message_queue[0]
-        del self._message_map[message.id]
-        self.NotificationClosed(message.id, reason)
-        if len(self._message_queue) != 0:
-            self._notify()  
-        else:
-            self._screen.del_page(self._screen.get_page("NotifyLCD"))
+    def _move_to_next(self, reason = NOTIFICATION_DISMISSED):
+        logger.debug("Dismissing current message. Reason code %d", reason)  
+        self._lock.acquire()
+        try :      
+            message = self._message_queue[0]
+            message.close()
+            del self._message_queue[0]
+            del self._message_map[message.id]
+            self.NotificationClosed(message.id, reason)
+            if len(self._message_queue) != 0:
+                self._notify()  
+            else:
+                self._screen.del_page(self._screen.get_page("NotifyLCD"))
+        finally:
+            self._lock.release()
                   
     def _hide_notification(self): 
         self._move_to_next(NOTIFICATION_EXPIRED)
@@ -498,13 +528,14 @@ class G15NotifyLCD():
         try :
             dbus.service.Object.__init__(self._service, self._bus_name, BUS_NAME)
         except KeyError:
-            print "DBUS notify service failed to start. May already be started."     
+            logger.error("DBUS notify service failed to start. May already be started.")     
             
     def deactivate(self):
         # TODO How do we properly 'unexport' a service? This seems to kind of work, in
         # that notify-osd can take over again, but trying to re-activate the plugin
         # doesn't reclaim the bus name (I think because it is cached)
-        print "WARNING: Deactivated notify service. Note, currently the service cannot be reactivated once deactivated. You must completely restart Gnome15"
+        if not self._screen.service.shutting_down:
+            logger.warn("Deactivated notify service. Currently the service cannot be reactivated once deactivated. You must completely restart Gnome15")
         self._service.active = False
         self._service.remove_from_connection()
         self._bus_name.__del__()

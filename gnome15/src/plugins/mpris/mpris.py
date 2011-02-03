@@ -24,12 +24,16 @@ import gnome15.g15_screen as g15screen
 import gnome15.g15_driver as g15driver
 import gnome15.g15_util as g15util
 import gnome15.g15_theme as g15theme
-from threading import Lock
 import dbus
 import os
+import time
 
 import xdg.Mime as mime
 import urllib
+
+# Logging
+import logging
+logger = logging.getLogger("mpris")
 
 # Plugin details - All of these must be provided
 id="mpris"
@@ -48,12 +52,13 @@ unsupported_models = [ g15driver.MODEL_G110 ]
 def create(gconf_key, gconf_client, screen):
     return G15MPRIS(gconf_client, screen)
 
-
 class AbstractMPRISPlayer():
     
     def __init__(self, gconf_client, screen, players, interface_name, session_bus, title):
-        self.lock = Lock()
+        logger.info("Starting player %s" % interface_name)
         self.stopped = False
+        self.elapsed = 0
+        self.volume = 0
         self.hidden = True
         self.title = title
         self.session_bus = session_bus
@@ -65,48 +70,61 @@ class AbstractMPRISPlayer():
         self.gconf_client = gconf_client     
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
         self.status = "Stopped"
-        self.status_check_timer = None
         self.cover_image = None
         self.thumb_image = None
         self.song_properties = {}
+        self.status = None      
+        self.redraw_timer = None  
         
     def check_status(self):        
         try :
             new_status = self.get_new_status()
-            if new_status != self.status:
-                self.status = new_status
-                if self.status == "Playing":
-                    self.show_page()
-                elif self.status == "Paused":
-                    if self.page != None:
-                        self.load_song_details()
-                        self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
-                    else:
-                        self.show_page()
-                elif self.status == "Stopped":
-                    self.hide_page()
+            self.volume = self.get_volume()   
+            if new_status != self.status:            
+                self.set_status(new_status)
             else:
                 if self.status == "Playing":   
                     self.recalc_progress()
                     self.screen.redraw(self.page)
                     
-            self.status_check_timer = g15util.schedule(self.interface_name + " Status Check", 1.0, self.check_status)
         except dbus.DBusException:
-            print "WARNING: Failed to check status, player must have closed."
+            logger.warning("WARNING: Failed to check status, player must have closed.")
             self.stop()
+            
+    def reset_elapsed(self):
+        self.start_elapsed = self.get_progress()
+        self.playback_started = time.time()
+        
+    def set_status(self, new_status):        
+        if new_status != self.status:
+            logger.info("Playback status changed to %s" % new_status)
+            self.status = new_status
+            if self.status == "Playing":
+                self.reset_elapsed()
+                logger.info("Now playing, showing page")
+                self.show_page()
+                self.schedule_redraw()
+            elif self.status == "Paused":
+                self.cancel_redraw()
+                if self.page != None:
+                    logger.info("Paused.")
+                    self.load_song_details()
+                    self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
+                else:
+                    self.show_page()
+            elif self.status == "Stopped":
+                self.cancel_redraw()
+                self.hide_page()
     
     def stop(self):
-        self.lock.acquire()
-        try :
-            self.stopped = True
-            self.on_stop()
-            if self.status_check_timer != None:
-                self.status_check_timer.cancel()
-            if self.page != None:
-                self.hide_page()
-            del self.players[self.interface_name]
-        finally:
-            self.lock.release()
+        logger.info("Stopping player %s" % self.interface_name)
+        self.stopped = True
+        self.on_stop()
+        if self.redraw_timer != None:
+            self.redraw_timer.cancel()
+        if self.page != None:
+            self.hide_page()
+        del self.players[self.interface_name]
     
     def show_page(self):
         self.load_song_details()
@@ -120,21 +138,35 @@ class AbstractMPRISPlayer():
         
     def hide_page(self):
         self.screen.del_page(self.page)    
-        self.page = None    
+        self.page = None
+        
+    def redraw(self):
+        if self.status == "Playing":
+            self.elapsed = time.time() - self.playback_started + self.start_elapsed 
+            self.recalc_progress() 
+            self.screen.redraw(self.page)
+            self.schedule_redraw()
+            
+    def schedule_redraw(self): 
+        self.redraw_timer = g15util.schedule("MPRIS2Redraw", 1.0, self.redraw)
         
     def on_shown(self):
         self.hidden = False
+        if self.status == "Playing":
+            self.schedule_redraw()
         
     def on_hidden(self):
-        self.hidden = True
+        self.hidden = True      
+        self.cancel_redraw()
+            
+    def cancel_redraw(self):
+        if self.redraw_timer != None:
+            self.redraw_timer.cancel()
+            self.redraw_timer = None
         
     def paint(self, canvas):
-        self.lock.acquire()
-        try :
-            properties = dict(self.song_properties)
-            self.theme.draw(canvas, properties) 
-        finally:
-            self.lock.release()
+        properties = dict(self.song_properties)
+        self.theme.draw(canvas, properties) 
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None:
@@ -143,6 +175,9 @@ class AbstractMPRISPlayer():
                 return size
             
     def process_properties(self):
+        
+        logger.debug("Processing properties")
+                
         self.recalc_progress()
         # Find the best icon for the media
         
@@ -158,11 +193,18 @@ class AbstractMPRISPlayer():
                 if mime_type != None:
                     mime_icon = g15util.get_icon_path(str(mime_type).replace("/","-"), size=self.screen.height)
                     if mime_icon != None:                    
-                        self.cover_uri = mime_icon                    
-                if self.cover_uri == None:                      
-                    self.cover_uri = g15util.get_icon_path(["audio-player", "applications-multimedia" ], size=self.screen.height)
-            if self.cover_uri != None:            
-                self.cover_uri = "file://" + urllib.pathname2url(self.cover_uri)
+                        self.cover_uri = mime_icon  
+            if self.cover_uri != None:
+                try :            
+                    self.cover_uri = "file://" + urllib.pathname2url(self.cover_uri)
+                except :
+                    self.cover_uri = None
+                                  
+            if self.cover_uri == None:                      
+                self.cover_uri = g15util.get_icon_path(["audio-player", "applications-multimedia" ], size=self.screen.height)
+                
+        logger.info("Getting cover art from %s" % self.cover_uri)
+                
         self.cover_image = None
         self.thumb_image = None
         if self.cover_uri != None:
@@ -187,8 +229,8 @@ class AbstractMPRISPlayer():
             
         
     def recalc_progress(self):
-        self.get_progress()
-        if(self.duration < 1):
+        logger.debug("Recalculating progress")
+        if not self.duration or self.duration < 1:
             self.song_properties["track_progress_pc"] = "0"
             self.song_properties["time_text"] = self.get_formatted_time(self.elapsed)
         else:
@@ -224,6 +266,9 @@ class AbstractMPRISPlayer():
     def get_progress(self):
         raise Exception("Not implemented.")
     
+    def get_volume(self):
+        raise Exception("Not implemented.")
+    
     def on_stop(self):
         raise Exception("Not implemented.")
     
@@ -238,18 +283,21 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.player = dbus.Interface(player_obj, 'org.freedesktop.MediaPlayer')        
         session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
-        # Start checking the status
+        # Set the initial status
         self.check_status()
         
     def on_stop(self):
         self.session_bus.remove_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def track_changed_handler(self, detail):
-        g15util.schedule("LoadTrackDetails", 1.0, self.load_and_draw)
+        g15util.queue("mprisDataQueue", "LoadTrackDetails", 1.0, self.load_and_draw)
         
     def load_and_draw(self):
         self.load_song_details()
         self.screen.redraw()
+        
+    def get_volume(self):
+        return 50
         
     def get_new_status(self):        
         status = self.player.GetStatus()
@@ -261,46 +309,42 @@ class MPRIS1Player(AbstractMPRISPlayer):
             return "Stopped"
                      
     def load_song_details(self):        
-        self.lock.acquire()
-        try :            
-            meta_data = self.player.GetMetadata()
-            
-            # Format properties that need formatting
-            bitrate = g15util.value_or_default(meta_data,"audio-bitrate", 0)
-            if str(bitrate) == "0":
-                bitrate = ""            
-            self.playing_uri = g15util.value_or_blank(meta_data,"location")
-            self.duration = g15util.value_or_default(meta_data,"time", 0)
-            if self.duration == 0:
-                self.duration = g15util.value_or_default(meta_data,"mtime", 0) / 1000
-                                
-            # General properties                    
-            self.song_properties = {
-                                    "status": self.status,
-                                    "uri": self.playing_uri,
-                                    "art_uri": g15util.value_or_blank(meta_data,"arturl"),
-                                    "title": g15util.value_or_blank(meta_data,"title"),
-                                    "genre": g15util.value_or_blank(meta_data,"genre"),
-                                    "track_no": g15util.value_or_blank(meta_data,"tracknumber"),
-                                    "artist": g15util.value_or_blank(meta_data,"artist"),
-                                    "album": g15util.value_or_blank(meta_data,"album"),
-                                    "bitrate": bitrate,
-                                    "rating": g15util.value_or_default(meta_data,"rating", 0.0),
-                                    "album_artist": g15util.value_or_blank(meta_data,"mb album artist"),
-                                    }
+        meta_data = self.player.GetMetadata()
         
-            self.process_properties()
-        finally:
-            self.lock.release()
+        # Format properties that need formatting
+        bitrate = g15util.value_or_default(meta_data,"audio-bitrate", 0)
+        if str(bitrate) == "0":
+            bitrate = ""            
+        self.playing_uri = g15util.value_or_blank(meta_data,"location")
+        self.duration = g15util.value_or_default(meta_data,"time", 0)
+        if self.duration == 0:
+            self.duration = g15util.value_or_default(meta_data,"mtime", 0) / 1000
+                            
+        # General properties                    
+        self.song_properties = {
+                                "status": self.status,
+                                "uri": self.playing_uri,
+                                "art_uri": g15util.value_or_blank(meta_data,"arturl"),
+                                "title": g15util.value_or_blank(meta_data,"title"),
+                                "genre": g15util.value_or_blank(meta_data,"genre"),
+                                "track_no": g15util.value_or_blank(meta_data,"tracknumber"),
+                                "artist": g15util.value_or_blank(meta_data,"artist"),
+                                "album": g15util.value_or_blank(meta_data,"album"),
+                                "bitrate": bitrate,
+                                "rating": g15util.value_or_default(meta_data,"rating", 0.0),
+                                "album_artist": g15util.value_or_blank(meta_data,"mb album artist"),
+                                }
+    
+        self.process_properties()
             
     def get_progress(self):        
-        self.elapsed = float(self.player.PositionGet()) / 1000.0
-        self.volume = self.player.VolumeGet()
+        return float(self.player.PositionGet()) / 1000.0
 
 
 class MPRIS2Player(AbstractMPRISPlayer):
     
     def __init__(self, gconf_client, screen, players, interface_name, session_bus):
+        self.last_properties = None
         
         # Connect to DBUS        
         player_obj = session_bus.get_object(interface_name, '/org/mpris/MediaPlayer2')     
@@ -314,7 +358,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
         session_bus.add_signal_receiver(self.properties_changed_handler, dbus_interface = "org.freedesktop.DBus.Properties", signal_name = "PropertiesChanged") 
         session_bus.add_signal_receiver(self.seeked, dbus_interface = "org.mpris.MediaPlayer2.Player", signal_name = "Seeked")
         
-        # Start checking the status
+        # Set the initial status
         self.check_status()
         
         
@@ -322,66 +366,97 @@ class MPRIS2Player(AbstractMPRISPlayer):
         self.session_bus.remove_signal_receiver(self.properties_changed_handler, dbus_interface = "org.freedesktop.DBus.Properties", signal_name = "PropertiesChanged") 
         self.session_bus.remove_signal_receiver(self.seeked, dbus_interface = "org.mpris.MediaPlayer2.Player", signal_name = "Seeked")        
         
-    def get_new_status(self):
-        return self.player_properties.Get("org.mpris.MediaPlayer2.Player", "PlaybackStatus")
+    def get_new_status(self):        
+        logger.debug("Getting status")
+        status = self.player_properties.Get("org.mpris.MediaPlayer2.Player", "PlaybackStatus")
+        logger.debug("Finished geting status")
+        return status
                                 
-    def seeked(self, seek_time):
+    def seeked(self, seek_time):    
+        self.start_elapsed = seek_time / 1000 / 1000    
+        logger.info("Seek changed to %f" % self.start_elapsed)
+        self.playback_started = time.time()
         self.recalc_progress()
         self.screen.redraw()
                 
     def properties_changed_handler(self, something, properties, list):
-        g15util.schedule("ReloadSongProperties", 0, self._reload)
+        logger.info("Properties changed, '%s' scheduling a reload", str(properties))
+        
+        if "PlaybackStatus" in properties:
+            self.set_status(properties["PlaybackStatus"])
+            
+        if "mpris:trackid" in properties:
+            self.reset_elapsed()
+            
+        if "Volume" in properties:
+            self.volume = int(properties["Volume"] * 100)
+             
+        if self.last_properties == None:
+            self._reload()
+        else:
+            for key in properties:
+                self.last_properties[key] = properties[key]
+            self._update_properties()
         
     def _reload(self):
         self.load_song_details()
         self.screen.redraw()
+            
+    def _update_properties(self):
+        if not self.stopped:
+            logger.info("Just updating properties")
+            self.load_meta()
+            self.screen.redraw()
         
     def load_song_details(self):
-        self.lock.acquire()
-        try :
-            if not self.stopped:
-                properties = self.player_properties.GetAll("org.mpris.MediaPlayer2.Player")
-                meta_data = properties["Metadata"]
-                
-                # Format properties that need formatting
-                bitrate = g15util.value_or_default(meta_data,"xesam:audioBitrate", 0)
-                if bitrate == 0:
-                    bitrate = ""
-                else:
-                    bitrate = str(bitrate / 1024)
-                
-                self.playing_uri = g15util.value_or_blank(meta_data,"xesam:url")            
-                                    
-                # General properties                    
-                self.song_properties = {
-                                        "status": self.status,
-                                        "uri": self.playing_uri,
-                                        "title": g15util.value_or_blank(meta_data,"xesam:title"),
-                                        "art_uri": g15util.value_or_blank(meta_data,"mpris:artUrl"),
-                                        "genre": ",".join(list(g15util.value_or_empty(meta_data,"xesam:genre"))),
-                                        "track_no": g15util.value_or_blank(meta_data,"xesam:trackNumber"),
-                                        "artist": ",".join(list(g15util.value_or_empty(meta_data,"xesam:artist"))),
-                                        "album": g15util.value_or_blank(meta_data,"xesam:album"),
-                                        "bitrate": bitrate,
-                                        "rating": g15util.value_or_default(meta_data,"xesam:userRating", 0.0),
-                                        "album_artist": ",".join(list(g15util.value_or_empty(meta_data,"xesam:albumArtist"))),
-                                        }
-            
-                self.duration = g15util.value_or_default(meta_data, "mpris:length", 0) / 1000 / 1000
-                self.process_properties()
-        finally:
-            self.lock.release()
+        if not self.stopped:
+            logger.info("Getting all song properties")
+            properties = self.player_properties.GetAll("org.mpris.MediaPlayer2.Player")
+            logger.info("Got all song properties")           
+            self.last_properties = dict(properties)
+            self.load_meta()
+        
+    def load_meta(self):
+        logger.debug("Loading MPRIS2 meta data")
+        meta_data = self.last_properties["Metadata"]
+        
+        # Format properties that need formatting
+        bitrate = g15util.value_or_default(meta_data,"xesam:audioBitrate", 0)
+        if bitrate == 0:
+            bitrate = ""
+        else:
+            bitrate = str(bitrate / 1024)
+        
+        self.playing_uri = g15util.value_or_blank(meta_data,"xesam:url")            
+                            
+        # General properties                    
+        self.song_properties = {
+                                "status": self.status,
+                                "uri": self.playing_uri,
+                                "title": g15util.value_or_blank(meta_data,"xesam:title"),
+                                "art_uri": g15util.value_or_blank(meta_data,"mpris:artUrl"),
+                                "genre": ",".join(list(g15util.value_or_empty(meta_data,"xesam:genre"))),
+                                "track_no": g15util.value_or_blank(meta_data,"xesam:trackNumber"),
+                                "artist": ",".join(list(g15util.value_or_empty(meta_data,"xesam:artist"))),
+                                "album": g15util.value_or_blank(meta_data,"xesam:album"),
+                                "bitrate": bitrate,
+                                "rating": g15util.value_or_default(meta_data,"xesam:userRating", 0.0),
+                                "album_artist": ",".join(list(g15util.value_or_empty(meta_data,"xesam:albumArtist"))),
+                                }
+    
+        self.duration = g15util.value_or_default(meta_data, "mpris:length", 0) / 1000 / 1000
+        self.process_properties()
+        
+    def get_volume(self):
+        return int(self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Volume") * 100)
             
     def get_progress(self):
         if self.status == "Playing":
             try :
-                self.elapsed = self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Position") / 1000 / 1000
+                return self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Position") / 1000 / 1000
             except:
-                self.elapsed = 0.0
-        else:
-            self.elapsed = 0.0                     
-        self.volume = self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Volume") * 100
-    
+                pass
+        return 0
             
 class G15MPRIS():
     
@@ -395,39 +470,51 @@ class G15MPRIS():
     def activate(self):
         if self.session_bus == None:
             self.session_bus = dbus.SessionBus()
-            self.session_bus.call_on_disconnection(self.dbus_disconnected)
-        self.discover()
+            self.session_bus.call_on_disconnection(self._dbus_disconnected)
+        self._discover()
+        
+        # Watch for players appearing and disappearing
+        self.session_bus.add_signal_receiver(self._name_owner_changed,
+                                     dbus_interface='org.freedesktop.DBus',
+                                     signal_name='NameOwnerChanged')  
     
     def deactivate(self):
         for key in self.players.keys():
             self.players[key].stop()
-        self.discover_timer.cancel()
+        self.session_bus.remove_signal_receiver(self._name_owner_changed,
+                                     dbus_interface='org.freedesktop.DBus',
+                                     signal_name='NameOwnerChanged')  
         
     def destroy(self):
         pass
-        
-    def discover(self):
-        try:
-            # Find new players
-            active_list = self.session_bus.list_names()
-            for name in active_list:        
-                # MPRIS 2
-                if not name in self.players and name.startswith("org.mpris.MediaPlayer2"):
-                    self.players[name] = MPRIS2Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
-                # MPRIS 1                
-                elif not name in self.players and name.startswith("org.mpris."):
-                    self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
 
-            # Remove old players
-            for key in self.players.keys():
-                if not key in active_list:
-                    self.players[key].stop()
+        
+    def _name_owner_changed(self, name, old_owner, new_owner):
+        logger.debug("Name owner changed for %s from %s to %s", name, old_owner, new_owner)
+        if name.startswith("org.mpris.MediaPlayer2"):
+            logger.info("MPRIS2 Name owner changed for %s from %s to %s", name, old_owner, new_owner)
+            if new_owner == "" and name in self.players:
+                self.players[name].stop()
+            elif old_owner == "" and not name in self.players:
+                self.players[name] = MPRIS2Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
+        elif name.startswith("org.mpris."):
+            logger.info("MPRIS1 Name owner changed for %s from %s to %s", name, old_owner, new_owner)
+            if new_owner == "" and name in self.players:
+                self.players[name].stop()
+            elif old_owner == "" and not name in self.players:
+                self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
+        
+    def _discover(self):
+        # Find new players
+        active_list = self.session_bus.list_names()
+        for name in active_list:  
+            # MPRIS 2
+            if not name in self.players and name.startswith("org.mpris.MediaPlayer2"):
+                self.players[name] = MPRIS2Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
+            # MPRIS 1                
+            elif not name in self.players and name.startswith("org.mpris."):
+                self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
             
-        except Exception as e:
-            print "Error. " + str(e) + ", retrying in 10 seconds"
-            
-        self.discover_timer = g15util.schedule("DiscoverPlayers", 5.0, self.discover)
-            
-    def dbus_disconnected(self, connection):
-        print "DBUS Disconnected"
+    def _dbus_disconnected(self, connection):
+        logger.debug("DBUS Disconnected")
         self.session_bus = None

@@ -37,6 +37,8 @@ import ImageOps
 import array
 import struct
 import cairo
+import logging
+logger = logging.getLogger("g15daemon")
 
 # Plugin details - All of these must be provided
 id="g15daemon-server"
@@ -126,7 +128,6 @@ class G15DaemonClient(asyncore.dispatcher):
         self.plugin.screen_index += 1
         self.plugin.screen.redraw(self.page)
         
-        print "Sending handshake reply"
         self.out_buffer += "G15 daemon HELLO"
         self.oob_buffer = ""
         
@@ -136,33 +137,25 @@ class G15DaemonClient(asyncore.dispatcher):
         self.close()
         
     def handle_expt(self):
-        print "OOB data arrived"
         data = self.socket.recv(1, socket.MSG_OOB)
         val = ord(data[0])
         
         if val == CLIENT_CMD_SWITCH_PRIORITIES: 
-            print "Raising page" 
             self.plugin.screen.raise_page(self.page)
         elif val == CLIENT_CMD_NEVER_SELECT: 
-            print "Setting to low priority"       
             self.plugin.screen.set_priority(self, self.page, g15screen.PRI_LOW)
         elif val == CLIENT_CMD_IS_FOREGROUND:
-            print "Being asked if foreground"
             self.oob_buffer += "1" if self.plugin.screen.get_visible_page() == self.page else "0"
         elif val == CLIENT_CMD_IS_USER_SELECTED:
-            print "Being asked if user selected"
             self.oob_buffer += "1" if self.plugin.screen.get_visible_page() == self.page and self.page.priority == g15screen.PRI_NORMAL else "0"
         elif val & CLIENT_CMD_MKEY_LIGHTS > 0:
-            print "Setting MKey lights"
             self.screen.driver.set_mkey_lights(val - CLIENT_CMD_MKEY_LIGHTS)
         elif val & CLIENT_CMD_KEY_HANDLER > 0:
-            print "Requesting Key Events"
             # TODO - the semantics are slightly different here. gnome15 is already grabbing the keyboard, always.
             # So instead, we just only send keyboard events if the client requests this.
             self.enable_keys = True
         elif val & CLIENT_CMD_BACKLIGHT:
             level = val - CLIENT_CMD_BACKLIGHT
-            print "Setting LCD brightness to",level
             if level == 0:
                 bl = 0
             elif level == 1:
@@ -175,7 +168,6 @@ class G15DaemonClient(asyncore.dispatcher):
             self.screen.driver.update_control(control)
         elif val & CLIENT_CMD_KB_BACKLIGHT:
             level = val - CLIENT_CMD_KB_BACKLIGHT
-            print "Setting keyboard backlight to",level
             if level == 0:
                 bl = (0, 0, 0)
             elif level == 1:
@@ -187,7 +179,7 @@ class G15DaemonClient(asyncore.dispatcher):
             control.value = bl            
             self.screen.driver.update_control(control)
         elif val & CLIENT_CMD_CONTRAST:
-            print "WARNING: Ignoring contrast command"
+            logger.warning("Ignoring contrast command")
             
 
     def handle_read(self):
@@ -206,7 +198,7 @@ class G15DaemonClient(asyncore.dispatcher):
 #            elif self.buffer_type == "W":
 #                self.buffer_len = 865
             else:
-                print "WARNING: Unsupported buffer type. Closing"
+                logger.warning("WARNING: Unsupported buffer type. Closing")
                 self.handle_close()
                 return
         else:        
@@ -233,7 +225,7 @@ class G15DaemonClient(asyncore.dispatcher):
                 self.img_buffer = ""
 
             elif len(self.img_buffer) > self.buffer_len:
-                print 'WARNING: Received bad frame (%d bytes), should be %d' % ( len(self.img_buffer), self.buffer_len )
+                logger.warning('Received bad frame (%d bytes), should be %d' % ( len(self.img_buffer), self.buffer_len ) )
                 
     def dump_buf(self, buf):
         i = 0
@@ -244,7 +236,7 @@ class G15DaemonClient(asyncore.dispatcher):
                     l += " "
                 else:
                     l += "*"
-            print l
+            logger.info(l)
             
     def convert_gbuf(self, g_buffer):
         r_buffer = array.array('c', chr(0)*1048)
@@ -307,7 +299,7 @@ class G15DaemonClient(asyncore.dispatcher):
                 self.out_buffer += struct.pack("<L",val)                            
                 self.out_buffer += struct.pack("<L",0)
             else:
-                print "Unmapped G19 -> G15 key"
+                logger.warning("Unmapped G19 -> G15 key")
         
 class G15Async(Thread):
     def __init__(self):
@@ -330,7 +322,6 @@ class G15DaemonServer():
         self.daemon = None
     
     def activate(self):
-        print "Enabling G15Daemon compatibility"
         self.screen_index = 0
         self.clients = []
         self.screen.driver.control_update_listeners.append(self)
@@ -341,7 +332,6 @@ class G15DaemonServer():
         self.async.start()
     
     def deactivate(self):
-        print "Disabling G15Daemon compatibility"
         self._stop_all_clients()
         self.daemon.close()
         self.screen.driver.control_update_listeners.remove(self)
@@ -365,7 +355,7 @@ class G15DaemonServer():
         port = self._get_port()
         if self.daemon == None or self.daemon.port != port:
             if self.daemon != None:
-                print "WARNING: Port changed to",port," (will restart daemon - clients may have to be reconnected manually"
+                logger.warning("Port changed to %d (will restart daemon - clients may have to be reconnected manually" % port)
                 self._stop_all_clients()
                 self.daemon.close()
             self.daemon = G15Daemon(port, self)
@@ -408,16 +398,16 @@ class G15Daemon(asyncore.dispatcher):
         asyncore.dispatcher.__init__(self)        
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
-        print 'Binding to port %d' % port
+        logger.info('Binding to port %d' % port)
         self.bind(("127.0.0.1", port))
-        print  'Bound to port %d' % port
+        logger.info('Bound to port %d' % port)
         self.listen(5)
         self.plugin = plugin
         self.port = port
  
     def handle_accept(self):
         sock, addr = self.accept()
-        print 'Got client'
+        logger.debug('Got client')
         client = G15DaemonClient(sock, self.plugin)
         
     def handle_sig_term(self, arg0, arg1):

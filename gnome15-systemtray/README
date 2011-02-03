@@ -1,0 +1,16 @@
+Gnome15 System Tray
+===================
+
+Allows control and monitoring of the Gnome15 desktop service using a system tray icon.
+Can be used to launch the configuration user interface, as well as show the current
+service status and select the visible screen.
+
+Installation
+============
+
+See the 'INSTALL' file.
+
+How to report bugs
+==================
+
+See http://tanktarta.pwp.blueyonder.co.uk/gnome15

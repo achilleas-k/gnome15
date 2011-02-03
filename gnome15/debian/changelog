@@ -1,4 +1,26 @@
-gnome15 (0.4.1-1) maverick; urgency=low
+gnome15 (0.5.0-1) maverick; urgency=low
+
+  * Feature: Major refactor, start of work required for KDE compatibility (much more to do yet)
+
+  * Feature: DBUS API expanded and altered (now more object oriented, exposes more).
+
+  * Feature: g15-desktop-service now manages the LCD and macros and must always be run regardless
+             of whether the indicator, applet or tray icon is used. 
+             
+  * Feature: GNOME specific plugins removed from core into their own package.
+  
+  * Feature: Panel applet and indicator have been moved to their own package.
+  
+  * Feature: New "System Tray" alternative to panel applet and indicator
+  
+  * Bug: Only allow one instance of g15-config to be running at a time.
+  
+  * Bug: MPRIS plugin shouldn't need to poll for players, just watch DBUS events 
+  
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Thu, 27 Jan 2010 22:51:17 +0000
+ 
+ gnome15 (0.4.1-1) maverick; urgency=low
 
   * Bug: DBUS API was broken. It is now fixed, and with more functions implemented. The example script has been updated to reflect this. 
 
@@ -6,21 +28,36 @@ gnome15 (0.4.1-1) maverick; urgency=low
  
 gnome15 (0.4.0-1) maverick; urgency=low
 
-  * Feature: Support latest models supported by g15daemon. Will require a patched g15tools suite. 
+  * Feature: Support latest models supported by g15daemon. Will require a patched g15tools suite.
+   
   * Bug: Plugin will now only appear in g15-config if supported by the current model.
+  
   * Bug: Plugin will now only load in g15-indicator or g15-applet if supported by the current model.
+  
   * Bug: sysmon plugin: Erroneous memory unit in g19 keyboards.
+  
   * Bug: screensaver plugin: erroneous text alignment.
+  
   * Bug: applet: display "screens" list with left click.
+  
   * Bug: rss plugin: now correctly refreshes at configured interval
+  
   * Feature: sysmon plugin: remembers last CPU / NET selected
+  
   * Feature: last selected screen will be reselected when Gnome15 restarts
+  
   * Feature: DBUS API. Create and draw new screens over DBUS
+  
   * Feature: Allow boot-up keyboard color to be set (g19d driver only)
+  
   * Feature: g15-macros no longer exists. Functionality has been merged with g15-config
+  
   * Bug: Problem drawing theme files that require text boxes on locales that use "," as a decimal point
+  
   * Feature: New G15Daemon plugin. Allows g15daemon scripts to run on a G19.
-  * Bug: Notify plugin now cleans up the mess of image files it left in /tmp. 
+  
+  * Bug: Notify plugin now cleans up the mess of image files it left in /tmp.
+   
   * Bug: Notify plugin now correctly replaces messages with the same ID. This improves the problem with Rhythmbox hanging when tracks change, although does not fix it completely. 
 
  -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon,  3 Jan 2010 23:38:47 +0000

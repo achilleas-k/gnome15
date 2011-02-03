@@ -32,6 +32,8 @@ import os
 import pywapi
 import gconf
 import pango
+import logging
+logger = logging.getLogger("weather")
 
 
 # Plugin details - All of these must be provided
@@ -328,8 +330,7 @@ class G15Weather():
             if icon_path != None:
                 return icon_path
             
-        print "WARNING: Having to resort to using Google weather image http://www.google.com" + icon + ". This may hang up the LCD for a bit"
-        
+        logger.warning("Having to resort to using Google weather image http://www.google.com%s. This may hang up the LCD for a bit" % icon)
         return "http://www.google.com" + icon
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):

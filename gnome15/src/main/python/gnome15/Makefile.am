@@ -2,8 +2,6 @@ SUBDIRS = drivers
 gnome15dir = $(pkgpythondir)
 gnome15_PYTHON = 		\
 	__init__.py \
-	g15_applet.py \
-	g15_indicator.py \
 	g15_service.py \
 	g15_config.py \
 	g15_devices.py \
@@ -19,7 +17,8 @@ gnome15_PYTHON = 		\
 	g15_screen.py \
 	g15_theme.py \
 	g15_util.py \
-	jobqueue.py
+	jobqueue.py \
+	objgraph.py
 	
 EXTRA_DIST =  			\
 	$(gnome15_PYTHON)

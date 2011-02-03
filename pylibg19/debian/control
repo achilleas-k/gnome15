@@ -1,0 +1,20 @@
+Source: pylibg19
+Section: utils
+Priority: optional
+Maintainer: Brett Smith <tanktarta@blueyonder.co.uk>
+Build-Depends: cdbs (>= 0.4.49), debhelper (>= 7), python-support, python (>= 2.6), python-usb , python-imaging, python-uinput (>=0.3.3-2ubuntu1gnome15)
+Standards-Version: 3.8.4
+Homepage: http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/
+
+Package: pylibg19
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends}, python-usb, python-imaging, python-uinput
+Provides: ${python:Provides}
+Description: Library to support Logitech G19
+ A library to support the additional features of the Logitech
+ G19 keyboard, including the additional keys and the colour
+ LCD screen. Based on "Logitech-G19-Linux-Daemon"
+ (http://github.com/MultiCoreNop/Logitech-G19-Linux-Daemon),
+ the work of "MultiCoreNop" (http://github.com/MultiCoreNop), 
+ this code was adapted for use with Gnome15 until such a time
+ as kernel support is available.

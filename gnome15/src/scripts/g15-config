@@ -24,8 +24,13 @@ import sys
 import os
 import gconf
 import gobject
-
-gobject.threads_init()
+       
+# DBUS - Use to check current desktop service status or stop it
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+from dbus.mainloop.glib import threads_init
+dbus.mainloop.glib.threads_init()
+DBusGMainLoop(set_as_default=True)
 
 # Allow running from local path
 path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..","main", "python")

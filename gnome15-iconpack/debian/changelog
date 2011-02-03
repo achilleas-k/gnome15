@@ -1,0 +1,11 @@
+gnome15-iconpack (0.0.2-1) maverick; urgency=low
+
+  * Fixed size of elementary cons
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun, 23 Jam 2011 01:00:32 +0000
+
+gnome15-iconpack (0.0.1-1) maverick; urgency=low
+
+  * First release of icon pack
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun,  7 Nov 2010 16:40:21 +0000
