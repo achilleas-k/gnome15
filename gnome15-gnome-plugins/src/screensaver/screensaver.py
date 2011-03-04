@@ -32,6 +32,8 @@ import os
 import sys
 import dbus
 import os
+import logging
+logger = logging.getLogger("screensaver")
 
 # Plugin details - All of these must be provided
 id="screensaver"
@@ -89,69 +91,78 @@ def changed(widget, key, gconf_client):
 class G15ScreenSaver():
     
     def __init__(self, gconf_key, gconf_client, screen):
-        self.screen = screen
-        self.session_bus = None
-        self.in_screensaver = False
-        self.page = None
-        self.gconf_client = gconf_client
-        self.gconf_key = gconf_key  
+        self._screen = screen
+        self._session_bus = None
+        self._in_screensaver = False
+        self._page = None
+        self._gconf_client = gconf_client
+        self._gconf_key = gconf_key  
     
 
     def activate(self):      
-        self.controls = []
-        self.control_values = []
-        for control in self.screen.driver.get_controls():
+        self._controls = []
+        self._control_values  = []
+        for control in self._screen.driver.get_controls():
             if control.hint & g15driver.HINT_DIMMABLE != 0 or  control.hint & g15driver.HINT_SHADEABLE != 0:
-                self.controls.append(control)
+                self._controls.append(control)
                 
-        if self.session_bus == None:
+        if self._session_bus == None:
             try:
-                self.session_bus = dbus.SessionBus()
-                self.session_bus.add_signal_receiver(self.screensaver_changed_handler, dbus_interface = "org.gnome.ScreenSaver", signal_name = "ActiveChanged")
+                self._session_bus = dbus.SessionBus()
+                self._session_bus.add_signal_receiver(self._screensaver_changed_handler, dbus_interface = "org.gnome.ScreenSaver", signal_name = "ActiveChanged")
             except Exception as e:
-                self.session_bus = None
+                self._session_bus = None
                 logger.error("Error. %s retrying in 10 seconds" % str(e) ) 
                 Timer(10, self.activate, ()).start()
                 return
         
-        self.activated = True
+        screen_saver = dbus.Interface(self.system_bus.get_object("org.freedesktop.ScreenSaver", '/'), 'org.gnome.ScreenSaver')
+        self._in_screensaver = screen_saver.GetActive()
+        self._activated = True
+        self._check_page()
     
     def deactivate(self):
-        self.remove_page()
-        self.activated = False
+        if self._in_screensaver:
+            if self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
+                self._light_keyboard()
+        self._remove_page()
+        self._activated = False
         
     def destroy(self):
-        self.session_bus.remove_signal_receiver(self.screensaver_changed_handler, dbus_interface = "org.gnome.ScreenSaver", signal_name = "ActiveChanged")
+        self._session_bus.remove_signal_receiver(self._screensaver_changed_handler, dbus_interface = "org.gnome.ScreenSaver", signal_name = "ActiveChanged")
         
     ''' Functions specific to plugin
     ''' 
     
-    def remove_page(self):
-        if self.page != None:
-            self.screen.del_page(self.page)
-            self.page = None
+    def _remove_page(self):
+        if self._page != None:
+            self._screen.del_page(self._page)
+            self._page = None
+            
+    def _check_page(self):
+        if self._in_screensaver:
+            self._page = self._screen.get_page("Screensaver")
+            if self._screen.service.driver.get_bpp() != 0 and self._page == None:
+                self._reload_theme()
+                self._page = self._screen.new_page(self._paint, g15screen.PRI_EXCLUSIVE, id="Screensaver")
+                self._screen.redraw(self._page)
+            if self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
+                self._dim_keyboard()
+        else:
+            if self._screen.service.driver.get_bpp() != 0:
+                self._remove_page()
+            if self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
+                self._light_keyboard()
         
     def screensaver_changed_handler(self, value):
-        if self.activated:
-            self.in_screensaver = bool(value)
-            if self.in_screensaver:
-                self.page = self.screen.get_page("Screensaver")
-                if self.screen.service.driver.get_bpp() != 0 and self.page == None:
-                    self.reload_theme()
-                    self.page = self.screen.new_page(self.paint, g15screen.PRI_EXCLUSIVE, id="Screensaver")
-                    self.screen.redraw(self.page)
-                if self.gconf_client.get_bool(self.gconf_key + "/dim_keyboard"):
-                    self.dim_keyboard()
-            else:
-                if self.screen.service.driver.get_bpp() != 0:
-                    self.remove_page()
-                if self.gconf_client.get_bool(self.gconf_key + "/dim_keyboard"):
-                    self.light_keyboard()
+        if self._activated:
+            self._in_screensaver = bool(value)
+            self._check_page()
         
-    def dim_keyboard(self):
-        self.control_values = []
-        for c in self.controls:
-            self.control_values.append(c.value)
+    def _dim_keyboard(self):
+        self._control_values  = []
+        for c in self._controls:
+            self._control_values .append(c.value)
             if c.hint & g15driver.HINT_DIMMABLE != 0:
                 if isinstance(c.value,int):
                     c.value = 0
@@ -162,27 +173,27 @@ class G15ScreenSaver():
                     c.value = int(c.value * 0.1)
                 else:
                     c.value = (c.value[0] * 0.1,c.value[1] * 0.1,c.value[2] * 0.1)
-            self.screen.driver.update_control(c)
+            self._screen.driver.update_control(c)
     
-    def light_keyboard(self):
+    def _light_keyboard(self):
         i = 0
-        for c in self.controls:
-            c.value = self.control_values[i]
+        for c in self._controls:
+            c.value = self._control_values [i]
             i += 1
-            self.screen.driver.update_control(c)
+            self._screen.driver.update_control(c)
             
-    def reload_theme(self):        
-        text = self.gconf_client.get_string(self.gconf_key + "/message_text")
+    def _reload_theme(self):        
+        text = self._gconf_client.get_string(self._gconf_key + "/message_text")
         variant = ""
         if text == None or text == "":
             variant = "nomessage"
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen, variant)
+        self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen, variant)
         
-    def paint(self, canvas):
+    def _paint(self, canvas):
         
         properties = {}
         properties["title"] = "Workstation Locked"
-        properties["message"] = self.gconf_client.get_string(self.gconf_key + "/message_text")
-        properties["icon"] = g15util.get_icon_path("sleep", self.screen.height)
+        properties["message"] = self._gconf_client.get_string(self._gconf_key + "/message_text")
+        properties["icon"] = g15util.get_icon_path("sleep", self._screen.height)
         
-        self.theme.draw(canvas, properties)
+        self._theme.draw(canvas, properties)

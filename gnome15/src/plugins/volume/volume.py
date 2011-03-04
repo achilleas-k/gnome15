@@ -154,6 +154,7 @@ class G15Volume():
         logger.info("Opening mixer %s" % mixer_name)
         
         vol_mixer = alsaaudio.Mixer(mixer_name, cardindex=0)
+        mute_mixer = None
         
         try :
         

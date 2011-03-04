@@ -24,6 +24,7 @@ import sys
 import pygtk
 pygtk.require('2.0')
 import gtk
+import os
 import os.path
 import gobject
 import g15_globals as pglobals
@@ -217,6 +218,22 @@ class G15Service(Thread):
         self.screen.add_screen_change_listener(self)
         self.plugins = g15plugins.G15Plugins(self.screen)
         self.plugins.start()
+            
+        # Monitor active session (we shut down the driver when becoming inactive)
+        try :
+            self.system_bus = dbus.SystemBus()
+            console_kit_object = self.system_bus.get_object("org.freedesktop.ConsoleKit", '/org/freedesktop/ConsoleKit/Manager')
+            console_kit_manager = dbus.Interface(console_kit_object, 'org.freedesktop.ConsoleKit.Manager')
+            logger.info("Seats %s " % str(console_kit_manager.GetSeats())) 
+            self.current_session_path = console_kit_manager.GetSessionForCookie (os.environ['XDG_SESSION_COOKIE'])
+            logger.info("Current session %s " % self.current_session_path)
+            self.system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
+            
+            # TODO GetCurrentSession doesn't seem to work as i would expect. Investigate. For now, assume we are the active session
+            self.session_active = True
+        except:
+            logger.warning("ConsoleKit not available, will not track active desktop session")
+            self.session_active = True
 
         # Start the driver
         self.attempt_connection() 
@@ -247,11 +264,29 @@ class G15Service(Thread):
         self.starting_up = False
         for listener in self.service_listeners:
             listener.started_up()
- 
+            
+    def _active_session_changed(self, object_path):        
+        logger.debug("Adding seat %s" % object_path)
+        self.session_active = object_path == self.current_session_path
+        if self.session_active:
+            logger.info("g15-desktop service is running on the active session")
+        else:
+            logger.info("g15-desktop service is NOT running on the active session")
+        if not self.session_active and self.driver.is_connected():
+            logger.info("Session now inactive, disconnecting from driver")
+            self.driver.disconnect()
+        elif self.session_active and not self.driver.is_connected():
+            self.attempt_connection()
+        
     def attempt_connection(self, delay=0.0):
+            
         logger.debug("Attempting connection")
         self.connection_lock.acquire()
-        try :
+        try :            
+            if not self.session_active:
+                logger.debug("Desktop session not active, will not connect to driver")
+                return
+        
             if self.driver == None:
                 self.driver = g15drivermanager.get_driver(self.conf_client, on_close=self.on_driver_close)
 
@@ -422,10 +457,7 @@ class G15Service(Thread):
         
         if state == g15driver.KEY_STATE_UP:
             if g15driver.G_KEY_LIGHT in keys:
-                self.keyboard_backlight = self.keyboard_backlight + 1
-                if self.keyboard_backlight == 3:
-                    self.keyboard_backlight = 0
-                self.conf_client.set_int("/apps/gnome15/keyboard_backlight", self.keyboard_backlight)
+                self.dbus_service._driver_service.CycleKeyboard(1)
 
             profile = g15profile.get_active_profile()
             if profile != None:

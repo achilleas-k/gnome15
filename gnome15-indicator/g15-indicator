@@ -31,6 +31,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 import gnome
+import gnome.ui
 import os
 import appindicator
 import gconf
@@ -101,7 +102,7 @@ class G15Indicator(appindicator.Indicator):
         item.connect("activate", self._show_configuration)
         self.menu.append(item)
         
-        item = gtk.MenuItem("About")
+        item = gtk.MenuItem("About Gnome15")
         item.connect("activate", self._about_info)
         self.menu.append(item)
         
@@ -248,7 +249,7 @@ class G15Indicator(appindicator.Indicator):
         
         # Add the start menu item if it is not already there
         if self.start_service_item == None:     
-            self.start_service_item = gtk.MenuItem("Start Gnome15 Desktop Service")
+            self.start_service_item = gtk.MenuItem("Start Desktop Service")
             self.start_service_item.connect("activate", self._start_desktop_service)
             self.menu.append(self.start_service_item)
             self.menu.show_all()
@@ -271,7 +272,7 @@ class G15Indicator(appindicator.Indicator):
         
     def _about_info(self, widget):         
         about = gnome.ui.About("Gnome15", g15globals.version, "GPL", \
-                               "GNOME Applet providing integration with\nthe Logitech G15 and G19 keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
+                               "Desktop integration for Logitech 'G' keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
                                ["Brett Smith <tanktarta@blueyonder.co.uk>"], "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
         about.show()
         

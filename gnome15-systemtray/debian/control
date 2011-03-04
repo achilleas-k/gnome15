@@ -7,7 +7,7 @@ Standards-Version: 3.8.4
 Homepage: http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/
 
 Package: gnome15-systemtray
-Architecture: any
+Architecture: all
 Depends: ${misc:Depends}, ${python:Depends}, gnome15
 Provides: ${python:Provides}
 Description: A system tray icon for controlling and monitoring Gnome15.

@@ -9,7 +9,7 @@ Homepage: http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/
 Package: gnome15
 Architecture: all
 Depends: ${python:Depends}, python-gobject, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, cairo-clock, python-xlib, python-setproctitle, python-wnck, libgtk2.0-bin 
-Recommends: gnome15-g19d | gnome15-g15daemon | gnome15-gtk | gnome15-kernel
+Recommends: gnome15-g19d | gnome15-g15daemon | gnome15-gtk | gnome15-kernel | gnome15-g19direct
 Provides: ${python:Provides}
 Description: Desktop service for the Logitech "G" keyboards
  This is the core of Gnome15, which provides macro handling, a
@@ -32,7 +32,16 @@ Depends: ${python:Depends}, gnome15, g19d
 Provides: ${python:Provides}
 Description: Adds support for the Logitech G19 to Gnome15
  Gnome15 driver for the Logitech G19, making use of
- G19D.
+ G19D. NOTE: This driver is deprecated. It is recommended
+ you use the gnome15-g19direct driver instead.
+ 
+Package: gnome15-g19direct
+Architecture: all
+Depends: ${python:Depends}, gnome15, pylibg19
+Provides: ${python:Provides}
+Description: Adds support for the Logitech G19 to Gnome15
+ Gnome15 driver for the Logitech G19, making use of
+ PyLibG19.
  
 Package: gnome15-gtk
 Architecture: all

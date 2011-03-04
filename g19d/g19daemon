@@ -37,12 +37,11 @@ import struct
 import uinput
 
 
-from g19d.g19 import G19
-from g19d.g19 import G19UsbController
+from g19.g19 import G19
+from g19.g19 import G19UsbController
 
-import g19d.g19_keys as g19keys
-import g19d.g19_globals as g19globals
-import g19d.g19_receivers as g19receivers
+import g19.keys as g19keys
+import g19.receivers as g19receivers
 
 import logging
 logging.basicConfig()
@@ -53,6 +52,8 @@ LEVELS = {'debug': logging.DEBUG,
           'warning': logging.WARNING,
           'error': logging.ERROR,
           'critical': logging.CRITICAL}
+
+import g19d.globals as g19globals
 
 class Lobby(g19receivers.InputProcessor):
     def __init__(self, options):

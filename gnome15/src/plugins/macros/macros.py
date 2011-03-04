@@ -153,10 +153,7 @@ class G15Macro():
         self.check_pages()
 
     def deactivate(self):
-        for macro_page in self.macro_pages:
-            self.screen.del_page(macro_page.page)
-        self.macro_pages = []
-                
+        self.close_all_pages()
         
     def get_active_profile_icon_path(self):
         if self.active_profile == None:
@@ -213,6 +210,8 @@ class G15Macro():
         for macro_page in self.macro_pages:
             self.screen.del_page(macro_page.page)
         self.macro_pages = []
+        self.current_page = 0
+        self.current_page_count = 0
     
     def profiles_changed(self, arg0, arg1, arg2, arg3):
         self.check_pages()
@@ -226,6 +225,7 @@ class G15Macro():
             macros = active_profile.macros[self.mkey - 1]
             no_pages = max(self.number_of_pages(len(macros), 12), 1)
             if no_pages != self.current_page_count:
+                logger.info("Number of macro pages has changed from %d to %d, reloading" % (no_pages, self.current_page_count))
                 self.current_page_count = no_pages
                 self.close_all_pages()
                 self.current_page = 0

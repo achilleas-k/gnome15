@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Encoding=UTF-8
-Name=Gnome15 Desktop Service
+Name=Logitech G Keyboard Desktop Service
 Icon=gnome15
 Comment=Logitech G series keyboard desktop service.
 Exec=g15-desktop-service

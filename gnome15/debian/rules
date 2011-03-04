@@ -34,7 +34,7 @@ install: installbasic
 	$(MAKE) install DESTDIR=${DESTDIR}
 	
 # Build architecture-independent files here.
-binary-indep: gnome15 gnome15-g15daemon gnome15-g19d gnome15-gtk gnome15-kernel
+binary-indep: gnome15 gnome15-g15daemon gnome15-g19d gnome15-gtk gnome15-kernel gnome15-g19direct
 
 # Build architecture-dependent files here.
 gnome15:
@@ -83,7 +83,23 @@ gnome15-g19d:
 	dh_gencontrol -p$@
 	dh_md5sums -p$@
 	dh_builddeb -p$@
-	
+    
+gnome15-g19direct:
+	dh_testdir
+	dh_testroot
+	dh_installdirs -p$@
+	dh_installchangelogs -p$@ ChangeLog
+	dh_installdocs -p$@
+	dh_installudev --priority=99
+	dh_install --package=$@
+	dh_compress -p$@
+	dh_fixperms -p$@
+	dh_pysupport -p$@ 
+	dh_installdeb -p$@
+	dh_gencontrol -p$@
+	dh_md5sums -p$@
+	dh_builddeb -p$@
+
 gnome15-gtk:
 	dh_testdir
 	dh_testroot
@@ -105,6 +121,7 @@ gnome15-kernel:
 	dh_installdirs -p$@
 	dh_installchangelogs -p$@ ChangeLog
 	dh_installdocs -p$@
+	dh_installudev --priority=99
 	dh_install --package=$@
 	dh_compress -p$@
 	dh_fixperms -p$@

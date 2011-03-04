@@ -35,10 +35,9 @@ import gnome15.g15_devices as g15devices
 import sys
 import os
 import re
-import uinput
 import usb
 import traceback
-from pyg19.g19 import G19 
+from g19.g19 import G19 
 import logging
 logger = logging.getLogger("driver")
 
@@ -151,27 +150,14 @@ class Driver(g15driver.AbstractDriver):
             raise Exception("Already connected")
         
         self._init_driver()
+        self.callback = None
         
-        # Enable UINPUT if multimedia key support is required
+        # TODO Enable UINPUT if multimedia key support is required?
         
-        # TODO create options
-        force_enable_mm = False
-        force_disable_mm = False
         reset = True
         timeout = 10000
         
-        self.mm_keys = ( force_enable_mm or self._is_mm_support_required() ) and not force_disable_mm
-        if self.mm_keys:
-            logger.info("Enabling UINPUT multimedia key support")
-            self.device = uinput.Device()
-            self.device.capabilities = {
-                                        uinput.EV_KEY: (uinput.KEY_PLAYPAUSE, uinput.KEY_STOP, uinput.KEY_PREVIOUSSONG,
-                                                        uinput.KEY_NEXTSONG, uinput.KEY_MUTE, uinput.KEY_VOLUMEUP, uinput.KEY_VOLUMEDOWN),
-                                        }
-        else:
-            logger.info("Letting kernel handle multimedia key support")
-        
-        self.lg19 = G19(reset, self.mm_keys, timeout)
+        self.lg19 = G19(reset, False, timeout)
         self.connected = True
         
         # Start listening for keys
@@ -208,7 +194,8 @@ class Driver(g15driver.AbstractDriver):
         if self.is_connected():
             self.disconnect()
         
-    def grab_keyboard(self, callback):        
+    def grab_keyboard(self, callback):    
+        self.callback = callback    
         self.lg19.start_event_handling()
         
     def is_connected(self):
@@ -258,7 +245,26 @@ class Driver(g15driver.AbstractDriver):
             self.lg19.send_frame(buf)
     
     def process_input(self, event):
-        logger.debug("Processing input %s" % str(event))
+        if self.callback == None:
+            logger.debug("Ignoring key input, keyboard not grabbed")
+            return
+            
+        keys_down = event.keysDown
+        keys_up = event.keysUp
+        
+        logger.info("Processing input, keys_down = %d, keys_up = %d" % ( len(keys_down), len(keys_up)))
+            
+        if len(keys_up) > 0:
+            c = []
+            for key in keys_up:
+                c.append(KEY_MAP[key])
+            self.callback(c, g15driver.KEY_STATE_UP)
+            
+        if len(keys_down) > 0:
+            c = []
+            for key in keys_down:
+                c.append(KEY_MAP[key])
+            self.callback(c, g15driver.KEY_STATE_DOWN)
             
     def _do_update_control(self, control):
         if control == keyboard_backlight_control:
@@ -272,20 +278,6 @@ class Driver(g15driver.AbstractDriver):
         self.device = g15devices.find_device([g15driver.MODEL_G19])
         if self.device == None:
             raise Exception("Could not find a G19 keyboard")
-        
-    def _is_mm_support_required(self):
-        keyboard_devices = []
-        dir = "/dev/input/by-id"
-        for p in os.listdir(dir):
-            if re.search("G19_Gaming_Keyboard.*if??", p):
-                keyboard_devices.append(dir + "/" + p)
-                
-        if len(keyboard_devices) == 0:
-            logger.info("Found no UINPUT device, will enable multimedia key support if not explicitly disabled")
-            return True
-        else:
-            logger.info("Found UINPUT device, will not enable multimedia key support unless explicitly enabled")
-            return False
             
     def _rgb_to_uint16(self, r, g, b):
         rBits = r * 32 / 255

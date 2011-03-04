@@ -1,0 +1,7 @@
+# This file maintains permissions for Gnome15's "G19 Direct" driver. These are the
+# defaults, you might want to tighten them up a bit.
+#
+# See udev(7) for syntax.
+#
+
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="046d", ATTR{idProduct}=="c229", MODE="0777"

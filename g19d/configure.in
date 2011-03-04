@@ -1,5 +1,5 @@
 AC_INIT(g19d, 0.0.7)
-AC_CONFIG_SRCDIR([g19d/g19.py])
+AC_CONFIG_SRCDIR([g19d/globals.py])
 AM_INIT_AUTOMAKE
 
 AM_MAINTAINER_MODE
@@ -7,6 +7,10 @@ AM_MAINTAINER_MODE
 dnl check for python
 AM_PATH_PYTHON
 
+AX_PYTHON_MODULE(g19, [])
+AS_IF([test "x${HAVE_PYMOD_G19}" = "xno"],
+     [AC_MSG_ERROR([Requires PyLibG19])])
+     
 AX_PYTHON_MODULE(usb, [])
 AS_IF([test "x${HAVE_PYMOD_USB}" = "xno"],
      [AC_MSG_ERROR([Requires PyUSB])])
@@ -21,6 +25,6 @@ AS_IF([test "x${HAVE_PYMOD_UINPUT}" = "xno"],
         
 AC_OUTPUT([
 Makefile
+g19d/globals.py
 g19d/Makefile
-g19d/g19_globals.py
 ])

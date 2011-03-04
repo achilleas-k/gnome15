@@ -12,3 +12,5 @@ images_DATA = background.png
 	
 EXTRA_DIST = $(sbin_SCRIPTS) \
 	$(images_DATA)
+	
+	

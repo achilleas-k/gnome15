@@ -93,7 +93,8 @@ class G15SystemTray(gtk.StatusIcon):
         gtk_icon_theme = gtk.icon_theme_get_default()
         gtk_icon_theme.connect("changed", self._theme_changed)
         
-        # Menu and default items
+        # Menus and default items
+        self.screens_menu = gtk.Menu()
         self.menu = gtk.Menu()
         item = gtk.MenuItem("Properties")
         item.connect("activate", self._show_configuration)
@@ -101,12 +102,12 @@ class G15SystemTray(gtk.StatusIcon):
         item = gtk.MenuItem("About")
         item.connect("activate", self._about_info)
         self.menu.append(item)        
-        self.menu.append(gtk.MenuItem())
         
         # Try and connect to the desktop server to get the initial pages
         self._attention("Locating Gnome15 service")
 
         self.menu.show_all()        
+        self.screens_menu.show_all()
         self.connect('popup-menu', self._on_popup_menu)
         self.connect('activate', self._on_activate)
         
@@ -156,10 +157,10 @@ class G15SystemTray(gtk.StatusIcon):
             page_item_key = str(page_sequence_number)
             if page_item_key in self.page_items:
                 item = self.page_items[page_item_key]
-                self.menu.remove(item)
+                self.screens_menu.remove(item)
                 item.destroy()
                 del self.page_items[page_item_key]
-                self.menu.show_all()
+                self.screens_menu.show_all()
         finally :
             self.lock.release()
         
@@ -187,8 +188,7 @@ class G15SystemTray(gtk.StatusIcon):
         self.menu.popup(None, None, None, button, time)
         
     def _on_activate(self, status):       
-#        print time.time()
-#        self.menu.popup(None, None, None, 3, 19216373)
+        self.screens_menu.popup(None, None, None, 1, gtk.get_current_event_time())
         pass
     
     def _connect(self):
@@ -248,7 +248,7 @@ class G15SystemTray(gtk.StatusIcon):
         
         # Add the start menu item if it is not already there
         if self.start_service_item == None:     
-            self.start_service_item = gtk.MenuItem("Start Gnome15 Desktop Service (required)")
+            self.start_service_item = gtk.MenuItem("Start Desktop Service")
             self.start_service_item.connect("activate", self._start_desktop_service)
             self.menu.append(self.start_service_item)
             self.menu.show_all()
@@ -269,11 +269,27 @@ class G15SystemTray(gtk.StatusIcon):
             self.menu.show_all()
             self.attention_item = None
         
-    def _about_info(self, widget):         
-        about = gnome.ui.About("Gnome15", g15globals.version, "GPL", \
-                               "GNOME Applet providing integration with\nthe Logitech G15 and G19 keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
-                               ["Brett Smith <tanktarta@blueyonder.co.uk>"], "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
-        about.show()
+    def _about_info(self, widget):   
+        about = gtk.AboutDialog()
+        about.set_name("Gnome15")
+        about.set_version(g15globals.version)
+        about.set_copyright(u"\u00A9Brett Smith 2011")
+        about.set_license("This program is free software; you can redistribute it and/or\n" + \
+                          "modify it under the terms of the GNU General Public License\n" + \
+                          "as published by the Free Software Foundation; either version 2\n" + \
+                          "of the License, or (at your option) any later version.\n\n" + \
+                          "This program is distributed in the hope that it will be useful,\n" + \
+                          "but WITHOUT ANY WARRANTY; without even the implied warranty of\n" + \
+                          "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n" + \
+                          "GNU General Public License for more details.\n\n" + \
+                          "You should have received a copy of the GNU General Public License\n" + \
+                          "along with this program; if not, write to the Free Software\n" + \
+                          "Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n")
+        about.set_logo(gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
+        about.set_authors(["Brett Smith <tanktarta@blueyonder.co.uk>"])
+        about.set_comments("Desktop integration for Logitech 'G' keyboards")        
+        about.run()
+        about.destroy()
         
     def _remove_all_page_menu_items(self):
         for page_item_key in self.page_items:
@@ -297,7 +313,7 @@ class G15SystemTray(gtk.StatusIcon):
             self.page_items[seq_no] = item
             item.connect("activate", self._show_page, page)                
             item.show_all()
-            self.menu.append(item)
+            self.screens_menu.append(item)
         
     def _show_page(self,event, page):
         page.CycleTo()

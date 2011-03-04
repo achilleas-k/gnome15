@@ -170,6 +170,41 @@ class G15DBUSDriverService(dbus.service.Object):
         driver = self._service.driver
         return ( driver.get_name(), driver.get_model_name(), driver.get_size()[0], driver.get_size()[1], driver.get_bpp() ) if driver != None else None 
     
+    @dbus.service.method(DRIVER_IF_NAME, in_signature='', out_signature='as')
+    def GetControlIds(self):
+        c = []
+        for control in self._service.driver.get_controls():
+            c.append(control.id)
+        return c
+    
+    @dbus.service.method(DRIVER_IF_NAME, in_signature='s', out_signature='s')
+    def GetControlValue(self, id):
+        control = self._service.driver.get_control(id)
+        if isinstance(control.value, int):
+            if control.hint & g15driver.HINT_SWITCH != 0:
+                return "true" if control.value else "false"
+            else:
+                return str(control.value)
+        else:
+            return "%d,%d,%d" % control.value
+    
+    @dbus.service.method(DRIVER_IF_NAME, in_signature='s', out_signature='t')
+    def GetControlHint(self, id):
+        return self._service.driver.get_control(id).hint
+    
+    @dbus.service.method(DRIVER_IF_NAME, in_signature='ss', out_signature='')
+    def SetControlValue(self, id, value):
+        control = self._service.driver.get_control(id)
+        if isinstance(control.value, int):
+            if control.hint & g15driver.HINT_SWITCH != 0:
+                control.value = 1 if value == "true" else 0
+            else:
+                control.value = int(value)
+        else:
+            sp = value.split(",")
+            control.value = (int(sp[0]), int(sp[1]), int(sp[2]))
+        self._service.driver.update_control(control)
+    
     @dbus.service.method(DRIVER_IF_NAME, in_signature='', out_signature='b')
     def IsConnected(self):
         return self._service.driver.is_connected() if self._service.driver != None else False
