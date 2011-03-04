@@ -31,6 +31,8 @@ import gtk
 import os
 import sys
 import time
+import logging
+logger = logging.getLogger("macros")
 
 from Xlib import X, XK, display
 from Xlib.ext import record
@@ -216,9 +218,11 @@ class G15MacroRecorder():
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
     
     def lookup_keysym(self, keysym):
+        logger.debug("Looking up %s" % keysym)
         for name in dir(XK):
-                if name[:3] == "XK_" and getattr(XK, name) == keysym:
-                    return name[3:]
+            logger.debug("   %s" % name)
+            if name[:3] == "XK_" and getattr(XK, name) == keysym:
+                return name[3:]
         return "[%d]" % keysym
     
     def record_callback(self, reply):
@@ -239,14 +243,20 @@ class G15MacroRecorder():
                 if self.key_down == None:
                     self.key_down = time.time()
                 else :
+                    
                     now = time.time()
                     delay = time.time() - self.key_down
                     self.script_model.append(["Delay", str(int(delay * 1000))])
                     self.key_down = now
                 
+                logger.info(">>> event.detail = %s" % event.detail)
                 keysym = local_dpy.keycode_to_keysym(event.detail, 0)
                 if not keysym:
+                    logger.info("Recorded %s" % event.detail)
                     self.script_model.append([pr, event.detail])
                 else:
-                    self.script_model.append([pr, self.lookup_keysym(keysym)])
+                    logger.info(">>> keysym = %s" % str(keysym))
+                    s = self.lookup_keysym(keysym)
+                    logger.info("Recorded %s" % s)
+                    self.script_model.append([pr, s])
                 self.screen.redraw(self.page)

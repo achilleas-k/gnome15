@@ -23,49 +23,99 @@
 import gconf
 import time
 import g15_util as g15util
- 
+import ConfigParser
+import os
+import os.path
+import errno
+import pyinotify
+import logging
+
+logger = logging.getLogger("macros")
 active_profile = None
-
 conf_client = gconf.client_get_default()
-conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
-conf_client.add_dir("/apps/gnome15/profiles", gconf.CLIENT_PRELOAD_NONE)
 
+# Create macro profiles directory
+conf_dir = os.path.expanduser("~/.config/gnome15/macro_profiles")
+try:
+    os.makedirs(conf_dir)
+except OSError as exc: # Python >2.5
+    if exc.errno == errno.EEXIST:
+        pass
+    else: 
+        raise
+    
+'''
+Watch for changes in macro configuration directory.
+Observers can add a callback function to profile_listeners
+to be informed when macro profiles change
+'''
+
+profile_listeners = []
+
+wm = pyinotify.WatchManager()
+mask = pyinotify.IN_DELETE | pyinotify.IN_MODIFY | pyinotify.IN_CREATE | pyinotify.IN_ATTRIB  # watched events
+
+class EventHandler(pyinotify.ProcessEvent):
+    
+    def _get_profile_id(self, event):
+        path = os.path.basename(event.pathname)
+        if path.endswith(".macros") and not path.startswith("."):
+            id_no = path.split(".")[0]
+            if id_no.isdigit():
+                return int(id_no)
+    
+    def _notify(self, event):
+        id = self._get_profile_id(event)
+        if id != None:
+            for profile_listener in profile_listeners:
+                profile_listener(id)
+        
+    def process_IN_MODIFY(self, event):
+        self._notify(event)
+        
+    def process_IN_CREATE(self, event):
+        self._notify(event)
+        
+    def process_IN_ATTRIB(self, event):
+        self._notify(event)
+
+    def process_IN_DELETE(self, event):
+        self._notify(event)
+
+notifier = pyinotify.ThreadedNotifier(wm, EventHandler())
+notifier.start()
+wdd = wm.add_watch(conf_dir, mask, rec=True)
+
+
+'''
+Get list of all configured macro profiles
+'''
 def get_profiles():
     profiles = []
-            
-    profile_list = conf_client.get_list("/apps/gnome15/profile_list", gconf.VALUE_INT)
-    if profile_list != None:
-        for profile in profile_list:
-            profiles_key = "/apps/gnome15/profiles/" + str(profile)
-            conf_client.add_dir(profiles_key, gconf.CLIENT_PRELOAD_NONE)
-            name = conf_client.get_string(profiles_key +  "/name")
-            icon = conf_client.get_string(profiles_key +  "/icon")
-            profiles.append(G15Profile(name, icon, profile))
-            
+    for profile in os.listdir(conf_dir):
+        if not profile.startswith(".") and profile.endswith(".macros"):
+            id = profile.split(".")[0]
+            if id.isdigit():
+                profiles.append(G15Profile(int(id)))
     return profiles
 
 def create_default():
-    profile_list = conf_client.get_list("/apps/gnome15/profile_list", gconf.VALUE_INT)
-    if profile_list == None:
-        profile_list = []
-    if not 0 in profile_list:
-        create_profile(G15Profile("Default", None, id=0))
+    if not get_profile(0):
+        logger.info("No default macro profile. Creating one")
+        default_profile = G15Profile(name = "Default")
+        default_profile.id = 0
+        create_profile(default_profile)
 
 def create_profile(profile):
-    profile_list = conf_client.get_list("/apps/gnome15/profile_list", gconf.VALUE_INT)
-    if profile_list == None:
-        profile_list = []
     if profile.id == -1:
         profile.id = int(time.time())
-    dir_key = "/apps/gnome15/profiles/" + str(profile.id)
-    conf_client.add_dir(dir_key, gconf.CLIENT_PRELOAD_NONE)
-    profile_list.append(profile.id)
-    conf_client.set_list("/apps/gnome15/profile_list", gconf.VALUE_INT, profile_list)
-    conf_client.set_string(dir_key + "/name", profile.name)
+    logger.info("Creating profile %d, %s" % ( profile.id, profile.name ))
+    profile.save()
     
 def get_profile(id):
-    dir_key = "/apps/gnome15/profiles/" + str(id)
-    return G15Profile(conf_client.get_string(dir_key + "/name"), conf_client.get_string(dir_key + "/icon"), id)    
+    path = "%s/%d.macros" % ( conf_dir, id )
+    if os.path.exists(path):
+        return G15Profile(id);
 
 def get_active_profile():
     val= conf_client.get("/apps/gnome15/active_profile")
@@ -78,63 +128,83 @@ def get_default_profile():
     return get_profile(0)
 
 def get_keys_from_key(key_list_key):
-    return key_list_key.split("-")
+    return key_list_key.split("_")
 
 def get_keys_key(keys):
-    return "-".join(keys)
+    return "_".join(keys)
             
 class G15Macro:
     
-    def __init__(self, profile, memory, key_list_key):
-        self.keys = key_list_key.split("-")
+    def __init__(self, profile, memory, key_list_key, name = "", macro = ""):
+        self.keys = key_list_key.split("_")
         self.key_list_key = key_list_key
-        
-        self.key_dir = profile.profile_dir + "/keys/m" + str(memory) + "/" + str(self.key_list_key)
-            
         self.memory = memory
-        self.name = conf_client.get_string(self.key_dir + "/name")
         self.profile = profile
-        self.macro = conf_client.get_string(self.key_dir + "/macro")
+        self.name = name
+        self.macro = macro
+        
+    def _store(self): 
+        section_name = "m%d" % self.memory
+        if not self.profile.parser.has_section(section_name):
+            self.profile.parser.add_section(section_name)
+        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_name", self.name)
+        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_macro", self.macro)
         
     def save(self):
-        conf_client.set_string(self.key_dir + "/name", self.name)
+        self._store()
+        self.profile.save()
         
-    def delete(self):        
-        conf_client.recursive_unset(self.key_dir)
-        key_list = conf_client.get_list(self.profile.profile_dir + "/key_list_str_" + str(self.memory), gconf.VALUE_STRING)
-        key_list.remove(self.key_list_key)
-        conf_client.set_list(self.profile.profile_dir + "/key_list_str_" + str(self.memory), gconf.VALUE_STRING, key_list)
+    def delete(self):     
+        self.profile.delete_macro(self.memory, self.key_list_key)
  
 class G15Profile():
     
-    def __init__(self, name, icon, id=-1):
-        self.id = id
-        self.name = name
-        self.icon = icon
-        self.macros = []
+    def __init__(self, id=-1):
+        self.id = id         
+        self.parser = ConfigParser.SafeConfigParser({
+                                                     })        
+        self.name = None
+        self.icon = None
+        self.macros = []        
         self.mkey_color = {}
-        self.profile_dir = "/apps/gnome15/profiles/" + str(self.id)
-        for j in range(1, 4):
-            conf_client.add_dir(self.profile_dir + "/keys/m" + str(j), gconf.CLIENT_PRELOAD_NONE)
         self.load()
         
     def get_default(self):
         return self.id == 0
         
     def save(self):
-         
+        logger.info("Saving macro profile %d, %s" % ( self.id, self.name ))
+    
         if self.window_name == None:
             self.window_name = ""
         if self.icon == None:
             self.icon = ""
-        conf_client.set_string(self.profile_dir + "/window_name", self.window_name)
-        conf_client.set_string(self.profile_dir + "/icon", self.icon)
-        conf_client.set_bool(self.profile_dir + "/activate_on_focus", self.activate_on_focus)
-        conf_client.set_bool(self.profile_dir + "/send_delays", self.send_delays)
         
-        for key in self.mkey_color:
-            col = self.mkey_color[key]
-            conf_client.set_string(self.profile_dir + "/color" + key, "" if col == None else g15util.rgb_to_string(col))
+        # Set the profile options
+        self.parser.set("DEFAULT", "name", self.name)
+        self.parser.set("DEFAULT", "icon", self.icon)
+        self.parser.set("DEFAULT", "window_name", self.window_name)    
+        self.parser.set("DEFAULT", "icon", self.icon)
+        self.parser.set("DEFAULT", "activate_on_focus", str(self.activate_on_focus))
+        self.parser.set("DEFAULT", "send_delays", str(self.send_delays))
+        
+        # Remove and re-add the bank sections
+        for i in range(1, 4): 
+            section_name = "m%d" % i
+            if not self.parser.has_section(section_name):
+                self.parser.add_section(section_name) 
+            col = self.mkey_color[str(i)] if str(i) in self.mkey_color else None
+            if col:
+                self.parser.set(section_name, "backlight_color", g15util.rgb_to_string(col))
+            elif self.parser.has_option(section_name, "backlight_color"):
+                self.parser.remove_option(section_name, "backlight_color")
+                
+        # Add the macros
+        for macro_bank in self.macros:
+            for macro in macro_bank:
+                macro._store()
+                
+        self._write()
             
     def set_mkey_color(self, bank, rgb):
         self.mkey_color[str(bank)] = rgb
@@ -143,69 +213,107 @@ class G15Profile():
         return self.mkey_color[str(bank)] if str(bank) in self.mkey_color else None
         
     def delete(self):
-        profile_list = conf_client.get_list("/apps/gnome15/profile_list", gconf.VALUE_INT)
-        conf_client.recursive_unset(self.profile_dir, gconf.UNSET_INCLUDING_SCHEMA_NAMES)
-        if profile_list != None:
-            profile_list.remove(self.id)
-        conf_client.set_list("/apps/gnome15/profile_list", gconf.VALUE_INT, profile_list)
+        os.remove(self._get_filename())
         
-    def delete_macro(self, memory, keys):
+    def delete_macro(self, memory, keys):  
+        section_name = "m%d" % memory     
         key_list_key = get_keys_key(keys)
-        key_dir = self.profile_dir + "/keys/m" + str(memory) + "/" + key_list_key
-        conf_client.recursive_unset(key_dir, gconf.UNSET_INCLUDING_SCHEMA_NAMES)
-        key_list = list(conf_client.get_list(self.profile_dir + "/key_list_str_" + str(memory), gconf.VALUE_STRING))
-        if key_list_key in key_list:
-            key_list.remove(key_list_key);
-        conf_client.set_list(self.profile_dir + "/key_list_str_" + str(memory), gconf.VALUE_STRING, key_list)
+        logger.info("Deleting macro M%d, for %s" % ( memory, key_list_key ))
+        self.parser.remove_option(section_name, "keys_" + key_list_key + "_name")
+        self.parser.remove_option(section_name, "keys_" + key_list_key + "_macro")
+        self._write()
+        bank_macros = self.macros[memory - 1] 
+        for macro in bank_macros:
+            if macro.key_list_key == key_list_key:
+                self.bank_macros.remove(macro)
         
     def create_macro(self, memory, keys, name, macro):
-        key_list_key = get_keys_key(keys)
-        key_list = conf_client.get_list(self.profile_dir + "/key_list_str_" + str(memory), gconf.VALUE_STRING)
-        if key_list_key in key_list:
-            self.delete_macro(memory, keys)  
-            key_list.remove(key_list_key)
-                      
-        key_list.append(key_list_key)
-        conf_client.set_list(self.profile_dir + "/key_list_str_" + str(memory), gconf.VALUE_STRING, key_list)
-        keys_dir = self.profile_dir + "/keys/m" + str(memory)
-        key_dir = keys_dir + "/" + str(key_list_key);
-        conf_client.add_dir(key_dir, gconf.CLIENT_PRELOAD_NONE)
-        conf_client.set_string(key_dir + "/name", name)
-        conf_client.set_string(key_dir + "/macro", macro)
-        new_macro = G15Macro(self, memory, key_list_key)
+        key_list_key = get_keys_key(keys)  
+        section_name = "m%d" % memory
+        logger.info("Creating macro M%d, for %s" % ( memory, key_list_key ))
+        new_macro = G15Macro(self, memory, key_list_key, name = name, macro = macro)
         self.macros[memory - 1].append(new_macro)
+        new_macro.save()
         return new_macro
     
     def get_macro(self, memory, keys):
-        key_list_key = get_keys_key(keys)
-        key_list = conf_client.get_list(self.profile_dir + "/key_list_str_" + str(memory), gconf.VALUE_STRING)
-        if key_list_key in key_list:
-            return G15Macro(self, memory, key_list_key)
+        key_list_key = get_keys_key(keys) 
+        section_name = "m%d" % memory
+        if self.parser.has_section(section_name):
+            option_key = "keys_" + key_list_key + "_name"
+            if self.parser.has_option(section_name, option_key):
+                name = self.parser.get(section_name, option_key)
+                return G15Macro(self, memory, key_list_key, name = name, macro = self.parser.get(section_name, "keys_" + key_list_key + "_macro"))
         
     def make_active(self):
         conf_client.set_int("/apps/gnome15/active_profile", self.id)
         
-    def load(self):        
+    def load(self):
+                 
+        # Initial values
         self.macros = []
         self.mkey_color = {}
-        for i in range(0, 3):
-            self.mkey_color[str(i)] = g15util.to_rgb(conf_client.get_string(self.profile_dir + "/color" + str(i)))
-        self.activate_on_focus = conf_client.get_bool(self.profile_dir + "/activate_on_focus")
-        self.window_name = conf_client.get_string(self.profile_dir + "/window_name")
-        if self.window_name == None:
-            self.window_name = ""
-        self.send_delays = conf_client.get_bool(self.profile_dir + "/send_delays")
-        for j in range(1, 4):
-            key_list = conf_client.get_list(self.profile_dir + "/key_list_str_" + str(j), gconf.VALUE_STRING)
-            keys_dir = self.profile_dir + "/keys/m" + str(j)
+        
+        # Load macro file        
+        if self.id != -1:
+            self.parser.read(self._get_filename())
+        
+        # Info section
+        self.name = self.parser.get("DEFAULT", "name") if self.parser.has_option("DEFAULT", "name") else ""
+        self.icon = self.parser.get("DEFAULT", "icon") if self.parser.has_option("DEFAULT", "icon") else ""
+        self.window_name = self.parser.get("DEFAULT", "window_name") if self.parser.has_option("DEFAULT", "window_name") else ""
+        self.activate_on_focus = self.parser.getboolean("DEFAULT", "active_on_focus") if self.parser.has_option("DEFAULT", "active_on_focus") else False
+        self.send_delays = self.parser.getboolean("DEFAULT", "send_delays") if self.parser.has_option("DEFAULT", "send_delays") else False
+        
+        # Bank sections
+        for i in range(1, 4):
+            section_name = "m%d" % i
+            if not self.parser.has_section(section_name):
+                self.parser.add_section(section_name)
+            self.mkey_color[str(i)] = g15util.to_rgb(self.parser.get(section_name, "backlight_color")) if self.parser.has_option(section_name, "backlight_color") else None
             memory_macros = []
             self.macros.append(memory_macros)
-            for key_list_key in key_list:
-                key_dir = keys_dir + "/" + str(key_list_key)
-                conf_client.add_dir(key_dir, gconf.CLIENT_PRELOAD_NONE)
-                memory_macros.append(G15Macro(self, j, key_list_key))
-
-
+            for option in self.parser.options(section_name):
+                if option.startswith("keys_") and option.endswith("_name"):
+                    key_list_key = option[5:-5]
+                    name = self.parser.get(section_name, option)
+                    macro_key = "keys_" + key_list_key + "_macro"
+                    macro = self.parser.get(section_name, macro_key) if self.parser.has_option(section_name, macro_key) else ""
+                    memory_macros.append(G15Macro(self, i, key_list_key, name = name, macro = macro))
+                    
+    '''
+    Private
+    '''
+        
+    def _write(self):
+        with open(self._get_filename(), 'wb') as configfile:
+            self.parser.write(configfile)
+        
+    def _get_filename(self):
+        return "%s/%d.macros" % ( conf_dir, self.id )
+    
+# Migrate from old gconf based macro profiles
+if len(get_profiles()) == 0:
+    import g15_profile_gconf as oldg15profile
+    logger.warning("Migrating GConf macro profiles. Note, the old profiles will be left in GConf")
+    for profile in oldg15profile.get_profiles():
+        new_profile = G15Profile()
+        new_profile.id = profile.id
+        new_profile.name = profile.name
+        new_profile.mkey_color = profile.mkey_color
+        new_profile.window_name = profile.window_name
+        new_profile.activate_on_focus = profile.activate_on_focus
+        new_profile.send_delays = profile.send_delays
+        create_profile(new_profile)
+        
+        for macro_bank in profile.macros:
+            for macro in macro_bank:
+                logger.warning("Migrating macro %s" % macro.name)
+                new_profile.create_macro(macro.memory, macro.keys, macro.name, macro.macro)
+        
+        logger.warning("Deleting migrated profile %s" % profile.name)
+        profile.delete()
+        
 # Create the default
 create_default()
 

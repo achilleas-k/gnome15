@@ -13,6 +13,7 @@ gnome15_PYTHON = 		\
 	g15_setup.py \
 	g15_plugins.py \
 	g15_profile.py \
+	g15_profile_gconf.py \
 	g15_exceptions.py \
 	g15_screen.py \
 	g15_theme.py \

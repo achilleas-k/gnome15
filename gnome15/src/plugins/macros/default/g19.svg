@@ -785,12 +785,12 @@
          id="rect3031-9"
          style="fill:#808080;fill-opacity:0.50196078;stroke:none" />
       <image
-         sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/macros/default/${icon}"
+         sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/macros/default/${icon}"
          xlink:href="${icon}"
-         transform="matrix(0.4765625,0,0,0.4765625,20,832.36218)"
-         id="image3050"
+         height="64"
          width="64"
-         height="64" />
+         id="image3050"
+         transform="matrix(0.4765625,0,0,0.4765625,20,832.36218)" />
     </g>
     <g
        id="row1">
@@ -1465,5 +1465,16 @@
            id="tspan3817-33-2-1"
            sodipodi:role="line">${name12}</tspan></text>
     </g>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="160.7207"
+       y="949.11414"
+       id="text3210"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3212"
+         x="160.7207"
+         y="949.11414">${message}</tspan></text>
   </g>
 </svg>

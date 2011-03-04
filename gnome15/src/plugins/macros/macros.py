@@ -147,13 +147,17 @@ class G15Macro():
         self.hidden = False
         self.current_page_count = 0
         self.mkey = self.screen.get_mkey()
-        self.notify_handle_1 = self.gconf_client.notify_add("/apps/gnome15/active_profile", self.profiles_changed);
-        self.notify_handle_2 = self.gconf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed);
+        self.notify_handle_1 = self.gconf_client.notify_add("/apps/gnome15/active_profile", self.profiles_changed)
+        
+        # Monitor macro profiles changing
+        g15profile.profile_listeners.append(self.profiles_changed)
+        
         self.reload_theme()        
         self.check_pages()
 
     def deactivate(self):
         self.close_all_pages()
+        g15profile.profile_listeners.remove(self.profiles_changed)
         
     def get_active_profile_icon_path(self):
         if self.active_profile == None:
@@ -170,38 +174,29 @@ class G15Macro():
         pass
     
     def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP:
+        if post:
             if self.screen.get_mkey() != self.mkey:
                 self.mkey = self.screen.get_mkey()
                 self.check_pages()
                 if len(self.macro_pages) > 0:
                     self.screen.set_priority(self.macro_pages[0].page, g15screen.PRI_HIGH, revert_after = 3.0)
-            self.pressed = None
-        
-# TODO
-#
-# This locks up the screen when the macro recorder finishes.
-# Apparently caused by the screen cycle
-#
-#            if state == g15driver.KEY_STATE_UP:
-#                print "Clearing pressed key"
-#                if self.screen.get_mkey() != self.mkey:
-#                    print "Changing bank"
-#                    self.mkey = self.screen.get_mkey()
-#                    self.check_pages()
-#                self.pressed = None
-#            else:
-#                print "Checking where to cycle to"
-#                self.pressed = keys            
-#                for macro_page in self.macro_pages:
-#                    if macro_page.contains_keys(keys):
-#                        print "Cycling to",macro_page.page.id
-#                        self.screen.cycle_to(macro_page.page)
-#                        return
-#                
-#            print "Checking where to cycle to"
-#            for macro_page in self.macro_pages:
-#                self.screen.redraw(macro_page.page)
+                      
+            macro = self.active_profile.get_macro(self.mkey, keys)
+            if macro:                    
+                if state == g15driver.KEY_STATE_UP:
+                    if self.screen.get_mkey() != self.mkey:
+                        self.mkey = self.screen.get_mkey()
+                        self.check_pages()
+                    self.pressed = None
+                else:
+                    self.pressed = keys            
+                    for macro_page in self.macro_pages:
+                        if macro_page.contains_keys(keys):
+                            self.screen.set_priority(macro_page.page, g15screen.PRI_HIGH, revert_after = 3.0)
+                            return
+                            
+                self.screen.redraw()
+                
         
     ''' Functions specific to plugin
     ''' 
@@ -213,7 +208,7 @@ class G15Macro():
         self.current_page = 0
         self.current_page_count = 0
     
-    def profiles_changed(self, arg0, arg1, arg2, arg3):
+    def profiles_changed(self, arg0 = None, arg1 = None, arg2 = None, arg3 = None):
         self.check_pages()
         
     def check_pages(self):       

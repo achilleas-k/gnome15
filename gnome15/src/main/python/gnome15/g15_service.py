@@ -193,6 +193,7 @@ class G15Service(Thread):
         
     def shutdown(self):
         self.shutting_down = True
+        g15profile.notifier.stop()
         for listener in self.service_listeners:
             listener.shutting_down()
         self.plugins.deactivate()
@@ -490,9 +491,18 @@ class G15Service(Thread):
             keysym = Xlib.XK.string_to_keysym(special_X_keysyms[ch])
         return keysym
                 
-    def char_to_keycode(self, ch) :
-        keysym = self.get_keysym(ch)
-        keycode = local_dpy.keysym_to_keycode(keysym)
+    def char_to_keycode(self, ch) :        
+        
+        if str(ch).startswith("["):
+            keysym_code = int(ch[1:-1])
+            # AltGr
+            if keysym_code == 65027:
+                keycode = 108
+            else:
+                logger.warn("Unknown keysym %d",keysym_code)
+        else:
+            keysym = self.get_keysym(ch)
+            keycode = local_dpy.keysym_to_keycode(keysym)        
         if keycode == 0 :
             logger.warning("Sorry, can't map", ch)
     
@@ -506,6 +516,7 @@ class G15Service(Thread):
             
     def send_string(self, ch, press) :
         keycode, shift_mask = self.char_to_keycode(ch)
+        logger.debug("Sending keychar %s keycode %d" % (ch, int(keycode)))
         if (UseXTest) :
             if press:
                 if shift_mask != 0 :

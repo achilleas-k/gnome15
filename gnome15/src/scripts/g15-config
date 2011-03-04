@@ -24,6 +24,7 @@ import sys
 import os
 import gconf
 import gobject
+gobject.threads_init()
        
 # DBUS - Use to check current desktop service status or stop it
 import dbus

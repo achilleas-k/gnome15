@@ -466,7 +466,7 @@ class G15Screen():
         if control != None and not isinstance(control.value, int):
             profile = g15profile.get_active_profile()
             if profile != None:
-                rgb = profile.get_mkey_color(self.mkey - 1)
+                rgb = profile.get_mkey_color(self.mkey)
                 if rgb != None:                    
                     control.value = rgb
                     self.driver.update_control(control)

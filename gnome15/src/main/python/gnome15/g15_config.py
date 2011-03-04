@@ -31,7 +31,6 @@ import shutil
 import logging
 logger = logging.getLogger("config")
 
-
 # Determine if appindicator is available, this decides that nature
 # of the message displayed when the Gnome15 service is not running
 HAS_APPINDICATOR=False
@@ -148,7 +147,9 @@ class G15Config:
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/cycle_screens", self.cycle_screens_configuration_changed));
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/plugins", self.plugins_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/active_profile", self.active_profile_changed))
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/profiles", self.profiles_changed))
+        
+        # Monitor macro profiles changing
+        g15profile.profile_listeners.append(self.profiles_changed)
         
         # Get current state        
         self.selected_profile = g15profile.get_active_profile() 
@@ -468,6 +469,7 @@ class G15Config:
         self.load_configurations()         
         self.main_window.run()
         self.main_window.hide()
+        g15profile.notifier.stop()
         
     def create_color_icon(self, color):
         draw = gtk.Image()
@@ -651,7 +653,8 @@ class G15Config:
         dialog.hide()
         if response == 1:
             new_profile_name = self.widget_tree.get_object("NewProfileName").get_text()
-            new_profile = g15profile.G15Profile(new_profile_name, "")
+            new_profile = g15profile.G15Profile(-1)
+            new_profile.name = new_profile_name
             g15profile.create_profile(new_profile)
             self.selected_profile = new_profile
             self.load_configurations()
@@ -692,8 +695,8 @@ class G15Config:
             self.load_configurations()
             
         
-    def profiles_changed(self, client, connection_id, entry, args):
-        self.load_configurations()
+    def profiles_changed(self, macro_profile_id):        
+        gobject.idle_add(self.load_configurations)
         
     def macro_name_edited(self, widget, row, value):
         macro = self.get_sorted_list()[int(row)] 
@@ -740,7 +743,7 @@ class G15Config:
             self.remove_button.set_sensitive(True)
             
         if self.color_button != None:
-            rgb = profile.get_mkey_color(self.get_memory_number() - 1)
+            rgb = profile.get_mkey_color(self.get_memory_number())
             if rgb == None:
                 self.enable_color_for_m_key.set_active(False)
                 self.color_button.set_sensitive(False)
@@ -863,7 +866,7 @@ class G15Config:
             self.widget_tree.get_object("SwitchesFrame").hide() 
             
     def _profile_color_changed(self, widget):
-        self.selected_profile.set_mkey_color(self.get_memory_number() - 1, 
+        self.selected_profile.set_mkey_color(self.get_memory_number(), 
                                              g15util.color_to_rgb(widget.get_color()) if self.enable_color_for_m_key.get_active() else None)
         self.selected_profile.save()
     
