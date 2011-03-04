@@ -456,7 +456,7 @@ class G15Service(Thread):
             return        
         
         if state == g15driver.KEY_STATE_UP:
-            if g15driver.G_KEY_LIGHT in keys:
+            if g15driver.G_KEY_LIGHT in keys and not self.screen.driver.get_model_name() == g15driver.MODEL_G19:
                 self.dbus_service._driver_service.CycleKeyboard(1)
 
             profile = g15profile.get_active_profile()
