@@ -190,10 +190,6 @@ class G15Macro():
                     self.pressed = None
                 else:
                     self.pressed = keys            
-                    for macro_page in self.macro_pages:
-                        if macro_page.contains_keys(keys):
-                            self.screen.set_priority(macro_page.page, g15screen.PRI_HIGH, revert_after = 3.0)
-                            return
                             
                 self.screen.redraw()
                 

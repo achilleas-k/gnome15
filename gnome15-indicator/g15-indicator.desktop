@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Encoding=UTF-8
-Name=Gnome15 Indicator
+Name=Logitech G Keyboard Indicator
 Icon=gnome15
 Comment=Panel indicator allowing control and monitor of the Gnome15 desktop service for Logitech G keyboards.
 Exec=g15-indicator
