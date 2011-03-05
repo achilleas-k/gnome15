@@ -275,6 +275,7 @@ class G15Service(Thread):
             logger.info("g15-desktop service is NOT running on the active session")
         if not self.session_active and self.driver.is_connected():
             logger.info("Session now inactive, disconnecting from driver")
+            self.plugins.deactivate()
             self.driver.disconnect()
         elif self.session_active and not self.driver.is_connected():
             self.attempt_connection()

@@ -19,6 +19,7 @@ libtool.m4
 *.la
 *.lo
 .deps
+gnome15-impulse15/libtool
 ltmain.sh
 site/pyinputevent-*
 g19d/g19d-*.tar.gz
