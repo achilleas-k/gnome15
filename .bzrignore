@@ -24,7 +24,12 @@ site/pyinputevent-*
 g19d/g19d-*.tar.gz
 lgsetled/lgsetled
 lgsetled/m4
+gnome15-impulse15/m4
+gnome15-impulse15/m4/*
 libtool
 depcomp
 config.sub
 config.guess
+pylibg19/dist
+pylibg19/MANIFEST
+pylibg19/build

@@ -209,6 +209,9 @@ class G15Macro():
         self.current_page_count = 0
     
     def profiles_changed(self, arg0 = None, arg1 = None, arg2 = None, arg3 = None):
+        print "PROFILES CHANGED"
+        self.screen.service.resched_cycle()
+        print "Checking pages"
         self.check_pages()
         
     def check_pages(self):       
@@ -221,8 +224,8 @@ class G15Macro():
             no_pages = max(self.number_of_pages(len(macros), 12), 1)
             if no_pages != self.current_page_count:
                 logger.info("Number of macro pages has changed from %d to %d, reloading" % (no_pages, self.current_page_count))
-                self.current_page_count = no_pages
                 self.close_all_pages()
+                self.current_page_count = no_pages
                 self.current_page = 0
                 for i in range(no_pages -1, -1, -1):                
                     macro_page = G15MacroPage(i, no_pages, self)
