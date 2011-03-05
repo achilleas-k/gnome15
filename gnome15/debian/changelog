@@ -17,6 +17,20 @@ gnome15 (0.5.0-1) maverick; urgency=low
   
   * Bug: MPRIS plugin shouldn't need to poll for players, just watch DBUS events 
   
+  * Feature: Macros can now be created and edited in the configuration UI
+  
+  * Feature: Macros can now be used to run system commands.
+  
+  * Bug: Driver now disconnects when switching users. This allows multiple gnome15 instances to co-exist.
+    
+  * Feature: New g19direct driver (does away with g19d but requires more permissions on device)
+  
+  * Bug: Macros contains AltGr playback now work.
+  
+  * Feature: Macros are now stored in ~/.config/gnome15/macro_profiles as INI style files instead of GConf. This 
+  			 makes it easier to back them up or move them and is also useful for the ongoing KDE compatibility work.
+  			 This new features adds a new dependency, pyinotify
+  
 
  -- Brett Smith <tanktarta@blueyonder.co.uk>  Thu, 27 Jan 2010 22:51:17 +0000
  

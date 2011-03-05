@@ -38,9 +38,9 @@ import vobject
 id="cal"
 name="Calendar"
 description="Clock & Calendar. Integrates with Evolution calendar. " \
-    + "You may move around the calendar using the cursor keys near " \
-    + "the display on the G19, or using the right most 4 keys under the " \
-    + "display (L2-L5)."
+    + "You may move around the calendar using the D-Pad on the G19, " \
+    + "or using the right most 3 keys under the " \
+    + "display (L3-L5) on other models."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
@@ -135,7 +135,7 @@ class G15Cal():
                     
     def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_UP and self.screen.get_visible_page() == self.page:
-            if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
+            if g15driver.G_KEY_UP in keys:
                 self.screen.service.resched_cycle()
                 self.adjust_calendar_date(-7)
                 return True
@@ -143,7 +143,7 @@ class G15Cal():
                 self.screen.service.resched_cycle()
                 self.adjust_calendar_date(7)
                 return True
-            elif g15driver.G_KEY_LEFT in keys or g15driver.G_KEY_L2 in keys:
+            elif g15driver.G_KEY_LEFT in keys or g15driver.G_KEY_L3 in keys:
                 self.screen.service.resched_cycle()
                 self.adjust_calendar_date(-1)
                 return True

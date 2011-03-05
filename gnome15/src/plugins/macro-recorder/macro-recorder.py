@@ -51,6 +51,7 @@ copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10 ]
+reserved_keys = [ g15driver.G_KEY_MR ]
 
 
 local_dpy = display.Display()
@@ -208,7 +209,7 @@ class G15MacroRecorder():
                     str += row[0] + " " + row[1]       
                 self.icon = "tag-new"   
                 self.message = key_name + " created"                
-                active_profile.create_macro(self.screen.get_mkey(), record_keys, key_name, str)
+                active_profile.create_macro(self.screen.get_mkey(), record_keys, key_name, g15profile.MACRO_SCRIPT, str)
                 self.screen.redraw(self.page)
             self.hide_recorder(3.0)    
         else:

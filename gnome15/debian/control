@@ -2,13 +2,13 @@ Source: gnome15
 Section: gnome
 Priority: optional
 Maintainer: Brett Smith <tanktarta@blueyonder.co.uk>
-Build-Depends: cdbs, debhelper (>= 7), autotools-dev, python-support, python-gobject, python-gtk2, python-gtk2-dev, python-dbus, python-cairo (>= 1.8.3), python-lxml, python-imaging, python-evolution, python-vobject, python-alsaaudio, python-feedparser, python-rsvg, python-gnomeapplet, python-xdg, pkg-config, python-xlib, python-setproctitle, python-appindicator, python-wnck, pyinputevent 
+Build-Depends: cdbs, debhelper (>= 7), autotools-dev, python-support, python-gobject, python-gtk2, python-gtk2-dev, python-dbus, python-cairo (>= 1.8.3), python-lxml, python-imaging, python-evolution, python-vobject, python-alsaaudio, python-feedparser, python-rsvg, python-gnomeapplet, python-xdg, pkg-config, python-xlib, python-setproctitle, python-appindicator, python-wnck, pyinputevent, python-pyinotify 
 Standards-Version: 3.8.4
 Homepage: http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/
 
 Package: gnome15
 Architecture: all
-Depends: ${python:Depends}, python-gobject, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, cairo-clock, python-xlib, python-setproctitle, python-wnck, libgtk2.0-bin 
+Depends: ${python:Depends}, python-gobject, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, cairo-clock, python-xlib, python-setproctitle, python-wnck, libgtk2.0-bin, python-pyinotify 
 Recommends: gnome15-g19d | gnome15-g15daemon | gnome15-gtk | gnome15-kernel | gnome15-g19direct
 Provides: ${python:Provides}
 Description: Desktop service for the Logitech "G" keyboards

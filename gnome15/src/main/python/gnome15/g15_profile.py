@@ -132,23 +132,61 @@ def get_keys_from_key(key_list_key):
 
 def get_keys_key(keys):
     return "_".join(keys)
+
+'''
+Macro types
+'''
+
+MACRO_COMMAND="command"
+MACRO_SIMPLE="simple"
+MACRO_SCRIPT="script"
             
 class G15Macro:
     
-    def __init__(self, profile, memory, key_list_key, name = "", macro = ""):
+    def __init__(self, profile, memory, key_list_key):
         self.keys = key_list_key.split("_")
         self.key_list_key = key_list_key
         self.memory = memory
         self.profile = profile
-        self.name = name
-        self.macro = macro
-        
-    def _store(self): 
+        self.name = ""
+        self.macro = ""
+        self.type = MACRO_SCRIPT
+        self.command = ""
+        self.simple_macro = ""
         section_name = "m%d" % self.memory
         if not self.profile.parser.has_section(section_name):
             self.profile.parser.add_section(section_name)
+        
+    def set_keys(self, keys):
+        section_name = "m%d" % self.memory     
+        self.profile._delete_key(section_name, self.key_list_key)
+        self.keys = keys
+        self.key_list_key = get_keys_key(keys)
+        self.save()
+        
+    def _remove_option(self, section_name, option_key):
+        if self.profile.parser.has_option(section_name, option_key):
+            self.profile.parser.remove_option(section_name, option_key)
+        
+    def _store(self): 
+        section_name = "m%d" % self.memory
         self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_name", self.name)
         self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_macro", self.macro)
+        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_type", self.type)
+        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_command", self.command)
+        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_simplemacro", self.simple_macro)
+        
+    def _load(self):
+        self.type = self._get("type", MACRO_SCRIPT)
+        self.command = self._get("command", "")
+        self.simple_macro = self._get("simplemacro", "")
+        self.name = self._get("name", "")
+        self.macro = self._get("macro", "")
+        
+    def _get(self, key, default_value):
+        section_name = "m%d" % self.memory
+        option_key = "keys_" + self.key_list_key + "_" + key
+        return self.profile.parser.get(section_name, option_key) if self.profile.parser.has_option(section_name, option_key) else default_value
         
     def save(self):
         self._store()
@@ -167,7 +205,15 @@ class G15Profile():
         self.icon = None
         self.macros = []        
         self.mkey_color = {}
+        self.activate_on_focus = False
+        self.window_name = ""
         self.load()
+        
+    def is_key_in_use(self, memory, key, exclude = None):
+        bank = self.macros[memory - 1]
+        for macro in bank:
+            if ( exclude == None or ( exclude != None and not macro in exclude ) ) and key in macro.keys: 
+                return True 
         
     def get_default(self):
         return self.id == 0
@@ -215,35 +261,48 @@ class G15Profile():
     def delete(self):
         os.remove(self._get_filename())
         
+    def _delete_key(self, section_name, key_list_key):
+        for option in self.parser.options(section_name):
+            if option.startswith("keys_" + key_list_key + "_"):
+                self.parser.remove_option(section_name, option)
+        
     def delete_macro(self, memory, keys):  
         section_name = "m%d" % memory     
         key_list_key = get_keys_key(keys)
         logger.info("Deleting macro M%d, for %s" % ( memory, key_list_key ))
-        self.parser.remove_option(section_name, "keys_" + key_list_key + "_name")
-        self.parser.remove_option(section_name, "keys_" + key_list_key + "_macro")
+        self._delete_key(section_name, key_list_key)
         self._write()
         bank_macros = self.macros[memory - 1] 
         for macro in bank_macros:
-            if macro.key_list_key == key_list_key:
-                self.bank_macros.remove(macro)
+            if macro.key_list_key == key_list_key and macro in bank_macros:
+                bank_macros.remove(macro)
         
-    def create_macro(self, memory, keys, name, macro):
+    def create_macro(self, memory, keys, name, type, content):
         key_list_key = get_keys_key(keys)  
         section_name = "m%d" % memory
         logger.info("Creating macro M%d, for %s" % ( memory, key_list_key ))
-        new_macro = G15Macro(self, memory, key_list_key, name = name, macro = macro)
+        new_macro = G15Macro(self, memory, key_list_key)
+        new_macro.name = name
+        new_macro.type = type
+        if type == MACRO_COMMAND:
+            new_macro.command = content
+        elif type == MACRO_SIMPLE:
+            new_macro.simple_command = content
+        else:
+            new_macro.macro = content
         self.macros[memory - 1].append(new_macro)
         new_macro.save()
         return new_macro
     
     def get_macro(self, memory, keys):
-        key_list_key = get_keys_key(keys) 
-        section_name = "m%d" % memory
-        if self.parser.has_section(section_name):
-            option_key = "keys_" + key_list_key + "_name"
-            if self.parser.has_option(section_name, option_key):
-                name = self.parser.get(section_name, option_key)
-                return G15Macro(self, memory, key_list_key, name = name, macro = self.parser.get(section_name, "keys_" + key_list_key + "_macro"))
+        bank = self.macros[memory - 1]
+        for macro in bank:
+            key_count = 0
+            for k in macro.keys:
+                if k in keys:
+                    key_count += 1
+            if key_count == len(keys):
+                return macro
         
     def make_active(self):
         conf_client.set_int("/apps/gnome15/active_profile", self.id)
@@ -262,7 +321,7 @@ class G15Profile():
         self.name = self.parser.get("DEFAULT", "name") if self.parser.has_option("DEFAULT", "name") else ""
         self.icon = self.parser.get("DEFAULT", "icon") if self.parser.has_option("DEFAULT", "icon") else ""
         self.window_name = self.parser.get("DEFAULT", "window_name") if self.parser.has_option("DEFAULT", "window_name") else ""
-        self.activate_on_focus = self.parser.getboolean("DEFAULT", "active_on_focus") if self.parser.has_option("DEFAULT", "active_on_focus") else False
+        self.activate_on_focus = self.parser.getboolean("DEFAULT", "activate_on_focus") if self.parser.has_option("DEFAULT", "activate_on_focus") else False
         self.send_delays = self.parser.getboolean("DEFAULT", "send_delays") if self.parser.has_option("DEFAULT", "send_delays") else False
         
         # Bank sections
@@ -276,10 +335,9 @@ class G15Profile():
             for option in self.parser.options(section_name):
                 if option.startswith("keys_") and option.endswith("_name"):
                     key_list_key = option[5:-5]
-                    name = self.parser.get(section_name, option)
-                    macro_key = "keys_" + key_list_key + "_macro"
-                    macro = self.parser.get(section_name, macro_key) if self.parser.has_option(section_name, macro_key) else ""
-                    memory_macros.append(G15Macro(self, i, key_list_key, name = name, macro = macro))
+                    macro_obj = G15Macro(self, i, key_list_key)
+                    macro_obj._load()
+                    memory_macros.append(macro_obj)
                     
     '''
     Private
@@ -309,7 +367,7 @@ if len(get_profiles()) == 0:
         for macro_bank in profile.macros:
             for macro in macro_bank:
                 logger.warning("Migrating macro %s" % macro.name)
-                new_profile.create_macro(macro.memory, macro.keys, macro.name, macro.macro)
+                new_profile.create_macro(macro.memory, macro.keys, macro.name, MACRO_SCRIPT, macro.macro)
         
         logger.warning("Deleting migrated profile %s" % profile.name)
         profile.delete()

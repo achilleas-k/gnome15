@@ -310,3 +310,4 @@ class AbstractDriver(object):
         if fg_control != None:
             fg_rgb = fg_control.value
         return fg_rgb
+    

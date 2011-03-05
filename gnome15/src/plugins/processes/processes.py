@@ -44,6 +44,7 @@ copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10 ]
+reserved_keys = [ g15driver.G_KEY_SETTINGS ]
 
 def create(gconf_key, gconf_client, screen):
     return G15Processes(gconf_client, gconf_key, screen)

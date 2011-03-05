@@ -30,8 +30,7 @@ import cairo
 # Plugin details - All of these must be provided
 id="panel"
 name="Panel"
-description="Adds a small area at the bottom of the screen for other plugins to add permanent components to. " \
-        + "This plugin only works on the G19. "
+description="Adds a small area at the bottom of the screen for other plugins to add permanent components to."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"

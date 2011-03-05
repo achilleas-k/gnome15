@@ -124,7 +124,7 @@ class Driver(g15driver.AbstractDriver):
         return controls
     
     def get_key_layout(self):
-        return self.device.model_name
+        return self.device.key_layout
     
     def process_svg(self, document):
         pass

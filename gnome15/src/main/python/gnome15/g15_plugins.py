@@ -80,6 +80,17 @@ def get_supported_models(plugin):
     except:
         pass        
     return supported_models
+        
+def is_key_reserved(key):
+    if key in [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3  ]:
+        return True
+    for mod in imported_plugins:       
+        try :
+            keys = getattr(mod, "reserved_keys")
+            if key in keys:
+                return True
+        except AttributeError: 
+            pass
 
 class G15Plugins():
     def __init__(self, screen):

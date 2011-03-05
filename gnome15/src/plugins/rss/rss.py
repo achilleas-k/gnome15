@@ -37,8 +37,8 @@ id="rss"
 name="RSS"
 description="A simple RSS reader. Multiple feeds may be added, with a screen being " \
         + "allocated to each one once it has loaded. You may move up and down " \
-        + "through the entries using the Up and Down keys on the G19, or L2 and L3 on " \
-        + "the G15. The entry may then be viewed in the browser using OK (G19), or L4 (G15)."
+        + "through the entries using the Up and Down keys on the G19, or L3 and L4 on " \
+        + "other models G15. The entry may then be viewed in the browser using OK (G19), or L5 (other models)."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"

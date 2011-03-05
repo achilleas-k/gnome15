@@ -68,6 +68,10 @@ AS_IF([test "x${HAVE_PYMOD_GTK}" = "xno"],
 AX_PYTHON_MODULE(dbus, [])
 AS_IF([test "x${HAVE_PYMOD_DBUS}" = "xno"],
      [AC_MSG_ERROR([Requires DBUS bindings for Python])])
+
+AX_PYTHON_MODULE(pyinotify, [])
+AS_IF([test "x${HAVE_PYMOD_PYINOTIFY}" = "xno"],
+     [AC_MSG_ERROR([Requires Pyinotify bindings for Python])])
      
 AX_PYTHON_MODULE(lxml, [])
 AS_IF([test "x${HAVE_PYMOD_LXML}" = "xno"],

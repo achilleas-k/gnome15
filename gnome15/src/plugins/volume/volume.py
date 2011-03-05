@@ -38,8 +38,8 @@ from threading import Thread
 # Plugin details - All of these must be provided
 id="volume"
 name="Volume Monitor"
-description="Popup the current volume when it changes. Currently only the " \
-        + "the master mixer of the default card is displayed."
+description="Popup the current volume when it changes. You may choose the mixer " \
+        + "that is monitored in the preferences for this plugin."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"

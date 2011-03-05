@@ -37,14 +37,15 @@ id="menu"
 name="Menu"
 description="Allows selections of any currently active screen " + \
             "through a menu on the LCD. It is activated by the " + \
-            "<b>Menu</b> key on the G19, or L2 on the <b>L2</b> " + \
-            "on the G15. Once activated, use the D-pad on the G19 " + \
+            "<b>Menu</b> key on the G19, or L2 on other models. " + \
+            "Once activated, use the D-pad on the G19 " + \
             "or L3-L5 on the the G15 to navigate and select."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10 ]
+reserved_keys = [ g15driver.G_KEY_MENU, g15driver.G_KEY_L2 ]
 
 def create(gconf_key, gconf_client, screen):
     return G15Menu(gconf_client, gconf_key, screen)

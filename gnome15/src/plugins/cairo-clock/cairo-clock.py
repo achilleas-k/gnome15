@@ -36,7 +36,7 @@ import rsvg
 # Plugin details - All of these must be provided
 id="cairo-clock"
 name="Cairo Clock"
-description="Port of MacSlow's SVG clock to Gnome15\n" \
+description="Port of MacSlow's SVG clock to Gnome15. " \
     + "Requires cairo-clock to be installed (at least the themes). " \
     + "Note, only works on the G19."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"

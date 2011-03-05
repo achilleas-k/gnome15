@@ -464,7 +464,16 @@ class G15Service(Thread):
             if profile != None:
                 macro = profile.get_macro(self.screen.get_mkey(), keys)
                 if macro != None:
-                    self.send_macro(macro)
+                    if macro.type == g15profile.MACRO_COMMAND:
+                        logger.warning("Running external command '%s'" % macro.command)
+                        os.system(macro.command)
+                    elif macro.type == g15profile.MACRO_SIMPLE:
+                        logger.debug("Simple macro '%s'" % macro.simple_macro)
+                        for c in macro.simple_macro:                            
+                            self.send_string(c, True)                            
+                            self.send_string(c, False)
+                    else:
+                        self.send_macro(macro)
                             
         self.screen.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True)
         
@@ -488,8 +497,16 @@ class G15Service(Thread):
             # Unfortunately, although this works to get the correct keysym
             # i.e. keysym for '#' is returned as "numbersign"
             # the subsequent display.keysym_to_keycode("numbersign") is 0.
-            keysym = Xlib.XK.string_to_keysym(special_X_keysyms[ch])
+            keysym_name = special_X_keysyms[ch]
+            keysym = Xlib.XK.string_to_keysym(keysym_name)
         return keysym
+    
+    def is_shifted(self, ch) :
+        if ch.isupper() :
+            return True
+        if "~!@#$%^&*()_+{}|:\"<>?".find(ch) >= 0 :
+            return True
+        return False
                 
     def char_to_keycode(self, ch) :        
         
@@ -506,7 +523,7 @@ class G15Service(Thread):
         if keycode == 0 :
             logger.warning("Sorry, can't map", ch)
     
-        if False:
+        if self.is_shifted(ch):
             shift_mask = Xlib.X.ShiftMask
         else :
             shift_mask = 0

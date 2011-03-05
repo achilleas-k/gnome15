@@ -87,7 +87,6 @@ g19_key_layout = [
               [ g15driver.G_KEY_G4, g15driver.G_KEY_G10 ],
               [ g15driver.G_KEY_G5, g15driver.G_KEY_G11 ],
               [ g15driver.G_KEY_G6, g15driver.G_KEY_G12 ],
-              [ g15driver.G_KEY_G6, g15driver.G_KEY_G12 ],
               [ g15driver.G_KEY_UP ],
               [ g15driver.G_KEY_LEFT, g15driver.G_KEY_OK, g15driver.G_KEY_RIGHT ],
               [ g15driver.G_KEY_DOWN ],

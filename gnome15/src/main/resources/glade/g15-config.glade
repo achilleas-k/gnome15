@@ -50,14 +50,6 @@
       <column type="glong"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="ScriptModel">
-    <columns>
-      <!-- column-name Type -->
-      <column type="gchararray"/>
-      <!-- column-name Key -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkDialog" id="MainWindow">
     <property name="width_request">600</property>
     <property name="height_request">540</property>
@@ -467,13 +459,27 @@
                           <object class="GtkNotebook" id="notebook2">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="border_width">3</property>
                             <child>
                               <object class="GtkVBox" id="vbox5">
                                 <property name="visible">True</property>
+                                <property name="border_width">2</property>
                                 <property name="spacing">4</property>
                                 <child>
                                   <object class="GtkToolbar" id="toolbar1">
                                     <property name="visible">True</property>
+                                    <child>
+                                      <object class="GtkToolButton" id="NewMacroButton">
+                                        <property name="visible">True</property>
+                                        <property name="label" translatable="yes">toolbutton2</property>
+                                        <property name="use_underline">True</property>
+                                        <property name="stock_id">gtk-new</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="homogeneous">True</property>
+                                      </packing>
+                                    </child>
                                     <child>
                                       <object class="GtkToolButton" id="DeleteMacroButton">
                                         <property name="visible">True</property>
@@ -1225,189 +1231,242 @@ the following title has focus</property>
         <property name="visible">True</property>
         <property name="spacing">2</property>
         <child>
-          <object class="GtkVBox" id="vbox7">
+          <object class="GtkHBox" id="KeyBox">
             <property name="visible">True</property>
+            <property name="spacing">8</property>
             <child>
-              <object class="GtkTable" id="table2">
+              <object class="GtkVBox" id="vbox8">
                 <property name="visible">True</property>
-                <property name="n_rows">3</property>
-                <property name="n_columns">2</property>
-                <property name="column_spacing">16</property>
-                <property name="row_spacing">8</property>
                 <child>
-                  <object class="GtkLabel" id="label11">
+                  <object class="GtkFrame" id="frame6">
                     <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Memory Bank:&lt;/b&gt;</property>
-                    <property name="use_markup">True</property>
+                    <property name="label_xalign">0</property>
+                    <property name="shadow_type">none</property>
+                    <child>
+                      <object class="GtkAlignment" id="KeysFrame">
+                        <property name="visible">True</property>
+                        <property name="left_padding">12</property>
+                        <child>
+                          <placeholder/>
+                        </child>
+                      </object>
+                    </child>
+                    <child type="label">
+                      <object class="GtkLabel" id="label12">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">&lt;b&gt;Keys Pressed&lt;/b&gt;</property>
+                        <property name="use_markup">True</property>
+                      </object>
+                    </child>
                   </object>
                   <packing>
-                    <property name="x_options">GTK_FILL</property>
+                    <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="label12">
-                    <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Keys:&lt;/b&gt;</property>
-                    <property name="use_markup">True</property>
-                  </object>
-                  <packing>
-                    <property name="top_attach">1</property>
-                    <property name="bottom_attach">2</property>
-                    <property name="x_options">GTK_FILL</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="label13">
-                    <property name="visible">True</property>
-                    <property name="xalign">0</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Name:&lt;/b&gt;</property>
-                    <property name="use_markup">True</property>
-                  </object>
-                  <packing>
-                    <property name="top_attach">2</property>
-                    <property name="bottom_attach">3</property>
-                    <property name="x_options">GTK_FILL</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkEntry" id="MacroNameField">
+                  <object class="GtkCheckButton" id="AllowCombination">
+                    <property name="label" translatable="yes">Allow combination of keys</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="invisible_char">●</property>
-                    <property name="width_chars">20</property>
+                    <property name="receives_default">False</property>
+                    <property name="draw_indicator">True</property>
                   </object>
                   <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
-                    <property name="top_attach">2</property>
-                    <property name="bottom_attach">3</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkEntry" id="MemoryBankLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="editable">False</property>
-                    <property name="invisible_char">●</property>
-                    <property name="width_chars">10</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkEntry" id="MacroKeysLabel">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="editable">False</property>
-                    <property name="invisible_char">●</property>
-                    <property name="width_chars">20</property>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="right_attach">2</property>
-                    <property name="top_attach">1</property>
-                    <property name="bottom_attach">2</property>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="padding">4</property>
+                    <property name="position">1</property>
                   </packing>
                 </child>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
                 <property name="position">0</property>
               </packing>
             </child>
             <child>
-              <object class="GtkFrame" id="frame6">
+              <object class="GtkVBox" id="vbox7">
                 <property name="visible">True</property>
-                <property name="label_xalign">0</property>
-                <property name="shadow_type">none</property>
+                <property name="spacing">4</property>
                 <child>
-                  <object class="GtkAlignment" id="alignment9">
+                  <object class="GtkTable" id="table2">
                     <property name="visible">True</property>
-                    <property name="left_padding">12</property>
+                    <property name="n_rows">2</property>
+                    <property name="n_columns">2</property>
+                    <property name="column_spacing">16</property>
+                    <property name="row_spacing">8</property>
                     <child>
-                      <object class="GtkLabel" id="ScriptLabel">
+                      <object class="GtkLabel" id="label11">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">&lt;b&gt;Memory Bank:&lt;/b&gt;</property>
+                        <property name="use_markup">True</property>
+                      </object>
+                      <packing>
+                        <property name="x_options">GTK_FILL</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label13">
+                        <property name="visible">True</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">&lt;b&gt;Name:&lt;/b&gt;</property>
+                        <property name="use_markup">True</property>
+                      </object>
+                      <packing>
+                        <property name="top_attach">1</property>
+                        <property name="bottom_attach">2</property>
+                        <property name="x_options">GTK_FILL</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="MacroNameField">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="has_focus">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="width_chars">20</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="right_attach">2</property>
+                        <property name="top_attach">1</property>
+                        <property name="bottom_attach">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="MemoryBankLabel">
                         <property name="visible">True</property>
                         <property name="xalign">0</property>
                         <property name="label" translatable="yes">label</property>
-                        <property name="wrap">True</property>
-                        <property name="wrap_mode">word-char</property>
-                        <property name="width_chars">30</property>
                       </object>
+                      <packing>
+                        <property name="left_attach">1</property>
+                        <property name="right_attach">2</property>
+                        <property name="y_options">GTK_FILL</property>
+                      </packing>
                     </child>
                   </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
                 </child>
-                <child type="label">
-                  <object class="GtkLabel" id="Script">
+                <child>
+                  <object class="GtkRadioButton" id="RunCommand">
+                    <property name="label" translatable="yes">Run this _command</property>
                     <property name="visible">True</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Script&lt;/b&gt;</property>
-                    <property name="use_markup">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="use_underline">True</property>
+                    <property name="active">True</property>
+                    <property name="draw_indicator">True</property>
                   </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
                 </child>
-              </object>
-              <packing>
-                <property name="padding">8</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkExpander" id="expander1">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
+                <child>
+                  <object class="GtkHBox" id="hbox7">
+                    <property name="visible">True</property>
+                    <property name="spacing">8</property>
+                    <child>
+                      <object class="GtkEntry" id="Command">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="invisible_char">●</property>
+                      </object>
+                      <packing>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="BrowseForCommand">
+                        <property name="label" translatable="yes">_Browse</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="use_underline">True</property>
+                      </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkRadioButton" id="RunSimpleMacro">
+                    <property name="label" translatable="yes">Send this _simple macro</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="use_underline">True</property>
+                    <property name="active">True</property>
+                    <property name="draw_indicator">True</property>
+                    <property name="group">RunCommand</property>
+                  </object>
+                  <packing>
+                    <property name="position">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="SimpleMacro">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">●</property>
+                  </object>
+                  <packing>
+                    <property name="position">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkRadioButton" id="RunMacroScript">
+                    <property name="label" translatable="yes">Run _macro script</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">False</property>
+                    <property name="tooltip_text" translatable="yes">Macro scripts consists of one or more commands, one one each line. 
+Supported commands are :-
+
+Press &lt;key_name&gt; - Simulates depression of a key
+Release &lt;key_name&gt; - Simulates release of a key
+Delay &lt;ms&gt; - Waits for a number of milliseconds
+Exec &lt;command&gt; - Executes a command
+</property>
+                    <property name="use_underline">True</property>
+                    <property name="active">True</property>
+                    <property name="draw_indicator">True</property>
+                    <property name="group">RunCommand</property>
+                  </object>
+                  <packing>
+                    <property name="position">5</property>
+                  </packing>
+                </child>
                 <child>
                   <object class="GtkScrolledWindow" id="scrolledwindow3">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="hscrollbar_policy">automatic</property>
                     <property name="vscrollbar_policy">automatic</property>
+                    <property name="shadow_type">etched-in</property>
                     <child>
-                      <object class="GtkTreeView" id="treeview2">
-                        <property name="height_request">180</property>
+                      <object class="GtkTextView" id="MacroScript">
+                        <property name="height_request">128</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="model">ScriptModel</property>
-                        <property name="headers_clickable">False</property>
-                        <property name="search_column">0</property>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="treeviewcolumn1">
-                            <property name="title">Type</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="cellrenderertext3"/>
-                              <attributes>
-                                <attribute name="text">0</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkTreeViewColumn" id="treeviewcolumn2">
-                            <property name="title">Value</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="cellrenderertext7"/>
-                              <attributes>
-                                <attribute name="text">1</attribute>
-                              </attributes>
-                            </child>
-                          </object>
-                        </child>
                       </object>
                     </child>
                   </object>
-                </child>
-                <child type="label">
-                  <object class="GtkLabel" id="label14">
-                    <property name="visible">True</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Advanced&lt;/b&gt;</property>
-                    <property name="use_markup">True</property>
-                  </object>
+                  <packing>
+                    <property name="position">6</property>
+                  </packing>
                 </child>
               </object>
               <packing>
-                <property name="position">2</property>
+                <property name="position">1</property>
               </packing>
             </child>
           </object>
@@ -1559,7 +1618,6 @@ delete any macro currently assigned to that key</property>
                       <object class="GtkTreeView" id="ScriptTree">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="model">ScriptModel</property>
                         <property name="headers_clickable">False</property>
                         <property name="enable_search">False</property>
                         <property name="search_column">0</property>

@@ -629,5 +629,5 @@ Get the string name of the key given it's code
 def get_key_names(keys):
     key_names = []
     for key in keys:
-        key_names.append((key[:1].upper() + key[1:]).replace('-',' '))
+        key_names.append((key[:1].upper() + key[1:].lower()).replace('-',' '))
     return key_names
