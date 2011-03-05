@@ -92,6 +92,7 @@ class AbstractMPRISPlayer():
             self.stop()
             
     def reset_elapsed(self):
+        logger.info("Reset track elapsed time")
         self.start_elapsed = self.get_progress()
         self.playback_started = time.time()
         
@@ -279,14 +280,29 @@ class MPRIS1Player(AbstractMPRISPlayer):
         root = dbus.Interface(root_obj, 'org.freedesktop.MediaPlayer')
         AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, interface_name, session_bus, root.Identity())
         
+        # There is no seek / position changed event in MPRIS1, so we poll :(
+        
         player_obj = session_bus.get_object(interface_name, '/Player')
         self.player = dbus.Interface(player_obj, 'org.freedesktop.MediaPlayer')        
-        session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
+        session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")        
         
         # Set the initial status
         self.check_status()
         
+        # Start polling for status, position and track changes        
+        self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 1.0, self.update_track)
+        
+    def update_track(self):
+        self.start_elapsed = float(self.player.PositionGet()) / float(1000)
+        self.playback_started = time.time()
+        self.check_status()
+        if self.status == "Playing":        
+            self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 1.0, self.update_track)
+        else:        
+            self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 5.0, self.update_track)
+        
     def on_stop(self):
+        self.timer.cancel()
         self.session_bus.remove_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def track_changed_handler(self, detail):
@@ -300,6 +316,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
         return 50
         
     def get_new_status(self):        
+        logger.debug("Getting status")
         status = self.player.GetStatus()
         if status[0] == 0:
             return "Playing"
@@ -373,8 +390,9 @@ class MPRIS2Player(AbstractMPRISPlayer):
         return status
                                 
     def seeked(self, seek_time):    
-        self.start_elapsed = seek_time / 1000 / 1000    
-        logger.info("Seek changed to %f" % self.start_elapsed)
+        self.start_elapsed = seek_time / 1000 / 1000
+#        self.start_elapsed = self.get_progress()    
+        logger.info("Seek changed to %f (%d)" % ( self.start_elapsed, seek_time ) )
         self.playback_started = time.time()
         self.recalc_progress()
         self.screen.redraw()
@@ -385,7 +403,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
         if "PlaybackStatus" in properties:
             self.set_status(properties["PlaybackStatus"])
             
-        if "mpris:trackid" in properties:
+        if "xesam:url" in properties and properties["xesam:url"] != self.playing_uri:
             self.reset_elapsed()
             
         if "Volume" in properties:
