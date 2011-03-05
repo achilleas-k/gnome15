@@ -421,11 +421,13 @@ class G15Screen():
         return o_painter
     
     def set_background_painter(self, background_painter):
+        logger.info("Changing background painter to %s" % str(background_painter))
         o_background_painter = self.background_painter_function
         self.background_painter_function = background_painter
         return o_background_painter
     
     def set_foreground_painter(self, foreground_painter):
+        logger.info("Changing foreground painter to %s" % str(foreground_painter))
         o_foreground_painter = self.foreground_painter_function
         self.foreground_painter_function = foreground_painter
         return o_foreground_painter

@@ -96,8 +96,8 @@ class G15ScreenSaver():
         self._in_screensaver = False
         self._page = None
         self._gconf_client = gconf_client
-        self._gconf_key = gconf_key  
-    
+        self._gconf_key = gconf_key
+        self.dimmed = False
 
     def activate(self):      
         self._controls = []
@@ -116,7 +116,7 @@ class G15ScreenSaver():
                 Timer(10, self.activate, ()).start()
                 return
         
-        screen_saver = dbus.Interface(self.system_bus.get_object("org.freedesktop.ScreenSaver", '/'), 'org.gnome.ScreenSaver')
+        screen_saver = dbus.Interface(self._session_bus.get_object("org.gnome.ScreenSaver", '/'), 'org.gnome.ScreenSaver')
         self._in_screensaver = screen_saver.GetActive()
         self._activated = True
         self._check_page()
@@ -146,15 +146,15 @@ class G15ScreenSaver():
                 self._reload_theme()
                 self._page = self._screen.new_page(self._paint, g15screen.PRI_EXCLUSIVE, id="Screensaver")
                 self._screen.redraw(self._page)
-            if self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
+            if not self.dimmed and self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
                 self._dim_keyboard()
         else:
             if self._screen.service.driver.get_bpp() != 0:
                 self._remove_page()
-            if self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
+            if self.dimmed and self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
                 self._light_keyboard()
         
-    def screensaver_changed_handler(self, value):
+    def _screensaver_changed_handler(self, value):
         if self._activated:
             self._in_screensaver = bool(value)
             self._check_page()
@@ -174,6 +174,7 @@ class G15ScreenSaver():
                 else:
                     c.value = (c.value[0] * 0.1,c.value[1] * 0.1,c.value[2] * 0.1)
             self._screen.driver.update_control(c)
+        self.dimmed = True
     
     def _light_keyboard(self):
         i = 0
@@ -181,6 +182,7 @@ class G15ScreenSaver():
             c.value = self._control_values [i]
             i += 1
             self._screen.driver.update_control(c)
+        self.dimmed = False
             
     def _reload_theme(self):        
         text = self._gconf_client.get_string(self._gconf_key + "/message_text")

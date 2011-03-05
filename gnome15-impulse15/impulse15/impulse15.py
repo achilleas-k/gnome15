@@ -71,10 +71,13 @@ class G15Impulse():
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
         self.active = False
+        self.last_paint = None
         
     def activate(self):
         self.active = True
         self.page = None
+        self.background_painter_set = False
+        self.foreground_painter_set = False
         self.chained_background_painter = None
         self.chained_foreground_painter = None
         self.visible = False
@@ -131,23 +134,25 @@ class G15Impulse():
         self.peak_heights = [ 0 for i in range( self.bars ) ]
 
         paint = self.gconf_client.get_string(self.gconf_key + "/paint")
-        if paint == "screen":
-            self._clear_background_painter()
-            self._clear_foreground_painter()
-            if self.page == None:
-                self.page = self.screen.new_page(self.paint, on_shown = self.on_shown, on_hidden = self.on_hidden, id="Impulse15")
-            else:
-                self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
-        elif paint == "foreground":
-            self._clear_background_painter()
-            if self.chained_foreground_painter == None:
+        if paint != self.last_paint:
+            self.last_paint = paint
+            if paint == "screen":
+                self._clear_background_painter()
+                self._clear_foreground_painter()
+                if self.page == None:
+                    self.page = self.screen.new_page(self.paint, on_shown = self.on_shown, on_hidden = self.on_hidden, id="Impulse15")
+                else:
+                    self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
+            elif paint == "foreground":
+                self._clear_background_painter()
                 self.chained_foreground_painter = self.screen.set_foreground_painter(self._paint_foreground)
-            self.hide_page()
-        elif paint == "background":
-            self._clear_foreground_painter()
-            if self.chained_background_painter == None:
+                self.foreground_painter_set = True
+                self.hide_page()
+            elif paint == "background":
+                self._clear_foreground_painter()
                 self.chained_background_painter = self.screen.set_background_painter(self._paint_background)
-            self.hide_page()
+                self.background_painter_set = True
+                self.hide_page()
         
     def config_changed(self, client, connection_id, entry, args):
         self.stop_redraw()
@@ -165,14 +170,16 @@ class G15Impulse():
         self.paint(canvas)
             
     def _clear_background_painter(self):
-        if self.chained_background_painter != None:
+        if self.background_painter_set:
             self.screen.set_background_painter(self.chained_background_painter)
             self.chained_background_painter = None
+            self.background_painter_set = False
             
     def _clear_foreground_painter(self):
-        if self.chained_foreground_painter != None:
+        if self.foreground_painter_set:
             self.screen.set_foreground_painter(self.chained_foreground_painter)
             self.chained_foreground_painter = None
+            self.foreground_painter_set = False
     
     def redraw(self):        
         if self.paint_mode == "screen" and self.visible:

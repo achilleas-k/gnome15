@@ -7,7 +7,7 @@ Standards-Version: 3.8.4
 Homepage: http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/
 
 Package: gnome15-gnome-plugins
-Architecture: any
+Architecture: all
 Depends: ${misc:Depends}, ${python:Depends}, gnome15, python-gnomekeyring, python-appindicator, python-gnome2, python-evolution, python-vobject
 Provides: ${python:Provides}
 Description: Collection of GNOME specific plugins for Gnome15.
