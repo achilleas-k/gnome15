@@ -1,4 +1,4 @@
-SUBDIRS = default 
+SUBDIRS = themes
 
 plugindir = $(datadir)/gnome15/plugins/impulse15
 plugin_DATA = impulse15.glade \

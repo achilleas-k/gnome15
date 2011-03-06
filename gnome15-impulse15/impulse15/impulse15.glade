@@ -21,7 +21,7 @@
             <child>
               <object class="GtkTable" id="table1">
                 <property name="visible">True</property>
-                <property name="n_rows">3</property>
+                <property name="n_rows">6</property>
                 <property name="n_columns">2</property>
                 <property name="column_spacing">8</property>
                 <property name="row_spacing">8</property>
@@ -53,6 +53,7 @@
                 </child>
                 <child>
                   <object class="GtkLabel" id="label2">
+                    <property name="visible">True</property>
                     <property name="xalign">0</property>
                     <property name="label" translatable="yes">Bars</property>
                   </object>
@@ -64,8 +65,8 @@
                 </child>
                 <child>
                   <object class="GtkSpinButton" id="BarsSpinner">
+                    <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="visibility">False</property>
                     <property name="invisible_char">●</property>
                     <property name="adjustment">BarsAdjustment</property>
                   </object>
@@ -78,6 +79,7 @@
                 </child>
                 <child>
                   <object class="GtkLabel" id="label5">
+                    <property name="visible">True</property>
                     <property name="xalign">0</property>
                     <property name="label" translatable="yes">Display</property>
                   </object>
@@ -103,6 +105,84 @@
                     <property name="right_attach">2</property>
                     <property name="top_attach">2</property>
                     <property name="bottom_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label6">
+                    <property name="visible">True</property>
+                    <property name="xalign">0</property>
+                    <property name="label" translatable="yes">Rows</property>
+                  </object>
+                  <packing>
+                    <property name="top_attach">3</property>
+                    <property name="bottom_attach">4</property>
+                    <property name="x_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSpinButton" id="RowsSpinner">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">●</property>
+                    <property name="adjustment">RowsAdjustment</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                    <property name="top_attach">3</property>
+                    <property name="bottom_attach">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label7">
+                    <property name="visible">True</property>
+                    <property name="xalign">0</property>
+                    <property name="label" translatable="yes">Bar Width</property>
+                  </object>
+                  <packing>
+                    <property name="top_attach">4</property>
+                    <property name="bottom_attach">5</property>
+                    <property name="x_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSpinButton" id="BarWidthSpinner">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">●</property>
+                    <property name="adjustment">BarWidthAdjustment</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                    <property name="top_attach">4</property>
+                    <property name="bottom_attach">5</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label8">
+                    <property name="visible">True</property>
+                    <property name="xalign">0</property>
+                    <property name="label" translatable="yes">Spacing</property>
+                  </object>
+                  <packing>
+                    <property name="top_attach">5</property>
+                    <property name="bottom_attach">6</property>
+                    <property name="x_options">GTK_FILL</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSpinButton" id="SpacingSpinner">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">●</property>
+                    <property name="adjustment">SpacingAdjustment</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="right_attach">2</property>
+                    <property name="top_attach">5</property>
+                    <property name="bottom_attach">6</property>
                   </packing>
                 </child>
               </object>
@@ -208,16 +288,23 @@
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">spectrum</col>
+        <col id="0" translatable="yes">default</col>
       </row>
       <row>
-        <col id="0" translatable="yes">scope</col>
+        <col id="0" translatable="yes">original</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">circlelcd</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">circleline</col>
       </row>
     </data>
   </object>
   <object class="GtkAdjustment" id="BarsAdjustment">
     <property name="value">32</property>
-    <property name="upper">1000</property>
+    <property name="lower">1</property>
+    <property name="upper">255</property>
     <property name="step_increment">1</property>
     <property name="page_increment">1</property>
   </object>
@@ -237,5 +324,23 @@
         <col id="0" translatable="yes">screen</col>
       </row>
     </data>
+  </object>
+  <object class="GtkAdjustment" id="RowsAdjustment">
+    <property name="upper">64</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+    <property name="page_size">10</property>
+  </object>
+  <object class="GtkAdjustment" id="BarWidthAdjustment">
+    <property name="upper">320</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+    <property name="page_size">10</property>
+  </object>
+  <object class="GtkAdjustment" id="SpacingAdjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+    <property name="page_size">10</property>
   </object>
 </interface>

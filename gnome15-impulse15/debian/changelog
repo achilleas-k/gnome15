@@ -1,6 +1,8 @@
 gnome15-impulse15 (0.0.5-1) maverick; urgency=low
 
   * De-activates properly and stops drawing when not visible
+  * More modes (updated to latest Impulse code)
+  * More configuration options. Lots of new effects possible.
 
  -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue,  1 Feb 2010 23:00:01 +0100
  

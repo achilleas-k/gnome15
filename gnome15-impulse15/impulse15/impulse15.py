@@ -27,10 +27,9 @@ import gtk
 import os
 import cairo
 import time
+import sys
 from ctypes import CDLL
 
-# Load impulse library from current directory
-import impulse
 #path = os.path.dirname(os.path.realpath(__file__))
 #impulse = CDLL("%s/impulse.so" % path)
 
@@ -56,7 +55,9 @@ def show_preferences(parent, gconf_client, gconf_key):
 
     g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/mode", "ModeCombo", "spectrum", widget_tree)
     g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/paint", "PaintCombo", "screen", widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bars", "BarsSpinner", 32, widget_tree)
+    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bars", "BarsSpinner", 16, widget_tree)
+    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_width", "BarWidthSpinner", 16, widget_tree)
+    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/spacing", "SpacingSpinner", 0, widget_tree)
     g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col1", "Color1", ( 255, 0, 0 ), widget_tree, default_alpha = 255)
     g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col2", "Color2", ( 0, 0, 255 ), widget_tree, default_alpha = 255)
     
@@ -72,8 +73,20 @@ class G15Impulse():
         self.gconf_key = gconf_key
         self.active = False
         self.last_paint = None
+        self.audio_source_index = 0
+
+        import impulse
+        sys.modules[ __name__ ].impulse = impulse
+        sys.path.append(os.path.join(os.path.dirname(__file__), "themes"))
+
+    def set_audio_source( self, *args, **kwargs ):
+        impulse.setSourceIndex( self.audio_source_index )
         
     def activate(self):
+        self.width = self.screen.driver.get_size()[0]
+        self.height = self.screen.driver.get_size()[1]
+        self.mode = "default"
+        self.theme_module = None
         self.active = True
         self.page = None
         self.background_painter_set = False
@@ -115,19 +128,32 @@ class G15Impulse():
     def destroy(self):
         pass
     
+
+    def on_load_theme (self):
+        if not self.theme_module or self.mode != self.theme_module.__name__:
+            self.theme_module = __import__( self.mode )
+            self.theme_module.load_theme( self )
+    
     def load_config(self):
+        print "Loading config"
+        self.set_audio_source()
+        
         self.mode = self.gconf_client.get_string(self.gconf_key + "/mode")
-        if self.mode == None or self.mode == "":
-            self.mode = "spectrum"
+        if self.mode == None or self.mode == "" or self.mode == "spectrum" or self.mode == "scope":
+            self.mode = "default"
         self.paint_mode = self.gconf_client.get_string(self.gconf_key + "/paint")
         if self.paint_mode == None or self.mode == "":
             self.paint_mode = "screen"
+        self.on_load_theme()
             
 # TODO check why this must be 32
-#        self.bars = self.gconf_client.get_int(self.gconf_key + "/bars")
-#        if self.bars == 0:
-#            self.bars = 32
-        self.bars = 32
+        self.bars = self.gconf_client.get_int(self.gconf_key + "/bars")
+        if self.bars == 0:
+            self.bars = 16
+        self.bar_width = self.gconf_client.get_int(self.gconf_key + "/bar_width")
+        if self.bar_width == 0:
+            self.bar_width = 16
+        self.spacing = self.gconf_client.get_int(self.gconf_key + "/spacing")
         self.col1 = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/col1", ( 255, 0, 0, 255 )) 
         self.col2 = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/col2", ( 0, 0, 255, 255 ))
             
@@ -206,6 +232,17 @@ class G15Impulse():
         return ( cols[0], cols[1], cols[2] )
     
     def paint(self, canvas):
+        if not self.theme_module: 
+            return
+
+        fft = False
+        if hasattr( self.theme_module, "fft" ) and self.theme_module.fft:
+            fft = True
+
+        audio_sample_array = impulse.getSnapshot( fft )
+        self.theme_module.on_draw( audio_sample_array, canvas, self )
+    
+    def old_paint(self, canvas):
         fft = self.mode == "spectrum"
         
         started_paint = time.time()

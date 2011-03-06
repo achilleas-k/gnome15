@@ -28,6 +28,10 @@ AC_CHECK_LIB(pulse, pa_stream_new)
 AC_OUTPUT([
 Makefile
 impulse15/Makefile
-impulse15/default/Makefile
+impulse15/themes/Makefile
+impulse15/themes/default/Makefile
+impulse15/themes/circlelcd/Makefile
+impulse15/themes/circleline/Makefile
+impulse15/themes/original/Makefile
 native/Makefile
 ])
