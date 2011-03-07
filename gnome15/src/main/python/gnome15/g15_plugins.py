@@ -31,6 +31,9 @@ import threading
 # Logging
 import logging
 logger = logging.getLogger("plugins")
+
+imported_plugins = []
+plugin_key = "/apps/gnome15/plugins"
             
 def list_plugin_dirs(path):
     plugindirs = []
@@ -50,7 +53,6 @@ def get_extra_plugin_dirs():
             plugindirs += list_plugin_dirs(dir)
     return plugindirs
 
-imported_plugins = []
 for plugindir in get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + list_plugin_dirs(pglobals.plugin_dir): 
     plugin_name = os.path.basename(plugindir)
     pluginfiles = [fname[:-3] for fname in os.listdir(plugindir) if fname == plugin_name + ".py"]
@@ -81,16 +83,18 @@ def get_supported_models(plugin):
         pass        
     return supported_models
         
-def is_key_reserved(key):
+def is_key_reserved(key, gconf_client):
     if key in [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3  ]:
         return True
-    for mod in imported_plugins:       
-        try :
-            keys = getattr(mod, "reserved_keys")
-            if key in keys:
-                return True
-        except AttributeError: 
-            pass
+    for mod in imported_plugins:  
+        enabled_key = plugin_key + "/" + mod.id + "/enabled"
+        if gconf_client.get_bool(enabled_key):  
+            try :
+                keys = getattr(mod, "reserved_keys")
+                if key in keys:
+                    return True
+            except AttributeError: 
+                pass
 
 class G15Plugins():
     def __init__(self, screen):
@@ -101,8 +105,7 @@ class G15Plugins():
         self.mgr_active = False
         self.started = []
         self.activated = []
-        self.plugin_key = "/apps/gnome15/plugins"
-        self.conf_client.add_dir(self.plugin_key, gconf.CLIENT_PRELOAD_NONE)
+        self.conf_client.add_dir(plugin_key, gconf.CLIENT_PRELOAD_NONE)
         self.module_map = {}
         self.plugin_map = {}
         
@@ -126,7 +129,7 @@ class G15Plugins():
             self.mgr_started = False
             self.started = []
             for mod in imported_plugins:
-                plugin_dir_key = self.plugin_key + "/" + mod.id
+                plugin_dir_key = plugin_key + "/" + mod.id
                 self.conf_client.add_dir(plugin_dir_key, gconf.CLIENT_PRELOAD_NONE)
                 key = plugin_dir_key + "/enabled"
                 self.conf_client.notify_add(key, self.plugin_changed);
@@ -156,7 +159,7 @@ class G15Plugins():
             if plugin_id in self.module_map:
                 instance = self.module_map[plugin_id]
             if now_enabled and instance == None:
-                instance = self._create_instance(plugin, self.plugin_key + "/" + plugin_id)
+                instance = self._create_instance(plugin, plugin_key + "/" + plugin_id)
                 self.started.append(instance)
                 if self.mgr_active == True:
                     self._activate_instance(instance)
@@ -235,7 +238,7 @@ class G15Plugins():
                 callback(idx, len(self.started), mod.name)
         except Exception as e:
             logger.error("Failed to activate plugin %s. %s" % ( mod.id, str(e)))   
-            self.conf_client.set_bool(self.plugin_key + "/" + mod.id + "/enabled", False)              
+            self.conf_client.set_bool(plugin_key + "/" + mod.id + "/enabled", False)              
             traceback.print_exc(file=sys.stderr)
         
             

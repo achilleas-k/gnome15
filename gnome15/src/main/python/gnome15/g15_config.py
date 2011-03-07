@@ -134,7 +134,7 @@ class G15Config:
         self.macro_name_field = self.widget_tree.get_object("MacroNameField")
         self.macro_script = self.widget_tree.get_object("MacroScript")
         self.memory_bank_vbox = self.widget_tree.get_object("MemoryBankVBox")      
-        self.macrosModel = self.widget_tree.get_object("MacroModel")
+        self.macros_model = self.widget_tree.get_object("MacroModel")
         self.profiles_model = self.widget_tree.get_object("ProfileModel")
         self.run_command = self.widget_tree.get_object("RunCommand")
         self.run_simple_macro = self.widget_tree.get_object("RunSimpleMacro")
@@ -240,19 +240,28 @@ class G15Config:
             logger.warning("BAMF not available, falling back to WNCK")
             self.bamf_matcher = None
         
-        # See if the Gnome15 service is running
+        # Show infobar component to start desktop service if it is not running
         self.infobar = gtk.InfoBar()       
-        content = self.infobar.get_content_area()
         self.warning_label = gtk.Label()
+        self.warning_label.set_line_wrap(True)
+        self.warning_label.set_alignment(0.0, 0.0)
         self.warning_image = gtk.Image()  
-        content.pack_start(self.warning_image, False, False)
-        content.pack_start(self.warning_label, True, True)
+        
+        # Start button
+        button_vbox = gtk.VBox()
         self.start_button = None
-
         self.start_button = gtk.Button("Start Service")
         self.start_button.connect("clicked", self._start_service)
-        content.pack_start(self.start_button, False, False)  
-        self.start_button.show()         
+        self.start_button.show()
+        button_vbox.pack_start(self.start_button, False, False)
+        
+        # Build the infobqar content
+        content = self.infobar.get_content_area()
+        content.pack_start(self.warning_image, False, False)
+        content.pack_start(self.warning_label, True, True)
+        content.pack_start(button_vbox, False, False)  
+        
+        # Add the bar to the glade built UI
         self.main_vbox.pack_start(self.infobar, True, True)
         self.warning_box_shown = False
         self.infobar.hide_all()
@@ -340,8 +349,6 @@ class G15Config:
             self.start_button.set_visible(start_service_button)
         self.warning_label.set_text(text)
         self.warning_label.set_use_markup(True)
-        self.warning_label.set_line_wrap(True)
-        self.warning_label.set_alignment(0.0, 0.5)
 
         if type == gtk.MESSAGE_WARNING:
             self.warning_image.set_from_stock(gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_DIALOG)
@@ -379,7 +386,7 @@ class G15Config:
             self.conf_client.set_int("/apps/gnome15/" + control.id, int(widget.get_value()))
         
     def _show_setup(self, widget):        
-        setup = g15setup.G15Setup(None, False, False)
+        setup = g15setup.G15Setup(self.main_window , False, False)
         setup.setup()
         self._add_controls()
         self._load_model()
@@ -630,7 +637,7 @@ class G15Config:
         for row in self.driver.get_key_layout():
             if not use:
                 for key in row:                
-                    reserved = g15plugins.is_key_reserved(key)
+                    reserved = g15plugins.is_key_reserved(key, self.conf_client)
                     in_use = self.selected_profile.is_key_in_use(memory, key)
                     if not in_use and not reserved:
                         use = key
@@ -643,9 +650,13 @@ class G15Config:
             print "No free keys"
         
     def _macro_properties(self, widget):
+        self._edit_macro(self._get_selected_macro())
+        
+    def _get_selected_macro(self):        
         (model, path) = self.macro_list.get_selection().get_selected()
-        key_list_key = model[path][2]
-        self._edit_macro(self.selected_profile.get_macro(self._get_memory_number(), g15profile.get_keys_from_key(key_list_key)))
+        if model and path:
+            key_list_key = model[path][2]
+            return self.selected_profile.get_macro(self._get_memory_number(), g15profile.get_keys_from_key(key_list_key))
         
     def _edit_macro(self, macro):
         self.editing_macro = macro
@@ -667,7 +678,7 @@ class G15Config:
             for key in row:
                 key_name = g15util.get_key_names([ key ])
                 g_button = gtk.ToggleButton(" ".join(key_name))
-                reserved = g15plugins.is_key_reserved(key)
+                reserved = g15plugins.is_key_reserved(key, self.conf_client)
                 in_use = self.selected_profile.is_key_in_use(memory, key, exclude = [self.editing_macro])
                 g_button.set_sensitive(not reserved and not in_use)
                 g_button.set_active(key in self.editing_macro.keys)
@@ -691,6 +702,7 @@ class G15Config:
         # Set the other details 
         self.memory_bank_label.set_text("M%d" % memory)
         self.macro_name_field.set_text(self.editing_macro.name)
+        self.simple_macro.set_text(self.editing_macro.simple_macro)
         self.macro_name_field.grab_focus()
         text_buffer = gtk.TextBuffer()
         text_buffer.set_text(self.editing_macro.macro)        
@@ -779,12 +791,22 @@ class G15Config:
         return sorted(self.selected_profile.macros[self._get_memory_number() - 1], key=lambda key: key.key_list_key)
         
     def _load_configuration(self, profile): 
+        current_selection = self._get_selected_macro()        
+        tree_selection = self.macro_list.get_selection()
         name = profile.window_name
         if name == None:
             name = ""            
-        self.macrosModel.clear()
-        for macro in self._get_sorted_list():
-            self.macrosModel.append([", ".join(g15util.get_key_names(macro.keys)), macro.name, macro.key_list_key, True])
+        self.macros_model.clear()
+        selected_macro = None
+        macros = self._get_sorted_list()
+        for macro in macros:
+            self.macros_model.append([", ".join(g15util.get_key_names(macro.keys)), macro.name, macro.key_list_key, True])
+            if current_selection != None and macro.key_list_key == current_selection.key_list_key:
+                tree_selection.select_path(self.macros_model.get_path(self.macros_model.get_iter(len(self.macros_model) - 1)))
+                selected_macro = macro        
+        if selected_macro == None and len(macros) > 0:            
+            tree_selection.select_path(self.macros_model.get_path(self.macros_model.get_iter(0)))
+                
         self.activate_on_focus.set_active(profile.activate_on_focus)
         self.activate_by_default.set_active(profile.activate_on_focus)
         if profile.window_name != None:

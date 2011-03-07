@@ -59,3 +59,4 @@ Provides: ${python:Provides}
 Description: Gnome15 Kernel driver
  Requires ali1234's kernel drivers. No additional processes
  need be running. Supports G13, G15 and G19
+

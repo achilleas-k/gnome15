@@ -1,0 +1,172 @@
+#!/bin/bash
+
+modules="pylibg19 gnome15 gnome15-gnome-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu"
+
+workspace=$HOME/Desktop/gnome15-build
+configure=n
+copy=n
+build=n
+sign=y
+install=n
+pdebuild=n
+
+for i in $*
+do
+    if [ "$i" = "configure" ]
+    then configure=y
+    elif [ "$i" = "copy" ]
+    then copy=y
+    elif [ "$i" = "nosign" ]
+    then sign=n
+    elif [ "$i" = "build" ]
+    then build=y
+    elif [ "$i" = "pdebuild" ]
+    then build=y
+         pdebuild=y
+    elif [ "$i" = "install" ]
+    then build=y
+         install=y
+    fi
+done
+
+for i in $modules
+do
+    if ! test -d $i 
+    then echo "$0: not a Gnome15 workspace"a >&2
+         exit 2
+    fi
+done
+
+if [ "$configure" = "y" ]
+then for i in $modules
+     do
+         cd $i
+         echo $i
+         if test -f setup.py
+         then echo " Distutils"
+              python setup.py clean
+              if python setup.py sdist
+              then echo "  Created source dist"
+              else echo "$0: Failed to create sdist" >&2
+                   exit 1
+              fi
+         else if test -f configure.in
+              then echo " Autotools"
+                   make clean
+                   make distclean
+                   if autoreconf -f && ./configure --prefix=/usr && make && make dist
+                   then echo "  Created source dist"
+                   else echo "$0: Failed to make dist" >&2
+                        exit 1
+                   fi
+              else echo "Meta"
+              fi
+         fi
+         cd .. 
+     done
+fi
+
+if [ "$copy" = "y" ]
+then for i in $modules
+     do
+         pushd $i
+         module_dir=$(pwd)
+         mkdir -p "${workspace}/${i}-package"
+   
+         # get latest version
+         if test -f setup.py
+         then version=$(python setup.py --version)
+              if ! cp dist/${i}-${version}.tar.gz "${workspace}/${i}-package/${i}_${version}.orig.tar.gz"
+              then echo "$0: failed to copy source tarball" >&2
+                   exit 1
+              fi
+         else if test -f configure.in
+              then version=$(./configure -V|head -1|awk '{ print $NF }')
+                   if ! cp ${i}-${version}.tar.gz "${workspace}/${i}-package/${i}_${version}.orig.tar.gz"
+                   then echo "$0: failed to copy source tarball" >&2
+                        exit 1
+                   fi
+              else version=$(grep "Version:" debian/control|awk '{ print $2 }')
+              fi
+         fi
+
+         pushd "${workspace}/${i}-package"
+         if ! rm -fr ${i}-${version}
+         then echo "$0: failed to remove old package directory" >&2
+              exit 1
+         fi
+
+         if test -f ${i}_${version}.orig.tar.gz && ! tar xzf ${i}_${version}.orig.tar.gz
+         then echo "$0: failed to extract source tarball" >&2
+              exit 1
+         else mkdir ${i}-${version}
+         fi
+
+
+         pushd ${i}-${version}
+         
+         if ! cp -Rp "${module_dir}/debian" .
+         then echo "$0: failed to copy debian directory to package directory" >&2
+         fi
+
+         popd # back to packge dir
+         popd # back to module
+         popd # back to workspace
+     done
+fi
+
+if [ "$build" = "y" ]
+then for i in $modules
+     do
+         pushd $i
+         equiv=n
+         if test -f setup.py
+         then version=$(python setup.py --version)
+         else if test -f configure.in
+              then version=$(./configure -V|head -1|awk '{ print $NF }')
+              else version=$(grep "Version:" debian/control|awk '{ print $2 }')
+                   equiv=y
+              fi
+         fi
+         popd
+
+         if ! pushd ${workspace}/${i}-package
+         then echo "$0: package $i not copied" >&2
+              exit 1
+         fi
+
+         pushd "${i}-${version}"
+
+
+         if [ "$pdebuild" = "y" ]
+         then if ! pdebuild
+              then echo "$0: pdebuild failed" >&2
+                   exit 1
+              fi
+         else if [ "$equiv" = "y" ]
+              then if equivs-build debian/control
+                   then mv $(ls *${version}*.deb) ..
+                   else echo "$0: failed to build metapackage" >&2
+                        exit 1
+                   fi
+              else if ! debuild -us -uc -b
+                   then echo "$0: failed to build binary package $i" >&2
+                        exit 1
+                   fi
+              fi
+         fi
+         
+         popd #back to package dir
+
+         if [ ${install} = "y" ]
+         then pwd
+              if ! sudo dpkg -i $(ls *${version}*.deb|grep -v g15daemon)
+              then echo "$0: failed to install package" >&2
+                   exit 1
+              fi
+         fi
+          
+         popd #back to default
+     done
+fi
+

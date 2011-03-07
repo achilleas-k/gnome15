@@ -32,6 +32,7 @@ import os
 import sys
 import cairo
 import rsvg
+import pango
 
 # Plugin details - All of these must be provided
 id="cairo-clock"
@@ -110,32 +111,27 @@ class G15CairoClock():
         self.gconf_key = gconf_key
         self.revert_timer = None
         self.timer = None
+        self.display_date = False
+        self.display_seconds = False
     
     def activate(self): 
         if self.screen.driver.get_bpp() == 1:
             raise Exception("Cairo clock not supported on low-res LCD")       
         self.notify_handler = self.gconf_client.notify_add(self.gconf_key, self.config_changed);   
         self.load_surfaces()         
-        self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_NORMAL, 
-                                        on_shown=self.on_shown,on_hidden=self.on_hidden,id="Cairo Clock",
-                                        thumbnail_painter = self.paint_thumbnail)
+        self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_NORMAL, id="Cairo Clock",
+                                        thumbnail_painter = self.paint_thumbnail, panel_painter = self.paint_panel)
         self.page.set_title("Cairo Clock")
-        self.screen.redraw(self.page)
-    
-    def on_shown(self):
-        self.cancel_refresh()
         self.refresh()
-            
-    def on_hidden(self):
-        self.cancel_refresh()
-        self.schedule_refresh()
-        
+    
     def cancel_refresh(self):
         if self.timer != None:
             self.timer.cancel()
             self.timer = None
         
     def load_surfaces(self):
+        self.display_date = self.gconf_client.get_bool(self.gconf_key + "/display_date")
+        self.display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")
         
         self.svg_size = None
         self.width = self.screen.width
@@ -182,15 +178,14 @@ class G15CairoClock():
         now = datetime.datetime.now()
         display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")
         
-        if self.screen.is_visible(self.page):
-            if display_seconds:
-                next_tick = now + datetime.timedelta(0, 1.0)
-                next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, int(next_tick.second))
-            else:
-                next_tick = now + datetime.timedelta(0, 60.0)
-                next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, 0)
-            delay = g15util.total_seconds( next_tick - now )        
-            self.timer = g15util.schedule("CairoRefresh", delay, self.refresh)
+        if display_seconds:
+            next_tick = now + datetime.timedelta(0, 1.0)
+            next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, int(next_tick.second))
+        else:
+            next_tick = now + datetime.timedelta(0, 60.0)
+            next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, 0)
+        delay = g15util.total_seconds( next_tick - now )        
+        self.timer = g15util.schedule("CairoRefresh", delay, self.refresh)
     
     def deactivate(self):
         self.cancel_refresh()
@@ -202,13 +197,13 @@ class G15CairoClock():
         self.load_surfaces()
         self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
         self.cancel_refresh()
-        self.schedule_refresh()
+        self.refresh()
         
     def destroy(self):
         pass
     
     def refresh(self):
-        self.screen.redraw(self.page)
+        self.screen.redraw(self.page, redraw_content = self.page != None and self.page == self.screen.get_visible_page())
         self.schedule_refresh()
         
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
@@ -217,27 +212,73 @@ class G15CairoClock():
         self._do_paint(canvas, self.width, self.height, False)
         canvas.scale(1 / scale, 1 / scale)
         return allocated_size 
+    
+    def paint_panel(self, canvas, allocated_size, horizontal):
+        if not self.screen.is_visible(self.page):
+            # Don't display the date or seconds on mono displays, not enough room as it is
+            if self.screen.driver.get_bpp() == 1:
+                text = self._get_time_text(False)
+                font_size = 8
+                factor = 2
+                font_name = "Fixed"
+                x = 1
+                gap = 1
+            else:
+                factor = 1 if horizontal else 2
+                font_name = "Sans"
+                if self.display_date:
+                    text = "%s\n%s" % ( self._get_time_text(), self._get_date_text() ) 
+                    font_size = allocated_size / 3
+                else:
+                    text = self._get_time_text()
+                    font_size = allocated_size / 2
+                x = 4
+                gap = 8
+                
+            pango_context, layout = g15util.create_pango_context(canvas, self.screen, text, align = pango.ALIGN_CENTER, font_desc = font_name, font_absolute_size =  font_size * pango.SCALE / factor)
+            x, y, width, height = g15util.get_extents(layout)
+            if horizontal: 
+                if self.screen.driver.get_bpp() == 1:
+                    y = 0
+                else:
+                    y = (allocated_size / 2) - height / 2
+                pango_context.move_to(x, y)
+            else:      
+                pango_context.move_to((allocated_size / 2) - width / 2, 0)
+            pango_context.update_layout(layout)
+            pango_context.show_layout(layout)
+            if horizontal:
+                return width + gap
+            else:
+                return height + 4
         
     def paint(self, canvas, draw_date = True):
             
         width = float(self.screen.width)
         height = float(self.screen.height)
             
-        self._do_paint(canvas, width, height, draw_date)
+        self._do_paint(canvas, width, height, self.display_date)
+        
+    def _get_time_text(self, display_seconds = None):
+        if display_seconds == None:
+            display_seconds = self.display_seconds
+        time_format = "%H:%M"
+        if display_seconds:
+            time_format = "%H:%M:%S"
+        return datetime.datetime.now().strftime(time_format)
+    
+    def _get_date_text(self):
+        return datetime.datetime.now().strftime("%d/%m")
         
     def _do_paint(self, canvas, width, height, draw_date = True):
+            
         now = datetime.datetime.now()
         properties = { }
         
-        time_format = "%H:%M"
-        display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")
-        if display_seconds:
-            time_format = "%H:%M:%S"
+        time = self._get_time_text()
             
         clock_width = min(width, height)
         clock_height = min(width, height)
-            
-        time = datetime.datetime.now().strftime(time_format)
         
         drawing_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, int(clock_width), int(clock_height))
         drawing_context = cairo.Context(drawing_surface)
@@ -251,9 +292,9 @@ class G15CairoClock():
             drawing_context.restore()
             
         # Date
-        if draw_date and self.gconf_client.get_bool(self.gconf_key + "/display_date"):
+        if draw_date:
             drawing_context.save()
-            date_text = datetime.datetime.now().strftime("%d/%m")
+            date_text = self._get_date_text()
             drawing_context.select_font_face("Liberation Sans",
                         cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
             drawing_context.set_font_size(27.0)
@@ -278,7 +319,7 @@ class G15CairoClock():
             
         self.draw_hand(drawing_context, self.hour_surfaces, clock_width, clock_height, h_deg)
         self.draw_hand(drawing_context, self.minute_surfaces, clock_width, clock_height, m_deg)
-        if display_seconds:
+        if self.display_seconds:
             self.draw_hand(drawing_context, self.second_surfaces, clock_width, clock_height, s_deg)
             
         # Above hands          

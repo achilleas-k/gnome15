@@ -296,7 +296,7 @@ class G15DBUSPageService(AbstractG15DBUSService):
     def Raise(self):
         self._plugin._service.screen.raise_page(self._page)
     
-    @dbus.service.method(IF_NAME, in_signature='', out_signature='')
+    @dbus.service.method(PAGE_IF_NAME, in_signature='', out_signature='')
     def CycleTo(self):
         self._plugin._service.screen.cycle_to(self._page)
     
@@ -552,12 +552,18 @@ class G15DBUSService(AbstractG15DBUSService):
     def GetServerInformation(self):
         return ( pglobals.name, "Gnome15 Project", pglobals.version, "1.0" )
     
+    
+    
     @dbus.service.method(IF_NAME, in_signature='s', out_signature='u')
     def GetPageSequenceNumber(self, id):
         for page in self._dbus_pages.values():
             if page._page.id == id:
                 return page._sequence_number
         return 0
+    
+    @dbus.service.method(IF_NAME, in_signature='', out_signature='u')
+    def GetVisiblePageSequenceNumber(self):
+        return self.GetPageSequenceNumber(self._service.screen.get_visible_page().id)
     
     @dbus.service.method(IF_NAME, in_signature='n', out_signature='au')
     def GetPageSequenceNumbers(self, priority):

@@ -56,6 +56,7 @@ def show_preferences(parent, gconf_client, gconf_key):
     g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/mode", "ModeCombo", "spectrum", widget_tree)
     g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/paint", "PaintCombo", "screen", widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bars", "BarsSpinner", 16, widget_tree)
+    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/audio_source", "AudioSourceSpinner", 0, widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_width", "BarWidthSpinner", 16, widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/spacing", "SpacingSpinner", 0, widget_tree)
     g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col1", "Color1", ( 255, 0, 0 ), widget_tree, default_alpha = 255)
@@ -135,9 +136,8 @@ class G15Impulse():
             self.theme_module.load_theme( self )
     
     def load_config(self):
-        print "Loading config"
+        self.audio_source_index = self.gconf_client.get_int(self.gconf_key + "/audio_source")
         self.set_audio_source()
-        
         self.mode = self.gconf_client.get_string(self.gconf_key + "/mode")
         if self.mode == None or self.mode == "" or self.mode == "spectrum" or self.mode == "scope":
             self.mode = "default"
@@ -240,7 +240,9 @@ class G15Impulse():
             fft = True
 
         audio_sample_array = impulse.getSnapshot( fft )
+        canvas.save()
         self.theme_module.on_draw( audio_sample_array, canvas, self )
+        canvas.restore()
     
     def old_paint(self, canvas):
         fft = self.mode == "spectrum"

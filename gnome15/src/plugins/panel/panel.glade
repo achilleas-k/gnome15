@@ -3,7 +3,6 @@
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
   <object class="GtkDialog" id="PanelDialog">
-    <property name="width_request">200</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Panel Preferences</property>
     <property name="resizable">False</property>
@@ -22,6 +21,7 @@
                 <property name="visible">True</property>
                 <property name="n_rows">3</property>
                 <property name="n_columns">2</property>
+                <property name="column_spacing">8</property>
                 <property name="row_spacing">4</property>
                 <child>
                   <object class="GtkLabel" id="label1">

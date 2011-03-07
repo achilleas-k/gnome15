@@ -104,6 +104,7 @@ def create_default():
         logger.info("No default macro profile. Creating one")
         default_profile = G15Profile(name = "Default")
         default_profile.id = 0
+        default_profile.activate_on_focus = True
         create_profile(default_profile)
 
 def create_profile(profile):
