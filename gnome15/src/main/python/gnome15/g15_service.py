@@ -180,6 +180,7 @@ class G15Service(Thread):
         self.defeat_profile_change = False
         self.screen = g15screen.G15Screen(self)
         self.service_listeners = []
+        self.plugins = None
                 
         # Expose Gnome15 functions via DBus
         logger.debug("Starting the DBUS service")
@@ -196,8 +197,9 @@ class G15Service(Thread):
         g15profile.notifier.stop()
         for listener in self.service_listeners:
             listener.shutting_down()
-        self.plugins.deactivate()
-        if self.driver.is_connected():
+        if self.plugins:
+            self.plugins.deactivate()
+        if self.driver and self.driver.is_connected():
             self.driver.disconnect() 
         self.dbus_service.stop()
         loop.quit() 
@@ -207,8 +209,9 @@ class G15Service(Thread):
         for listener in self.service_listeners:
             listener.starting_up()
                     
-        # Get the driver. If it is not configured, configuration will be required at this point
-        self.driver = g15drivermanager.get_driver(self.conf_client, on_close=self.on_driver_close)
+        if not self._load_driver():
+            self.shutdown()
+            return
         
         # Load main Glade file
         g15Config = os.path.join(pglobals.glade_dir, 'g15-config.glade')        
@@ -444,11 +447,22 @@ class G15Service(Thread):
         
     def driver_changed(self, client, connection_id, entry, args):
         if self.driver == None or self.driver.id != entry.value.get_string():
-            if self.driver != None and self.driver.is_connected() :
+            if self.driver and self.driver.is_connected() :
                 self.driver.disconnect()
-            else:
-                self.driver = g15drivermanager.get_driver(self.conf_client, on_close=self.on_driver_close)
+
+            self._load_driver()
+            if self.driver:
                 self.attempt_connection(0.0)
+            
+    def _load_driver(self): 
+        # Get the driver. If it is not configured, configuration will be required at this point
+        try :
+            self.driver = g15drivermanager.get_driver(self.conf_client, on_close=self.on_driver_close)
+            return True
+        except Exception as e:
+            self._process_exception(e)
+            self.driver = None
+            return False     
         
     def profiles_changed(self, client, connection_id, entry, args):
         self.screen.set_color_for_mkey()

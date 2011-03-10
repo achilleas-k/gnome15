@@ -1,7 +1,6 @@
 if ENABLE_UDEV
-bin_SCRIPTS = configure-logitech-g
 udevdir = @UDEV_RULES_PATH@
-udev_DATA = 40-logitechg.rules
+udev_DATA = 99-gnome15-kernel.rules
 
 EXTRA_DIST =  			\
 	$(udev_DATA)

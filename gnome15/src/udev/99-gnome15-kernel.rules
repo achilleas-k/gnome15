@@ -3,4 +3,4 @@
 #
 
 SUBSYSTEM=="leds", ACTION=="add", GROUP="video", MODE="0664"
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", GROUP="video", MODE="0664", RUN
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", GROUP="video", MODE="0664"

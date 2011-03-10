@@ -277,7 +277,7 @@ class Driver(g15driver.AbstractDriver):
     def _init_driver(self):        
         self.device = g15devices.find_device([g15driver.MODEL_G19])
         if self.device == None:
-            raise Exception("Could not find a G19 keyboard")
+            raise Exception("Could not find a G19 keyboard. This may be caused by incorrect device permissions. The files for the USB devices must be readable and writeable by the current user.")
             
     def _rgb_to_uint16(self, r, g, b):
         rBits = r * 32 / 255

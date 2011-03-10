@@ -1,9 +1,16 @@
+Source: gnome15-ubuntu
+Section: gnome
+Priority: optional
+Maintainer: Brett Smith <tanktarta@blueyonder.co.uk>
+Build-Depends: cdbs (>=0.4.73), debhelper (>= 7)
+Standards-Version: 3.8.4
+Homepage: http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/
+
 Package: gnome15-ubuntu
 Architecture: all
 Version: 0.5.0
-Depends: ${python:Depends}, gnome15, gnome15-impulse15, gnome15-indicator, gnome15-mono-icons, gnome15-accessibility-icons, gnome15-gnome-plugins
-Provides: ${python:Provides}
+Depends: gnome15, gnome15-impulse15, gnome15-indicator, gnome15-mono-icons, gnome15-accessibility-icons, gnome15-gnome-plugins
 Description: Meta-package for Gnome15 
  Gnome15 is a suite of tools for Logitech "G" keyboards. This
- packages depends on all other required for the best experience
+ packages depends on all others required for the best experience
  on Ubuntu.

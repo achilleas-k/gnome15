@@ -202,14 +202,21 @@ class G15MacroRecorder():
                 active_profile.delete_macro(self.screen.get_mkey(), record_keys)  
                 self.screen.redraw(self.page)   
             else:
-                str = ""
+                macro_script = ""
                 for row in self.script_model:
-                    if len(str) != 0:                    
-                        str += "\n"
-                    str += row[0] + " " + row[1]       
+                    if len(macro_script) != 0:                    
+                        macro_script += "\n"
+                    macro_script += row[0] + " " + row[1]       
                 self.icon = "tag-new"   
-                self.message = key_name + " created"                
-                active_profile.create_macro(self.screen.get_mkey(), record_keys, key_name, g15profile.MACRO_SCRIPT, str)
+                self.message = key_name + " created"
+                memory = self.screen.get_mkey()
+                macro = active_profile.get_macro(memory, record_keys)
+                if macro:
+                    macro.type = g15profile.MACRO_SCRIPT
+                    macro.macro = macro_script
+                    macro.save()
+                else:                
+                    active_profile.create_macro(memory, record_keys, key_name, g15profile.MACRO_SCRIPT, macro_script)
                 self.screen.redraw(self.page)
             self.hide_recorder(3.0)    
         else:
@@ -250,14 +257,14 @@ class G15MacroRecorder():
                     self.script_model.append(["Delay", str(int(delay * 1000))])
                     self.key_down = now
                 
-                logger.info(">>> event.detail = %s" % event.detail)
+                logger.debug("Event detail = %s" % event.detail)
                 keysym = local_dpy.keycode_to_keysym(event.detail, 0)
                 if not keysym:
-                    logger.info("Recorded %s" % event.detail)
+                    logger.debug("Recorded %s" % event.detail)
                     self.script_model.append([pr, event.detail])
                 else:
-                    logger.info(">>> keysym = %s" % str(keysym))
+                    logger.debug("Keysym = %s" % str(keysym))
                     s = self.lookup_keysym(keysym)
-                    logger.info("Recorded %s" % s)
+                    logger.debug("Recorded %s" % s)
                     self.script_model.append([pr, s])
                 self.screen.redraw(self.page)

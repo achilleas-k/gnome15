@@ -205,9 +205,7 @@ class G15Macro():
         self.current_page_count = 0
     
     def profiles_changed(self, arg0 = None, arg1 = None, arg2 = None, arg3 = None):
-        print "PROFILES CHANGED"
         self.screen.service.resched_cycle()
-        print "Checking pages"
         self.check_pages()
         
     def check_pages(self):       

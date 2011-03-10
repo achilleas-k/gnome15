@@ -81,6 +81,7 @@ class G15Config:
         self.service = service
         self.conf_client = gconf.client_get_default()
         self.rows = None
+        self.adjusting = False
         
         # Load main Glade file
         g15Config = os.path.join(pglobals.glade_dir, 'g15-config.glade')        
@@ -121,6 +122,7 @@ class G15Config:
         self.remove_button = self.widget_tree.get_object("RemoveButton")
         self.activate_on_focus = self.widget_tree.get_object("ActivateProfileOnFocusCheckbox")
         self.macro_name_renderer = self.widget_tree.get_object("MacroNameRenderer")
+        self.profile_name_renderer = self.widget_tree.get_object("ProfileNameRenderer")
         self.window_label = self.widget_tree.get_object("WindowLabel")
         self.activate_by_default = self.widget_tree.get_object("ActivateByDefaultCheckbox")
         self.send_delays = self.widget_tree.get_object("SendDelaysCheckbox")
@@ -190,6 +192,7 @@ class G15Config:
         self.new_macro_button.connect("clicked", self._new_macro)
         self.macro_list.connect("cursor-changed", self._select_macro)
         self.macro_name_renderer.connect("edited", self._macro_name_edited)
+        self.profile_name_renderer.connect("edited", self._profile_name_edited)
         self.m1.connect("toggled", self._memory_changed)
         self.m2.connect("toggled", self._memory_changed)
         self.m3.connect("toggled", self._memory_changed)
@@ -281,7 +284,7 @@ class G15Config:
         ''' Set up everything and display the window
         '''
         self.id = None                
-        self._load_configurations()         
+        self._load_profile_list()         
         self.main_window.run()
         self.main_window.hide()
         g15profile.notifier.stop()
@@ -489,16 +492,18 @@ class G15Config:
         return draw
     
     def _active_profile_changed(self, client, connection_id, entry, args):
-        self._load_configurations()
+        self._load_profile_list()
         
     def _send_delays_changed(self, widget=None):
-        self.selected_profile.send_delays = self.send_delays.get_active()
-        self.selected_profile.save()
+        if not self.adjusting:
+            self.selected_profile.send_delays = self.send_delays.get_active()
+            self.selected_profile.save()
         
     def _activate_on_focus_changed(self, widget=None):
-        self.selected_profile.activate_on_focus = widget.get_active()        
-        self.window_combo.set_sensitive(self.selected_profile.activate_on_focus)
-        self.selected_profile.save()
+        if not self.adjusting:
+            self.selected_profile.activate_on_focus = widget.get_active()        
+            self.window_combo.set_sensitive(self.selected_profile.activate_on_focus)
+            self.selected_profile.save()
         
     def _window_name_changed(self, widget):
         if isinstance(widget, gtk.ComboBoxEntry):
@@ -555,7 +560,7 @@ class G15Config:
         
     def _make_active(self, profile): 
         profile.make_active()
-        self._load_configurations()
+        self._load_profile_list()
         
     def _clear_icon(self, widget):
         self.selected_profile.icon = ""            
@@ -605,7 +610,7 @@ class G15Config:
             if self.selected_profile.id == active_profile.id:
                 self._make_active(g15profile.get_profile(0))
             self.selected_profile.delete()
-            self._load_configurations()
+            self._load_profile_list()
             
     def _macro_name_changed(self, widget):
         self.editing_macro.name = widget.get_text()
@@ -647,7 +652,7 @@ class G15Config:
             macro = self.selected_profile.create_macro(memory, [use], "Macro %s" % " ".join(g15util.get_key_names([use])), g15profile.MACRO_SIMPLE, "")
             self._edit_macro(macro)
         else:
-            print "No free keys"
+            logger.warning("No free keys")
         
     def _macro_properties(self, widget):
         self._edit_macro(self._get_selected_macro())
@@ -713,7 +718,7 @@ class G15Config:
         dialog.run()
         dialog.hide()
         self.editing_macro.name = self.macro_name_field.get_text()
-        self._load_configurations()
+        self._load_profile_list()
         
     def _remove_macro(self, widget):
         memory = self._get_memory_number()
@@ -726,7 +731,7 @@ class G15Config:
         if response == 1:
             keys = g15profile.get_keys_from_key(key_list_key)
             self.selected_profile.delete_macro(memory, keys)
-            self._load_configurations()
+            self._load_profile_list()
         
     def _add_profile(self, widget):
         dialog = self.widget_tree.get_object("AddProfileDialog") 
@@ -739,7 +744,7 @@ class G15Config:
             new_profile.name = new_profile_name
             g15profile.create_profile(new_profile)
             self.selected_profile = new_profile
-            self._load_configurations()
+            self._load_profile_list()
         
     def _get_memory_number(self):
         if self.m1.get_active():
@@ -749,7 +754,7 @@ class G15Config:
         elif self.m3.get_active():
             return 3
         
-    def _load_configurations(self):
+    def _load_profile_list(self):
         current_selection = self.selected_profile
         self.profiles_model.clear()
         tree_selection = self.profiles_tree.get_selection()
@@ -763,7 +768,7 @@ class G15Config:
             weight = 400
             if profile.id == active_id:
                 weight = 700
-            self.profiles_model.append([profile.name, weight, profile.id])
+            self.profiles_model.append([profile.name, weight, profile.id, profile.name != "Default" ])
             if current_selection != None and profile.id == current_selection.id:
                 tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(len(self.profiles_model) - 1)))
                 self.selected_profile = profile
@@ -774,11 +779,17 @@ class G15Config:
         else:
             default_profile = g15profile.G15Profile("Default")
             g15profile.create_profile(default_profile)
-            self._load_configurations()
+            self._load_profile_list()
             
         
     def _profiles_changed(self, macro_profile_id):        
-        gobject.idle_add(self._load_configurations)
+        gobject.idle_add(self._load_profile_list)
+        
+    def _profile_name_edited(self, widget, row, value):        
+        profile = self.profiles[int(row)]
+        if value != profile.name:
+            profile.name = value
+            profile.save()
         
     def _macro_name_edited(self, widget, row, value):
         macro = self._get_sorted_list()[int(row)] 
@@ -790,63 +801,67 @@ class G15Config:
     def _get_sorted_list(self):
         return sorted(self.selected_profile.macros[self._get_memory_number() - 1], key=lambda key: key.key_list_key)
         
-    def _load_configuration(self, profile): 
-        current_selection = self._get_selected_macro()        
-        tree_selection = self.macro_list.get_selection()
-        name = profile.window_name
-        if name == None:
-            name = ""            
-        self.macros_model.clear()
-        selected_macro = None
-        macros = self._get_sorted_list()
-        for macro in macros:
-            self.macros_model.append([", ".join(g15util.get_key_names(macro.keys)), macro.name, macro.key_list_key, True])
-            if current_selection != None and macro.key_list_key == current_selection.key_list_key:
-                tree_selection.select_path(self.macros_model.get_path(self.macros_model.get_iter(len(self.macros_model) - 1)))
-                selected_macro = macro        
-        if selected_macro == None and len(macros) > 0:            
-            tree_selection.select_path(self.macros_model.get_path(self.macros_model.get_iter(0)))
-                
-        self.activate_on_focus.set_active(profile.activate_on_focus)
-        self.activate_by_default.set_active(profile.activate_on_focus)
-        if profile.window_name != None:
-            self.window_combo.child.set_text(profile.window_name)
-        else:
-            self.window_combo.child.set_text("")
-        self.send_delays.set_active(profile.send_delays)
-        self.window_combo.set_sensitive(self.activate_on_focus.get_active())
-        
-        if profile.icon == None or profile.icon == "":
-            self.profile_icon.set_from_stock(gtk.STOCK_MISSING_IMAGE, gtk.ICON_SIZE_DIALOG)
-        else:
-            self.profile_icon.set_from_pixbuf(gtk.gdk.pixbuf_new_from_file_at_size(profile.icon, 48, 48))
-        
-        if profile.get_default():
-            self.window_combo.set_visible(False)
-            self.activate_on_focus.set_visible(False)
-            self.window_label.set_visible(False)
-            self.activate_by_default.set_visible(True)
-            self.remove_button.set_sensitive(False)
-        else:
-            self.window_combo.set_visible(True)
-            self.activate_on_focus.set_visible(True)
-            self.window_label.set_visible(True)
-            self.activate_by_default.set_visible(False)
-            self.remove_button.set_sensitive(True)
-            
-        if self.color_button != None:
-            rgb = profile.get_mkey_color(self._get_memory_number())
-            if rgb == None:
-                self.enable_color_for_m_key.set_active(False)
-                self.color_button.set_sensitive(False)
-                self.color_button.set_color(g15util.to_color((255, 255, 255)))
+    def _load_configuration(self, profile):
+        self.adjusting = True
+        try : 
+            current_selection = self._get_selected_macro()        
+            tree_selection = self.macro_list.get_selection()
+            name = profile.window_name
+            if name == None:
+                name = ""            
+            self.macros_model.clear()
+            selected_macro = None
+            macros = self._get_sorted_list()
+            for macro in macros:
+                self.macros_model.append([", ".join(g15util.get_key_names(macro.keys)), macro.name, macro.key_list_key, True])
+                if current_selection != None and macro.key_list_key == current_selection.key_list_key:
+                    tree_selection.select_path(self.macros_model.get_path(self.macros_model.get_iter(len(self.macros_model) - 1)))
+                    selected_macro = macro        
+            if selected_macro == None and len(macros) > 0:            
+                tree_selection.select_path(self.macros_model.get_path(self.macros_model.get_iter(0)))
+                    
+            self.activate_on_focus.set_active(profile.activate_on_focus)
+            self.activate_by_default.set_active(profile.activate_on_focus)
+            if profile.window_name != None:
+                self.window_combo.child.set_text(profile.window_name)
             else:
-                self.color_button.set_sensitive(True)
-                self.color_button.set_color(g15util.to_color(rgb))
-                self.enable_color_for_m_key.set_active(True)
+                self.window_combo.child.set_text("")
+            self.send_delays.set_active(profile.send_delays)
+            self.window_combo.set_sensitive(self.activate_on_focus.get_active())
             
-        self._load_windows()
-        self._set_available_actions()
+            if profile.icon == None or profile.icon == "":
+                self.profile_icon.set_from_stock(gtk.STOCK_MISSING_IMAGE, gtk.ICON_SIZE_DIALOG)
+            else:
+                self.profile_icon.set_from_pixbuf(gtk.gdk.pixbuf_new_from_file_at_size(profile.icon, 48, 48))
+            
+            if profile.get_default():
+                self.window_combo.set_visible(False)
+                self.activate_on_focus.set_visible(False)
+                self.window_label.set_visible(False)
+                self.activate_by_default.set_visible(True)
+                self.remove_button.set_sensitive(False)
+            else:
+                self.window_combo.set_visible(True)
+                self.activate_on_focus.set_visible(True)
+                self.window_label.set_visible(True)
+                self.activate_by_default.set_visible(False)
+                self.remove_button.set_sensitive(True)
+                
+            if self.color_button != None:
+                rgb = profile.get_mkey_color(self._get_memory_number())
+                if rgb == None:
+                    self.enable_color_for_m_key.set_active(False)
+                    self.color_button.set_sensitive(False)
+                    self.color_button.set_color(g15util.to_color((255, 255, 255)))
+                else:
+                    self.color_button.set_sensitive(True)
+                    self.color_button.set_color(g15util.to_color(rgb))
+                    self.enable_color_for_m_key.set_active(True)
+                
+            self._load_windows()
+            self._set_available_actions()
+        finally:
+            self.adjusting = False
             
     def _load_windows(self):        
         self.window_model.clear()
@@ -1005,9 +1020,10 @@ class G15Config:
             self.widget_tree.get_object("SwitchesFrame").hide() 
             
     def _profile_color_changed(self, widget):
-        self.selected_profile.set_mkey_color(self._get_memory_number(), 
-                                             g15util.color_to_rgb(widget.get_color()) if self.enable_color_for_m_key.get_active() else None)
-        self.selected_profile.save()
+        if not self.adjusting:
+            self.selected_profile.set_mkey_color(self._get_memory_number(), 
+                                                 g15util.color_to_rgb(widget.get_color()) if self.enable_color_for_m_key.get_active() else None)
+            self.selected_profile.save()
     
     def _color_for_mkey_enabled(self, widget):
         self.color_button.set_sensitive(widget.get_active())        

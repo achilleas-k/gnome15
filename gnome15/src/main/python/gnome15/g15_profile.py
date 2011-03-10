@@ -29,6 +29,7 @@ import os.path
 import errno
 import pyinotify
 import logging
+import traceback
 
 logger = logging.getLogger("macros")
 active_profile = None

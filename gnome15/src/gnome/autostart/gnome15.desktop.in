@@ -10,6 +10,7 @@ Type=Application
 Categories=
 GenericName=
 #X-GNOME-Autostart-Delay=8
+X-GNOME-Autostart-Phase=Initialization
 #AutostartCondition=GNOME /desktop/gnome/gnome15/enabled
 #X-GNOME-Autostart-Phase=Applications
 #X-GNOME-AutoRestart=true

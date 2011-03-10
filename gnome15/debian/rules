@@ -26,17 +26,19 @@ clean::
 	dh_auto_clean
 	dh_clean
 	rm -rf ${BUILDDIR} 
-        
-installbasic:
-	dh_auto_install DESTDIR=${DESTDIR} 
 
 install: installbasic
 	$(MAKE) install DESTDIR=${DESTDIR}
+        
+installbasic:
+	dh_testdir
+	dh_testroot
+	dh_prep
+# dh_auto_install DESTDIR=${DESTDIR} 
 	
 # Build architecture-independent files here.
 binary-indep: gnome15 gnome15-g15daemon gnome15-g19d gnome15-gtk gnome15-kernel gnome15-g19direct
 
-# Build architecture-dependent files here.
 gnome15:
 	dh_testdir
 	dh_testroot
@@ -85,6 +87,7 @@ gnome15-g19d:
 	dh_builddeb -p$@
     
 gnome15-g19direct:
+	rm -f debian/gnome15-g19direct/lib/udev/rules.d/40-* # Why???
 	dh_testdir
 	dh_testroot
 	dh_installdirs -p$@
@@ -116,6 +119,7 @@ gnome15-gtk:
 	dh_builddeb -p$@
 	
 gnome15-kernel:
+	rm -f debian/gnome15-kernel/lib/udev/rules.d/40-* # Why???
 	dh_testdir
 	dh_testroot
 	dh_installdirs -p$@
@@ -137,6 +141,6 @@ gnome15-kernel:
 
 # build and install are implicit, but THIS package source needs 2 cycles.
 # so the first cycle is implicity and this entry is for the second cycle. 
-binary: build install binary-arch binary-indep
+binary: build install binary-indep
 .PHONY: build build-stamp clean clean-patched binary-indep binary-arch binarydocs binary install configure configure-stamp installdocs installbasic unpatch patchsource patch-stamp
 

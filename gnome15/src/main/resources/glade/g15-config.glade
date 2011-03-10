@@ -48,6 +48,8 @@
       <column type="gint"/>
       <!-- column-name Id -->
       <column type="glong"/>
+      <!-- column-name Editable -->
+      <column type="gboolean"/>
     </columns>
   </object>
   <object class="GtkDialog" id="MainWindow">
@@ -404,8 +406,9 @@
                                                 <property name="title">Name</property>
                                                 <property name="expand">True</property>
                                                 <child>
-                                                  <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                                                  <object class="GtkCellRendererText" id="ProfileNameRenderer"/>
                                                   <attributes>
+                                                    <attribute name="editable">3</attribute>
                                                     <attribute name="text">0</attribute>
                                                     <attribute name="weight">1</attribute>
                                                   </attributes>

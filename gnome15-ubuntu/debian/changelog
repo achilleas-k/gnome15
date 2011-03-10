@@ -1,4 +1,4 @@
-gnome15-ubuntu (0.5.0-1) maverick; urgency=low
+gnome15-ubuntu (0.5.0) maverick; urgency=low
 
   * First release of Gnome15 meta-package.
 

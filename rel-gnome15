@@ -1,12 +1,14 @@
 #!/bin/bash
 
-modules="pylibg19 gnome15 gnome15-gnome-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu"
+#modules="pylibg19 gnome15 gnome15-gnome-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu"
+modules="gnome15-ubuntu"
 
 workspace=$HOME/Desktop/gnome15-build
 configure=n
 copy=n
 build=n
 sign=y
+source=n
 install=n
 pdebuild=n
 
@@ -20,6 +22,8 @@ do
     then sign=n
     elif [ "$i" = "build" ]
     then build=y
+    elif [ "$i" = "source" ]
+    then source=y
     elif [ "$i" = "pdebuild" ]
     then build=y
          pdebuild=y
@@ -86,7 +90,7 @@ then for i in $modules
                    then echo "$0: failed to copy source tarball" >&2
                         exit 1
                    fi
-              else version=$(grep "Version:" debian/control|awk '{ print $2 }')
+              else version=$(grep "^Version:" debian/control|awk '{ print $2 }')
               fi
          fi
 
@@ -124,7 +128,7 @@ then for i in $modules
          then version=$(python setup.py --version)
          else if test -f configure.in
               then version=$(./configure -V|head -1|awk '{ print $NF }')
-              else version=$(grep "Version:" debian/control|awk '{ print $2 }')
+              else version=$(grep "^Version:" debian/control|awk '{ print $2 }')
                    equiv=y
               fi
          fi
@@ -143,15 +147,26 @@ then for i in $modules
               then echo "$0: pdebuild failed" >&2
                    exit 1
               fi
-         else if [ "$equiv" = "y" ]
-              then if equivs-build debian/control
-                   then mv $(ls *${version}*.deb) ..
-                   else echo "$0: failed to build metapackage" >&2
-                        exit 1
-                   fi
-              else if ! debuild -us -uc -b
+         else if [ "$source" = "y" ] 
+              then if ! debuild -S -us -uc
                    then echo "$0: failed to build binary package $i" >&2
                         exit 1
+                   fi
+              else if [ "$equiv" = "y" ]
+                   then :
+                        #if equivs-build debian/control
+                        #then mv $(ls *${version}*.deb) ..
+                        #else echo "$0: failed to build metapackage" >&2
+                        #     exit 1
+                        #fi
+                        if ! debuild -us -uc -b
+                        then echo "$0: failed to build binary package $i" >&2
+                             exit 1
+                        fi
+                   else if ! debuild -us -uc -b
+                        then echo "$0: failed to build binary package $i" >&2
+                             exit 1
+                        fi
                    fi
               fi
          fi
