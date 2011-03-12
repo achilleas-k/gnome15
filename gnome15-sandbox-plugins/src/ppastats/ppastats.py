@@ -38,7 +38,7 @@ name="PPA Statistics"
 description="Show download statistics and other information about your Ubuntu PPA."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
+site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110 ]
 

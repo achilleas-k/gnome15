@@ -1,37 +1,58 @@
 #!/bin/bash
 
-modules="pylibg19 gnome15 gnome15-gnome-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu"
-#modules="gnome15-ubuntu"
+modules="../pyinputevent pylibg19 g19d gnome15 gnome15-gnome-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu"
+base_dist="maverick"
+arch=$(dpkg --print-architecture)
 
-workspace=$HOME/Desktop/gnome15-build
+function get_version() {
+    pushd "${root_dir}/$1" >/dev/null 2>&1
+    if test -f setup.py
+    then version=$(python setup.py --version)
+    else if test -f configure.in
+         then version=$(./configure -V|head -1|awk '{ print $NF }')
+         else version=$(grep "^Version:" debian/control|awk '{ print $2 }')
+         fi
+    fi
+    echo $version
+    popd >/dev/null 2>&1
+}
+
+# Ops
 configure=n
 copy=n
+upload=n
+
+# Build types
 build=n
-sign=y
 source=n
-install=n
 pdebuild=n
 
-for i in $*
+#Options
+sign=y
+install=n
+dist="maverick"
+
+while [ $# -gt 0 ]
 do
-    if [ "$i" = "configure" ]
-    then configure=y
-    elif [ "$i" = "copy" ]
-    then copy=y
-    elif [ "$i" = "nosign" ]
-    then sign=n
-    elif [ "$i" = "build" ]
-    then build=y
-    elif [ "$i" = "source" ]
-    then source=y
-    elif [ "$i" = "pdebuild" ]
-    then build=y
-         pdebuild=y
-    elif [ "$i" = "install" ]
-    then build=y
-         install=y
-    fi
+    case "$1" in
+       "configure") configure=y ;;
+            "copy") copy=y ;;
+          "upload") upload=y ;;
+         "-nosign") sign=n ;;
+        "-install") install=y ;;
+              "-s") build=y
+                    source=y ;;
+              "-b") build=y ;;
+              "-p") build=y
+                    pdebuild=y ;;
+              "-d") dist="$2" 
+                    shift ;;
+                 *) echo "$0: [configure] [copy] [-nosign] [-s|-b|-p] [-d lucid|maverick]  [-install]" >&2
+                    exit 1 ;;
+     esac
+     shift
 done
+workspace=$HOME/Desktop/gnome15-build/${dist}
 
 for i in $modules
 do
@@ -40,11 +61,12 @@ do
          exit 2
     fi
 done
+root_dir=$(pwd)
 
 if [ "$configure" = "y" ]
 then for i in $modules
      do
-         cd $i
+         pushd $i >/dev/null 2>&1
          echo $i
          if test -f setup.py
          then echo " Distutils"
@@ -66,21 +88,22 @@ then for i in $modules
               else echo "Meta"
               fi
          fi
-         cd .. 
+         popd >/dev/null 2>&1
      done
 fi
 
 if [ "$copy" = "y" ]
 then for i in $modules
      do
-         pushd $i
+         pushd $i >/dev/null 2>&1
+         module_name=$(basename $i)
          module_dir=$(pwd)
-         mkdir -p "${workspace}/${i}-package"
+         mkdir -p "${workspace}/${module_name}-package" 2>/dev/null
    
          # get latest version
          if test -f setup.py
          then version=$(python setup.py --version)
-              if ! cp dist/${i}-${version}.tar.gz "${workspace}/${i}-package/${i}_${version}.orig.tar.gz"
+              if ! cp dist/${module_name}-${version}.tar.gz "${workspace}/${module_name}-package/${module_name}_${version}.orig.tar.gz"
               then echo "$0: failed to copy source tarball" >&2
                    exit 1
               fi
@@ -94,23 +117,38 @@ then for i in $modules
               fi
          fi
 
-         pushd "${workspace}/${i}-package"
-         if ! rm -fr ${i}-${version}
+         pushd "${workspace}/${module_name}-package" >/dev/null 2>&1
+         if ! rm -fr ${module_name}-${version}
          then echo "$0: failed to remove old package directory" >&2
               exit 1
          fi
 
-         if test -f ${i}_${version}.orig.tar.gz && ! tar xzf ${i}_${version}.orig.tar.gz
+         if test -f ${module_name}_${version}.orig.tar.gz && ! tar xzf ${module_name}_${version}.orig.tar.gz
          then echo "$0: failed to extract source tarball" >&2
               exit 1
-         else mkdir ${i}-${version}
+         else mkdir ${module_name}-${version}
          fi
 
 
-         pushd ${i}-${version}
+         pushd ${module_name}-${version} >/dev/null 2>&1
          
          if ! cp -Rp "${module_dir}/debian" .
          then echo "$0: failed to copy debian directory to package directory" >&2
+         fi
+
+         # If not working on the base distribution, then adjust the distributions in packages
+         if [ "$dist" != "$base_dist" ]
+         then echo "Adjusting distribution details"
+              changelog_version=$(head -1 debian/changelog|awk '{ print $2 }'|tr -d '('|tr -d ')')
+              new_changelog_version=${changelog_version}~lucid1
+              sed "s/ (${changelog_version}) ${base_dist}\;/ (${new_changelog_version}) ${dist}\;/" debian/changelog > debian/changelog.new
+              mv debian/changelog.new debian/changelog
+
+              # CDBS in Lucid is not new enough to have python rules, 
+              # so the version is adjusted and cdbs rules
+              # are inserted into the debian/rules file
+              #if [ "$dist" = "lucid" ]
+              #then sed "s/cdbs (>=.*)/ cdbc (>=ZZ(${new_changelog_version}) ${dist}\;/" debian/changelog > debian/changelog.new
          fi
 
          popd # back to packge dir
@@ -119,54 +157,40 @@ then for i in $modules
      done
 fi
 
+
 if [ "$build" = "y" ]
 then for i in $modules
      do
-         pushd $i
-         equiv=n
-         if test -f setup.py
-         then version=$(python setup.py --version)
-         else if test -f configure.in
-              then version=$(./configure -V|head -1|awk '{ print $NF }')
-              else version=$(grep "^Version:" debian/control|awk '{ print $2 }')
-                   equiv=y
-              fi
-         fi
-         popd
+         module_name=$(basename $i)
+         version=$(get_version $i)
 
-         if ! pushd ${workspace}/${i}-package
+         if ! pushd ${workspace}/${module_name}-package >/dev/null 2>&1
          then echo "$0: package $i not copied" >&2
               exit 1
          fi
 
-         pushd "${i}-${version}"
+         pushd "${module_name}-${version}" >/dev/null 2>&1
 
+         signarg1="-us"
+         signarg2="-uc"
+         if [ "$sign" = "y" ]
+         then signarg1=""
+              signarg2=""
+         fi
 
          if [ "$pdebuild" = "y" ]
-         then if ! pdebuild
+         then if ! BUILD_DIST=${dist} pdebuild -- --basetgz /var/cache/pbuilder/${dist}-${arch}.tgz --distribution ${dist} --override-config
               then echo "$0: pdebuild failed" >&2
                    exit 1
               fi
          else if [ "$source" = "y" ] 
-              then if ! debuild -S -us -uc
+              then if ! debuild -S ${signarg1} ${signarg2}
                    then echo "$0: failed to build binary package $i" >&2
                         exit 1
                    fi
-              else if [ "$equiv" = "y" ]
-                   then :
-                        #if equivs-build debian/control
-                        #then mv $(ls *${version}*.deb) ..
-                        #else echo "$0: failed to build metapackage" >&2
-                        #     exit 1
-                        #fi
-                        if ! debuild -us -uc -b
-                        then echo "$0: failed to build binary package $i" >&2
-                             exit 1
-                        fi
-                   else if ! debuild -us -uc -b
-                        then echo "$0: failed to build binary package $i" >&2
-                             exit 1
-                        fi
+                   if ! debuild ${signarg1} ${signarg2} -b
+                   then echo "$0: failed to build binary package $i" >&2
+                        exit 1
                    fi
               fi
          fi
@@ -182,6 +206,27 @@ then for i in $modules
          fi
           
          popd #back to default
+     done
+fi
+
+if [ "$upload" = "y" ]
+then for i in $modules
+     do
+         module_name=$(basename $i)
+         version=$(get_version $i)
+         pushd ${workspace}/${module_name}-package >/dev/null 2>&1
+         changelog_file="./${module_name}-${version}/debian/changelog"
+         changelog_version=$(head -1 "${changelog_file}"|awk '{ print $2 }'|tr -d '('|tr -d ')')
+         changes_file=${module_name}_${changelog_version}_source.changes
+         if [ -f ${changes_file} ]
+         then if ! dput ppa:tanktarta/gnome15 ${changes_file}
+              then echo $0: dput failed" >&2
+                   exit 1
+              fi
+         else echo "$0: no changes file $changes_file, did you build source (-s)" >&2
+              exit 1
+         fi
+         popd >/dev/null >&1
      done
 fi
 

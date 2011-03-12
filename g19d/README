@@ -6,7 +6,7 @@ It was based "Logitech-G19-Linux-Daemon" (http://github.com/MultiCoreNop/Logitec
 the work of "MultiCoreNop" (http://github.com/MultiCoreNop).
 
 A daemon was added to allow userspace access from the Gnome15 project. See
-http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/ for more information.
+http://www.gnome15.org/ for more information.
 
 
 Requirements

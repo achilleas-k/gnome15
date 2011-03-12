@@ -42,7 +42,7 @@ description="Allows selections of any currently active screen " + \
             "or L3-L5 on the the G15 to navigate and select."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
+site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10 ]
 reserved_keys = [ g15driver.G_KEY_MENU, g15driver.G_KEY_L2 ]

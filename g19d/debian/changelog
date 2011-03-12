@@ -1,3 +1,11 @@
+g19d (0.0.8-1) maverick; urgency=low
+
+  * Separated G19 support code out of daemon into separate library. G19D is
+    now deprecated in favour of the 'g19direct' driver include with Gnome15
+    itself.
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Thu, 10 Mar 2011 23:50:11 +0100
+ 
 g19d (0.0.7-1) maverick; urgency=low
 
   * Added a bit more logging.

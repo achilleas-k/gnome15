@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Brett Smith <tanktarta@blueyonder.co.uk>
 Build-Depends: cdbs (>=0.4.73), debhelper (>= 7)
 Standards-Version: 3.8.4
-Homepage: http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/
+Homepage: http://www.gnome15.org/
 
 Package: gnome15-ubuntu
 Architecture: all

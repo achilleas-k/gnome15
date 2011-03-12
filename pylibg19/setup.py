@@ -8,6 +8,6 @@ setup(name='pylibg19',
       author='MultiCoreNop,Brett Smith',
       author_email='tanktarta@blueyonder.co.uk',
       license="GPL",
-      url='http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/',
+      url='http://www.gnome15.org/',
       packages= [ 'g19' ],
       )

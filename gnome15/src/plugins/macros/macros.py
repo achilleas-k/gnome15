@@ -38,7 +38,7 @@ description="Displays the currently active macro profile and a summary of availa
     + "highlighted."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
+site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10 ]
 

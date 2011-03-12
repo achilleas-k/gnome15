@@ -41,7 +41,7 @@ description="Lists all running processes and allows them to be " + \
             "may be activated by the <b>Settings</b> key."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
+site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10 ]
 reserved_keys = [ g15driver.G_KEY_SETTINGS ]

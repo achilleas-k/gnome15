@@ -1,5 +1,5 @@
-AC_INIT(g19d, 0.0.7)
-AC_CONFIG_SRCDIR([g19d/globals.py])
+AC_INIT(g19d, 0.0.8)
+AC_CONFIG_SRCDIR([g19d/globals.py.in])
 AM_INIT_AUTOMAKE
 
 AM_MAINTAINER_MODE

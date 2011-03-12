@@ -48,7 +48,7 @@ description="Allows recording of macros. All feedback is provided on the LCD. " 
     + "The macro will be recorded on the currently profile and memory bank."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
+site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10 ]
 reserved_keys = [ g15driver.G_KEY_MR ]

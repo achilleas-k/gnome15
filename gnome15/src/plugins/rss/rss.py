@@ -41,7 +41,7 @@ description="A simple RSS reader. Multiple feeds may be added, with a screen bei
         + "other models G15. The entry may then be viewed in the browser using OK (G19), or L5 (other models)."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
+site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110 ]
 

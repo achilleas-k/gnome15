@@ -36,7 +36,7 @@ description="Set the keyboard backlight color using the LCD screen and menu keys
             "This plugin demonstrates the use of ordinary GTK widgets on the LCD." 
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
-site="http://www.tanktarta.pwp.blueyonder.co.uk/gnome15/"
+site="http://www.gnome15.org/"
 has_preferences=False
 supported_models = [ g15driver.MODEL_G19 ]
 
