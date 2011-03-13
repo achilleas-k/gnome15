@@ -282,9 +282,9 @@ if __name__ == '__main__':
         default=False, help="Force disbling of multimedia key support (default to automatic).")
     parser.add_option("-t", "--test", action="store_true", dest="test",
         default=False, help="Test whether the hardware exists and exit with 0 if it does, otherwise exit with 1.")
-    parser.add_option("-T", "--timeout", action="store_true", dest="timeout",
+    parser.add_option("-T", "--timeout", dest="timeout",
         default=10000, help="Timeout to use for writes to the USB device.")
-    parser.add_option("-W", "--resetwait", action="store_true", dest="reset_wait",
+    parser.add_option("-W", "--resetwait", dest="reset_wait",
         default=0, help="Number of milliseconds to wait after a reset before trying to connect")
     (options, args) = parser.parse_args()
     
