@@ -11,6 +11,8 @@ gnome15 (0.5.1-1) maverick; urgency=low
     wait.
     
   * Bug: processes plugin. Killing processes broken for G15
+  
+  * Bug: mpris plugin hangs if cover art doesn't exist
 
  -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun, 13 Mar 2011 19:01:02 +0100  
 
