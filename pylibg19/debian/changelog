@@ -1,3 +1,9 @@
+pylibg19 (0.0.2-1) maverick; urgency=low
+
+  * Added 'reset wait' option
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun, 13 Mar 2011 19:01:02 +0100
+
 pylibg19 (0.0.1-1) maverick; urgency=low
 
   * First release of separated G19 library.

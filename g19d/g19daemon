@@ -73,7 +73,7 @@ class Lobby(g19receivers.InputProcessor):
         else:
             logger.info("Letting kernel handle multimedia key support")
         
-        self.lg19 = G19(self.reset, self.mm_keys, options.timeout)
+        self.lg19 = G19(self.reset, self.mm_keys, options.timeout, options.reset_wait)
         
         # Show the splash
         self.show_splash()
@@ -284,6 +284,8 @@ if __name__ == '__main__':
         default=False, help="Test whether the hardware exists and exit with 0 if it does, otherwise exit with 1.")
     parser.add_option("-T", "--timeout", action="store_true", dest="timeout",
         default=10000, help="Timeout to use for writes to the USB device.")
+    parser.add_option("-W", "--resetwait", action="store_true", dest="reset_wait",
+        default=0, help="Number of milliseconds to wait after a reset before trying to connect")
     (options, args) = parser.parse_args()
     
     if options.test:

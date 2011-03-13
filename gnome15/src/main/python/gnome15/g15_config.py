@@ -82,6 +82,7 @@ class G15Config:
         self.conf_client = gconf.client_get_default()
         self.rows = None
         self.adjusting = False
+        self.connected = False
         
         # Load main Glade file
         g15Config = os.path.join(pglobals.glade_dir, 'g15-config.glade')        
@@ -246,6 +247,7 @@ class G15Config:
         # Show infobar component to start desktop service if it is not running
         self.infobar = gtk.InfoBar()       
         self.warning_label = gtk.Label()
+        self.warning_label.set_size_request(400, -1)
         self.warning_label.set_line_wrap(True)
         self.warning_label.set_alignment(0.0, 0.0)
         self.warning_image = gtk.Image()  
@@ -295,9 +297,10 @@ class G15Config:
         
     def _name_owner_changed(self, name, old_owner, new_owner):
         if name == "org.gnome15.Gnome15":
-            if old_owner == "":
+            print "Name owner change",name,old_owner,new_owner
+            if old_owner == "" and not self.connected:
                 self._connect()
-            else:
+            elif old_owner != "" and self.connected:
                 self._disconnect()
         
     def __del__(self):
@@ -310,6 +313,7 @@ class G15Config:
         for sig in self._signal_handles:
             self.session_bus.remove_signal_receiver(sig)
         self._signal_handles = []
+        self.connected = False
         
     def _connect(self):
         self.gnome15_service = self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service')
@@ -321,6 +325,7 @@ class G15Config:
         self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Service", signal_name='ShuttingDown'))  
         self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Driver", signal_name='Connected'))  
         self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Driver", signal_name='Disconnected'))
+        self.connected = True
         
     def _status_change(self, arg0 = None):
         if self.gnome15_service.IsStartingUp():            
@@ -346,6 +351,7 @@ class G15Config:
         g15util.run_script("g15-desktop-service", ["-f"])
     
     def _show_message(self, type, text, start_service_button = True):
+        print "Showing message",str(type),text
         self.infobar.set_message_type(type)
         if self.start_button != None:
             self.start_button.set_sensitive(True)
@@ -390,9 +396,11 @@ class G15Config:
         
     def _show_setup(self, widget):        
         setup = g15setup.G15Setup(self.main_window , False, False)
-        setup.setup()
-        self._add_controls()
-        self._load_model()
+        old_driver = self.conf_client.get_string("/apps/gnome15/driver")
+        new_driver = setup.setup()
+        if new_driver and new_driver != old_driver:            
+            self._add_controls()
+            self._load_model()
     
     def _show_preferences(self, widget):
         plugin = self._get_selected_plugin()

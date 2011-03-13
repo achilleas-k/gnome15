@@ -1,6 +1,7 @@
 #!/bin/bash
 
 modules="../pyinputevent pylibg19 g19d gnome15 gnome15-gnome-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu"
+modules="pylibg19 g19d gnome15 gnome15-gnome-plugins gnome15-ubuntu"
 base_dist="maverick"
 arch=$(dpkg --print-architecture)
 
@@ -38,8 +39,8 @@ do
        "configure") configure=y ;;
             "copy") copy=y ;;
           "upload") upload=y ;;
-         "-nosign") sign=n ;;
-        "-install") install=y ;;
+        "--nosign") sign=n ;;
+       "--install") install=y ;;
               "-s") build=y
                     source=y ;;
               "-b") build=y ;;
@@ -52,6 +53,12 @@ do
      esac
      shift
 done
+
+if [ "${build}" = "y" -a "${configure}" = "y" -a "${copy}" = n ]
+then echo "$0: if you are doing a configure and a build, you must do a copy (add 'copy' command)" >&2
+     exit 1
+fi
+
 workspace=$HOME/Desktop/gnome15-build/${dist}
 
 for i in $modules
@@ -188,7 +195,7 @@ then for i in $modules
                    then echo "$0: failed to build binary package $i" >&2
                         exit 1
                    fi
-                   if ! debuild ${signarg1} ${signarg2} -b
+              else if ! debuild ${signarg1} ${signarg2} -b
                    then echo "$0: failed to build binary package $i" >&2
                         exit 1
                    fi

@@ -4,4 +4,6 @@ udev_DATA = 99-gnome15-kernel.rules
 
 EXTRA_DIST =  			\
 	$(udev_DATA)
+else
+dist_udev_DATA = 99-gnome15-kernel.rules
 endif

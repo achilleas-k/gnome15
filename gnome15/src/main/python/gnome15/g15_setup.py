@@ -36,7 +36,7 @@ class G15Setup(gtk.Dialog):
         
         if len(g15drivermanager.imported_drivers) == 0:
             buttons = ( "Quit", gtk.RESPONSE_CLOSE)
-            heading = "No Gnome15 drivers were detected. Make sure you have installed the appropriate driver package for your hardware."
+            heading = "<b>No Gnome15 drivers were detected. Make sure you have installed the appropriate driver package for your hardware.</b>"
             icon = "error"
         else:
             icon = "input-keyboard"
@@ -45,12 +45,14 @@ class G15Setup(gtk.Dialog):
             else:
                 buttons = ("Apply", gtk.RESPONSE_APPLY)
             if first_run:
-                heading = "This is the first run Gnome15, and you must choose a driver to use. " + \
-                        "Select the option below most appropriate to your setup. "
+                heading = "<b>This is the first run Gnome15, and you must choose a driver to use. " + \
+                        "Select the option below most appropriate to your setup.</b>"
             else:
-                heading = "Choose the driver most appropriate for your hardware."
+                heading = "<b>Choose the driver most appropriate for your hardware.</b>"
                 
         gtk.Dialog.__init__(self, "Gnome15 Setup", parent_window, gtk.DIALOG_DESTROY_WITH_PARENT | gtk.DIALOG_NO_SEPARATOR, buttons)
+                
+#        self.set_size_request(760, -1)
         self.conf_client = gconf.client_get_default()
         self.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
         self.selected_driver = None
@@ -72,13 +74,16 @@ class G15Setup(gtk.Dialog):
         heading_hbox.pack_start(image, False, False, 8)
         heading_label = gtk.Label(heading)
         heading_label.set_line_wrap(True)
+        heading_label.set_alignment(0.0, 0.5)
+        heading_label.set_line_wrap(True)
+        heading_label.set_use_markup(True)
         heading_hbox.pack_start(heading_label, True, True, 8)
         
         self.vbox.add(heading_hbox)
         
         if len(g15drivermanager.imported_drivers) != 0:
             driver_table = gtk.VBox()
-            driver_table.set_spacing(4)
+            driver_table.set_spacing(8)
             driver_table.set_border_width(8)
             button_group = None
             
@@ -102,7 +107,8 @@ class G15Setup(gtk.Dialog):
                     
                 driver_table.pack_start(driver_top, True, True)
                 desc_label = gtk.Label(driver_mod.description)
-                desc_label.set_alignment(0.2, 0.5)
+                desc_label.set_size_request(600, -1)
+                desc_label.set_alignment(0.0, 0.5)
                 desc_label.set_line_wrap(True)
                 desc_label.set_use_markup(True)
                 driver_table.pack_start(desc_label, True, True)

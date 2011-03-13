@@ -15,13 +15,13 @@ class G19(object):
 
     '''
 
-    def __init__(self, resetOnStart=False, enable_mm_keys=False, write_timeout = 10000):
+    def __init__(self, resetOnStart=False, enable_mm_keys=False, write_timeout = 10000, reset_wait = 0):
         '''Initializes and opens the USB device.'''
         
         logger.info("Setting up G19 with write timeout of %d", write_timeout)
         self.enable_mm_keys = enable_mm_keys
         self.__write_timeout = write_timeout
-        self.__usbDevice = G19UsbController(resetOnStart, enable_mm_keys)
+        self.__usbDevice = G19UsbController(resetOnStart, enable_mm_keys, reset_wait)
         self.__usbDeviceMutex = threading.Lock()
         self.__keyReceiver = G19Receiver(self)
         self.__threadDisplay = None
@@ -293,7 +293,7 @@ class G19UsbController(object):
 
     '''
 
-    def __init__(self, resetOnStart=False, enable_mm_keys=False):
+    def __init__(self, resetOnStart=False, enable_mm_keys=False, resetWait = 0):
         self.enable_mm_keys = enable_mm_keys
         logger.info("Looking for LCD device")
         self.__lcd_device = self._find_device(0x046d, 0xc229)
@@ -303,6 +303,7 @@ class G19UsbController(object):
         if resetOnStart:
             logger.info("Resetting LCD device")
             self.handleIf0.reset()
+            time.sleep(float(resetWait) / 1000.0)
             logger.info("Re-opening LCD device")
             self.handleIf0 = self.__lcd_device.open()
             logger.info("Re-opened LCD device")

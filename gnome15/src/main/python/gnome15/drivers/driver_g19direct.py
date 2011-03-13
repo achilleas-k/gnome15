@@ -30,10 +30,13 @@ from gnome15.g15_exceptions import NotConnectedException
 from threading import RLock, Thread
 import cairo
 import gnome15.g15_driver as g15driver
+import gnome15.g15_globals as g15globals
 import gnome15.g15_util as g15util
 import gnome15.g15_devices as g15devices
 import sys
 import os
+import gconf
+import gtk
 import re
 import usb
 import traceback
@@ -49,7 +52,7 @@ description="For use with the Logitech G19 only, this driver communicates direct
             "with the keyboard and so is more efficient than the G19D driver. Note, " + \
             "you will have to ensure the permissions of the USB devices are read/write " + \
             "for your user."
-has_preferences=False
+has_preferences=True
 
 MAX_X=320
 MAX_Y=240
@@ -101,6 +104,16 @@ foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (
 background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
 controls = [ keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control]
 
+def show_preferences(parent, gconf_client):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.glade"))    
+    dialog = widget_tree.get_object("DriverDialog")
+    dialog.set_transient_for(parent)
+    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/reset_usb", "Reset", False, widget_tree, True)
+    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/timeout", "Timeout", 10000, widget_tree, False)
+    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/reset_wait", "ResetWait", 0, widget_tree, False)
+    dialog.run()
+    dialog.hide()
 
 class Driver(g15driver.AbstractDriver):
 
@@ -110,6 +123,7 @@ class Driver(g15driver.AbstractDriver):
         self.lock = RLock()
         self._init_driver()
         self.connected = False
+        self.conf_client = gconf.client_get_default()
     
     def get_antialias(self):
         return cairo.ANTIALIAS_SUBPIXEL
@@ -153,11 +167,17 @@ class Driver(g15driver.AbstractDriver):
         self.callback = None
         
         # TODO Enable UINPUT if multimedia key support is required?
-        
-        reset = True
+        reset = self.conf_client.get_bool("/apps/gnome15/reset_usb")
         timeout = 10000
+        reset_wait = 0
+        e = self.conf_client.get("/apps/gnome15/timeout")
+        if e:
+            timeout = e.get_int()
+        e = self.conf_client.get("/apps/gnome15/reset_wait")
+        if e:
+            reset_wait = e.get_int()
         
-        self.lg19 = G19(reset, False, timeout)
+        self.lg19 = G19(reset, False, timeout, reset_wait)
         self.connected = True
         
         # Start listening for keys
@@ -170,6 +190,8 @@ class Driver(g15driver.AbstractDriver):
         if self.is_connected():  
             self.lg19.stop_event_handling()
             self.connected = False
+            if self.on_close != None:
+                self.on_close()
         else:
             raise Exception("Not connected")
         

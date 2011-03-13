@@ -186,9 +186,8 @@ class G15Service(Thread):
         logger.debug("Starting the DBUS service")
         self.dbus_service = g15dbus.G15DBUSService(self) 
         
-        self.start();
-        
-        logger.debug("Starting GLib loop")
+        gobject.idle_add(self.start)
+        logger.info("Starting GLib loop")
         loop.run()
         logger.debug("Exited GLib loop")
         
@@ -378,12 +377,11 @@ class G15Service(Thread):
         for listener in self.service_listeners:
             listener.driver_disconnected(self.driver)
                 
-                
         if not self.shutting_down:
             if retry:
                 self._process_exception(NotConnectedException("Keyboard driver disconnected."))
-            else:                
-                self.service_host.quit()
+            else:         
+                self.shutdown()
         
     def __del__(self):
         if self.plugins.get_active():
@@ -447,12 +445,16 @@ class G15Service(Thread):
         
     def driver_changed(self, client, connection_id, entry, args):
         if self.driver == None or self.driver.id != entry.value.get_string():
-            if self.driver and self.driver.is_connected() :
-                self.driver.disconnect()
-
-            self._load_driver()
-            if self.driver:
-                self.attempt_connection(0.0)
+            g15util.schedule("DriveChange", 1.0, self._reload_driver)
+                
+    def _reload_driver(self):
+        if self.driver and self.driver.is_connected() :
+            self.driver.disconnect()
+            # Let any clients receive their disconnecting. Driver changes should be rare so this is not a big deal
+            time.sleep(2.0)
+        self._load_driver()
+        if self.driver:
+            self.attempt_connection(0.0)
             
     def _load_driver(self): 
         # Get the driver. If it is not configured, configuration will be required at this point

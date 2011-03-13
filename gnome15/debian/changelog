@@ -1,3 +1,19 @@
+gnome15 (0.5.1-1) maverick; urgency=low
+
+  * Bug: Fixes font size on Redhat
+  
+  * Bug: Various autotools fixes for building on Redhat
+  
+  * Bug: g15-config sometimes gets the status wrong when switching between
+    drivers.
+    
+  * Bug: g19direct driver now has preferences for reset, timeout and reset
+    wait.
+    
+  * Bug: processes plugin. Killing processes broken for G15
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun, 13 Mar 2011 19:01:02 +0100  
+
 gnome15 (0.5.0-1) maverick; urgency=low
 
   * Feature: Major refactor, start of work required for KDE compatibility 

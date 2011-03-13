@@ -27,6 +27,8 @@ import cairo
 
 import Image
 import ImageMath
+import logging
+logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
 id="gtk"
@@ -119,6 +121,7 @@ class Driver(g15driver.AbstractDriver):
         g15driver.AbstractDriver.__init__(self, "gtk")
         self.lights = 0
         self.main_window = None
+        self.connected = False
         self.callback = None
         self.area = None
         self.image = None
@@ -134,18 +137,20 @@ class Driver(g15driver.AbstractDriver):
             return cairo.ANTIALIAS_NONE
         
     def disconnect(self):
+        logger.info("Disconnecting GTK driver")
         if not self.is_connected():
             raise Exception("Not connected")
         self.conf_client.notify_remove(self.notify_h)
-        gobject.idle_add(self._do_disconnect)
+        self.connected = False
         if self.on_close != None:
-            g15util.schedule("Close", 0, self.on_close)
+            self.on_close()
+        gobject.idle_add(self._do_disconnect)
         
     def is_connected(self):
-        return self.main_window != None and self.main_window.get_visible()
+        return self.connected
         
     def window_closed(self, window, evt):
-        if self.on_close != None:
+        if self.main_window != None and  self.on_close != None:
             self.on_close(retry=False)
     
     def get_model_names(self):
@@ -178,10 +183,14 @@ class Driver(g15driver.AbstractDriver):
             return 3
         
     def connect(self):
+        logger.info("Connecting GTK driver")
         if self.is_connected():
-            raise Exception("Already connected")      
+            raise Exception("Already connected") 
+        self.connected = True     
         self.notify_h = self.conf_client.notify_add("/apps/gnome15/gtk_mode", self._mode_changed);
-        gobject.idle_add(self._do_connect)
+        self._init_driver()
+        gobject.timeout_add(1000, self._do_connect)
+#        gobject.idle_add(self._do_connect)
     
     def get_name(self):
         return "Gtk"
@@ -263,17 +272,30 @@ class Driver(g15driver.AbstractDriver):
         if self.is_connected():
             gobject.idle_add(self.disconnect)
         else:
-            logger.warnging("Mode change would cause disconnect when already connected. %s" % str(entry) )
+            logger.warning("Mode change would cause disconnect when already connected. %s" % str(entry) )
+            
+    def _expose(self, widget, event):
+        self.context = widget.window.cairo_create()
+#        self.context.rectangle(event.area.x, event.area.y,
+#                           event.area.width, event.area.height)
+#        self.context.clip()
+        self.redraw()
+        return False
         
     def _draw_surface(self):
         # Finally paint the Cairo surface on the GTK widget
+        size = self.get_size()
         zoom = self.get_zoom()
+        width = size[0]
+        height = size[1]
         if self.area != None and self.area.window != None:
+            self.area.window.begin_paint_rect((0, 0, zoom * width, zoom * height))
             context = self.area.window.cairo_create()        
             context.set_antialias(self.get_antialias())
             context.scale(zoom, zoom)
             context.set_source_surface(self.image)
             context.paint()
+            self.area.window.end_paint()
             
     def _draw_pixbuf(self):
         size = self.get_size()
@@ -286,7 +308,6 @@ class Driver(g15driver.AbstractDriver):
             self.area.set_from_pixbuf(pixbuf)
         
     def _do_connect(self):
-        self._init_driver()
         self._init_ui()
         control = self.get_control_for_hint(g15driver.HINT_DIMMABLE)        
         if isinstance(control.value, int):
@@ -296,17 +317,21 @@ class Driver(g15driver.AbstractDriver):
             self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(control.value[0] << 8, control.value[1] << 8, control.value[2] << 8))
             
             
-    def _init_driver(self):          
+    def _init_driver(self):      
+        logger.info("Initialising GTK driver")    
         self.mode = self.conf_client.get_string("/apps/gnome15/gtk_mode")
         if self.mode == None or self.mode == "":
             self.mode = g15driver.MODEL_G19
             
         self.device = g15devices.Device(None, self.mode)
         self.controls = controls[self.mode]
+        logger.info("Initialised GTK driver")
         
     def _init_ui(self):
-        self.area = gtk.Image()
+        logger.info("Initialising GTK UI")
+        self.area = gtk.DrawingArea()
         self.area.set_double_buffered(True)
+        self.area.connect("expose_event", self._expose)
         self.hboxes = []
         
         zoomed_size = self.get_zoomed_size()
@@ -339,10 +364,12 @@ class Driver(g15driver.AbstractDriver):
         self.main_window.connect("delete-event", self.window_closed)
         
         self.main_window.show_all()
+        logger.info("Initialised GTK UI")
     
     def _do_disconnect(self):
         if self.main_window != None:
-            self.main_window.hide()
-            self.main_window.destroy()
+            w = self.main_window
             self.main_window = None
+            w.hide()
+            w.destroy()
         self.area = None

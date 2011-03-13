@@ -74,7 +74,7 @@ class G15Volume():
         self._gconf_client = gconf_client
         self._gconf_key = gconf_key
         self._volume = 0.0
-        self._thread = None
+        self._volthread = None
         self._mute = False
 
     def activate(self):
@@ -93,7 +93,7 @@ class G15Volume():
     ''' Functions specific to plugin
     ''' 
     def _start_monitoring(self):        
-        self._thread = VolumeThread(self).start()
+        self._volthread = VolumeThread(self).start()
     
     def _config_changed(self):    
         self._stop_monitoring()
@@ -101,8 +101,8 @@ class G15Volume():
         self._start_monitoring()
             
     def _stop_monitoring(self):
-        if self._thread != None:
-            self._thread.stop_monitoring()
+        if self._volthread != None:
+            self._volthread.stop_monitoring()
     
     def _reload_theme(self):        
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen)
@@ -213,14 +213,16 @@ class VolumeThread(Thread):
         self._event_mask = self._poll_desc[0][1]
         self._open = os.fdopen(self._fd)
         self._poll.register(self._open, select.POLLIN)
+        self._stop = False
         
     def _stop_monitoring(self):
+        self._stop = True
         self._open.close()
         self._mixer.close()
         
     def run(self):
         try :
-            while self._volume._activated:
+            while not self._stop:
                 if self._poll.poll(5):
                     g15util.schedule("popupVolume", 0, self._volume._popup)
                     if not self._open.read():
