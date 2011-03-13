@@ -278,28 +278,32 @@ def load_surface_from_file(filename, size = None):
         logger.warning("Empty filename requested")
         return None
     if "://" in filename:
-        file = urllib.urlopen(filename)
-        data = file.read()
-        type = file.info().gettype()
-        if filename.endswith(".svg"):
-            svg = rsvg.Handle()
-            svg.write(data)
-            svg_size = svg.get_dimension_data()[2:4]
-            if size == None:
-                size = svg_size
-            surface = cairo.ImageSurface(0, int(size[0]), int(size[1]))
-            context = cairo.Context(surface)
-            if size != svg_size:
-                scale = get_scale(size, svg_size)
-                context.scale(scale, scale)
-            svg.render_cairo(context)
-            return surface
-        else:
-            pbl = gtk.gdk.pixbuf_loader_new_with_mime_type(type)
-            pbl.write(data)
-            pixbuf = pbl.get_pixbuf()
-            pbl.close()
-            return pixbuf_to_surface(pixbuf, size)    
+        try:
+            file = urllib.urlopen(filename)
+            data = file.read()
+            type = file.info().gettype()
+            if filename.endswith(".svg"):
+                svg = rsvg.Handle()
+                svg.write(data)
+                svg_size = svg.get_dimension_data()[2:4]
+                if size == None:
+                    size = svg_size
+                surface = cairo.ImageSurface(0, int(size[0]), int(size[1]))
+                context = cairo.Context(surface)
+                if size != svg_size:
+                    scale = get_scale(size, svg_size)
+                    context.scale(scale, scale)
+                svg.render_cairo(context)
+                return surface
+            else:
+                pbl = gtk.gdk.pixbuf_loader_new_with_mime_type(type)
+                pbl.write(data)
+                pixbuf = pbl.get_pixbuf()
+                pbl.close()
+                return pixbuf_to_surface(pixbuf, size)
+        except IOError as e:
+            logger.warning("({})".format(e))
+            return None
     else:
 #        if filename.endswith(".svg"):
 #            svg = rsvg.Handle(filename)
