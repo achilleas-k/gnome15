@@ -60,10 +60,6 @@ AS_IF([test "x${HAVE_PYMOD_IMAGE}" = "xno"],
 AX_PYTHON_MODULE(cairo, [])
 AS_IF([test "x${HAVE_PYMOD_CAIRO}" = "xno"],
      [AC_MSG_ERROR([Requires Python bindings for the Cairo vector graphics library])])
-          
-AX_PYTHON_MODULE(gtk, [])
-AS_IF([test "x${HAVE_PYMOD_GTK}" = "xno"],
-     [AC_MSG_ERROR([Requires PyGTK, the GTK bindings for Python])])
 
 AX_PYTHON_MODULE(dbus, [])
 AS_IF([test "x${HAVE_PYMOD_DBUS}" = "xno"],

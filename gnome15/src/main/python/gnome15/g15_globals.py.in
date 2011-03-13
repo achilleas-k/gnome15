@@ -26,3 +26,8 @@ else:
 	themes_dir = "@prefix@/share/gnome15/themes"
 	icons_dir = "@prefix@/share/icons"
 	scripts_dir = "@prefix@/bin"
+
+# Font family has different name on Fedora and probably others. 
+fixed_size_font_name = "Fixed"
+if os.path.exists("/usr/share/fonts/ucs-miscfixed"):
+    fixed_size_font_name = "MiscFixed"

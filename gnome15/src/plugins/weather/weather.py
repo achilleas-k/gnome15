@@ -25,6 +25,7 @@ import gnome15.g15_screen as g15screen
 import gnome15.g15_theme as g15theme
 import gnome15.g15_util as g15util
 import gnome15.g15_driver as g15driver
+import gnome15.g15_globals as g15globals
 import datetime
 from threading import Timer
 import gtk
@@ -341,7 +342,7 @@ class G15Weather():
                 canvas.translate(size + 2, 0)
                 total_taken += size + 2
             if "temp_short" in self.properties:
-                pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp_short"], font_desc = "Fixed", font_absolute_size =  6 * pango.SCALE / 2)
+                pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp_short"], font_desc = g15globals.fixed_size_font_name, font_absolute_size =  6 * pango.SCALE / 2)
                 x, y, width, height = g15util.get_extents(layout)
                 total_taken += width
                 pango_context.update_layout(layout)

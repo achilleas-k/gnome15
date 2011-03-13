@@ -23,7 +23,7 @@ import select
 import pyinputevent.scancodes as S
 import gnome15.g15_driver as g15driver
 import gnome15.g15_util as g15util
-import gnome15.g15_globals as pglobals
+import gnome15.g15_globals as g15globals
 import gconf
 import fcntl
 import os
@@ -158,7 +158,7 @@ EVIOCGRAB = 0x40044590
 
 def show_preferences(parent, gconf_client):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(pglobals.glade_dir, "driver_kernel.glade"))    
+    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_kernel.glade"))    
     dialog = widget_tree.get_object("DriverDialog")
     dialog.set_transient_for(parent)  
     device_model = widget_tree.get_object("DeviceModel")
@@ -430,7 +430,7 @@ class Driver(g15driver.AbstractDriver):
             for element in document.getroot().iter():
                 style = element.get("style")
                 if style != None:
-                    element.set("style", style.replace("font-family:Sans", "font-family:Fixed"))
+                    element.set("style", style.replace("font-family:Sans", "font-family:%s" % g15globals.fixed_size_font_name))
                     
     def on_update_control(self, control):
         if control == g19_keyboard_backlight_control:

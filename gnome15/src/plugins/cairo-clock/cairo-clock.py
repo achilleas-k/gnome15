@@ -23,7 +23,8 @@
 import gnome15.g15_screen as g15screen 
 import gnome15.g15_theme as g15theme 
 import gnome15.g15_util as g15util 
-import gnome15.g15_driver as g15driver
+import gnome15.g15_driver as g15driver 
+import gnome15.g15_globals as g15globals
 import datetime
 from threading import Timer
 import time
@@ -220,7 +221,7 @@ class G15CairoClock():
                 text = self._get_time_text(False)
                 font_size = 8
                 factor = 2
-                font_name = "Fixed"
+                font_name = g15globals.fixed_size_font_name
                 x = 1
                 gap = 1
             else:

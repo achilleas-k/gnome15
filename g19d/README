@@ -1,5 +1,5 @@
-g19d 0.1
-========
+g19d 0.0.8
+==========
 
 This daemon is intended as a stop gap until there is kernel support for the g19.
 It was based "Logitech-G19-Linux-Daemon" (http://github.com/MultiCoreNop/Logitech-G19-Linux-Daemon),

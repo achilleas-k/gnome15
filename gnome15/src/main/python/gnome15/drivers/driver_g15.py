@@ -27,6 +27,7 @@ keyboard
 
 import gnome15.g15_driver as g15driver
 import gnome15.g15_devices as g15devices
+import gnome15.g15_globals as g15globals
 import socket
 import cairo
 import ImageMath
@@ -113,7 +114,7 @@ def fix_sans_style(root):
     for element in root.iter():
         style = element.get("style")
         if style != None:
-            element.set("style", style.replace("font-family:Sans","font-family:Fixed"))
+            element.set("style", style.replace("font-family:Sans","font-family:%s" % g15globals.fixed_size_font_name))
 
 class EventReceive(Thread):
     def __init__(self, socket, callback):
