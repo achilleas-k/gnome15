@@ -386,7 +386,10 @@ def get_icon_path(icon = None, size = 128):
                 logger.warning("Found icon %s (%d), but no filename was available" % ( o_icon, size ))
             return icon.get_filename()
         else:
-            logger.warning("Icon %s (%d) not found" % ( o_icon, size ))
+            if os.path.isfile(o_icon):
+                return o_icon
+            else:
+                logger.warning("Icon %s (%d) not found" % ( o_icon, size ))
     
 def get_app_icon(gconf_client, icon, size = 128):
     icon_path = get_icon_path(icon, size)
