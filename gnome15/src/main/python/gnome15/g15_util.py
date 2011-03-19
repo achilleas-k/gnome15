@@ -128,7 +128,7 @@ def spinner_changed(widget, gconf_client, key, model, decimal = False):
     if decimal:
         gconf_client.set_float(key, widget.get_value())
     else:
-        gconf_client.set_int(key, widget.get_value())
+        gconf_client.set_int(key, int(widget.get_value()))
         
 def configure_spinner_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, decimal = False):
     widget = widget_tree.get_object(widget_id)
@@ -150,18 +150,33 @@ def configure_combo_from_gconf(gconf_client, gconf_key, widget_id, default_value
     if widget == None:
         raise Exception("No widget with id %s." % widget_id)
     model = widget.get_model()
-    widget.connect("changed", combo_box_changed, gconf_client, gconf_key, model)
-    val = gconf_client.get_string(gconf_key)
-    if val == None or val == "":
-        val = default_value
+    widget.connect("changed", combo_box_changed, gconf_client, gconf_key, model, default_value)
+    
+    if isinstance(default_value, int):
+        e = gconf_client.get(gconf_key)
+        if e:
+            val = e.get_int()
+        else:
+            val = default_value
+    else:
+        val = gconf_client.get_string(gconf_key)
+        if val == None or val == "":
+            val = default_value
     idx = 0
     for row in model:
-        if row[0] == val:
+        if isinstance(default_value, int):
+            row_val = int(row[0])
+        else:
+            row_val = str(row[0])
+        if row_val == val:
             widget.set_active(idx)
         idx += 1
     
-def combo_box_changed(widget, gconf_client, key, model):
-    gconf_client.set_string(key, model[widget.get_active()][0])
+def combo_box_changed(widget, gconf_client, key, model, default_value):
+    if isinstance(default_value, int):
+        gconf_client.set_int(key, int(model[widget.get_active()][0]))
+    else:
+        gconf_client.set_string(key, model[widget.get_active()][0])
     
 def boolean_conf_value_change(client, connection_id, entry, args):
     widget, key = args
@@ -320,6 +335,10 @@ def load_surface_from_file(filename, size = None):
 #        else:
 #            return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
         return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
+    
+def image_to_surface(image, type = "ppm"):
+    # TODO make better
+    return pixbuf_to_surface(image_to_pixbuf(image, type))
         
 def pixbuf_to_surface(pixbuf, size = None):
     x = pixbuf.get_width()

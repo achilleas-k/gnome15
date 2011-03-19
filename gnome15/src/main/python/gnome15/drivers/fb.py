@@ -122,9 +122,12 @@ class fb_device():
         self.close()
     
     def get_screen_size(self):
-        variable_info = self.get_var_info()
-#        return variable_info.xres * variable_info.yres * variable_info.bits_per_pixel / 8
-        return 1376
+        # fb_sys_write() in linux kernel 2.6.36 relies on this value
+        return self.get_fixed_info().smem_len
+
+        # variable_info = self.get_var_info()
+        # return variable_info.xres * variable_info.yres * variable_info.bits_per_pixel / 8
+
     
     def dump(self):
         

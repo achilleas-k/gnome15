@@ -1,7 +1,8 @@
 #!/bin/bash
 
-modules="../pyinputevent pylibg19 g19d gnome15 gnome15-gnome-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu"
-modules="pylibg19 g19d gnome15 gnome15-gnome-plugins gnome15-ubuntu"
+modules="../pyinputevent pylibg19 g19d gnome15 gnome15-gnome-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu gnome15-iconpack"
+#modules="gnome15-iconpack"
+modules="gnome15-impulse15"
 base_dist="maverick"
 arch=$(dpkg --print-architecture)
 
@@ -48,7 +49,7 @@ do
                     pdebuild=y ;;
               "-d") dist="$2" 
                     shift ;;
-                 *) echo "$0: [configure] [copy] [-nosign] [-s|-b|-p] [-d lucid|maverick]  [-install]" >&2
+                 *) echo "$0: [configure] [copy] [upload] [-nosign] [-s|-b|-p] [-d lucid|maverick]  [-install]" >&2
                     exit 1 ;;
      esac
      shift
@@ -186,7 +187,7 @@ then for i in $modules
          fi
 
          if [ "$pdebuild" = "y" ]
-         then if ! BUILD_DIST=${dist} pdebuild -- --basetgz /var/cache/pbuilder/${dist}-${arch}.tgz --distribution ${dist} --override-config
+         then if ! BUILD_DIST=${dist} pdebuild -- --basetgz /var/cache/pbuilder/${dist}-${arch}-base.tgz --distribution ${dist} --override-config
               then echo "$0: pdebuild failed" >&2
                    exit 1
               fi
@@ -226,7 +227,9 @@ then for i in $modules
          changelog_version=$(head -1 "${changelog_file}"|awk '{ print $2 }'|tr -d '('|tr -d ')')
          changes_file=${module_name}_${changelog_version}_source.changes
          if [ -f "${changes_file}" ]
-         then if ! dput -f ppa:gnome15-team/${dist} ${changes_file}
+         then ppa_loc=ppa:gnome15-team/${dist}
+              ppa_loc=ppa:tanktarta/gnome15
+              if ! dput -f ${ppa_loc} ${changes_file}
               then echo "$0: dput failed" >&2
                    exit 1
               fi

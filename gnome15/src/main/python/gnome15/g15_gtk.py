@@ -27,6 +27,7 @@ import gtk
 import gobject
 import cairo
 import g15_driver as g15driver
+import g15_util as g15util
 import traceback
 from threading import Lock
  
@@ -42,7 +43,7 @@ class G15Window(gtk.OffscreenWindow):
         self.area_y = int(area_y)
         self.area_width = int(area_width)
         self.area_height = int(area_height)
-        
+        self.surface = None
         self.redraw_surface()
         
         
@@ -141,6 +142,17 @@ class G15Window(gtk.OffscreenWindow):
         self._do_capture
         return False
     
+    def get_as_surface(self):
+        self.redraw_surface()
+        lock = Lock()
+        self.lock = lock
+        lock.acquire()
+        self.queue_draw()
+        lock.acquire()
+        self.lock = None
+        lock.release()
+        return self.surface
+    
     def get_as_pixbuf(self):
         self.redraw_surface()
         lock = Lock()
@@ -161,8 +173,13 @@ class G15Window(gtk.OffscreenWindow):
         self.lock = Lock()
         
     def _do_capture(self):
+        print "_do_capture()"
         pixbuf = gtk.gdk.Pixbuf( gtk.gdk.COLORSPACE_RGB, False, 8, self.area_width, self.area_height)
+        print "created pixbuf"
         pixbuf.get_from_drawable(self.content.window, self.content.get_colormap(), 0, 0, 0, 0, self.area_width, self.area_height)
-        self.pixbuf = pixbuf 
+        print "built pixbuf"
+        self.surface = g15util.pixbuf_to_surface(pixbuf)
+        print "created surface"
+        self.pixbuf = pixbuf
         if self.lock != None:
             self.lock.release()

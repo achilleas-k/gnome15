@@ -254,6 +254,7 @@ class Driver(g15driver.AbstractDriver):
     def __init__(self, on_close=None):
         g15driver.AbstractDriver.__init__(self, "kernel")
         self.fb = None
+        self.var_info = None
         self.on_close = on_close
         self.key_thread = None
         self.conf_client = gconf.client_get_default()
@@ -339,9 +340,13 @@ class Driver(g15driver.AbstractDriver):
         return "Linux Kernel Driver"
         
     def get_size(self):
+        if self.var_info is None:
+            return (0,0)
         return (self.var_info.xres, self.var_info.yres)
         
     def get_bpp(self):
+        if self.var_info is None:
+            return 0
         return self.var_info.bits_per_pixel
     
     def get_controls(self):
@@ -582,7 +587,7 @@ class Driver(g15driver.AbstractDriver):
         else:
             f = open("/sys/class/graphics/" + os.path.basename(self.device_name) + "/name", "r")
             try :
-                self.fb_mode = f.readline()
+                self.fb_mode = f.readline().replace("\n", "")
             finally :
                 f.close()
         

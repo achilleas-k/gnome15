@@ -95,7 +95,7 @@ class G15Volume():
     def _start_monitoring(self):        
         self._volthread = VolumeThread(self).start()
     
-    def _config_changed(self):    
+    def _config_changed(self, client, connection_id, entry, args):    
         self._stop_monitoring()
         time.sleep(1.0)
         self._start_monitoring()

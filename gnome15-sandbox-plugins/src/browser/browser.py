@@ -59,6 +59,7 @@ class G15Browser():
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
         self.pixbuf = None
+        self.image = None
     
     def activate(self):
         self.offscreen_window = None
@@ -67,12 +68,17 @@ class G15Browser():
         gobject.idle_add(self._create_offscreen_window)
         
     def _create_offscreen_window(self):
-        self.moz = gtkmozembed.MozEmbed()        
+        print "Creating browser"
+        self.moz = gtkmozembed.MozEmbed()
+        print "Creating window"        
         self.offscreen_window = g15gtk.G15Window(self.screen, self.page, 0, 0, self.screen.width, self.screen.height)
         self.offscreen_window.content.add(self.moz)
         self.offscreen_window.show_all()
+        print "Loading URL"        
         self.moz.load_url("http://www.google.com")
+        print "Redrawing"        
         self.screen.redraw(self.page)
+        print "Loaded page"
         
     def deactivate(self):
         self.screen.del_page(self.page)
@@ -82,7 +88,5 @@ class G15Browser():
     
     def paint(self, canvas):
         if self.offscreen_window != None:
-            pixbuf = self.offscreen_window.get_as_pixbuf()
-            image = g15util.pixbuf_to_surface(pixbuf)
-            canvas.set_source_surface(image)
+            canvas.set_source_surface(self.offscreen_window.get_as_surface())
             canvas.paint()

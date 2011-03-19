@@ -94,9 +94,11 @@ class G15Config:
         self.session_bus = dbus.SessionBus()
         try :
             G15ConfigService(self.session_bus, self.main_window)
-        except dbus.exceptions.NameExistsException:
+        except dbus.exceptions.NameExistsException as e:
             self.session_bus.get_object(BUS_NAME, NAME).Present()
-            sys.exit(0)
+            self.session_bus.close()
+            g15profile.notifier.stop()
+            sys.exit()
 
         # Widgets
         self.site_label = self.widget_tree.get_object("SiteLabel")

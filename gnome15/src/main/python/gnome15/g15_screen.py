@@ -69,6 +69,9 @@ class G15Page():
         
         self.new_surface()
         
+    def is_visible(self):
+        return self.screen.get_visible_page() == self
+        
     def set_title(self, title):
         self.title = title   
         for l in self.screen.screen_change_listeners:

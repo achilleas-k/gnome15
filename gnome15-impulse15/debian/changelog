@@ -1,4 +1,10 @@
-gnome15-impulse15 (0.0.5-1) maverick; urgency=low
+gnome15-impulse15 (0.0.6-2) maverick; urgency=low
+  
+  * Build fix for Lucid
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue, 15 Mar 2010 08:04:03 +0100
+
+gnome15-impulse15 (0.0.5-2) maverick; urgency=low
 
   * De-activates properly and stops drawing when not visible
   * More modes (updated to latest Impulse code)
