@@ -34,3 +34,5 @@ config.guess
 pylibg19/dist
 pylibg19/MANIFEST
 pylibg19/build
+*.kdev4
+gnome15-kde-plugins/window-thumbnail/build
