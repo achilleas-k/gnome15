@@ -264,7 +264,11 @@ class Driver(g15driver.AbstractDriver):
         if len(buf) != expected_size:
             logger.warning("Invalid buffer size, expected %d, got %d" % ( expected_size, len(buf) ) )
         else:
-            self.lg19.send_frame(buf)
+            try:
+                self.lg19.send_frame(buf)
+            except usb.USBError as e:
+                traceback.print_exc(file=sys.stderr)
+                self.on_receive_error(e)
     
     def process_input(self, event):
         if self.callback == None:
@@ -289,12 +293,16 @@ class Driver(g15driver.AbstractDriver):
             self.callback(c, g15driver.KEY_STATE_DOWN)
             
     def _do_update_control(self, control):
-        if control == keyboard_backlight_control:
-            self.lg19.set_bg_color(control.value[0], control.value[1], control.value[2])
-        elif control == default_keyboard_backlight_control: 
-            self.lg19.save_default_bg_color(control.value[0], control.value[1], control.value[2])
-        elif control == lcd_brightness_control: 
-            self.lg19.set_display_brightness(control.value)
+        try:
+            if control == keyboard_backlight_control:
+                self.lg19.set_bg_color(control.value[0], control.value[1], control.value[2])
+            elif control == default_keyboard_backlight_control: 
+                self.lg19.save_default_bg_color(control.value[0], control.value[1], control.value[2])
+            elif control == lcd_brightness_control: 
+                self.lg19.set_display_brightness(control.value)
+        except usb.USBError as e:
+            traceback.print_exc(file=sys.stderr)
+            self.on_receive_error(e)
             
     def _init_driver(self):        
         self.device = g15devices.find_device([g15driver.MODEL_G19])

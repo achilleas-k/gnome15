@@ -8,7 +8,7 @@ Homepage: http://www.gnome15.org/
 
 Package: gnome15
 Architecture: all
-Depends: ${python:Depends}, python-gobject, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, cairo-clock, python-xlib, libgtk2.0-bin, python-pyinotify 
+Depends: ${python:Depends}, python-gobject, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, cairo-clock, python-xlib, libgtk2.0-bin, python-pyinotify, bamfdaemon 
 Recommends: gnome15-g19d | gnome15-g15daemon | gnome15-gtk | gnome15-kernel | gnome15-g19direct
 Suggests: python-setproctitle
 Provides: ${python:Provides}
