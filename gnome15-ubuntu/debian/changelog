@@ -1,3 +1,9 @@
+gnome15-ubuntu (0.6.0-1) maverick; urgency=low
+
+  * Feature: First release of separated Ubuntu plugins
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue, 29 Mar 2011 01:01:23 +0000  
+ 
 gnome15-ubuntu (0.5.1-1) maverick; urgency=low
 
   * Bug: Added 'reset wait' option

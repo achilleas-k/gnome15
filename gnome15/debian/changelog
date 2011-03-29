@@ -1,3 +1,16 @@
+gnome15 (0.6.0-1) maverick; urgency=low
+
+  * Bug: #733706 - Fixes font size on Redhat
+
+  * Bug: #734488 - macros plugin: profile icon not displayed on keyboard
+
+  * Bug: #737221 - Exception using kernel-module
+  
+  * Bug: g19direct driver handles USB errors and reconnects when they occur.
+    This is a work around to crashes when the system is heavily loaded.
+  
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue, 29 Mar 2011 01:05:33 +0000  
+
 gnome15 (0.5.1-1) maverick; urgency=low
 
   * Bug: Fixes font size on Redhat

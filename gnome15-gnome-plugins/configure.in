@@ -1,4 +1,4 @@
-AC_INIT(gnome15-gnome-plugins, 0.0.2)
+AC_INIT(gnome15-gnome-plugins, 0.0.3)
 AC_CONFIG_SRCDIR([src/cal/cal.py])
 AM_INIT_AUTOMAKE
 
@@ -37,9 +37,6 @@ Makefile
 src/Makefile
 src/cal/Makefile
 src/cal/default/Makefile
-src/indicator-messages/Makefile
-src/indicator-me/Makefile
-src/indicator-me/default/Makefile
 src/screensaver/Makefile
 src/screensaver/default/Makefile
 src/lcdbiff/Makefile

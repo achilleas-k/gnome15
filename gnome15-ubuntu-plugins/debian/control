@@ -1,0 +1,15 @@
+Source: gnome15-ubuntu-plugins
+Section: gnome
+Priority: optional
+Maintainer: Brett Smith <tanktarta@blueyonder.co.uk>
+Build-Depends: cdbs (>=0.4.73), debhelper (>= 7), autotools-dev, python-support, python-gtk2, python-gtk2-dev, gnome15, python-gnome2
+Standards-Version: 3.8.4
+Homepage: http://www.gnome15.org/
+
+Package: gnome15-ubuntu-plugins
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends}, gnome15, python-gnome2
+Provides: ${python:Provides}
+Description: Collection of Ubuntu specific plugins for Gnome15.
+ This package contains plugins that will only work when
+ running on Ubuntu Linux. Includes Indicator Me and Indicator Messages.
