@@ -319,7 +319,7 @@ class G15Theme:
         buf = ""
         for style in styles:
             buf += style + ":" + styles[style] + ";"
-        return buf
+        return buf.rstrip(';')
     
     def add_component(self, component):
         component.configure(self)
