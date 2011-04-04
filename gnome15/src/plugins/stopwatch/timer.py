@@ -25,7 +25,7 @@ class G15Timer():
     TIMER_MODE_STOPWATCH = 0
     TIMER_MODE_COUNTDOWN = 1
 
-    def __init__(self, plugin):
+    def __init__(self):
         self.__enabled = False
         self.__running = False
         self.label = ""
@@ -33,7 +33,6 @@ class G15Timer():
         self.initial_value = datetime.timedelta()
         self.loop = False
         self.reset()
-        self.plugin = plugin
 
     def set_enabled(self, value):
         if value != self.__enabled:

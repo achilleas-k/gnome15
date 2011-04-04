@@ -70,8 +70,8 @@ class G15Stopwatch():
     def activate(self):
         self.timer = None
         self.notify_timer = None
-        self.timer1 = g15timer.G15Timer(self)
-        self.timer2 = g15timer.G15Timer(self)
+        self.timer1 = g15timer.G15Timer()
+        self.timer2 = g15timer.G15Timer()
         self.load_configuration()
 
         self._reload_theme()
