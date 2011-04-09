@@ -137,6 +137,8 @@ src/plugins/panel/Makefile
 src/plugins/processes/Makefile
 src/plugins/notify-lcd/Makefile
 src/plugins/notify-lcd/default/Makefile
+src/plugins/stopwatch/Makefile
+src/plugins/stopwatch/default/Makefile
 src/plugins/sysmon/Makefile
 src/plugins/sysmon/default/Makefile
 src/plugins/rss/Makefile
