@@ -199,7 +199,8 @@ class G15Macro():
         
     def close_all_pages(self):
         for macro_page in self.macro_pages:
-            self.screen.del_page(macro_page.page)
+            if macro_page in self.screen.pages:
+                self.screen.del_page(macro_page.page)
         self.macro_pages = []
         self.current_page = 0
         self.current_page_count = 0

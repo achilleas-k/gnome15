@@ -1,0 +1,11 @@
+lgsetled (0.0.1-3) natty; urgency=low
+
+  * First natty release.
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue,  4 Apr 2011 17:57:10 +0000
+
+lgsetled (0.0.1-2) maverick; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun, 05 Dec 2010 11:33:46 +0000

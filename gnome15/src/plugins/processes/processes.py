@@ -27,11 +27,19 @@ import gnome15.g15_screen as g15screen
 import gnome15.g15_globals as g15globals
 import os
 import sys
+import dbus
 import cairo
 import traceback
 import base64
 import time
 from cStringIO import StringIO
+
+from Xlib import X, display, error, Xatom, Xutil
+import Xlib.protocol.event
+
+display = Xlib.display.Display()
+screen = display.screen()
+root = screen.root
 
 # Plugin details - All of these must be provided
 id="processes"
@@ -48,6 +56,16 @@ reserved_keys = [ g15driver.G_KEY_SETTINGS ]
 
 def create(gconf_key, gconf_client, screen):
     return G15Processes(gconf_client, gconf_key, screen)
+
+def sendEvent(win, ctype, data, mask=None):
+    """ Send a ClientMessage event to the root """
+    data = (data+[0]*(5-len(data)))[:5]
+    ev = Xlib.protocol.event.ClientMessage(window=win, client_type=ctype, data=(32,(data)))
+
+    if not mask:
+        mask = (X.SubstructureRedirectMask|X.SubstructureNotifyMask)
+    root.send_event(ev, event_mask=mask)
+    display.flush()
 
 class MenuItem():
     
@@ -77,10 +95,19 @@ class G15Processes():
         self.hidden = False
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
+        self.i = 0
+        
+        # Connection to BAMF for running applications list
+        self.session_bus = dbus.SessionBus()
+        try :
+            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
+        except:
+            logger.warning("BAMF not available, falling back to WNCK")
+            self.bamf_matcher = None
     
     def activate(self):
-        self.modes = [ "applicatios", "owner", "all" ]
-        self.mode = "owner"
+        self.modes = [ "applications", "owner", "all" ]
+        self.mode = "applications"
         self._reload_theme()
         self.timer = None
         self.page = None
@@ -94,46 +121,75 @@ class G15Processes():
         
     def destroy(self):
         pass
+    
+    def _check_selected(self):
+        if not self.selected in self.items:
+            if self.i > len(self.items):
+                return
+            self.selected = self.items[self.i]
+            
+    def _do_selected(self):
+        self.selected = self.items[self.i]
+        self.screen.service.resched_cycle()
+        self.screen.redraw(self.page)
+        
+    def _move_up(self, amount = 1):
+        self._reschedule()
+        self._check_selected()
+        self.i = self.items.index(self.selected)
+        self.i -= amount
+        if self.i < 0:
+            self.i = len(self.items) - 1
+        self._do_selected()
+        
+    def _move_down(self, amount = 1):
+        self._reschedule()
+        self._check_selected()
+        self.i = self.items.index(self.selected)
+        self.i += amount
+        if self.i >= len(self.items):
+            self.i = 0
+        self._do_selected()
                     
     def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP:              
+        if not post and state == g15driver.KEY_STATE_DOWN:              
             if self.screen.get_visible_page() == self.page:                    
                 if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
-                    i = self.items.index(self.selected)
-                    i -= 1
-                    if i < 0:
-                        i = len(self.items) - 1
-                    self.selected = self.items[i]
-                    self.screen.service.resched_cycle()
-                    self.screen.redraw(self.page)
+                    self._move_up(1)
                     return True
                 elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
-                    i = self.items.index(self.selected)
-                    i += 1
-                    if i >= len(self.items):
-                        i = 0
-                    self.selected = self.items[i]
-                    self.screen.service.resched_cycle()
-                    self.screen.redraw(self.page)
+                    self._move_down(1)
+                    return True                              
+                elif g15driver.G_KEY_RIGHT in keys:
+                    self._move_down(10)
+                    return True        
+                elif g15driver.G_KEY_LEFT in keys:
+                    self._move_up(10)
                     return True           
                 elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
+                    self._reschedule()
                     if self.selected != None:
-                        g15theme.ConfirmationScreen(self.screen, "Kill Process", "Are you sure you want to kill %d" % self.selected.process_id,  
+                        kill_name = str(self.selected.process_id) if isinstance(self.selected.process_id, int) else self.selected.process_name 
+                        g15theme.ConfirmationScreen(self.screen, "Kill Process", "Are you sure you want to kill %s" % kill_name,  
                                                     g15util.get_icon_path("utilities-system-monitor"), self._kill_process, self.selected.process_id)
                     
                     return True
                 elif g15driver.G_KEY_UP in keys or g15driver.G_KEY_SETTINGS in keys:
+                    self._reschedule()
                     self.screen.set_priority(self.page, g15screen.PRI_NORMAL)
                 
         return False
     
     def _kill_process(self, process_id):
-        os.system("kill %d" % process_id)
-        time.sleep(0.5)
-        if os.path.exists("/proc/%d" % process_id):
-            time.sleep(5.0)
+        if isinstance(process_id, int):
+            os.system("kill %d" % process_id)
+            time.sleep(0.5)
             if os.path.exists("/proc/%d" % process_id):
-                os.system("kill -9 %d" % process_id)
+                time.sleep(5.0)
+                if os.path.exists("/proc/%d" % process_id):
+                    os.system("kill -9 %d" % process_id)
+        else:
+            sendEvent(root, display.intern_atom("_NET_CURRENT_DESKTOP"), [1, X.CurrentTime])
         self._reload_menu()        
     
     def paint(self, canvas):
@@ -153,37 +209,58 @@ class G15Processes():
     '''
     Private
     '''
+            
+    def _load_applications(self):        
+        if self.bamf_matcher != None:            
+            for window in self.bamf_matcher.RunningApplications():
+                app = self.session_bus.get_object("org.ayatana.bamf", window)
+                view = dbus.Interface(app, 'org.ayatana.bamf.view')
+                application = dbus.Interface(app, 'org.ayatana.bamf.application')
+                xids = []
+                for i in application.Xids():
+                    xids.append(int(i))
+                self.items.append(MenuItem(xids, view.Name()))
+        else:
+            import wnck
+            for window in wnck.screen_get_default().get_windows():
+                self.items.append(MenuItem(window.get_process_id(), window.get_name()))
+                
     def _reload_menu(self):
         self.items = []
         
         sel_pid = 0 if self.selected == None else self.selected.process_id 
         
-        for process_id in os.listdir("/proc"):
-            if process_id.isdigit():
-                try :
-                    stat_file = file("/proc/%s/cmdline" % process_id, "r")
+        if self.mode == "applications":
+            self._load_applications()
+        else:
+            for process_id in os.listdir("/proc"):
+                if process_id.isdigit():
                     try :
-                        line = stat_file.readline().split("\0")
-                        name = line[0]
-                        if name != "":
-                            if self.mode == "all":
-                                self.items.append(MenuItem(int(process_id), name))
-                            else:
-                                owner_stat = os.stat("/proc/%s/cmdline" % process_id)
-                                owner_uid = owner_stat[4]
-                                if owner_uid == os.getuid():
-                                    pid = int(process_id)
-                                    item = MenuItem(pid, name)
-                                    self.items.append(item)
-                                    if pid == sel_pid:
-                                        self.selected = item
-                                
-                                
-                    finally :
-                        stat_file.close()
-                except :
-                    # In case the process disappears
-                    pass
+                        stat_file = file("/proc/%s/cmdline" % process_id, "r")
+                        try :
+                            line = stat_file.readline().split("\0")
+                            name = line[0]
+                            if name != "":
+                                if self.mode == "all":
+                                    self.items.append(MenuItem(int(process_id), name))          
+                                else:
+                                    owner_stat = os.stat("/proc/%s/cmdline" % process_id)
+                                    owner_uid = owner_stat[4]
+                                    if owner_uid == os.getuid():
+                                        pid = int(process_id)
+                                        item = MenuItem(pid, name)
+                                        self.items.append(item)
+                                        if pid == sel_pid:
+                                            self.selected = item
+                                    
+                                    
+                        finally :
+                            stat_file.close()
+                    except :
+                        # In case the process disappears
+                        pass
+                
+        self.items = sorted(self.items, key=lambda item: item.process_name)
             
         if self.selected == None:
             self.selected = self.items[0]
@@ -207,6 +284,11 @@ class G15Processes():
         
     def _refresh(self):
         self._reload_menu()
+        self._schedule_refresh()
+        
+    def _reschedule(self):
+        if self.timer != None:
+            self.timer.cancel()
         self._schedule_refresh()
         
     def _schedule_refresh(self):

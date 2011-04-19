@@ -150,6 +150,8 @@ src/plugins/videoplayer/Makefile
 src/plugins/videoplayer/default/Makefile
 src/plugins/weather/Makefile
 src/plugins/weather/default/Makefile
+src/plugins/webcam/Makefile
+src/plugins/webcam/default/Makefile
 src/themes/Makefile
 src/themes/default/Makefile
 src/udev/Makefile

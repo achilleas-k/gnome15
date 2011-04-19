@@ -1,3 +1,9 @@
+gnome15-iconpack (0.0.2-2) natty; urgency=low
+
+  * First natty release.
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue,  4 Apr 2011 17:57:10 +0000
+
 gnome15-iconpack (0.0.2-1) maverick; urgency=low
 
   * Fixed size of elementary cons

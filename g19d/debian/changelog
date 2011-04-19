@@ -1,3 +1,9 @@
+g19d (0.0.9-2) natty; urgency=low
+
+  * First natty release
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue,  4 Apr 2011 17:57:10 +0000
+ 
 g19d (0.0.9-1) maverick; urgency=low
 
   * Added 'reset wait' option

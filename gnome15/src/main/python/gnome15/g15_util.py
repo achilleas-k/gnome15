@@ -391,7 +391,7 @@ def get_embedded_image_url(path):
     file_str.write(base64.b64encode(img_data.getvalue()))
     return file_str.getvalue()
 
-def get_icon_path(icon = None, size = 128):
+def get_icon_path(icon = None, size = 128, warning = True):
     o_icon = icon
     if isinstance(icon, list):
         for i in icon:
@@ -401,14 +401,15 @@ def get_icon_path(icon = None, size = 128):
     else:
         icon = gtk_icon_theme.lookup_icon(icon, size, 0)
         if icon != None:
-            if icon.get_filename() == None:
+            if icon.get_filename() == None and warning:
                 logger.warning("Found icon %s (%d), but no filename was available" % ( o_icon, size ))
             return icon.get_filename()
         else:
             if os.path.isfile(o_icon):
                 return o_icon
             else:
-                logger.warning("Icon %s (%d) not found" % ( o_icon, size ))
+                if warning:
+                    logger.warning("Icon %s (%d) not found" % ( o_icon, size ))
     
 def get_app_icon(gconf_client, icon, size = 128):
     icon_path = get_icon_path(icon, size)

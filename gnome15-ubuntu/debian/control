@@ -8,7 +8,6 @@ Homepage: http://www.gnome15.org/
 
 Package: gnome15-ubuntu
 Architecture: all
-Version: 0.5.1
 Depends: gnome15, gnome15-impulse15, gnome15-indicator, gnome15-mono-icons, gnome15-accessibility-icons, gnome15-gnome-plugins, gnome15-ubuntu-plugins
 Description: Meta-package for Gnome15 
  Gnome15 is a suite of tools for Logitech "G" keyboards. This

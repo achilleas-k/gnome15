@@ -534,6 +534,7 @@ class G15Service(Thread):
                 keycode = 108
             else:
                 logger.warn("Unknown keysym %d",keysym_code)
+                keycode = 0
         else:
             keysym = self.get_keysym(ch)
             keycode = local_dpy.keysym_to_keycode(keysym)        
@@ -676,7 +677,7 @@ class G15Service(Thread):
 
     def activate_profile(self):
         logger.debug("Activating profile")
-        if self.screen.driver.is_connected():
+        if self.screen.driver and self.screen.driver.is_connected():
             self.screen.set_mkey(1)
     
     def deactivate_profile(self):

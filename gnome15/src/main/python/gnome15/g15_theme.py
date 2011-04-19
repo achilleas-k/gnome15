@@ -135,10 +135,10 @@ class Menu(Component):
                 
         if new_base != self.base:
             if new_base < self.base:
-                self.base -= max(1, int(( self.base - new_base ) / 10))
+                self.base -= max(1, int(( self.base - new_base ) / 3))
             else:
-                self.base += max(1, int(( new_base - self.base ) / 10))
-            g15util.schedule("ScrollTo", 0.05, self.theme.screen.redraw)
+                self.base += max(1, int(( new_base - self.base ) / 3))
+            g15util.schedule("ScrollTo", 0.1, self.theme.screen.redraw)
         
         canvas.save()
         

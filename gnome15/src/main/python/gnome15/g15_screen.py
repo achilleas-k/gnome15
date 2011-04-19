@@ -225,6 +225,7 @@ class G15Screen():
     
     def __init__(self, service):
         self.service = service
+        self.driver = None
         self.screen_change_listeners = []
         self.local_data = threading.local()
         self.local_data.surface = None

@@ -716,7 +716,7 @@ class G15Biff():
         self.theme.draw(canvas,
                         properties={
                                       "title" : "Email",
-                                      "icon" : g15util.get_icon_path("internet-mail")
+                                      "icon" : g15util.get_icon_path("mail-inbox")
                                       },
                         attributes={
                                       "items" : self.items,

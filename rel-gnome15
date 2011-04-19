@@ -1,8 +1,8 @@
 #!/bin/bash
 
-modules="../pyinputevent pylibg19 g19d gnome15 gnome15-gnome-plugins gnome15-ubuntu-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu gnome15-iconpack"
-modules="gnome15 gnome15-gnome-plugins gnome15-ubuntu-plugins gnome15-ubuntu"
-base_dist="maverick"
+modules="../pyinputevent pylibg19 g19d lgsetled gnome15 gnome15-gnome-plugins gnome15-ubuntu-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu gnome15-iconpack"
+#modules="gnome15-ubuntu gnome15-iconpack"
+base_dist="natty"
 arch=$(dpkg --print-architecture)
 
 function get_version() {
@@ -31,7 +31,7 @@ pdebuild=n
 #Options
 sign=y
 install=n
-dist="maverick"
+dist="natty"
 
 while [ $# -gt 0 ]
 do
@@ -59,7 +59,7 @@ then echo "$0: if you are doing a configure and a build, you must do a copy (add
      exit 1
 fi
 
-workspace=$HOME/Desktop/gnome15-build/${dist}
+workspace=$HOME/Documents/Gnome15/gnome15-build/${dist}
 
 for i in $modules
 do
@@ -70,10 +70,14 @@ do
 done
 root_dir=$(pwd)
 
-if [ "$configure" = "y" ]
-then for i in $modules
-     do
-         pushd $i >/dev/null 2>&1
+for i in $modules
+do
+    #
+    # Configure
+    # 
+    
+    if [ "$configure" = "y" ]
+    then pushd $i >/dev/null 2>&1
          echo $i
          if test -f setup.py
          then echo " Distutils"
@@ -96,13 +100,14 @@ then for i in $modules
               fi
          fi
          popd >/dev/null 2>&1
-     done
-fi
-
-if [ "$copy" = "y" ]
-then for i in $modules
-     do
-         pushd $i >/dev/null 2>&1
+    fi
+    
+    #
+    # Copy
+    #
+    
+    if [ "$copy" = "y" ]
+    then pushd $i >/dev/null 2>&1
          module_name=$(basename $i)
          module_dir=$(pwd)
          mkdir -p "${workspace}/${module_name}-package" 2>/dev/null
@@ -161,14 +166,10 @@ then for i in $modules
          popd # back to packge dir
          popd # back to module
          popd # back to workspace
-     done
-fi
+    fi
 
-
-if [ "$build" = "y" ]
-then for i in $modules
-     do
-         module_name=$(basename $i)
+    if [ "$build" = "y" ]
+    then module_name=$(basename $i)
          version=$(get_version $i)
 
          if ! pushd ${workspace}/${module_name}-package >/dev/null 2>&1
@@ -213,13 +214,10 @@ then for i in $modules
          fi
           
          popd #back to default
-     done
-fi
-
-if [ "$upload" = "y" ]
-then for i in $modules
-     do
-         module_name=$(basename $i)
+    fi
+    
+    if [ "$upload" = "y" ]
+    then module_name=$(basename $i)
          version=$(get_version $i)
          pushd ${workspace}/${module_name}-package >/dev/null 2>&1
          changelog_file="./${module_name}-${version}/debian/changelog"
@@ -236,6 +234,6 @@ then for i in $modules
               exit 1
          fi
          popd >/dev/null >&1
-     done
-fi
+    fi
+done
 

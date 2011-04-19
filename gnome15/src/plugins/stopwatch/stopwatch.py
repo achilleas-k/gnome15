@@ -234,39 +234,27 @@ class G15Stopwatch():
         self.load_configuration()
         self._reload_theme()
         self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
+        
+    def _get_or_default(self, key, default_value):
+        v = self.gconf_client.get(key)
+        return v.get_int() if v != None else default_value
+        
+    def _load_timer(self, timer, number):        
+        timer.set_enabled(self.gconf_client.get_bool(self.gconf_key + "/timer" + str(number) + "_enabled") or False)
+        timer.label = self.gconf_client.get_string(self.gconf_key + "/timer" + str(number) + "_label") or ""
+        if self.gconf_client.get_bool(self.gconf_key + "/timer" + str(number) + "_mode_countdown"):
+            timer.mode = g15timer.G15Timer.TIMER_MODE_COUNTDOWN
+            timer.initial_value = datetime.timedelta(hours = self._get_or_default(self.gconf_key + "/timer1_hours", 0), \
+                                                     minutes = self._get_or_default(self.gconf_key + "/timer1_minutes", 5), \
+                                                     seconds = self._get_or_default(self.gconf_key + "/timer1_seconds", 0))
+            timer.loop = self.gconf_client.get_bool(self.gconf_key + "/timer" + number + "_loop")
+        else:
+            timer.mode = g15timer.G15Timer.TIMER_MODE_STOPWATCH
+            timer.initial_value = datetime.timedelta(0, 0, 0)
 
     def load_configuration(self):
-        # Timer 1
-        self.timer1.set_enabled(self.gconf_client.get_bool(self.gconf_key + "/timer1_enabled") or False)
-
-        self.timer1.label = self.gconf_client.get_string(self.gconf_key + "/timer1_label") or ""
-
-        if self.gconf_client.get_bool(self.gconf_key + "/timer1_mode_stopwatch") == True:
-            self.timer1.mode = g15timer.G15Timer.TIMER_MODE_STOPWATCH
-        else:
-            self.timer1.mode = g15timer.G15Timer.TIMER_MODE_COUNTDOWN
-
-        self.timer1.initial_value = datetime.timedelta(hours = self.gconf_client.get_int(self.gconf_key + "/timer1_hours"), \
-                                                       minutes = self.gconf_client.get_int(self.gconf_key + "/timer1_minutes"), \
-                                                       seconds = self.gconf_client.get_int(self.gconf_key + "/timer1_seconds"))
-
-        self.timer1.loop = self.gconf_client.get_bool(self.gconf_key + "/timer1_loop")
-
-        # Timer 2
-        self.timer2.set_enabled(self.gconf_client.get_bool(self.gconf_key + "/timer2_enabled") or False)
-
-        self.timer2.label = self.gconf_client.get_string(self.gconf_key + "/timer2_label") or ""
-
-        if self.gconf_client.get_bool(self.gconf_key + "/timer2_mode_stopwatch") == True:
-            self.timer2.mode = g15timer.G15Timer.TIMER_MODE_STOPWATCH
-        else:
-            self.timer2.mode = g15timer.G15Timer.TIMER_MODE_COUNTDOWN
-
-        self.timer2.initial_value = datetime.timedelta(hours = self.gconf_client.get_int(self.gconf_key + "/timer2_hours"), \
-                                                       minutes = self.gconf_client.get_int(self.gconf_key + "/timer2_minutes"), \
-                                                       seconds = self.gconf_client.get_int(self.gconf_key + "/timer2_seconds"))
-
-        self.timer2.loop = self.gconf_client.get_bool(self.gconf_key + "/timer2_loop")
+        self._load_timer(self.timer1, '1')
+        self._load_timer(self.timer2, '2')
 
         # Set active timer
         if self.active_timer == None and self.timer1.get_enabled() and self.timer2.get_enabled():

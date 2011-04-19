@@ -8,6 +8,7 @@ gnome15_PYTHON = 		\
 	g15_dbus.py \
 	g15_gtk.py \
 	g15_driver.py \
+	g15_notify.py \
 	g15_driver_manager.py \
 	g15_globals.py \
 	g15_setup.py \
@@ -19,7 +20,8 @@ gnome15_PYTHON = 		\
 	g15_theme.py \
 	g15_util.py \
 	jobqueue.py \
-	objgraph.py
+	objgraph.py \
+	dbusmenu.py
 	
 EXTRA_DIST =  			\
 	$(gnome15_PYTHON)

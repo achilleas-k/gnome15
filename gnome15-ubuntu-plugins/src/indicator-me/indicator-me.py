@@ -30,7 +30,9 @@ import os
 import xdg.Config as config
 import gtk
 import Image
+import gobject
 from threading import Timer
+from dbus.exceptions import DBusException
 
 # Plugin details - All of these must be provided
 id="indicator-me"
@@ -54,27 +56,40 @@ class G15IndicatorMe():
         self.screen = screen;
         self.hide_timer = None
         self.session_bus = None
+        self.me_service = None
         self.gconf_client = gconf_client
         self.session_bus = dbus.SessionBus()
 
     def activate(self):
-        self.me_service = self.session_bus.get_object('org.ayatana.indicator.me', '/org/ayatana/indicator/me/service')
-        self.session_bus.add_signal_receiver(self._status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
-        self.session_bus.add_signal_receiver(self._user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")
+        self.natty = False
+        try :
+            self.me_service = self.session_bus.get_object('com.canonical.indicator.me', '/com/canonical/indicator/me/service')
+            self.session_bus.add_signal_receiver(self._status_icon_changed, dbus_interface = "com.canonical.indicator.me.service", signal_name = "StatusIconsChanged")
+            self.session_bus.add_signal_receiver(self._user_changed, dbus_interface = "com.canonical.indicator.me.service", signal_name = "UserChanged")
+            self.natty = True
+        except DBusException as dbe:
+            self.me_service = self.session_bus.get_object('org.ayatana.indicator.me', '/org/ayatana/indicator/me/service')
+            self.session_bus.add_signal_receiver(self._status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
+            self.session_bus.add_signal_receiver(self._user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")
+
         self._reload_theme()
         self._get_details()     
-        self.page = self.screen.new_page(self._paint, priority=g15screen.PRI_INVISIBLE, id="Indicator Me", panel_painter = self._paint_thumbnail)   
+        self.page = self.screen.new_page(self._paint, priority=g15screen.PRI_INVISIBLE, id="Indicator Me", panel_painter = self._paint_thumbnail)
     
     def deactivate(self):
-        self.session_bus.remove_signal_receiver(self._status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
-        self.session_bus.remove_signal_receiver(self._user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")      
+        if self.natty:
+            self.session_bus.remove_signal_receiver(self._status_icon_changed, dbus_interface = "com.canonical.indicator.me.service", signal_name = "StatusIconsChanged")
+            self.session_bus.remove_signal_receiver(self._user_changed, dbus_interface = "com.canonical.indicator.me.service", signal_name = "UserChanged")
+        else:
+            self.session_bus.remove_signal_receiver(self._status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
+            self.session_bus.remove_signal_receiver(self._user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")      
         
     def destroy(self):
         pass
         
     '''
     Private
-    '''
+    '''            
     
     def _status_icon_changed(self, new_icon):
         self._popup()

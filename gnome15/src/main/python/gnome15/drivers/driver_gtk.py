@@ -329,7 +329,7 @@ class Driver(g15driver.AbstractDriver):
         
     def _init_ui(self):
         logger.info("Initialising GTK UI")
-        self.area = gtk.DrawingArea()
+        self.area = gtk.Image()
         self.area.set_double_buffered(True)
         self.area.connect("expose_event", self._expose)
         self.hboxes = []

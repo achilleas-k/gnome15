@@ -170,9 +170,10 @@ class ColorChanger():
         self.controls = []            
         for c in self._driver.get_controls():
             if c.hint & g15driver.HINT_DIMMABLE != 0:
-                self.controls.append(c)
-                c.value = val
-                self._driver.update_control(c)
+                if isinstance(c.value, tuple):
+                    self.controls.append(c)
+                    c.value = val
+                    self._driver.update_control(c)
                 
         self.timer = g15util.schedule("ResetKeyboardLights", 3.0, self.reset)
                 
@@ -214,30 +215,33 @@ class G15Message():
         self.hints = hints
         self.embedded_image = None
         
-        if self.icon == None or self.icon == "":
-            if "image_data" in self.hints:
-                image_struct = self.hints["image_data"]
-                img_width = image_struct[0]
-                img_height = image_struct[1]
-                img_stride = image_struct[2]
-                has_alpha = image_struct[3]
-                bits_per_sample = image_struct[4]
-                channels = image_struct[5]
-                buf = ""
-                for b in image_struct[6]:
-                    buf += chr(b)
-                    
-                try :
-                    pixbuf = gtk.gdk.pixbuf_new_from_data(buf, gtk.gdk.COLORSPACE_RGB, has_alpha, bits_per_sample, img_width, img_height, img_stride)
-                    fh, self.embedded_image = tempfile.mkstemp(suffix=".png",prefix="notify-lcd")
-                    file = os.fdopen(fh)
-                    file.close()
-                    pixbuf.save(self.embedded_image, "png")
-                except :
-                    # Sometimes the image data seems to be bad
-                    logger.warn("Failed to decode notification image")
-                    self.icon = g15util.get_icon_path("dialog-information", 1024)
-            else:
+        if "image_path" in self.hints:
+            self.icon = self.hints["image_path"]
+            
+        if "image_data" in self.hints:
+            image_struct = self.hints["image_data"]
+            img_width = image_struct[0]
+            img_height = image_struct[1]
+            img_stride = image_struct[2]
+            has_alpha = image_struct[3]
+            bits_per_sample = image_struct[4]
+            channels = image_struct[5]
+            buf = ""
+            for b in image_struct[6]:
+                buf += chr(b)
+                
+            try :
+                pixbuf = gtk.gdk.pixbuf_new_from_data(buf, gtk.gdk.COLORSPACE_RGB, has_alpha, bits_per_sample, img_width, img_height, img_stride)
+                fh, self.embedded_image = tempfile.mkstemp(suffix=".png",prefix="notify-lcd")
+                file = os.fdopen(fh)
+                file.close()
+                pixbuf.save(self.embedded_image, "png")
+                self.icon = None
+            except :
+                # Sometimes the image data seems to be bad
+                logger.warn("Failed to decode notification image")
+                
+            if self.embedded_image == None and ( self.icon == None or self.icon == "" ):
                 self.icon = g15util.get_icon_path("dialog-information", 1024)
     
     def close(self):
@@ -285,7 +289,9 @@ class G15NotifyService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='susssasa{sv}i', out_signature='u')
     def Notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
-        logger.debug("Notify app=%s id=%s '%s'", app_name, id, summary)
+        logger.info("Notify app=%s id=%s '%s' {%s}", app_name, id, summary, hints)
+        if len(icon) > 0:
+            logger.info("   Icon data: %d %s" % (len(icon), str(icon)))
         try :                
             if self._active:
                 timeout = float(timeout) / 1000.0
@@ -328,7 +334,7 @@ class G15NotifyService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='u', out_signature='')
     def CloseNotification(self, id):        
-        logger.debug("Closing notification " % id)
+        logger.info("Closing notification " % id)
         self._lock.acquire()
         try :
             if self._gconf_client.get_bool(self._gconf_key + "/allow_cancel") and len(self._message_queue) > 0:
@@ -475,11 +481,12 @@ class G15NotifyService(dbus.service.Object):
         logger.debug("Dismissing current message. Reason code %d", reason)  
         self._lock.acquire()
         try :      
-            message = self._message_queue[0]
-            message.close()
-            del self._message_queue[0]
-            del self._message_map[message.id]
-            self.NotificationClosed(message.id, reason)
+            if len(self._message_queue) > 0:
+                message = self._message_queue[0]
+                message.close()
+                del self._message_queue[0]
+                del self._message_map[message.id]
+                self.NotificationClosed(message.id, reason)
             if len(self._message_queue) != 0:
                 self._notify()  
             else:

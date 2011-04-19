@@ -37,6 +37,7 @@ import ImageOps
 import array
 import struct
 import cairo
+import gobject
 import logging
 logger = logging.getLogger("g15daemon")
 

@@ -302,7 +302,8 @@ class MPRIS1Player(AbstractMPRISPlayer):
             self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 5.0, self.update_track)
         
     def on_stop(self):
-        self.timer.cancel()
+        if self.timer != None:
+            self.timer.cancel()
         self.session_bus.remove_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def track_changed_handler(self, detail):
@@ -378,7 +379,6 @@ class MPRIS2Player(AbstractMPRISPlayer):
         # Set the initial status
         self.check_status()
         
-        
     def on_stop(self): 
         self.session_bus.remove_signal_receiver(self.properties_changed_handler, dbus_interface = "org.freedesktop.DBus.Properties", signal_name = "PropertiesChanged") 
         self.session_bus.remove_signal_receiver(self.seeked, dbus_interface = "org.mpris.MediaPlayer2.Player", signal_name = "Seeked")        
@@ -410,21 +410,13 @@ class MPRIS2Player(AbstractMPRISPlayer):
             self.volume = int(properties["Volume"] * 100)
              
         if self.last_properties == None:
-            self._reload()
+            self.last_properties = dict(properties)
         else:
             for key in properties:
                 self.last_properties[key] = properties[key]
-            self._update_properties()
-        
-    def _reload(self):
-        self.load_song_details()
-        self.screen.redraw()
-            
-    def _update_properties(self):
-        if not self.stopped:
-            logger.info("Just updating properties")
+        if "Metadata" in self.last_properties:
             self.load_meta()
-            self.screen.redraw()
+            self.schedule_redraw()
         
     def load_song_details(self):
         if not self.stopped:
@@ -471,6 +463,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
     def get_progress(self):
         if self.status == "Playing":
             try :
+                # This call seems to be where it usually hangs, although not always?????
                 return self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Position") / 1000 / 1000
             except:
                 pass

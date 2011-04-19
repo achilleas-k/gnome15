@@ -94,7 +94,7 @@ class G15Menu():
         pass
                     
     def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP:
+        if not post and state == g15driver.KEY_STATE_DOWN:
 
             if self.page == None:            
                 # Menu not active, should we activate?

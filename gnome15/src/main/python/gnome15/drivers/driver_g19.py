@@ -194,7 +194,7 @@ class Driver(g15driver.AbstractDriver):
         self._init_driver()
         
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(4.0)
+        s.settimeout(30.0)
         s.connect((self.remote_host, self.remote_port))
         self.socket = s
         for control in self.get_controls():

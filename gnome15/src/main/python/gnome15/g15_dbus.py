@@ -213,10 +213,10 @@ class G15DBUSDriverService(dbus.service.Object):
     def CycleKeyboard(self, value):
         self.CancelBlink()
         for c in self._get_dimmable_controls():
-            if len(c.value) > 1:
-                self._service.cycle_color(value, c)
-            else:
+            if isinstance(c.value, int):
                 self._service.cycle_level(value, c)
+            else:
+                self._service.cycle_color(value, c)
     
     @dbus.service.method(DRIVER_IF_NAME, in_signature='ddan')
     def BlinkKeyboard(self, blink_delay, duration, levels):
@@ -495,6 +495,12 @@ class G15DBUSService(AbstractG15DBUSService):
             self.PageDestroyed(dbus_page._sequence_number)
             del self._dbus_pages[page.id]
             dbus_page.remove_from_connection()
+#            import sys
+#            import gc
+#            gc.collect()
+#            print hex(id(dbus_page)), type(dbus_page), sys.getrefcount(dbus_page), len(gc.get_referrers(dbus_page))
+#            for ref in gc.get_referrers(dbus_page):
+#                print "     ",str(ref)
         else:
             logger.warning("DBUS Page %s was deleted, but it never existed. Huh?" % ( page.id ))
        

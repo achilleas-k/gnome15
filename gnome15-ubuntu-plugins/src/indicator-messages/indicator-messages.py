@@ -32,6 +32,7 @@ import os
 import gtk
 import Image
 import indicator_messages_menu as messagesmenu
+import gnome15.dbusmenu as dbusmenu
 
 from lxml import etree
 
@@ -109,14 +110,24 @@ class G15IndicatorMessages():
         self._load_items()
         self.page = self.screen.new_page(self._paint, priority=g15screen.PRI_NORMAL, id="Indicator Messages", panel_painter = self._paint_panel, thumbnail_painter = self._paint_thumbnail)
         self.messages_menu.on_change = self._menu_changed
-        self.session_bus.add_signal_receiver(self._icon_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "IconChanged")
-        self.session_bus.add_signal_receiver(self._attention_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "AttentionChanged")
+        
+        if self.messages_menu.natty:
+            self.session_bus.add_signal_receiver(self._icon_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "IconChanged")
+            self.session_bus.add_signal_receiver(self._attention_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "AttentionChanged")
+        else:
+            self.session_bus.add_signal_receiver(self._icon_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "IconChanged")
+            self.session_bus.add_signal_receiver(self._attention_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "AttentionChanged")
+            
         self.page.set_title(name)
     
     def deactivate(self):
         self.screen.del_page(self.page)
-        self.session_bus.remove_signal_receiver(self._icon_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "IconChanged")
-        self.session_bus.remove_signal_receiver(self._attention_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "AttentionChanged")      
+        if self.messages_menu.natty:
+            self.session_bus.remove_signal_receiver(self._icon_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "IconChanged")
+            self.session_bus.remove_signal_receiver(self._attention_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "AttentionChanged")
+        else:
+            self.session_bus.remove_signal_receiver(self._icon_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "IconChanged")
+            self.session_bus.remove_signal_receiver(self._attention_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "AttentionChanged")      
         
     def destroy(self):
         pass
@@ -193,7 +204,7 @@ class G15IndicatorMessages():
         
         # Scroll to item if it is newly visible
         if menu != None:
-            if property != None and property == messagesmenu.VISIBLE and value and menu.get_type() != "separator":
+            if property != None and property == dbusmenu.VISIBLE and value and menu.get_type() != "separator":
                 self.selected = menu
         else:
             # Layout change

@@ -45,7 +45,7 @@ class G15StopwatchPreferences():
         timer1_label.set_text(gconf_client.get_string(gconf_key + "/timer1_label") or "")
         timer1_label.connect("changed", self._label_changed, gconf_key + "/timer1_label", gconf_client)
 
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer1_mode_stopwatch", "rb_timer1_stopwatch_mode", False, widget_tree, True)
+        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer1_mode_stopwatch", "rb_timer1_stopwatch_mode", True, widget_tree, True)
         rb_timer1_stopwatch = widget_tree.get_object("rb_timer1_stopwatch_mode")
         rb_timer1_stopwatch.connect("clicked", self._timer_timer_mode, widget_tree, "1", False)
         g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer1_mode_countdown", "rb_timer1_countdown_mode", False, widget_tree, True)
@@ -65,7 +65,7 @@ class G15StopwatchPreferences():
         timer2_label.set_text(gconf_client.get_string(gconf_key + "/timer2_label") or "")
         timer2_label.connect("changed", self._label_changed, gconf_key + "/timer2_label", gconf_client)
 
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer2_mode_stopwatch", "rb_timer2_stopwatch_mode", False, widget_tree, True)
+        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer2_mode_stopwatch", "rb_timer2_stopwatch_mode", True, widget_tree, True)
         rb_timer2_stopwatch = widget_tree.get_object("rb_timer2_stopwatch_mode")
         rb_timer2_stopwatch.connect("clicked", self._timer_timer_mode, widget_tree, "2", False)
 

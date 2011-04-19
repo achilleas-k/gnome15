@@ -1,3 +1,9 @@
+pylibg19 (0.0.2-2) natty; urgency=low
+
+  * Added 'reset wait' option
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue,  4 Apr 2011 17:57:10 +0000
+
 pylibg19 (0.0.2-1) maverick; urgency=low
 
   * Added 'reset wait' option

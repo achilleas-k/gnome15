@@ -27,6 +27,15 @@ import time
 import logging
 logger = logging.getLogger("dbusmenu")
 
+
+'''
+DBUSMenu property names
+'''
+VISIBLE = "visible"
+ICON_NAME = "icon-name"
+TYPE = "type"
+LABEL = "label"
+
 class DBUSMenuItem():
     def __init__(self, id, properties, menu):
         self.id = id
@@ -36,6 +45,10 @@ class DBUSMenuItem():
         
     def set_properties(self, properties):
         self.properties = properties
+        if not VISIBLE in self.properties:
+            self.properties[VISIBLE] = True
+        self.label = self.properties[LABEL] if LABEL in self.properties else None
+        self.icon = None
         
     def flatten(self, include_self = False):
         flat_list = []
@@ -60,9 +73,22 @@ class DBUSMenuItem():
         for c in element.children:
             _flatten(c, flat_list)
         
+    def is_visible(self):
+        return VISIBLE in self.properties and self.properties[VISIBLE]
+        
+    def get_label(self):
+        return self.label
+        
+    def get_icon(self):
+        return self.icon
+        
+    def get_icon_name(self):
+        return self.properties[ICON_NAME] if ICON_NAME in self.properties else None
+        
 class DBUSMenu():
     
-    def __init__(self, session_bus, object_name, path, interface, on_change = None):
+    def __init__(self, session_bus, object_name, path, interface, on_change = None, natty = False):
+        self.natty = natty
         self.session_bus = session_bus
         self.on_change = on_change
         self.messages_menu = self.session_bus.get_object(object_name, path)
@@ -71,7 +97,10 @@ class DBUSMenu():
         self.dbus_menu.connect_to_signal("ItemUpdated", self._item_updated)
         self.dbus_menu.connect_to_signal("ItemPropertyUpdated", self._item_property_updated)
         self.dbus_menu.connect_to_signal("LayoutUpdated", self._layout_updated)    
-        self.dbus_menu.connect_to_signal("ItemActivationRequested", self._item_activation_requested)  
+        self.dbus_menu.connect_to_signal("ItemActivationRequested", self._item_activation_requested)
+        
+        # From Natty onwards
+        self.dbus_menu.connect_to_signal("ItemPropertiesUpdated", self._item_properties_updated)  
         
         self._get_layout()
         
@@ -99,6 +128,23 @@ class DBUSMenu():
         else:
             logger.warning("Update request for item not in map")
     
+    def _item_properties_updated(self, updated_properties, removed_properties):
+        for id, properties in updated_properties:
+            if str(id) in self.menu_map:
+                menu = self.menu_map[str(id)]
+                for prop in properties:
+                    value = properties[prop]
+                    if not prop in menu.properties or value != menu.properties[prop]:
+                        menu.properties[prop] = value
+                        menu.set_properties(menu.properties)
+                        if self.on_change != None:
+                            self.on_change(menu, prop, value)
+            else:
+                logger.warning("Update request for item not in map")
+                
+#        for id, properties in removed_properties:
+#            print "Removed: ",str(id),str(properties)
+    
     def _item_property_updated(self, id, prop, value):
         if str(id) in self.menu_map:
             menu = self.menu_map[str(id)]
@@ -111,17 +157,31 @@ class DBUSMenu():
             logger.warning("Update request for item not in map")
         
     def _get_layout(self):
-        revision, menu_xml = self.dbus_menu.GetLayout(0)
         self.menu_map = {}
-        self.root_item = self._load_menu(etree.fromstring(menu_xml), self.menu_map)
+        if self.natty:
+            revision, layout = self.dbus_menu.GetLayout(0, 3, [])
+            self.root_item = self._load_menu_struct(layout, self.menu_map)
+        else:
+            revision, menu_xml = self.dbus_menu.GetLayout(0)
+            self.root_item = self._load_xml_menu(etree.fromstring(menu_xml), self.menu_map)
+            
+    def _load_menu_struct(self, layout, map):
+        id  = layout[0]
+        properties = layout[1]
+        menu = self.create_item(id, dict(properties))
+        map[str(id)] = menu
+        children = layout[2]
+        for item in children:
+            menu.children.append(self._load_menu_struct(item, map))
+        return menu
         
-    def _load_menu(self, element, map):
+    def _load_xml_menu(self, element, map):
         id = int(element.get("id"))
         menu = self.create_item(id, dict(self.dbus_menu.GetProperties(id, [])))
         map[str(id)] = menu
         for child in element:
             try :
-                menu.children.append(self._load_menu(child, map))
+                menu.children.append(self._load_xml_menu(child, map))
             except DBUSException as e:
                 logger.warning("Failed to get child menu." % str(e))
         return menu
