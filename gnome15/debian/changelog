@@ -11,6 +11,15 @@ gnome15 (0.6.0-1) natty; urgency=low
     
   * Feature: First natty release
   
+  * Feature: Processes plugin can now switch between All Processes, User
+    processes and 'Applications'.
+    
+  * Feature: First release of Stop Watch plugin. Many thanks to Nuno Araujo.
+  
+  * Bug: #706421 - "sysmon plugin: should use libgtop python bindings".
+  
+  * Bug: Screen now blanked on shutdown.
+  
  -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue, 29 Mar 2011 01:05:33 +0000  
 
 gnome15 (0.5.1-1) maverick; urgency=low

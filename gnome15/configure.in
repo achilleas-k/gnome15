@@ -102,7 +102,11 @@ AS_IF([test "x${HAVE_PYMOD_ALSAAUDIO}" = "xno"],
 AX_PYTHON_MODULE(feedparser, [])
 AS_IF([test "x${HAVE_PYMOD_FEEDPARSER}" = "xno"],
      [AC_MSG_ERROR([Requires Universal Feed Parser for Python])])
-     
+
+AX_PYTHON_MODULE(gtop, [])
+AS_IF([test "x${HABE_PYMOD_GTOP}" = "xno"],
+     [AC_MSG_ERROR([Requires python-gtop - Python libgtop bindings])])
+
 PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
 AC_SUBST(PYGTK_CFLAGS)
 AC_SUBST(PYGTK_LIBS)
