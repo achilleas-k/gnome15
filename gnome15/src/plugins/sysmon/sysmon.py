@@ -25,8 +25,7 @@ import gnome15.g15_util as g15util
 import gnome15.g15_driver as g15driver
 import time
 import os
-import socket
-import shlex
+import gtop
 
 id = "sysmon"
 name = "System Monitor"
@@ -220,10 +219,10 @@ class G15SysMon():
         Memory
         '''
         
-        self.total = float(mem['MemTotal'])
-        self.free = float(mem['MemFree'])
+        self.total = float(mem.total)
+        self.free = float(mem.free)
         self.used = self.total - self.free
-        self.cached = float(mem['Cached'])
+        self.cached = float(mem.cached)
         self.noncached = self.total - self.free - self.cached
         
         '''
@@ -238,23 +237,23 @@ class G15SysMon():
         properties = {}
         properties["cpu_pc"] = "%3d" % self.cpu
          
-        properties["mem_total"] = "%f" % self.total
-        properties["mem_free_k"] = "%f" % self.free
-        properties["mem_used_k"] = "%f" % self.used
-        properties["mem_cached_k"] = "%f" % self.cached
-        properties["mem_noncached_k"] = "%f" % self.noncached
+        properties["mem_total"] = "%f" % ( self.total / 1024 )
+        properties["mem_free_k"] = "%f" % ( self.free / 1024 )
+        properties["mem_used_k"] = "%f" % ( self.used / 1024 )
+        properties["mem_cached_k"] = "%f" % ( self.cached / 1024 )
+        properties["mem_noncached_k"] = "%f" % ( self.noncached / 1024 )
           
-        properties["mem_total_mb"] = "%.2f" % ( self.total / 1024 )
-        properties["mem_free_mb"] = "%.2f" % ( self.free / 1024 ) 
-        properties["mem_used_mb"] = "%.2f" % ( self.used / 1024 ) 
-        properties["mem_cached_mb" ] = "%3d" % ( self.cached / 1024 ) 
-        properties["mem_noncached_mb" ] = "%3d" % ( self.noncached / 1024 )
+        properties["mem_total_mb"] = "%.2f" % ( self.total / 1024 / 1024 )
+        properties["mem_free_mb"] = "%.2f" % ( self.free / 1024 / 1024 )
+        properties["mem_used_mb"] = "%.2f" % ( self.used / 1024 / 1024 )
+        properties["mem_cached_mb" ] = "%3d" % ( self.cached / 1024 / 1024 )
+        properties["mem_noncached_mb" ] = "%3d" % ( self.noncached / 1024 / 1024 )
           
-        properties["mem_total_gb"] = "%.1f" % ( self.total / 1024  / 1024 )
-        properties["mem_free_gb"] = "%.1f" % ( self.free / 1024  / 1024 ) 
-        properties["mem_used_gb"] = "%.1f" % ( self.used / 1024  / 1024 ) 
-        properties["mem_cached_gb" ] = "%.1f" % ( self.cached / 1024 / 1024 ) 
-        properties["mem_noncached_gb"] = "%.1f" % ( self.noncached / 1024  / 1024 ) 
+        properties["mem_total_gb"] = "%.1f" % ( self.total / 1024  / 1024 / 1024 )
+        properties["mem_free_gb"] = "%.1f" % ( self.free / 1024  / 1024 / 1024 )
+        properties["mem_used_gb"] = "%.1f" % ( self.used / 1024  / 1024 / 1024 )
+        properties["mem_cached_gb" ] = "%.1f" % ( self.cached / 1024 / 1024 / 1024 )
+        properties["mem_noncached_gb"] = "%.1f" % ( self.noncached / 1024  / 1024 / 1024 )
         
         properties["mem_used_pc"] = int(self.used * 100.0 / self.total)
         properties["mem_cached_pc"] = int(self.cached * 100.0 / self.total)
@@ -290,31 +289,21 @@ class G15SysMon():
         self.screen.redraw(self.page)
         self._schedule_refresh()  
     
-    def _get_net_stats(self):        
-        stat_file = file("/proc/net/dev", "r")
-        stat_file.readline()
-        stat_file.readline()
+    def _get_net_stats(self):
         ifs = { }
-        nets = [ "Net" ]
-        for if_line in stat_file:
-            split = if_line.split()
-            if_name = split[0][:len(split[0]) - 1]
-            ifs[if_name] = [ int(split[1]), int(split[9]) ]
-            nets.append(if_name)
-        stat_file.close()
-        return ifs, nets        
-    
+        nets = gtop.netlist()
+        for net in nets:
+            netload = gtop.netload(net)
+            ifs[net] = [ netload.bytes_in, netload.bytes_out ]
+        nets.insert(0, "Net")
+        return ifs, nets
+
     def _get_cpu_list(self):
-        stat_file = file("/proc/stat", "r")
-        try :
-            cpus = []
-            for line in stat_file:
-                if line.startswith("cpu"):
-                    cpus.append(line.split(" ")[0])
-            return cpus
-        finally :
-            stat_file.close()
-    
+	cpus = [ "cpu" ]
+        for i in range(len(gtop.cpu().cpus)):
+            cpus.append("cpu%d" % i)
+        return cpus
+
     '''
     Returns a 4 element list containing the amount of time the CPU has 
     spent performing the different types of work
@@ -327,17 +316,13 @@ class G15SysMon():
     Values are in USER_HZ or Jiffies
     ''' 
     def _get_time_list(self, cpu):
-        stat_file = file("/proc/stat", "r")
-        try :
-            for line in stat_file:
-                if line.startswith("%s " % cpu):
-                    time_list = shlex.split(line)[1:5]
-                    for i in range(len(time_list))  :
-                        time_list[i] = int(time_list[i])
-                    return time_list
-        finally :
-            stat_file.close()
-    
+        cpu_no = cpu.lower().replace("cpu","")
+        if len(cpu_no) == 0:
+            cpu = gtop.cpu()
+        else:
+            cpu = gtop.cpu().cpus[int(cpu_no)]
+        return [cpu.user, cpu.nice, cpu.sys, cpu.idle]
+
     def _get_net_total(self, list):
         totals = (0, 0)
         for l in list:
@@ -351,13 +336,4 @@ class G15SysMon():
         return totals
     
     def _get_mem_info(self):
-        mem = { }
-        stat_file = file("/proc/meminfo", "r")
-        try :
-            for mem_line in stat_file:
-                split = mem_line.split()
-                mem[split[0][:len(split[0]) - 1]] = split[1]
-        finally:
-            stat_file.close()
-            
-        return mem
+        return gtop.mem()
