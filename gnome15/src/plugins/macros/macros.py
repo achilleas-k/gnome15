@@ -138,7 +138,6 @@ class G15Macro():
     def __init__(self, gconf_client, screen):
         self.screen = screen
         self.gconf_client = gconf_client
-        self.macro_pages = []
         self.current_page = 0
         self.pressed = None
 
@@ -177,9 +176,9 @@ class G15Macro():
         if post:
             if self.screen.get_mkey() != self.mkey:
                 self.mkey = self.screen.get_mkey()
-                self.check_pages()
-                if len(self.macro_pages) > 0:
-                    self.screen.set_priority(self.macro_pages[0].page, g15screen.PRI_HIGH, revert_after = 3.0)
+                p = self.check_pages()
+                if len(p) > 0:
+                    self.screen.set_priority(p[0].page, g15screen.PRI_HIGH, revert_after = 3.0)
                       
             macro = self.active_profile.get_macro(self.mkey, keys)
             if macro:                    
@@ -198,10 +197,10 @@ class G15Macro():
     ''' 
         
     def close_all_pages(self):
-        for macro_page in self.macro_pages:
-            if macro_page in self.screen.pages:
-                self.screen.del_page(macro_page.page)
-        self.macro_pages = []
+        for page in list(self.screen.pages):
+            # TODO bit of a crap way to test if it is a macro page
+            if page.id.startswith("Macro Info"):
+                self.screen.del_page(page)
         self.current_page = 0
         self.current_page_count = 0
     
@@ -210,7 +209,8 @@ class G15Macro():
         self.check_pages()
         
     def check_pages(self):       
-        active_profile = g15profile.get_active_profile()    
+        active_profile = g15profile.get_active_profile()
+        p = []    
         if active_profile == None:    
             self.close_all_pages()
         else:    
@@ -218,19 +218,22 @@ class G15Macro():
             macros = active_profile.macros[self.mkey - 1]
             no_pages = max(self.number_of_pages(len(macros), 12), 1)
             if no_pages != self.current_page_count:
-                logger.info("Number of macro pages has changed from %d to %d, reloading" % (no_pages, self.current_page_count))
+                logger.info("Number of macro pages has changed from %d to %d, reloading" % (self.current_page_count, no_pages))
                 self.close_all_pages()
-                self.current_page_count = no_pages
-                self.current_page = 0
-                for i in range(no_pages -1, -1, -1):                
-                    macro_page = G15MacroPage(i, no_pages, self)
-                    self.macro_pages.append(macro_page)
+                if no_pages > 0:
+                    self.current_page_count = no_pages
+                    self.current_page = 0
+                    for i in range(no_pages -1, -1, -1):                
+                        macro_page = G15MacroPage(i, no_pages, self)
+                        p.append(macro_page)
                     
             self.active_profile = active_profile
             
-            for macro_page in self.macro_pages:
+            for macro_page in p:
                 macro_page.reset(active_profile)
                 self.screen.redraw(macro_page.page)
+                
+        return p
                     
     def number_of_pages(self, items, page_size):
         r = items % page_size

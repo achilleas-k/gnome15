@@ -55,6 +55,7 @@ class G15Page():
         self.value = self.priority * self.time
         self.painter = painter
         self.cairo = cairo
+        self.opacity = 0
         self.key_handlers = []
         
         self.theme = None
@@ -392,7 +393,9 @@ class G15Screen():
     def del_page(self, page):
         self.page_model_lock.acquire()
         try :
-            if page != None:                
+            if page != None:    
+                logger.info("Deleting page %s" % page.id)
+                    
                 # Remove any timers that might be running on this page
                 if page.id in self.hiding:
                     self.hiding[page.id].cancel()
@@ -498,6 +501,12 @@ class G15Screen():
         sy = float(self.available_size[3]) / float(self.height)
         return min(sx, sy)
     
+
+    def fade(self):
+        for o in range[0, 255]:
+            self.opacity = o
+            self.redraw()
+    
     '''
     Private functions
     '''
@@ -586,7 +595,6 @@ class G15Screen():
             canvas.set_source_surface(self.content_surface)
             canvas.paint()
             canvas.restore()
-            
             
         # Now paint the screen's foreground
         if self.foreground_painter_function != None:

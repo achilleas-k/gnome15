@@ -72,19 +72,26 @@ class MenuItem():
     def __init__(self, process_id, process_name):
         self.process_id = process_id
         self.process_name = process_name
+        self.icon = None
         
 class G15ProcessesMenu(g15theme.Menu):
     def __init__(self):
         g15theme.Menu.__init__(self, "menu")
         
+    def load_theme(self):
+        self.entry_theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.theme.screen, "menu-entry")
+        
     def render_item(self, item, selected, canvas, properties, attributes, group = False):        
         item_properties = {}
         if selected == item:
             item_properties["item_selected"] = True
-        item_properties["item_name"] = os.path.basename(item.process_name) 
-        item_properties["item_alt"] = item.process_id
+        item_properties["item_name"] = item.process_name if len(item.process_name) > 0 else "Unamed" 
+        if isinstance(item.process_id, int):
+            item_properties["item_alt"] = item.process_id
+        else:
+            item_properties["item_alt"] = ""
         item_properties["item_type"] = ""
-        item_properties["item_icon"] = ""
+        item_properties["item_icon"] = item.icon
         self.entry_theme.draw(canvas, item_properties)
         return self.entry_theme.bounds[3]
 
@@ -98,21 +105,25 @@ class G15Processes():
         self.i = 0
         
         # Connection to BAMF for running applications list
+        self.bamf_matcher = None
+        
+        # Can't work out how to kill an application/window given its XID, so only wnck is used for killing
         self.session_bus = dbus.SessionBus()
-        try :
-            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
-        except:
-            logger.warning("BAMF not available, falling back to WNCK")
-            self.bamf_matcher = None
+#        try :
+#            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
+#        except:
+#            logger.warning("BAMF not available, falling back to WNCK")
     
     def activate(self):
-        self.modes = [ "applications", "owner", "all" ]
+        self.items = []
+        self.item_map = {}
+        self.modes = [ "applications", "all", "user" ]
         self.mode = "applications"
         self._reload_theme()
         self.timer = None
         self.page = None
         self.selected = None
-        self._show_menu()
+        g15util.schedule("FirstProcessListLoad", 5.0, self._show_menu)
     
     def deactivate(self):
         if self.page != None:
@@ -154,7 +165,7 @@ class G15Processes():
     def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_DOWN:              
             if self.screen.get_visible_page() == self.page:                    
-                if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
+                if g15driver.G_KEY_UP in keys:
                     self._move_up(1)
                     return True
                 elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
@@ -174,9 +185,15 @@ class G15Processes():
                                                     g15util.get_icon_path("utilities-system-monitor"), self._kill_process, self.selected.process_id)
                     
                     return True
-                elif g15driver.G_KEY_UP in keys or g15driver.G_KEY_SETTINGS in keys:
-                    self._reschedule()
-                    self.screen.set_priority(self.page, g15screen.PRI_NORMAL)
+                elif g15driver.G_KEY_L3 in keys or g15driver.G_KEY_SETTINGS in keys:
+                    if self.mode == "applications":
+                        self.mode = "all"
+                    elif self.mode == "all":
+                        self.mode = "user"
+                    elif self.mode == "user":
+                        self.mode = "applications"
+                    self._cancel_timer()
+                    self._refresh()
                 
         return False
     
@@ -189,6 +206,7 @@ class G15Processes():
                 if os.path.exists("/proc/%d" % process_id):
                     os.system("kill -9 %d" % process_id)
         else:
+            Xlib.XKillClient(display, )
             sendEvent(root, display.intern_atom("_NET_CURRENT_DESKTOP"), [1, X.CurrentTime])
         self._reload_menu()        
     
@@ -196,11 +214,21 @@ class G15Processes():
         self.menu.items = self.items
         self.menu.selected = self.selected
         
+        props = { "icon" : g15util.get_icon_path("utilities-system-monitor") }
+        
+        props["mode"] = self.mode
+        if self.mode == "applications":
+            props["title"] = "Applications"
+            props["list"] = "All"
+        elif self.mode == "all":
+            props["title"] = "All Processes"
+            props["list"] = "Usr"
+        elif self.mode == "user":
+            props["title"] = "User Processes"
+            props["list"] = "App"
+        
         self.theme.draw(canvas, 
-                        properties = {
-                                      "title" : name,
-                                      "icon" : g15util.get_icon_path("utilities-system-monitor")
-                                      }, 
+                        props, 
                         attributes = {
                                       "items" : self.items,
                                       "selected" : self.selected
@@ -210,28 +238,46 @@ class G15Processes():
     Private
     '''
             
-    def _load_applications(self):        
-        if self.bamf_matcher != None:            
-            for window in self.bamf_matcher.RunningApplications():
-                app = self.session_bus.get_object("org.ayatana.bamf", window)
-                view = dbus.Interface(app, 'org.ayatana.bamf.view')
-                application = dbus.Interface(app, 'org.ayatana.bamf.application')
-                xids = []
-                for i in application.Xids():
-                    xids.append(int(i))
-                self.items.append(MenuItem(xids, view.Name()))
-        else:
-            import wnck
-            for window in wnck.screen_get_default().get_windows():
-                self.items.append(MenuItem(window.get_process_id(), window.get_name()))
-                
     def _reload_menu(self):
-        self.items = []
         
-        sel_pid = 0 if self.selected == None else self.selected.process_id 
-        
+        # Get the new list of active applications / processes
+        items = []
+        item_map = {}
         if self.mode == "applications":
-            self._load_applications()
+            if self.bamf_matcher != None:            
+                for window in self.bamf_matcher.RunningApplications():
+                    app = self.session_bus.get_object("org.ayatana.bamf", window)
+                    view = dbus.Interface(app, 'org.ayatana.bamf.view')
+                    application = dbus.Interface(app, 'org.ayatana.bamf.application')
+                    xids = []
+                    for i in application.Xids():
+                        xids.append(int(i))
+                    item = MenuItem(xids, view.Name())
+                    icon_name = view.Icon()
+                    if icon_name and len(icon_name) > 0:
+                        icon_path = g15util.get_icon_path(icon_name, warning = False)
+                        if icon_path:
+                            item.icon = "file:" + icon_path
+                    items.append(item)
+                    item_map[str(item.process_id)] = item
+            else:
+                import wnck
+                screen = wnck.screen_get_default()
+                for window in screen.get_windows():
+                    pid = window.get_pid()
+                    if pid > 0:
+                        item = MenuItem(pid, window.get_name())
+                        if window.has_icon_name():
+                            icon_path = g15util.get_icon_path(window.get_icon_name(), warning = False)
+                            if icon_path:
+                                item.icon = "file:" + icon_path
+                        if item.icon == None:
+                            pixbuf = window.get_icon()
+                            if pixbuf:               
+                                item.icon = g15util.pixbuf_to_surface(pixbuf)
+                                
+                        items.append(item)
+                        item_map[str(item.process_id)] = item
         else:
             for process_id in os.listdir("/proc"):
                 if process_id.isdigit():
@@ -240,19 +286,19 @@ class G15Processes():
                         try :
                             line = stat_file.readline().split("\0")
                             name = line[0]
+                            pid = int(process_id)
                             if name != "":
                                 if self.mode == "all":
-                                    self.items.append(MenuItem(int(process_id), name))          
+                                    item = MenuItem(pid, os.path.basename(name))
+                                    items.append(item)          
+                                    item_map[process_id] = item
                                 else:
                                     owner_stat = os.stat("/proc/%s/cmdline" % process_id)
                                     owner_uid = owner_stat[4]
                                     if owner_uid == os.getuid():
-                                        pid = int(process_id)
-                                        item = MenuItem(pid, name)
-                                        self.items.append(item)
-                                        if pid == sel_pid:
-                                            self.selected = item
-                                    
+                                        item = MenuItem(pid, os.path.basename(name))
+                                        item_map[process_id] = item
+                                        items.append(item)                                    
                                     
                         finally :
                             stat_file.close()
@@ -260,14 +306,33 @@ class G15Processes():
                         # In case the process disappears
                         pass
                 
+        # Remove any missing items
+        for item in list(self.items):
+            if not str(item.process_id) in item_map:
+                self.items.remove(item)
+                del self.item_map[str(item.process_id)]
+                
+        # Insert new items
+        for item in items:
+            if not str(item.process_id) in self.item_map:
+                self.items.append(item)
+                self.item_map[str(item.process_id)] = item
+                
+        # Sort
         self.items = sorted(self.items, key=lambda item: item.process_name)
-            
-        if self.selected == None:
-            self.selected = self.items[0]
+        
+        # Make sure selected still exists
+        if self.selected != None and not self.selected in self.items:
+            if len(self.items) > 0:
+                self.selected  = self.items[0]
+            else:
+                self.selected = None
+
         self.screen.redraw(self.page)
         
-    def _reload_theme(self):        
-        self.theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.screen, "menu-screen")
+    def _reload_theme(self):
+        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
+#        self.theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.screen, "menu-screen")
         self.menu = G15ProcessesMenu()
         self.theme.add_component(self.menu)
         self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
@@ -286,9 +351,12 @@ class G15Processes():
         self._reload_menu()
         self._schedule_refresh()
         
-    def _reschedule(self):
+    def _cancel_timer(self):
         if self.timer != None:
             self.timer.cancel()
+        
+    def _reschedule(self):
+        self._cancel_timer()
         self._schedule_refresh()
         
     def _schedule_refresh(self):

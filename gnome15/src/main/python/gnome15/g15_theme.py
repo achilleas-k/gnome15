@@ -76,14 +76,14 @@ class Scrollbar(Component):
         
     def draw(self, canvas, element, properties, attributes):        
         if self.theme != None:
-            max, view_size, position = self.values_callback(properties, attributes)
+            max_s, view_size, position = self.values_callback(properties, attributes)
             knob = element.xpath('//svg:*[@class=\'knob\']',namespaces=self.theme.nsmap)[0]
             track = element.xpath('//svg:*[@class=\'track\']',namespaces=self.theme.nsmap)[0]
             track_bounds = g15util.get_bounds(track)
             knob_bounds = g15util.get_bounds(knob)
-            scale = max / view_size
-            knob.set("y", str( int( knob_bounds[1] + ( position / scale ) ) ) )
-            knob.set("height", str(int(track_bounds[3] / scale )))
+            scale = max_s / view_size
+            knob.set("y", str( int( knob_bounds[1] + ( position / max(scale, 0.01) ) ) ) )
+            knob.set("height", str(int(track_bounds[3] / max(scale, 0.01) )))
         
 class Menu(Component):
     def __init__(self, id):
@@ -97,6 +97,9 @@ class Menu(Component):
         if self.view_element == None:
             raise Exception("No element in SVG with ID of %s. Required for Menu component" % self.id)
         self.view_bounds  = g15util.get_actual_bounds(self.view_element)
+        self.load_theme()
+          
+    def load_theme(self):
         self.entry_theme = G15Theme(self.theme.dir, self.theme.screen, "menu-entry")
         
     def get_scroll_values(self, properties, attributes):
@@ -403,14 +406,17 @@ class G15Theme:
             id = element.get("title")
             if id != None and id in properties and properties[id] != None:
                 file_str = StringIO()
-                file_str.write("data:image/png;base64,")
-                img_data = StringIO()
                 val = properties[id]
-                if isinstance(val, cairo.Surface):
-                    val.write_to_png(img_data)
-                    file_str.write(base64.b64encode(img_data.getvalue()))
-                else: 
-                    file_str.write(val)
+                if isinstance(val, str) and str(val).startswith("file:"):
+                    file_str.write(val[5:])
+                else:
+                    file_str.write("data:image/png;base64,")
+                    img_data = StringIO()
+                    if isinstance(val, cairo.Surface):
+                        val.write_to_png(img_data)
+                        file_str.write(base64.b64encode(img_data.getvalue()))
+                    else: 
+                        file_str.write(val)
                 element.set("{http://www.w3.org/1999/xlink}href", file_str.getvalue())
                 
                 

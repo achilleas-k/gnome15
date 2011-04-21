@@ -33,6 +33,7 @@ import urllib
 
 # Logging
 import logging
+from dbus.exceptions import DBusException
 logger = logging.getLogger("mpris")
 
 # Plugin details - All of these must be provided
@@ -77,20 +78,15 @@ class AbstractMPRISPlayer():
         self.redraw_timer = None  
         
     def check_status(self):        
-        try :
-            new_status = self.get_new_status()
-            self.volume = self.get_volume()   
-            if new_status != self.status:            
-                self.set_status(new_status)
-            else:
-                if self.status == "Playing":   
-                    self.recalc_progress()
-                    self.screen.redraw(self.page)
+        new_status = self.get_new_status()
+        self.volume = self.get_volume()   
+        if new_status != self.status:            
+            self.set_status(new_status)
+        else:
+            if self.status == "Playing":   
+                self.recalc_progress()
+                self.screen.redraw(self.page)
                     
-        except dbus.DBusException:
-            logger.warning("WARNING: Failed to check status, player must have closed.")
-            self.stop()
-            
     def reset_elapsed(self):
         logger.info("Reset track elapsed time")
         self.start_elapsed = self.get_progress()
@@ -276,6 +272,7 @@ class AbstractMPRISPlayer():
 class MPRIS1Player(AbstractMPRISPlayer):
     
     def __init__(self, gconf_client, screen, players, interface_name, session_bus):
+        self.timer = None
         root_obj = session_bus.get_object(interface_name, '/')                    
         root = dbus.Interface(root_obj, 'org.freedesktop.MediaPlayer')
         AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, interface_name, session_bus, root.Identity())
@@ -355,8 +352,14 @@ class MPRIS1Player(AbstractMPRISPlayer):
     
         self.process_properties()
             
-    def get_progress(self):        
-        return float(self.player.PositionGet()) / 1000.0
+    def get_progress(self):  
+        try:      
+            return float(self.player.PositionGet()) / 1000.0
+        except DBusException as e:
+            if "UnknownMethod" == e.get_dbus_name():
+                logger.warning("Player doesn't support PositionGet, no track progress")
+            else:
+                raise e
 
 
 class MPRIS2Player(AbstractMPRISPlayer):

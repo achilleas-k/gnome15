@@ -135,6 +135,7 @@ src/plugins/mpris/default/Makefile
 src/plugins/menu/Makefile
 src/plugins/panel/Makefile
 src/plugins/processes/Makefile
+src/plugins/processes/default/Makefile
 src/plugins/notify-lcd/Makefile
 src/plugins/notify-lcd/default/Makefile
 src/plugins/stopwatch/Makefile

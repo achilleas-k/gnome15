@@ -1,3 +1,5 @@
+SUBDIRS = default 
+
 plugindir = $(datadir)/gnome15/plugins/processes
 plugin_DATA = processes.py
 

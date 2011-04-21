@@ -45,6 +45,7 @@ import time
 import g15_plugins as g15plugins
 import dbus
 import glib
+import signal
 from threading import RLock
 from threading import Thread
 from g15_exceptions import NotConnectedException
@@ -186,23 +187,35 @@ class G15Service(Thread):
         logger.debug("Starting the DBUS service")
         self.dbus_service = g15dbus.G15DBUSService(self) 
         
+        # Watch for signals        
+        signal.signal(signal.SIGINT, self.signal_handler)
+        
         gobject.idle_add(self.start)
         logger.info("Starting GLib loop")
         loop.run()
         logger.debug("Exited GLib loop")
+    
+    def signal_handler(self, signum, frame):
+        logger.info("Got signal, shutting down")
+        self.stop()
         
-    def shutdown(self):
+    def stop(self):
         self.shutting_down = True
         g15profile.notifier.stop()
         for listener in self.service_listeners:
             listener.shutting_down()
         if self.plugins:
             self.plugins.deactivate()
+        self.screen.fade()
+        
+    def shutdown(self):
+        logger.info("Shutting down")
+        self.stop()
         if self.driver and self.driver.is_connected():
             self.driver.disconnect() 
         self.dbus_service.stop()
-        loop.quit() 
         g15util.stop_all_schedulers()
+        loop.quit() 
         
     def run(self):
         for listener in self.service_listeners:
