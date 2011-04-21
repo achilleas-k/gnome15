@@ -503,7 +503,7 @@ class G15Screen():
     
 
     def fade(self):
-        for o in range[0, 255]:
+        for o in range(0, 255):
             self.opacity = o
             self.redraw()
     

@@ -63,26 +63,23 @@ class G15IndicatorMe():
     def activate(self):
         self.natty = False
         try :
-            self.me_service = self.session_bus.get_object('com.canonical.indicator.me', '/com/canonical/indicator/me/service')
-            self.session_bus.add_signal_receiver(self._status_icon_changed, dbus_interface = "com.canonical.indicator.me.service", signal_name = "StatusIconsChanged")
-            self.session_bus.add_signal_receiver(self._user_changed, dbus_interface = "com.canonical.indicator.me.service", signal_name = "UserChanged")
+            me_object = self.session_bus.get_object('com.canonical.indicator.me', '/com/canonical/indicator/me/service')
+            self.me_service = dbus.Interface(me_object, 'com.canonical.indicator.me.service')
             self.natty = True
         except DBusException as dbe:
-            self.me_service = self.session_bus.get_object('org.ayatana.indicator.me', '/org/ayatana/indicator/me/service')
-            self.session_bus.add_signal_receiver(self._status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
-            self.session_bus.add_signal_receiver(self._user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")
+            me_object = self.session_bus.get_object('org.ayatana.indicator.me', '/org/ayatana/indicator/me/service')
+            self.me_service = dbus.Interface(me_object, 'org.ayatana.indicator.me.service')
+            
+        self._status_changed_handle = self.me_service.connect_to_signal("StatusIconsChanged", self._status_icon_changed)
+        self._user_changed_handle = self.me_service.connect_to_signal("UserChanged", self._user_changed)
 
         self._reload_theme()
         self._get_details()     
         self.page = self.screen.new_page(self._paint, priority=g15screen.PRI_INVISIBLE, id="Indicator Me", panel_painter = self._paint_thumbnail)
     
     def deactivate(self):
-        if self.natty:
-            self.session_bus.remove_signal_receiver(self._status_icon_changed, dbus_interface = "com.canonical.indicator.me.service", signal_name = "StatusIconsChanged")
-            self.session_bus.remove_signal_receiver(self._user_changed, dbus_interface = "com.canonical.indicator.me.service", signal_name = "UserChanged")
-        else:
-            self.session_bus.remove_signal_receiver(self._status_icon_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "StatusIconsChanged")
-            self.session_bus.remove_signal_receiver(self._user_changed, dbus_interface = "org.ayatana.indicator.me.service", signal_name = "UserChanged")      
+        self.session_bus.remove_signal_receiver(self._status_changed_handle)
+        self.session_bus.remove_signal_receiver(self._user_changed_handle)
         
     def destroy(self):
         pass

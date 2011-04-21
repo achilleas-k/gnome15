@@ -50,6 +50,9 @@ site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110 ]
 
+# Players that are not supported
+mpris_blacklist = [ "org.mpris.xbmc" ]
+
 def create(gconf_key, gconf_client, screen):
     return G15MPRIS(gconf_client, screen)
 
@@ -353,13 +356,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.process_properties()
             
     def get_progress(self):  
-        try:      
-            return float(self.player.PositionGet()) / 1000.0
-        except DBusException as e:
-            if "UnknownMethod" == e.get_dbus_name():
-                logger.warning("Player doesn't support PositionGet, no track progress")
-            else:
-                raise e
+        return float(self.player.PositionGet()) / 1000.0
 
 
 class MPRIS2Player(AbstractMPRISPlayer):
@@ -522,12 +519,13 @@ class G15MPRIS():
         # Find new players
         active_list = self.session_bus.list_names()
         for name in active_list:  
-            # MPRIS 2
-            if not name in self.players and name.startswith("org.mpris.MediaPlayer2"):
-                self.players[name] = MPRIS2Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
-            # MPRIS 1                
-            elif not name in self.players and name.startswith("org.mpris."):
-                self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
+            if not name in mpris_blacklist:
+                # MPRIS 2
+                if not name in self.players and name.startswith("org.mpris.MediaPlayer2"):
+                    self.players[name] = MPRIS2Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
+                # MPRIS 1
+                elif not name in self.players and name.startswith("org.mpris."):
+                    self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
             
     def _dbus_disconnected(self, connection):
         logger.debug("DBUS Disconnected")
