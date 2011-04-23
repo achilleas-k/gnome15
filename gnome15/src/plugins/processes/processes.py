@@ -42,6 +42,9 @@ display = Xlib.display.Display()
 screen = display.screen()
 root = screen.root
 
+import logging
+logger = logging.getLogger("processes")
+
 # Plugin details - All of these must be provided
 id="processes"
 name="Process List"
@@ -124,7 +127,7 @@ class G15Processes():
         self.timer = None
         self.page = None
         self.selected = None
-        g15util.schedule("FirstProcessListLoad", 5.0, self._show_menu)
+        self._show_menu()
     
     def deactivate(self):
         if self.page != None:
@@ -207,8 +210,8 @@ class G15Processes():
                 if process_id in gtop.proclist():
                     os.system("kill -9 %d" % process_id)
         else:
-            Xlib.XKillClient(display, )
-            sendEvent(root, display.intern_atom("_NET_CURRENT_DESKTOP"), [1, X.CurrentTime])
+            # TODO kill using XID if possible
+            pass
         self._reload_menu()        
     
     def paint(self, canvas):
@@ -340,9 +343,16 @@ class G15Processes():
         self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
         
     def _show_menu(self):        
-        self.page = self.screen.new_page(self.paint, id=name, priority = g15screen.PRI_NORMAL)
+        self.page = self.screen.new_page(self.paint, id=name, priority = g15screen.PRI_NORMAL,  on_shown=self._page_shown, on_hidden=self._page_hidden)
+        self.screen.redraw(self.page)
+        
+    def _page_shown(self):
+        logger.debug("Process list activated")
         self._reload_menu()  
-        self._schedule_refresh()          
+        self._schedule_refresh()
+        
+    def _page_hidden(self):
+        self._cancel_timer()
     
     def _hide_menu(self):     
         self.screen.del_page(self.page)
@@ -355,6 +365,7 @@ class G15Processes():
         
     def _cancel_timer(self):
         if self.timer != None:
+            logger.debug("Stopping refreshing process list")
             self.timer.cancel()
         
     def _reschedule(self):

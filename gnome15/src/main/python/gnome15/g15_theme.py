@@ -81,7 +81,7 @@ class Scrollbar(Component):
             track = element.xpath('//svg:*[@class=\'track\']',namespaces=self.theme.nsmap)[0]
             track_bounds = g15util.get_bounds(track)
             knob_bounds = g15util.get_bounds(knob)
-            scale = max_s / view_size
+            scale = max(1.0, max_s / view_size)
             knob.set("y", str( int( knob_bounds[1] + ( position / max(scale, 0.01) ) ) ) )
             knob.set("height", str(int(track_bounds[3] / max(scale, 0.01) )))
         

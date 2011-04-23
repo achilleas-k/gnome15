@@ -38,3 +38,4 @@ pylibg19/build
 *.kdev4
 gnome15-kde-plugins/window-thumbnail/build
 .libs
+lgsetled*.tar.gz
