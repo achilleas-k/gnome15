@@ -32,6 +32,7 @@ import cairo
 import traceback
 import base64
 import time
+import gtop
 from cStringIO import StringIO
 
 from Xlib import X, display, error, Xatom, Xutil
@@ -201,9 +202,9 @@ class G15Processes():
         if isinstance(process_id, int):
             os.system("kill %d" % process_id)
             time.sleep(0.5)
-            if os.path.exists("/proc/%d" % process_id):
+            if process_id in gtop.proclist():
                 time.sleep(5.0)
-                if os.path.exists("/proc/%d" % process_id):
+                if process_id in gtop.proclist():
                     os.system("kill -9 %d" % process_id)
         else:
             Xlib.XKillClient(display, )
@@ -237,7 +238,16 @@ class G15Processes():
     '''
     Private
     '''
-            
+
+    def _get_process_name(self, args, cmd):
+        result = cmd
+        for i in range(min(2, len(args))):
+            basename = os.path.basename(args[i])
+            if basename.find(cmd) != -1:
+                result = basename
+                break
+        return result
+
     def _reload_menu(self):
         
         # Get the new list of active applications / processes
@@ -279,33 +289,25 @@ class G15Processes():
                         items.append(item)
                         item_map[str(item.process_id)] = item
         else:
-            for process_id in os.listdir("/proc"):
-                if process_id.isdigit():
-                    try :
-                        stat_file = file("/proc/%s/cmdline" % process_id, "r")
-                        try :
-                            line = stat_file.readline().split("\0")
-                            name = line[0]
-                            pid = int(process_id)
-                            if name != "":
-                                if self.mode == "all":
-                                    item = MenuItem(pid, os.path.basename(name))
-                                    items.append(item)          
-                                    item_map[process_id] = item
-                                else:
-                                    owner_stat = os.stat("/proc/%s/cmdline" % process_id)
-                                    owner_uid = owner_stat[4]
-                                    if owner_uid == os.getuid():
-                                        item = MenuItem(pid, os.path.basename(name))
-                                        item_map[process_id] = item
-                                        items.append(item)                                    
-                                    
-                        finally :
-                            stat_file.close()
-                    except :
-                        # In case the process disappears
-                        pass
-                
+            for process_id in gtop.proclist():
+                process_id = "%d" %  process_id
+                try :
+                    pid = int(process_id)
+                    proc_state = gtop.proc_state(pid)
+                    proc_args = gtop.proc_args(pid)
+
+                    if self.mode == "all":
+                        item = MenuItem(pid, self._get_process_name(proc_args, proc_state.cmd))
+                        items.append(item)
+                        item_map[process_id] = item
+                    elif proc_state.uid == os.getuid():
+                        item = MenuItem(pid, self._get_process_name(proc_args, proc_state.cmd))
+                        item_map[process_id] = item
+                        items.append(item)
+                except :
+                    # In case the process disappears
+                    pass
+
         # Remove any missing items
         for item in list(self.items):
             if not str(item.process_id) in item_map:
