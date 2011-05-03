@@ -290,8 +290,6 @@ class G15NotifyService(dbus.service.Object):
     @dbus.service.method(IF_NAME, in_signature='susssasa{sv}i', out_signature='u')
     def Notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
         logger.info("Notify app=%s id=%s '%s' {%s}", app_name, id, summary, hints)
-        if len(icon) > 0:
-            logger.info("   Icon data: %d %s" % (len(icon), str(icon)))
         try :                
             if self._active:
                 timeout = float(timeout) / 1000.0

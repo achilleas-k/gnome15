@@ -19,7 +19,7 @@ import sys
 import gobject
 import time
 
- 
+# Can be adjusted to aid debugging
 TIME_FACTOR=1.0
 
 # Logging

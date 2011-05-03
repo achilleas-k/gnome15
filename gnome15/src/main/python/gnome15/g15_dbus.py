@@ -492,15 +492,11 @@ class G15DBUSService(AbstractG15DBUSService):
         logger.debug("Sending page deleted signal for %s" % page.id)
         if page.id in self._dbus_pages:
             dbus_page = self._dbus_pages[page.id]
+            page.key_handlers.remove(dbus_page)
             self.PageDestroyed(dbus_page._sequence_number)
             del self._dbus_pages[page.id]
             dbus_page.remove_from_connection()
-#            import sys
-#            import gc
-#            gc.collect()
-#            print hex(id(dbus_page)), type(dbus_page), sys.getrefcount(dbus_page), len(gc.get_referrers(dbus_page))
-#            for ref in gc.get_referrers(dbus_page):
-#                print "     ",str(ref)
+            
         else:
             logger.warning("DBUS Page %s was deleted, but it never existed. Huh?" % ( page.id ))
        

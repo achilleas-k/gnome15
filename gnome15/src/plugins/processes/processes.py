@@ -357,7 +357,7 @@ class G15Processes():
     def _hide_menu(self):     
         self.screen.del_page(self.page)
         self.page = None
-        self.timer.cancel()
+        self._cancel_timer()
         
     def _refresh(self):
         self._reload_menu()
