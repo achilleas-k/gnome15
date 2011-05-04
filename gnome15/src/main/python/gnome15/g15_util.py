@@ -297,7 +297,7 @@ def load_surface_from_file(filename, size = None):
             file = urllib.urlopen(filename)
             data = file.read()
             type = file.info().gettype()
-            if filename.endswith(".svg"):
+            if type == "image/svg+xml" or filename.lower().endswith(".svg"):
                 svg = rsvg.Handle()
                 svg.write(data)
                 svg_size = svg.get_dimension_data()[2:4]
@@ -320,21 +320,21 @@ def load_surface_from_file(filename, size = None):
             logger.warning("({})".format(e))
             return None
     else:
-#        if filename.endswith(".svg"):
-#            svg = rsvg.Handle(filename)
-#            svg_size = svg.get_dimension_data()[2:4]
-#            if size == None:
-#                size = svg_size
-#            surface = cairo.ImageSurface(0, int(size[0]), int(size[1]))
-#            context = cairo.Context(surface)
-#            if size != svg_size:
-#                scale = get_scale(size, svg_size)
-#                context.scale(scale, scale)
-#            svg.render_cairo(context)
-#            return surface, context
-#        else:
-#            return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
-        return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
+        if os.path.exists(filename):
+            if filename.lower().endswith(".svg"):
+                svg = rsvg.Handle(filename)
+                svg_size = svg.get_dimension_data()[2:4]
+                if size == None:
+                    size = svg_size
+                surface = cairo.ImageSurface(0, int(size[0]), int(size[1]))
+                context = cairo.Context(surface)
+                if size != svg_size:
+                    scale = get_scale(size, svg_size)
+                    context.scale(scale, scale)
+                svg.render_cairo(context)
+                return surface
+            else:
+                return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
     
 def image_to_surface(image, type = "ppm"):
     # TODO make better

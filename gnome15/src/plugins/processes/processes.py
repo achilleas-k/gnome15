@@ -38,10 +38,6 @@ from cStringIO import StringIO
 from Xlib import X, display, error, Xatom, Xutil
 import Xlib.protocol.event
 
-display = Xlib.display.Display()
-screen = display.screen()
-root = screen.root
-
 import logging
 logger = logging.getLogger("processes")
 
@@ -61,16 +57,6 @@ reserved_keys = [ g15driver.G_KEY_SETTINGS ]
 def create(gconf_key, gconf_client, screen):
     return G15Processes(gconf_client, gconf_key, screen)
 
-def sendEvent(win, ctype, data, mask=None):
-    """ Send a ClientMessage event to the root """
-    data = (data+[0]*(5-len(data)))[:5]
-    ev = Xlib.protocol.event.ClientMessage(window=win, client_type=ctype, data=(32,(data)))
-
-    if not mask:
-        mask = (X.SubstructureRedirectMask|X.SubstructureNotifyMask)
-    root.send_event(ev, event_mask=mask)
-    display.flush()
-
 class MenuItem():
     
     def __init__(self, process_id, process_name):
@@ -84,7 +70,7 @@ class G15ProcessesMenu(g15theme.Menu):
         
     def load_theme(self):
         self.entry_theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.theme.screen, "menu-entry")
-        
+    
     def render_item(self, item, selected, canvas, properties, attributes, group = False):        
         item_properties = {}
         if selected == item:
@@ -132,39 +118,9 @@ class G15Processes():
     def deactivate(self):
         if self.page != None:
             self._hide_menu()
-            
         
     def destroy(self):
         pass
-    
-    def _check_selected(self):
-        if not self.selected in self.items:
-            if self.i > len(self.items):
-                return
-            self.selected = self.items[self.i]
-            
-    def _do_selected(self):
-        self.selected = self.items[self.i]
-        self.screen.service.resched_cycle()
-        self.screen.redraw(self.page)
-        
-    def _move_up(self, amount = 1):
-        self._reschedule()
-        self._check_selected()
-        self.i = self.items.index(self.selected)
-        self.i -= amount
-        if self.i < 0:
-            self.i = len(self.items) - 1
-        self._do_selected()
-        
-    def _move_down(self, amount = 1):
-        self._reschedule()
-        self._check_selected()
-        self.i = self.items.index(self.selected)
-        self.i += amount
-        if self.i >= len(self.items):
-            self.i = 0
-        self._do_selected()
                     
     def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_DOWN:              
@@ -200,6 +156,54 @@ class G15Processes():
                     self._refresh()
                 
         return False
+    
+    '''
+    Private
+    '''
+
+    def _send_event(win, ctype, data, mask=None):
+        """ Send a ClientMessage event to the root """
+        data = (data+[0]*(5-len(data)))[:5]
+        ev = Xlib.protocol.event.ClientMessage(window=win, client_type=ctype, data=(32,(data)))
+    
+        if not mask:
+            mask = (X.SubstructureRedirectMask|X.SubstructureNotifyMask)
+        
+        display = self.screen.service.get_x_display()
+        screen = display.screen()
+        root = screen.root
+
+        root.send_event(ev, event_mask=mask)
+        display.flush()
+    
+    def _check_selected(self):
+        if not self.selected in self.items:
+            if self.i > len(self.items):
+                return
+            self.selected = self.items[self.i]
+            
+    def _do_selected(self):
+        self.selected = self.items[self.i]
+        self.screen.service.resched_cycle()
+        self.screen.redraw(self.page)
+        
+    def _move_up(self, amount = 1):
+        self._reschedule()
+        self._check_selected()
+        self.i = self.items.index(self.selected)
+        self.i -= amount
+        if self.i < 0:
+            self.i = len(self.items) - 1
+        self._do_selected()
+        
+    def _move_down(self, amount = 1):
+        self._reschedule()
+        self._check_selected()
+        self.i = self.items.index(self.selected)
+        self.i += amount
+        if self.i >= len(self.items):
+            self.i = 0
+        self._do_selected()
     
     def _kill_process(self, process_id):
         if isinstance(process_id, int):

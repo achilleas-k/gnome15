@@ -280,20 +280,20 @@ class MPRIS1Player(AbstractMPRISPlayer):
         root = dbus.Interface(root_obj, 'org.freedesktop.MediaPlayer')
         AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, interface_name, session_bus, root.Identity())
         
-        # There is no seek / position changed event in MPRIS1, so we poll :(
-        
+        # There is no seek / position changed event in MPRIS1, so we poll        
         player_obj = session_bus.get_object(interface_name, '/Player')
-        self.player = dbus.Interface(player_obj, 'org.freedesktop.MediaPlayer')        
-        session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")        
+        self.player = dbus.Interface(player_obj, 'org.freedesktop.MediaPlayer')            
         
         # Set the initial status
+        self._get_elapsed()
         self.check_status()
         
         # Start polling for status, position and track changes        
-        self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 1.0, self.update_track)
+        self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 1.0, self.update_track)            
+        session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def update_track(self):
-        self.start_elapsed = float(self.player.PositionGet()) / float(1000)
+        self._get_elapsed()
         self.playback_started = time.time()
         self.check_status()
         if self.status == "Playing":        
@@ -357,6 +357,9 @@ class MPRIS1Player(AbstractMPRISPlayer):
             
     def get_progress(self):  
         return float(self.player.PositionGet()) / 1000.0
+        
+    def _get_elapsed(self):
+        self.start_elapsed = float(self.player.PositionGet()) / float(1000)
 
 
 class MPRIS2Player(AbstractMPRISPlayer):

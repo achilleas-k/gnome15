@@ -55,19 +55,6 @@ loop = gobject.MainLoop()
 # Logging
 import logging
 logger = logging.getLogger("service")
-
-# Determine whether to use XTest for sending key events to X
-UseXTest = True
-try :
-    import Xlib.ext.xtest
-except ImportError:
-    UseXTest = False
-     
-local_dpy = Xlib.display.Display()
-window = local_dpy.get_input_focus()._data["focus"];
-
-if UseXTest and not local_dpy.query_extension("XTEST") :
-    UseXTest = False
     
 NAME = "Gnome15"
 VERSION = pglobals.version
@@ -182,6 +169,7 @@ class G15Service(Thread):
         self.screen = g15screen.G15Screen(self)
         self.service_listeners = []
         self.plugins = None
+        self.use_x_test = None
                 
         # Expose Gnome15 functions via DBus
         logger.debug("Starting the DBUS service")
@@ -537,9 +525,31 @@ class G15Service(Thread):
         if "~!@#$%^&*()_+{}|:\"<>?".find(ch) >= 0 :
             return True
         return False
+    
+    def get_x_display(self):
+        self.init_xtest()
+        return self.local_dpy
+    
+    def init_xtest(self):
+        if self.use_x_test == None:
+            logger.info("Initialising macro output system")
+    
+            # Determine whether to use XTest for sending key events to X
+            self.use_x_test  = True
+            try :
+                import Xlib.ext.xtest
+            except ImportError:
+                self.use_x_test = False
+                 
+            self.local_dpy = Xlib.display.Display()
+            self.window = self.local_dpy.get_input_focus()._data["focus"];
+            
+            if self.use_x_test  and not self.local_dpy.query_extension("XTEST") :
+                logger.warn("Found XTEST module, but the X extension could not be found")
+                self.use_x_test = False
                 
     def char_to_keycode(self, ch) :        
-        
+        self.init_xtest()
         if str(ch).startswith("["):
             keysym_code = int(ch[1:-1])
             # AltGr
@@ -550,7 +560,7 @@ class G15Service(Thread):
                 keycode = 0
         else:
             keysym = self.get_keysym(ch)
-            keycode = local_dpy.keysym_to_keycode(keysym)        
+            keycode = self.local_dpy.keysym_to_keycode(keysym)        
         if keycode == 0 :
             logger.warning("Sorry, can't map", ch)
     
@@ -565,23 +575,21 @@ class G15Service(Thread):
     def send_string(self, ch, press) :
         keycode, shift_mask = self.char_to_keycode(ch)
         logger.debug("Sending keychar %s keycode %d" % (ch, int(keycode)))
-        if (UseXTest) :
+        if (self.use_x_test) :
             if press:
                 if shift_mask != 0 :
-                    Xlib.ext.xtest.fake_input(local_dpy, Xlib.X.KeyPress, 50)
-                Xlib.ext.xtest.fake_input(local_dpy, Xlib.X.KeyPress, keycode)
+                    Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyPress, 50)
+                Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyPress, keycode)
             else:
-                Xlib.ext.xtest.fake_input(local_dpy, Xlib.X.KeyRelease, keycode)
+                Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyRelease, keycode)
                 if shift_mask != 0 :
-                    Xlib.ext.xtest.fake_input(local_dpy, Xlib.X.KeyRelease, 50)
-                
-            
+                    Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyRelease, 50)
         else :
             if press:
                 event = Xlib.protocol.event.KeyPress(
                                                          time=int(time.time()),
-                                                         root=local_dpy.screen().root,
-                                                         window=window,
+                                                         root=self.local_dpy.screen().root,
+                                                         window=self.window,
                                                          same_screen=0, child=Xlib.X.NONE,
                                                          root_x=0, root_y=0, event_x=0, event_y=0,
                                                          state=shift_mask,
@@ -591,8 +599,8 @@ class G15Service(Thread):
             else:
                 event = Xlib.protocol.event.KeyRelease(
                                                            time=int(time.time()),
-                                                           root=local_dpy.screen().root,
-                                                           window=window,
+                                                           root=self.local_dpy.screen().root,
+                                                           window=self.window,
                                                            same_screen=0, child=Xlib.X.NONE,
                                                            root_x=0, root_y=0, event_x=0, event_y=0,
                                                            state=shift_mask,
@@ -600,7 +608,7 @@ class G15Service(Thread):
                     )
                 window.send_event(event, propagate=True)
                 
-        local_dpy.sync() 
+        self.local_dpy.sync() 
              
     def control_changed(self, client, connection_id, entry, args):
         self.driver.set_controls_from_configuration(client)
