@@ -64,7 +64,7 @@ def start_service():
     try :
         import setproctitle
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
-    except:
+    except Exception as e:
         # Not a big issue
         pass
 

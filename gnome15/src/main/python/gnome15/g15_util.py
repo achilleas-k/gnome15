@@ -414,7 +414,7 @@ def get_icon_path(icon = None, size = 128, warning = True):
 def get_app_icon(gconf_client, icon, size = 128):
     icon_path = get_icon_path(icon, size)
     if icon_path == None:
-        icon_path = gtk.gdk.pixbuf_new_from_file(os.path.join(pglobals.icons_dir, icon + '.svg'))
+        icon_path = os.path.join(pglobals.icons_dir,"hicolor", "scalable", "apps", "%s.svg" % icon)
     return icon_path
 
 def get_icon(gconf_client, icon, size = None):

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 modules="../pyinputevent pylibg19 g19d lgsetled gnome15 gnome15-gnome-plugins gnome15-ubuntu-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu gnome15-iconpack"
-#modules="gnome15-ubuntu gnome15-iconpack"
 base_dist="natty"
 arch=$(dpkg --print-architecture)
 
@@ -15,6 +14,13 @@ function get_version() {
          fi
     fi
     echo $version
+    popd >/dev/null 2>&1
+}
+
+function get_changelog_version() {
+    pushd ${workspace}/${module_name}-package >/dev/null 2>&1
+    changelog_file="./$1-$2/debian/changelog"
+    head -1 "${changelog_file}"|awk '{ print $2 }'|tr -d '('|tr -d ')'
     popd >/dev/null 2>&1
 }
 
@@ -151,7 +157,7 @@ do
          # If not working on the base distribution, then adjust the distributions in packages
          if [ "$dist" != "$base_dist" ]
          then echo "Adjusting distribution details"
-              changelog_version=$(head -1 debian/changelog|awk '{ print $2 }'|tr -d '('|tr -d ')')
+              changelog_version=$(get_changelog_version ${module_name} ${version})
               new_changelog_version=${changelog_version}~lucid1
               sed "s/ (${changelog_version}) ${base_dist}\;/ (${new_changelog_version}) ${dist}\;/" debian/changelog > debian/changelog.new
               mv debian/changelog.new debian/changelog
@@ -186,11 +192,31 @@ do
               signarg2=""
          fi
 
+         
+         #then if ! BUILD_DIST=${dist} pdebuild -- --basetgz /var/cache/pbuilder/${dist}-${arch}-base.tgz --distribution ${dist} --override-config
+
          if [ "$pdebuild" = "y" ]
-         then if ! BUILD_DIST=${dist} pdebuild -- --basetgz /var/cache/pbuilder/${dist}-${arch}-base.tgz --distribution ${dist} --override-config
+         then if ! BUILD_DIST=${dist} pdebuild -- --distribution ${dist} --override-config
               then echo "$0: pdebuild failed" >&2
                    exit 1
               fi
+
+              changelog_version=$(get_changelog_version ${module_name} ${version})
+              pushd ${workspace}/${module_name}-package
+              changes_file="${module_name}_${changelog_version}_${arch}.changes"
+              echo "Changes file: '${changes_file}'"
+              debsign "${changes_file}"
+              if ! dput local "${changes_file}"
+              then echo "$0: dput failed" >&2
+                   exit 1
+              fi
+              if ! sudo DIST=${dist} pbuilder update --override-config --configfile ~/.pbuilderrc
+              then echo "$0: pbuilder update failed" >&2
+                   exit 1
+              fi
+              popd
+           
+              
          else if [ "$source" = "y" ] 
               then if ! debuild -S ${signarg1} ${signarg2}
                    then echo "$0: failed to build binary package $i" >&2
@@ -220,8 +246,7 @@ do
     then module_name=$(basename $i)
          version=$(get_version $i)
          pushd ${workspace}/${module_name}-package >/dev/null 2>&1
-         changelog_file="./${module_name}-${version}/debian/changelog"
-         changelog_version=$(head -1 "${changelog_file}"|awk '{ print $2 }'|tr -d '('|tr -d ')')
+         changelog_version=$(get_changelog_version ${module_name} ${version})
          changes_file=${module_name}_${changelog_version}_source.changes
          if [ -f "${changes_file}" ]
          then ppa_loc=ppa:gnome15-team/${dist}

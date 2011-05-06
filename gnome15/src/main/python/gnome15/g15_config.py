@@ -151,7 +151,7 @@ class G15Config:
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
-        self.main_window.set_icon_from_file(g15util.get_icon_path("gnome15"))
+        self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client,  "gnome15"))
         
         # Monitor gconf
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)

@@ -77,6 +77,22 @@ AX_PYTHON_MODULE(gobject, [])
 AS_IF([test "x${HAVE_PYMOD_GOBJECT}" = "xno"],
      [AC_MSG_ERROR([Requires GObject for Python])])
      
+AX_PYTHON_MODULE(xdg, [])
+AS_IF([test "x${HAVE_PYMOD_XDG}" = "xno"],
+     [AC_MSG_ERROR([Requires Python XDG])])
+     
+AX_PYTHON_MODULE(usb, [])
+AS_IF([test "x${HAVE_PYMOD_USB}" = "xno"],
+     [AC_MSG_ERROR([Requires PyUSB, python bindings for libusb])])
+     
+AX_PYTHON_MODULE(gtop, [])
+AS_IF([test "x${HAVE_PYMOD_GTOP}" = "xno"],
+     [AC_MSG_ERROR([Requires Python libgtop bindings])])
+     
+AX_PYTHON_MODULE(gconf, [])
+AS_IF([test "x${HAVE_PYMOD_GCONF}" = "xno"],
+     [AC_MSG_ERROR([Requires GConf bindings for Python])])
+     
 AX_PYTHON_MODULE(rsvg, [])
 AS_IF([test "x${HAVE_PYMOD_RSVG}" = "xno"],
      [AC_MSG_ERROR([Requires RSVG for Python])])
@@ -106,6 +122,10 @@ AS_IF([test "x${HAVE_PYMOD_FEEDPARSER}" = "xno"],
 AX_PYTHON_MODULE(gtop, [])
 AS_IF([test "x${HABE_PYMOD_GTOP}" = "xno"],
      [AC_MSG_ERROR([Requires python-gtop - Python libgtop bindings])])
+     
+AX_PYTHON_MODULE(opencv, [])
+AS_IF([test "x${HAVE_PYMOD_OPENCV}" = "xno"],
+     [AC_MSG_ERROR([Requires Python OpenCV])])
 
 PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
 AC_SUBST(PYGTK_CFLAGS)
