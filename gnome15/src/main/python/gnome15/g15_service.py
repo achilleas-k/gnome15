@@ -194,7 +194,9 @@ class G15Service(Thread):
             listener.shutting_down()
         if self.plugins:
             self.plugins.deactivate()
-        self.screen.fade()
+            
+        if self.screen.is_active():
+            self.screen.fade()
         
     def shutdown(self):
         logger.info("Shutting down")

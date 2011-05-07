@@ -944,6 +944,8 @@ class G15Config:
         
         # Controls
         driver_controls = self.driver.get_controls()
+        if not driver_controls:
+            driver_controls = []
         
         # Slider and Color controls
         controls = self.widget_tree.get_object("ControlsBox")

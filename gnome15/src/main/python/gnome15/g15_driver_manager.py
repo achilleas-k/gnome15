@@ -24,15 +24,20 @@
 import os
 import gconf
 import g15_setup as g15setup
+import logging
+logger = logging.getLogger("driver")
 
 # Find all drivers
 drivers_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "drivers"))
 imported_drivers = {}
 driverfiles = [fname[:-3] for fname in os.listdir(drivers_dir) if fname.endswith(".py") and fname.startswith("driver_")]
-driver_mods = __import__("gnome15.drivers", fromlist=driverfiles)
+driver_mods = __import__("gnome15.drivers", fromlist=list(driverfiles))
 for d in driverfiles:
-    mod = getattr(driver_mods, d)
-    imported_drivers[d] = mod
+    try :
+        mod = getattr(driver_mods, d)
+        imported_drivers[d] = mod
+    except Exception as e:
+        logger.warning("Failed to load driver. %s" % str(e))
     
 '''
 Get the configured driver, starting the setup dialog if no driver is set, or

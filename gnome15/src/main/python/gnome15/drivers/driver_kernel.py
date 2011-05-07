@@ -22,6 +22,7 @@ from threading import Thread
 import select
 import pyinputevent.scancodes as S
 import gnome15.g15_driver as g15driver
+import gnome15.g15_devices as g15devices
 import gnome15.g15_util as g15util
 import gnome15.g15_globals as g15globals
 import gconf
@@ -34,7 +35,9 @@ import usb
 import fb
 import Image
 import ImageMath
+import logging
 
+logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
 id = "kernel"
@@ -42,48 +45,6 @@ name = "Kernel Drivers"
 description = "Requires ali123's Logitech Kernel drivers. This method requires no other " + \
             "daemons to be running, and works with the G13, G15 and G19 keyboards. " 
 has_preferences = True
-
-# Key layouts
-g15v1_key_layout = [
-                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
-                  [ g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6 ],
-                  [ g15driver.G_KEY_G7, g15driver.G_KEY_G8, g15driver.G_KEY_G9 ],
-                  [ g15driver.G_KEY_G10, g15driver.G_KEY_G11, g15driver.G_KEY_G12 ],
-                  [ g15driver.G_KEY_G13, g15driver.G_KEY_G14, g15driver.G_KEY_G15 ],
-                  [ g15driver.G_KEY_G16, g15driver.G_KEY_G17, g15driver.G_KEY_G18 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4, g15driver.G_KEY_L5 ],
-                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
-                  ]
-
-g15v2_key_layout = [
-                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
-                  [ g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4, g15driver.G_KEY_L5 ],
-                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
-                  ]          
-
-g13_key_layout = [
-                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3, g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6, g15driver.G_KEY_G7 ],
-                  [ g15driver.G_KEY_G8, g15driver.G_KEY_G9, g15driver.G_KEY_G10, g15driver.G_KEY_G11, g15driver.G_KEY_G12, g15driver.G_KEY_G13, g15driver.G_KEY_G14 ],
-                  [ g15driver.G_KEY_G15, g15driver.G_KEY_G16, g15driver.G_KEY_G17, g15driver.G_KEY_G18, g15driver.G_KEY_G19 ],
-                  [ g15driver.G_KEY_G20, g15driver.G_KEY_G21, g15driver.G_KEY_G22 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4, g15driver.G_KEY_L5 ],
-                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
-                  ]
-g19_key_layout = [
-              [ g15driver.G_KEY_G1, g15driver.G_KEY_G7 ],
-              [ g15driver.G_KEY_G2, g15driver.G_KEY_G8 ],
-              [ g15driver.G_KEY_G3, g15driver.G_KEY_G9 ],
-              [ g15driver.G_KEY_G4, g15driver.G_KEY_G10 ],
-              [ g15driver.G_KEY_G5, g15driver.G_KEY_G11 ],
-              [ g15driver.G_KEY_G6, g15driver.G_KEY_G12 ],
-              [ g15driver.G_KEY_G6, g15driver.G_KEY_G12 ],
-              [ g15driver.G_KEY_UP ],
-              [ g15driver.G_KEY_LEFT, g15driver.G_KEY_OK, g15driver.G_KEY_RIGHT ],
-              [ g15driver.G_KEY_DOWN ],
-              [ g15driver.G_KEY_MENU, g15driver.G_KEY_BACK, g15driver.G_KEY_SETTINGS ],
-              [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ],
-              ]
 
 g19_key_map = {
                "191" : g15driver.G_KEY_M1,
@@ -126,19 +87,6 @@ g15_key_map = {
                "33" : g15driver.G_KEY_LIGHT,
                }
 
-usb_device_ids = { 
-                  g15driver.MODEL_G19 : (0x046d, 0xc229),
-                  g15driver.MODEL_G15_V1 : (0x046d, 0xc222),
-                  g15driver.MODEL_G13 : (0x046d, 0xc21c),
-                   }
-                  
-# Controls
-led_light_names = {
-                  g15driver.MODEL_G19 : ["orange:m1", "orange:m2", "orange:m3", "red:mr" ],
-                  g15driver.MODEL_G15_V1 : ["orange:m1", "orange:m2", "orange:m3", "blue:mr" ],
-                  g15driver.MODEL_G13 : ["red:m1", "red:m2", "red:m3", "blue:mr" ],
-                   }
-            
 
 g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint=g15driver.HINT_SHADEABLE)
@@ -152,6 +100,23 @@ g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 
 g15_lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 48, hint=g15driver.HINT_SHADEABLE)
 g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint=g15driver.HINT_SWITCH)
 g15_controls = [ g15_backlight_control, g15_invert_control, g15_lcd_backlight_control, g15_lcd_contrast_control ]  
+
+class DeviceInfo:
+    def __init__(self, leds, controls, key_map, led_prefix, keydev_pattern):
+        self.leds = leds
+        self.controls = controls
+        self.key_map = key_map
+        self.led_prefix = led_prefix 
+        self.keydev_pattern = keydev_pattern
+        
+device_info = {
+               g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", "Logitech_G19_Gaming_Keyboard.*if*"), 
+               g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", "G15_Keyboard_G15.*if*"), 
+               g15driver.MODEL_G15_V2: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", "G15_Keyboard_G15.*if*"),
+               g15driver.MODEL_G13: DeviceInfo(["red:m1", "red:m2", "red:m3", "blue:mr" ], g15_controls, g15_key_map, "g13", "G13_Keyboard_G13.*if*"),
+               g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g15_controls, g15_key_map, "g110", "G110_Keyboard_G15.*if*")
+               }
+        
 
 # Other constants
 EVIOCGRAB = 0x40044590
@@ -257,14 +222,20 @@ class Driver(g15driver.AbstractDriver):
         self.var_info = None
         self.on_close = on_close
         self.key_thread = None
+        self.device = None
+        self.device_info = None
         self.conf_client = gconf.client_get_default()
-        self._init_driver()
+        
+        try :
+            self._init_driver()
+        except Exception as e:
+            logger.warning("Failed to initialise driver properly. %s" % str(e))
     
-    def get_antialias(self):        
-        if self.mode == g15driver.MODEL_G15_V1 or self.mode == g15driver.MODEL_G15_V2 or self.mode == g15driver.MODEL_G13: 
-            return cairo.ANTIALIAS_NONE
-        else:
+    def get_antialias(self):         
+        if self.device.bpp != 1:
             return cairo.ANTIALIAS_DEFAULT
+        else:
+            return cairo.ANTIALIAS_NONE
         
     def disconnect(self):
         if not self.is_connected():
@@ -290,7 +261,7 @@ class Driver(g15driver.AbstractDriver):
         return "Linux Logitech Kernel Driver"
     
     def get_model_name(self):
-        return self.mode
+        return self.device.model_name if self.device != None else None
     
     def simulate_key(self, widget, key, state):
         if self.callback != None:
@@ -299,7 +270,7 @@ class Driver(g15driver.AbstractDriver):
             self.callback(keys, state)
         
     def get_key_layout(self):
-        return self.key_layout
+        return self.device.key_layout
         
     def get_zoomed_size(self):
         size = self.get_size()
@@ -321,7 +292,7 @@ class Driver(g15driver.AbstractDriver):
         self._init_driver()
 
         # Sanity check        
-        if self.mode == "":
+        if not self.device:
             raise usb.USBError("No supported logitech keyboards found on USB bus")
         if self.device == None:
             raise usb.USBError("WARNING: Found no " + self.model + " Logitech keyboard, Giving up")
@@ -350,7 +321,7 @@ class Driver(g15driver.AbstractDriver):
         return self.var_info.bits_per_pixel
     
     def get_controls(self):
-        return self.controls
+        return self.device_info.controls if self.device_info != None else None
     
     def paint(self, img):   
         
@@ -498,14 +469,6 @@ class Driver(g15driver.AbstractDriver):
             # Fallback to lgsetled
             os.system("lgsetled -s -f %s %d" % (self.led_path_prefix[1] + name, value))
 
-    @staticmethod
-    def _find_device(idVendor, idProduct):
-        for bus in usb.busses():
-            for dev in bus.devices:
-                if dev.idVendor == idVendor and \
-                        dev.idProduct == idProduct:
-                    return dev
-        return None
     
     def _handle_bound_key(self, key):
         print "G key - %d", key
@@ -517,48 +480,34 @@ class Driver(g15driver.AbstractDriver):
         else:
             print "WARNING: Mode change would cause disconnect when already connected.", entry
         
-    def _init_driver(self):      
-        self.mode = self.conf_client.get_string("/apps/gnome15/fb_mode")
-        if self.mode == None or self.mode == "" or self.mode == "auto":
-            self.mode = ""
-            for model in usb_device_ids:
-                id = usb_device_ids[model]
-                self.device = self._find_device(id[0], id[1])
-                if self.device:
-                    self.mode = model
-                    break
-                    
-        else:
-            id = usb_device_ids[self.mode]
-            self.device = self._find_device(id[0], id[1])
+    def _init_driver(self):
+        mode = self.conf_client.get_string("/apps/gnome15/fb_mode")
         
-        self.key_map = None
-        if self.mode == g15driver.MODEL_G15_V1 or self.mode == g15driver.MODEL_G15_V2 or self.mode == g15driver.MODEL_G13:
+        # Find the first device if auto mode
+        if mode == None or mode == "" or mode == "auto":
+            mode = ""
+            devices = g15devices.find_all_devices()
+            if len(devices) > 0:
+                mode = devices[0].model_name
+                
+        # Find the selected device
+        self.device = g15devices.find_device(mode)
+        if not self.device:      
+            self.device = None
+            self.device_info = None
+            raise Exception("Could not find any device for model %s" % mode)
+        
+        if self.device.bpp == 1:
             self.framebuffer_mode = "GFB_MONO"
-            self.controls = g15_controls        
-            if self.mode == g15driver.MODEL_G15_V1:
-                led_prefix = "g15"
-                keydev_pattern = "G15_Keyboard_G15.*if*"
-                self.key_layout = g15v1_key_layout
-                self.key_map = g15_key_map      
-            elif self.mode == g15driver.MODEL_G15_V2:
-                led_prefix = "g15"
-                self.key_layout = g15v2_key_layout
-            elif self.mode == g15driver.MODEL_G13:
-                led_prefix = "g13"
-                self.key_layout = g13_key_layout
-        else:         
-            led_prefix = "g19"
-            self.framebuffer_mode = "GFB_QVGA"   
-            self.controls = g19_controls
-            self.key_layout = g19_key_layout
-            self.key_map = g19_key_map            
-            keydev_pattern = "Logitech_G19_Gaming_Keyboard.*if*"
+        else:
+            self.framebuffer_mode = "GFB_QVGA"
             
+        self.device_info = device_info[mode]
+                    
         # Try and find the paths for the LED devices.
         # Note, I am told these files may be in different places on different kernels / distros. Will
         # just have to see how it goes for now
-        self.led_path_prefix = self._find_led_path_prefix(led_prefix)
+        self.led_path_prefix = self._find_led_path_prefix(self.device_info.led_prefix)
         if self.led_path_prefix == None:
             print "WARNING: Could not find control files for LED lights. Some features won't work"
             
@@ -566,7 +515,7 @@ class Driver(g15driver.AbstractDriver):
         self.keyboard_devices = []
         dir = "/dev/input/by-id"
         for p in os.listdir(dir):
-            if re.search(keydev_pattern, p):
+            if re.search(self.device_info.keydev_pattern, p):
                 self.keyboard_devices.append(dir + "/" + p)
                 
         # Determine the framebuffer device to use

@@ -416,6 +416,9 @@ class G15Screen():
         finally:
             self.page_model_lock.release()
             
+    def is_active(self):
+        return self.driver != None and self.driver.is_connected()
+            
     def is_visible(self, page):
         return self._get_next_page_to_display() == page
     

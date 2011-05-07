@@ -39,10 +39,16 @@ import gconf
 import gtk
 import re
 import usb
-import traceback
-from g19.g19 import G19 
+import traceback 
 import logging
 logger = logging.getLogger("driver")
+
+# Import from local version of pylibg19 if available
+if g15globals.dev:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", "..", "pylibg19"))    
+
+from g19.g19 import G19
+
 
 
 # Driver information (used by driver selection UI)

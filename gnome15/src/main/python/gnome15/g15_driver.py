@@ -268,18 +268,24 @@ class AbstractDriver(object):
     Utilities
     '''
     def get_control(self, id):
-        for control in self.get_controls():
-            if id == control.id:
-                return control
+        controls = self.get_controls()
+        if controls:
+            for control in self.get_controls():
+                if id == control.id:
+                    return control
             
     def get_control_for_hint(self, hint):
-        for control in self.get_controls():
-            if ( hint & control.hint ) == hint:
-                return control
+        controls = self.get_controls()
+        if controls:
+            for control in self.get_controls():
+                if ( hint & control.hint ) == hint:
+                    return control
         
     def set_controls_from_configuration(self, conf_client):
-        for control in self.get_controls():
-            self.set_control_from_configuration(control, conf_client)
+        controls = self.get_controls()
+        if controls:
+            for control in controls:
+                self.set_control_from_configuration(control, conf_client)
             
     def set_control_from_configuration(self, control, conf_client):
         entry = conf_client.get("/apps/gnome15/" + control.id)

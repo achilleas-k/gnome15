@@ -1,1 +1,18 @@
-SUBDIRS = background cairo-clock clock fx macro-recorder macros notify-lcd sysmon volume weather rss mpris menu panel videoplayer processes g15daemon-server stopwatch webcam
+if ENABLE_VOLUME_PLUGIN
+    MAYBE_VOLUME = volume
+endif
+if ENABLE_RSS_PLUGIN
+    MAYBE_RSS = volume
+endif
+if ENABLE_SYSMON_PLUGIN
+    MAYBE_SYSMON = sysmon
+endif
+if ENABLE_PROCESSES_PLUGIN
+	MAYBE_PROCESSES = processes
+endif
+if ENABLE_WEBCAM_PLUGIN
+	MAYBE_WEBCAM = webcam
+endif
+
+SUBDIRS = background cairo-clock clock fx macro-recorder macros notify-lcd weather mpris menu panel videoplayer g15daemon-server stopwatch \
+	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_WEBCAM)
