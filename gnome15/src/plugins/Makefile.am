@@ -16,3 +16,6 @@ endif
 
 SUBDIRS = background cairo-clock clock fx macro-recorder macros notify-lcd weather mpris menu panel videoplayer g15daemon-server stopwatch \
 	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_WEBCAM)
+	
+DIST_SUBDIRS = background cairo-clock clock fx macro-recorder macros notify-lcd weather mpris menu panel videoplayer g15daemon-server stopwatch \
+	sysmon volume rss processes webcam
