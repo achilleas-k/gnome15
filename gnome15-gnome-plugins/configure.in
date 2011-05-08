@@ -37,7 +37,5 @@ Makefile
 src/Makefile
 src/cal/Makefile
 src/cal/default/Makefile
-src/screensaver/Makefile
-src/screensaver/default/Makefile
 src/lcdbiff/Makefile
 ])

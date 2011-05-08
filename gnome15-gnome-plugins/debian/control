@@ -13,5 +13,4 @@ Provides: ${python:Provides}
 Description: Collection of GNOME specific plugins for Gnome15.
  This package contains plugins that will only work when
  running on the GNOME desktop. Includes an Evolution calendar plugin, 
- Indicator Me, Indicator Messages, POP/IMAP email notification and
- Screensaver integration.
+ Indicator Me, Indicator Messages and POP/IMAP email notification.

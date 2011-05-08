@@ -1,4 +1,4 @@
-AC_INIT(gnome15, 0.6.2)
+AC_INIT(gnome15, 0.6.3)
 AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_service.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 
@@ -169,6 +169,8 @@ src/plugins/processes/Makefile
 src/plugins/processes/default/Makefile
 src/plugins/notify-lcd/Makefile
 src/plugins/notify-lcd/default/Makefile
+src/plugins/screensaver/Makefile
+src/plugins/screensaver/default/Makefile
 src/plugins/stopwatch/Makefile
 src/plugins/stopwatch/default/Makefile
 src/plugins/sysmon/Makefile

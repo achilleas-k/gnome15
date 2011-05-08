@@ -1,1 +1,1 @@
-SUBDIRS = cal screensaver lcdbiff 
+SUBDIRS = cal lcdbiff 

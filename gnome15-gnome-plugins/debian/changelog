@@ -1,3 +1,9 @@
+gnome15-gnome-plugins (0.0.5-1) natty; urgency=low
+
+  * Bug: Allow screensaver to work on KDE (moved from gnome-plugins) package.
+  
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun,  8 May 2011 15:18:31 +0000 
+
 gnome15-gnome-plugins (0.0.4-1) natty; urgency=low
 
   * Feature: First release of separated Ubuntu plugins
