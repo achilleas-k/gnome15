@@ -1,4 +1,4 @@
-AC_INIT(gnome15, 0.6.1)
+AC_INIT(gnome15, 0.6.2)
 AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_service.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 
@@ -118,7 +118,7 @@ AM_CONDITIONAL([ENABLE_VOLUME_PLUGIN], [test x$enable_volume_plugin = xyes])
 
 AX_PYTHON_MODULE(feedparser, [])
 AS_IF([test "x${HAVE_PYMOD_FEEDPARSER}" = "xyes"],
-[enable_rss_plugin=yes])
+	  [enable_rss_plugin=yes])
 AM_CONDITIONAL([ENABLE_RSS_PLUGIN], [test x$enable_volume_plugin = xyes])
 
 AX_PYTHON_MODULE(gtop, [])
