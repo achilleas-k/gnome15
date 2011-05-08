@@ -99,7 +99,7 @@ device_list = {
                   g15driver.MODEL_G15_V1 : [ (0x046d, 0xc222), g15v1_key_layout, 1, ( 160, 43 ) ], 
                   g15driver.MODEL_G15_V2 : [ (0x046d, 0xc227), g15v2_key_layout, 1, ( 160, 43 ) ],
                   g15driver.MODEL_G13 : [ (0x046d, 0xc21c), g13_key_layout, 1, ( 160, 43 ) ],
-                  g15driver.MODEL_G510 : [ (0x046d, 0xc22e), g510_key_layout, 1, ( 160, 43 ) ],
+                  g15driver.MODEL_G510 : [ (0x046d, 0xc22d), g510_key_layout, 1, ( 160, 43 ) ],
                   g15driver.MODEL_G510_AUDIO : [ (0x046d, 0xc22e), g510_key_layout, 1, ( 160, 43 ) ],
                   g15driver.MODEL_Z10 : [ (0x046d, 0x0a07), z10_key_layout, 1, ( 160, 43 ) ],
                   g15driver.MODEL_G110 : [ (0x046d, 0xc225), g110_key_layout, 0, ( 0, 0 ) ],
