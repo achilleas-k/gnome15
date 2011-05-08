@@ -1,4 +1,4 @@
-AC_INIT(g19d, 0.0.9)
+AC_INIT(g19d, 0.0.10)
 AC_CONFIG_SRCDIR([g19d/globals.py.in])
 AM_INIT_AUTOMAKE
 

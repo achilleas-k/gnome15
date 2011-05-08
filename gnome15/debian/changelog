@@ -1,4 +1,4 @@
-gnome15 (0.6.0-1) natty; urgency=low
+gnome15 (0.6.1-1) natty; urgency=low
 
   * Bug: #733706 - Fixes font size on Redhat
 
