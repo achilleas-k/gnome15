@@ -1,17 +1,19 @@
 #!/bin/bash
 
 modules="../pyinputevent pylibg19 g19d lgsetled gnome15 gnome15-gnome-plugins gnome15-ubuntu-plugins gnome15-indicator gnome15-systemtray gnome15-panel-applet gnome15-impulse15 gnome15-ubuntu gnome15-iconpack"
-modules="gnome15 gnome15-gnome-plugins"
 base_dist="natty"
 arch=$(dpkg --print-architecture)
 
 function get_version() {
     pushd "${root_dir}/$1" >/dev/null 2>&1
+    module_name="$(pwd)"
+    module_name="$(basename $module_name)"
     if test -f setup.py
     then version=$(python setup.py --version)
     else if test -f configure.in
          then version=$(./configure -V|head -1|awk '{ print $NF }')
-         else version=$(grep "^Version:" debian/control|awk '{ print $2 }')
+         else version=$(get_changelog_version ${module_name})
+              version=$(echo $version|awk -F'-' '{ print $1 }')
          fi
     fi
     echo $version
@@ -19,8 +21,17 @@ function get_version() {
 }
 
 function get_changelog_version() {
-    pushd ${workspace}/${module_name}-package >/dev/null 2>&1
-    changelog_file="./$1-$2/debian/changelog"
+    ver=""
+    if [ "$1" = "-s" ]
+    then pushd ${workspace}/${module_name}-package/ >/dev/null 2>&1
+         shift
+         if [ -n "$2" ]
+         then ver="-$2"
+         fi
+         changelog_file="./${1}${ver}/debian/changelog"
+    else pushd ${root_dir}/${module_name} >/dev/null 2>&1
+         changelog_file="debian/changelog"
+    fi
     head -1 "${changelog_file}"|awk '{ print $2 }'|tr -d '('|tr -d ')'
     popd >/dev/null 2>&1
 }
@@ -39,10 +50,12 @@ pdebuild=n
 sign=y
 install=n
 dist="natty"
+bump=n
 
 while [ $# -gt 0 ]
 do
     case "$1" in
+            "bump") bump=y ;;
        "configure") configure=y ;;
             "copy") copy=y ;;
           "upload") upload=y ;;
@@ -132,7 +145,7 @@ do
                    then echo "$0: failed to copy source tarball" >&2
                         exit 1
                    fi
-              else version=$(grep "^Version:" debian/control|awk '{ print $2 }')
+              else version=$(get_version $i)
               fi
          fi
 
@@ -145,34 +158,57 @@ do
          if test -f ${module_name}_${version}.orig.tar.gz && ! tar xzf ${module_name}_${version}.orig.tar.gz
          then echo "$0: failed to extract source tarball" >&2
               exit 1
-         else mkdir ${module_name}-${version}
+         else mkdir ${module_name}-${version} 2>/dev/null
          fi
 
-
-         pushd ${module_name}-${version} >/dev/null 2>&1
-         
-         if ! cp -Rp "${module_dir}/debian" .
+         cd ${module_name}-${version} 
+         if ! cp -Rp "${root_dir}/${i}/debian" .
          then echo "$0: failed to copy debian directory to package directory" >&2
+              exit 1
          fi
 
          # If not working on the base distribution, then adjust the distributions in packages
          if [ "$dist" != "$base_dist" ]
          then echo "Adjusting distribution details"
               changelog_version=$(get_changelog_version ${module_name} ${version})
-              new_changelog_version=${changelog_version}~lucid1
+              new_changelog_version=${changelog_version}~${dist}1
               sed "s/ (${changelog_version}) ${base_dist}\;/ (${new_changelog_version}) ${dist}\;/" debian/changelog > debian/changelog.new
               mv debian/changelog.new debian/changelog
 
-              # CDBS in Lucid is not new enough to have python rules, 
-              # so the version is adjusted and cdbs rules
-              # are inserted into the debian/rules file
-              #if [ "$dist" = "lucid" ]
-              #then sed "s/cdbs (>=.*)/ cdbc (>=ZZ(${new_changelog_version}) ${dist}\;/" debian/changelog > debian/changelog.new
          fi
 
-         popd # back to packge dir
-         popd # back to module
-         popd # back to workspace
+         popd >/dev/null 2>&1 # back to module
+         popd >/dev/null 2>&1 # back to workspace
+    fi
+
+    if [ "$bump" = "y" ]
+    then module_name=$(basename $i)
+         version=$(get_version ${i})
+         pushd "${workspace}/${module_name}-package/${module_name}-${version}" >/dev/null 2>&1
+ 
+         echo getting changelog version for ${module_name} ${version}
+         changelog_version=$(get_changelog_version -s ${module_name} ${version})
+         suffix=$(echo $changelog_version|awk -F'~' '{ print $2 }')
+         if [ -n "${suffix}" ]
+         then suffix="~${suffix}"
+         fi
+         buildv=$(echo $changelog_version|awk -F'-' '{ print $2 }'|awk -F'~' '{print $1 }')
+         if [ "${buildv}" = "" ]
+         then buildv="1"
+         else buildv=$(expr ${buildv} + 1)
+         fi
+         new_changelog_version="${version}-${buildv}${suffix}"
+         echo -n "${module_name} goes from $changelog_version to ${new_changelog_version} (y/n):"
+         read yesno
+         if [ "$yesno" = "y" ]
+         then sed "s/ (${changelog_version}) ${dist}\;/ (${new_changelog_version}) ${dist}\;/" debian/changelog > debian/changelog.new
+              if cat debian/changelog.new > debian/changelog
+              then rm debian/changelog.new
+              else echo "$0: failed to adjust changelog" >&2
+                   exit 1
+              fi
+         fi
+         popd >/dev/null 2>&1
     fi
 
     if [ "$build" = "y" ]
@@ -202,7 +238,7 @@ do
                    exit 1
               fi
 
-              changelog_version=$(get_changelog_version ${module_name} ${version})
+              changelog_version=$(get_changelog_version -s ${module_name} ${version})
               pushd ${workspace}/${module_name}-package
               changes_file="${module_name}_${changelog_version}_${arch}.changes"
               echo "Changes file: '${changes_file}'"
@@ -215,7 +251,7 @@ do
               then echo "$0: pbuilder update failed" >&2
                    exit 1
               fi
-              popd
+              popd >/dev/null 2>&1
            
               
          else if [ "$source" = "y" ] 
@@ -230,7 +266,7 @@ do
               fi
          fi
          
-         popd #back to package dir
+         popd  >/dev/null 2>&1
 
          if [ ${install} = "y" ]
          then pwd
@@ -240,14 +276,14 @@ do
               fi
          fi
           
-         popd #back to default
+         popd  >/dev/null 2>&1 #back to default
     fi
     
     if [ "$upload" = "y" ]
     then module_name=$(basename $i)
          version=$(get_version $i)
          pushd ${workspace}/${module_name}-package >/dev/null 2>&1
-         changelog_version=$(get_changelog_version ${module_name} ${version})
+         changelog_version=$(get_changelog_version -s ${module_name} ${version})
          changes_file=${module_name}_${changelog_version}_source.changes
          if [ -f "${changes_file}" ]
          then ppa_loc=ppa:gnome15-team/${dist}
