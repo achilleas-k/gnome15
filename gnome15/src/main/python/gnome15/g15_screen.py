@@ -253,7 +253,7 @@ class G15Screen():
         self.painter_function = None
         self.mkey = 1
         self.reverting = { }
-        self.hiding = { }
+        self.deleting = { }
            
         self.redraw()   
 
@@ -308,8 +308,14 @@ class G15Screen():
                 self.set_mkey(3)
                 
         return False
-                
+    
     def index(self, page):
+        """
+        Returns the page index
+        
+        Keyword arguments:
+        page -- page object
+        """
         i = 0
         for p in self.pages:
             if p == page:
@@ -318,19 +324,41 @@ class G15Screen():
         return i
     
     def get_page(self, id):
+        """
+        Return a page object given it's ID
+        
+        Keyword arguments:
+        id -- page ID
+        """
         for page in self.pages:
             if page.id == id:
                 return page
             
     def clear_popup(self):
+        """
+        Clear any popup screens that are currently running
+        """
         for page in self.pages:
             if page.priority == PRI_POPUP:
                 # Drop the priority of other popups
                 page.set_priority(PRI_LOW)
                 break
-        
+    
     def new_page(self, painter, priority=PRI_NORMAL, on_shown=None, on_hidden=None, 
                  id="Unknown", thumbnail_painter = None, panel_painter = None):
+        """
+        Create a new page. Returns the G15Page object
+        
+        Keyword arguments:
+        painter --  painter function. Will be called with a 'canvas' argument that is a cairo.Context
+        priority --  priority of screen, defaults to PRI_NORMAL
+        on_shown --  function to call when screen is show. Defaults to None 
+        on_hidden --  function to call when screen is hidden. Defaults to None 
+        id --  id of screen 
+        thumbnail_painter --  function to call to paint thumbnails for this page. Defaults to None
+        panel_painter -- function to call to paint panel graphics for this page. Defaults to None
+        """
+        
         logger.info("Creating new page with %s of priority %d" % (id, priority))
         self.page_model_lock.acquire()
         try :
@@ -347,19 +375,45 @@ class G15Screen():
                 l.new_page(page) 
             return page
         finally:
-            self.page_model_lock.release()            
-
-    def hide_after(self, hide_after, page):
-        if page.id in self.hiding:
-            # If the page was already hiding, cancel previous timer
-            self.hiding[page.id].cancel()
-            del self.hiding[page.id]       
+            self.page_model_lock.release()   
+            
+    def delete_after(self, delete_after, page):
+        """
+        Delete a page after a given time interval. Returns timer object used for deleting. May be canceled
+        
+        Keyword arguments:
+        delete_after -- interval in seconds (float)
+        page -- page object to hide
+        """
+        if page.id in self.deleting:
+            # If the page was already deleting, cancel previous timer
+            self.deleting[page.id].cancel()
+            del self.deleting[page.id]       
                       
-        timer = g15util.schedule("HideScreen", hide_after, self.del_page, page)
-        self.hiding[page.id] = timer
+        timer = g15util.schedule("DeleteScreen", delete_after, self.del_page, page)
+        self.deleting[page.id] = timer
         return timer
     
-    def set_priority(self, page, priority, revert_after=0.0, hide_after=0.0, do_redraw = True):
+    def is_on_timer(self, page):
+        '''
+        Get if the given page is currently on a revert or delete timer
+        
+        Keyword arugments:
+        page -- page object
+        '''
+        return page.id in self.reverting or page.id in self.deleting
+    
+    def set_priority(self, page, priority, revert_after=0.0, delete_after=0.0, do_redraw = True):
+        """
+        Change the priority of a page, optionally reverting or deleting after a specified time. Returns timer object used for reverting or deleting. May be canceled
+        
+        Keyword arguments:
+        page -- page object to change
+        priority -- new priority
+        revert_after -- revert the page priority to it's original value after specified number of seconds
+        delete_after -- delete the page after specified number of seconds
+        do_redraw -- redraw after changing priority. Defaults to True
+        """
         self.page_model_lock.acquire()
         try :
             if page != None:
@@ -378,28 +432,43 @@ class G15Screen():
                     timer = g15util.schedule("Revert", revert_after, self.set_priority, page, old_priority)
                     self.reverting[page.id] = (old_priority, timer)
                     return timer
-                if hide_after != 0.0:       
-                    return self.hide_after(hide_after, page)
+                if delete_after != 0.0:       
+                    return self.delete_after(delete_after, page)
         finally:
-            self.page_model_lock.release()   
-    
+            self.page_model_lock.release()  
+            
     def raise_page(self, page):
+        """
+        Raise the page. If it is LOW priority, it will be turned into a POPUP. If it is any other priority,
+        it will be raised to the top of list of all pages that are of the same priority (effectively making
+        it visible)
+        
+        Keyword arguments:
+        page - page to raise
+        """
         if page.priority == PRI_LOW:
             page.set_priority(PRI_POPUP)
         else:
             page.set_time(time.time())
         self.redraw()
-            
+        
     def del_page(self, page):
+        """
+        Remove the page from the screen. The page will be hidden and the next highest priority page
+        displayed.
+        
+        Keyword arguments:
+        page -- page to remove
+        """
         self.page_model_lock.acquire()
         try :
             if page != None:    
                 logger.info("Deleting page %s" % page.id)
                     
                 # Remove any timers that might be running on this page
-                if page.id in self.hiding:
-                    self.hiding[page.id].cancel()
-                    del self.hiding[page.id]
+                if page.id in self.deleting:
+                    self.deleting[page.id].cancel()
+                    del self.deleting[page.id]
                 if page.id in self.reverting:
                     self.reverting[page.id][1].cancel()
                     del self.reverting[page.id]                                             
@@ -417,6 +486,9 @@ class G15Screen():
             self.page_model_lock.release()
             
     def is_active(self):
+        """
+        Get if the driver is active.
+        """
         return self.driver != None and self.driver.is_connected()
             
     def is_visible(self, page):
@@ -447,11 +519,6 @@ class G15Screen():
         self.transition_function = transition
         return o_transition
     
-    
-    '''
-    Queued functions. 
-    '''
-    
     def cycle_to(self, page, transitions = True):
         g15util.clear_jobs("cycleQueue")
         g15util.execute("cycleQueue", "cycleTo", self._do_cycle_to, page, transitions)
@@ -466,11 +533,6 @@ class G15Screen():
         else:
             logger.debug("Redrawing current page")
         current_page = self._get_next_page_to_display()
-        
-#        if page != None and page == current_page and self.visible_page == page:
-#            # Drop any redraws that are not required
-#            g15util.clear_jobs("redrawQueue")
-            
         g15util.execute("redrawQueue", "redraw", self._do_redraw, page, direction, transitions, redraw_content)
         
     def set_color_for_mkey(self):
@@ -505,10 +567,8 @@ class G15Screen():
         return min(sx, sy)
     
 
-    def fade(self):
-        for o in range(0, 255):
-            self.opacity = o
-            self.redraw()
+    def fade(self, stay_faded=False):
+        Fader(self, stay_faded=stay_faded).run()
     
     '''
     Private functions
@@ -630,7 +690,7 @@ class G15Screen():
                 self._draw_page(page, "down", transitions)
             else: 
                 self.clear_popup()
-                self._flush_reverts_and_hides()
+                self._flush_reverts_and_deletes()
                 # Cycle within pages of the same priority
                 page_list = self._get_pages_of_priority(page.priority)
                 direction = "up"
@@ -647,7 +707,7 @@ class G15Screen():
     def _do_cycle(self, number, transitions = True):            
         self.page_model_lock.acquire()
         try :
-            self._flush_reverts_and_hides()
+            self._flush_reverts_and_deletes()
             self._cycle(number, transitions)
             dir = "up"
             if number < 0:
@@ -693,7 +753,7 @@ class G15Screen():
         finally:
             self.page_model_lock.release()
             
-    def _flush_reverts_and_hides(self):        
+    def _flush_reverts_and_deletes(self):        
         self.page_model_lock.acquire()
         try :
             for page_id in self.reverting:
@@ -701,11 +761,11 @@ class G15Screen():
                 timer.cancel()                
                 self.set_priority(self.get_page(page_id), old_priority)
             self.reverting = {}
-            for page_id in self.hiding:
-                timer = self.hiding[page_id]
+            for page_id in self.deleting:
+                timer = self.deleting[page_id]
                 timer.cancel()
                 self.del_page(self.get_page(page_id))                
-            self.hiding = {}
+            self.deleting = {}
         finally:
             self.page_model_lock.release()   
         
@@ -720,4 +780,40 @@ class G15Screen():
                 return srt[0]
         finally:            
             self.page_model_lock.release()
+    
+"""
+Fades the screen by inserting a foreground painter that paints a transparent
+black rectangle over the top of everything. The opacity is this gradually
+increased, creating a fading effect
+"""    
+class Fader():
+    
+    def __init__(self, screen, stay_faded=False):
+        self.screen = screen
+        self.opacity = 0.0
+        self.stay_faded = stay_faded
+        
+    def run(self):
+        self.chained_painter = self.screen.set_foreground_painter(self.paint)
+        try:
+            while self.opacity <= 1.0:
+                self.screen.redraw()
+                time.sleep(0.02)
+        finally:
+            if not self.stay_faded:
+                self.screen.set_foreground_painter(self.chained_painter)
+        
+    def paint(self, canvas):
+        if self.chained_painter != None:
+            self.chained_painter(canvas)
+            
+        # Fade to black on the G19, or white on everything else
+        if self.screen.driver.get_bpp() == 1:
+            col = 1.0
+        else:
+            col = 0.0
+        canvas.set_source_rgba(col, col, col, self.opacity)
+        canvas.rectangle(0, 0, self.screen.width, self.screen.height)
+        canvas.fill()
+        self.opacity += 0.025
         

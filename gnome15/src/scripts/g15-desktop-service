@@ -64,7 +64,7 @@ def start_service():
     try :
         import setproctitle
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
-    except ImportError:
+    except ImportError as ie:
         # Not a big issue
         logger.debug("No setproctitle, process will be named 'python'")
 

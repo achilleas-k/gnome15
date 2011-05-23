@@ -1,1 +1,1 @@
-SUBDIRS = gnome15
+SUBDIRS = backlight browser im nm notify-lcd2 ppastats ts3 webkitbrowser

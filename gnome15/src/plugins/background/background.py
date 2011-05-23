@@ -25,7 +25,10 @@ import gnome15.g15_driver as g15driver
 import cairo
 import gtk
 import os
-import Image
+import logging
+import gconf
+logger = logging.getLogger("background")
+
 
 # Plugin details - All of these must be provided
 id="background"
@@ -47,23 +50,31 @@ class G15BackgroundPreferences():
     
     def __init__(self, parent, gconf_client, gconf_key):
         
-        self.widget_tree = gtk.Builder()
-        self.widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "background.glade"))
+        widget_tree = gtk.Builder()
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "background.glade"))
         
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
         
         # Widgets
-        dialog = self.widget_tree.get_object("BackgroundDialog")
-        dialog.set_transient_for(parent)
+        dialog = widget_tree.get_object("BackgroundDialog")
+        dialog.set_transient_for(parent)        
+        g15util.configure_radio_from_gconf(gconf_client, gconf_key + "/type", [ "UseDesktop", "UseFile" ], [ "desktop", "file" ], "desktop", widget_tree, True)
+        g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/style", "StyleCombo", "zoom", widget_tree)
+        widget_tree.get_object("UseDesktop").connect("toggled", self.set_available, widget_tree)
+        widget_tree.get_object("UseFile").connect("toggled", self.set_available, widget_tree)
+        
+        # Currently, only GNOME is supported for getting the desktop background
+        if not "gnome" == g15util.get_desktop():
+            widget_tree.get_object("UseFile").set_active(True)
         
         # The file chooser
-        self.chooser = gtk.FileChooserDialog("Open..",
+        chooser = gtk.FileChooserDialog("Open..",
                                None,
                                gtk.FILE_CHOOSER_ACTION_OPEN,
                                (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                 gtk.STOCK_OPEN, gtk.RESPONSE_OK))
-        self.chooser.set_default_response(gtk.RESPONSE_OK)
+        chooser.set_default_response(gtk.RESPONSE_OK)
         
         filter = gtk.FileFilter()
         filter.set_name("Images")
@@ -74,24 +85,28 @@ class G15BackgroundPreferences():
         filter.add_pattern("*.jpg")
         filter.add_pattern("*.jpeg")
         filter.add_pattern("*.gif")
-        self.chooser.add_filter(filter)
+        chooser.add_filter(filter)
         
         filter = gtk.FileFilter()
         filter.set_name("All files")
         filter.add_pattern("*")
-        self.chooser.add_filter(filter)
+        chooser.add_filter(filter)
         
-        self.chooser_button = self.widget_tree.get_object("FileChooserButton")        
-        self.chooser_button.dialog = self.chooser        
-        self.chooser_button.connect("file-set", self.file_set)
-        self.widget_tree.connect_signals(self)
+        chooser_button = widget_tree.get_object("FileChooserButton")        
+        chooser_button.dialog = chooser        
+        chooser_button.connect("file-set", self.file_set)
+        widget_tree.connect_signals(self)
         bg_img = gconf_client.get_string(gconf_key + "/path")
         if bg_img == None:
             bg_img = ""
-        self.chooser_button.set_filename(bg_img)
-        
+        chooser_button.set_filename(bg_img)
+        self.set_available(None, widget_tree)
         dialog.run()
         dialog.hide()
+    
+    def set_available(self, widget, widget_tree):
+        widget_tree.get_object("FileChooserLabel").set_sensitive(widget_tree.get_object("UseFile").get_active())
+        widget_tree.get_object("FileChooserButton").set_sensitive(widget_tree.get_object("UseFile").get_active())
         
     def file_set(self, widget):
         self.gconf_client.set_string(self.gconf_key + "/path", widget.get_filename())
@@ -102,60 +117,131 @@ class G15Background():
         self.screen = screen
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
-        self.this_image = None
-        self.background_image = None
         self.target_surface = None
         self.target_context = None
-        self.was_cairo = False
+        self.gconf_client.add_dir('/desktop/gnome/background', gconf.CLIENT_PRELOAD_NONE)
     
     def activate(self):
+        self.bg_img = None
+        self.this_image = None
+        self.current_style = None
+        self.background_image = None
+        self.notify_handlers = []
         self.chained_painter = self.screen.set_background_painter(self.paint)
-        self.notify_handler = self.gconf_client.notify_add(self.gconf_key + "/path", self.config_changed);
-        self.screen.redraw()
+        self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/path", self.config_changed))
+        self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/type", self.config_changed))
+        self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/style", self.config_changed))
+        
+        
+        # Monitor desktop specific configuration for wallpaper changes
+        if "gnome" == g15util.get_desktop():
+            self.notify_handlers.append(self.gconf_client.notify_add("/desktop/gnome/background/picture_filename", self.config_changed))
+        
+        self._do_config_changed()
     
     def deactivate(self):
         self.screen.set_background_painter(self.chained_painter)
-        self.gconf_client.notify_remove(self.notify_handler);
+        for h in self.notify_handlers:
+            self.gconf_client.notify_remove(h);
         self.screen.redraw()
         
     def config_changed(self, client, connection_id, entry, args):
-        self.screen.redraw()
+        self._do_config_changed()
         
     def destroy(self):
         pass
         
     def paint(self, canvas):
-        bg_img = self.gconf_client.get_string(self.gconf_key + "/path")
         screen_size = self.screen.size
-        if bg_img == None:
-            bg_img = os.path.join(os.path.dirname(__file__), "background-%dx%d.png" % ( screen_size[0], screen_size[1] ) )
-
-        if bg_img != self.this_image or ( self.was_cairo and not isinstance(canvas, cairo.Context) ) or ( not self.was_cairo and isinstance(canvas, cairo.Context)):
-            self.this_image = bg_img
-            if isinstance(canvas, cairo.Context):
-                self.was_cairo = True
-                if os.path.exists(bg_img):
-                    # Load the background
-                    self.background_image = g15util.load_surface_from_file(bg_img, screen_size)
-                else:
-                    self.background_image = None
-            else:
-                self.was_cairo = False    
-                if os.path.exists(bg_img):
-                    self.background_image = Image.open(bg_img).convert("RGBA")
-                    if self.background_image.size[0] != screen_size[0] or self.background_image.size[1] != screen_size[1]:
-                        # TODO resize maintaining aspect            
-                        self.background_image = self.background_image.resize((screen_size[0], screen_size[1]), Image.BILINEAR)
-                else:
-                    self.background_image = None
-         
         if self.background_image != None:
-            if isinstance(canvas, cairo.Context):
-                
-                canvas.set_source_surface(self.background_image, 0.0, 0.0)
-                canvas.paint()
-            else:
-                canvas.draw_image(self.background_image, (0, 0))
+            canvas.set_source_surface(self.background_image, 0.0, 0.0)
+            canvas.paint()
          
         if self.chained_painter != None:
             self.chained_painter(canvas)
+            
+    '''
+    Private
+    ''' 
+    def _do_config_changed(self):
+        # Get the configuration
+        screen_size = self.screen.size
+        self.bg_img = None
+        bg_type = self.gconf_client.get_string(self.gconf_key + "/type")
+        if bg_type == None:
+            bg_type = "desktop"
+        bg_style = self.gconf_client.get_string(self.gconf_key + "/style")
+        if bg_style == None:
+            bg_style = "zoom"
+        
+        if bg_type == "desktop":
+            # Get the current background the desktop is using if possible
+            desktop_env = g15util.get_desktop()
+            if "gnome" == desktop_env:
+                self.bg_img = self.gconf_client.get_string("/desktop/gnome/background/picture_filename")
+            else:
+                logger.warning("User request wallpaper from the desktop, but the desktop environment is unknown. Please report this bug to the Gnome15 project")
+        
+        if self.bg_img == None:
+            # Use the file
+            self.bg_img = self.gconf_client.get_string(self.gconf_key + "/path")
+            
+        # Fallback to the default provided image
+        if self.bg_img == None:
+            self.bg_img = os.path.join(os.path.dirname(__file__), "background-%dx%d.png" % ( screen_size[0], screen_size[1] ) )
+            
+        # Load the image 
+        if self.bg_img != self.this_image or bg_style != self.current_style:
+            self.this_image = self.bg_img
+            self.current_style = bg_style
+            if os.path.exists(self.bg_img):
+                img_surface = g15util.load_surface_from_file(self.bg_img)
+                sx = float(screen_size[0]) / img_surface.get_width()
+                sy = float(screen_size[1]) / img_surface.get_height()  
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, screen_size[0], screen_size[1])
+                context = cairo.Context(surface)
+                context.save()
+                if bg_style == "zoom":
+                    scale = max(sx, sy)
+                    context.scale(scale, scale)
+                    context.set_source_surface(img_surface)
+                    context.paint()
+                elif bg_style == "stretch":              
+                    context.scale(sx, sy)
+                    context.set_source_surface(img_surface)
+                    context.paint()
+                elif bg_style == "scale":  
+                    x = ( screen_size[0] - img_surface.get_width() * sy ) / 2   
+                    context.translate(x, 0)         
+                    context.scale(sy, sy)
+                    context.set_source_surface(img_surface)
+                    context.paint()
+                elif bg_style == "center":        
+                    x = ( screen_size[0] - img_surface.get_width() ) / 2
+                    y = ( screen_size[1] - img_surface.get_height() ) / 2
+                    context.translate(x, y)
+                    context.set_source_surface(img_surface)
+                    context.paint()
+                elif bg_style == "tile":
+                    context.set_source_surface(img_surface)
+                    context.paint()
+                    y = 0
+                    x = img_surface.get_width()
+                    while y < screen_size[1] + img_surface.get_height():
+                        if x >= screen_size[1] + img_surface.get_width():
+                            x = 0
+                            y += img_surface.get_height()
+                        context.restore()
+                        context.save()
+                        context.translate(x, y)
+                        context.set_source_surface(img_surface)
+                        context.paint()
+                        x += img_surface.get_width()
+                    
+                context.restore()
+                self.background_image = surface
+            else:
+                self.background_image = None
+                
+                
+        self.screen.redraw()

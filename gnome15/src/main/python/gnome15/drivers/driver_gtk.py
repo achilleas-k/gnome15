@@ -228,7 +228,40 @@ class Driver(g15driver.AbstractDriver):
                 invert_control = self.get_control("invert_lcd")
                 if invert_control.value == 1:            
                     pil_img = pil_img.point(lambda i: 1^i)
-                
+                    
+                # Faking it                    
+#                data = list(pil_img.getdata())
+#                data_len = len(data)             
+#                buf =""
+#                for row in range(0, 43):
+#                    max_i = (row * 20 ) + 20
+#                    for col in range(0, 20):
+#                        s = (row * 20 ) + ( col * 8 )
+#                        v = 0
+#                        b = 1
+#                        for bit in data[s:s + 8]:
+#                            if bit != 0:
+#                                v += b
+#                            b = b * 2
+#                        buf += chr(v)
+
+                data = list(pil_img.getdata())
+                data_len = len(data)
+                buf = ""
+                for x in range(0, data_len, 8):
+                    print x
+                    v = 0
+                    i = 128 
+                    for y in range(x + 7, -1, -1):
+                        print y
+                        j = data[y]
+                        v += i if j == 1 else 0
+                        i /= 2                    
+                    buf += chr(v)
+                    
+                logger.info("Should be 1376, Painting frame size %d, send buffer size %d" % (data_len, len(buf)))
+                    
+                # Create drawable message
                 pil_img = pil_img.convert("RGB")
                 self.image = pil_img           
             else:

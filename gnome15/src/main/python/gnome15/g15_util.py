@@ -41,6 +41,9 @@ from cStringIO import StringIO
 import jobqueue
 from threading import Thread
 
+from HTMLParser import HTMLParser
+
+
 ''' 
 Default scheduler
 '''
@@ -181,6 +184,12 @@ def combo_box_changed(widget, gconf_client, key, model, default_value):
 def boolean_conf_value_change(client, connection_id, entry, args):
     widget, key = args
     widget.set_active( entry.get_value().get_bool())
+    
+def radio_conf_value_change(client, connection_id, entry, args):
+    widget, key, gconf_value = args
+    str_value = entry.get_value().get_string()
+    print "Radio changed for %s - %s = %s / %s" % (str(widget), key, gconf_value, str_value)
+    widget.set_active(str_value == gconf_value)
         
 def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, watch_changes = False):
     widget = widget_tree.get_object(widget_id)
@@ -192,6 +201,22 @@ def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_va
     widget.connect("toggled", checkbox_changed, gconf_key, gconf_client)
     if watch_changes:
         return gconf_client.notify_add(gconf_key, boolean_conf_value_change,( widget, gconf_key ));
+        
+def configure_radio_from_gconf(gconf_client, gconf_key, widget_ids , gconf_values, default_value, widget_tree, watch_changes = False):
+    entry = gconf_client.get(gconf_key)
+    handles = []
+    sel_entry = entry.get_string()
+    for i in range(0, len(widget_ids)):
+        gconf_value = gconf_values[i]
+        active = ( entry != None and gconf_value == sel_entry ) or ( entry == None and default_value == gconf_value )
+        widget_tree.get_object(widget_ids[i]).set_active(active)
+        
+    for i in range(0, len(widget_ids)):
+        widget = widget_tree.get_object(widget_ids[i])
+        widget.connect("toggled", radio_changed, gconf_key, gconf_client, gconf_values[i])
+        if watch_changes:
+            handles.append(gconf_client.notify_add(gconf_key, radio_conf_value_change,( widget, gconf_key, gconf_values[i] )))
+    return handles
         
 def configure_adjustment_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree):
     adj = widget_tree.get_object(widget_id)
@@ -213,6 +238,9 @@ def adjustment_changed(adjustment, key, gconf_client, integer = True):
     
 def checkbox_changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
+    
+def radio_changed(widget, key, gconf_client, gconf_value):
+    gconf_client.set_string(key, gconf_value)
     
 '''
 Task scheduler. Tasks may be added to the queue to execute
@@ -249,6 +277,23 @@ def value_or_default(d, key, default_value):
         return d[key]
     except KeyError:
         return default_value
+    
+'''
+Markup utilities
+'''
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
 
 ''' 
 Date / time utilities
@@ -353,6 +398,50 @@ def pixbuf_to_surface(pixbuf, size = None):
     gdk_context.paint()
     gdk_context.scale(1 / scale, 1 / scale)
     return surface
+
+
+'''
+Desktop utilities
+'''
+
+def get_desktop():
+    '''
+    Utility function to get the name of the current desktop environment. The list
+    of detectable desktop environments is not complete, but hopefully this will
+    improve over time. Currently no attempt is made to determine the version of
+    the desktop in use.
+    
+    Will return :-
+    
+    gnome    GNOME Desktop
+    kde      KDE 
+    [None]   No known desktop  
+    '''
+    
+    vars = os.environ
+    
+    # XDG_CURRENT_DESKTOP
+    dt = { "LXDE" : "lxde", "GNOME" : "gnome"}
+    if "XDG_CURRENT_DESKTOP" in vars:
+        val = vars["XDG_CURRENT_DESKTOP"]
+        if val in dt:
+            return dt[val]
+    
+    # Environment variables that suggest the use of GNOME
+    for i in [ "GNOME_DESKTOP_SESSION_ID", "GNOME_KEYRING_CONTROL" ]:
+        if i in vars:
+            return "gnome"
+    
+    # Environment variables that suggest the use of KDE
+    for i in [ "KDE_FULL_SESSION", "KDE_SESSION_VERSION", "KDE_SESSION_UID" ]:
+        if i in vars:
+            return "kde"
+    
+    # Environment variables that suggest the use of LXDE
+    for i in [ "_LXSESSION_PID" ]:
+        if i in vars:
+            return "kde"
+     
     
 '''
 Icon utilities

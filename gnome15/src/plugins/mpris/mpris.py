@@ -516,7 +516,10 @@ class G15MPRIS():
             if new_owner == "" and name in self.players:
                 self.players[name].stop()
             elif old_owner == "" and not name in self.players:
-                self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
+                if not name in mpris_blacklist:
+                    self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
+                else:
+                    logger.info("%s is a blacklisted player, ignoring" % name)
         
     def _discover(self):
         # Find new players

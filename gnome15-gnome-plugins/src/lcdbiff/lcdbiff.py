@@ -73,13 +73,11 @@ def get_update_time(gconf_client, gconf_key):
         val = 10
     return val
 
-    
-'''
-Abstract mail checker. Subclasses are responsible for connecting
-to mail stores and retrieving the number of unread messages
-'''
-
 class Checker():
+    '''
+    Abstract mail checker. Subclasses are responsible for connecting
+    to mail stores and retrieving the number of unread messages
+    '''
     
     def __init__(self):
         self.lock = Lock()
@@ -171,13 +169,12 @@ class Checker():
             
         return None
 
-    
-'''
-POP3 checker. Does the actual work of checking for emails using
-the POP3 protocol.
-'''
-
 class POP3Checker(Checker):    
+    '''
+    POP3 checker. Does the actual work of checking for emails using
+    the POP3 protocol.
+    '''
+    
     def __init__(self):
         Checker.__init__(self)
     
@@ -212,13 +209,12 @@ class POP3Checker(Checker):
             pop.quit()
         return (0, 0)
     
-    
-'''
-IMAP checker. Does the actual work of checking for emails using
-the IMAP protocol.
-'''
-    
-class IMAPChecker(Checker):    
+class IMAPChecker(Checker):   
+    '''
+    IMAP checker. Does the actual work of checking for emails using
+    the IMAP protocol.
+    '''
+     
     def __init__(self):
         Checker.__init__(self)
     
@@ -259,13 +255,14 @@ class IMAPChecker(Checker):
                     imap.logout()   
             
         return count
-    
-'''
-Manages the storage and loading of the account list. This is
-stored as an XML file in the Gnome configuration directory
-'''
 
-class G15BiffAccountManager():    
+class G15BiffAccountManager():  
+    
+    '''
+    Manages the storage and loading of the account list. This is
+    stored as an XML file in the Gnome configuration directory
+    '''  
+    
     def __init__(self):
         self._conf_file = os.path.expanduser("~/.gnome2/gnome15/lcdbiff/mailboxes.xml")
         self.load()
@@ -306,14 +303,13 @@ class G15BiffAccountManager():
             fh.write(xml)
         finally :
             fh.close()
-            
-'''
-A single account. An account has two main attributes,
-a name and a type. All protocol specific details are
-stored in the properties map.
-'''
 
 class G15BiffAccount():
+    '''
+    A single account. An account has two main attributes,
+    a name and a type. All protocol specific details are
+    stored in the properties map.
+    '''
     
     def __init__(self, name, type=POP3):
         self.name = name
@@ -323,13 +319,13 @@ class G15BiffAccount():
     def get_property(self, key, default_value=None): 
         return self.properties[key] if key in self.properties else default_value
    
-'''
-Superclass of the UI protocol specific configuration. Currently
-all types support server, username and SSL options, although
-this may change in future
-'''     
 class G15BiffOptions():
     
+    '''
+    Superclass of the UI protocol specific configuration. Currently
+    all types support server, username and SSL options, although
+    this may change in future
+    '''     
     def __init__(self, account, account_manager):        
         self.account = account
         self.account_manager = account_manager
@@ -364,18 +360,20 @@ class G15BiffOptions():
         self.account.properties["username"] = widget.get_text()
         self.account_manager.save()
         
-'''
-POP3 configuration UI
-'''
         
 class G15BiffPOP3Options(G15BiffOptions):
+    '''
+    POP3 configuration UI
+    '''
+
     def __init__(self, account, account_manager):
         G15BiffOptions.__init__(self, account, account_manager)
     
-'''
-IMAP configuration UI. Adds the additioal Folder widget
-'''  
 class G15BiffIMAPOptions(G15BiffOptions):
+    '''
+    IMAP configuration UI. Adds the additional Folder widget
+    '''
+      
     def __init__(self, account, account_manager):
         G15BiffOptions.__init__(self, account, account_manager)
         folder = self.widget_tree.get_object("Folder")
@@ -385,12 +383,12 @@ class G15BiffIMAPOptions(G15BiffOptions):
     def _folder_changed(self, widget):
         self.account.properties["folder"] = widget.get_text()
         self.account_manager.save()
-   
-'''
-Configuration UI
-'''
- 
+        
 class G15BiffPreferences():
+    '''
+    Configuration UI
+    '''
+     
     
     def __init__(self, parent, gconf_client, gconf_key):
         self.gconf_client = gconf_client
@@ -528,14 +526,15 @@ class G15BiffPreferences():
         (model, path) = self.feed_list.get_selection().get_selected()
         if path != None:
             return self.account_mgr.by_name(model[path][0])
+   
         
-'''
-Theme menu implementation for displaying current account stats, one per line
-'''
-        
-class G15AccountsMenu(g15theme.Menu):
-    def __init__(self):
-        g15theme.Menu.__init__(self, "menu")
+class G15AccountsMenu(g15theme.Menu):     
+    '''
+    Theme menu implementation for displaying current account stats, one per line
+    '''
+    
+    def __init__(self, screen):
+        g15theme.Menu.__init__(self, "menu", screen)
         
     def render_item(self, item, selected, canvas, properties, attributes, group=False):        
         item_properties = {}
@@ -702,7 +701,7 @@ class G15Biff():
         
     def _reload_theme(self):        
         self.theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.screen, "menu-screen")
-        self.menu = G15AccountsMenu()
+        self.menu = G15AccountsMenu(self.screen)
         self.theme.add_component(self.menu)
         self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
     

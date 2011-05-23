@@ -141,10 +141,10 @@ class G15Volume():
         if page == None:
             self._reload_theme()
             page = self._screen.new_page(self._paint, priority=g15screen.PRI_HIGH, id="Volume")
-            self._screen.hide_after(3.0, page)
+            self._screen.delete_after(3.0, page)
         else:
             self._screen.raise_page(page)
-            self._screen.hide_after(3.0, page)
+            self._screen.delete_after(3.0, page)
         
         
         mixer_name = self._gconf_client.get_string(self._gconf_key + "/mixer")

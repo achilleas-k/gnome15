@@ -65,8 +65,8 @@ class MenuItem():
         self.icon = None
         
 class G15ProcessesMenu(g15theme.Menu):
-    def __init__(self):
-        g15theme.Menu.__init__(self, "menu")
+    def __init__(self, screen):
+        g15theme.Menu.__init__(self, "menu", screen)
         
     def load_theme(self):
         self.entry_theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.theme.screen, "menu-entry")
@@ -342,7 +342,7 @@ class G15Processes():
     def _reload_theme(self):
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
 #        self.theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.screen, "menu-screen")
-        self.menu = G15ProcessesMenu()
+        self.menu = G15ProcessesMenu(self.screen)
         self.theme.add_component(self.menu)
         self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
         

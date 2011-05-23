@@ -1,3 +1,16 @@
+gnome15 (0.6.5-1) natty; urgency=low
+
+  * Feature: Kernel driver now has G15 support (tested)
+  * Feature: Kernel driver now has G13 support (untested)
+  * Feature: Kernel driver now has G110 support (untested)
+  * Bug: Fixes a number of problems with the G19 kernel driver.
+  * Feature: Kernel driver package now has service script that configures the modules for use
+  * Feature: Wallpaper now use current desktop background by default (may be reconfigured). Note,
+    this currently only works for GNOME. Support for other desktops to come in future version
+  * Bug: #784070 Indicator Messages plugin doesn't clear after timeout
+  
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon,  23 May 2011 08:30:23 +0000 
+ 
 gnome15 (0.6.4-1) natty; urgency=low
 
   * Bug: Menu plugin crashes if thumbnail is bad.

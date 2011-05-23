@@ -189,14 +189,16 @@ class G15Service(Thread):
         
     def stop(self):
         self.shutting_down = True
-        g15profile.notifier.stop()
+        try :
+            g15profile.notifier.stop()
+        except Exception as e:
+            pass
         for listener in self.service_listeners:
             listener.shutting_down()
+        if self.screen.is_active():
+            self.screen.fade(True)
         if self.plugins:
             self.plugins.deactivate()
-            
-        if self.screen.is_active():
-            self.screen.fade()
         
     def shutdown(self):
         logger.info("Shutting down")
@@ -214,6 +216,8 @@ class G15Service(Thread):
         if not self._load_driver():
             self.shutdown()
             return
+        
+        self.session_bus = dbus.SessionBus()
         
         # Load main Glade file
         g15Config = os.path.join(pglobals.glade_dir, 'g15-config.glade')        
@@ -240,6 +244,15 @@ class G15Service(Thread):
         except:
             logger.warning("ConsoleKit not available, will not track active desktop session")
             self.session_active = True
+            
+        # Watch for logout (should probably move this to a plugin)
+        try :
+            
+            session_manager_object = self.session_bus.get_object("org.gnome.SessionManager", "/org/gnome/SessionManager")
+            session_manager = dbus.Interface(session_manager_object, "org.gnome.SessionManager")
+            self.session_bus.add_signal_receiver(self._session_over, dbus_interface="org.gnome.SessionManager", signal_name="SessionOver")
+        except Exception as e:
+            logger.warning("GNOME session manager not available, will not detect logout signal for clean shutdown. %s" % str(e))
 
         # Start the driver
         self.attempt_connection() 
@@ -254,7 +267,6 @@ class G15Service(Thread):
             
         # Monitor active application    
         logger.debug("Attempting to set up BAMF")
-        self.session_bus = dbus.SessionBus()
         try :
             self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')   
             self.session_bus.add_signal_receiver(self.application_changed, dbus_interface="org.ayatana.bamf.matcher", signal_name="ActiveApplicationChanged")
@@ -270,6 +282,10 @@ class G15Service(Thread):
         self.starting_up = False
         for listener in self.service_listeners:
             listener.started_up()
+            
+    def _session_over(self, object_path):        
+        logger.info("Logout")
+        self.shutdown()
             
     def _active_session_changed(self, object_path):        
         logger.debug("Adding seat %s" % object_path)

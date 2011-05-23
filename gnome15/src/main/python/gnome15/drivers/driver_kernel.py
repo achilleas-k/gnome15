@@ -35,8 +35,11 @@ import usb
 import fb
 import Image
 import ImageMath
-import logging
+import array
+import time
 
+# Logging
+import logging
 logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
@@ -166,6 +169,11 @@ class KeyboardReceiveThread(Thread):
                 dev = self.fds[x]
                 dev.read()
 
+'''
+SimpleDevice implementation that translates kernel input events
+into Gnome15 key events and forwards them to the registered 
+Gnome15 keyboard callback.
+'''
 class ForwardDevice(SimpleDevice):
     def __init__(self, callback, key_map, *args, **kwargs):
         SimpleDevice.__init__(self, *args, **kwargs)
@@ -181,7 +189,7 @@ class ForwardDevice(SimpleDevice):
 
     def send_all(self, events):
         for event in events:
-            logging.debug(" --> %r" % event)
+            logger.debug(" --> %r" % event)
             self.udev.send_event(event)
 
     @property
@@ -205,14 +213,14 @@ class ForwardDevice(SimpleDevice):
         elif event.etype == 0:
             return
         else:
-            print "WARNING: Unhandled event: %s" % event
+            logger.warning("Unhandled event: %s" % event)
             
     def _event(self, event, state):
         key = str(event.ecode)
         if key in self.key_map:
             self.callback([self.key_map[key]], state)
         else:
-            print "WARNING: Unmapped key for event: %s" % event
+            logger.warning("Unmapped key for event: %s" % event)
 
 class Driver(g15driver.AbstractDriver):
 
@@ -302,10 +310,16 @@ class Driver(g15driver.AbstractDriver):
             raise usb.USBError("Unexpected framebuffer mode %s, expected %s" % (self.fb_mode, self.framebuffer_mode))
         
         # Open framebuffer
-        print "Using framebuffer",self.device_name
+        logger.info("Using framebuffer %s"  % self.device_name)
         self.fb = fb.fb_device(self.device_name)
-        self.fb.dump()
+        if logger.isEnabledFor(logging.DEBUG):
+            self.fb.dump()
         self.var_info = self.fb.get_var_info()
+                
+        # Create an empty string buffer for use with monochrome LCD
+        self.empty_buf = ""
+        for i in range(0, self.fb.get_fixed_info().smem_len):
+            self.empty_buf += chr(0)
         
     def get_name(self):
         return "Linux Kernel Driver"
@@ -324,9 +338,12 @@ class Driver(g15driver.AbstractDriver):
         return self.device_info.controls if self.device_info != None else None
     
     def paint(self, img):   
-        
         width = img.get_width()
         height = img.get_height()
+        character_width = width / 8
+        fixed = self.fb.get_fixed_info()
+        padding = fixed.line_length - character_width
+        file_str = StringIO()
         
         if self.get_model_name() == g15driver.MODEL_G19:
             try:
@@ -340,65 +357,69 @@ class Driver(g15driver.AbstractDriver):
             back_context.paint()
                 
             if back_surface.get_format() == cairo.FORMAT_ARGB32:
+                """
+                If the creation of the type 4 image failed (i.e. earlier version of Cairo)
+                then we have to have ourselves. This is slow.
+                """
                 file_str = StringIO()
                 data = back_surface.get_data()
                 for i in range(0, len(data), 4):
                     r = ord(data[i + 2])
                     g = ord(data[i + 1])
                     b = ord(data[i + 0])
-                    file_str.write(self.rgb_to_uint16(r, g, b))                
+                    file_str.write(self.rgb_to_uint16(r, g, b))             
                 buf = file_str.getvalue()
             else:   
                 buf = str(back_surface.get_data())
         else:
-            size = self.get_size()
+            width, height = self.get_size()
+            arrbuf = array.array('B', self.empty_buf)
             
-            argb_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, size[0], size[1])
+            argb_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
             argb_context = cairo.Context(argb_surface)
             argb_context.set_source_surface(img)
             argb_context.paint()
             
-            # Now convert the ARGB to a PIL image so it can be converted to a 1 bit monochrome image, with all
-            # colours dithered. It would be nice if Cairo could do this :( Any suggestions? 
-            pil_img = Image.frombuffer("RGBA", size, argb_surface.get_data(), "raw", "RGBA", 0, 1)
+            '''
+            Now convert the ARGB to a PIL image so it can be converted to a 1 bit monochrome image, with all
+            colours dithered. It would be nice if Cairo could do this :( Any suggestions?
+            ''' 
+            pil_img = Image.frombuffer("RGBA", (width, height), argb_surface.get_data(), "raw", "RGBA", 0, 1)
             pil_img = ImageMath.eval("convert(pil_img,'1')",pil_img=pil_img)
             pil_img = ImageMath.eval("convert(pil_img,'P')",pil_img=pil_img)
             pil_img = pil_img.point(lambda i: i >= 250,'1')
             
+            # Invert the screen if required
             if g15_invert_control.value == 0:            
                 pil_img = pil_img.point(lambda i: 1^i)
-#            pil_img = pil_img.convert("L")
+            
+            # Data is 160x43, 1 byte per pixel. Will have value of 0 or 1.
+            width, height = self.get_size()
+            data = list(pil_img.getdata())
+            fixed = self.fb.get_fixed_info()
+            v = 0
+            b = 1
+            for row in range(0, height):
+                for col in range(0, width):
+                    if data[( row * width ) + col]:
+                        v += b
+                    b = b << 1
+                    if b == 256:
+                        # Full byte
+                        b = 1          
+                        i = row * fixed.line_length + col / 8
+                        
+                        if row > 7 and col < 96:
+                            '''
+                            ????? This was discovered more by trial and error rather than any 
+                            understanding of what is going on
+                            '''
+                            i -= 12 + ( 7 * fixed.line_length )
+                            
+                        arrbuf[i] = v   
+                        v = 0 
+            buf = arrbuf.tostring()
                 
-#            data = list(pil_img.getdata())
-#            data_len = len(data)
-#            print "Data",data_len,data
-#            buf = ""
-#            for x in range(0, data_len, 8):
-#                v = 0
-#                i = 128 
-#                for y in range(x + 7, -1, -1):
-#                    j = data[y]
-#                    v += i if j == 1 else 0
-#                    i /= 2                    
-#                buf += chr(v)
-#            buf = str(pil_img.getdata())
-
-            buf = ""
-#            for x in range(0, len(self.fb.buffer)):
-#                if x < 100: 
-#                    buf += chr(255)
-#                else:
-#                    buf += chr(0)
-                   
-            l = len(self.fb.buffer)
-            for x in range(0, l - 1):
-                buf += chr(255)
-#                if x < l / 2: 
-#                    buf += chr(85)
-#                else: 
-#                    buf += chr(170)
-
-#        print "Buffer len",len(buf),"expect",len(self.fb.buffer)
         self.fb.buffer[0:len(buf)] = buf
             
     def process_svg(self, document):  
@@ -422,29 +443,29 @@ class Driver(g15driver.AbstractDriver):
         elif control == g15_invert_control:
             pass
         else:
-            print "WARNING: Setting the control " + control.id + " is not yet supported on this model. " + \
-            "Please report this as a bug, providing the contents of your /sys/class/led" + \
-            "directory and the keyboard model you use."
+            logger.warning("Setting the control " + control.id + " is not yet supported on this model. " + \
+                           "Please report this as a bug, providing the contents of your /sys/class/led" + \
+                           "directory and the keyboard model you use.")
     
     def set_mkey_lights(self, lights):
         self.lights = lights
-        if self.mode in led_light_names:
-            leds = led_light_names[self.mode] 
+        if self.device_info.leds:
+            leds = self.device_info.leds
             self._write_to_led(leds[0], lights & g15driver.MKEY_LIGHT_1 != 0)        
             self._write_to_led(leds[1], lights & g15driver.MKEY_LIGHT_2 != 0)        
             self._write_to_led(leds[2], lights & g15driver.MKEY_LIGHT_3 != 0)        
             self._write_to_led(leds[3], lights & g15driver.MKEY_LIGHT_MR != 0)
         else:
-            print "WARNING: Setting MKey lights on " + self.mode + " not yet supported. " + \
+            logger.warning(" Setting MKey lights on " + self.device.model_name + " not yet supported. " + \
             "Please report this as a bug, providing the contents of your /sys/class/led" + \
-            "directory and the keyboard model you use."
+            "directory and the keyboard model you use.")
     
     def grab_keyboard(self, callback):
         if self.key_thread != None:
             raise Exception("Keyboard already grabbed")      
         self.key_thread = KeyboardReceiveThread()
         for devpath in self.keyboard_devices:
-            self.key_thread.devices.append(ForwardDevice(callback, self.key_map, devpath, devpath))
+            self.key_thread.devices.append(ForwardDevice(callback, self.device_info.key_map, devpath, devpath))
         self.key_thread.start()
         
     '''
@@ -457,7 +478,7 @@ class Driver(g15driver.AbstractDriver):
             self.key_thread = None
     
     def _write_to_led(self, name, value):
-        print "Writing",value,"to LED",name
+        logger.info("Writing %d to LED %s" % (value, name ))
         path = self.led_path_prefix[0] + "/" + self.led_path_prefix[1] + name + "/brightness"
         try :
             file = open(path, "w")
@@ -471,14 +492,14 @@ class Driver(g15driver.AbstractDriver):
 
     
     def _handle_bound_key(self, key):
-        print "G key - %d", key
+        logger.info("G key - %d", key)
         return True
         
     def _mode_changed(self, client, connection_id, entry, args):
         if self.is_connected():
             self.disconnect()
         else:
-            print "WARNING: Mode change would cause disconnect when already connected.", entry
+            logger.warning("WARNING: Mode change would cause disconnect when already connected.", entry)
         
     def _init_driver(self):
         mode = self.conf_client.get_string("/apps/gnome15/fb_mode")
@@ -501,6 +522,7 @@ class Driver(g15driver.AbstractDriver):
             self.framebuffer_mode = "GFB_MONO"
         else:
             self.framebuffer_mode = "GFB_QVGA"
+        logger.info("Using %s frame buffer mode" % self.framebuffer_mode)
             
         self.device_info = device_info[mode]
                     
@@ -509,7 +531,7 @@ class Driver(g15driver.AbstractDriver):
         # just have to see how it goes for now
         self.led_path_prefix = self._find_led_path_prefix(self.device_info.led_prefix)
         if self.led_path_prefix == None:
-            print "WARNING: Could not find control files for LED lights. Some features won't work"
+            logger.warning("Could not find control files for LED lights. Some features won't work")
             
         # Try and find the paths for the keyboard devices
         self.keyboard_devices = []
@@ -524,15 +546,18 @@ class Driver(g15driver.AbstractDriver):
         if self.device_name == None or self.device_name == "" or self.device_name == "auto":
             for fb in os.listdir("/sys/class/graphics"):
                 if fb != "fbcon":
-                    f = open("/sys/class/graphics/" + fb + "/name", "r")
-                    try :
-                        fb_mode = f.readline().replace("\n", "")
-                        if fb_mode == self.framebuffer_mode:
-                            self.fb_mode = fb_mode
-                            self.device_name = "/dev/" + fb
-                            break
-                    finally :
-                        f.close() 
+                    try:
+                        f = open("/sys/class/graphics/" + fb + "/name", "r")
+                        try :
+                            fb_mode = f.readline().replace("\n", "")
+                            if fb_mode == self.framebuffer_mode:
+                                self.fb_mode = fb_mode
+                                self.device_name = "/dev/" + fb
+                                break
+                        finally :
+                            f.close() 
+                    except Exception as e:
+                        logger.warning("Could not open %s. %s" %(self.device_name, str(e)))
         else:
             f = open("/sys/class/graphics/" + os.path.basename(self.device_name) + "/name", "r")
             try :
@@ -550,5 +575,3 @@ class Driver(g15driver.AbstractDriver):
                             if p.startswith(led_model + "_"):
                                 number = p.split("_")[1].split(":")[0]
                                 return (dir, led_model + "_" + number + ":")
-                
-        

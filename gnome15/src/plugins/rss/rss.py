@@ -131,8 +131,8 @@ class G15RSSPreferences():
             self.gconf_client.set_list(self.gconf_key + "/urls", gconf.VALUE_STRING, urls)   
         
 class G15FeedsMenu(g15theme.Menu):
-    def __init__(self):
-        g15theme.Menu.__init__(self, "menu")
+    def __init__(self, screen):
+        g15theme.Menu.__init__(self, "menu", screen)
         
     def render_item(self, entry, selected, canvas, properties, attributes, group = False):
         
@@ -172,7 +172,7 @@ class G15FeedPage():
         self.page = self.screen.new_page(self.paint, id="Feed " + str(plugin.page_serial), thumbnail_painter = self.paint_thumbnail)
         plugin.page_serial += 1
         self.page.set_title(self.title)
-        self.menu = G15FeedsMenu()
+        self.menu = G15FeedsMenu(self.screen)
         self.theme.add_component(self.menu)
         self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
         self.screen.redraw(self.page)

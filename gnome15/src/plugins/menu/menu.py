@@ -59,8 +59,8 @@ class MenuItem():
         self.thumbnail = None
         
 class G15ScreensMenu(g15theme.Menu):
-    def __init__(self):
-        g15theme.Menu.__init__(self, "menu")
+    def __init__(self, screen):
+        g15theme.Menu.__init__(self, "menu", screen)
         
     def render_item(self, item, selected, canvas, properties, attributes, group = False):        
         item_properties = {}
@@ -85,7 +85,6 @@ class G15Menu():
         self._reload_theme()
         self.timer = None
         self.page = None
-        self.selected = None
         self.screen.redraw(self.page)
     
     def deactivate(self):
@@ -99,7 +98,6 @@ class G15Menu():
         if not post and state == g15driver.KEY_STATE_DOWN:
 
             if self.page == None:            
-                # Menu not active, should we activate?
                 if g15driver.G_KEY_MENU in keys or g15driver.G_KEY_L2 in keys:
                     self._show_menu()
                     return True
@@ -109,26 +107,10 @@ class G15Menu():
                         self._hide_menu()
                         self.screen.service.resched_cycle()
                         return True
-                    elif g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
-                        i = self.items.index(self.selected)
-                        i -= 1
-                        if i < 0:
-                            i = len(self.items) - 1
-                        self.selected = self.items[i]
-                        self.screen.service.resched_cycle()
-                        self.screen.redraw(self.page)
-                        return True
-                    elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
-                        i = self.items.index(self.selected)
-                        i += 1
-                        if i >= len(self.items):
-                            i = 0
-                        self.selected = self.items[i]
-                        self.screen.service.resched_cycle()
-                        self.screen.redraw(self.page)
+                    elif self.menu.handle_key(keys, state, post):
                         return True           
                     elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
-                        self.screen.raise_page(self.selected.page)
+                        self.screen.raise_page(self.menu.selected.page)
                         self.screen.service.resched_cycle()
                         self._hide_menu()
                         return True                
@@ -136,17 +118,14 @@ class G15Menu():
         return False
     
     def paint(self, canvas):
-        self.menu.items = self.items
-        self.menu.selected = self.selected
-        
         self.theme.draw(canvas, 
                         properties = {
                                       "title" : g15globals.name,
                                       "icon" : g15util.get_icon_path("gnome-main-menu")
                                       }, 
                         attributes = {
-                                      "items" : self.items,
-                                      "selected" : self.selected
+                                      "items" : self.menu.items,
+                                      "selected" : self.menu.selected
                                       })
         
     '''
@@ -168,13 +147,13 @@ class G15Menu():
     Private
     '''
     def _reload_menu(self):
-        self.items = []
+        self.menu.items = []
         for page in self.screen.pages:
             if page != self.page and page.priority > g15screen.PRI_INVISIBLE:
-                self.items.append(MenuItem(page))
-        self.selected = self.items[0]
+                self.menu.items.append(MenuItem(page))
+        self.menu.selected = self.menu.items[0]
                
-        for item in self.items:
+        for item in self.menu.items:
             if item.page.thumbnail_painter != None:
                 img = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.screen.height, self.screen.height)
                 thumb_canvas = cairo.Context(img)
@@ -192,9 +171,17 @@ class G15Menu():
         
     def _reload_theme(self):        
         self.theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.screen, "menu-screen")
-        self.menu = G15ScreensMenu()
+        self.menu = G15ScreensMenu(self.screen)
+        self.menu.on_move = self._on_move
+        self.menu.on_selected = self._on_selected
         self.theme.add_component(self.menu)
         self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
+        
+    def _on_selected(self):
+        self.screen.redraw(self.page)
+        
+    def _on_move(self):
+        pass
         
     def _show_menu(self):        
         self.page = self.screen.new_page(self.paint, id="Menu", priority = g15screen.PRI_EXCLUSIVE)

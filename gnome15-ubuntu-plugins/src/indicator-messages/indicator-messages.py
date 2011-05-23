@@ -50,8 +50,8 @@ def create(gconf_key, gconf_client, screen):
     return G15IndicatorMessages(gconf_client, screen)
 
 class G15DBusMenu(g15theme.Menu):
-    def __init__(self):
-        g15theme.Menu.__init__(self, "menu")
+    def __init__(self, screen):
+        g15theme.Menu.__init__(self, "menu", screen)
         
     def on_configure(self):
         g15theme.Menu.on_configure(self)
@@ -104,6 +104,7 @@ class G15IndicatorMessages():
     def activate(self):
         self._reload_theme()
         self.items = []
+        self._raise_timer = None
         self.attention = False
         self.selected = None
         self.messages_menu = messagesmenu.IndicatorMessagesMenu(self.session_bus)        
@@ -146,6 +147,7 @@ class G15IndicatorMessages():
                             break
                     self.selected = self.items[i] if i < len(self.items) else None
                     self.screen.service.resched_cycle()
+                    self._reset_raise()
                     self.screen.redraw(self.page)
                     return True
                 elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:                              
@@ -159,6 +161,7 @@ class G15IndicatorMessages():
                             break
                     self.selected = self.items[i] if i < len(self.items) else None
                     self.screen.service.resched_cycle()
+                    self._reset_raise()
                     self.screen.redraw(self.page)
                     return True           
                 elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
@@ -176,25 +179,23 @@ class G15IndicatorMessages():
         
     def _attention_changed(self, attention):
         self.attention = attention
-        
+        print "Attention changed to ",str(attention)
         if self.attention == 1:
             if self.screen.driver.get_bpp() == 1:
                 self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
             else:
-                self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages-new"))
-            self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 5.0)
+                self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages-new")) 
+            self._popup()
         else:
             if self.screen.driver.get_bpp() == 1:
                 self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
             else:
                 self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages"))
             self.screen.redraw()
-        
-    '''
-    Private
-    ''' 
+            
     def _menu_changed(self, menu = None, property = None, value = None):
         current_ids = []
+        print "Menu changed ",str(menu),str(property),str(value)
         for item in self.items:
             current_ids.append(item.id)
             
@@ -222,10 +223,12 @@ class G15IndicatorMessages():
                 if not item.id in current_ids:
                     self.selected = item
                     break
-                
-        # Fire DBUS event if 
-                
-        self.screen.redraw(self.page)
+         
+        self._popup()
+        
+    '''
+    Private
+    ''' 
         
     def _load_items(self):
         self.items = []
@@ -234,12 +237,23 @@ class G15IndicatorMessages():
                 self.items.append(item)
         
     def _popup(self):    
-        self.screen.set_priority(self.screen.get_page("Indicator Messages"), g15screen.PRI_HIGH, revert_after = 3.0)
+        if not self.page.is_visible():
+            self._raise_timer = self.screen.set_priority(self.screen.get_page("Indicator Messages"), g15screen.PRI_HIGH, revert_after = 4.0)
+            self.screen.redraw(self.page)
+        else:
+            self._reset_raise()
+    
+    def _reset_raise(self):
+        '''
+        Reset the timer if the page is already visible because of a timer
+        '''
+        if self.screen.is_on_timer(self.page):
+            self._raise_timer = self.screen.set_priority(self.screen.get_page("Indicator Messages"), g15screen.PRI_HIGH, revert_after = 4.0)
         self.screen.redraw(self.page)
     
     def _reload_theme(self):        
         self.theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.screen, "menu-screen")
-        self.menu = G15DBusMenu()
+        self.menu = G15DBusMenu(self.screen)
         self.theme.add_component(self.menu)
         self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
     

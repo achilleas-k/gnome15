@@ -25,6 +25,7 @@ import gnome15.g15_util as g15util
 import gnome15.g15_globals as pglobals
 import gnome15.g15_theme as g15theme
 import gnome15.g15_driver as g15driver
+import gconf
 import time
 import dbus
 import dbus.service
@@ -297,6 +298,12 @@ class G15NotifyService(dbus.service.Object):
                     timeout = 10.0                
                 if not self._gconf_client.get_bool(self._gconf_key + "/allow_actions"):
                     actions = None
+                    
+                # Strip markup
+                if body:
+                    body = g15util.strip_tags(body) 
+                if summary:
+                    summary  = g15util.strip_tags(summary)
                 
                 # If a message with this ID is already queued, replace it's details
                 if id in self._message_map:

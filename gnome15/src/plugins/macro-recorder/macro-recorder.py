@@ -180,7 +180,7 @@ class G15MacroRecorder():
         if after == 0.0:   
             self.screen.del_page(self.page)
         else:
-            self.screen.hide_after(after, self.page)
+            self.screen.delete_after(after, self.page)
             
     def halt_recorder(self):        
         if self.record_thread != None:

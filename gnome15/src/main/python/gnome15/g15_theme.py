@@ -86,11 +86,19 @@ class Scrollbar(Component):
             knob.set("height", str(int(track_bounds[3] / max(scale, 0.01) )))
         
 class Menu(Component):
-    def __init__(self, id):
+    def __init__(self, id, screen):
         Component.__init__(self, id)
+        self.screen = screen
         self.items = []
+        self.item_map = {}
         self.base = 0
         self.selected = None
+        self.on_selected = None
+        self.on_move = None
+        self.i = 0
+        
+    def sort(self):
+        pass
         
     def on_configure(self):
         self.view_element = self.theme.get_element(self.id)
@@ -103,16 +111,17 @@ class Menu(Component):
         self.entry_theme = G15Theme(self.theme.dir, self.theme.screen, "menu-entry")
         
     def get_scroll_values(self, properties, attributes):
-        max = 0
+        max_val = 0
         for item in self.items:
-            max += self.get_item_height(item, True)
-        return max, self.view_bounds[3], self.base
+            max_val += self.get_item_height(item, True)
+        return max(max_val, self.view_bounds[3]), self.view_bounds[3], self.base
         
     def get_item_height(self, item, group = False):
         return self.entry_theme.bounds[3]
     
-    
-    def draw(self, canvas, element, properties, attributes):
+    def draw(self, canvas, element, properties, attributes):   
+        self.select_first()                 
+        
         # Get the Y position of the selected item
         y = 0 
         selected_y = -1
@@ -159,6 +168,39 @@ class Menu(Component):
                 
         canvas.restore() 
         
+    def render_item(self, item, selected, canvas, properties, attributes, group = False):
+        raise Exception("Not implemented.")
+                    
+    def handle_key(self, keys, state, post):   
+        self.select_first()                 
+        if g15driver.G_KEY_UP in keys:
+            self._move_up(1)
+            return True
+        elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
+            self._move_down(1)
+            return True                              
+        elif g15driver.G_KEY_RIGHT in keys:
+            self._move_down(10)
+            return True        
+        elif g15driver.G_KEY_LEFT in keys:
+            self._move_up(10)
+            return True
+                
+        return False
+        
+    def select_first(self):
+        if not self.selected == None and not self.selected in self.items:
+            self.selected == None
+        if self.selected == None:
+            if len(self.items) > 0:
+                self.selected  = self.items[0]
+            else:
+                self.selected = None
+    
+    '''
+    Private
+    '''
+        
     def _do_item(self, item, selected, canvas, y, properties, attributes, group = False):        
         # Don't draw items that are not visible
         ih = self.get_item_height(item, group)
@@ -167,9 +209,43 @@ class Menu(Component):
         canvas.translate(0, ih)
         y += ih
         return y
+    
+    def _check_selected(self):
+        if not self.selected in self.items:
+            if self.i >= len(self.items):
+                return
+            self.selected = self.items[self.i]
+            
+    def _do_selected(self):
+        self.selected = self.items[self.i]
+        if self.on_selected:
+            self.on_selected()
         
-    def render_item(self, item, selected, canvas, properties, attributes, group = False):
-        raise Exception("Not implemented.")
+    def _move_up(self, amount = 1):
+        if self.on_move:
+            self.on_move()
+        self._check_selected()
+        if not self.selected in self.items:
+            self.i = 0
+        else:
+            self.i = self.items.index(self.selected)
+        self.i -= amount
+        if self.i < 0:
+            self.i = len(self.items) - 1
+        self._do_selected()
+        
+    def _move_down(self, amount = 1):
+        if self.on_move:
+            self.on_move()
+        self._check_selected()
+        if not self.selected in self.items:
+            self.i = 0
+        else:
+            self.i = self.items.index(self.selected)
+        self.i += amount
+        if self.i >= len(self.items):
+            self.i = 0
+        self._do_selected()        
     
 class ConfirmationScreen():
     
@@ -402,13 +478,16 @@ class G15Theme:
                 
         # Populate any embedded images
          
-        for element in root.xpath('//svg:image[@class=\'embedded_image\']',namespaces=self.nsmap):
+#        for element in root.xpath('//svg:image[@class=\'embedded_image\']',namespaces=self.nsmap):
+        for element in root.xpath('//svg:image',namespaces=self.nsmap):
             id = element.get("title")
             if id != None and id in properties and properties[id] != None:
                 file_str = StringIO()
                 val = properties[id]
                 if isinstance(val, str) and str(val).startswith("file:"):
                     file_str.write(val[5:])
+                elif isinstance(val, str) and str(val).startswith("/"):
+                    file_str.write(val)
                 else:
                     file_str.write("data:image/png;base64,")
                     img_data = StringIO()

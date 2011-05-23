@@ -390,8 +390,8 @@ class G15DBUSPageService(AbstractG15DBUSService):
         self._page.properties = properties
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='ndd')
-    def SetPriority(self, priority, revert_after, hide_after):
-        self._timer = self._service.screen.set_priority(self._page, priority, revert_after, hide_after)
+    def SetPriority(self, priority, revert_after, delete_after):
+        self._timer = self._service.screen.set_priority(self._page, priority, revert_after, delete_after)
                     
     @dbus.service.signal(PAGE_IF_NAME, signature='as')
     def KeysPressed(self, keys):
