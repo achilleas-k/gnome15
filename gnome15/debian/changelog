@@ -1,4 +1,4 @@
-gnome15 (0.6.5-1) natty; urgency=low
+gnome15 (0.6.6-1) natty; urgency=low
 
   * Feature: Kernel driver now has G15 support (tested)
   * Feature: Kernel driver now has G13 support (untested)

@@ -33,6 +33,7 @@ import g15_screen as g15screen
 import g15_util as g15util
 import xml.sax.saxutils as saxutils
 import base64
+import dbusmenu
 import logging
 logger = logging.getLogger("theme")
 from string import Template
@@ -64,6 +65,13 @@ class Component():
         
     def draw(self, canvas, element, properties, attributes):
         raise Exception("Not implemented.")
+    
+    '''
+    Private
+    '''
+    
+    def get_default_theme_dir(self):
+        return os.path.join(pglobals.themes_dir, "default")
 
 class Scrollbar(Component):
     
@@ -89,13 +97,30 @@ class Menu(Component):
     def __init__(self, id, screen):
         Component.__init__(self, id)
         self.screen = screen
-        self.items = []
-        self.item_map = {}
+        self._items = []
         self.base = 0
         self.selected = None
         self.on_selected = None
         self.on_move = None
         self.i = 0
+        
+    def clear_items(self):
+        self._items = []
+        
+    def get_items(self):
+        return self._items
+        
+    def set_items(self, items):
+        self._items = []
+        for i in items:
+            self.add_item(i)
+            
+    def remove_item(self, item):
+        self._items.remove(item)
+        
+    def add_item(self, item):
+        item.configure(self.theme)
+        self._items.append(item)
         
     def sort(self):
         pass
@@ -108,16 +133,16 @@ class Menu(Component):
         self.load_theme()
           
     def load_theme(self):
-        self.entry_theme = G15Theme(self.theme.dir, self.theme.screen, "menu-entry")
+        pass
         
     def get_scroll_values(self, properties, attributes):
         max_val = 0
-        for item in self.items:
+        for item in self._items:
             max_val += self.get_item_height(item, True)
         return max(max_val, self.view_bounds[3]), self.view_bounds[3], self.base
         
     def get_item_height(self, item, group = False):
-        return self.entry_theme.bounds[3]
+        return item.theme.bounds[3]
     
     def draw(self, canvas, element, properties, attributes):   
         self.select_first()                 
@@ -125,7 +150,7 @@ class Menu(Component):
         # Get the Y position of the selected item
         y = 0 
         selected_y = -1
-        for item in self.items:
+        for item in self._items:
             ih = self.get_item_height(item, True)
             if item == self.selected:
                 selected_y = y
@@ -163,14 +188,11 @@ class Menu(Component):
         
         # This will handle two levels of menus
         y = -self.base
-        for item in self.items:
+        for item in self._items:
             y = self._do_item(item, self.selected, canvas, y, properties, attributes,  True)
                 
         canvas.restore() 
         
-    def render_item(self, item, selected, canvas, properties, attributes, group = False):
-        raise Exception("Not implemented.")
-                    
     def handle_key(self, keys, state, post):   
         self.select_first()                 
         if g15driver.G_KEY_UP in keys:
@@ -189,11 +211,11 @@ class Menu(Component):
         return False
         
     def select_first(self):
-        if not self.selected == None and not self.selected in self.items:
+        if not self.selected == None and not self.selected in self._items:
             self.selected == None
         if self.selected == None:
-            if len(self.items) > 0:
-                self.selected  = self.items[0]
+            if len(self._items) > 0:
+                self.selected  = self._items[0]
             else:
                 self.selected = None
     
@@ -205,19 +227,19 @@ class Menu(Component):
         # Don't draw items that are not visible
         ih = self.get_item_height(item, group)
         if y >= -ih and y <= self.view_bounds[3] + ih:
-            self.render_item(item, selected, canvas, properties, attributes, group)
+            item.draw(selected, canvas, properties, attributes)
         canvas.translate(0, ih)
         y += ih
         return y
     
     def _check_selected(self):
-        if not self.selected in self.items:
-            if self.i >= len(self.items):
+        if not self.selected in self._items:
+            if self.i >= len(self._items):
                 return
-            self.selected = self.items[self.i]
+            self.selected = self._items[self.i]
             
     def _do_selected(self):
-        self.selected = self.items[self.i]
+        self.selected = self._items[self.i]
         if self.on_selected:
             self.on_selected()
         
@@ -225,27 +247,126 @@ class Menu(Component):
         if self.on_move:
             self.on_move()
         self._check_selected()
-        if not self.selected in self.items:
+        if not self.selected in self._items:
             self.i = 0
         else:
-            self.i = self.items.index(self.selected)
-        self.i -= amount
-        if self.i < 0:
-            self.i = len(self.items) - 1
+            self.i = self._items.index(self.selected)
+            
+        for a in range(0, abs(amount), 1):
+            while True:
+                self.i -= 1 
+                if self.i < 0:
+                    self.i = len(self._items) - 1
+                if not isinstance(self._items[self.i], MenuSeparator):
+                    break
+        
         self._do_selected()
         
     def _move_down(self, amount = 1):
         if self.on_move:
             self.on_move()
         self._check_selected()
-        if not self.selected in self.items:
+        if not self.selected in self._items:
             self.i = 0
         else:
-            self.i = self.items.index(self.selected)
-        self.i += amount
-        if self.i >= len(self.items):
-            self.i = 0
-        self._do_selected()        
+            self.i = self._items.index(self.selected)
+            
+        for a in range(0, abs(amount), 1):
+            while True:
+                self.i += 1
+                if self.i >= len(self._items):
+                    self.i = 0
+                if not isinstance(self._items[self.i], MenuSeparator):
+                    break
+
+        self._do_selected()
+        
+class MenuItem(Component):
+    def __init__(self, id="menu-entry", group = True):
+        Component.__init__(self, id)
+        self.group = group
+        
+    def on_configure(self):
+        self.theme = G15Theme(self.get_default_theme_dir(), self.theme.screen, "menu-entry" if self.group else "menu-child-entry")
+        
+    def draw(self, selected, canvas, menu_properties, menu_attributes):
+        self.theme.draw(canvas, {}, {})
+        return self.theme.bounds[3] 
+        
+class MenuSeparator(MenuItem):
+    def __init__(self):
+        MenuItem.__init__(self, "menu-separator")
+        
+    def on_configure(self):
+        self.theme = G15Theme(self.get_default_theme_dir(), self.theme.screen, "menu-separator")
+    
+class DBusMenuItem(MenuItem):
+    def __init__(self, dbus_menu_entry):
+        MenuItem.__init__(self)
+        self.dbus_menu_entry = dbus_menu_entry
+        
+    def draw(self, selected, canvas, menu_properties, menu_attributes):
+        properties = {}
+        if selected == self:
+            properties["item_selected"] = True
+        properties["item_name"] = self.dbus_menu_entry.get_label() 
+        properties["item_type"] = self.dbus_menu_entry.type
+        properties["item_alt"] = self.dbus_menu_entry.get_alt_label()
+        icon_name = self.dbus_menu_entry.get_icon_name()
+        if icon_name != None:
+            properties["item_icon"] = g15util.load_surface_from_file(g15util.get_icon_path(icon_name), self.theme.bounds[3])
+        else:
+            properties["item_icon"] = self.dbus_menu_entry.get_icon()
+        self.theme.draw(canvas, properties, {})
+        return self.theme.bounds[3] 
+
+class DBusMenu(Menu):
+    def __init__(self, screen, dbus_menu):
+        Menu.__init__(self, "menu", screen)
+        self.dbus_menu = dbus_menu
+        
+    def on_configure(self):
+        Menu.on_configure(self)
+        self.populate()
+        
+    def menu_changed(self, menu = None, property = None, value = None):
+        current_ids = []
+        for item in self._items:
+            current_ids.append(item.id)
+            
+        self.populate()
+        
+        was_selected = self.selected
+        
+        # Scroll to item if it is newly visible
+        if menu != None:
+            if property != None and property == dbusmenu.VISIBLE and value and menu.get_type() != "separator":
+                self.selected = menu
+        else:
+            # Layout change
+            
+            # See if the selected item is still there
+            if self.selected != None:
+                sel = self.selected
+                self.selected = None
+                for i in self._items:
+                    if i.id == sel.id:
+                        self.selected = i
+            
+            # See if there are new items, make them selected
+            for item in self._items:
+                if not item.id in current_ids:
+                    self.selected = item
+                    break
+        
+    def populate(self):
+        self._items = []
+        for item in self.dbus_menu.root_item.children:
+            if item.is_visible():
+                if item.type == dbusmenu.TYPE_SEPARATOR:
+                    self.add_item(MenuSeparator())
+                else:
+                    self.add_item(DBusMenuItem(item))   
     
 class ConfirmationScreen():
     

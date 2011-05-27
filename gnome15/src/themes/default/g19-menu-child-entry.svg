@@ -14,8 +14,8 @@
    height="22"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.0 r9654"
-   sodipodi:docname="g19-child-entry.svg"
+   inkscape:version="0.48.1 r9760"
+   sodipodi:docname="g19-menu-child-entry.svg"
    style="display:inline">
   <defs
      id="defs4">
@@ -148,17 +148,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.959798"
-     inkscape:cx="153.03869"
-     inkscape:cy="-38.825511"
+     inkscape:zoom="1.979899"
+     inkscape:cx="181.07364"
+     inkscape:cy="-41.999069"
      inkscape:document-units="px"
      inkscape:current-layer="layer1-5"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2262"
-     inkscape:window-y="42"
+     inkscape:window-x="526"
+     inkscape:window-y="82"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -194,12 +194,12 @@
     <rect
        style="fill:#696969;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5-4"
-       width="315"
-       height="17.999962"
-       x="12.547735"
-       y="789.11218"
-       rx="6"
-       ry="6" />
+       width="260"
+       height="18"
+       x="24.547735"
+       y="789.11212"
+       rx="4.9523811"
+       ry="6.0000129" />
     <text
        xml:space="preserve"
        style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
@@ -208,17 +208,17 @@
        id="text2999"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999)"
-       transform="translate(-54.672419,2)"><tspan
+       transform="translate(-39.875395,2)"><tspan
          sodipodi:role="line"
          id="tspan3001"
          x="107.22406"
          y="798.28217">${item_name}</tspan></text>
     <image
        class="embedded_image"
-       y="787.11218"
-       x="17.547735"
-       height="22"
-       width="22"
+       y="791.11218"
+       x="49.547737"
+       height="13.999998"
+       width="13.999998"
        id="item_icon-3"
        style="display:inline"
        xlink:href="/home/tanktarta/dummy.png"
@@ -232,7 +232,7 @@
        id="text2999-0-5"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999-5-09)"
-       transform="translate(143.82953,2.999916)"><tspan
+       transform="translate(82.219183,2.999916)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-8"
          x="176.15961"
@@ -248,22 +248,22 @@
     <rect
        style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5-4-5"
-       width="315"
+       width="260"
        height="17.999977"
-       x="12.547735"
+       x="24.547735"
        y="789.11218"
-       rx="6"
+       rx="4.9523811"
        ry="6" />
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15-sandbox-plugins/src/indicator-messages/default/dummy.png"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/themes/default/dummy.png"
        xlink:href="dummy.png"
-       width="41"
-       height="41"
-       x="16.547735"
-       y="777.54773"
-       class="embedded_image"
+       id="item_item-2"
        title="item_icon"
-       id="item_item-2" />
+       class="embedded_image"
+       y="777.54773"
+       x="24.547735"
+       height="41"
+       width="41" />
     <text
        xml:space="preserve"
        style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
@@ -272,7 +272,7 @@
        id="text2999-0"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999-5)"
-       transform="translate(-54.672419,1.9999163)"><tspan
+       transform="translate(-39.875395,1.9999163)"><tspan
          sodipodi:role="line"
          id="tspan3001-7"
          x="107.22406"
@@ -285,7 +285,7 @@
        id="text2999-0-1"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999-5-0)"
-       transform="matrix(1.0000023,0,0,1,143.82929,2.9999163)"><tspan
+       transform="matrix(1.0000023,0,0,1,82.218838,2.9999163)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-9"
          x="176.15961"

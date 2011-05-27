@@ -129,7 +129,7 @@ class Blinker():
             c.value = self._control_values[i]
             self._driver.update_control(c)
             i += 1
-
+    
 class G15DBUSDebugService(dbus.service.Object):
     
     def __init__(self, dbus_service):

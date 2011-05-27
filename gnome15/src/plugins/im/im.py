@@ -112,11 +112,10 @@ Holds list of contacts for a single connection
 """
 class ContactList:
 
-    def __init__(self, list_store, conn, screen, page):
+    def __init__(self, list_store, conn, screen):
         self._menu = list_store
         self._conn = conn
         self._screen = screen
-        self._page = page
         self._contact_list = {}
         self._conn.call_when_ready(self._connection_ready_cb)
 
@@ -158,6 +157,7 @@ class ContactList:
                 error_handler = self._error_cb)
 
     def _request_contact_info(self, handles):
+        logger.debug("Requesting contact info for %s" %(str(handles)))
         interfaces = [CONNECTION,
                 CONNECTION_INTERFACE_ALIASING,
                 CONNECTION_INTERFACE_SIMPLE_PRESENCE]
@@ -169,6 +169,7 @@ class ContactList:
             error_handler = self._error_cb)
 
     def _get_contact_attributes_cb(self, attributes):
+        logger.debug("Received contact attributes for %s" %(str(attributes)))
         for handle, member in attributes.iteritems():
             contact_info = self._parse_member_attributes(member)
             contact, alias, presence = contact_info
@@ -188,11 +189,12 @@ class ContactList:
         return (contact_id, alias, presence)
 
     def _add_contact(self, handle, contact, presence, alias):
-        logger.debug("Add contact %s" %(str(contact)))
+        logger.debug("Add contact %s (%s)" %(str(contact),str(handle)))
         self._contact_list[handle] = contact
         self._menu.add_contact(self._conn, handle, contact, presence, alias)
 
     def _contact_presence_changed_cb(self, presences):
+        logger.debug("Contact presence changed %s" %(str(presences)))
         for handle, presence in presences.iteritems():
             if handle in self._contact_list:
                 self._update_contact_presence(handle, presence)
@@ -200,8 +202,8 @@ class ContactList:
                 self._request_contact_info([handle])
 
     def _update_contact_presence(self, handle, presence):
+        logger.debug("Updating contact presence for %s" %(str(handle)))
         self._menu.update_contact_presence(self._conn, handle, presence)
-        self._screen.redraw(self._page)
 
     def _error_cb(self, *args):
         logger.error("Error happens: %s" % args)
@@ -209,17 +211,64 @@ class ContactList:
 """
 Represents a contact as a single item in a menu
 """
-class ContactMenuItem():    
+class ContactMenuItem(g15theme.MenuItem):    
     def __init__(self, conn, handle, contact, presence, alias):
+        g15theme.MenuItem.__init__(self)
         self.conn = conn
         self.handle = handle
         self.contact=  contact
         self.presence = presence
         self.alias = alias  
         
+    def draw(self, selected, canvas, menu_properties, menu_attributes):
+        """
+        Render a single menu item
+        
+        Keyword arguments:
+        item -- item object
+        selected -- selected item object
+        canvas -- canvas to draw on
+        properties -- properties to pass to theme
+        attribtes -- attributes to pass to theme
+        
+        """       
+        item_properties = {}
+        if selected == self:
+            item_properties["item_selected"] = True
+        item_properties["item_name"] = self.alias
+        item_properties["item_alt"] = self._get_status_text(self.presence)
+        item_properties["item_type"] = ""
+        item_properties["item_icon"] = g15util.get_icon_path(self._get_status_icon_name(self.presence))
+        self.theme.draw(canvas, item_properties)
+        return self.theme.bounds[3]
+        
     def set_presence(self, presence):
         logger.debug("Setting presence of %s to %s" % (str(self.contact), str(presence)))
-        self.presence = presence      
+        self.presence = presence   
+        
+    '''
+    Private
+    '''
+
+    def _get_status_text(self, presence):        
+        key = ( presence[0], presence[1] ) 
+        if key in STATUS_MAP:
+            return STATUS_MAP[key][1]
+        key = ( presence[0], None ) 
+        if key in STATUS_MAP:
+            return STATUS_MAP[key][1]
+        logger.warning("Unknown presence %d = %s" % (presence[0], presence[1]))
+        return "Unknown"
+    
+    def _get_status_icon_name(self, presence):
+        key = ( presence[0], presence[1] ) 
+        if key in STATUS_MAP:
+            return STATUS_MAP[key][0]
+        key = ( presence[0], None ) 
+        if key in STATUS_MAP:
+            return STATUS_MAP[key][0]
+        logger.warning("Unknown presence %d = %s" % (presence[0], presence[1]))
+        return "dialog-warning"   
         
 """
 Compare a single contact based on it's alias and presence
@@ -244,9 +293,9 @@ connections.
 """
 class ContactMenu(g15theme.Menu):
 
-    def __init__(self, screen, page, mode):
+    def __init__(self, screen, mode):
         """
-        Create the plugin instance
+        Create the menu instance
         
         Keyword arguments:
         screen -- screen instance
@@ -255,10 +304,10 @@ class ContactMenu(g15theme.Menu):
         """
         g15theme.Menu.__init__(self, "menu", screen)
         self.mode = mode
+        self.on_update = None
         if not self.mode:
             self.mode = MODE_ONLINE
         self._screen = screen
-        self._page = page
         self._contacts = []
         self._contact_lists = {}
         self._connections = []
@@ -293,7 +342,8 @@ class ContactMenu(g15theme.Menu):
                     if item.conn == connection:
                         self._contacts.remove(item)
                 self.reload()
-                self._screen.redraw(self._page)
+                if self.on_update:
+                    self.on_update()
                 return
             
     def is_connected(self, bus_name):
@@ -315,10 +365,10 @@ class ContactMenu(g15theme.Menu):
         contacts that are approriate for the current mode will be added
         """
         logger.debug("Reloading contacts")
-        self.items = []
+        self.clear_items()
         for item in self._contacts:
             if self._is_presence_included(item.presence):
-                self.items.append(item)
+                self.add_item(item)
         self.sort_items()
         self.select_first()
         
@@ -326,17 +376,7 @@ class ContactMenu(g15theme.Menu):
         """
         Sort items based on their alias and presence
         """
-        self.items = sorted(self.items, cmp=compare_contacts)
-     
-    def _connect(self, connection):
-        """
-        Connect to the given path. Events will then be received to add new contacts
-        
-        Keyword arguments:
-        connection -- connection object 
-        """
-        self._contact_lists[connection] = ContactList(self, connection, self._screen, self._page)
-        self._connections.append(connection)
+        self.set_items(sorted(self.get_items(), cmp=compare_contacts))
 
     def add_contact(self, conn, handle, contact, presence, alias):
         """
@@ -350,21 +390,9 @@ class ContactMenu(g15theme.Menu):
         """
         item = ContactMenuItem(conn, handle, contact, presence, alias)
         self._contacts.append(item)
-        if self._is_presence_included(item.presence):
-            self.items.append(item)
-            self.sort_items()
-            self._screen.redraw(self._page)
-            
-    def _is_presence_included(self, presence):
-        """
-        Determine if presence is appropriate for the current mode
-        
-        Keyword arguments:
-        presence -- presence
-        """
-        return ( self.mode == MODE_ONLINE and presence[0] != 1 ) or \
-            ( self.mode == MODE_AVAILABLE and presence[0] == CONNECTION_PRESENCE_TYPE_AVAILABLE ) or \
-            self.mode == MODE_ALL
+        self.reload()
+        if self.on_update:
+            self.on_update()
 
     def update_contact_presence(self, conn, handle, presence):
         """
@@ -376,66 +404,42 @@ class ContactMenu(g15theme.Menu):
         prescence -- presence object
         """
         for row in self._contacts:
-            if row.handle == handle:
-                logger.debug("Updating presence to %s" % str(presence))
+            if row.handle == handle and row.conn == conn:
+                logger.debug("Updating presence of %s to %s" % (str(row.contact), str(presence)))
                 row.set_presence(presence)
                 self.selected = row
                 self.reload()
+                if self.on_update:
+                    self.on_update()
                 return
         logger.warning("Got presence update for unknown contact %s" %(str(presence)))
-        
-    def load_theme(self):
-       
-        """
-        Load the menu item theme
-        """ 
-        self.entry_theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self._screen, "menu-entry")
     
-    def render_item(self, item, selected, canvas, properties, attributes, group = False): 
+        
+    '''
+    Private
+    '''
+        
+     
+    def _connect(self, connection):
         """
-        Render a single menu item
+        Connect to the given path. Events will then be received to add new contacts
         
         Keyword arguments:
-        item -- item object
-        selected -- selected item object
-        canvas -- canvas to draw on
-        properties -- properties to pass to theme
-        attribtes -- attributes to pass to theme
+        connection -- connection object 
+        """
+        self._contact_lists[connection] = ContactList(self, connection, self._screen)
+        self._connections.append(connection)
+            
+    def _is_presence_included(self, presence):
+        """
+        Determine if presence is appropriate for the current mode
         
-        """       
-        item_properties = {}
-        if selected == item:
-            item_properties["item_selected"] = True
-        item_properties["item_name"] = item.alias
-        item_properties["item_alt"] = self._get_status_text(item.presence)
-        item_properties["item_type"] = ""
-        item_properties["item_icon"] = g15util.get_icon_path(self._get_status_icon_name(item.presence))
-        self.entry_theme.draw(canvas, item_properties)
-        return self.entry_theme.bounds[3]
-    
-    """
-    Private
-    """
-
-    def _get_status_icon_name(self, presence):
-        key = ( presence[0], presence[1] ) 
-        if key in STATUS_MAP:
-            return STATUS_MAP[key][0]
-        key = ( presence[0], None ) 
-        if key in STATUS_MAP:
-            return STATUS_MAP[key][0]
-        logger.warning("Unknown presence %d = %s" % (presence[0], presence[1]))
-        return "dialog-warning"
-
-    def _get_status_text(self, presence):        
-        key = ( presence[0], presence[1] ) 
-        if key in STATUS_MAP:
-            return STATUS_MAP[key][1]
-        key = ( presence[0], None ) 
-        if key in STATUS_MAP:
-            return STATUS_MAP[key][1]
-        logger.warning("Unknown presence %d = %s" % (presence[0], presence[1]))
-        return "Unknown"
+        Keyword arguments:
+        presence -- presence
+        """
+        return ( self.mode == MODE_ONLINE and presence[0] != 1 ) or \
+            ( self.mode == MODE_AVAILABLE and presence[0] == CONNECTION_PRESENCE_TYPE_AVAILABLE ) or \
+            self.mode == MODE_ALL
 
 """
 Instance Messenger plugin class
@@ -548,7 +552,7 @@ class G15Im():
         # Draw the page
         self._theme.draw(canvas, props, 
                         attributes = {
-                                      "items" : self._menu.items,
+                                      "items" : self._menu.get_items(),
                                       "selected" : self._menu.selected
                                       })
         
@@ -561,16 +565,16 @@ class G15Im():
         mode = self._gconf_client.get_string(self._gconf_key + "/mode")
         
         # Create the menu
-        self._menu = ContactMenu(self._screen, self._page, mode)
-        self._menu.on_selected = self._on_selected
+        self._menu = ContactMenu(self._screen, mode)
+        self._menu.on_selected = self._redraw
+        self._menu.on_update = self._redraw
         
         # Setup the theme
         self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen)
         self._theme.add_component(self._menu)
         self._theme.add_component(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
         
-        
-    def _on_selected(self):
+    def _redraw(self):
         self._screen.redraw(self._page)
         
     def _show_menu(self):  

@@ -36,7 +36,10 @@ ICON_NAME = "icon-name"
 TYPE = "type"
 LABEL = "label"
 
-class DBUSMenuItem():
+TYPE_SEPARATOR = "separator"
+TYPE_ROOT = "root"
+
+class DBUSMenuEntry():
     def __init__(self, id, properties, menu):
         self.id = id
         self.menu = menu
@@ -49,6 +52,7 @@ class DBUSMenuItem():
             self.properties[VISIBLE] = True
         self.label = self.properties[LABEL] if LABEL in self.properties else None
         self.icon = None
+        self.type = self.properties[TYPE] if TYPE in self.properties else TYPE_ROOT
         
     def flatten(self, include_self = False):
         flat_list = []
@@ -81,6 +85,9 @@ class DBUSMenuItem():
         
     def get_icon(self):
         return self.icon
+    
+    def get_alt_label(self):
+        return ""
         
     def get_icon_name(self):
         return self.properties[ICON_NAME] if ICON_NAME in self.properties else None
@@ -104,8 +111,8 @@ class DBUSMenu():
         
         self._get_layout()
         
-    def create_item(self, id, properties):
-        return DBUSMenuItem(id, properties, self) 
+    def create_entry(self, id, properties):
+        return DBUSMenuEntry(id, properties, self) 
     
     '''
     Private
@@ -168,7 +175,7 @@ class DBUSMenu():
     def _load_menu_struct(self, layout, map):
         id  = layout[0]
         properties = layout[1]
-        menu = self.create_item(id, dict(properties))
+        menu = self.create_entry(id, dict(properties))
         map[str(id)] = menu
         children = layout[2]
         for item in children:
@@ -177,7 +184,7 @@ class DBUSMenu():
         
     def _load_xml_menu(self, element, map):
         id = int(element.get("id"))
-        menu = self.create_item(id, dict(self.dbus_menu.GetProperties(id, [])))
+        menu = self.create_entry(id, dict(self.dbus_menu.GetProperties(id, [])))
         map[str(id)] = menu
         for child in element:
             try :

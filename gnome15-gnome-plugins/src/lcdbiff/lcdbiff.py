@@ -527,44 +527,38 @@ class G15BiffPreferences():
         if path != None:
             return self.account_mgr.by_name(model[path][0])
    
-        
-class G15AccountsMenu(g15theme.Menu):     
-    '''
-    Theme menu implementation for displaying current account stats, one per line
-    '''
-    
-    def __init__(self, screen):
-        g15theme.Menu.__init__(self, "menu", screen)
-        
-    def render_item(self, item, selected, canvas, properties, attributes, group=False):        
-        item_properties = {}
-        if selected == item:
-            item_properties["item_selected"] = True
-        item_properties["item_name"] = item.account.name
-        
-        if item.error != None:
-            item_properties["item_alt"] = "Error"
-        else: 
-            if item.count > 0:
-                item_properties["item_alt"] = "%d" % ( item.count )
-            else:
-                item_properties["item_alt"] = "None"
-        item_properties["item_type"] = ""
-        item_properties["item_icon"] =  g15util.load_surface_from_file(item.icon_path)
-        self.entry_theme.draw(canvas, item_properties)
-        return self.entry_theme.bounds[3]
-   
 '''
 Account menu item
 '''
  
-class MailItem():
+class MailItem(g15theme.MenuItem):
     def __init__(self, account):
+        g15theme.MenuItem.__init__(self)
         self.account = account
         self.count = 0
         self.icon_path = g15util.get_icon_path("indicator-messages")
         self.status = "Unknown"
         self.error = None
+        
+    def draw(self, selected, canvas, menu_properties, menu_attributes):        
+        item_properties = {}
+        if selected == self:
+            item_properties["item_selected"] = True
+       
+        item_properties["item_name"] = self.account.name
+        
+        if self.error != None:
+            item_properties["item_alt"] = "Error"
+        else: 
+            if self.count > 0:
+                item_properties["item_alt"] = "%d" % ( self.count )
+            else:
+                item_properties["item_alt"] = "None"
+        item_properties["item_type"] = ""
+        item_properties["item_icon"] =  g15util.load_surface_from_file(self.icon_path)
+        
+        self.theme.draw(canvas, item_properties)
+        return self.theme.bounds[3]
          
 '''
 Gnome15 LCDBiff plugin
@@ -608,7 +602,7 @@ class G15Biff():
         self._reload_menu()
         self.total_count = 0
         self.total_errors = 0
-        for item in self.items:
+        for item in self.menu.get_items():
             try :
                 status = self.account_manager.check_account(item.account)
                 item.count  = status[0]
@@ -657,19 +651,7 @@ class G15Biff():
     
     def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_UP and self.screen.get_visible_page() == self.page:
-            if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
-                if self.index == 0:
-                    self.index = len(self.items) - 1
-                else:
-                    self.index -= 1
-                self._selection_changed()
-                return True
-            elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
-                if self.index >= len(self.items) - 1:
-                    self.index = 0
-                else:
-                    self.index += 1
-                self._selection_changed()
+            if self.menu.handle_key(keys, state, post):
                 return True
             elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
                 if self.index != -1:
@@ -684,24 +666,21 @@ class G15Biff():
     Private
     '''
     def _selection_changed(self): 
-        if self.index > -1 and self.index < len(self.items):       
-            self.selected = self.items[self.index]
-        else:
-            self.index = -1
-            self.selected = None
         self.screen.redraw(self.page)
         
     def _reload_menu(self):
-        self.items = []
+        self.menu.clear_items()
         self.account_manager.load()
         for account in self.account_manager.accounts:
-            self.items.append(MailItem(account))
-        self.selected = self.items[0]                    
+            self.menu.add_item(MailItem(account))
+        items = self.menu.get_items()
+        self.menu.selected = items[0] if len(items) > 0 else None
         self.screen.redraw(self.page)
         
     def _reload_theme(self):        
         self.theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.screen, "menu-screen")
-        self.menu = G15AccountsMenu(self.screen)
+        self.menu = g15theme.Menu("menu", self.screen)
+        self.menu.on_selected = self._selection_changed
         self.theme.add_component(self.menu)
         self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
     
@@ -710,16 +689,14 @@ class G15Biff():
         self.schedule_refresh()
         
     def _paint(self, canvas):
-        self.menu.items = self.items
-        self.menu.selected = self.selected
         self.theme.draw(canvas,
                         properties={
                                       "title" : "Email",
                                       "icon" : g15util.get_icon_path("mail-inbox")
                                       },
                         attributes={
-                                      "items" : self.items,
-                                      "selected" : self.selected
+                                      "items" : self.menu.get_items(),
+                                      "selected" : self.menu.selected
                                       })
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):

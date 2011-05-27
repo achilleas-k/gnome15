@@ -52,43 +52,38 @@ reserved_keys = [ g15driver.G_KEY_MENU, g15driver.G_KEY_L2 ]
 def create(gconf_key, gconf_client, screen):
     return G15Menu(gconf_client, gconf_key, screen)
 
-class MenuItem():
+class MenuItem(g15theme.MenuItem):
     
-    def __init__(self, page):
-        self.page = page
+    def __init__(self, item_page):
+        g15theme.MenuItem.__init__(self, "menuitem")
+        self._item_page = item_page
         self.thumbnail = None
         
-class G15ScreensMenu(g15theme.Menu):
-    def __init__(self, screen):
-        g15theme.Menu.__init__(self, "menu", screen)
-        
-    def render_item(self, item, selected, canvas, properties, attributes, group = False):        
+    def draw(self, selected, canvas, menu_properties, menu_attributes):        
         item_properties = {}
-        if selected == item:
+        if selected == self:
             item_properties["item_selected"] = True
-        item_properties["item_name"] = item.page.title 
+        item_properties["item_name"] = self._item_page.title 
         item_properties["item_alt"] = ""
         item_properties["item_type"] = ""
-        item_properties["item_icon"] = item.thumbnail
-        self.entry_theme.draw(canvas, item_properties)
-        return self.entry_theme.bounds[3]
+        item_properties["item_icon"] = self.thumbnail
+        self.theme.draw(canvas, item_properties)
+        return self.theme.bounds[3]
 
 class G15Menu():
     
     def __init__(self, gconf_client, gconf_key, screen):
-        self.screen = screen
-        self.hidden = False
-        self.gconf_client = gconf_client
-        self.gconf_key = gconf_key
+        self._screen = screen
+        self._gconf_client = gconf_client
+        self._gconf_key = gconf_key
     
     def activate(self):
         self._reload_theme()
-        self.timer = None
-        self.page = None
-        self.screen.redraw(self.page)
+        self._page = None
+        self._screen.redraw(self._page)
     
     def deactivate(self):
-        if self.page != None:
+        if self._page != None:
             self._hide_menu()
         
     def destroy(self):
@@ -97,35 +92,35 @@ class G15Menu():
     def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_DOWN:
 
-            if self.page == None:            
+            if self._page == None:            
                 if g15driver.G_KEY_MENU in keys or g15driver.G_KEY_L2 in keys:
                     self._show_menu()
                     return True
             else:                            
-                if self.screen.get_visible_page() == self.page:                    
+                if self._screen.get_visible_page() == self._page:                    
                     if g15driver.G_KEY_MENU in keys or g15driver.G_KEY_L2 in keys:
                         self._hide_menu()
-                        self.screen.service.resched_cycle()
+                        self._screen.service.resched_cycle()
                         return True
-                    elif self.menu.handle_key(keys, state, post):
+                    elif self._menu.handle_key(keys, state, post):
                         return True           
                     elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
-                        self.screen.raise_page(self.menu.selected.page)
-                        self.screen.service.resched_cycle()
+                        self._screen.raise_page(self._menu.selected._item_page)
+                        self._screen.service.resched_cycle()
                         self._hide_menu()
                         return True                
                 
         return False
     
     def paint(self, canvas):
-        self.theme.draw(canvas, 
+        self._theme.draw(canvas, 
                         properties = {
                                       "title" : g15globals.name,
                                       "icon" : g15util.get_icon_path("gnome-main-menu")
                                       }, 
                         attributes = {
-                                      "items" : self.menu.items,
-                                      "selected" : self.menu.selected
+                                      "items" : self._menu.get_items(),
+                                      "selected" : self._menu.selected
                                       })
         
     '''
@@ -147,48 +142,52 @@ class G15Menu():
     Private
     '''
     def _reload_menu(self):
-        self.menu.items = []
-        for page in self.screen.pages:
-            if page != self.page and page.priority > g15screen.PRI_INVISIBLE:
-                self.menu.items.append(MenuItem(page))
-        self.menu.selected = self.menu.items[0]
+        self._menu.clear_items()
+        for page in self._screen.pages:
+            if page != self._page and page.priority > g15screen.PRI_INVISIBLE:
+                self._menu.add_item(MenuItem(page))
+        items = self._menu.get_items()
+        if len(items) > 0:
+            self._menu.selected = items[0]
+        else:
+            self._menu.selected = None
                
-        for item in self.menu.items:
-            if item.page.thumbnail_painter != None:
-                img = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.screen.height, self.screen.height)
+        for item in items:
+            if item._item_page.thumbnail_painter != None:
+                img = cairo.ImageSurface(cairo.FORMAT_ARGB32, self._screen.height, self._screen.height)
                 thumb_canvas = cairo.Context(img)
                 try :
-                    if item.page.thumbnail_painter(thumb_canvas, self.screen.height, True):
+                    if item._item_page.thumbnail_painter(thumb_canvas, self._screen.height, True):
                         img_data = StringIO()
                         img.write_to_png(img_data)
                         item.thumbnail = base64.b64encode(img_data.getvalue())                    
                         
                 except :
-                    logger.warning("Problem with painting thumbnail in %s" % item.page.id)                   
+                    logger.warning("Problem with painting thumbnail in %s" % item._item_page.id)                   
                     traceback.print_exc(file=sys.stderr) 
                     
-        self.screen.redraw(self.page)
+        self._screen.redraw(self._page)
         
     def _reload_theme(self):        
-        self.theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.screen, "menu-screen")
-        self.menu = G15ScreensMenu(self.screen)
-        self.menu.on_move = self._on_move
-        self.menu.on_selected = self._on_selected
-        self.theme.add_component(self.menu)
-        self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
+        self._theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self._screen, "menu-screen")
+        self._menu = g15theme.Menu("menu", self._screen)
+        self._menu.on_move = self._on_move
+        self._menu.on_selected = self._on_selected
+        self._theme.add_component(self._menu)
+        self._theme.add_component(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
         
     def _on_selected(self):
-        self.screen.redraw(self.page)
+        self._screen.redraw(self._page)
         
     def _on_move(self):
         pass
         
     def _show_menu(self):        
-        self.page = self.screen.new_page(self.paint, id="Menu", priority = g15screen.PRI_EXCLUSIVE)
+        self._page = self._screen.new_page(self.paint, id="Menu", priority = g15screen.PRI_EXCLUSIVE)
         self._reload_menu()            
-        self.screen.add_screen_change_listener(self)
+        self._screen.add_screen_change_listener(self)
     
     def _hide_menu(self):     
-        self.screen.remove_screen_change_listener(self)
-        self.screen.del_page(self.page)
-        self.page = None
+        self._screen.remove_screen_change_listener(self)
+        self._screen.del_page(self._page)
+        self._page = None

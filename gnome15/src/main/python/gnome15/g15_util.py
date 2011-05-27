@@ -371,7 +371,9 @@ def load_surface_from_file(filename, size = None):
                 svg_size = svg.get_dimension_data()[2:4]
                 if size == None:
                     size = svg_size
-                surface = cairo.ImageSurface(0, int(size[0]), int(size[1]))
+                sx = int(size) if isinstance(size, int) or isinstance(size, float) else int(size[0])
+                sy = int(size) if isinstance(size, int) or isinstance(size, float) else int(size[1])
+                surface = cairo.ImageSurface(0, sx, sy)
                 context = cairo.Context(surface)
                 if size != svg_size:
                     scale = get_scale(size, svg_size)
@@ -541,7 +543,7 @@ Various maths
 def get_scale(target, actual):
     scale = 1.0
     if target != None:
-        if isinstance(target, int):
+        if isinstance(target, int) or isinstance(target, float):
             sx = float(target) / actual[0]
             sy = float(target) / actual[1]
         else:

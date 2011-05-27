@@ -145,7 +145,7 @@ class G15Splash():
 
 class G15Service(Thread):
     
-    def __init__(self, service_host, parent_window=None):
+    def __init__(self, service_host, parent_window=None, no_trap=False):
         Thread.__init__(self)
         self.first_page = None
         self.attention_message = pglobals.name
@@ -175,17 +175,23 @@ class G15Service(Thread):
         logger.debug("Starting the DBUS service")
         self.dbus_service = g15dbus.G15DBUSService(self) 
         
-        # Watch for signals        
-        signal.signal(signal.SIGINT, self.signal_handler)
+        # Watch for signals
+        if not no_trap:
+            signal.signal(signal.SIGINT, self.sigint_handler)
+            signal.signal(signal.SIGTERM, self.sigterm_handler)
         
         gobject.idle_add(self.start)
         logger.info("Starting GLib loop")
         loop.run()
         logger.debug("Exited GLib loop")
     
-    def signal_handler(self, signum, frame):
-        logger.info("Got signal, shutting down")
-        self.stop()
+    def sigint_handler(self, signum, frame):
+        logger.info("Got SIGINT signal, shutting down")
+        self.shutdown()
+    
+    def sigterm_handler(self, signum, frame):
+        logger.info("Got SIGTERM signal, shutting down")
+        self.shutdown()
         
     def stop(self):
         self.shutting_down = True

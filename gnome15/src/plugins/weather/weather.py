@@ -331,8 +331,12 @@ class G15Weather():
             if icon_path != None:
                 return icon_path
             
-        logger.warning("Having to resort to using Google weather image http://www.google.com%s. This may hang up the LCD for a bit" % icon)
-        return "http://www.google.com" + icon
+        if icon.startswith("http"):
+            logger.warning("Having to resort to using Google weather image %s. This may hang up the LCD for a bit" % icon)
+            return icon
+        else:
+            logger.warning("Having to resort to using Google weather image http://www.google.com%s. This may hang up the LCD for a bit" % icon)
+            return "http://www.google.com" + icon
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         total_taken = 0

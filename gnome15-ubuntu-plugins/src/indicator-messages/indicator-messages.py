@@ -31,7 +31,6 @@ import dbus
 import os
 import gtk
 import Image
-import indicator_messages_menu as messagesmenu
 import gnome15.dbusmenu as dbusmenu
 
 from lxml import etree
@@ -49,125 +48,99 @@ unsupported_models = [ g15driver.MODEL_G110 ]
 def create(gconf_key, gconf_client, screen):
     return G15IndicatorMessages(gconf_client, screen)
 
-class G15DBusMenu(g15theme.Menu):
-    def __init__(self, screen):
-        g15theme.Menu.__init__(self, "menu", screen)
+'''
+Indicator Messages  DBUSMenu property names
+'''
+
+APP_RUNNING = "app-running"
+INDICATOR_LABEL = "indicator-label"
+INDICATOR_ICON = "indicator-icon"
+RIGHT_SIDE_TEXT = "right-side-text"
+
+'''
+Indicator Messages DBUSMenu types
+'''
+TYPE_APPLICATION_ITEM = "application-item"
+TYPE_INDICATOR_ITEM = "indicator-item"
+
+
+class IndicatorMessagesMenuEntry(dbusmenu.DBUSMenuEntry):
+    def __init__(self, id, properties, menu):
+        dbusmenu.DBUSMenuEntry.__init__(self, id, properties, menu)
         
-    def on_configure(self):
-        g15theme.Menu.on_configure(self)
-        self.child_entry_theme = g15theme.G15Theme(self.theme.dir, self.theme.screen, "menu-child-entry")
-        self.separator_theme = g15theme.G15Theme(self.theme.dir, self.theme.screen, "menu-separator")
+    def set_properties(self, properties):
+        dbusmenu.DBUSMenuEntry.set_properties(self, properties)        
+        if self.type == TYPE_INDICATOR_ITEM and INDICATOR_LABEL in self.properties:
+            self.label = self.properties[INDICATOR_LABEL]
+        if self.type == TYPE_INDICATOR_ITEM:
+            self.icon = self.properties[INDICATOR_ICON] if INDICATOR_ICON in self.properties else None
         
-    def get_item_height(self, item, group = False):
-        if item.get_type() == "separator":
-            theme = self.separator_theme
-        else:
-            if group:
-                theme = self.entry_theme
-            else:
-                theme = self.child_entry_theme
-        return theme.bounds[3]
+    def get_alt_label(self):
+        return self.properties[RIGHT_SIDE_TEXT] if RIGHT_SIDE_TEXT in self.properties else None
+        
+    def is_app_running(self):
+        return APP_RUNNING in self.properties and self.properties[APP_RUNNING]
+
+class IndicatorMessagesMenu(dbusmenu.DBUSMenu):
     
-    def render_item(self, item, selected, canvas, properties, attributes, group = False):        
-        item_properties = {}
-        if selected == item:
-            item_properties["item_selected"] = True
-        item_properties["item_name"] = item.get_label() 
-        item_properties["item_alt"] = item.get_right_side_text()
-        item_properties["item_type"] = item.get_type()
-        icon_name = item.get_icon_name()
-        if icon_name != None:
-            item_properties["item_icon"] = g15util.load_surface_from_file(g15util.get_icon_path(icon_name))
-        else:
-            item_properties["item_icon"] = item.get_icon()
-            
-        if item.get_type() == "separator":
-            theme = self.separator_theme
-        else:
-            if group:
-                theme = self.entry_theme
-            else:
-                theme = self.child_entry_theme
-        theme.draw(canvas, item_properties)
-        return theme.bounds[3]
-        
+    
+    def __init__(self, session_bus, on_change = None):
+        try:
+            dbusmenu.DBUSMenu.__init__(self, session_bus, "org.ayatana.indicator.messages", "/org/ayatana/indicator/messages/menu", "org.ayatana.dbusmenu", on_change, False)
+        except dbus.DBusException as dbe:
+            dbusmenu.DBUSMenu.__init__(self, session_bus, "com.canonical.indicator.messages", "/com/canonical/indicator/messages/menu", "com.canonical.dbusmenu", on_change, True)
+
+    def create_entry(self, id, properties):
+        return IndicatorMessagesMenuEntry(id, properties, self)
+
 class G15IndicatorMessages():
     
     def __init__(self, gconf_client, screen):
-        self.screen = screen;
-        self.hide_timer = None
-        self.session_bus = None
-        self.thumb_icon = None
-        self.gconf_client = gconf_client
-        self.session_bus = dbus.SessionBus()
+        self._screen = screen;
+        self._hide_timer = None
+        self._session_bus = None
+        self._thumb_icon = None
+        self._gconf_client = gconf_client
+        self._session_bus = dbus.SessionBus()
 
     def activate(self):
+        self._messages_menu = IndicatorMessagesMenu(self._session_bus)  
         self._reload_theme()
-        self.items = []
         self._raise_timer = None
-        self.attention = False
-        self.selected = None
-        self.messages_menu = messagesmenu.IndicatorMessagesMenu(self.session_bus)        
-        self._load_items()
-        self.page = self.screen.new_page(self._paint, priority=g15screen.PRI_NORMAL, id="Indicator Messages", panel_painter = self._paint_panel, thumbnail_painter = self._paint_thumbnail)
-        self.messages_menu.on_change = self._menu_changed
+        self._attention = False
+        self._page = self._screen.new_page(self._paint, priority=g15screen.PRI_NORMAL, id="Indicator Messages", panel_painter = self._paint_panel, thumbnail_painter = self._paint_thumbnail)
         
-        if self.messages_menu.natty:
-            self.session_bus.add_signal_receiver(self._icon_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "IconChanged")
-            self.session_bus.add_signal_receiver(self._attention_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "AttentionChanged")
+        if self._messages_menu.natty:
+            self._session_bus.add_signal_receiver(self._icon_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "IconChanged")
+            self._session_bus.add_signal_receiver(self._attention_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "AttentionChanged")
         else:
-            self.session_bus.add_signal_receiver(self._icon_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "IconChanged")
-            self.session_bus.add_signal_receiver(self._attention_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "AttentionChanged")
+            self._session_bus.add_signal_receiver(self._icon_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "IconChanged")
+            self._session_bus.add_signal_receiver(self._attention_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "AttentionChanged")
             
-        self.page.set_title(name)
+        self._page.set_title(name)
+        self._screen.redraw(self._page)
     
     def deactivate(self):
-        self.screen.del_page(self.page)
-        if self.messages_menu.natty:
-            self.session_bus.remove_signal_receiver(self._icon_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "IconChanged")
-            self.session_bus.remove_signal_receiver(self._attention_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "AttentionChanged")
+        self._screen.del_page(self._page)
+        if self._messages_menu.natty:
+            self._session_bus.remove_signal_receiver(self._icon_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "IconChanged")
+            self._session_bus.remove_signal_receiver(self._attention_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "AttentionChanged")
         else:
-            self.session_bus.remove_signal_receiver(self._icon_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "IconChanged")
-            self.session_bus.remove_signal_receiver(self._attention_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "AttentionChanged")      
+            self._session_bus.remove_signal_receiver(self._icon_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "IconChanged")
+            self._session_bus.remove_signal_receiver(self._attention_changed, dbus_interface = "org.ayatana.indicator.messages.service", signal_name = "AttentionChanged")      
         
     def destroy(self):
         pass
                     
     def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP:
-            if self.screen.get_visible_page() == self.page:
-                if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:                    
-                    i = 1 if self.selected == None or not self.selected in self.items else self.items.index(self.selected)
-                    while True:
-                        i -= 1
-                        if i < 0:
-                            i = 0
-                            break
-                        if self.items[i].get_type() != "separator":
-                            break
-                    self.selected = self.items[i] if i < len(self.items) else None
-                    self.screen.service.resched_cycle()
-                    self._reset_raise()
-                    self.screen.redraw(self.page)
-                    return True
-                elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:                              
-                    i = -1 if self.selected == None or not self.selected in self.items else self.items.index(self.selected)
-                    while True:
-                        i += 1
-                        if i >= len(self.items):
-                            i = len(self.items) - 1
-                            break
-                        if self.items[i].get_type() != "separator":
-                            break
-                    self.selected = self.items[i] if i < len(self.items) else None
-                    self.screen.service.resched_cycle()
-                    self._reset_raise()
-                    self.screen.redraw(self.page)
+        if not post and state == g15driver.KEY_STATE_DOWN:              
+            if self._screen.get_visible_page() == self._page:    
+                if self._menu.handle_key(keys, state, post):
                     return True           
                 elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
-                    self.selected.activate()
-                    self.screen.service.resched_cycle()
-                    return True                
+                    self._menu.selected.dbus_menu_entry.activate()
+                    self._screen.service.resched_cycle()
+                    return True
                 
         return False
         
@@ -178,68 +151,32 @@ class G15IndicatorMessages():
         pass
         
     def _attention_changed(self, attention):
-        self.attention = attention
-        print "Attention changed to ",str(attention)
-        if self.attention == 1:
-            if self.screen.driver.get_bpp() == 1:
-                self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
+        self._attention = attention
+        if self._attention == 1:
+            if self._screen.driver.get_bpp() == 1:
+                self._thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
             else:
-                self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages-new")) 
+                self._thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages-new")) 
             self._popup()
         else:
-            if self.screen.driver.get_bpp() == 1:
-                self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
+            if self._screen.driver.get_bpp() == 1:
+                self._thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
             else:
-                self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages"))
-            self.screen.redraw()
+                self._thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages"))
+            self._screen.redraw()
             
     def _menu_changed(self, menu = None, property = None, value = None):
-        current_ids = []
-        print "Menu changed ",str(menu),str(property),str(value)
-        for item in self.items:
-            current_ids.append(item.id)
-            
-        self._load_items()
-        
-        was_selected = self.selected
-        
-        # Scroll to item if it is newly visible
-        if menu != None:
-            if property != None and property == dbusmenu.VISIBLE and value and menu.get_type() != "separator":
-                self.selected = menu
-        else:
-            # Layout change
-            
-            # See if the selected item is still there
-            if self.selected != None:
-                sel = self.selected
-                self.selected = None
-                for i in self.items:
-                    if i.id == sel.id:
-                        self.selected = i
-            
-            # See if there are new items, make them selected
-            for item in self.items:
-                if not item.id in current_ids:
-                    self.selected = item
-                    break
-         
+        self._menu.menu_changed(menu, property, value)
         self._popup()
         
     '''
     Private
     ''' 
         
-    def _load_items(self):
-        self.items = []
-        for item in self.messages_menu.root_item.children:
-            if item.is_visible():
-                self.items.append(item)
-        
     def _popup(self):    
-        if not self.page.is_visible():
-            self._raise_timer = self.screen.set_priority(self.screen.get_page("Indicator Messages"), g15screen.PRI_HIGH, revert_after = 4.0)
-            self.screen.redraw(self.page)
+        if not self._page.is_visible():
+            self._raise_timer = self._screen.set_priority(self._screen.get_page("Indicator Messages"), g15screen.PRI_HIGH, revert_after = 4.0)
+            self._screen.redraw(self._page)
         else:
             self._reset_raise()
     
@@ -247,37 +184,39 @@ class G15IndicatorMessages():
         '''
         Reset the timer if the page is already visible because of a timer
         '''
-        if self.screen.is_on_timer(self.page):
-            self._raise_timer = self.screen.set_priority(self.screen.get_page("Indicator Messages"), g15screen.PRI_HIGH, revert_after = 4.0)
-        self.screen.redraw(self.page)
+        if self._screen.is_on_timer(self._page):
+            self._raise_timer = self._screen.set_priority(self._screen.get_page("Indicator Messages"), g15screen.PRI_HIGH, revert_after = 4.0)
+        self._screen.redraw(self._page)
     
     def _reload_theme(self):        
-        self.theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.screen, "menu-screen")
-        self.menu = G15DBusMenu(self.screen)
-        self.theme.add_component(self.menu)
-        self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
-    
+        self._theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self._screen, "menu-screen")
+        self._menu = g15theme.DBusMenu(self._screen, self._messages_menu)
+        self._messages_menu.on_change = self._menu_changed
+        self._menu.on_selected = self._on_selected
+        self._theme.add_component(self._menu)
+        self._theme.add_component(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
+        
+    def _on_selected(self):
+        self._screen.redraw(self._page)
+        
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if self.page != None:
-            if self.thumb_icon != None:
-                return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
-                return size
+        if self._page != None:
+            if self._thumb_icon != None:
+                return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
-        if self.page != None:
-            if self.thumb_icon != None and self.attention == 1:
-                return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+        if self._page != None:
+            if self._thumb_icon != None and self._attention == 1:
+                return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
 
     def _paint(self, canvas):  
-        self.menu.items = self.items
-        self.menu.selected = self.selected
-        self.theme.draw(canvas, 
+        self._theme.draw(canvas, 
                         properties = {
                                       "title" : "Messages",
-                                      "icon" : g15util.get_icon_path("indicator-messages-new" if self.attention else "indicator-messages"),
-                                      "attention": self.attention
+                                      "icon" : g15util.get_icon_path("indicator-messages-new" if self._attention else "indicator-messages"),
+                                      "attention": self._attention
                                       }, 
                         attributes = {
-                                      "items" : self.items,
-                                      "selected" : self.selected
+                                      "items" : self._menu.get_items(),
+                                      "selected" : self._menu.selected
                                       })  
