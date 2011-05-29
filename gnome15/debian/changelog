@@ -1,4 +1,4 @@
-gnome15 (0.6.6-1) natty; urgency=low
+gnome15 (0.7.0-1) natty; urgency=low
 
   * Feature: New Instant Messenger plugin (integrates with Telepathy)
   * Feature: New Mounts plugin. Shows mounted and mountable volumes, as well as disk space stats. 

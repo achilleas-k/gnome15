@@ -116,6 +116,7 @@ class MountMenuItem(g15theme.MenuItem):
         else:
             if self.mount.can_unmount():
                 self.mount.unmount(self._unmounted, flags = gio.MOUNT_UNMOUNT_NONE)
+        return True
             
     def _ejected(self, arg1, arg2):
         logger.info("Ejected %s %s %s" % (self.mount.get_name(), str(arg1), str(arg2)))
@@ -146,6 +147,7 @@ class VolumeMenuItem(g15theme.MenuItem):
     def activate(self):
         if self.volume.can_mount():
             self.volume.mount(None, self._mounted, flags = gio.MOUNT_UNMOUNT_NONE)
+        return True
     
     def _mounted(self, arg1, arg2):
         logger.info("Mounted %s %s %s" % (self.volume.get_name(), str(arg1), str(arg2)))

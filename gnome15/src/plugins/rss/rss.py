@@ -158,7 +158,12 @@ class G15FeedsMenuItem(g15theme.MenuItem):
         element_properties["ent_month_year"] = time.strftime("%m/%y", self.entry.date_parsed)
                         
         self.theme.draw(canvas, element_properties)
-        return self.theme.bounds[3]     
+        return self.theme.bounds[3] 
+    
+    def activate(self):
+        logger.info("xdg-open '%s'" % self.entry.link)
+        subprocess.Popen(['xdg-open', self.entry.link])
+        return True
         
 class G15FeedPage():
     
@@ -171,7 +176,6 @@ class G15FeedPage():
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
         self.url = url
         self.index = -1
-        self.selected_entry = None
         self.menu = g15theme.Menu("menu", self.screen)
         self.menu.on_selected = self.selection_changed
         self.theme.add_component(self.menu)
@@ -222,19 +226,6 @@ class G15FeedPage():
     def selection_changed(self):    
         self.screen.redraw(self.page)
                     
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_DOWN and self.screen.get_visible_page() == self.page:
-            if self.menu.handle_key(keys, state, post):
-                return True
-            elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
-                if self.selected_entry != None:
-                    subprocess.Popen(['xdg-open', self.selected_entry.link])
-                    
-                # Open in browser
-                return True
-                
-        return False
-    
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         if "icon" in self.attributes:
             return g15util.paint_thumbnail_image(allocated_size, self.attributes["icon"], canvas)
@@ -259,7 +250,7 @@ class G15RSS():
         
     def handle_key(self, keys, state, post):
         for page in self.pages:
-            if self.pages[page].handle_key(keys, state, post):
+            if self.pages[page].page.is_visible() and self.pages[page].menu.handle_key(keys, state, post):
                 return True
         return False
         

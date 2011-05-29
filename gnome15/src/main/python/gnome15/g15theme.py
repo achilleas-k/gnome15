@@ -204,21 +204,23 @@ class Menu(Component):
         canvas.restore() 
         
     def handle_key(self, keys, state, post):   
-        self.select_first()                 
-        if g15driver.G_KEY_UP in keys:
-            self._move_up(1)
-            return True
-        elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
-            self._move_down(1)
-            return True                              
-        elif g15driver.G_KEY_RIGHT in keys:
-            self._move_down(10)
-            return True        
-        elif g15driver.G_KEY_LEFT in keys:
-            self._move_up(10)
-            return True        
-        elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
-            return self.selected.activate()
+        self.select_first()   
+        if not post and state == g15driver.KEY_STATE_DOWN:                
+            if g15driver.G_KEY_UP in keys:
+                self._move_up(1)
+                return True
+            elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
+                self._move_down(1)
+                return True                              
+            elif g15driver.G_KEY_RIGHT in keys:
+                self._move_down(10)
+                return True        
+            elif g15driver.G_KEY_LEFT in keys:
+                self._move_up(10)
+                return True        
+            elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
+                if self.selected and self.selected.activate():
+                    return True
     
                 
         return False
