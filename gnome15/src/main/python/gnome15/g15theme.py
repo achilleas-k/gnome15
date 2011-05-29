@@ -27,10 +27,10 @@ import sys
 import traceback
 import pango
 import pangocairo
-import g15_driver as g15driver
-import g15_globals as pglobals
-import g15_screen as g15screen
-import g15_util as g15util
+import g15driver
+import g15globals
+import g15screen
+import g15util
 import xml.sax.saxutils as saxutils
 import base64
 import dbusmenu
@@ -71,7 +71,7 @@ class Component():
     '''
     
     def get_default_theme_dir(self):
-        return os.path.join(pglobals.themes_dir, "default")
+        return os.path.join(g15globals.themes_dir, "default")
 
 class Scrollbar(Component):
     
@@ -118,9 +118,19 @@ class Menu(Component):
     def remove_item(self, item):
         self._items.remove(item)
         
+    def add_separator(self):
+        self.add_item(MenuSeparator())
+        
     def add_item(self, item):
         item.configure(self.theme)
         self._items.append(item)
+        
+    def get_item_count(self):
+        return len(self._items)
+        
+    def insert_item(self, index, item):
+        item.configure(self.theme)
+        self._items.insert(index, item)
         
     def sort(self):
         pass
@@ -206,7 +216,10 @@ class Menu(Component):
             return True        
         elif g15driver.G_KEY_LEFT in keys:
             self._move_up(10)
-            return True
+            return True        
+        elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
+            return self.selected.activate()
+    
                 
         return False
         
@@ -292,6 +305,9 @@ class MenuItem(Component):
     def draw(self, selected, canvas, menu_properties, menu_attributes):
         self.theme.draw(canvas, {}, {})
         return self.theme.bounds[3] 
+
+    def activate(self):
+        return False
         
 class MenuSeparator(MenuItem):
     def __init__(self):
@@ -372,7 +388,7 @@ class ConfirmationScreen():
     
     def __init__(self, screen, title, text, icon, callback, arg):
         self.screen = screen      
-        self.theme = G15Theme(os.path.join(pglobals.themes_dir, "default"), screen, "confirmation-screen")
+        self.theme = G15Theme(os.path.join(g15globals.themes_dir, "default"), screen, "confirmation-screen")
         self.properties = { 
                            "title": title,
                            "text": text,
@@ -452,7 +468,7 @@ class G15Theme:
             path = os.path.join(dir, prefix + "default" + variant + "." + extension)
             if not os.path.exists(path):
                 if fatal:
-                    raise Exception("No .%s file for model %s in %s for variant %s" % ( extension, self.driver.get_model_name(), dir, variant ))
+                    raise Exception("Missing %s. No .%s file for model %s in %s for variant %s" % ( path, extension, self.driver.get_model_name(), dir, variant ))
                 else:
                     return None
         return path
@@ -530,7 +546,7 @@ class G15Theme:
         element = self.document.getroot().xpath('//svg:*[@id=\'%s\']' % id,namespaces=self.nsmap)[0]
         offscreen_bounds = g15util.get_actual_bounds(element)
         element.getparent().remove(element)
-        import g15_gtk as g15gtk
+        import g15gtk as g15gtk
         window = g15gtk.G15Window(self.screen, page, offscreen_bounds[0], offscreen_bounds[1], offscreen_bounds[2], offscreen_bounds[3])
         self.offscreen_windows.append((window, offscreen_bounds))
         return window

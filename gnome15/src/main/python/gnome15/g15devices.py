@@ -23,7 +23,7 @@
 
 import os
 import usb
-import g15_driver as g15driver
+import g15driver as g15driver
 
 '''
 Keyboard layouts 

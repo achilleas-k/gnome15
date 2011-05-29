@@ -1,5 +1,14 @@
 gnome15 (0.6.6-1) natty; urgency=low
 
+  * Feature: New Instant Messenger plugin (integrates with Telepathy)
+  * Feature: New Mounts plugin. Shows mounted and mountable volumes, as well as disk space stats. 
+  * Feature: Indicator Me now displays and allows current presence to be changed
+  
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Fri,  27 May 2011 00:03:20 +0000 
+ 
+
+gnome15 (0.6.5-1) natty; urgency=low
+
   * Feature: Kernel driver now has G15 support (tested)
   * Feature: Kernel driver now has G13 support (untested)
   * Feature: Kernel driver now has G110 support (untested)

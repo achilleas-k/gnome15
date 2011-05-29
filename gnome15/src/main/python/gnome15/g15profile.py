@@ -22,7 +22,7 @@
  
 import gconf
 import time
-import g15_util as g15util
+import g15util as g15util
 import ConfigParser
 import os
 import os.path
@@ -354,7 +354,7 @@ class G15Profile():
     
 # Migrate from old gconf based macro profiles
 if len(get_profiles()) == 0:
-    import g15_profile_gconf as oldg15profile
+    import g15profile_gconf as oldg15profile
     logger.warning("Migrating GConf macro profiles. Note, the old profiles will be left in GConf")
     for profile in oldg15profile.get_profiles():
         new_profile = G15Profile()

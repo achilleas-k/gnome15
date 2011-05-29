@@ -26,8 +26,8 @@ A top level GTK windows that draws on the LCD
 import gtk
 import gobject
 import cairo
-import g15_driver as g15driver
-import g15_util as g15util
+import g15driver as g15driver
+import g15util as g15util
 import traceback
 from threading import Lock
  

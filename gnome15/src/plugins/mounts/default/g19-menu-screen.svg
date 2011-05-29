@@ -15,7 +15,7 @@
    id="svg2"
    version="1.2"
    inkscape:version="0.48.1 r9760"
-   sodipodi:docname="g19.svg">
+   sodipodi:docname="g19-menu-screen.svg">
   <defs
      id="defs4">
     <filter
@@ -52,17 +52,6 @@
            in="SourceGraphic" />
       </feMerge>
     </filter>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
-       id="clipPath3087">
-      <rect
-         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-         id="rect3089"
-         width="201.16251"
-         height="34.797737"
-         x="24.690418"
-         y="796.4826" />
-    </clipPath>
     <clipPath
        clipPathUnits="userSpaceOnUse"
        id="clipPath3093">
@@ -107,6 +96,17 @@
            in="SourceGraphic" />
       </feMerge>
     </filter>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3078">
+      <rect
+         y="800.74359"
+         x="24.690418"
+         height="30.536789"
+         width="201.16251"
+         id="rect3080"
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -116,17 +116,17 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="167.59211"
-     inkscape:cy="113.971"
+     inkscape:cx="239.02068"
+     inkscape:cy="99.685283"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
-     inkscape:window-width="1213"
-     inkscape:window-height="893"
-     inkscape:window-x="2042"
-     inkscape:window-y="68"
-     inkscape:window-maximized="0"
+     inkscape:window-width="1920"
+     inkscape:window-height="1056"
+     inkscape:window-x="1920"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1"
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
@@ -177,13 +177,13 @@
        rx="4"
        ry="4" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/themes/default/${icon}"
-       xlink:href="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/themes/default/${icon}"
-       height="24.999987"
-       width="24.999987"
-       y="795.11218"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/places/default/${icon}"
+       xlink:href="${icon}"
+       id="image4256"
        x="294.54773"
-       id="image4256" />
+       y="795.11218"
+       width="24.999987"
+       height="24.999987" />
     <text
        xml:space="preserve"
        style="font-size:28px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
@@ -192,7 +192,7 @@
        id="text4017"
        sodipodi:linespacing="125%"
        transform="matrix(0.99422109,0,0,1.0058125,-7,-13)"
-       clip-path="url(#clipPath3087)"><tspan
+       clip-path="url(#clipPath3078)"><tspan
          sodipodi:role="line"
          id="tspan4019"
          x="23.692986"
@@ -339,17 +339,17 @@
     <text
        xml:space="preserve"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="299.81448"
+       x="265.81448"
        y="1015.3265"
        id="text3126-8-4"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3128-4-1"
-         x="299.81448"
-         y="1015.3265">Kill</tspan></text>
+         x="265.81448"
+         y="1015.3265">${sel}</tspan></text>
     <g
        id="g3244"
-       transform="translate(1,0)">
+       transform="translate(-31,0)">
       <rect
          transform="scale(-1,1)"
          ry="2"
@@ -405,7 +405,7 @@
        transform="matrix(5,0,0,2.6666667,-490.45226,602.77884)" />
     <g
        id="g3044"
-       transform="translate(-10,0)">
+       transform="translate(-44,0)">
       <rect
          transform="scale(-1,1)"
          ry="2"
@@ -459,13 +459,26 @@
     <text
        xml:space="preserve"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="222.63737"
+       x="184.63737"
        y="1014.9044"
        id="text3126-8-43"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3128-4-3"
-         x="222.63737"
+         x="184.63737"
          y="1014.9044">${list}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="285.5715"
+       y="806.54004"
+       id="text4017-3"
+       sodipodi:linespacing="125%"
+       transform="scale(0.99422109,1.0058125)"
+       clip-path="none"><tspan
+         sodipodi:role="line"
+         id="tspan4019-7"
+         x="285.5715"
+         y="806.54004">${mode}</tspan></text>
   </g>
 </svg>

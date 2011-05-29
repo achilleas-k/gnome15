@@ -21,10 +21,10 @@ from threading import Thread
 
 import select
 import pyinputevent.scancodes as S
-import gnome15.g15_driver as g15driver
-import gnome15.g15_devices as g15devices
-import gnome15.g15_util as g15util
-import gnome15.g15_globals as g15globals
+import gnome15.g15driver as g15driver
+import gnome15.g15devices as g15devices
+import gnome15.g15util as g15util
+import gnome15.g15globals as g15globals
 import gconf
 import fcntl
 import os

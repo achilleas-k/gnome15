@@ -18,14 +18,14 @@ import gobject
 import dbus
 import os
 import sys
-import g15_globals as pglobals
-import g15_setup as g15setup
-import g15_profile as g15profile
+import g15globals
+import g15setup
+import g15profile
 import gconf
-import g15_plugins as g15plugins
-import g15_driver as g15driver
-import g15_driver_manager as g15drivermanager
-import g15_util as g15util
+import g15pluginmanager
+import g15driver
+import g15drivermanager
+import g15util
 import subprocess
 import shutil
 import logging
@@ -85,7 +85,7 @@ class G15Config:
         self.connected = False
         
         # Load main Glade file
-        g15Config = os.path.join(pglobals.glade_dir, 'g15-config.glade')        
+        g15Config = os.path.join(g15globals.glade_dir, 'g15-config.glade')        
         self.widget_tree = gtk.Builder()
         self.widget_tree.add_from_file(g15Config)
         self.main_window = self.widget_tree.get_object("MainWindow")
@@ -410,9 +410,9 @@ class G15Config:
         
     def _load_model(self):
         self.plugin_model.clear()
-        for mod in sorted(g15plugins.imported_plugins, key=lambda key: key.name):
+        for mod in sorted(g15pluginmanager.imported_plugins, key=lambda key: key.name):
             key = self.plugin_key + "/" + mod.id + "/enabled"
-            if self.driver.get_model_name() in g15plugins.get_supported_models(mod):
+            if self.driver.get_model_name() in g15pluginmanager.get_supported_models(mod):
                 enabled = self.conf_client.get_bool(key)
                 self.plugin_model.append([enabled, mod.name, mod.id])
                 if mod.id == self.selected_id:
@@ -425,10 +425,10 @@ class G15Config:
     def _get_selected_plugin(self):
         (model, path) = self.plugin_tree.get_selection().get_selected()
         if path != None:
-            return g15plugins.get_module_for_id(model[path][2])
+            return g15pluginmanager.get_module_for_id(model[path][2])
             
     def _toggle_plugin(self, widget, path):
-        plugin = g15plugins.get_module_for_id(self.plugin_model[path][2])
+        plugin = g15pluginmanager.get_module_for_id(self.plugin_model[path][2])
         if plugin != None:
             key = self.plugin_key + "/" + plugin.id + "/enabled"
             self.conf_client.set_bool(key, not self.conf_client.get_bool(key))
@@ -441,7 +441,7 @@ class G15Config:
             self.widget_tree.get_object("DescriptionLabel").set_text(plugin.description)
             self.widget_tree.get_object("DescriptionLabel").set_use_markup(True)
             self.widget_tree.get_object("AuthorLabel").set_text(plugin.author)
-            self.widget_tree.get_object("SupportedLabel").set_text(", ".join(g15plugins.get_supported_models(plugin)).upper())
+            self.widget_tree.get_object("SupportedLabel").set_text(", ".join(g15pluginmanager.get_supported_models(plugin)).upper())
             self.widget_tree.get_object("CopyrightLabel").set_text(plugin.copyright)
             self.widget_tree.get_object("SiteLabel").set_uri(plugin.site)
             self.widget_tree.get_object("SiteLabel").set_label(plugin.site)
@@ -652,7 +652,7 @@ class G15Config:
         for row in self.driver.get_key_layout():
             if not use:
                 for key in row:                
-                    reserved = g15plugins.is_key_reserved(key, self.conf_client)
+                    reserved = g15pluginmanager.is_key_reserved(key, self.conf_client)
                     in_use = self.selected_profile.is_key_in_use(memory, key)
                     if not in_use and not reserved:
                         use = key
@@ -693,7 +693,7 @@ class G15Config:
             for key in row:
                 key_name = g15util.get_key_names([ key ])
                 g_button = gtk.ToggleButton(" ".join(key_name))
-                reserved = g15plugins.is_key_reserved(key, self.conf_client)
+                reserved = g15pluginmanager.is_key_reserved(key, self.conf_client)
                 in_use = self.selected_profile.is_key_in_use(memory, key, exclude = [self.editing_macro])
                 g_button.set_sensitive(not reserved and not in_use)
                 g_button.set_active(key in self.editing_macro.keys)

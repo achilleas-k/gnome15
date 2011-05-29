@@ -20,11 +20,11 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15_screen as g15screen
-import gnome15.g15_util as g15util
-import gnome15.g15_theme as g15theme
-import gnome15.g15_driver as g15driver
-import gnome15.g15_globals as g15globals
+import gnome15.g15screen as g15screen
+import gnome15.g15util as g15util
+import gnome15.g15theme as g15theme
+import gnome15.g15driver as g15driver
+import gnome15.g15globals as g15globals
 import time
 import dbus
 import os
@@ -142,9 +142,9 @@ class G15IndicatorMe():
     def deactivate(self):
         self._session_bus.remove_signal_receiver(self._status_changed_handle)
         self._session_bus.remove_signal_receiver(self._user_changed_handle)
-        if self._menu_page != None:
+        if self._menu_page != None and self._screen.pages.contains(self._menu_page):
             self._screen.del_page(self._menu_page)
-        if self._popup_page != None:
+        if self._popup_page != None and self._screen.pages.contains(self._popup_page):
             self._screen.del_page(self._popup_page)
         
     def destroy(self):

@@ -26,12 +26,12 @@ keyboard
 """
 
 from cStringIO import StringIO
-from gnome15.g15_exceptions import NotConnectedException
+from gnome15.g15exceptions import NotConnectedException
 from threading import RLock, Thread
 import cairo
-import gnome15.g15_driver as g15driver
-import gnome15.g15_util as g15util
-import gnome15.g15_devices as g15devices
+import gnome15.g15driver as g15driver
+import gnome15.g15util as g15util
+import gnome15.g15devices as g15devices
 import socket
 import struct
 import sys

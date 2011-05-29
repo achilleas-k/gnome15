@@ -25,30 +25,28 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 import os
-import os.path
 import gobject
-import g15_globals as pglobals
-import g15_screen as g15screen
-import g15_driver as g15driver
-import g15_driver_manager as g15drivermanager
-import g15_profile as g15profile
-import g15_theme as g15theme
-import g15_dbus as g15dbus
+import g15globals
+import g15screen
+import g15driver
+import g15drivermanager
+import g15profile
+import g15theme
+import g15dbus
 import traceback
 import gconf
-import g15_util as g15util
+import g15util as g15util
 import Xlib.X 
 import Xlib.XK
 import Xlib.display
 import Xlib.protocol
 import time
-import g15_plugins as g15plugins
+import g15pluginmanager
 import dbus
-import glib
 import signal
 from threading import RLock
 from threading import Thread
-from g15_exceptions import NotConnectedException
+from g15exceptions import NotConnectedException
 
 loop = gobject.MainLoop()
 
@@ -57,7 +55,7 @@ import logging
 logger = logging.getLogger("service")
     
 NAME = "Gnome15"
-VERSION = pglobals.version
+VERSION = g15globals.version
 
 COLOURS = [(0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
 
@@ -109,12 +107,12 @@ class G15Splash():
         self.screen = screen        
         self.progress = 0.0
         self.text = "Starting up .."
-        self.theme = g15theme.G15Theme(pglobals.image_dir, self.screen, "background")
+        self.theme = g15theme.G15Theme(g15globals.image_dir, self.screen, "background")
         self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_EXCLUSIVE, id="Splash", thumbnail_painter=self.paint_thumbnail)
         self.screen.redraw(self.page)
         icon_path = g15util.get_icon_path("gnome15")
         if icon_path == None:
-            icon_path = os.path.join(pglobals.icons_dir,"hicolor", "apps", "scalable", "gnome15.svg")
+            icon_path = os.path.join(g15globals.icons_dir,"hicolor", "apps", "scalable", "gnome15.svg")
         self.logo = g15util.load_surface_from_file(icon_path)
         
     def paint(self, canvas):
@@ -148,7 +146,7 @@ class G15Service(Thread):
     def __init__(self, service_host, parent_window=None, no_trap=False):
         Thread.__init__(self)
         self.first_page = None
-        self.attention_message = pglobals.name
+        self.attention_message = g15globals.name
         self.attention = False
         self.splash = None
         self.parent_window = parent_window
@@ -197,7 +195,7 @@ class G15Service(Thread):
         self.shutting_down = True
         try :
             g15profile.notifier.stop()
-        except Exception as e:
+        except Exception:
             pass
         for listener in self.service_listeners:
             listener.shutting_down()
@@ -226,13 +224,13 @@ class G15Service(Thread):
         self.session_bus = dbus.SessionBus()
         
         # Load main Glade file
-        g15Config = os.path.join(pglobals.glade_dir, 'g15-config.glade')        
+        g15Config = os.path.join(g15globals.glade_dir, 'g15-config.glade')        
         self.widget_tree = gtk.Builder()
         self.widget_tree.add_from_file(g15Config)
         
         # Create the screen and plugin manager
         self.screen.add_screen_change_listener(self)
-        self.plugins = g15plugins.G15Plugins(self.screen)
+        self.plugins = g15pluginmanager.G15Plugins(self.screen)
         self.plugins.start()
             
         # Monitor active session (we shut down the driver when becoming inactive)
@@ -704,7 +702,7 @@ class G15Service(Thread):
                 elif active_profile == None or choose_profile.id != active_profile.id:
                     choose_profile.make_active()
             
-        except Exception as exception:
+        except Exception:
             logger.warning("Failed to activate profile for active window")
             traceback.print_exc(file=sys.stdout)
             

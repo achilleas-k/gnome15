@@ -38,10 +38,10 @@ path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..","main", 
 if os.path.exists(path):
     sys.path.insert(0, path)
 
-import gnome15.g15_config as g15config
-import gnome15.g15_setup as g15setup
-import gnome15.g15_globals as pglobals
-import gnome15.g15_driver_manager as g15drivermanager
+import gnome15.g15config as g15config
+import gnome15.g15setup as g15setup
+import gnome15.g15globals as pglobals
+import gnome15.g15drivermanager as g15drivermanager
 
 if g15drivermanager.get_configured_driver("-c" in sys.argv) != None:
     a = g15config.G15Config()

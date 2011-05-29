@@ -20,9 +20,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15_theme as g15theme
-import gnome15.g15_driver as g15driver
-import gnome15.g15_util as g15util
+import gnome15.g15theme as g15theme
+import gnome15.g15driver as g15driver
+import gnome15.g15util as g15util
 import os
 import gtk
 import cairo

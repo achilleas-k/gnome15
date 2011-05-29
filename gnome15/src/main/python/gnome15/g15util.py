@@ -17,8 +17,8 @@
 THIS HAS TURNED INTO A DUMPING GROUND AND NEEDS REFACTORING
 '''
 
-import g15_driver as g15driver
-import g15_globals as pglobals
+import g15driver as g15driver
+import g15globals as pglobals
 import gtk.gdk
 import gobject
 import os

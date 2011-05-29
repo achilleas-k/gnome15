@@ -1,4 +1,4 @@
-import gnome15.g15_util as g15util
+import gnome15.g15util as g15util
 import os
 import rsvg
 import cairo

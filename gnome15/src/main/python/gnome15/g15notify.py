@@ -24,7 +24,7 @@
 Notifications
 '''
 import dbus
-import g15_globals as pglobals
+import g15globals as pglobals
 
 # Logging
 import logging

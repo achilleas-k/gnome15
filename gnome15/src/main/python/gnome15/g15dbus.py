@@ -21,10 +21,10 @@
 #        +-----------------------------------------------------------------------------+
  
 import dbus.service
-import g15_globals as pglobals
-import g15_theme as g15theme
-import g15_util as g15util
-import g15_driver as g15driver
+import g15globals as pglobals
+import g15theme as g15theme
+import g15util as g15util
+import g15driver as g15driver
 import time
 import gc
 import objgraph

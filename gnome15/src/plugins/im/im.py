@@ -28,11 +28,11 @@
 # LGPL. See http://telepathy.freedesktop.org/wiki/Contact%20selector
 
 
-import gnome15.g15_util as g15util
-import gnome15.g15_theme as g15theme
-import gnome15.g15_driver as g15driver
-import gnome15.g15_screen as g15screen
-import gnome15.g15_globals as g15globals
+import gnome15.g15util as g15util
+import gnome15.g15theme as g15theme
+import gnome15.g15driver as g15driver
+import gnome15.g15screen as g15screen
+import gnome15.g15globals as g15globals
 import os
 import sys
 import dbus
@@ -442,7 +442,7 @@ class ContactMenu(g15theme.Menu):
             self.mode == MODE_ALL
 
 """
-Instance Messenger plugin class
+Instant Messenger plugin class
 """
 class G15Im():
 
@@ -461,6 +461,7 @@ class G15Im():
         self._gconf_key = gconf_key
         self._session_bus = dbus.SessionBus()
         self._icon_path = g15util.get_icon_path(POSSIBLE_ICON_NAMES)
+        self._signal_handle = None
         
     def activate(self):
         """
@@ -469,7 +470,7 @@ class G15Im():
         self._page = None        
         self._reload_theme()
         self._show_menu()
-        self._session_bus.add_signal_receiver(self._name_owner_changed,
+        self._signal_handle = self._session_bus.add_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
                                      signal_name='NameOwnerChanged')  
     
@@ -479,6 +480,8 @@ class G15Im():
         """
         if self._page != None:
             self._hide_menu()
+        if self._signal_handle:
+            self._session_bus.remove_signal_receiver(self._signal_handle)
 
     def destroy(self):
         """

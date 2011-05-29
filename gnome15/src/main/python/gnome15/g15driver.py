@@ -133,7 +133,7 @@ HINT_SWITCH = 1 << 4
 # 16bit 565
 CAIRO_IMAGE_FORMAT=4
 
-import g15_util as g15util
+import g15util as g15util
 
 seq_no = 0
 

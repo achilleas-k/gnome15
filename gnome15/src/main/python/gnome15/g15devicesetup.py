@@ -23,8 +23,8 @@
 import pygtk
 pygtk.require('2.0')
 import gtk
-import g15_util as g15util
-import g15_driver_manager as g15drivermanager
+import g15util as g15util
+import g15drivermanager as g15drivermanager
 import gconf
 import subprocess
 

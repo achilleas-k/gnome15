@@ -27,9 +27,9 @@ PRI_NORMAL=50
 PRI_LOW=20
 PRI_INVISIBLE=0
 
-import g15_driver as g15driver
-import g15_util as g15util
-import g15_profile as g15profile
+import g15driver as g15driver
+import g15util as g15util
+import g15profile as g15profile
 import time
 import threading
 import jobqueue 

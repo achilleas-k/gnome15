@@ -2,23 +2,23 @@ SUBDIRS = drivers
 gnome15dir = $(pkgpythondir)
 gnome15_PYTHON = 		\
 	__init__.py \
-	g15_service.py \
-	g15_config.py \
-	g15_devices.py \
-	g15_dbus.py \
-	g15_gtk.py \
-	g15_driver.py \
-	g15_notify.py \
-	g15_driver_manager.py \
-	g15_globals.py \
-	g15_setup.py \
-	g15_plugins.py \
-	g15_profile.py \
-	g15_profile_gconf.py \
-	g15_exceptions.py \
-	g15_screen.py \
-	g15_theme.py \
-	g15_util.py \
+	g15service.py \
+	g15config.py \
+	g15devices.py \
+	g15dbus.py \
+	g15gtk.py \
+	g15driver.py \
+	g15notify.py \
+	g15drivermanager.py \
+	g15globals.py \
+	g15setup.py \
+	g15plugins.py \
+	g15profile.py \
+	g15profilegconf.py \
+	g15exceptions.py \
+	g15screen.py \
+	g15theme.py \
+	g15util.py \
 	jobqueue.py \
 	objgraph.py \
 	dbusmenu.py

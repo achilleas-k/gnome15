@@ -25,9 +25,9 @@ Main implementation of a G15Driver that uses g15daemon to control and query the
 keyboard
 """
 
-import gnome15.g15_driver as g15driver
-import gnome15.g15_devices as g15devices
-import gnome15.g15_globals as g15globals
+import gnome15.g15driver as g15driver
+import gnome15.g15devices as g15devices
+import gnome15.g15globals as g15globals
 import socket
 import cairo
 import ImageMath

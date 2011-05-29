@@ -59,11 +59,11 @@ if __name__ == "__main__":
         print "Adding",path,"to python path"
         sys.path.insert(0, path)
  
-import gnome15.g15_screen as g15screen
-import gnome15.g15_util as g15util
-import gnome15.g15_globals as pglobals
-import gnome15.g15_theme as g15theme
-import gnome15.g15_driver as g15driver
+import gnome15.g15screen as g15screen
+import gnome15.g15util as g15util
+import gnome15.g15globals as pglobals
+import gnome15.g15theme as g15theme
+import gnome15.g15driver as g15driver
 
 # Logging
 import logging

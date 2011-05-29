@@ -23,7 +23,7 @@
 
 import os
 import gconf
-import g15_setup as g15setup
+import g15setup as g15setup
 import logging
 logger = logging.getLogger("driver")
 

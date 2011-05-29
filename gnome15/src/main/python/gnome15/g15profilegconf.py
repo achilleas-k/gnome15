@@ -22,7 +22,7 @@
  
 import gconf
 import time
-import g15_util as g15util
+import g15util as g15util
  
 active_profile = None
 

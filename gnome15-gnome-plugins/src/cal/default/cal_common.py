@@ -1,5 +1,5 @@
-import gnome15.g15_theme as g15theme
-import gnome15.g15_util as g15util
+import gnome15.g15theme as g15theme
+import gnome15.g15util as g15util
 import os
 import time
 import calendar

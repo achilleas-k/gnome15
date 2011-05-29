@@ -1,5 +1,5 @@
 AC_INIT(gnome15, 0.6.6)
-AC_CONFIG_SRCDIR([src/main/python/gnome15/g15_service.py])
+AC_CONFIG_SRCDIR([src/main/python/gnome15/g15service.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 
 dnl AM_CONFIG_HEADER(config.h)
@@ -163,6 +163,8 @@ src/plugins/macros/Makefile
 src/plugins/macros/default/Makefile
 src/plugins/mpris/Makefile
 src/plugins/mpris/default/Makefile
+src/plugins/mounts/Makefile
+src/plugins/mounts/default/Makefile
 src/plugins/menu/Makefile
 src/plugins/panel/Makefile
 src/plugins/processes/Makefile
@@ -200,7 +202,7 @@ src/gnome/dbus/Makefile
 src/main/Makefile
 src/main/python/Makefile
 src/main/python/gnome15/Makefile
-src/main/python/gnome15/g15_globals.py
+src/main/python/gnome15/g15globals.py
 src/main/python/gnome15/drivers/Makefile
 src/main/resources/Makefile
 src/main/resources/icons/Makefile

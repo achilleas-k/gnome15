@@ -22,8 +22,8 @@
  
 import os.path
 import sys
-import g15_globals as pglobals
-import g15_driver as g15driver
+import g15globals as pglobals
+import g15driver as g15driver
 import gconf
 import traceback
 import threading
@@ -62,7 +62,7 @@ for plugindir in get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("
         for mod in ([__import__(fname) for fname in pluginfiles]):
             imported_plugins.append(mod)
     except Exception as e:
-        logger.error("Failed to load plugin module %s. %s" % ( plugindir, str(e) ) )                    
+        logger.error("Failed to load plugin module %s. %s" % (plugindir, str(e)))                    
         traceback.print_exc(file=sys.stderr) 
         
 def get_module_for_id(id):
@@ -142,7 +142,7 @@ class G15Plugins():
                             self.started.append(instance)
                     except Exception as e:
                         self.conf_client.set_bool(key, False)
-                        logger.error("Failed to load plugin %s. %s" % ( mod.id, str(e) ) )                    
+                        logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
                         traceback.print_exc(file=sys.stderr) 
         finally:
             self.lock.release()
@@ -185,7 +185,7 @@ class G15Plugins():
                 return True 
         return False
     
-    def activate(self, callback = None):
+    def activate(self, callback=None):
         logger.info("Activating plugins")
         self.lock.acquire()
         try :
@@ -229,7 +229,7 @@ class G15Plugins():
     Private
     '''
             
-    def _activate_instance(self, instance, callback = None, idx = 0):
+    def _activate_instance(self, instance, callback=None, idx=0):
         mod = self.plugin_map[instance]
         try : 
             instance.activate()
@@ -237,7 +237,7 @@ class G15Plugins():
             if callback != None:
                 callback(idx, len(self.started), mod.name)
         except Exception as e:
-            logger.error("Failed to activate plugin %s. %s" % ( mod.id, str(e)))   
+            logger.error("Failed to activate plugin %s. %s" % (mod.id, str(e)))   
             self.conf_client.set_bool(plugin_key + "/" + mod.id + "/enabled", False)              
             traceback.print_exc(file=sys.stderr)
         
@@ -248,3 +248,4 @@ class G15Plugins():
         self.module_map[module.id] = instance
         self.plugin_map[instance] = module
         return instance
+    

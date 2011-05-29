@@ -47,10 +47,10 @@ path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..", "gnome1
 if os.path.exists(path):
     sys.path.insert(0, path)
 
-import gnome15.g15_globals as g15globals
-import gnome15.g15_service as g15service
-import gnome15.g15_screen as g15screen
-import gnome15.g15_util as g15util
+import gnome15.g15globals as g15globals
+import gnome15.g15service as g15service
+import gnome15.g15screen as g15screen
+import gnome15.g15util as g15util
     
 # DBUS - Use to check current desktop service status or stop it
 import dbus
