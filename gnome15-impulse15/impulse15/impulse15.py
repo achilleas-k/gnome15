@@ -59,6 +59,8 @@ def show_preferences(parent, gconf_client, gconf_key):
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/audio_source", "AudioSourceSpinner", 0, widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_width", "BarWidthSpinner", 16, widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/spacing", "SpacingSpinner", 0, widget_tree)
+    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/rows", "RowsSpinner", 16, widget_tree)
+    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_height", "BarHeightSpinner", 2, widget_tree)
     g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col1", "Color1", ( 255, 0, 0 ), widget_tree, default_alpha = 255)
     g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col2", "Color2", ( 0, 0, 255 ), widget_tree, default_alpha = 255)
     
@@ -153,6 +155,12 @@ class G15Impulse():
         self.bar_width = self.gconf_client.get_int(self.gconf_key + "/bar_width")
         if self.bar_width == 0:
             self.bar_width = 16
+        self.bar_height = self.gconf_client.get_int(self.gconf_key + "/bar_height")
+        if self.bar_height == 0:
+            self.bar_height = 2
+        self.rows = self.gconf_client.get_int(self.gconf_key + "/rows")
+        if self.rows == 0:
+            self.rows = 16
         self.spacing = self.gconf_client.get_int(self.gconf_key + "/spacing")
         self.col1 = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/col1", ( 255, 0, 0, 255 )) 
         self.col2 = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/col2", ( 0, 0, 255, 255 ))

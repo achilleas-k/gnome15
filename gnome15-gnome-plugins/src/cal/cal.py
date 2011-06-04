@@ -37,7 +37,7 @@ import vobject
 
 id="cal"
 name="Calendar"
-description="Clock & Calendar. Integrates with Evolution calendar. " \
+description="Calendar. Integrates with Evolution calendar. " \
     + "You may move around the calendar using the D-Pad on the G19, " \
     + "or using the right most 3 keys under the " \
     + "display (L3-L5) on other models."

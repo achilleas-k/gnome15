@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="320"
+   height="240"
+   id="svg2"
+   version="1.2"
+   inkscape:version="0.48.0 r9654"
+   sodipodi:docname="g19.svg">
+  <defs
+     id="defs4">
+    <filter
+       id="filter3967"
+       inkscape:label="Drop shadow"
+       width="1.5"
+       height="1.5"
+       x="-0.25"
+       y="-0.25"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3969"
+         in="SourceAlpha"
+         stdDeviation="4"
+         result="blur" />
+      <feColorMatrix
+         id="feColorMatrix3971"
+         result="bluralpha"
+         type="matrix"
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 " />
+      <feOffset
+         id="feOffset3973"
+         in="bluralpha"
+         dx="0.9"
+         dy="0.9"
+         result="offsetBlur" />
+      <feMerge
+         id="feMerge3975">
+        <feMergeNode
+           id="feMergeNode3977"
+           in="offsetBlur" />
+        <feMergeNode
+           id="feMergeNode3979"
+           in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.979899"
+     inkscape:cx="30.903771"
+     inkscape:cy="125.25644"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     borderlayer="false"
+     inkscape:window-width="1429"
+     inkscape:window-height="940"
+     inkscape:window-x="2061"
+     inkscape:window-y="64"
+     inkscape:window-maximized="0"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3986"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-9.5477353,-786.11217)">
+    <rect
+       style="fill:#696969;fill-opacity:0.49411765000000002;stroke:none"
+       id="rect3058"
+       width="235"
+       height="225"
+       x="50"
+       y="5"
+       transform="matrix(0.55319149,0,0,0.57777778,85.316729,793.79471)"
+       rx="21.692308"
+       ry="20.769232" />
+    <image
+       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/screensaver/default/${icon}"
+       xlink:href="${icon}"
+       transform="matrix(0.4797619,0,0,0.4797619,120.40488,804.11217)"
+       width="240"
+       height="240"
+       id="image3055" />
+    <rect
+       style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
+       id="rect2994"
+       width="300"
+       height="80"
+       x="10"
+       y="150"
+       transform="translate(9.5477353,786.11217)"
+       rx="12"
+       ry="12" />
+    <g
+       id="g3769"
+       transform="translate(-3.0351563e-7,4.6435548e-6)">
+      <text
+         sodipodi:linespacing="125%"
+         id="text3764"
+         y="961.11218"
+         x="24.547737"
+         style="font-size:18px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="961.11218"
+           x="24.547737"
+           id="tspan3766"
+           sodipodi:role="line">${message}</tspan></text>
+    </g>
+  </g>
+</svg>

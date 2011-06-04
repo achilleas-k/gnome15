@@ -33,7 +33,7 @@ def on_draw( audio_sample_array, cr, screenlet ):
 		bar_amp_norm = audio_sample_array[ i ]
 
 
-		bar_height = bar_amp_norm * ( screenlet.width / 2 ) + screenlet.bar_width
+		bar_height = ( bar_amp_norm * ( screenlet.width / 2 ) + screenlet.bar_width ) * ( screenlet.bar_height / 10.0 )
 
 		cc = screenlet.col2
 		cr.set_source_rgba( cc[ 0 ],  cc[ 1 ],  cc[ 2 ],  cc[ 3 ] )

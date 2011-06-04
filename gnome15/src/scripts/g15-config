@@ -24,6 +24,8 @@ import sys
 import os
 import gconf
 import gobject
+import logging
+logging.basicConfig()
 gobject.threads_init()
        
 # DBUS - Use to check current desktop service status or stop it
@@ -43,6 +45,5 @@ import gnome15.g15setup as g15setup
 import gnome15.g15globals as pglobals
 import gnome15.g15drivermanager as g15drivermanager
 
-if g15drivermanager.get_configured_driver("-c" in sys.argv) != None:
-    a = g15config.G15Config()
-    a.run()
+a = g15config.G15Config()
+a.run()

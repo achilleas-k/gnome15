@@ -56,6 +56,10 @@ class G15SysMon():
         self.timer = None
     
     def activate(self):
+        self._net_icon = g15util.get_icon_path([ "network-transmit-receive", "gnome-fs-network" ], self.screen.height)
+        self._cpu_icon = g15util.get_icon_path( [ "utilities-system-monitor", "gnome-cpu-frequency-applet", "computer" ],  self.screen.height)
+        self._mem_icon = g15util.get_icon_path( [ "media-memory", "media-flash" ],  self.screen.height)
+        
         self.properties = None
         self.active = True
         self.last_time_list = None
@@ -265,11 +269,10 @@ class G15SysMon():
         properties["net_recv_mbps"] = "%.2f" % (self.recv_bps / 1024 / 1024)
         properties["net_send_mbps"] = "%.2f" % (self.send_bps / 1024 / 1024)
         
-        
         # TODO we should ship some more appropriate default icons
-        properties["net_icon"] = g15util.get_icon_path([ "network-transmit-receive", "gnome-fs-network" ], self.screen.height)
-        properties["cpu_icon"] = g15util.get_icon_path( [ "utilities-system-monitor", "gnome-cpu-frequency-applet", "computer" ],  self.screen.height)
-        properties["mem_icon"] = g15util.get_icon_path( [ "media-memory", "media-flash" ],  self.screen.height)
+        properties["net_icon"] = self._net_icon
+        properties["cpu_icon"] = self._cpu_icon
+        properties["mem_icon"] = self._mem_icon
         
         try :
             properties["info"] = socket.gethostname()

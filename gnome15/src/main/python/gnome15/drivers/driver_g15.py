@@ -267,16 +267,16 @@ class G15Async(Thread):
 
 class Driver(g15driver.AbstractDriver):
 
-    def __init__(self, host = 'localhost', port= 15550, on_close = None):
+    def __init__(self, device, host = 'localhost', port= 15550, on_close = None):
         g15driver.AbstractDriver.__init__(self, "g15")
         self.remote_host=host
+        self.device = device
         self.lock = Lock()
         self.remote_port=port
         self.dispatcher = None
         self.on_close = on_close
         self.socket = None
         self.connected = False
-        self._init_driver()
         self.async = None
         
     def get_size(self):
@@ -363,8 +363,6 @@ class Driver(g15driver.AbstractDriver):
         if self.is_connected():
             raise Exception("Already connected")
         
-        self._init_driver()
-        
         map = {}
             
         self.socket  = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -431,8 +429,3 @@ class Driver(g15driver.AbstractDriver):
                     self.disconnect()
         finally:
             self.lock.release()
-            
-    def _init_driver(self):        
-        self.device = g15devices.find_device(self.get_model_names())
-        if self.device == None:
-            raise Exception("No device supported by the g15daemon driver could be found.")

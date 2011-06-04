@@ -1,11 +1,5 @@
-fft = True
-
 peak_heights = [ 0 for i in range( 256 ) ]
 peak_acceleration = [ 0.0 for i in range( 256 ) ]
-
-n_rows = 30
-row_height = 3
-row_spacing = 1
 
 def load_theme ( screenlet):
 	pass
@@ -15,6 +9,9 @@ def on_draw ( audio_sample_array, cr, screenlet ):
 	col_width = screenlet.bar_width
 	col_spacing = screenlet.spacing
 	bar_color = screenlet.col1
+	row_height = screenlet.bar_height
+	n_rows = screenlet.rows
+	row_spacing = screenlet.spacing
 	peak_color = screenlet.col2
 	freq = len( audio_sample_array ) / n_cols
 	actual_cols = ( len( audio_sample_array ) / freq ) + 1 

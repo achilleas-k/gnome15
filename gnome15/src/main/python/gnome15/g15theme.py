@@ -227,7 +227,7 @@ class Menu(Component):
         
     def select_first(self):
         if not self.selected == None and not self.selected in self._items:
-            self.selected == None
+            self.selected = None
         if self.selected == None:
             if len(self._items) > 0:
                 self.selected  = self._items[0]
@@ -259,6 +259,8 @@ class Menu(Component):
             self.on_selected()
         
     def _move_up(self, amount = 1):
+        if len(self._items) == 0:
+            return
         if self.on_move:
             self.on_move()
         self._check_selected()
@@ -278,6 +280,8 @@ class Menu(Component):
         self._do_selected()
         
     def _move_down(self, amount = 1):
+        if len(self._items) == 0:
+            return
         if self.on_move:
             self.on_move()
         self._check_selected()
@@ -656,7 +660,7 @@ class G15Theme:
                         styles = self.parse_css(shadowed.get("style"))
                         if styles == None:
                             styles = {}
-                        styles["fill"] = self.screen.service.driver.get_color_as_hexrgb(g15driver.HINT_BACKGROUND, (255, 255,255))
+                        styles["fill"] = self.screen.driver.get_color_as_hexrgb(g15driver.HINT_BACKGROUND, (255, 255,255))
                         shadowed.set("style", self.format_styles(styles))
                         element.addprevious(shadowed)
                         idx += 1

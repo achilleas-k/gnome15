@@ -95,14 +95,14 @@ g19_key_layout = [
               ]
 
 device_list = { 
-                  g15driver.MODEL_G19 : [ (0x046d, 0xc229), g19_key_layout, 16, ( 320, 240 ) ], 
-                  g15driver.MODEL_G15_V1 : [ (0x046d, 0xc222), g15v1_key_layout, 1, ( 160, 43 ) ], 
-                  g15driver.MODEL_G15_V2 : [ (0x046d, 0xc227), g15v2_key_layout, 1, ( 160, 43 ) ],
-                  g15driver.MODEL_G13 : [ (0x046d, 0xc21c), g13_key_layout, 1, ( 160, 43 ) ],
-                  g15driver.MODEL_G510 : [ (0x046d, 0xc22d), g510_key_layout, 1, ( 160, 43 ) ],
-                  g15driver.MODEL_G510_AUDIO : [ (0x046d, 0xc22e), g510_key_layout, 1, ( 160, 43 ) ],
-                  g15driver.MODEL_Z10 : [ (0x046d, 0x0a07), z10_key_layout, 1, ( 160, 43 ) ],
-                  g15driver.MODEL_G110 : [ (0x046d, 0xc225), g110_key_layout, 0, ( 0, 0 ) ],
+                  g15driver.MODEL_G19 : [ (0x046d, 0xc229), g19_key_layout, 16, ( 320, 240 ), "Logitech G19 Gaming Keyboard" ], 
+                  g15driver.MODEL_G15_V1 : [ (0x046d, 0xc222), g15v1_key_layout, 1, ( 160, 43 ), "Logitech G15 Gaming Keyboard (version 1)" ], 
+                  g15driver.MODEL_G15_V2 : [ (0x046d, 0xc227), g15v2_key_layout, 1, ( 160, 43 ), "Logitech G15 Gaming Keyboard (version 2)" ],
+                  g15driver.MODEL_G13 : [ (0x046d, 0xc21c), g13_key_layout, 1, ( 160, 43 ), "Logitech G13 Advanced Gameboard" ],
+                  g15driver.MODEL_G510 : [ (0x046d, 0xc22d), g510_key_layout, 1, ( 160, 43 ), "Logitech G510 Keyboard" ],
+                  g15driver.MODEL_G510_AUDIO : [ (0x046d, 0xc22e), g510_key_layout, 1, ( 160, 43 ), "Logitech G510 Keyboard (audio)" ],
+                  g15driver.MODEL_Z10 : [ (0x046d, 0x0a07), z10_key_layout, 1, ( 160, 43 ), "Logitech Z10 Speakers" ],
+                  g15driver.MODEL_G110 : [ (0x046d, 0xc225), g110_key_layout, 0, ( 0, 0 ), "Logitech G110 Keyboard" ],
                    }
 
 '''
@@ -113,12 +113,23 @@ class Device():
     def __init__(self, device, model_name):
         device_info = device_list[model_name]
         
+        # TODO - better UID. need something stable, but unique. 
+        self.uid = str(model_name)
+        
         self.model_name = model_name
         self.device = device
-        self.usb_ib = device_info[0]
+        self.usb_id = device_info[0]
         self.key_layout = device_info[1]  
         self.bpp = device_info[2]
         self.lcd_size = device_info[3]
+        self.model_fullname = device_info[4]
+        
+def is_enabled(conf_client, device):    
+    val = conf_client.get("/apps/gnome15/%s/enabled" % device.uid)
+    return val == None or val.get_bool()
+        
+def set_enabled(conf_client, device, enabled):
+    conf_client.set_bool("/apps/gnome15/%s/enabled" % device.uid, enabled)
 
 def find_all_devices():
     devices = []

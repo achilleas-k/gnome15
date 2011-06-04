@@ -15,6 +15,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 import gobject
+import pango
 import dbus
 import os
 import sys
@@ -25,11 +26,15 @@ import gconf
 import g15pluginmanager
 import g15driver
 import g15drivermanager
+import g15devices
 import g15util
 import subprocess
 import shutil
 import logging
+import traceback
+
 logger = logging.getLogger("config")
+logger.setLevel(logging.DEBUG)
 
 # Determine if appindicator is available, this decides that nature
 # of the message displayed when the Gnome15 service is not running
@@ -53,7 +58,17 @@ BUS_NAME="org.gnome15.Configuration"
 NAME="/org/gnome15/Config"
 IF_NAME="org.gnome15.Config"
 
+STOPPED = 0
+STARTING = 1
+STARTED = 2
+STOPPING = 3 
+
 class G15ConfigService(dbus.service.Object):
+    """
+    DBUS Service used to prevent g15-config from running more than once. Each run will
+    test if this service is available, if it is, then the Present function will be 
+    called and the runtime exited.
+    """
     
     def __init__(self, bus, window):
         bus_name = dbus.service.BusName(BUS_NAME, bus=bus, replace_existing=False, allow_replacement=False, do_not_queue=True)
@@ -66,23 +81,29 @@ class G15ConfigService(dbus.service.Object):
 
 class G15Config:
     
-    adjusting = False
+    """
+    Configuration user interface for Gnome15. Allows selection and configuration
+    of the device, macros and enabled plugins.
+    """
     
-    ''' GUI for configuring Logitech "G" Keyboards, Gamepads and Speakers.
-    '''
+    adjusting = False
+
     def __init__(self, parent_window=None, service=None):
         self.parent_window = parent_window
         
         self._signal_handles = []
         self.notify_handles = []
         self.control_notify_handles = []
-        self.plugin_key = "/apps/gnome15/plugins"
         self.selected_id = None
         self.service = service
         self.conf_client = gconf.client_get_default()
         self.rows = None
         self.adjusting = False
+        self.gnome15_service = None
         self.connected = False
+        self.color_button = None
+        self.screen_services = {}
+        self.state = STOPPED
         
         # Load main Glade file
         g15Config = os.path.join(g15globals.glade_dir, 'g15-config.glade')        
@@ -148,6 +169,12 @@ class G15Config:
         self.command = self.widget_tree.get_object("Command")
         self.browse_for_command = self.widget_tree.get_object("BrowseForCommand")
         self.allow_combination = self.widget_tree.get_object("AllowCombination")
+        self.device_model = self.widget_tree.get_object("DeviceModel")
+        self.device_view = self.widget_tree.get_object("DeviceView")
+        self.device_title = self.widget_tree.get_object("DeviceTitle")
+        self.device_enabled = self.widget_tree.get_object("DeviceEnabled")
+        self.tabs = self.widget_tree.get_object("Tabs")
+        self.stop_service_button = self.widget_tree.get_object("StopServiceButton")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -155,24 +182,18 @@ class G15Config:
         
         # Monitor gconf
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/cycle_seconds", self._cycle_seconds_configuration_changed));
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/cycle_screens", self._cycle_screens_configuration_changed));
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/plugins", self._plugins_changed))
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/active_profile", self._active_profile_changed))
         
         # Monitor macro profiles changing
-        g15profile.profile_listeners.append(self._profiles_changed)
-        
-        # Get current state        
-        self.selected_profile = g15profile.get_active_profile() 
+        g15profile.profile_listeners.append(self._profiles_changed)         
         
         # Configure widgets    
         self.profiles_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)        
         self.macro_list.get_selection().set_mode(gtk.SELECTION_SINGLE)   
 
-        # Indicator options        
+        # Indicator options
+        # TODO move this out of here        
         if HAS_APPINDICATOR:  
-            self.notify_handles.append(g15util.configure_checkbox_from_gconf(self.conf_client, "/apps/gnome15/indicate_only_on_error", "OnlyShowIndicatorOnError", False, self.widget_tree, True))
+            g15util.configure_checkbox_from_gconf(self.conf_client, "/apps/gnome15/indicate_only_on_error", "OnlyShowIndicatorOnError", False, self.widget_tree, True)
         else:
             self.widget_tree.get_object("OnlyShowIndicatorOnError").destroy()
         
@@ -212,32 +233,9 @@ class G15Config:
         self.command.connect("changed", self._command_changed)
         self.simple_macro.connect("changed", self._simple_macro_changed)
         self.browse_for_command.connect("clicked", self._browse_for_command)
-        
-        # Add the custom controls
-        self._add_controls()
-        
-        # Populate model and configure other components
-        self._load_model()
-        self._set_cycle_seconds_value_from_configuration()
-        self._set_cycle_screens_value_from_configuration()
-        
-        # If the keyboard has a colour dimmer, allow colours to be assigned to memory banks
-        control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
-        if control != None and not isinstance(control.value, int):
-            hbox = gtk.HBox()
-            self.enable_color_for_m_key = gtk.CheckButton("Set backlight colour")
-            self.enable_color_for_m_key.connect("toggled", self._color_for_mkey_enabled)
-            hbox.pack_start(self.enable_color_for_m_key, True, False)            
-            self.color_button = gtk.ColorButton()
-            self.color_button.set_sensitive(False)                
-            self.color_button.connect("color-set", self._profile_color_changed)
-#            color_button.set_color(self._to_color(control.value))
-            hbox.pack_start(self.color_button, True, False)
-            self.memory_bank_vbox.add(hbox)
-            hbox.show_all()
-        else:
-            self.color_button = None
-            self.enable_color_for_m_key = None
+        self.stop_service_button.connect("clicked", self._stop_service)
+        self.device_view.connect("selection-changed", self._device_selection_changed)
+        self.device_enabled.connect("toggled", self._device_enabled_changed)
         
         # Connection to BAMF for running applications list
         try :
@@ -247,7 +245,8 @@ class G15Config:
             self.bamf_matcher = None
         
         # Show infobar component to start desktop service if it is not running
-        self.infobar = gtk.InfoBar()       
+        self.infobar = gtk.InfoBar()    
+        self.infobar.set_size_request(-1, 64)   
         self.warning_label = gtk.Label()
         self.warning_label.set_size_request(400, -1)
         self.warning_label.set_line_wrap(True)
@@ -255,6 +254,7 @@ class G15Config:
         self.warning_image = gtk.Image()  
         
         # Start button
+        self.stop_service_button.set_sensitive(False)
         button_vbox = gtk.VBox()
         self.start_button = None
         self.start_button = gtk.Button("Start Service")
@@ -262,14 +262,17 @@ class G15Config:
         self.start_button.show()
         button_vbox.pack_start(self.start_button, False, False)
         
-        # Build the infobqar content
+        # Populate model and configure other components
+        self._load_devices()
+        
+        # Build the infobar content
         content = self.infobar.get_content_area()
         content.pack_start(self.warning_image, False, False)
         content.pack_start(self.warning_label, True, True)
         content.pack_start(button_vbox, False, False)  
         
         # Add the bar to the glade built UI
-        self.main_vbox.pack_start(self.infobar, True, True)
+        self.main_vbox.pack_start(self.infobar, False, False)
         self.warning_box_shown = False
         self.infobar.hide_all()
         
@@ -279,6 +282,9 @@ class G15Config:
         try :
             self._connect()
         except dbus.exceptions.DBusException:
+            if(logger.level == logging.DEBUG):
+                logger.debug("Failed to connect to service.")
+                traceback.print_exc(file=sys.stdout)
             self._disconnect()
         self.session_bus.add_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
@@ -287,9 +293,13 @@ class G15Config:
     def run(self):
         ''' Set up everything and display the window
         '''
-        self.id = None                
-        self._load_profile_list()         
-        self.main_window.run()
+        self.id = None
+        while True:
+            opt = self.main_window.run()
+            logger.debug("Option %s" % str(opt))         
+            if opt != 1:
+                break
+            
         self.main_window.hide()
         g15profile.notifier.stop()
         
@@ -306,54 +316,146 @@ class G15Config:
                 self._disconnect()
         
     def __del__(self):
+        self._remove_notify_handles()
+        
+    def _remove_notify_handles(self):
         for h in self.notify_handles:
             self.conf_client.notify_remove(h)
             
+    def _stop_service(self, event = None):
+        self.gnome15_service.Stop(reply_handler = self._general_dbus_reply, error_handler = self._general_dbus_error)
+        
+    def _general_dbus_reply(self, *args):
+        logger.info("DBUS reply %s" % str(args))
+
+    def _general_dbus_error(self, *args):
+        logger.error("DBUS error %s" % str(args))
+
+    def _starting(self):
+        logger.debug("Got starting signal")
+        self.state = STARTING
+        self._status_change()
+        
+    def _started(self):
+        logger.debug("Got started signal")
+        self.state = STARTED
+        self._status_change()
+        
+    def _stopping(self):
+        logger.debug("Got stopping signal")
+        self.state = STOPPING
+        self._status_change()
+        
+    def _stopped(self):
+        logger.debug("Got stopped signal")
+        self.state = STOPPED
+        self._status_change()
+            
     def _disconnect(self):
-        self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is not running. It is recommended " + \
-                                  "you add <b>g15-desktop-service</b> as a <i>Startup Application</i>.")
         for sig in self._signal_handles:
             self.session_bus.remove_signal_receiver(sig)
         self._signal_handles = []
+        self.screen_services = {}
+        self.state = STOPPED
+        self._do_status_change()
         self.connected = False
         
     def _connect(self):
         self.gnome15_service = self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service')
-        self.driver_service =  self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Driver')
-        self._status_change()
-        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Service", signal_name='StartingUp'))
-        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Service", signal_name='StartedUp'))
-        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Service", signal_name='ShuttingDown'))  
-        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Service", signal_name='ShuttingDown'))  
-        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Driver", signal_name='Connected'))  
-        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Driver", signal_name='Disconnected'))
-        self.connected = True
-        
-    def _status_change(self, arg0 = None):
-        if self.gnome15_service.IsStartingUp():            
-            self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is starting up. Please wait", False)
-        elif self.gnome15_service.IsShuttingDown():            
-            self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is shutting down.", False)
+            
+        # Set initial status
+        logger.debug("Getting state")
+        if self.gnome15_service.IsStarting():
+            logger.debug("State is starting")
+            self.state = STARTING
+        elif self.gnome15_service.IsStopping():
+            logger.debug("State is stopping")
+            self.state = STOPPING
         else:
-            if not self.driver_service.IsConnected():
-                self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is running, but failed to connect " + \
-                                  "to the keyboard driver. The error message given was <b>%s</b>" % self.gnome15_service.GetLastError(), False)
+            logger.debug("State is started")
+            self.state = STARTED
+            for screen_name in self.gnome15_service.GetScreens():
+                logger.debug("Screen added %s" % screen_name)
+                screen_service =  self.session_bus.get_object('org.gnome15.Gnome15', screen_name)
+                self.screen_services[screen_name] = screen_service
+        
+        # Watch for changes
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._starting, dbus_interface="org.gnome15.Service", signal_name='Starting'))
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._started, dbus_interface="org.gnome15.Service", signal_name='Started'))
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._stopping, dbus_interface="org.gnome15.Service", signal_name='Stopping'))  
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._stopped, dbus_interface="org.gnome15.Service", signal_name='Stopped'))  
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._screen_added, dbus_interface="org.gnome15.Service", signal_name='ScreenAdded'))  
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._screen_removed, dbus_interface="org.gnome15.Service", signal_name='ScreenRemoved'))
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Screen", signal_name='Connected'))  
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Screen", signal_name='Disconnected'))
+        self.connected = True
+        self._do_status_change()
+        
+    def _screen_added(self, screen_name):
+        logger.debug("Screen added %s" % screen_name)
+        screen_service =  self.session_bus.get_object('org.gnome15.Gnome15', screen_name)
+        self.screen_services[screen_name] = screen_service
+        gobject.idle_add(self._do_status_change)
+        
+    def _screen_removed(self, screen_name):
+        logger.debug("Screen removed %s" % screen_name)
+        if screen_name in self.screen_services:
+            del self.screen_services[screen_name]
+        self._do_status_change()
+        
+    def _status_change(self, arg1 = None, arg2 = None):
+        gobject.idle_add(self._do_status_change)
+        
+    def _do_status_change(self):
+        if not self.gnome15_service or self.state == STOPPED:         
+            self.stop_service_button.set_sensitive(False)
+            logger.debug("Stopped")
+            self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is not running. It is recommended " + \
+                                      "you add <b>g15-desktop-service</b> as a <i>Startup Application</i>.")
+        elif self.state == STARTING:        
+            logger.debug("Starting up")
+            self.stop_service_button.set_sensitive(False)   
+            self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is starting up. Please wait", False)
+        elif self.state == STOPPING:        
+            logger.debug("Stopping")                
+            self.stop_service_button.set_sensitive(False)
+            self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is stopping.", False)
+        else:        
+            logger.debug("Started - Checking status")          
+            connected = 0
+            first_error = ""
+            for screen in self.screen_services:
+                try:
+                    if self.screen_services[screen].IsConnected():
+                        connected += 1
+                    else:
+                        first_error = self.screen_services[screen].GetLastError() 
+                except dbus.DBusException:
+                    pass
+            
+            logger.debug("Found %d of %d connected" % (connected, len(self.screen_services)))
+            screen_count = len(self.screen_services)
+            if connected != screen_count:
+                if len(self.screen_services) == 1:
+                    self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is running, but failed to connect " + \
+                                      "to the keyboard driver. The error message given was <b>%s</b>" % first_error, False)
+                else:
+                    self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is running, but only %d out of %d keyboards " + \
+                                      "are connected. The first error message given was <b>%s</b>" % ( connected, screen_count, first_error ), False)
             else:
                 self._hide_warning()
-        
+            self.stop_service_button.set_sensitive(True)
         
     def _hide_warning(self):
-        if self.warning_box_shown == None or self.warning_box_shown:
-            self.warning_box_shown = False    
-            self.infobar.hide_all()
-            self.main_window.check_resize()
+        self.warning_box_shown = False    
+        self.infobar.hide_all()
+        self.main_window.check_resize()
         
     def _start_service(self, widget):
         widget.set_sensitive(False)
         g15util.run_script("g15-desktop-service", ["-f"])
     
     def _show_message(self, type, text, start_service_button = True):
-        print "Showing message",str(type),text
         self.infobar.set_message_type(type)
         if self.start_button != None:
             self.start_button.set_sensitive(True)
@@ -385,20 +487,20 @@ class G15Config:
         if i == None:
             col = widget.get_color()     
             i = ( col.red >> 8, col.green >> 8, col.blue >> 8 )
-        self.conf_client.set_string("/apps/gnome15/" + control.id, "%d,%d,%d" % ( i[0],i[1],i[2]))
+        self.conf_client.set_string(self._get_full_key(control.id), "%d,%d,%d" % ( i[0],i[1],i[2]))
         
     def _control_changed(self, widget, control):
         if control.hint & g15driver.HINT_SWITCH != 0:
             val = 0
             if widget.get_active():
                 val = 1
-            self.conf_client.set_int("/apps/gnome15/" + control.id, val)
+            self.conf_client.set_int(self._get_full_key(control.id), val)
         else:
-            self.conf_client.set_int("/apps/gnome15/" + control.id, int(widget.get_value()))
+            self.conf_client.set_int(self._get_full_key(control.id), int(widget.get_value()))
         
     def _show_setup(self, widget):        
-        setup = g15setup.G15Setup(self.main_window , False, False)
-        old_driver = self.conf_client.get_string("/apps/gnome15/driver")
+        setup = g15setup.G15Setup(self.selected_device, self.main_window , False, False)
+        old_driver = self.conf_client.get_string(self._get_full_key("driver"))
         new_driver = setup.setup()
         if new_driver and new_driver != old_driver:            
             self._add_controls()
@@ -406,19 +508,20 @@ class G15Config:
     
     def _show_preferences(self, widget):
         plugin = self._get_selected_plugin()
-        plugin.show_preferences(self.main_window, self.conf_client, self.plugin_key + "/" + plugin.id)
+        plugin.show_preferences(self.main_window, self.conf_client, self._get_full_key("plugins/%s" % plugin.id))
         
     def _load_model(self):
         self.plugin_model.clear()
-        for mod in sorted(g15pluginmanager.imported_plugins, key=lambda key: key.name):
-            key = self.plugin_key + "/" + mod.id + "/enabled"
-            if self.driver.get_model_name() in g15pluginmanager.get_supported_models(mod):
-                enabled = self.conf_client.get_bool(key)
-                self.plugin_model.append([enabled, mod.name, mod.id])
-                if mod.id == self.selected_id:
-                    self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(len(self.plugin_model) - 1)))
-        if len(self.plugin_model) > 0 and self._get_selected_plugin() == None:            
-            self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(0)))            
+        if self.selected_device:
+            for mod in sorted(g15pluginmanager.imported_plugins, key=lambda key: key.name):
+                key = self._get_full_key("plugins/%s/enabled" % mod.id )
+                if self.driver.get_model_name() in g15pluginmanager.get_supported_models(mod):
+                    enabled = self.conf_client.get_bool(key)
+                    self.plugin_model.append([enabled, mod.name, mod.id])
+                    if mod.id == self.selected_id:
+                        self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(len(self.plugin_model) - 1)))
+            if len(self.plugin_model) > 0 and self._get_selected_plugin() == None:            
+                self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(0)))            
             
         self._select_plugin(None)
         
@@ -430,7 +533,7 @@ class G15Config:
     def _toggle_plugin(self, widget, path):
         plugin = g15pluginmanager.get_module_for_id(self.plugin_model[path][2])
         if plugin != None:
-            key = self.plugin_key + "/" + plugin.id + "/enabled"
+            key = self._get_full_key("plugins/%s/enabled" % plugin.id )
             self.conf_client.set_bool(key, not self.conf_client.get_bool(key))
             
     def _select_plugin(self, widget):       
@@ -451,7 +554,7 @@ class G15Config:
             self.widget_tree.get_object("PluginDetails").set_visible(False)
 
     def _set_cycle_seconds_value_from_configuration(self):
-        val = self.conf_client.get("/apps/gnome15/cycle_seconds")
+        val = self.conf_client.get(self._get_full_key("cycle_seconds"))
         time = 10
         if val != None:
             time = val.get_int()
@@ -459,7 +562,7 @@ class G15Config:
             self.cycle_seconds.set_value(time)
             
     def _set_cycle_screens_value_from_configuration(self):
-        val = self.conf_client.get_bool("/apps/gnome15/cycle_screens")
+        val = self.conf_client.get_bool(self._get_full_key("cycle_screens"))
         self.cycle_seconds_widget.set_sensitive(val)
         if val != self.cycle_screens.get_active():
             self.cycle_screens.set_active(val)
@@ -485,11 +588,11 @@ class G15Config:
         self._load_model()
         
     def _cycle_screens_changed(self, widget=None):
-        self.conf_client.set_bool("/apps/gnome15/cycle_screens", self.cycle_screens.get_active())
+        self.conf_client.set_bool(self._get_full_key("cycle_screens"), self.cycle_screens.get_active())
         
     def _cycle_seconds_changed(self, widget):
         val = int(self.cycle_seconds.get_value())
-        self.conf_client.set_int("/apps/gnome15/cycle_seconds", val)
+        self.conf_client.set_int(self._get_full_key("cycle_seconds"), val)
         
     def _create_color_icon(self, color):
         draw = gtk.Image()
@@ -547,13 +650,61 @@ class G15Config:
                                 self.selected_profile.icon = filename    
                             
                 self.selected_profile.save()
+                
+    def _device_enabled_configuration_changed(self, client, connection_id, entry, args):
+        self._set_enabled_value_from_configuration()
+        
+    def _set_enabled_value_from_configuration(self):
+        enabled = g15devices.is_enabled(self.conf_client, self.selected_device) if self.selected_device != None else False
+        self.device_enabled.set_active(enabled)
+        self.device_enabled.set_sensitive(self.selected_device != None)
+        self.tabs.set_sensitive(enabled)
+                
+    def _device_enabled_changed(self, widget = None):
+        gobject.idle_add(self._set_device)
+        
+    def _set_device(self):
+        g15devices.set_enabled(self.conf_client, self.selected_device, self.device_enabled.get_active())
         
     def _memory_changed(self, widget):
         self._load_configuration(self.selected_profile)
         
+    def _device_selection_changed(self, widget):
+        self._load_device()
+        if self.selected_device:
+            self.conf_client.set_string("/apps/gnome15/config_device_name", self.selected_device.uid)
+    
+    def _load_device(self):
+        sel_items = self.device_view.get_selected_items()
+        sel_idx = sel_items[0][0] if len(sel_items) > 0 else -1
+        self.selected_device = self.devices[sel_idx] if sel_idx > -1 else None
+        self._remove_notify_handles()
+        self.device_title.set_text(self.selected_device.model_fullname if self.selected_device else "")
+        self._set_enabled_value_from_configuration()
+        if self.selected_device != None:            
+            self.conf_client.add_dir(self._get_device_conf_key(), gconf.CLIENT_PRELOAD_NONE)   
+            self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("cycle_seconds"), self._cycle_seconds_configuration_changed));
+            self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("cycle_screens"), self._cycle_screens_configuration_changed));
+            self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("plugins"), self._plugins_changed))
+            self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("active_profile"), self._active_profile_changed))
+            self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("enabled"), self._device_enabled_configuration_changed))
+            self.selected_profile = g15profile.get_active_profile(self.selected_device)  
+            self._set_cycle_seconds_value_from_configuration()
+            self._set_cycle_screens_value_from_configuration()
+        self._load_profile_list()
+        self._add_controls()
+        self._load_model()
+        self._do_status_change()
+        
+    def _get_device_conf_key(self):
+        return "/apps/gnome15/%s" % self.selected_device.uid
+    
+    def _get_full_key(self, key):
+        return "%s/%s" % (self._get_device_conf_key(), key)
+        
     def _select_profile(self, widget):
         (model, path) = self.profiles_tree.get_selection().get_selected()
-        self.selected_profile = g15profile.get_profile(model[path][2])
+        self.selected_profile = g15profile.get_profile(self.selected_device, model[path][2])
         self._load_configuration(self.selected_profile)
         
     def _select_macro(self, widget):
@@ -566,7 +717,7 @@ class G15Config:
         
     def _activate(self, widget):
         (model, path) = self.profiles_tree.get_selection().get_selected()
-        self._make_active(g15profile.get_profile(model[path][2]))
+        self._make_active(g15profile.get_profile(self.selected_device,  model[path][2]))
         
     def _make_active(self, profile): 
         profile.make_active()
@@ -652,7 +803,7 @@ class G15Config:
         for row in self.driver.get_key_layout():
             if not use:
                 for key in row:                
-                    reserved = g15pluginmanager.is_key_reserved(key, self.conf_client)
+                    reserved = g15pluginmanager.is_key_reserved(self.selected_device, key, self.conf_client)
                     in_use = self.selected_profile.is_key_in_use(memory, key)
                     if not in_use and not reserved:
                         use = key
@@ -693,7 +844,7 @@ class G15Config:
             for key in row:
                 key_name = g15util.get_key_names([ key ])
                 g_button = gtk.ToggleButton(" ".join(key_name))
-                reserved = g15pluginmanager.is_key_reserved(key, self.conf_client)
+                reserved = g15pluginmanager.is_key_reserved(self.selected_device, key, self.conf_client)
                 in_use = self.selected_profile.is_key_in_use(memory, key, exclude = [self.editing_macro])
                 g_button.set_sensitive(not reserved and not in_use)
                 g_button.set_active(key in self.editing_macro.keys)
@@ -750,7 +901,7 @@ class G15Config:
         dialog.hide()
         if response == 1:
             new_profile_name = self.widget_tree.get_object("NewProfileName").get_text()
-            new_profile = g15profile.G15Profile(-1)
+            new_profile = g15profile.G15Profile(self.selected_device, -1)
             new_profile.name = new_profile_name
             g15profile.create_profile(new_profile)
             self.selected_profile = new_profile
@@ -764,35 +915,50 @@ class G15Config:
         elif self.m3.get_active():
             return 3
         
+    def _load_devices(self):
+        self.device_model.clear()
+        self.devices = g15devices.find_all_devices()
+        sel_device_name = self.conf_client.get_string("/apps/gnome15/config_device_name")
+        idx = 0
+        for device in self.devices:
+            icon_file = g15util.get_app_icon(self.conf_client,  device.model_name)
+            pixb = gtk.gdk.pixbuf_new_from_file(icon_file)
+            self.device_model.append([pixb.scale_simple(96, 96, gtk.gdk.INTERP_BILINEAR), device.model_fullname, 96, gtk.WRAP_WORD, pango.ALIGN_CENTER])
+            if not sel_device_name or device.uid == sel_device_name:
+                sel_device_name = device.uid
+                self.device_view.select_path((idx,))
+            idx += 1
+        
     def _load_profile_list(self):
         current_selection = self.selected_profile
-        self.profiles_model.clear()
-        tree_selection = self.profiles_tree.get_selection()
-        active = g15profile.get_active_profile()
-        active_id = -1
-        if active != None:
-            active_id = active.id
-        self.selected_profile = None
-        self.profiles = g15profile.get_profiles()
-        for profile in self.profiles: 
-            weight = 400
-            if profile.id == active_id:
-                weight = 700
-            self.profiles_model.append([profile.name, weight, profile.id, profile.name != "Default" ])
-            if current_selection != None and profile.id == current_selection.id:
-                tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(len(self.profiles_model) - 1)))
-                self.selected_profile = profile
-        if self.selected_profile != None:                             
-            self._load_configuration(self.selected_profile)             
-        elif len(self.profiles) > 0:            
-            tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(0)))
-        else:
-            default_profile = g15profile.G15Profile("Default")
-            g15profile.create_profile(default_profile)
-            self._load_profile_list()
+        self.profiles_model.clear()        
+        if self.selected_device != None:
+            tree_selection = self.profiles_tree.get_selection()
+            active = g15profile.get_active_profile(self.selected_device)
+            active_id = -1
+            if active != None:
+                active_id = active.id
+            self.selected_profile = None
+            self.profiles = g15profile.get_profiles(self.selected_device)
+            for profile in self.profiles: 
+                weight = 400
+                if profile.id == active_id:
+                    weight = 700
+                self.profiles_model.append([profile.name, weight, profile.id, profile.name != "Default" ])
+                if current_selection != None and profile.id == current_selection.id:
+                    tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(len(self.profiles_model) - 1)))
+                    self.selected_profile = profile
+            if self.selected_profile != None:                             
+                self._load_configuration(self.selected_profile)             
+            elif len(self.profiles) > 0:            
+                tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(0)))
+            else:
+                default_profile = g15profile.G15Profile(self.selected_device, "Default")
+                g15profile.create_profile(default_profile)
+                self._load_profile_list()
             
         
-    def _profiles_changed(self, macro_profile_id):        
+    def _profiles_changed(self, device_uid, macro_profile_id):        
         gobject.idle_add(self._load_profile_list)
         
     def _profile_name_edited(self, widget, row, value):        
@@ -938,19 +1104,28 @@ class G15Config:
         for nh in self.control_notify_handles:
             self.conf_client.notify_remove(nh)            
         
-        # Driver. We only need this to get the controls. Perhaps they should be moved out of the driver
-        # class and the values stored separately
-        self.driver = g15drivermanager.get_driver(self.conf_client)
-        
-        # Controls
-        driver_controls = self.driver.get_controls()
+        if self.selected_device != None:
+            # Driver. We only need this to get the controls. Perhaps they should be moved out of the driver
+            # class and the values stored separately
+            self.driver = g15drivermanager.get_driver(self.conf_client, self.selected_device)
+            
+            # Controls
+            driver_controls = self.driver.get_controls()
+        else:
+            driver_controls = None
+            
         if not driver_controls:
             driver_controls = []
         
-        # Slider and Color controls
+        # Remove current components
         controls = self.widget_tree.get_object("ControlsBox")
         for c in controls.get_children():
-            controls.remove(c)            
+            controls.remove(c)
+        for c in self.memory_bank_vbox.get_children():
+            self.memory_bank_vbox.remove(c)
+        self.memory_bank_vbox.add(self.widget_tree.get_object("MemoryBanks"))
+        
+        # Slider and Color controls            
         table = gtk.Table(rows = len(driver_controls), columns = 2)
         table.set_row_spacings(4)
         row = 0
@@ -972,7 +1147,7 @@ class G15Config:
                     hscale.show()
                     
                     table.attach(hscale, 1, 2, row, row + 1, xoptions = gtk.EXPAND | gtk.FILL);                
-                    self.conf_client.notify_add("/apps/gnome15/" + control.id, self._control_configuration_changed, [ control, hscale ]);
+                    self.control_notify_handles.append(self.conf_client.notify_add(self._get_full_key(control.id), self._control_configuration_changed, [ control, hscale ]))
             else:  
                 label = gtk.Label(control.name)
                 label.set_alignment(0.0, 0.5)
@@ -995,7 +1170,7 @@ class G15Config:
                 color_button.show()
                 color_button.set_color(self._to_color(control.value))
                 hbox.add(color_button)
-                self.control_notify_handles.append(self.conf_client.notify_add("/apps/gnome15/" + control.id, self._control_configuration_changed, [ control, color_button]));
+                self.control_notify_handles.append(self.conf_client.notify_add(self._get_full_key(control.id), self._control_configuration_changed, [ control, color_button]));
                 
                 hbox.show()
                 table.attach(hbox, 1, 2, row, row + 1);
@@ -1018,15 +1193,38 @@ class G15Config:
                     check_button.show()
                     controls.pack_start(check_button, False, False, 4)  
                     check_button.connect("toggled", self._control_changed, control)
-                    self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/" + control.id, self._control_configuration_changed, [ control, check_button ]));
+                    self.notify_handles.append(self.conf_client.notify_add(self._get_full_key(control.id), self._control_configuration_changed, [ control, check_button ]));
                     row += 1
         
         # Show everything
         self.main_window.show_all()
+        self._hide_warning()
         
-        if self.driver.get_bpp() == 0:            
+        # Hide the cycle screens if the device has no screen
+        if self.driver != None and self.driver.get_bpp() == 0:            
             self.cycle_screens.hide()
             self.cycle_screens_options.hide()
+        else:            
+            self.cycle_screens.show()
+            self.cycle_screens_options.show()
+        
+        # If the keyboard has a colour dimmer, allow colours to be assigned to memory banks
+        control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE) if self.driver != None else None
+        if control != None and not isinstance(control.value, int):
+            hbox = gtk.HBox()
+            self.enable_color_for_m_key = gtk.CheckButton("Set backlight colour")
+            self.enable_color_for_m_key.connect("toggled", self._color_for_mkey_enabled)
+            hbox.pack_start(self.enable_color_for_m_key, True, False)            
+            self.color_button = gtk.ColorButton()
+            self.color_button.set_sensitive(False)                
+            self.color_button.connect("color-set", self._profile_color_changed)
+#            color_button.set_color(self._to_color(control.value))
+            hbox.pack_start(self.color_button, True, False)
+            self.memory_bank_vbox.add(hbox)
+            hbox.show_all()
+        else:
+            self.color_button = None
+            self.enable_color_for_m_key = None
             
         if row == 0:
             self.widget_tree.get_object("SwitchesFrame").hide() 

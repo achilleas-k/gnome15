@@ -1,0 +1,1 @@
+SUBDIRS = applications autostart dbus

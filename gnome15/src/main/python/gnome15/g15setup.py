@@ -32,7 +32,8 @@ class G15Setup(gtk.Dialog):
     
     adjusting = False
     
-    def __init__(self, parent_window=None, allow_quit = False, first_run = True):
+    def __init__(self, device, parent_window=None, allow_quit = False, first_run = True):
+        self.device = device
         
         if len(g15drivermanager.imported_drivers) == 0:
             buttons = ( "Quit", gtk.RESPONSE_CLOSE)
@@ -57,17 +58,19 @@ class G15Setup(gtk.Dialog):
         self.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
         self.selected_driver = None
         self.set_modal(True)
-        driver = self.conf_client.get_string("/apps/gnome15/driver")
+        driver = self.conf_client.get_string("/apps/gnome15/%s/driver" % device.uid)
         if driver == None:
-            driver = "driver_g19"
+            driver_object = g15drivermanager.get_best_driver(self.conf_client, device)
+            self.selected_driver = driver_object.__module__
         else:
             driver = "driver_" + driver
-        if driver in g15drivermanager.imported_drivers:
-            self.selected_driver = g15drivermanager.imported_drivers[driver]
-        elif len(g15drivermanager.imported_drivers) > 0:
-            self.selected_driver = g15drivermanager.imported_drivers.items()[0][1]
-        else:
-            self.selected_driver = None
+            if driver in g15drivermanager.imported_drivers:
+                self.selected_driver = g15drivermanager.imported_drivers[driver]
+            elif len(g15drivermanager.imported_drivers) > 0:
+                self.selected_driver = g15drivermanager.imported_drivers.items()[0][1]
+            else:
+                self.selected_driver = None
+                
         heading_hbox = gtk.HBox()
         image = gtk.image_new_from_icon_name(icon, 64)
         image.set_pixel_size(64)
@@ -89,29 +92,31 @@ class G15Setup(gtk.Dialog):
             
             for driver_mod_key in g15drivermanager.imported_drivers:
                 driver_mod = g15drivermanager.imported_drivers[driver_mod_key]
-                button = gtk.RadioButton(button_group, driver_mod.name)
-                button.set_alignment(0.0, 0.5)
-                if driver_mod_key == driver:
-                    button.set_active(True)
-                button.connect("toggled", self.set_driver, driver_mod)
-                if button_group == None:
-                    button_group = button
-                    
-                driver_top = gtk.HBox()
-                driver_top.set_spacing(4)
-                driver_top.pack_start(button, True, True)
-                if driver_mod.has_preferences:
-                    pref_button = gtk.Button("Preferences", stock = gtk.STOCK_PREFERENCES, use_underline = True)
-                    pref_button.connect("clicked", self.driver_preferences, driver_mod)
-                    driver_top.pack_start(pref_button, False, False)
-                    
-                driver_table.pack_start(driver_top, True, True)
-                desc_label = gtk.Label(driver_mod.description)
-                desc_label.set_size_request(600, -1)
-                desc_label.set_alignment(0.0, 0.5)
-                desc_label.set_line_wrap(True)
-                desc_label.set_use_markup(True)
-                driver_table.pack_start(desc_label, True, True)
+                driver = driver_mod.Driver(self.device)
+                if self.device.model_name in driver.get_model_names():
+                    button = gtk.RadioButton(button_group, driver_mod.name)
+                    button.set_alignment(0.0, 0.5)
+                    if driver_mod_key == driver:
+                        button.set_active(True)
+                    button.connect("toggled", self.set_driver, driver_mod)
+                    if button_group == None:
+                        button_group = button
+                        
+                    driver_top = gtk.HBox()
+                    driver_top.set_spacing(4)
+                    driver_top.pack_start(button, True, True)
+                    if driver_mod.has_preferences:
+                        pref_button = gtk.Button("Preferences", stock = gtk.STOCK_PREFERENCES, use_underline = True)
+                        pref_button.connect("clicked", self.driver_preferences, driver_mod)
+                        driver_top.pack_start(pref_button, False, False)
+                        
+                    driver_table.pack_start(driver_top, True, True)
+                    desc_label = gtk.Label(driver_mod.description)
+                    desc_label.set_size_request(600, -1)
+                    desc_label.set_alignment(0.0, 0.5)
+                    desc_label.set_line_wrap(True)
+                    desc_label.set_use_markup(True)
+                    driver_table.pack_start(desc_label, True, True)
         
             self.vbox.add(driver_table)
         
@@ -122,7 +127,7 @@ class G15Setup(gtk.Dialog):
             self.selected_driver = driver_mod    
         
     def driver_preferences(self, button, driver_mod):
-        driver_mod.show_preferences(self, self.conf_client)
+        driver_mod.show_preferences(self.device, self, self.conf_client)
         
     def open_site(self, widget):
         subprocess.Popen(['xdg-open',widget.get_uri()])
@@ -134,7 +139,7 @@ class G15Setup(gtk.Dialog):
             gtk.main_iteration(False)
         try :
             if response == gtk.RESPONSE_APPLY:
-                self.conf_client.set_string("/apps/gnome15/driver", self.selected_driver.id)        
+                self.conf_client.set_string("/apps/gnome15/%s/driver" % self.device.uid, self.selected_driver.id)        
                 return self.selected_driver.id
         finally:            
             self.destroy()

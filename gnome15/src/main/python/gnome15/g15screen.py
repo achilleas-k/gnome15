@@ -27,17 +27,28 @@ PRI_NORMAL=50
 PRI_LOW=20
 PRI_INVISIBLE=0
 
-import g15driver as g15driver
-import g15util as g15util
-import g15profile as g15profile
+COLOURS = [(0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
+
+import g15driver
+import g15util
+import g15profile
+import g15globals
+import g15drivermanager
+import g15theme
 import time
 import threading
-import jobqueue 
 import cairo
+import gobject
 import pangocairo
 import pango
+import gconf
+import os.path
 import xml.sax.saxutils as saxutils
+import traceback
+import sys
 import logging
+from threading import RLock
+from g15exceptions import NotConnectedException
 logger = logging.getLogger("screen")
 
 class G15Page():
@@ -221,23 +232,123 @@ class G15Page():
         pango_context.update_layout(layout)
         pango_context.show_layout(layout)        
         pango_context.restore()
+        
+class ScreenChangeAdapter():
+    def memory_bank_changed(self, new_bank_number):
+        pass
+    
+    def attention_cleared(self):
+        pass
+    
+    def attention_requested(self, message):
+        pass
+    
+    def driver_disconnected(self, driver):
+        pass
+    
+    def driver_connected(self, driver):
+        pass
+    
+    def deleting_page(self, page):
+        pass
+    
+    def deleted_page(self, page):
+        pass
+    
+    def new_page(self, page):
+        pass
+    
+    def title_changed(self, page, title):
+        pass
+    
+    def page_changed(self, page):
+        pass
+    
     
 class G15Screen():
     
-    def __init__(self, service):
+    def __init__(self, plugin_manager_module, service, device):
         self.service = service
+        self.plugin_manager_module = plugin_manager_module
+        self.device = device
         self.driver = None
         self.screen_change_listeners = []
         self.local_data = threading.local()
         self.local_data.surface = None
         self.key_handlers = []
+        self.plugins = []
+        self.conf_client = service.conf_client
+        self.notify_handles = []
+        self.connection_lock = RLock()
+        self.defeat_profile_change = False
+        self.first_page = None
+        self.attention_message = g15globals.name
+        self.attention = False
+        self.splash = None
+        self.reschedule_lock = RLock()        
+        self.last_error = None
+        self.loading_complete = False
+        self.control_handles = []
+        self.color_no = 1
+        self.cycle_timer = None
+        self._started_plugins = False
+        self.shutting_down = False
+        self.plugins = self.plugin_manager_module.G15Plugins(self)
+        
+        if not self._load_driver():
+            raise Exception("Driver failed to load")
+        
+    def active_session_changed(self, active):
+        if not active and self.driver != None and self.driver.is_connected():
+            logger.info("Session now inactive, disconnecting from driver")
+            self.plugins.deactivate()
+            self.driver.disconnect()
+        elif active and ( self.driver == None or not self.driver.is_connected() ):
+            self.attempt_connection()
+        
+    def application_changed(self, view):
+        if not self.defeat_profile_change:
+            choose_profile = None
+            title = view.Name()                                    
+            # Active window has changed, see if we have a profile that matches it
+            for profile in g15profile.get_profiles(self.device):
+                if not profile.get_default() and profile.activate_on_focus and len(profile.window_name) > 0 and title.lower().find(profile.window_name.lower()) != -1:
+                    choose_profile = profile 
+                    break
+                
+            # No applicable profile found. Look for a default profile, and see if it is set to activate by default
+            active_profile = g15profile.get_active_profile(self.device)
+            if choose_profile == None:
+                default_profile = g15profile.get_default_profile(self.device)
+                
+                if (active_profile == None or active_profile.id != default_profile.id) and default_profile.activate_on_focus:
+                    default_profile.make_active()
+            elif active_profile == None or choose_profile.id != active_profile.id:
+                choose_profile.make_active()
+        
+    def connect(self):
+        
+        logger.info("Connecting to %s." % self.device.uid)
+        
+        # Start the driver
+        self.attempt_connection() 
+        
+        # Monitor gconf
+        screen_key = "/apps/gnome15/%s" % self.device.uid
+        logger.info("Watching GConf settings in %s" % screen_key)
+        self.conf_client.add_dir(screen_key, gconf.CLIENT_PRELOAD_NONE)
+        self.notify_handles.append(self.conf_client.notify_add("%s/cycle_screens" % screen_key, self.resched_cycle))
+        self.notify_handles.append(self.conf_client.notify_add("%s/active_profile" % screen_key, self.active_profile_changed))
+        self.notify_handles.append(self.conf_client.notify_add("%s/profiles" % screen_key, self.profiles_changed))
+        self.notify_handles.append(self.conf_client.notify_add("%s/driver" % screen_key, self.driver_changed))
+        
+        logger.info("Connection for %s is complete." % self.device.uid)
         
     def start(self):
-        logger.debug("Starting screen")
-        self.driver = self.service.driver
+        logger.info("Starting screen")
         self.content_surface = None
-        self.width = self.service.driver.get_size()[0]
-        self.height = self.service.driver.get_size()[1]
+        self.width = self.driver.get_size()[0]
+        self.height = self.driver.get_size()[1]
         
         self.surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
         self.size = ( self.width, self.height )
@@ -255,8 +366,21 @@ class G15Screen():
         self.reverting = { }
         self.deleting = { }
            
-        self.redraw()   
-
+        self.redraw()
+        
+    def shutdown(self):       
+        self.shutting_down = True
+        self.plugins.destroy()
+        if self.driver and self.driver.is_connected():
+            self.driver.disconnect()
+        
+    def stop(self):
+        if self.is_active():
+            self.fade(True)
+        if self.plugins:
+            self.plugins.deactivate() 
+        for h in self.notify_handles:
+            self.conf_client.notify_remove(h)
         
     def add_screen_change_listener(self, screen_change_listener):
         if not screen_change_listener in self.screen_change_listeners:
@@ -282,10 +406,14 @@ class G15Screen():
             val = g15driver.MKEY_LIGHT_2
         elif self.mkey == 3:
             val = g15driver.MKEY_LIGHT_3
-        self.service.driver.set_mkey_lights(val)
-        self.set_color_for_mkey()     
+        self.driver.set_mkey_lights(val)
+        self.set_color_for_mkey()
+        for listener in self.screen_change_listeners:
+            listener.memory_bank_changed(val)  
     
     def handle_key(self, keys, state, post=False):
+        self.resched_cycle()
+        
         # Event first goes to this objects key handlers
         for h in self.key_handlers:
             if h.handle_key(keys, state, post):
@@ -345,7 +473,7 @@ class G15Screen():
                 break
     
     def new_page(self, painter, priority=PRI_NORMAL, on_shown=None, on_hidden=None, 
-                 id="Unknown", thumbnail_painter = None, panel_painter = None):
+                 id="Unknown", thumbnail_painter = None, panel_painter = None, title=None):
         """
         Create a new page. Returns the G15Page object
         
@@ -373,6 +501,8 @@ class G15Screen():
             self.pages.append(page)   
             for l in self.screen_change_listeners:
                 l.new_page(page) 
+            if title:
+                page.set_title(title)
             return page
         finally:
             self.page_model_lock.release()   
@@ -477,13 +607,239 @@ class G15Screen():
                     callback = page.on_hidden
                     if callback != None:
                         callback()
-                    self.visible_page = None
+                    self.visible_page = None                
+                for l in self.screen_change_listeners:
+                    l.deleting_page(page) 
                 self.pages.remove(page)                    
                 self.redraw()                   
                 for l in self.screen_change_listeners:
-                    l.del_page(page) 
+                    l.deleted_page(page) 
         finally:
             self.page_model_lock.release()
+            
+    def get_last_error(self):
+        return self.last_error
+            
+    def should_reconnect(self, exception):
+        return isinstance(exception, NotConnectedException) or (len(exception.args) == 2 and isinstance(exception.args[0], int) and exception.args[0] in [ 111, 104 ])
+            
+    def complete_loading(self):              
+        try :           
+            logger.info("Activating plugins") 
+            self.plugins.activate(self.splash.update_splash) 
+            if self.first_page != None:
+                page = self.get_page(self.first_page)
+                if page:
+                    self.raise_page(page)
+                    
+            logger.info("Grabbing keyboard")
+            self.driver.grab_keyboard(self.key_received)
+            
+            logger.info("Grabbed keyboard")
+            self.clear_attention()
+                
+            self.splash.complete()
+            self.loading_complete = True
+            logger.info("Loading complete")
+        except Exception as e:
+            if self._process_exception(e):
+                raise
+        
+    def key_received(self, keys, state):
+        if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
+            return        
+        
+        if state == g15driver.KEY_STATE_UP:
+            if g15driver.G_KEY_LIGHT in keys and not self.driver.get_model_name() == g15driver.MODEL_G19:
+                self.service.dbus_service._driver_service.CycleKeyboard(1)
+
+            profile = g15profile.get_active_profile(self.device)
+            if profile != None:
+                macro = profile.get_macro(self.get_mkey(), keys)
+                if macro != None:
+                    self.service.handle_macro(macro)
+                            
+        self.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True)
+            
+    def screen_cycle(self):
+        page = self.get_visible_page()
+        if page != None and page.priority < PRI_HIGH:
+            self.cycle(1)
+        else:
+            self.resched_cycle()
+        
+    def resched_cycle(self, arg1=None, arg2=None, arg3=None, arg4=None):
+        self.reschedule_lock.acquire()
+        try:
+            logger.info("Rescheduling cycle")
+            self._cancel_timer()
+            cycle_screens = self.conf_client.get_bool("/apps/gnome15/%s/cycle_screens" % self.device.uid)
+            active = self.driver != None and self.driver.is_connected() and cycle_screens
+            if active and self.cycle_timer == None:
+                val = self.conf_client.get("/apps/gnome15/%s/cycle_seconds" % self.device.uid)
+                time = 10
+                if val != None:
+                    time = val.get_int()
+                self.cycle_timer = g15util.schedule("CycleTimer", time, self.screen_cycle)
+        finally:
+            self.reschedule_lock.release()
+            
+    def cycle_level(self, val, control):
+        logger.debug("Cycling of %s level by %d" % (control.id, val))
+        level = self.conf_client.get_int("/apps/gnome15/" + control.id)
+        level += val
+        if level > control.upper - 1:
+            level = control.lower
+        if level < control.lower - 1:
+            level = control.upper
+        self.conf_client.set_int("/apps/gnome15/" + control.id, level)
+             
+    def control_changed(self, client, connection_id, entry, args):
+        self.driver.set_controls_from_configuration(client)
+        
+    def control_configuration_changed(self, client, connection_id, entry, args):
+        key = os.path.basename(entry.key)
+        logger.debug("Controls changed %s", str(key))
+        if self.driver != None:
+            for control in self.driver.get_controls():
+                if key == control.id:
+                    if isinstance(control.value, int):
+                        control.value = entry.value.get_int()
+                    else:
+                        rgb = entry.value.get_string().split(",")
+                        control.value = (int(rgb[0]), int(rgb[1]), int(rgb[2]))
+                        
+                    self.driver.update_control(control)
+                    
+                    break
+            self.redraw()
+        
+    def set_defeat_profile_change(self, defeat):
+        self.defeat_profile_change = defeat
+        
+    def cycle_color(self, val, control):
+        logger.debug("Cycling of %s color by %d" % (control.id, val))
+        self.color_no += val
+        if self.color_no < 0:
+            self.color_no = len(COLOURS) - 1
+        if self.color_no >= len(COLOURS):
+            self.color_no = 0
+        color = COLOURS[self.color_no]
+        self.conf_client.set_string("/apps/gnome15/" + control.id, "%d,%d,%d" % (color[0], color[1], color[2] ) )
+        
+    def driver_changed(self, client, connection_id, entry, args):
+        if self.driver == None or self.driver.id != entry.value.get_string():
+            g15util.schedule("DriveChange", 1.0, self._reload_driver)
+        
+    def active_profile_changed(self, client, connection_id, entry, args):
+        # Check if the active profile has change
+        new_profile = g15profile.get_active_profile(self.device)
+        if new_profile == None:
+            self.deactivate_profile()
+        else:
+            self.activate_profile()
+                
+        return 1
+
+    def activate_profile(self):
+        logger.debug("Activating profile")
+        if self.driver and self.driver.is_connected():
+            self.set_mkey(1)
+    
+    def deactivate_profile(self):
+        logger.debug("De-activating profile")
+        if self.driver and self.driver.is_connected():
+            self.set_mkey(0)
+        
+    def clear_attention(self):
+        logger.debug("Clearing attention")
+        self.attention = False
+        for listener in self.screen_change_listeners:
+            listener.attention_cleared()
+            
+    def request_attention(self, message = None):
+        logger.debug("Requesting attention '%s'" % message)
+        self.attention = True
+        if message != None:
+            self.attention_message = message
+            
+        for listener in self.screen_change_listeners:
+            listener.attention_requested(message)
+
+        
+    '''
+    Private
+    '''    
+    def _cancel_timer(self):
+        self.reschedule_lock.acquire()
+        try:      
+            if self.cycle_timer:
+                self.cycle_timer.cancel()
+                self.cycle_timer = None  
+        finally:
+            self.reschedule_lock.release()          
+            
+    def _process_exception(self, exception):
+        self.last_error = exception
+        self.request_attention(str(exception))
+        self.resched_cycle()   
+        self.driver = None      
+        print "EXCEPTION IS >>> %s" % str(exception)    
+        if self.should_reconnect(exception):
+            print "SHOULD RECONNECT IS TRUE!!"
+            traceback.print_exc(file=sys.stderr)
+            self.reconnect_timer = g15util.schedule("ReconnectTimer", 5.0, self.attempt_connection)
+        else:
+            traceback.print_exc(file=sys.stderr)
+            return True
+                
+    def _reload_driver(self):
+        if self.driver and self.driver.is_connected() :
+            self.driver.disconnect()
+            # Let any clients receive their disconnecting. Driver changes should be rare so this is not a big deal
+            time.sleep(2.0)
+        self._load_driver()
+        if self.driver:
+            self.attempt_connection(0.0)
+            
+    def _load_driver(self): 
+        # Get the driver. If it is not configured, configuration will be required at this point
+        try :
+            self.driver = g15drivermanager.get_driver(self.conf_client, self.device, on_close=self.on_driver_close)
+            return True
+        except Exception as e:
+            self._process_exception(e)
+            self.driver = None
+            return False     
+        
+    def profiles_changed(self, client, connection_id, entry, args):
+        self.set_color_for_mkey()
+        
+    def error(self, error_text=None): 
+        self.attention(error_text)
+
+    def on_driver_close(self, retry=True):
+        logger.info("Driver closed")
+    
+        for handle in self.control_handles:
+            self.conf_client.notify_remove(handle);
+        self.control_handles = []
+    
+        self.plugins.deactivate()
+        
+        # Delete any remaining pages
+        for page in list(self.pages):
+            self.del_page(page)
+
+        for listener in self.screen_change_listeners:
+            listener.driver_disconnected(self.driver)
+                
+        if not self.service.shutting_down and not self.shutting_down:
+            if retry:
+                logger.info("Testing if connection should be retried")
+                self._process_exception(NotConnectedException("Keyboard driver disconnected."))
+        
+        self.shutting_down = False
             
     def is_active(self):
         """
@@ -496,6 +852,9 @@ class G15Screen():
     
     def get_visible_page(self):
         return self.visible_page
+    
+    def has_page(self, page):
+        return self.get_page(page.id) != None
 
     def set_painter(self, painter):
         o_painter = self.painter_function
@@ -538,7 +897,7 @@ class G15Screen():
     def set_color_for_mkey(self):
         control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
         if control != None and not isinstance(control.value, int):
-            profile = g15profile.get_active_profile()
+            profile = g15profile.get_active_profile(self.device)
             if profile != None:
                 rgb = profile.get_mkey_color(self.mkey)
                 if rgb != None:                    
@@ -569,6 +928,60 @@ class G15Screen():
 
     def fade(self, stay_faded=False):
         Fader(self, stay_faded=stay_faded).run()
+        
+    def attempt_connection(self, delay=0.0):
+            
+        logger.debug("Attempting connection" if delay == 0 else "Attempting connection in %f" % delay)
+        self.connection_lock.acquire()
+        try :            
+            if not self.service.session_active:
+                logger.debug("Desktop session not active, will not connect to driver")
+                return
+        
+            if self.driver == None:
+                self.driver = g15drivermanager.get_driver(self.conf_client, self.device, on_close=self.on_driver_close)
+
+            if self.driver.is_connected():
+                logger.warning("WARN: Attempt to reconnect when already connected.")
+                return
+            
+            if not self._started_plugins:                
+                self.plugins.start()
+                self._started_plugins = True
+            
+            self.loading_complete = False
+            self.first_page = self.conf_client.get_string("/apps/gnome15/%s/last_page" % self.device.uid)
+            
+            if delay != 0.0:
+                self.reconnect_timer = g15util.schedule("ReconnectTimer", delay, self.attempt_connection)
+                return
+                            
+            try :
+                self.driver.connect() 
+                
+                for control in self.driver.get_controls():
+                    self.control_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/%s" %( self.device.uid, control.id), self.control_configuration_changed));
+                
+                self.start()
+                if self.splash == None:
+                    self.splash = G15Splash(self, self.conf_client)
+                else:
+                    self.splash.update_splash(0, 100, "Starting up ..")
+                self.set_mkey(1)
+                self.activate_profile()
+                self.last_error = None
+                for listener in self.screen_change_listeners:
+                    listener.driver_connected(self.driver)
+                             
+                self.complete_loading()
+
+            except Exception as e:
+                if self._process_exception(e):
+                    raise
+        finally:
+            self.connection_lock.release()
+            
+        logger.info("Connection for %s is complete." % self.device.uid)
     
     '''
     Private functions
@@ -576,11 +989,11 @@ class G15Screen():
     
     def _draw_page(self, visible_page, direction="down", transitions = True, redraw_content = True):
         
-        if self.service.driver == None or not self.service.driver.is_connected():
+        if self.driver == None or not self.driver.is_connected():
             return
         
         # Do not paint if the device has no LCD (i.e. G110)
-        if self.service.driver.get_bpp() == 0:
+        if self.driver.get_bpp() == 0:
             return
         
         surface =  self.surface
@@ -590,17 +1003,17 @@ class G15Screen():
         if visible_page != self.visible_page: 
             logger.debug("Page has changed, recreating surface")
             if visible_page.priority == PRI_NORMAL:   
-                self.service.conf_client.set_string("/apps/gnome15/last_page", visible_page.id)      
+                self.service.conf_client.set_string("/apps/gnome15/%s/last_page" % self.device.uid, visible_page.id)      
             surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
             
         self.local_data.surface = surface
         canvas = cairo.Context (surface)
-        canvas.set_antialias(self.service.driver.get_antialias())
-        rgb = self.service.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
+        canvas.set_antialias(self.driver.get_antialias())
+        rgb = self.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
         canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
         canvas.rectangle(0, 0, self.width, self.height)
         canvas.fill()
-        rgb = self.service.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+        rgb = self.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
         canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
         
         if self.background_painter_function != None:
@@ -622,6 +1035,7 @@ class G15Screen():
                 if callback != None:
                     callback()
                     
+            self.resched_cycle()
             for l in self.screen_change_listeners:
                 l.page_changed(self.visible_page)
             
@@ -672,7 +1086,7 @@ class G15Screen():
         if self.painter_function != None:
             self.painter_function(surface)
         else:
-            self.service.driver.paint(surface)
+            self.driver.paint(surface)
             
         self.old_canvas = canvas
         self.old_surface = surface
@@ -817,3 +1231,44 @@ class Fader():
         canvas.fill()
         self.opacity += 0.025
         
+        
+
+class G15Splash():
+    
+    def __init__(self, screen, gconf_client):
+        self.screen = screen        
+        self.progress = 0.0
+        self.text = "Starting up .."
+        self.theme = g15theme.G15Theme(g15globals.image_dir, self.screen, "background")
+        self.page = self.screen.new_page(self.paint, priority=PRI_EXCLUSIVE, id="Splash", thumbnail_painter=self.paint_thumbnail)
+        self.screen.redraw(self.page)
+        icon_path = g15util.get_icon_path("gnome15")
+        if icon_path == None:
+            icon_path = os.path.join(g15globals.icons_dir,"hicolor", "apps", "scalable", "gnome15.svg")
+        self.logo = g15util.load_surface_from_file(icon_path)
+        
+    def paint(self, canvas):
+        properties = {
+                      "version": g15globals.version,
+                      "progress": self.progress,
+                      "text": self.text
+                      }
+        self.theme.draw(canvas, properties)
+        
+    def paint_thumbnail(self, canvas, allocated_size, horizontal):
+        return g15util.paint_thumbnail_image(allocated_size, self.logo, canvas)
+        
+    def complete(self):
+        self.progress = 100
+        self.screen.redraw(self.page)
+        gobject.timeout_add(2000, self.hide)
+        
+    def hide(self):
+        self.screen.del_page(self.page)
+        self.screen.redraw()
+        
+    def update_splash(self, value, max, text=None):
+        self.progress = (float(value) / float(max)) * 100.0
+        self.screen.redraw(self.page)
+        if text != None:
+            self.text = text

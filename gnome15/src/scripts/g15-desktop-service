@@ -71,7 +71,8 @@ def start_service(no_trap=False):
     # Start the loop    
     try :
         import gnome15.g15service as g15service   
-        g15service.G15Service(None, no_trap=no_trap)
+        service = g15service.G15Service(None, no_trap=no_trap)
+        service.start_loop()
     except dbus.exceptions.NameExistsException:
         print "Gnome15 desktop service is already running"
         sys.exit(1)
@@ -101,7 +102,7 @@ if __name__ == "__main__":
             if args[0] == "stop":
                 print "Gnome15 desktop service is not running"
         else:            
-            session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service').Shutdown();
+            session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service').Stop();
             
     if len(args) == 0 or ( len(args) == 1 and ( args[0] == "start" or args[0] == "restart" ) ):
         import gnome15.g15drivermanager as g15drivermanager
@@ -113,8 +114,4 @@ if __name__ == "__main__":
                 print "Gnome15 desktop service already running"
             else:
                 if options.foreground or ( not options.foreground and os.fork() == 0 ):
-                    driver = g15drivermanager.get_configured_driver(False)    
-                    if not driver:
-                        print "No driver"
-                    else:
-                        start_service(options.no_trap)
+                    start_service(options.no_trap)

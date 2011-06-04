@@ -185,7 +185,9 @@ class fb_device():
    
    
 if __name__ == "__main__":     
-        
-    device = fb_device("/dev/fb1")
-    print "Screen bytes: " + str(device.get_screen_size())
-    device.dump()
+    for d in os.listdir("/dev"):
+        if d.startswith("fb"):
+            print "---------",d                
+            device = fb_device("/dev/%s" %d) 
+            print "Screen bytes: " + str(device.get_screen_size())
+            device.dump()

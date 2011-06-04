@@ -7,13 +7,14 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="160"
    height="7"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="default-menu-entry.svg">
   <defs
      id="defs4">
@@ -62,6 +63,31 @@
          x="104.54774"
          y="784.11218" />
     </clipPath>
+    <linearGradient
+       y2="857.36218"
+       x2="250"
+       y1="857.36218"
+       x1="80.000015"
+       gradientTransform="matrix(0.4705883,0,0,1.4999991,156.35293,-491.11396)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient3033"
+       xlink:href="#linearGradient3812-6-6"
+       inkscape:collect="always" />
+    <linearGradient
+       id="linearGradient3812-6-6">
+      <stop
+         style="stop-color:#13f116;stop-opacity:1;"
+         offset="0"
+         id="stop3814-4-7" />
+      <stop
+         id="stop3820-5-56"
+         offset="0.71428573"
+         style="stop-color:#e64b0e;stop-opacity:1;" />
+      <stop
+         style="stop-color:#ff000d;stop-opacity:1;"
+         offset="1"
+         id="stop3816-4-9" />
+    </linearGradient>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -71,16 +97,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="3.959798"
-     inkscape:cx="33.955933"
+     inkscape:cx="97.222775"
      inkscape:cy="17.609832"
      inkscape:document-units="px"
-     inkscape:current-layer="layer2"
+     inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2407"
-     inkscape:window-y="57"
+     inkscape:window-x="2204"
+     inkscape:window-y="76"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -139,6 +165,21 @@
          id="tspan2999-8"
          x="150.13086"
          y="4.5849609">${item_alt} </tspan></text>
+    <rect
+       class="progress"
+       style="fill:#000000;fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;display:inline"
+       id="disk_usage_progress"
+       width="10"
+       height="2"
+       x="95"
+       y="2" />
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:0.82564402;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3789"
+       width="13.174356"
+       height="5.174356"
+       x="93.412819"
+       y="0.41282201" />
   </g>
   <g
      inkscape:groupmode="layer"
@@ -177,5 +218,20 @@
          id="tspan2999-8-2"
          x="150.13086"
          y="4.5849609">${item_alt} </tspan></text>
+    <rect
+       class="progress"
+       style="fill:#ffffff;fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;display:inline"
+       id="sel_disk_usage_progress"
+       width="10"
+       height="2"
+       x="95"
+       y="1.9999993" />
+    <rect
+       style="fill:none;stroke:#ffffff;stroke-width:0.82564402;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline"
+       id="rect3789-2"
+       width="13.174356"
+       height="5.174356"
+       x="93.412819"
+       y="0.41282201" />
   </g>
 </svg>

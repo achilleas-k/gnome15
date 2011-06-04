@@ -96,6 +96,7 @@ class G15Clock():
         self.hidden = False
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
+        self.page = None
     
     def activate(self):
         self.timer = None
@@ -193,7 +194,7 @@ class G15Clock():
     the amount of space you have (i.e. 6 pixels high maximum and limited width)
     ''' 
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if not self.screen.is_visible(self.page):
+        if self.page and not self.screen.is_visible(self.page):
             properties = self._get_properties()
             # Don't display the date or seconds on mono displays, not enough room as it is
             if self.screen.driver.get_bpp() == 1:

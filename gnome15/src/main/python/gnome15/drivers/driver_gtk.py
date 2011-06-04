@@ -33,54 +33,10 @@ logger = logging.getLogger("driver")
 # Driver information (used by driver selection UI)
 id="gtk"
 name="GTK"
-description="A special development driver that emulates the G19, " + \
-            "G15v1, G15v2 and G13 as a window on your desktop. This allows " + \
-            "you to develop plugins without having access to a real Logitech " + \
-            "G keyboard"
-has_preferences=True
-
-# Key layouts
-g15v1_key_layout = [
-                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
-                  [ g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6 ],
-                  [ g15driver.G_KEY_G7, g15driver.G_KEY_G8, g15driver.G_KEY_G9 ],
-                  [ g15driver.G_KEY_G10, g15driver.G_KEY_G11, g15driver.G_KEY_G12 ],
-                  [ g15driver.G_KEY_G13, g15driver.G_KEY_G14, g15driver.G_KEY_G15 ],
-                  [ g15driver.G_KEY_G16, g15driver.G_KEY_G17, g15driver.G_KEY_G18 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4,  g15driver.G_KEY_L5 ],
-                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
-                  ]
-
-g15v2_key_layout = [
-                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
-                  [ g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4,  g15driver.G_KEY_L5 ],
-                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
-                  ]          
-
-g13_key_layout = [
-                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3, g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6, g15driver.G_KEY_G7 ],
-                  [ g15driver.G_KEY_G8, g15driver.G_KEY_G9, g15driver.G_KEY_G10, g15driver.G_KEY_G11, g15driver.G_KEY_G12, g15driver.G_KEY_G13, g15driver.G_KEY_G14 ],
-                  [ g15driver.G_KEY_G15, g15driver.G_KEY_G16, g15driver.G_KEY_G17, g15driver.G_KEY_G18, g15driver.G_KEY_G19 ],
-                  [ g15driver.G_KEY_G20, g15driver.G_KEY_G21, g15driver.G_KEY_G22 ],
-                  [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4,  g15driver.G_KEY_L5 ],
-                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
-                  ]
-
-g19_key_layout = [
-              [ g15driver.G_KEY_G1, g15driver.G_KEY_G7 ],
-              [ g15driver.G_KEY_G2, g15driver.G_KEY_G8 ],
-              [ g15driver.G_KEY_G3, g15driver.G_KEY_G9 ],
-              [ g15driver.G_KEY_G4, g15driver.G_KEY_G10 ],
-              [ g15driver.G_KEY_G5, g15driver.G_KEY_G11 ],
-              [ g15driver.G_KEY_G6, g15driver.G_KEY_G12 ],
-              [ g15driver.G_KEY_G6, g15driver.G_KEY_G12 ],
-              [ g15driver.G_KEY_UP ],
-              [ g15driver.G_KEY_LEFT, g15driver.G_KEY_OK, g15driver.G_KEY_RIGHT ],
-              [ g15driver.G_KEY_DOWN ],
-              [ g15driver.G_KEY_MENU, g15driver.G_KEY_BACK, g15driver.G_KEY_SETTINGS ],
-              [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ],
-              ]
+description="A special development driver that emulates all supported, " + \
+            "models as a window on your desktop. This allows " + \
+            "you to develop plugins without having access to a real Logitech hardward "
+has_preferences=False
 
 # Controls
 
@@ -100,29 +56,17 @@ controls = {
   g15driver.MODEL_G510 : [ g19_keyboard_backlight_control, g15_invert_control ],
   g15driver.MODEL_Z10 : [ g15_backlight_control, g15_invert_control ],
   g15driver.MODEL_G110 : [ g19_keyboard_backlight_control ],
-            }   
-
-def show_preferences(parent, gconf_client):
-    widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_gtk.glade"))    
-    dialog = widget_tree.get_object("DriverDialog")
-    dialog.set_transient_for(parent)
-    mode_model = widget_tree.get_object("ModeModel")
-    mode_model.clear()
-    for mode in g15driver.MODELS:
-        mode_model.append([mode])
-    g15util.configure_combo_from_gconf(gconf_client,"/apps/gnome15/gtk_mode", "ModeCombo", g15driver.MODEL_G15_V1, widget_tree)
-    dialog.run()
-    dialog.hide()
+            }  
 
 class Driver(g15driver.AbstractDriver):
 
-    def __init__(self, on_close = None):
+    def __init__(self, device, on_close = None):
         g15driver.AbstractDriver.__init__(self, "gtk")
         self.lights = 0
         self.main_window = None
         self.connected = False
         self.callback = None
+        self.device = device
         self.area = None
         self.image = None
         self.event_box = None
@@ -140,7 +84,6 @@ class Driver(g15driver.AbstractDriver):
         logger.info("Disconnecting GTK driver")
         if not self.is_connected():
             raise Exception("Not connected")
-        self.conf_client.notify_remove(self.notify_h)
         self.connected = False
         if self.on_close != None:
             self.on_close()
@@ -177,7 +120,7 @@ class Driver(g15driver.AbstractDriver):
         return ( size[0] * zoom, size[1] * zoom )
         
     def get_zoom(self):
-        if self.mode == g15driver.MODEL_G19:
+        if self.device.bpp == 16:
             return 1
         else:
             return 3
@@ -187,7 +130,6 @@ class Driver(g15driver.AbstractDriver):
         if self.is_connected():
             raise Exception("Already connected") 
         self.connected = True     
-        self.notify_h = self.conf_client.notify_add("/apps/gnome15/gtk_mode", self._mode_changed);
         self._init_driver()
         gobject.timeout_add(1000, self._do_connect)
 #        gobject.idle_add(self._do_connect)
@@ -228,38 +170,6 @@ class Driver(g15driver.AbstractDriver):
                 invert_control = self.get_control("invert_lcd")
                 if invert_control.value == 1:            
                     pil_img = pil_img.point(lambda i: 1^i)
-                    
-                # Faking it                    
-#                data = list(pil_img.getdata())
-#                data_len = len(data)             
-#                buf =""
-#                for row in range(0, 43):
-#                    max_i = (row * 20 ) + 20
-#                    for col in range(0, 20):
-#                        s = (row * 20 ) + ( col * 8 )
-#                        v = 0
-#                        b = 1
-#                        for bit in data[s:s + 8]:
-#                            if bit != 0:
-#                                v += b
-#                            b = b * 2
-#                        buf += chr(v)
-
-                data = list(pil_img.getdata())
-                data_len = len(data)
-                buf = ""
-                for x in range(0, data_len, 8):
-                    print x
-                    v = 0
-                    i = 128 
-                    for y in range(x + 7, -1, -1):
-                        print y
-                        j = data[y]
-                        v += i if j == 1 else 0
-                        i /= 2                    
-                    buf += chr(v)
-                    
-                logger.info("Should be 1376, Painting frame size %d, send buffer size %d" % (data_len, len(buf)))
                     
                 # Create drawable message
                 pil_img = pil_img.convert("RGB")

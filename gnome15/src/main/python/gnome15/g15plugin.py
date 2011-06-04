@@ -46,8 +46,8 @@ class G15MenuPlugin():
 
     def activate(self):
         self.page = None        
-        self._reload_theme()
-        self._show_menu()
+        self.reload_theme() 
+        self.show_menu()
     
     def deactivate(self):
         if self.page != None:
@@ -86,47 +86,49 @@ class G15MenuPlugin():
         """
         properties["icon"] = self._icon_path
         properties["title"] = self._title
+        properties["no_items"] = self.menu.get_item_count() == 0
         return properties
-    
-    """
-    Private functions
-    """        
-    def _paint(self, canvas):
-        # Draw the page
-        self.theme.draw(canvas, self.get_theme_properties({}),
-                        attributes={
-                                      "items" : self.menu.get_items(),
-                                      "selected" : self.menu.selected
-                                      })
         
-    def _reload_theme(self):
+    def reload_theme(self):
         """
         Reload the SVG theme and configure it
         """
         
         # Create the menu
         self.menu = g15theme.Menu("menu", self.screen)
-        self.menu.on_selected = self._redraw
-        self.menu.on_update = self._redraw
+        self.menu.on_selected = self.redraw
+        self.menu.on_update = self.redraw
         
         # Setup the theme
         self.theme = g15theme.G15Theme(self.get_theme_path(), self.screen, "menu-screen")
         self.theme.add_component(self.menu)
         self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
         
-    def _redraw(self):
-        self.screen.redraw(self.page)
-        
-    def _show_menu(self):  
+    def show_menu(self):  
         """
         Create a new page for the menu and draw it
         """      
-        self.page = self.screen.new_page(self._paint, id=self.page_id, priority=g15screen.PRI_NORMAL)
+        self.page = self.screen.new_page(self.paint, id=self.page_id, priority=g15screen.PRI_NORMAL, title = self._title)
         self.screen.redraw(self.page)
     
-    def _hide_menu(self):
+    def hide_menu(self):
         """
         Delete the page
         """     
         self.screen.del_page(self.page)
         self.page = None
+        
+    def redraw(self):
+        self.screen.redraw(self.page)
+
+    
+    """
+    Private functions
+    """        
+    def paint(self, canvas):
+        # Draw the page
+        self.theme.draw(canvas, self.get_theme_properties({}),
+                        attributes={
+                                      "items" : self.menu.get_items(),
+                                      "selected" : self.menu.selected
+                                      })

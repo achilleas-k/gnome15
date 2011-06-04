@@ -205,7 +205,7 @@ def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_va
 def configure_radio_from_gconf(gconf_client, gconf_key, widget_ids , gconf_values, default_value, widget_tree, watch_changes = False):
     entry = gconf_client.get(gconf_key)
     handles = []
-    sel_entry = entry.get_string()
+    sel_entry = entry.get_string() if entry else None
     for i in range(0, len(widget_ids)):
         gconf_value = gconf_values[i]
         active = ( entry != None and gconf_value == sel_entry ) or ( entry == None and default_value == gconf_value )
@@ -486,9 +486,10 @@ def get_icon_path(icon = None, size = 128, warning = True):
     o_icon = icon
     if isinstance(icon, list):
         for i in icon:
-            p = get_icon_path(i, size)
+            p = get_icon_path(i, size, warning = False)
             if p != None:
                 return p
+        logger.warning("Icon %s (%d) not found" % ( str(icon), size ))            
     else:
         icon = gtk_icon_theme.lookup_icon(icon, size, 0)
         if icon != None:
@@ -749,3 +750,18 @@ def get_key_names(keys):
     for key in keys:
         key_names.append((key[:1].upper() + key[1:].lower()).replace('-',' '))
     return key_names
+
+"""
+HTML utilities
+"""
+
+html_escape_table = {
+                     "&": "&amp;",
+                     '"': "&quot;",
+                     "'": "&apos;",
+                     ">": "&gt;",
+                     "<": "&lt;",
+                     }
+
+def html_escape(text):
+    return "".join(html_escape_table.get(c,c) for c in text)

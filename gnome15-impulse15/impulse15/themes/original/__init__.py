@@ -24,7 +24,7 @@ def on_draw( audio_sample_array, cr, screenlet ):
 
 		bar_amp_norm = audio_sample_array[ i ]
 
-		bar_height = bar_amp_norm * height + 2
+		bar_height = ( bar_amp_norm * height + 2 ) * ( screenlet.bar_height / 10.0 )
 
 		cr.rectangle(
 			( bar_width + bar_spacing ) * ( i / ( l / n_bars ) ),

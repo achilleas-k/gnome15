@@ -124,7 +124,7 @@ device_info = {
 # Other constants
 EVIOCGRAB = 0x40044590
 
-def show_preferences(parent, gconf_client):
+def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_kernel.glade"))    
     dialog = widget_tree.get_object("DriverDialog")
@@ -135,39 +135,51 @@ def show_preferences(parent, gconf_client):
     for dir in os.listdir("/dev"):
         if dir.startswith("fb"):
             device_model.append(["/dev/" + dir])    
-    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/fb_device", "DeviceCombo", "/dev/fb0", widget_tree)
-    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/fb_mode", "ModeCombo", "auto", widget_tree)
+    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/fb_device" % device.uid, "DeviceCombo", "auto", widget_tree)
     dialog.run()
     dialog.hide()
     
 class KeyboardReceiveThread(Thread):
-    def __init__(self):
+    def __init__(self, device):
         Thread.__init__(self)
         self._run = True
-        self.name = "KeyboardReceiveThread"
+        self.name = "KeyboardReceiveThread-%s" % device.uid
         self.setDaemon(True)
         self.devices = []
         
     def deactivate(self):
         self._run = False
         for dev in self.devices:
+            logger.info("Ungrabbing %d" % dev.fileno())
             try :
                 fcntl.ioctl(dev.fileno(), EVIOCGRAB, 0)
             except Exception as e:
-                print e
-            self.fds[dev.fileno()].close()
+                print "Failed ungrab.",e
+            logger.info("Closing %d" % dev.fileno())
+            try :
+                self.fds[dev.fileno()].close()
+            except Exception as e:
+                print "Failed close.",e
+            logger.info("Stopped %d" % dev.fileno())
+        logger.info("Stopped all input devices")
         
     def run(self):        
-        poll = select.poll()
+        self.poll = select.poll()
         self.fds = {}
         for dev in self.devices:
-            poll.register(dev, select.POLLIN | select.POLLPRI)
+            self.poll.register(dev, select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLNVAL | select.POLLERR)
             fcntl.ioctl(dev.fileno(), EVIOCGRAB, 1)
             self.fds[dev.fileno()] = dev
         while self._run:
-            for x, e in poll.poll():
+            for x, e in self.poll.poll(1000):
                 dev = self.fds[x]
-                dev.read()
+                try :
+                    dev.read()
+                except OSError as e:
+                    # Ignore this error if deactivated
+                    if self._run:
+                        raise e
+        logger.info("Thread left")
 
 '''
 SimpleDevice implementation that translates kernel input events
@@ -224,16 +236,15 @@ class ForwardDevice(SimpleDevice):
 
 class Driver(g15driver.AbstractDriver):
 
-    def __init__(self, on_close=None):
+    def __init__(self, device, on_close=None):
         g15driver.AbstractDriver.__init__(self, "kernel")
         self.fb = None
         self.var_info = None
         self.on_close = on_close
         self.key_thread = None
-        self.device = None
+        self.device = device
         self.device_info = None
         self.conf_client = gconf.client_get_default()
-        
         try :
             self._init_driver()
         except Exception as e:
@@ -249,7 +260,6 @@ class Driver(g15driver.AbstractDriver):
         if not self.is_connected():
             raise Exception("Not connected")
         self._stop_receiving_keys()
-        self.conf_client.notify_remove(self.notify_h)
         self.fb.__del__()
         self.fb = None
         if self.on_close != None:
@@ -280,21 +290,9 @@ class Driver(g15driver.AbstractDriver):
     def get_key_layout(self):
         return self.device.key_layout
         
-    def get_zoomed_size(self):
-        size = self.get_size()
-        zoom = self.get_zoom()
-        return (size[0] * zoom, size[1] * zoom)
-        
-    def get_zoom(self):
-        if self.mode == g15driver.MODEL_G19:
-            return 1
-        else:
-            return 3
-        
     def connect(self):
         if self.is_connected():
             raise Exception("Already connected")
-        self.notify_h = self.conf_client.notify_add("/apps/gnome15/fb_mode", self._mode_changed);
         
         # Check hardware again
         self._init_driver()
@@ -307,7 +305,7 @@ class Driver(g15driver.AbstractDriver):
         if self.fb_mode == None or self.device_name == None:
             raise usb.USBError("No matching framebuffer device found")
         if self.fb_mode != self.framebuffer_mode:
-            raise usb.USBError("Unexpected framebuffer mode %s, expected %s" % (self.fb_mode, self.framebuffer_mode))
+            raise usb.USBError("Unexpected framebuffer mode %s, expected %s for device %s" % (self.fb_mode, self.framebuffer_mode, self.device_name))
         
         # Open framebuffer
         logger.info("Using framebuffer %s"  % self.device_name)
@@ -321,18 +319,11 @@ class Driver(g15driver.AbstractDriver):
         for i in range(0, self.fb.get_fixed_info().smem_len):
             self.empty_buf += chr(0)
         
-    def get_name(self):
-        return "Linux Kernel Driver"
-        
     def get_size(self):
-        if self.var_info is None:
-            return (0,0)
-        return (self.var_info.xres, self.var_info.yres)
+        return self.device.lcd_size
         
     def get_bpp(self):
-        if self.var_info is None:
-            return 0
-        return self.var_info.bits_per_pixel
+        return self.device.bpp
     
     def get_controls(self):
         return self.device_info.controls if self.device_info != None else None
@@ -463,7 +454,7 @@ class Driver(g15driver.AbstractDriver):
     def grab_keyboard(self, callback):
         if self.key_thread != None:
             raise Exception("Keyboard already grabbed")      
-        self.key_thread = KeyboardReceiveThread()
+        self.key_thread = KeyboardReceiveThread(self.device)
         for devpath in self.keyboard_devices:
             self.key_thread.devices.append(ForwardDevice(callback, self.device_info.key_map, devpath, devpath))
         self.key_thread.start()
@@ -502,21 +493,6 @@ class Driver(g15driver.AbstractDriver):
             logger.warning("WARNING: Mode change would cause disconnect when already connected.", entry)
         
     def _init_driver(self):
-        mode = self.conf_client.get_string("/apps/gnome15/fb_mode")
-        
-        # Find the first device if auto mode
-        if mode == None or mode == "" or mode == "auto":
-            mode = ""
-            devices = g15devices.find_all_devices()
-            if len(devices) > 0:
-                mode = devices[0].model_name
-                
-        # Find the selected device
-        self.device = g15devices.find_device(mode)
-        if not self.device:      
-            self.device = None
-            self.device_info = None
-            raise Exception("Could not find any device for model %s" % mode)
         
         if self.device.bpp == 1:
             self.framebuffer_mode = "GFB_MONO"
@@ -524,7 +500,7 @@ class Driver(g15driver.AbstractDriver):
             self.framebuffer_mode = "GFB_QVGA"
         logger.info("Using %s frame buffer mode" % self.framebuffer_mode)
             
-        self.device_info = device_info[mode]
+        self.device_info = device_info[self.device.model_name]
                     
         # Try and find the paths for the LED devices.
         # Note, I am told these files may be in different places on different kernels / distros. Will
@@ -541,9 +517,11 @@ class Driver(g15driver.AbstractDriver):
                 self.keyboard_devices.append(dir + "/" + p)
                 
         # Determine the framebuffer device to use
-        self.device_name = self.conf_client.get_string("/apps/gnome15/fb_device")
+        self.device_name = self.conf_client.get_string("/apps/gnome15/%s/fb_device" % self.device.uid)
         self.fb_mode = None
         if self.device_name == None or self.device_name == "" or self.device_name == "auto":
+            
+            # Find the first framebuffer device that matches the mode
             for fb in os.listdir("/sys/class/graphics"):
                 if fb != "fbcon":
                     try:

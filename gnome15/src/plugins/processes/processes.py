@@ -64,6 +64,9 @@ class ProcessMenuItem(g15theme.MenuItem):
         self.icon = None
         self.process_id = process_id
         self.process_name = process_name
+    
+    def get_default_theme_dir(self):
+        return os.path.join(os.path.dirname(__file__), "default")
         
     def draw(self, selected, canvas, menu_properties, menu_attributes):        
         item_properties = {}

@@ -515,6 +515,7 @@ class G15Im():
                     if mode_index >= len(MODE_LIST):
                         mode_index = 0
                     self._menu.mode = MODE_LIST[mode_index]
+                    logger.info("Mode is now %s" % self._menu.mode)
                     self._gconf_client.set_string(self._gconf_key + "/mode", self._menu.mode)
                     self._menu.reload()
                     self._screen.redraw(self._page)

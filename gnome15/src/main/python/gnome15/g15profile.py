@@ -22,14 +22,13 @@
  
 import gconf
 import time
-import g15util as g15util
+import g15util
+import g15devices
 import ConfigParser
-import os
 import os.path
 import errno
 import pyinotify
 import logging
-import traceback
 
 logger = logging.getLogger("macros")
 active_profile = None
@@ -58,18 +57,19 @@ mask = pyinotify.IN_DELETE | pyinotify.IN_MODIFY | pyinotify.IN_CREATE | pyinoti
 
 class EventHandler(pyinotify.ProcessEvent):
     
-    def _get_profile_id(self, event):
+    def _get_profile_ids(self, event):
         path = os.path.basename(event.pathname)
+        device_uid = os.path.basename(os.path.dirname(event.pathname))
         if path.endswith(".macros") and not path.startswith("."):
             id_no = path.split(".")[0]
             if id_no.isdigit():
-                return int(id_no)
+                return ( int(id_no), device_uid )
     
     def _notify(self, event):
-        id = self._get_profile_id(event)
-        if id != None:
+        ids = self._get_profile_ids(event)
+        if ids:
             for profile_listener in profile_listeners:
-                profile_listener(id)
+                profile_listener(ids[0], ids[1])
         
     def process_IN_MODIFY(self, event):
         self._notify(event)
@@ -84,27 +84,34 @@ class EventHandler(pyinotify.ProcessEvent):
         self._notify(event)
 
 notifier = pyinotify.ThreadedNotifier(wm, EventHandler())
+notifier.name = "PyInotify"
+notifier.setDaemon(True)
 notifier.start()
 wdd = wm.add_watch(conf_dir, mask, rec=True)
 
-
-'''
-Get list of all configured macro profiles
-'''
-def get_profiles():
+def get_profiles(device):
+    '''
+    Get list of all configured macro profiles
+    
+    Keyword arguments:
+    '''
     profiles = []
-    for profile in os.listdir(conf_dir):
+    for profile in os.listdir(_get_profile_dir(device)):
         if not profile.startswith(".") and profile.endswith(".macros"):
             id = profile.split(".")[0]
             if id.isdigit():
-                profiles.append(G15Profile(int(id)))
+                profiles.append(G15Profile(device, int(id)))
     return profiles
 
-def create_default():
-    if not get_profile(0):
+def _get_profile_dir(device):
+    return "%s/%s" % (conf_dir, device.uid)
+
+def create_default(device):
+    if not get_profile(device, 0):
         logger.info("No default macro profile. Creating one")
-        default_profile = G15Profile(name = "Default")
-        default_profile.id = 0
+        default_profile = G15Profile(device, id = 0)
+        default_profile.name = "Default"
+        default_profile.device = device
         default_profile.activate_on_focus = True
         create_profile(default_profile)
 
@@ -114,20 +121,20 @@ def create_profile(profile):
     logger.info("Creating profile %d, %s" % ( profile.id, profile.name ))
     profile.save()
     
-def get_profile(id):
-    path = "%s/%d.macros" % ( conf_dir, id )
+def get_profile(device, id):
+    path = "%s/%s/%d.macros" % ( conf_dir, device.uid, id )
     if os.path.exists(path):
-        return G15Profile(id);
+        return G15Profile(device, id);
 
-def get_active_profile():
-    val= conf_client.get("/apps/gnome15/active_profile")
+def get_active_profile(device):
+    val= conf_client.get("/apps/gnome15/%s/active_profile" % device.uid)
     if val != None:
-        return get_profile(val.get_int())
+        return get_profile(device, val.get_int())
     else:
-        return get_default_profile()
+        return get_default_profile(device)
       
-def get_default_profile():
-    return get_profile(0)
+def get_default_profile(device):
+    return get_profile(device, 0)
 
 def get_keys_from_key(key_list_key):
     return key_list_key.split("_")
@@ -199,8 +206,9 @@ class G15Macro:
  
 class G15Profile():
     
-    def __init__(self, id=-1):
-        self.id = id         
+    def __init__(self, device, id=-1):
+        self.id = id
+        self.device = device
         self.parser = ConfigParser.SafeConfigParser({
                                                      })        
         self.name = None
@@ -307,7 +315,7 @@ class G15Profile():
                 return macro
         
     def make_active(self):
-        conf_client.set_int("/apps/gnome15/active_profile", self.id)
+        conf_client.set_int("/apps/gnome15/%s/active_profile" % self.device.uid, self.id)
         
     def load(self):
                  
@@ -346,34 +354,15 @@ class G15Profile():
     '''
         
     def _write(self):
+        dir_name = os.path.dirname(self._get_filename())
+        if not os.path.exists(dir_name):
+            os.mkdir(dir_name)
         with open(self._get_filename(), 'wb') as configfile:
             self.parser.write(configfile)
         
     def _get_filename(self):
-        return "%s/%d.macros" % ( conf_dir, self.id )
-    
-# Migrate from old gconf based macro profiles
-if len(get_profiles()) == 0:
-    import g15profile_gconf as oldg15profile
-    logger.warning("Migrating GConf macro profiles. Note, the old profiles will be left in GConf")
-    for profile in oldg15profile.get_profiles():
-        new_profile = G15Profile()
-        new_profile.id = profile.id
-        new_profile.name = profile.name
-        new_profile.mkey_color = profile.mkey_color
-        new_profile.window_name = profile.window_name
-        new_profile.activate_on_focus = profile.activate_on_focus
-        new_profile.send_delays = profile.send_delays
-        create_profile(new_profile)
-        
-        for macro_bank in profile.macros:
-            for macro in macro_bank:
-                logger.warning("Migrating macro %s" % macro.name)
-                new_profile.create_macro(macro.memory, macro.keys, macro.name, MACRO_SCRIPT, macro.macro)
-        
-        logger.warning("Deleting migrated profile %s" % profile.name)
-        profile.delete()
+        return "%s/%s/%d.macros" % ( conf_dir, self.device.uid, self.id )
         
 # Create the default
-create_default()
-
+for device in g15devices.find_all_devices():
+    create_default(device)

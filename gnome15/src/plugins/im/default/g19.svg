@@ -54,17 +54,6 @@
     </filter>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3087">
-      <rect
-         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-         id="rect3089"
-         width="201.16251"
-         height="34.797737"
-         x="24.690418"
-         y="796.4826" />
-    </clipPath>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
        id="clipPath3093">
       <rect
          style="fill:#000000;fill-opacity:0.50196078;stroke:none"
@@ -116,17 +105,17 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="239.02068"
-     inkscape:cy="99.685283"
+     inkscape:cx="160"
+     inkscape:cy="128.25671"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1056"
-     inkscape:window-x="1920"
-     inkscape:window-y="24"
-     inkscape:window-maximized="1"
+     inkscape:window-width="1142"
+     inkscape:window-height="739"
+     inkscape:window-x="2364"
+     inkscape:window-y="103"
+     inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
@@ -179,11 +168,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/im/default/${icon}"
        xlink:href="${icon}"
-       id="image4256"
-       x="294.54773"
-       y="795.11218"
+       height="24.999987"
        width="24.999987"
-       height="24.999987" />
+       y="795.11218"
+       x="294.54773"
+       id="image4256" />
     <text
        xml:space="preserve"
        style="font-size:28px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
@@ -192,7 +181,7 @@
        id="text4017"
        sodipodi:linespacing="125%"
        transform="matrix(0.99422109,0,0,1.0058125,-7,-13)"
-       clip-path="url(#clipPath3087)"><tspan
+       clip-path="none"><tspan
          sodipodi:role="line"
          id="tspan4019"
          x="23.692986"
@@ -467,5 +456,17 @@
          id="tspan3128-4-3"
          x="190.63737"
          y="1014.9044">${list}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="163.01062"
+       y="896.39789"
+       id="text3046"
+       sodipodi:linespacing="125%"
+       title="del !no_items"><tspan
+         sodipodi:role="line"
+         id="tspan3048"
+         x="163.01062"
+         y="896.39789">No Contacts</tspan></text>
   </g>
 </svg>

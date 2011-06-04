@@ -222,6 +222,7 @@ src/main/resources/icons/hicolor/64x64/apps/Makefile
 src/main/resources/icons/hicolor/scalable/Makefile
 src/main/resources/icons/hicolor/scalable/apps/Makefile
 src/main/resources/icons/hicolor/scalable/status/Makefile
+src/main/resources/icons/hicolor/scalable/devices/Makefile
 src/main/resources/images/Makefile
 src/main/resources/glade/Makefile
 src/man/Makefile

@@ -111,9 +111,9 @@ class G15Weather():
         self.screen = screen
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
-        self.gconf_client.add_dir(self.gconf_key, gconf.CLIENT_PRELOAD_NONE)
         self.page = None
         self.change_timer = None
+        self.timer = None
         
     def activate(self):
         self.reload_theme()
@@ -123,11 +123,12 @@ class G15Weather():
         self.page = self.screen.new_page(self.paint, id="Weather", 
                                         thumbnail_painter = self.paint_thumbnail,
                                         panel_painter = self.paint_thumbnail)
-        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self.loc_changed)
+        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self.loc_changed, None)
         self.screen.redraw(self.page)
         self.refresh_after_interval()
         
     def refresh_after_interval(self):
+        self.cancel_timer()
         val = self.gconf_client.get_int(self.gconf_key + "/update")
         if val == 0:
             val = 3600
@@ -175,6 +176,7 @@ class G15Weather():
         attributes = {}
         try :
             loc = get_location(self.gconf_client, self.gconf_key)
+            print "Getting weather for %s" % loc
             self.weather = pywapi.get_weather_from_google(loc,  hl = ''  )
             
             properties["location"] = loc
@@ -247,26 +249,29 @@ class G15Weather():
     def get_mono_thumb_icon(self, icon):
         if icon == None or icon == "":
             return None
-        elif icon == "/ig/images/weather/chance_of_rain.gif":
-            theme_icon = "weather-showers-scattered"
-        elif icon == "/ig/images/weather/sunny.gif" or icon == "/ig/images/weather/haze.gif": 
-            return "mono-sunny.gif"
-        elif icon == "/ig/images/weather/mostly_sunny.gif":
-            return "mono-few-clouds.gif"
-        elif icon == "/ig/images/weather/partly_cloudy.gif":
-            return "mono-clouds.gif"
-        elif icon == "/ig/images/weather/mostly_cloudy.gif" or icon == "/ig/images/weather/cloudy.gif":
-            return "mono-more-clouds.gif"
-        elif icon == "/ig/images/weather/rain.gif":
-            return "mono-rain.gif"
-        elif icon == "/ig/images/weather/mist.gif" or icon == "/ig/images/weather/fog.gif":
-            return "mono-fog.gif"
-        elif icon == "/ig/images/weather/chance_of_snow.gif" or icon == "/ig/images/weather/snow.gif" or icon == "/ig/images/weather/sleet.gif" or icon == "/ig/images/weather/flurries.gif":
-            return "mono-snow.gif"
-        elif icon == "/ig/images/weather/storm.gif" or icon == "/ig/images/weather/chance_of_storm.gif":
-            return "mono-dark-clouds.gif"
-        elif icon == "/ig/images/weather/thunderstorm.gif" or icon == "/ig/images/weather/chance_of_tstorm.gif":
-            return "mono-tunder.gif"
+        else :
+            base_icon= self._get_base_icon(icon)
+            
+            if base_icon in [ "chance_of_rain", "scatteredshowers" ]:
+                return "weather-showers-scattered.gif"
+            elif base_icon == "sunny" or icon == "haze": 
+                return "mono-sunny.gif"
+            elif base_icon == "mostly_sunny":
+                return "mono-few-clouds.gif"
+            elif base_icon == "partly_cloudy":
+                return "mono-clouds.gif"
+            elif base_icon == "mostly_cloudy" or icon == "cloudy":
+                return "mono-more-clouds.gif"
+            elif base_icon == "rain":
+                return "mono-rain.gif"
+            elif base_icon == "mist" or icon == "fog":
+                return "mono-fog.gif"
+            elif base_icon == "chance_of_snow" or icon == "snow" or icon == "sleet" or icon == "flurries":
+                return "mono-snow.gif"
+            elif base_icon == "storm" or icon == "chance_of_storm":
+                return "mono-dark-clouds.gif"
+            elif base_icon == "thunderstorm" or icon == "chance_of_tstorm":
+                return "mono-thunder.gif"
         
     def translate_icon(self, icon):
         
@@ -281,41 +286,36 @@ class G15Weather():
         images/weather/smoke.gif
         images/weather/haze.gif
         '''
+        
+        
         theme_icon = None
-        mono_thumb_icon = None
         if icon == None or icon == "":
             return None
-        elif icon == "/ig/images/weather/chance_of_rain.gif":
-            theme_icon = "weather-showers-scattered"
-        elif icon == "/ig/images/weather/sunny.gif" or icon == "/ig/images/weather/haze.gif": 
-            theme_icon = "weather-clear"
-            mono_thumb_icon = "mono-sunny.gif"
-        elif icon == "/ig/images/weather/mostly_sunny.gif":
-            theme_icon = "weather-few-clouds"
-            mono_thumb_icon = "mono-few-clouds.gif"
-        elif icon == "/ig/images/weather/partly_cloudy.gif":
-            theme_icon = "weather-clouds"
-            mono_thumb_icon = "mono-clouds.gif"
-        elif icon == "/ig/images/weather/mostly_cloudy.gif" or icon == "/ig/images/weather/cloudy.gif":
-            theme_icon = "weather-overcast"
-            mono_thumb_icon = "mono-more-clouds.gif"
-        elif icon == "/ig/images/weather/rain.gif":
-            theme_icon = "weather-showers"
-            mono_thumb_icon = "mono-rain.gif"
-        elif icon == "/ig/images/weather/mist.gif" or icon == "/ig/images/weather/fog.gif":
-            theme_icon = "weather-fog"
-            mono_thumb_icon = "mono-fog.gif"
-        elif icon == "/ig/images/weather/chance_of_snow.gif" or icon == "/ig/images/weather/snow.gif" or icon == "/ig/images/weather/sleet.gif" or icon == "/ig/images/weather/flurries.gif":
-            theme_icon = "weather-snow"
-            mono_thumb_icon = "mono-snow.gif"
-        elif icon == "/ig/images/weather/storm.gif" or icon == "/ig/images/weather/chance_of_storm.gif":
-            # TODO is this too extreme?
-            mono_thumb_icon = "mono-dark-clouds.gif"
-            theme_icon = "weather-severe-alert"
-        elif icon == "/ig/images/weather/thunderstorm.gif" or icon == "/ig/images/weather/chance_of_tstorm.gif":
-            # TODO is this right?
-            mono_thumb_icon = "mono-tunder.gif"
-            theme_icon = "weather-storm"
+        else:
+            base_icon= self._get_base_icon(icon)
+            
+            if base_icon in [ "chance_of_rain", "scatteredshowers" ]:
+                theme_icon = "weather-showers-scattered"
+            elif base_icon == "sunny" or icon == "haze": 
+                theme_icon = "weather-clear"
+            elif base_icon == "mostlysunny":
+                theme_icon = "weather-few-clouds"
+            elif base_icon == "partlycloudy":
+                theme_icon = "weather-clouds"
+            elif base_icon == "mostlycloudy" or icon == "cloudy":
+                theme_icon = "weather-overcast"
+            elif base_icon == "rain":
+                theme_icon = "weather-showers"
+            elif base_icon == "mist" or icon == "fog":
+                theme_icon = "weather-fog"
+            elif base_icon in [ "chanceofsnow", "sleet", "flurries"]:
+                theme_icon = "weather-snow"
+            elif base_icon in [ "storm", "chanceofstorm" ]:
+                # TODO is this too extreme?
+                theme_icon = "weather-severe-alert"
+            elif base_icon in [ "thunderstorm", "chanceoftstorm" ]:
+                # TODO is this right?
+                theme_icon = "weather-storm"
             
         now = datetime.datetime.now()
         # TODO dusk / dawn based on locale / time of year - probably hard? 
@@ -337,6 +337,13 @@ class G15Weather():
         else:
             logger.warning("Having to resort to using Google weather image http://www.google.com%s. This may hang up the LCD for a bit" % icon)
             return "http://www.google.com" + icon
+        
+    def _get_base_icon(self, icon):
+        # Strips off URL path, image extension, size and weather prefix if present
+        base_icon = os.path.splitext(os.path.basename(icon))[0].rsplit("-")[0]
+        if base_icon.startswith("weather_"):
+            base_icon = base_icon[8:]
+        return base_icon
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         total_taken = 0

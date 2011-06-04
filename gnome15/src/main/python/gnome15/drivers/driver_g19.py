@@ -142,16 +142,16 @@ controls = [ keyboard_backlight_control, default_keyboard_backlight_control, lcd
 
 class Driver(g15driver.AbstractDriver):
 
-    def __init__(self, host = 'localhost', port= 15551, on_close = None):
+    def __init__(self, device, host = 'localhost', port= 15551, on_close = None):
         g15driver.AbstractDriver.__init__(self, "g19")
         self.init_string="GBUF"
         self.remote_host=host
+        self.device = device
         self.socket = None
         self.on_close = on_close
         self.lock = RLock()
         self.remote_port=port
         self.thread = None
-        self._init_driver()
     
     def get_antialias(self):
         return cairo.ANTIALIAS_SUBPIXEL
@@ -190,8 +190,6 @@ class Driver(g15driver.AbstractDriver):
     def connect(self):          
         if self.is_connected():
             raise Exception("Already connected")
-        
-        self._init_driver()
         
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(30.0)

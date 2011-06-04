@@ -29,7 +29,7 @@ def on_draw( audio_sample_array, cr, screenlet ):
 
 	cr.set_line_width( screenlet.bar_width )
 
-	h = 50
+	h = screenlet.bar_height
 
 	fx = 0
 	fy = 0
@@ -43,8 +43,8 @@ def on_draw( audio_sample_array, cr, screenlet ):
 
 		a = ( math.pi*2 / n_bars ) * ( i / ( l / n_bars ) )
 
-		x = math.sin( a ) * ( h + bar_height ) + width / 2
-		y = math.cos( a ) * ( h + bar_height ) + height / 2
+		x = ( math.sin( a ) * ( h + bar_height ) + width / 2 ) 
+		y = ( math.cos( a ) * ( h + bar_height ) + height / 2 )
 
 		if not i:
 			fx = x

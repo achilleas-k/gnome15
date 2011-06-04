@@ -254,7 +254,8 @@ DBus service implementing the freedesktop notification specification
 '''     
 class G15NotifyService(dbus.service.Object):
     
-    def __init__(self, gconf_client,gconf_key, screen):
+    def __init__(self, gconf_client, gconf_key, screen, bus_name):
+        dbus.service.Object.__init__(self, bus_name, BUS_NAME)
         self.id = 1
         self._lock = RLock()
         self._gconf_client = gconf_client
@@ -535,10 +536,9 @@ class G15NotifyLCD():
                 if i == 2:
                     raise
                 
-        self._service = G15NotifyService(self._gconf_client, self._gconf_key, self._screen)
         
         try :
-            dbus.service.Object.__init__(self._service, self._bus_name, BUS_NAME)
+        	self._service = G15NotifyService(self._gconf_client, self._gconf_key, self._screen, self._bus_name)
         except KeyError:
             logger.error("DBUS notify service failed to start. May already be started.")     
             

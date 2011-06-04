@@ -25,14 +25,11 @@ import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15drivermanager as g15drivermanager
-import datetime
 from threading import Timer
 import gtk
-import os
-import sys
 import dbus
-import os
 import logging
+import os.path
 logger = logging.getLogger("screensaver")
 
 # Plugin details - All of these must be provided
@@ -67,7 +64,6 @@ def show_preferences(parent, gconf_client, gconf_key):
     if driver.get_bpp() == 0:
         widget_tree.get_object("MessageFrame").hide()
         
-    message_text = widget_tree.get_object("MessageTextView")
     text_buffer = widget_tree.get_object("TextBuffer")
     text = gconf_client.get_string(gconf_key + "/message_text")
     if text == None:
@@ -140,7 +136,8 @@ class G15ScreenSaver():
         self._activated = False
         
     def destroy(self):
-        self._session_bus.remove_signal_receiver(self._screensaver_changed_handler, dbus_interface = self._dbus_interface, signal_name = "ActiveChanged")
+        if self._session_bus:
+            self._session_bus.remove_signal_receiver(self._screensaver_changed_handler, dbus_interface = self._dbus_interface, signal_name = "ActiveChanged")
         
     ''' Functions specific to plugin
     ''' 
@@ -153,14 +150,14 @@ class G15ScreenSaver():
     def _check_page(self):
         if self._in_screensaver:
             self._page = self._screen.get_page("Screensaver")
-            if self._screen.service.driver.get_bpp() != 0 and self._page == None:
+            if self._screen.driver.get_bpp() != 0 and self._page == None:
                 self._reload_theme()
                 self._page = self._screen.new_page(self._paint, g15screen.PRI_EXCLUSIVE, id="Screensaver")
                 self._screen.redraw(self._page)
             if not self.dimmed and self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
                 self._dim_keyboard()
         else:
-            if self._screen.service.driver.get_bpp() != 0:
+            if self._screen.driver.get_bpp() != 0:
                 self._remove_page()
             if self.dimmed and self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
                 self._light_keyboard()

@@ -24,20 +24,18 @@ import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import datetime
-import gtk
 import pango
 import os
-import sys
+import timer
 
-import timer as g15timer
 import preferences as g15preferences
 
 # Plugin details - All of these must be provided
 id="stopwatch"
 name="Stopwatch"
-description="Stopwatch/Countdown timer plugin for gnome15.\n \
-Two timers are available. User can select the a mode (stopwatch/countdown) for each of them.\n \
-Use the D-pad or the L3-L5 keys to start/pause and reset the timers.\n"
+description="Stopwatch/Countdown timer plugin for gnome15.\
+Two timers are available. User can select the a mode (stopwatch/countdown) for each of them.\
+Use the D-pad or the L3-L5 keys to start/pause and reset the timers."
 author="Nuno Araujo <nuno.araujo@russo79.com>"
 copyright="Copyright (C)2011 Nuno Araujo"
 site="http://www.gnome15.org/"
@@ -66,17 +64,26 @@ class G15Stopwatch():
         self.gconf_key = gconf_key
         self.active_timer = None
         self.message = None
+        self.page = None
 
     def activate(self):
         self.timer = None
         self.notify_timer = None
-        self.timer1 = g15timer.G15Timer()
-        self.timer2 = g15timer.G15Timer()
+        self.timer1 = timer.G15Timer()
+        self.timer2 = timer.G15Timer()
         self.load_configuration()
 
         self._reload_theme()
 
-        self.page = self.screen.new_page(self.paint, id="Stopwatch", thumbnail_painter = self.paint_thumbnail, panel_painter = self.paint_thumbnail)
+        if self.screen.device.bpp == 16:
+            self.page = self.screen.new_page(self.paint, id="Stopwatch", thumbnail_painter = self.paint_thumbnail, panel_painter = self.paint_thumbnail)
+        else:
+            """
+            Don't show on the panel for G15, there just isn't enough room
+            Long term, this will be configurable per plugin
+            """
+            self.page = self.screen.new_page(self.paint, id="Stopwatch", thumbnail_painter = self.paint_thumbnail)
+            
         self.page.title = "Stopwatch"
 
         self.screen.redraw(self.page)
@@ -179,7 +186,7 @@ class G15Stopwatch():
     the amount of space you have (i.e. 6 pixels high maximum and limited width)
     ''' 
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if self.screen.is_visible(self.page):
+        if not self.page or self.screen.is_visible(self.page):
             return
         if not (self.timer1.get_enabled() or self.timer2.get_enabled()):
             return
@@ -193,7 +200,6 @@ class G15Stopwatch():
             font_size = 8
             factor = 2
             font_name = g15globals.fixed_size_font_name
-            x = 1
             gap = 1
         else:
             factor = 1 if horizontal else 2
@@ -204,7 +210,6 @@ class G15Stopwatch():
             else:
                 text = properties["timer"]
                 font_size = allocated_size / 2
-            x = 4
             gap = 8
 
         pango_context, layout = g15util.create_pango_context(canvas, self.screen, text, align = pango.ALIGN_CENTER, font_desc = font_name, font_absolute_size =  font_size * pango.SCALE / factor)
@@ -239,18 +244,18 @@ class G15Stopwatch():
         v = self.gconf_client.get(key)
         return v.get_int() if v != None else default_value
         
-    def _load_timer(self, timer, number):        
-        timer.set_enabled(self.gconf_client.get_bool(self.gconf_key + "/timer" + str(number) + "_enabled") or False)
-        timer.label = self.gconf_client.get_string(self.gconf_key + "/timer" + str(number) + "_label") or ""
+    def _load_timer(self, timer_object, number):        
+        timer_object.set_enabled(self.gconf_client.get_bool(self.gconf_key + "/timer" + str(number) + "_enabled") or False)
+        timer_object.label = self.gconf_client.get_string(self.gconf_key + "/timer" + str(number) + "_label") or ""
         if self.gconf_client.get_bool(self.gconf_key + "/timer" + str(number) + "_mode_countdown"):
-            timer.mode = g15timer.G15Timer.TIMER_MODE_COUNTDOWN
-            timer.initial_value = datetime.timedelta(hours = self._get_or_default(self.gconf_key + "/timer1_hours", 0), \
+            timer_object.mode = timer.G15Timer.TIMER_MODE_COUNTDOWN
+            timer_object.initial_value = datetime.timedelta(hours = self._get_or_default(self.gconf_key + "/timer1_hours", 0), \
                                                      minutes = self._get_or_default(self.gconf_key + "/timer1_minutes", 5), \
                                                      seconds = self._get_or_default(self.gconf_key + "/timer1_seconds", 0))
-            timer.loop = self.gconf_client.get_bool(self.gconf_key + "/timer" + number + "_loop")
+            timer_object.loop = self.gconf_client.get_bool(self.gconf_key + "/timer" + number + "_loop")
         else:
-            timer.mode = g15timer.G15Timer.TIMER_MODE_STOPWATCH
-            timer.initial_value = datetime.timedelta(0, 0, 0)
+            timer_object.mode = timer.G15Timer.TIMER_MODE_STOPWATCH
+            timer_object.initial_value = datetime.timedelta(0, 0, 0)
 
     def load_configuration(self):
         self._load_timer(self.timer1, '1')

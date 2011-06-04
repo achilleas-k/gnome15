@@ -91,7 +91,7 @@ class IndicatorMeMenuEntry(dbusmenu.DBUSMenuEntry):
             self.icon = self.properties[INDICATOR_ICON] if INDICATOR_ICON in self.properties else None
         
     def get_alt_label(self):
-        return self.properties[RIGHT_SIDE_TEXT] if RIGHT_SIDE_TEXT in self.properties else None
+        return self.properties[RIGHT_SIDE_TEXT] if RIGHT_SIDE_TEXT in self.properties else ""
         
     def is_app_running(self):
         return APP_RUNNING in self.properties and self.properties[APP_RUNNING]
@@ -142,10 +142,8 @@ class G15IndicatorMe():
     def deactivate(self):
         self._session_bus.remove_signal_receiver(self._status_changed_handle)
         self._session_bus.remove_signal_receiver(self._user_changed_handle)
-        if self._menu_page != None and self._screen.pages.contains(self._menu_page):
-            self._screen.del_page(self._menu_page)
-        if self._popup_page != None and self._screen.pages.contains(self._popup_page):
-            self._screen.del_page(self._popup_page)
+        self._screen.del_page(self._menu_page)
+        self._screen.del_page(self._popup_page)
         
     def destroy(self):
         pass
@@ -166,10 +164,10 @@ class G15IndicatorMe():
     Private
     '''     
     def _create_pages(self):  
-        self._menu_page = self._screen.new_page(self._paint_menu, id=name, priority = g15screen.PRI_NORMAL, on_shown = self._on_menu_page_show)
+        self._menu_page = self._screen.new_page(self._paint_menu, id="Indicator Me Status", priority = g15screen.PRI_NORMAL, on_shown = self._on_menu_page_show)
         self._menu_page.set_title(self._get_status_text())
         self._screen.redraw(self._menu_page)
-        self._popup_page = self._screen.new_page(self._paint_popup, priority=g15screen.PRI_INVISIBLE, id="Indicator Me", panel_painter = self._paint_popup_thumbnail)
+        self._popup_page = self._screen.new_page(self._paint_popup, priority=g15screen.PRI_INVISIBLE, id="Indicator Me Popup", panel_painter = self._paint_popup_thumbnail)
         
     def _on_menu_page_show(self):
         for item in self._menu.get_items():

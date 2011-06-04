@@ -51,7 +51,7 @@ def create(gconf_key, gconf_client, screen):
 POSSIBLE_ICON_NAMES = [ "folder" ]
 FS_ICONS = { "" }
 
-MODES = { "free" : "Free", "used" : "Used", "size" : "Size "}
+MODES = { "free" : "Free", "used" : "Used", "size" : "Size"}
 MODE_LIST = list(MODES.keys())
 
 """
@@ -211,7 +211,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         return properties
             
     def handle_key(self, keys, state, post):        
-        if not post and state == g15driver.KEY_STATE_DOWN: 
+        if not post and state == g15driver.KEY_STATE_DOWN and self.page == self.screen.get_visible_page(): 
             if g15plugin.G15MenuPlugin.handle_key(self, keys, state, post):
                 return True
             elif g15driver.G_KEY_L3 in keys or g15driver.G_KEY_SETTINGS in keys:

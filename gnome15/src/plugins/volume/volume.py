@@ -93,7 +93,8 @@ class G15Volume():
     ''' Functions specific to plugin
     ''' 
     def _start_monitoring(self):        
-        self._volthread = VolumeThread(self).start()
+        self._volthread = VolumeThread(self)
+        self._volthread.start()
     
     def _config_changed(self, client, connection_id, entry, args):    
         self._stop_monitoring()
@@ -102,7 +103,7 @@ class G15Volume():
             
     def _stop_monitoring(self):
         if self._volthread != None:
-            self._volthread.stop_monitoring()
+            self._volthread._stop_monitoring()
     
     def _reload_theme(self):        
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen)
@@ -137,6 +138,10 @@ class G15Volume():
         self.theme.draw(canvas, properties)
     
     def _popup(self):
+        if not self._activated:
+            logger.warning("Cannot popup volume when it is deactivated. This suggests the volume thread has not died.")
+            return
+        
         page = self._screen.get_page("Volume")
         if page == None:
             self._reload_theme()
@@ -224,10 +229,15 @@ class VolumeThread(Thread):
         try :
             while not self._stop:
                 if self._poll.poll(5):
+                    if self._stop:
+                        break
                     g15util.schedule("popupVolume", 0, self._volume._popup)
                     if not self._open.read():
                         break
         finally:
-            self._poll.unregister(self._open)
+            try :
+                self._poll.unregister(self._open)
+            except :
+                pass
             self._open.close()
  

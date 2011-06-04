@@ -5,6 +5,7 @@ gnome15_PYTHON = 		\
 	g15service.py \
 	g15config.py \
 	g15devices.py \
+	g15desktop.py \
 	g15dbus.py \
 	g15gtk.py \
 	g15driver.py \
@@ -15,7 +16,6 @@ gnome15_PYTHON = 		\
 	g15plugin.py \
 	g15pluginmanager.py \
 	g15profile.py \
-	g15profilegconf.py \
 	g15exceptions.py \
 	g15screen.py \
 	g15theme.py \

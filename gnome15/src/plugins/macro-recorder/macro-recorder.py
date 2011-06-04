@@ -62,11 +62,11 @@ def create(gconf_key, gconf_client, screen):
 
 
 class RecordThread(Thread):
-    def __init__(self, record_callback):
+    def __init__(self, _record_callback):
         Thread.__init__(self)
         self.setDaemon(True)
         self.name = "RecordThread"
-        self.record_callback = record_callback  
+        self._record_callback = _record_callback  
         self.ctx = record_dpy.record_create_context(
                                 0,
                                 [record.AllClients],
@@ -88,144 +88,66 @@ class RecordThread(Thread):
             local_dpy.flush()
         
     def run(self):      
-        record_dpy.record_enable_context(self.ctx, self.record_callback)
+        record_dpy.record_enable_context(self.ctx, self._record_callback)
         record_dpy.record_free_context(self.ctx)
+        
+class MacroRecorderScreenChangeListener(g15screen.ScreenChangeAdapter):
+    def __init__(self, plugin):
+        self._plugin = plugin
+        
+    def memory_bank_changed(self, new_bank_number):
+        self._plugin._redraw()
 
 class G15MacroRecorder():
     
     def __init__(self, gconf_key, gconf_client, screen):
-        self.screen = screen
-        self.gconf_client = gconf_client
-        self.gconf_key = gconf_key
-        self.record_key = None
-        self.record_thread = None
-        self.last_keys = None
-        self.page = None
-        self.key_down = None
+        self._screen = screen
+        self._gconf_client = gconf_client
+        self._gconf_key = gconf_key
+        self._record_key = None
+        self._record_thread = None
+        self._last_keys = None
+        self._page = None
+        self._key_down = None
     
     def activate(self):
-        self.reload_theme()
+        self._reload_theme()
+        self._listener = MacroRecorderScreenChangeListener(self)
+        self._screen.add_screen_change_listener(self._listener)
     
     def deactivate(self):
-        pass
+        self._screen.remove_screen_change_listener(self._listener)
         
     def destroy(self):
-        if self.record_thread != None:
-            self.record_thread.disable_record_context()
+        if self._record_thread != None:
+            self._record_thread.disable_record_context()
     
     def handle_key(self, keys, state, post):    
-        if not post and state == g15driver.KEY_STATE_UP:
+        if not post and state == g15driver.KEY_STATE_DOWN:
             # Memory keys
-            if self.page != None and ( g15driver.G_KEY_M1 in keys or g15driver.G_KEY_M2 in keys or g15driver.G_KEY_M3 in keys ):
-                self.screen.redraw(self.page)
-                return False
-            # Set recording
-            elif g15driver.G_KEY_MR in keys:              
-                if self.record_thread != None:
-                    self.cancel_macro(None)
+            if g15driver.G_KEY_MR in keys:              
+                if self._record_thread != None:
+                    self._cancel_macro(None)
                 else:
-                    self.start_recording()
+                    self._start_recording()
                 return True
+            elif g15driver.G_KEY_M1 in keys or g15driver.G_KEY_M2 in keys or g15driver.G_KEY_M3 in keys:
+                pass
             else:
-                self.last_keys = keys                    
-                if self.record_thread != None:
-                    self.record_keys = keys
-                    self.done_recording()
+                # All other keys end recording
+                self._last_keys = keys                    
+                if self._record_thread != None:
+                    self._record_keys = keys
+                    self._done_recording()
                     return True
                 
         return False
+                
+    '''
+    Private
+    ''' 
     
-    def start_recording(self):      
-        self.script_model = []      
-        self.page = self.screen.get_page("Macro Recorder")
-        if self.page == None:
-            self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_EXCLUSIVE,  id="Macro Recorder")
-        self.page.title = "Macro Recorder"
-        self.icon = "media-record"
-        self.message = None
-        self.screen.redraw(self.page)
-        
-        self.record_thread = RecordThread(self.record_callback)
-        self.record_thread.start()
-        
-    def paint(self, canvas):
-        
-        active_profile = g15profile.get_active_profile()
-        
-        properties = {}
-        properties["icon"] = g15util.get_icon_path(self.icon, self.screen.height)
-        
-        properties["memory"] = "M%d" % self.screen.get_mkey()
-            
-        if active_profile != None:
-            properties["profile"] = active_profile.name
-            properties["profile_icon"] = active_profile.icon
-            
-            if self.message == None:
-                properties["message"] = "Recording on M%s. Type in your macro then press the G-Key to assign it to, or MR to cancel." % self.screen.get_mkey()
-            else:
-                properties["message"] = self.message
-        else:
-            properties["profile"] = "No Profile"
-            properties["profile_icon"] = ""
-            properties["message"] = "You have no profiles configured. Configure one now using the Macro tool"
-            
-        self.theme.draw(canvas, properties)  
-        
-    def cancel_macro(self,event,data=None):
-        self.halt_recorder()
-        self.hide_recorder()
-
-    def hide_recorder(self, after = 0.0):
-        if after == 0.0:   
-            self.screen.del_page(self.page)
-        else:
-            self.screen.delete_after(after, self.page)
-            
-    def halt_recorder(self):        
-        if self.record_thread != None:
-            self.record_thread.disable_record_context()
-        self.key_down = None
-        self.record_key = None
-        self.record_thread = None
-            
-    def done_recording(self):
-        if self.record_keys != None:
-            record_keys = self.record_keys    
-            self.halt_recorder()   
-              
-            active_profile = g15profile.get_active_profile()
-            key_name = ", ".join(g15util.get_key_names(record_keys))
-            if len(self.script_model) == 0:  
-                self.icon = "edit-delete"
-                self.message = key_name + " deleted"
-                active_profile.delete_macro(self.screen.get_mkey(), record_keys)  
-                self.screen.redraw(self.page)   
-            else:
-                macro_script = ""
-                for row in self.script_model:
-                    if len(macro_script) != 0:                    
-                        macro_script += "\n"
-                    macro_script += row[0] + " " + row[1]       
-                self.icon = "tag-new"   
-                self.message = key_name + " created"
-                memory = self.screen.get_mkey()
-                macro = active_profile.get_macro(memory, record_keys)
-                if macro:
-                    macro.type = g15profile.MACRO_SCRIPT
-                    macro.macro = macro_script
-                    macro.save()
-                else:                
-                    active_profile.create_macro(memory, record_keys, key_name, g15profile.MACRO_SCRIPT, macro_script)
-                self.screen.redraw(self.page)
-            self.hide_recorder(3.0)    
-        else:
-            self.hide_recorder()     
-        
-    def reload_theme(self):        
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-    
-    def lookup_keysym(self, keysym):
+    def _lookup_keysym(self, keysym):
         logger.debug("Looking up %s" % keysym)
         for name in dir(XK):
             logger.debug("   %s" % name)
@@ -233,7 +155,7 @@ class G15MacroRecorder():
                 return name[3:]
         return "[%d]" % keysym
     
-    def record_callback(self, reply):
+    def _record_callback(self, reply):
         if reply.category != record.FromServer:
             return
         if reply.client_swapped:
@@ -248,23 +170,116 @@ class G15MacroRecorder():
             if event.type in [X.KeyPress, X.KeyRelease]:
                 pr = event.type == X.KeyPress and "Press" or "Release"
                 delay = 0
-                if self.key_down == None:
-                    self.key_down = time.time()
+                if self._key_down == None:
+                    self._key_down = time.time()
                 else :
                     
                     now = time.time()
-                    delay = time.time() - self.key_down
-                    self.script_model.append(["Delay", str(int(delay * 1000))])
-                    self.key_down = now
+                    delay = time.time() - self._key_down
+                    self._script_model.append(["Delay", str(int(delay * 1000))])
+                    self._key_down = now
                 
                 logger.debug("Event detail = %s" % event.detail)
                 keysym = local_dpy.keycode_to_keysym(event.detail, 0)
                 if not keysym:
                     logger.debug("Recorded %s" % event.detail)
-                    self.script_model.append([pr, event.detail])
+                    self._script_model.append([pr, event.detail])
                 else:
                     logger.debug("Keysym = %s" % str(keysym))
-                    s = self.lookup_keysym(keysym)
+                    s = self._lookup_keysym(keysym)
                     logger.debug("Recorded %s" % s)
-                    self.script_model.append([pr, s])
-                self.screen.redraw(self.page)
+                    self._script_model.append([pr, s])
+                self._screen.redraw(self._page)
+            
+    def _done_recording(self):
+        if self._record_keys != None:
+            record_keys = self._record_keys    
+            self._halt_recorder()   
+              
+            active_profile = g15profile.get_active_profile(self._screen.device)
+            key_name = ", ".join(g15util.get_key_names(record_keys))
+            if len(self._script_model) == 0:  
+                self.icon = "edit-delete"
+                self.message = key_name + " deleted"
+                active_profile.delete_macro(self._screen.get_mkey(), record_keys)  
+                self._screen.redraw(self._page)   
+            else:
+                macro_script = ""
+                for row in self._script_model:
+                    if len(macro_script) != 0:                    
+                        macro_script += "\n"
+                    macro_script += row[0] + " " + row[1]       
+                self.icon = "tag-new"   
+                self.message = key_name + " created"
+                memory = self._screen.get_mkey()
+                macro = active_profile.get_macro(memory, record_keys)
+                if macro:
+                    macro.type = g15profile.MACRO_SCRIPT
+                    macro.macro = macro_script
+                    macro.save()
+                else:                
+                    active_profile.create_macro(memory, record_keys, key_name, g15profile.MACRO_SCRIPT, macro_script)
+                self._screen.redraw(self._page)
+            self._hide_recorder(3.0)    
+        else:
+            self._hide_recorder()
+
+    def _hide_recorder(self, after = 0.0):
+        if after == 0.0:   
+            self._screen.del_page(self._page)
+        else:
+            self._screen.delete_after(after, self._page) 
+            
+    def _halt_recorder(self):        
+        if self._record_thread != None:
+            self._record_thread.disable_record_context()
+        self._key_down = None
+        self._record_key = None
+        self._record_thread = None
+        
+    def _cancel_macro(self,event,data=None):
+        self._halt_recorder()
+        self._hide_recorder()
+        
+    def _redraw(self):
+        if self._page != None:
+            self._screen.redraw(self._page)     
+        
+    def _reload_theme(self):        
+        self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen)
+    
+    def _start_recording(self):      
+        self._script_model = []      
+        self._page = self._screen.get_page("Macro Recorder")
+        if self._page == None:
+            self._page = self._screen.new_page(self._paint, priority=g15screen.PRI_EXCLUSIVE,  id="Macro Recorder")
+        self._page.title = "Macro Recorder"
+        self.icon = "media-record"
+        self.message = None
+        self._screen.redraw(self._page)
+        
+        self._record_thread = RecordThread(self._record_callback)
+        self._record_thread.start()
+        
+    def _paint(self, canvas):
+        
+        active_profile = g15profile.get_active_profile(self._screen.device)
+        
+        properties = {}
+        properties["icon"] = g15util.get_icon_path(self.icon, self._screen.height)
+        properties["memory"] = "M%d" % self._screen.get_mkey()
+            
+        if active_profile != None:
+            properties["profile"] = active_profile.name
+            properties["profile_icon"] = active_profile.icon
+            
+            if self.message == None:
+                properties["message"] = "Recording on M%s. Type in your macro then press the G-Key to assign it to, or MR to cancel." % self._screen.get_mkey()
+            else:
+                properties["message"] = self.message
+        else:
+            properties["profile"] = "No Profile"
+            properties["profile_icon"] = ""
+            properties["message"] = "You have no profiles configured. Configure one now using the Macro tool"
+            
+        self._theme.draw(canvas, properties)

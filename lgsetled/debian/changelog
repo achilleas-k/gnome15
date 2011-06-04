@@ -1,3 +1,10 @@
+lgsetled (0.0.3-1) natty; urgency=low
+
+  * Removed attempt at setting setuid. Will now leave this to the user, with
+    help from Gnome15 displaying a warning message.
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon, 30 May 2011 10:45:01 +0000
+
 lgsetled (0.0.2-1) natty; urgency=low
 
   * First natty release.

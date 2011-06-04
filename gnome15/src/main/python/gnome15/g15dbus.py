@@ -21,30 +21,32 @@
 #        +-----------------------------------------------------------------------------+
  
 import dbus.service
-import g15globals as pglobals
-import g15theme as g15theme
-import g15util as g15util
-import g15driver as g15driver
-import time
+import g15globals
+import g15theme
+import g15util
+import g15driver
+import g15devices
 import gc
 import objgraph
 
 from cStringIO import StringIO
-from threading import Thread
 
 BUS_NAME="org.gnome15.Gnome15"
 NAME="/org/gnome15/Service"
 DEBUG_NAME="/org/gnome15/Debug"
 PAGE_NAME="/org/gnome15/Page"
-DRIVER_NAME="/org/gnome15/Driver"
+SCREEN_NAME="/org/gnome15/Screen"
+DEVICE_NAME="/org/gnome15/Device"
 IF_NAME="org.gnome15.Service"
 PAGE_IF_NAME="org.gnome15.Page"
-DRIVER_IF_NAME="org.gnome15.Driver"
+SCREEN_IF_NAME="org.gnome15.Screen"
 DEBUG_IF_NAME="org.gnome15.Debug"
+DEVICE_IF_NAME="org.gnome15.Device"
 
 # Logging
 import logging
 logger = logging.getLogger("dbus")
+logger.setLevel(logging.DEBUG)
 
 '''
 Blinks keyboard backlight at configured rate
@@ -130,6 +132,25 @@ class Blinker():
             self._driver.update_control(c)
             i += 1
     
+class AbstractG15DBUSService(dbus.service.Object):
+    
+    def __init__(self, conn=None, object_path=None, bus_name=None):
+        dbus.service.Object.__init__(self, conn, object_path, bus_name)
+        self._reserved_keys = []
+                    
+    def handle_key(self, keys, state, post):
+        if not post:
+            p = []
+            for k in keys:
+                if k in self._reserved_keys:
+                    p.append(k)
+            if len(p) > 0:
+                if state == g15driver.KEY_STATE_UP:
+                    self.KeysReleased(p)
+                elif state == g15driver.KEY_STATE_DOWN:
+                    self.KeysPressed(p)
+                return True
+    
 class G15DBUSDebugService(dbus.service.Object):
     
     def __init__(self, dbus_service):
@@ -146,40 +167,191 @@ class G15DBUSDebugService(dbus.service.Object):
     def MostCommonTypes(self):
         objgraph.show_most_common_types(limit=200)
         
-class G15DBUSDriverService(dbus.service.Object):
+class G15DBUSDeviceService(AbstractG15DBUSService):
     
-    def __init__(self, dbus_service):
-        dbus.service.Object.__init__(self, dbus_service._bus_name, DRIVER_NAME)
+    def __init__(self, dbus_service, device):
+        AbstractG15DBUSService.__init__(self, dbus_service._bus_name, "%s/%s" % ( DEVICE_NAME, device.uid ) )
+        self._dbus_service = dbus_service
         self._service = dbus_service._service
         self._effect = None
+        self._device = device
+        
+    @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='s')
+    def GetScreen(self):
+        for screen_path in self._dbus_service._dbus_screens:
+            screen = self._dbus_service._dbus_screens[screen_path]
+            if screen._screen.device.uid == self._device.uid:
+                return "%s/%s" % ( SCREEN_NAME, self._device.uid)
+        return ""
+        
+    @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='')
+    def Disable(self):
+        g15devices.set_enabled(self._service.conf_client, self._device, False)
+        
+    @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='')
+    def Enable(self):
+        g15devices.set_enabled(self._service.conf_client, self._device, True)
+        
+    @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='s')
+    def GetModelFullName(self):
+        return self._device.model_fullname
+        
+    @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='s')
+    def GetUID(self):
+        return self._device.uid
+        
+    @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='s')
+    def GetUsbID(self):
+        return "%s:%s" % ( hex(self._device.usb_id[0]), hex(self._device.usb_id[1]) )
+        
+    @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='u')
+    def GetBPP(self):
+        return self._device.bpp
+        
+    @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='uu')
+    def GetSize(self):
+        return self._device.size
+        
+class G15DBUSScreenService(AbstractG15DBUSService):
     
-    @dbus.service.signal(DRIVER_IF_NAME, signature='s')
-    def Disconnected(self, driver_name):
-        pass
+    def __init__(self, dbus_service, screen):
+        AbstractG15DBUSService.__init__(self, dbus_service._bus_name, "%s/%s" % ( SCREEN_NAME, screen.device.uid ) )
+        self._dbus_service = dbus_service
+        self._service = dbus_service._service
+        self._effect = None
+        self._screen = screen
+        self._screen.add_screen_change_listener(self)
+        self._screen.key_handlers.append(self)
+        self._dbus_pages = {}
+        
+    '''
+    screen change listener
+    '''
+        
+    def memory_bank_changed(self, new_memory_bank):
+        logger.debug("Sending memory bank changed signel (%d)" % new_memory_bank)
+        self.MemoryBankChanged(self._get_screen_path(), new_memory_bank)
+        
+    def attention_cleared(self):
+        logger.debug("Sending attention cleared signal")
+        self.AttentionCleared(self._get_screen_path())
+        logger.debug("Sent attention cleared signal")
+            
+    def attention_requested(self, message):
+        logger.debug("Sending attention requested signal")
+        self.AttentionRequested(self._get_screen_path(), message if message != None else "")
+        logger.debug("Sent attention requested signal")
+            
+    def driver_connected(self, driver):
+        logger.debug("Sending driver connected signal")
+        self.Connected(self._get_screen_path(), driver.get_name())
+        logger.debug("Sent driver connected signal")
+            
+    def driver_disconnected(self, driver):
+        logger.debug("Sending driver disconnected signal")
+        self.Disconnected(self._get_screen_path(), driver.get_name())
+        logger.debug("Sent driver disconnected signal")
+        
+    def page_changed(self, page):
+        logger.debug("Sending page changed signal for %s" % page.id)
+        dbus_page = self._dbus_pages[page.id]
+        self.PageChanged(self._get_screen_path(), dbus_page._sequence_number)
+        logger.debug("Sent page changed signal for %s" % page.id)
+        
+    def new_page(self, page): 
+        logger.debug("Sending new page signal for %s" % page.id)
+        dbus_page = G15DBUSPageService(self, page, self._dbus_service._page_sequence_number)
+        self._dbus_pages[page.id] = dbus_page
+        self.PageCreated(self._get_screen_path(), self._dbus_service._page_sequence_number, page.title)
+        self._dbus_service._page_sequence_number += 1
+        logger.debug("Sent new page signal for %s" % page.id)
+        
+    def title_changed(self, page, title):
+        logger.debug("Sending title changed signal for %s" % page.id)
+        dbus_page = self._dbus_pages[page.id]
+        self.PageTitleChanged(self._get_screen_path(), dbus_page._sequence_number, title)
+        logger.debug("Sent title changed signal for %s" % page.id)
     
-    @dbus.service.signal(DRIVER_IF_NAME, signature='s')
-    def Connected(self, driver_name):
-        pass
+    def deleting_page(self, page):
+        logger.debug("Sending page deleted signal for %s" % page.id)
+        if page.id in self._dbus_pages:
+            dbus_page = self._dbus_pages[page.id]
+            if dbus_page in page.key_handlers: 
+                page.key_handlers.remove(dbus_page)
+            self.PageDeleting(self._get_screen_path(), dbus_page._sequence_number)
+        else:
+            logger.warning("DBUS Page %s is deleting, but it never existed. Huh? %s" % ( page.id, str(self._dbus_pages) ))
+        logger.debug("Sent page deleting signal for %s" % page.id)
+            
+    def deleted_page(self, page):
+        logger.debug("Sending page deleted signal for %s" % page.id)
+        if page.id in self._dbus_pages:
+            dbus_page = self._dbus_pages[page.id]
+            self.PageDeleted(self._get_screen_path(), dbus_page._sequence_number)
+            dbus_page.remove_from_connection()
+            del self._dbus_pages[page.id]
+        else:
+            logger.warning("DBUS Page %s was deleted, but it never existed. Huh? %s" % ( page.id, str(self._dbus_pages) ))
+        logger.debug("Sent page deleted signal for %s" % page.id)
+            
+    """
+    DBUS Functions
+    """
     
-    @dbus.service.signal(DRIVER_IF_NAME)
-    def AttentionRequested(self, signature='s'):
-        pass
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='s')
+    def GetMessage(self):
+        return self._screen.attention_message
     
-    @dbus.service.method(DRIVER_IF_NAME, in_signature='', out_signature='ssnnn')
-    def GetInformation(self):
-        driver = self._service.driver
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='')
+    def ClearAttention(self):
+        return self._screen.clear_attention()
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='s', out_signature='')
+    def RequestAttention(self, message):
+        self._screen.request_attention(message)
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='ssn', out_signature='t')
+    def CreatePage(self, id, title, priority):
+        page = self._screen.new_page(None, priority = priority, id = id, thumbnail_painter = None, panel_painter = None)
+        page.set_title(title)
+        return self.GetPageSequenceNumber(id)
+            
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='s')
+    def ReserveKey(self, key_name):
+        if key_name in self._reserved_keys:
+            raise Exception("Already reserved")
+        self._reserved_keys.add(key_name)
+            
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='s')
+    def UnreserveKey(self, key_name):
+        if not key_name in self._reserved_keys:
+            raise Exception("Not reserved")
+        self._reserved_keys.remove(key_name)
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='ssss')
+    def GetDeviceInformation(self):
+        device = self._screen.device
+        return ( device.uid, device.model_name, "%s:%s" % ( hex(device.usb_id[0]),hex(device.usb_id[1]) ), device.model_fullname )
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='ssnnn')
+    def GetDriverInformation(self):
+        driver = self._screen.driver
         return ( driver.get_name(), driver.get_model_name(), driver.get_size()[0], driver.get_size()[1], driver.get_bpp() ) if driver != None else None 
     
-    @dbus.service.method(DRIVER_IF_NAME, in_signature='', out_signature='as')
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='s')
+    def GetDeviceUID(self):
+        return self._screen.device.uid
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='as')
     def GetControlIds(self):
         c = []
-        for control in self._service.driver.get_controls():
+        for control in self._screen.driver.get_controls():
             c.append(control.id)
         return c
     
-    @dbus.service.method(DRIVER_IF_NAME, in_signature='s', out_signature='s')
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='s', out_signature='s')
     def GetControlValue(self, id):
-        control = self._service.driver.get_control(id)
+        control = self._screen.driver.get_control(id)
         if isinstance(control.value, int):
             if control.hint & g15driver.HINT_SWITCH != 0:
                 return "true" if control.value else "false"
@@ -188,13 +360,13 @@ class G15DBUSDriverService(dbus.service.Object):
         else:
             return "%d,%d,%d" % control.value
     
-    @dbus.service.method(DRIVER_IF_NAME, in_signature='s', out_signature='t')
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='s', out_signature='t')
     def GetControlHint(self, id):
-        return self._service.driver.get_control(id).hint
+        return self._screen.driver.get_control(id).hint
     
-    @dbus.service.method(DRIVER_IF_NAME, in_signature='ss', out_signature='')
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='ss', out_signature='')
     def SetControlValue(self, id, value):
-        control = self._service.driver.get_control(id)
+        control = self._screen.driver.get_control(id)
         if isinstance(control.value, int):
             if control.hint & g15driver.HINT_SWITCH != 0:
                 control.value = 1 if value == "true" else 0
@@ -203,31 +375,122 @@ class G15DBUSDriverService(dbus.service.Object):
         else:
             sp = value.split(",")
             control.value = (int(sp[0]), int(sp[1]), int(sp[2]))
-        self._service.driver.update_control(control)
+        self._screen.driver.update_control(control)
     
-    @dbus.service.method(DRIVER_IF_NAME, in_signature='', out_signature='b')
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='b')
     def IsConnected(self):
-        return self._service.driver.is_connected() if self._service.driver != None else False
+        return self._screen.driver.is_connected() if self._screen.driver != None else False
     
-    @dbus.service.method(DRIVER_IF_NAME, in_signature='n')
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='n')
     def CycleKeyboard(self, value):
         self.CancelBlink()
         for c in self._get_dimmable_controls():
             if isinstance(c.value, int):
-                self._service.cycle_level(value, c)
+                self._screen.cycle_level(value, c)
             else:
-                self._service.cycle_color(value, c)
+                self._screen.cycle_color(value, c)
     
-    @dbus.service.method(DRIVER_IF_NAME, in_signature='ddan')
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='ddan')
     def BlinkKeyboard(self, blink_delay, duration, levels):
         self.CancelBlink()
-        self._effect = Blinker(blink_delay, duration, levels, self._service.driver, self._get_dimmable_control_values())
+        self._effect = Blinker(blink_delay, duration, levels, self._screen.driver, self._get_dimmable_control_values())
         
-    @dbus.service.method(DRIVER_IF_NAME)
+    @dbus.service.method(SCREEN_IF_NAME)
     def CancelBlink(self):
         if self._effect != None:
             self._effect.cancel()
-        
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='s', out_signature='u')
+    def GetPageSequenceNumber(self, id):
+        for page in self._dbus_pages.values():
+            if page._page.id == id:
+                return page._sequence_number
+        return 0
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='u')
+    def GetVisiblePageSequenceNumber(self):
+        return self.GetPageSequenceNumber(self._screen.get_visible_page().id)
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='n', out_signature='au')
+    def GetPageSequenceNumbers(self, priority):
+        l = []
+        for page in self._dbus_pages.values():
+            if page._page.priority >= priority:
+                l.append(page._sequence_number)
+        return l
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='s')
+    def GetLastError(self):
+        return str(self._screen.get_last_error())
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='')
+    def ClearPopup(self):
+        return self._screen.clear_popup()
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='n', out_signature='')
+    def Cycle(self, cycle):
+        return self._screen.cycle(cycle)
+    
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='b')
+    def IsAttentionRequested(self):
+        return self._screen.attention
+    
+    """
+    DBUS Signals
+    """
+    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='ss')
+    def Disconnected(self, screen_path, driver_name):
+        pass
+    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='ss')
+    def Connected(self, screen_path, driver_name):
+        pass
+            
+    @dbus.service.signal(SCREEN_IF_NAME, signature='su')
+    def MemoryBankChanged(self, screen_path, new_memory_bank):
+        pass 
+            
+    @dbus.service.signal(SCREEN_IF_NAME, signature='st')
+    def PageChanged(self, screen_path, page_sequence):
+        pass 
+    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='sts')
+    def PageCreated(self, screen_path, page_sequence, title):
+        pass 
+    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='sts')
+    def PageTitleChanged(self, screen_path, page_sequence, new_title):
+        pass
+    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='st')
+    def PageDeleted(self, screen_path, page_sequence):
+        pass
+    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='st')
+    def PageDeleting(self, screen_path, page_sequence):
+        pass
+    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='ss')
+    def AttentionRequested(self, screen_path, message):
+        pass
+    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='s')
+    def AttentionCleared(self, screen_path):
+        pass  
+                    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='sas')
+    def KeysPressed(self, screen_path, keys):
+        pass 
+                    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='sas')
+    def KeysReleased(self, screen_path, keys):
+        pass
+    
+    """
+    Private
+    """
+    
     def _get_dimmable_controls(self):
         controls = []
         for c in self._service.driver.get_controls():
@@ -241,31 +504,15 @@ class G15DBUSDriverService(dbus.service.Object):
             values.append(c.value)
         return values
     
-class AbstractG15DBUSService(dbus.service.Object):
-    
-    def __init__(self):
-        self._reserved_keys = []
-                    
-    def handle_key(self, keys, state, post):
-        if not post:
-            p = []
-            for k in keys:
-                if k in self._reserved_keys:
-                    p.append(k)
-            if len(p) > 0:
-                if state == g15driver.KEY_STATE_UP:
-                    self.KeysReleased(p)
-                elif state == g15driver.KEY_STATE_DOWN:
-                    self.KeysPressed(p)
-                return True
+    def _get_screen_path(self):
+        return "%s/%s" % ( SCREEN_NAME, self._screen.device.uid )
 
 class G15DBUSPageService(AbstractG15DBUSService):
     
-    def __init__(self, plugin, page, sequence_number):
-        AbstractG15DBUSService.__init__(self)
-        dbus.service.Object.__init__(self, plugin._bus_name, "%s%s" % ( PAGE_NAME , str( sequence_number ) ) ) 
+    def __init__(self, screen_service, page, sequence_number):
+        AbstractG15DBUSService.__init__(self, screen_service._dbus_service._bus_name, "%s%s" % ( PAGE_NAME , str( sequence_number ) ) )
         
-        self._plugin = plugin
+        self._screen_service = screen_service
         self._sequence_number = sequence_number
         self._page = page
         self._timer = None
@@ -289,16 +536,16 @@ class G15DBUSPageService(AbstractG15DBUSService):
         return self._page.id
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='')
-    def Destroy(self):
-        self._plugin._service.screen.del_page(self._page)
+    def Delete(self):
+        self._screen_service._screen.del_page(self._page)
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='')
     def Raise(self):
-        self._plugin._service.screen.raise_page(self._page)
+        self._screen_service._screen.raise_page(self._page)
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='', out_signature='')
     def CycleTo(self):
-        self._plugin._service.screen.cycle_to(self._page)
+        self._screen_service._screen.cycle_to(self._page)
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='')
     def NewSurface(self):
@@ -371,15 +618,15 @@ class G15DBUSPageService(AbstractG15DBUSService):
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='')
     def Redraw(self):
-        self._plugin._service.screen.redraw(self._page)
+        self._screen_service._screen.redraw(self._page)
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='ss')
     def LoadTheme(self, dir, variant):
-        self._page.theme = g15theme.G15Theme(dir, self._plugin._service.screen, variant)
+        self._page.theme = g15theme.G15Theme(dir, self._screen_service._screen, variant)
         
     @dbus.service.method(PAGE_IF_NAME, in_signature='s')
     def SetThemeSVG(self, svg_text):
-        self._page.theme = g15theme.G15Theme(None, self._plugin._service.screen, None, svg_text = svg_text)
+        self._page.theme = g15theme.G15Theme(None, self._screen_service._screen, None, svg_text = svg_text)
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='ss')
     def SetThemeProperty(self, name, value):
@@ -391,7 +638,7 @@ class G15DBUSPageService(AbstractG15DBUSService):
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='ndd')
     def SetPriority(self, priority, revert_after, delete_after):
-        self._timer = self._service.screen.set_priority(self._page, priority, revert_after, delete_after)
+        self._timer = self._screen_service._screen.set_priority(self._page, priority, revert_after, delete_after)
                     
     @dbus.service.signal(PAGE_IF_NAME, signature='as')
     def KeysPressed(self, keys):
@@ -424,127 +671,87 @@ class G15DBUSService(AbstractG15DBUSService):
         logger.debug("Exposing service")
         self._bus_name = dbus.service.BusName(BUS_NAME, bus=self._bus, replace_existing=False, allow_replacement=False, do_not_queue=True)
         dbus.service.Object.__init__(self, self._bus_name, NAME)
-        self._service.screen.add_screen_change_listener(self)
-        self._dbus_pages = {}
-        self._driver_service = G15DBUSDriverService(self)
         self._debug_service = G15DBUSDebugService(self)
         self._service.service_listeners.append(self)
-        self._service.screen.key_handlers.append(self)
         logger.debug("DBUS service ready")
+        self._dbus_screens = {}
+        self._dbus_devices = []
+        for device in g15devices.find_all_devices():
+            dbus_device = G15DBUSDeviceService(self, device)
+            self._dbus_devices.append(dbus_device)
         
-    def stop(self):
-        self._driver_service.remove_from_connection()        
-        self._debug_service.remove_from_connection()
-        self.remove_from_connection()
+    def stop(self):   
+        for dbus_device in self._dbus_devices:
+            self._silently_remove_from_connector(dbus_device)
+        for screen in self._dbus_screens:
+            self._silently_remove_from_connector(self._dbus_screens[screen])               
+        self._silently_remove_from_connector(self._debug_service)               
+        self._silently_remove_from_connector(self)
+        
+    def _silently_remove_from_connector(self, object):
+        try:
+            object.remove_from_connection()
+        except Exception:
+            pass
             
     '''
     service listener
     '''
-    def shutting_down(self):
-        logger.debug("Sending shutting down signal")
-        self.ShuttingDown()
+    def screen_added(self, screen):
+        logger.debug("Screen added for %s" % screen.device.model_name)        
+        screen_service = G15DBUSScreenService(self, screen)
+        self._dbus_screens[screen.device.uid] = screen_service
+        self.ScreenAdded("%s/%s" % ( SCREEN_NAME, screen.device.uid ))
         
-    def starting_up(self):
+    def screen_removed(self, screen):
+        logger.debug("Screen removed for %s" % screen.device.model_name)
+        screen_service = self._dbus_screens[screen.device.uid]
+        screen_service.remove_from_connection()  
+        del self._dbus_screens[screen.device.uid]
+        self.ScreenRemoved("%s/%s" % ( SCREEN_NAME, screen.device.uid ))
+        
+    def service_stopping(self):
+        logger.debug("Sending stopping down signal")
+        self.Stopping()
+        
+    def service_stopped(self):
+        logger.debug("Sending stopped down signal")
+        self.Stopped()
+        
+    def service_starting_up(self):
         logger.debug("Sending starting up signal")
-        self.StartingUp()
+        self.Starting()
         
-    def started_up(self):
+    def service_started_up(self):
         logger.debug("Sending started up signal")
-        self.StartedUp()
-        
-    def attention_cleared(self):
-        logger.debug("Sending attention cleared signal")
-        self.AttentionCleared()
-            
-    def attention_requested(self, message):
-        logger.debug("Sending attention requested signal")
-        self.AttentionRequested(message if message != None else "")
-            
-    def driver_connected(self, driver):
-        logger.debug("Sending driver connected signal")
-        self._driver_service.Connected(driver.get_name())
-            
-    def driver_disconnected(self, driver):
-        logger.debug("Sending driver disconnected signal")
-        self._driver_service.Disconnected(driver.get_name())
-        
-    '''
-    screen change listener
-    '''
-    def page_changed(self, page):
-        logger.debug("Sending page changed signal for %s" % page.id)
-        dbus_page = self._dbus_pages[page.id]
-        self.PageChanged(dbus_page._sequence_number)
-        
-    def new_page(self, page): 
-        logger.debug("Sending new page signal for %s" % page.id)
-        dbus_page = G15DBUSPageService(self, page, self._page_sequence_number)
-        self._dbus_pages[page.id] = dbus_page
-        self.PageCreated(self._page_sequence_number, page.title)
-        self._page_sequence_number += 1
-        
-    def title_changed(self, page, title):
-        logger.debug("Sending title changed signal for %s" % page.id)
-        dbus_page = self._dbus_pages[page.id]
-        self.PageTitleChanged(dbus_page._sequence_number, title)
-    
-    def del_page(self, page):
-        logger.debug("Sending page deleted signal for %s" % page.id)
-        if page.id in self._dbus_pages:
-            dbus_page = self._dbus_pages[page.id]
-            page.key_handlers.remove(dbus_page)
-            self.PageDestroyed(dbus_page._sequence_number)
-            del self._dbus_pages[page.id]
-            dbus_page.remove_from_connection()
-            
-        else:
-            logger.warning("DBUS Page %s was deleted, but it never existed. Huh?" % ( page.id ))
+        self.Started()
        
     '''
     DBUS Signals
     ''' 
-    @dbus.service.signal(IF_NAME, signature='t')
-    def PageChanged(self, page_sequence):
-        pass 
     
-    @dbus.service.signal(IF_NAME, signature='ts')
-    def PageCreated(self, page_sequence, title):
-        pass 
-    
-    @dbus.service.signal(IF_NAME, signature='ts')
-    def PageTitleChanged(self, page_sequence, new_title):
+    @dbus.service.signal(IF_NAME)
+    def Stopping(self):
         pass
-    
-    @dbus.service.signal(IF_NAME, signature='t')
-    def PageDestroyed(self, page_sequence):
+      
+    @dbus.service.signal(IF_NAME)
+    def Stopped(self):
         pass
     
     @dbus.service.signal(IF_NAME)
-    def AttentionRequested(self, signature='s'):
-        pass
-    
-    @dbus.service.signal(IF_NAME)
-    def AttentionCleared(self):
-        pass  
-    
-    @dbus.service.signal(IF_NAME)
-    def ShuttingDown(self):
-        pass  
-    
-    @dbus.service.signal(IF_NAME)
-    def StartingUp(self):
+    def Starting(self):
         pass 
     
     @dbus.service.signal(IF_NAME)
-    def StartedUp(self):
+    def Started(self):
         pass
-                    
-    @dbus.service.signal(IF_NAME, signature='as')
-    def KeysPressed(self, keys):
-        pass 
-                    
-    @dbus.service.signal(IF_NAME, signature='as')
-    def KeysReleased(self, keys):
+    
+    @dbus.service.signal(IF_NAME)
+    def ScreenAdded(self, screen_name):
+        pass
+    
+    @dbus.service.signal(IF_NAME)
+    def ScreenRemoved(self, screen_name):
         pass
     
     '''
@@ -552,83 +759,41 @@ class G15DBUSService(AbstractG15DBUSService):
     ''' 
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
     def GetServerInformation(self):
-        return ( pglobals.name, "Gnome15 Project", pglobals.version, "1.0" )
-    
-    
-    
-    @dbus.service.method(IF_NAME, in_signature='s', out_signature='u')
-    def GetPageSequenceNumber(self, id):
-        for page in self._dbus_pages.values():
-            if page._page.id == id:
-                return page._sequence_number
-        return 0
-    
-    @dbus.service.method(IF_NAME, in_signature='', out_signature='u')
-    def GetVisiblePageSequenceNumber(self):
-        return self.GetPageSequenceNumber(self._service.screen.get_visible_page().id)
-    
-    @dbus.service.method(IF_NAME, in_signature='n', out_signature='au')
-    def GetPageSequenceNumbers(self, priority):
-        l = []
-        for page in self._dbus_pages.values():
-            if page._page.priority >= priority:
-                l.append(page._sequence_number)
-        return l
-    
-    @dbus.service.method(IF_NAME, in_signature='', out_signature='s')
-    def GetLastError(self):
-        return str(self._service.get_last_error())
+        return ( g15globals.name, "Gnome15 Project", g15globals.version, "1.1" )
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='')
-    def Shutdown(self):
+    def Stop(self):
         self._service.shutdown()
     
-    @dbus.service.method(IF_NAME, in_signature='', out_signature='')
-    def ClearPopup(self):
-        return self._service.screen.clear_popup()
-    
-    @dbus.service.method(IF_NAME, in_signature='n', out_signature='')
-    def Cycle(self, cycle):
-        return self._service.screen.cycle(cycle)
-    
     @dbus.service.method(IF_NAME, in_signature='', out_signature='b')
-    def IsAttentionRequested(self):
-        return self._service.attention
-    
-    @dbus.service.method(IF_NAME, in_signature='', out_signature='b')
-    def IsStartingUp(self):
+    def IsStarting(self):
         return self._service.starting_up
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='b')
-    def IsShuttingDown(self):
+    def IsStarted(self):
+        return not self._service.starting_up and not not self._service.shutting_down 
+    
+    @dbus.service.method(IF_NAME, in_signature='', out_signature='b')
+    def IsStopping(self):
         return self._service.shutting_down
     
-    @dbus.service.method(IF_NAME, in_signature='', out_signature='s')
-    def GetMessage(self):
-        return self._service.attention_message
     
-    @dbus.service.method(IF_NAME, in_signature='', out_signature='')
-    def ClearAttention(self):
-        return self._service.clear_attention()
-    
-    @dbus.service.method(IF_NAME, in_signature='s', out_signature='')
-    def RequestAttention(self, message):
-        self._service.request_attention(message)
-    
-    @dbus.service.method(IF_NAME, in_signature='ssn', out_signature='t')
-    def CreatePage(self, id, title, priority):
-        page = self._service.screen.new_page(None, priority = priority, id = id, thumbnail_painter = None, panel_painter = None)
-        page.set_title(title)
-        return self.GetPageSequenceNumber(id)
-            
-    @dbus.service.method(IF_NAME, in_signature='s')
-    def ReserveKey(self, key_name):
-        if key_name in self._reserved_keys:
-            raise Exception("Already reserved")
-        self._reserved_keys.add(key_name)
-            
-    @dbus.service.method(IF_NAME, in_signature='s')
-    def UnreserveKey(self, key_name):
-        if not key_name in self._reserved_keys:
-            raise Exception("Not reserved")
-        self._reserved_keys.remove(key_name)
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='ssss')
+    def GetDeviceInformation(self):
+        device = self._screen.device
+        return ( device.uid, device.model_name, "%s:%s" % ( hex(device.usb_id[0]),hex(device.usb_id[1]) ), device.model_fullname )
+
+    @dbus.service.method(IF_NAME, out_signature='as')
+    def GetDevices(self):
+        l = []
+        for device in self._dbus_devices:
+            l.append("%s/%s" % (DEVICE_NAME, device._device.uid ) )
+        return l
+
+
+    @dbus.service.method(IF_NAME, out_signature='as')
+    def GetScreens(self):
+        l = []
+        for screen in self._dbus_screens:
+            l.append("%s/%s" % (SCREEN_NAME, screen ) )
+        return l

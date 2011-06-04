@@ -41,6 +41,7 @@ import traceback
 import logging
 logging.basicConfig()
 logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
 
 # Allow running from local path
 path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..", "gnome15", "src", "main", "python")
@@ -71,6 +72,15 @@ if g15globals.dev:
     
 session_bus = dbus.SessionBus()
 
+class G15Screen():
+    
+    def __init__(self, path, device_model_fullname, device_uid):
+        self.path = path
+        self.device_model_fullname = device_model_fullname
+        self.device_uid = device_uid
+        self.items = {}
+        self.message = None
+
 class G15Indicator(appindicator.Indicator):
     
     def __init__(self,  parent_window=None):
@@ -80,13 +90,17 @@ class G15Indicator(appindicator.Indicator):
                                appindicator.CATEGORY_HARDWARE)
         self.set_status (appindicator.STATUS_ACTIVE)
         
-        self.page_items = {}
+        self.screens = {}
+        self.last_items = []
         self.service = None
         self.start_service_item = None
         self.attention_item = None
         self.pages = []        
         self._set_icons()
         self.lock = RLock()
+        self.attention_messages = {}
+        self.notify_handles = []
+        self.connected = False
         
         self.conf_client = gconf.client_get_default()
         self.conf_client.notify_add("/apps/gnome15/indicate_only_on_error", self._indicator_options_changed)
@@ -108,19 +122,11 @@ class G15Indicator(appindicator.Indicator):
         
         self.menu.append(gtk.MenuItem())
         
-        self.cycle_screens_item = gtk.CheckMenuItem("Automatically cycle screens")
-        self.cycle_screens_item.set_active(self.conf_client.get_bool("/apps/gnome15/cycle_screens"))
-        self.conf_client.notify_add("/apps/gnome15/cycle_screens", self._cycle_screens_option_changed)
-        self.cycle_screens_item.connect("toggled", self._cycle_screens_changed)
-        
-        self.menu.append(self.cycle_screens_item)
-        self.menu.append(gtk.MenuItem())
-
-        
         # Try and connect to the service now
         try :
             self._connect()        
         except dbus.exceptions.DBusException:
+            traceback.print_exc(file=sys.stdout)
             self._disconnect()
 
         # Watch for Gnome15 starting and stopping
@@ -141,37 +147,123 @@ class G15Indicator(appindicator.Indicator):
                     self._connect()
             else:
                 if self.service != None:
+                    self.connected = False
                     self._disconnect()
         
-    def _page_created(self, page_sequence_number, page_title):
+    def _page_created(self, screen_path, page_sequence_number, page_title):
+        logger.debug("Page created (%s) %d = %s" % ( screen_path, page_sequence_number, page_title ) )
         page = session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Page%d' % page_sequence_number)
         self.lock.acquire()
         try :
             if page.GetPriority() >= g15screen.PRI_LOW:
-                self._add_page(page)
+                self._add_page(screen_path, page)
         finally :
             self.lock.release()
         
-    def _page_title_changed(self, page_sequence_number, title):
+    def _page_title_changed(self, screen_path, page_sequence_number, title):
         self.lock.acquire()
         try :
-            item = self.page_items[str(page_sequence_number)]
-            item.set_label(title)
+            item = self.screens[screen_path].items[str(page_sequence_number)] = title
+            self._rebuild_menu()
         finally :
             self.lock.release()
     
-    def _page_destroyed(self, page_sequence_number):
+    def _page_destroying(self, screen_path, page_sequence_number):
         self.lock.acquire()
+        logger.debug("Destroying page (%s) %d" % ( screen_path, page_sequence_number ) )
         try :
             page_item_key = str(page_sequence_number)
-            if page_item_key in self.page_items:
-                item = self.page_items[page_item_key]
-                self.menu.remove(item)
-                item.destroy()
-                del self.page_items[page_item_key]
-                self.menu.show_all()
+            items = self.screens[screen_path].items
+            if page_item_key in items:
+                del items[page_item_key]
+                self._rebuild_menu()
         finally :
             self.lock.release()
+        
+    def _attention_cleared(self, screen_path):
+        if screen_path in self.attention_messages:
+            del self.attention_messages[screen_path]
+            self._rebuild_menu()             
+        
+    def _attention_requested(self, screen_path, message = None):
+        if not screen_path in self.attention_messages:
+            self.attention_messages[screen_path] = message
+            self._rebuild_menu()          
+        
+        
+    '''
+    Private
+    '''
+            
+    def _rebuild_menu(self):
+        logger.debug("Removing old menu items")
+        for item in self.last_items:
+            self.menu.remove(item)
+            item.destroy()
+            
+            
+        self.last_items = []
+        i = 0
+        
+        # Remove the notify handles used for the previous cycle components
+        logger.debug("Removing old notify handles")
+        for h in self.notify_handles:
+            self.conf_client.notify_remove(h)
+        self.notify_handles = []
+        
+        
+        logger.debug("Building new menu")
+        if self.service and self.connected:
+            for device_path in self.service.GetDevices():
+                remote_device = session_bus.get_object('org.gnome15.Gnome15', device_path)
+                screen_path = remote_device.GetScreen()
+                
+                screen = self.screens[screen_path] if len(screen_path) > 0 and screen_path in self.screens else None
+                if i > 0:
+                    logger.debug("Adding separator")
+                    item = gtk.MenuItem()
+                    self.menu.append(item)
+                    self.last_items.append(item)
+                
+                if screen:
+                    
+                    # Disable
+                    disable_item = gtk.MenuItem("Disable %s"  % screen.device_model_fullname)
+                    disable_item.connect("activate", self._disable, remote_device)
+                    self.menu.append(disable_item)
+                    self.last_items.append(disable_item)
+                    
+                    # Cycle screens
+                    cycle_screens_item = gtk.CheckMenuItem("Cycle screens automatically")
+                    cycle_screens_item.set_active(self.conf_client.get_bool("/apps/gnome15/%s/cycle_screens" % screen.device_uid))
+                    self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/cycle_screens" % screen.device_uid, self._cycle_screens_option_changed))
+                    cycle_screens_item.connect("toggled", self._cycle_screens_changed, screen.device_uid)
+                    self.menu.append(cycle_screens_item)
+                    self.last_items.append(cycle_screens_item)
+                    
+                    # Alert message            
+                    if screen.message:
+                        item = gtk.MenuItem(screen.message)
+                        self.menu.append(item)
+                        self.last_items.append(item)
+                    
+                    logger.debug("Adding items")
+                    for item_key in screen.items:
+                        text = screen.items[item_key]
+                        logger.debug("Adding item %s = %s " % (item_key, text ) )
+                        item = gtk.MenuItem(text)
+                        item.connect("activate", self._show_page, item_key)
+                        self.menu.append(item)
+                        self.last_items.append(item)
+                else:
+                    # Enable
+                    enable_item = gtk.MenuItem("Enable %s" % remote_device.GetModelFullName())
+                    enable_item.connect("activate", self._enable, remote_device)
+                    self.menu.append(enable_item)
+                    self.last_items.append(enable_item)
+                i += 1
+        self.menu.show_all()
+        self._check_attention()
         
     def _clear_attention(self):
         if self.conf_client.get_bool("/apps/gnome15/indicate_only_on_error"):
@@ -182,70 +274,92 @@ class G15Indicator(appindicator.Indicator):
     def _attention(self, message = None):
         self.set_status (appindicator.STATUS_ATTENTION)
         
-    '''
-    Private
-    '''
-    def _cycle_screens_changed(self, widget):
-        self.conf_client.set_bool("/apps/gnome15/cycle_screens", widget.get_active())
+    def _enable(self, widget, device):
+        device.Enable()
+        
+    def _disable(self, widget, device):
+        device.Disable()
+        
+    def _cycle_screens_changed(self, widget, device_uid):
+        self.conf_client.set_bool("/apps/gnome15/%s/cycle_screens" % device_uid, widget.get_active())
         
     def _cycle_screens_option_changed(self, client, connection_id, entry, args):
         self.cycle_screens_item.set_active(entry.value.get_bool())
         
+    def _remove_screen(self, screen_path):
+        if screen_path in self.screens:
+            try :
+                del self.screens[screen_path]
+            except dbus.DBusException:
+                pass
+        self._rebuild_menu()
+    
+    def _check_attention(self):
+        if len(self.attention_messages) == 0:
+            self._clear_attention()      
+            self._remove_attention_menu_item()
+        else:
+            for i in self.attention_messages:
+                message = self.attention_messages[i]
+                self._attention(message)
+                break
+        
+    def _add_screen(self, screen_path):
+        logger.debug("Screen added %s" % screen_path)
+        remote_screen = session_bus.get_object('org.gnome15.Gnome15', screen_path)
+        ( device_uid, device_model_name, device_usb_id, device_model_fullname ) = remote_screen.GetDeviceInformation()
+        screen = G15Screen(screen_path, device_model_fullname, device_uid)        
+        self.screens[screen_path] = screen
+        if remote_screen.IsAttentionRequested():
+            screen.message = remote_screen.GetMessage()                                
+        
     def _connect(self):
+        logger.debug("Connecting")
+        self._reset_attention()
         self.service = session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service')
+        self.connected = True
                 
-        # Load the initial pages
+        # Load the initial screens
         self.lock.acquire()
         try : 
-            for page_sequence_number in self.service.GetPageSequenceNumbers(g15screen.PRI_LOW):
-                page = session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Page%d' % page_sequence_number)
-                if page.GetPriority() >= g15screen.PRI_LOW:
-                    self._add_page(page)
+            for screen_path in self.service.GetScreens():
+                self._add_screen(screen_path)
+                remote_screen = session_bus.get_object('org.gnome15.Gnome15', screen_path)
+                for page_sequence_number in remote_screen.GetPageSequenceNumbers(g15screen.PRI_LOW):
+                    page = session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Page%d' % page_sequence_number)
+                    if page.GetPriority() >= g15screen.PRI_LOW:
+                        self._add_page(screen_path, page)
         finally :
             self.lock.release()
         
         # Listen for events
-        session_bus.add_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Service", signal_name = "PageCreated")
-        session_bus.add_signal_receiver(self._page_title_changed, dbus_interface = "org.gnome15.Service", signal_name = "PageTitleChanged")
-        session_bus.add_signal_receiver(self._page_destroyed, dbus_interface = "org.gnome15.Service", signal_name = "PageDestroyed")
-        session_bus.add_signal_receiver(self._attention, dbus_interface = "org.gnome15.Service", signal_name = "AttentionRequested")
-        session_bus.add_signal_receiver(self._clear_attention, dbus_interface = "org.gnome15.Service", signal_name = "AttentionCleared")
-
-        # Set the initial attention status
-        if self.service.IsAttentionRequested():
-            message = self.service.GetMessage()
-            self._attention(message)
+        session_bus.add_signal_receiver(self._add_screen, dbus_interface = "org.gnome15.Service", signal_name = "ScreenAdded")
+        session_bus.add_signal_receiver(self._remove_screen, dbus_interface = "org.gnome15.Service", signal_name = "ScreenRemoved")
+        session_bus.add_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Screen", signal_name = "PageCreated")
+        session_bus.add_signal_receiver(self._page_title_changed, dbus_interface = "org.gnome15.Screen", signal_name = "PageTitleChanged")
+        session_bus.add_signal_receiver(self._page_destroying, dbus_interface = "org.gnome15.Screen", signal_name = "PageDeleting")
+        session_bus.add_signal_receiver(self._attention_requested, dbus_interface = "org.gnome15.Screen", signal_name = "AttentionRequested")
+        session_bus.add_signal_receiver(self._attention_cleared, dbus_interface = "org.gnome15.Screen", signal_name = "AttentionCleared")
             
-            if self.attention_item == None:
-                self.attention_item = gtk.MenuItem(message)
-                self.menu.append(self.attention_item)
-                self.menu.show_all()
-                
-        else:
-            self._clear_attention()
-            self.message = self.service.GetMessage()      
-            self._remove_attention_menu_item()
-            
-        # We are now connected, so remove the start service menu item
-        self._remove_start_service_item()
-        self.cycle_screens_item.set_sensitive(True)
+        # We are now connected, so remove the start service menu item and allow cycling
+        self._rebuild_menu()
         
     def _disconnect(self):
-        
-        self.cycle_screens_item.set_sensitive(False)
-        
-        session_bus.remove_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Service", signal_name = "PageCreated")
-        session_bus.remove_signal_receiver(self._page_title_changed, dbus_interface = "org.gnome15.Service", signal_name = "PageTitleChanged")
-        session_bus.remove_signal_receiver(self._page_destroyed, dbus_interface = "org.gnome15.Service", signal_name = "PageDestroyed")
-        session_bus.remove_signal_receiver(self._attention, dbus_interface = "org.gnome15.Service", signal_name = "AttentionRequested")
-        session_bus.remove_signal_receiver(self._clear_attention, dbus_interface = "org.gnome15.Service", signal_name = "AttentionCleared")
+        logger.debug("Disconnecting")               
+        session_bus.remove_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Service", signal_name = "ScreenAdded")
+        session_bus.remove_signal_receiver(self._page_title_changed, dbus_interface = "org.gnome15.Service", signal_name = "ScreenRemoved")
+        session_bus.remove_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Screen", signal_name = "PageCreated")
+        session_bus.remove_signal_receiver(self._page_title_changed, dbus_interface = "org.gnome15.Screen", signal_name = "PageTitleChanged")
+        session_bus.remove_signal_receiver(self._page_destroying, dbus_interface = "org.gnome15.Screen", signal_name = "PageDeleting")
+        session_bus.remove_signal_receiver(self._attention, dbus_interface = "org.gnome15.Screen", signal_name = "AttentionRequested")
+        session_bus.remove_signal_receiver(self._clear_attention, dbus_interface = "org.gnome15.Screen", signal_name = "AttentionCleared")
              
-                
-        self._remove_attention_menu_item()
-        if self.service != None:
-            self._remove_all_page_menu_items()
+        if self.service != None and self.connected:
+            for screen_path in dict(self.screens):
+                self._remove_screen(screen_path)
         
-        self._attention("g15-desktop-service is not running.")   
+        self._reset_attention()
+        self._attention_requested("service", "g15-desktop-service is not running.")   
         
         # Add the start menu item if it is not already there
         if self.start_service_item == None:     
@@ -254,7 +368,12 @@ class G15Indicator(appindicator.Indicator):
             self.menu.append(self.start_service_item)
             self.menu.show_all()
             
-        self.service = None
+        self.service = None  
+        self.connected = False       
+        
+    def _reset_attention(self):
+        self.attention_messages = {}
+        self._rebuild_menu()
         
     def _remove_start_service_item(self):
         if self.start_service_item != None:
@@ -276,14 +395,6 @@ class G15Indicator(appindicator.Indicator):
                                ["Brett Smith <tanktarta@blueyonder.co.uk>"], "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
         about.show()
         
-    def _remove_all_page_menu_items(self):
-        for page_item_key in self.page_items:
-            item = self.page_items[page_item_key]
-            self.menu.remove(item)
-            item.destroy()
-            self.menu.show_all()
-        self.page_items = {}
-        
     def _show_configuration(self, widget):        
         g15util.run_script("g15-config")
         
@@ -291,17 +402,16 @@ class G15Indicator(appindicator.Indicator):
         self._remove_start_service_item()   
         g15util.run_script("g15-desktop-service", ["-f"])
             
-    def _add_page(self, page):
+    def _add_page(self, screen_path, page): 
         seq_no = str(page.GetSequenceNumber())
-        if not seq_no in self.page_items:
-            item = gtk.MenuItem(page.GetTitle())
-            self.page_items[seq_no] = item
-            item.connect("activate", self._show_page, page)                
-            item.show_all()
-            self.menu.append(item)
+        logger.debug("Adding page %s to %s" % (seq_no, screen_path))
+        items = self.screens[screen_path].items
+        if not seq_no in items:
+            items[seq_no] = page.GetTitle()
+            self._rebuild_menu()
         
-    def _show_page(self,event, page):
-        page.CycleTo()
+    def _show_page(self,event, page_sequence_number):
+         session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Page%s' % page_sequence_number).CycleTo()
         
     def _indicator_options_changed(self, client, connection_id, entry, args):
         if self.get_status() == appindicator.STATUS_PASSIVE or self.get_status() == appindicator.STATUS_ACTIVE:

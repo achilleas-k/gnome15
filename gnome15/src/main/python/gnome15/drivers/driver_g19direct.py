@@ -110,24 +110,24 @@ foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (
 background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
 controls = [ keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control]
 
-def show_preferences(parent, gconf_client):
+def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.glade"))    
     dialog = widget_tree.get_object("DriverDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/reset_usb", "Reset", False, widget_tree, True)
-    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/timeout", "Timeout", 10000, widget_tree, False)
-    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/reset_wait", "ResetWait", 0, widget_tree, False)
+    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/reset_usb" % device.uid, "Reset", False, widget_tree, True)
+    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
+    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/reset_wait" % device.uid, "ResetWait", 0, widget_tree, False)
     dialog.run()
     dialog.hide()
 
 class Driver(g15driver.AbstractDriver):
 
-    def __init__(self, on_close = None):
+    def __init__(self, device, on_close = None):
         g15driver.AbstractDriver.__init__(self, "g19direct")
         self.on_close = on_close
+        self.device = device
         self.lock = RLock()
-        self._init_driver()
         self.connected = False
         self.conf_client = gconf.client_get_default()
     
@@ -169,17 +169,16 @@ class Driver(g15driver.AbstractDriver):
         if self.is_connected():
             raise Exception("Already connected")
         
-        self._init_driver()
         self.callback = None
         
         # TODO Enable UINPUT if multimedia key support is required?
-        reset = self.conf_client.get_bool("/apps/gnome15/reset_usb")
+        reset = self.conf_client.get_bool("/apps/gnome15/%s/reset_usb" % self.device.uid)
         timeout = 10000
         reset_wait = 0
-        e = self.conf_client.get("/apps/gnome15/timeout")
+        e = self.conf_client.get("/apps/gnome15/%s/timeout" % self.device.uid)
         if e:
             timeout = e.get_int()
-        e = self.conf_client.get("/apps/gnome15/reset_wait")
+        e = self.conf_client.get("/apps/gnome15/%s/reset_wait" % self.device.uid)
         if e:
             reset_wait = e.get_int()
         
@@ -309,11 +308,6 @@ class Driver(g15driver.AbstractDriver):
         except usb.USBError as e:
             traceback.print_exc(file=sys.stderr)
             self.on_receive_error(e)
-            
-    def _init_driver(self):        
-        self.device = g15devices.find_device([g15driver.MODEL_G19])
-        if self.device == None:
-            raise Exception("Could not find a G19 keyboard. This may be caused by incorrect device permissions. The files for the USB devices must be readable and writeable by the current user.")
             
     def _rgb_to_uint16(self, r, g, b):
         rBits = r * 32 / 255

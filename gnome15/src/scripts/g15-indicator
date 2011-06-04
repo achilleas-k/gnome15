@@ -1,0 +1,227 @@
+#!/usr/bin/env python
+ 
+#        +-----------------------------------------------------------------------------+
+#        | GPL                                                                         |
+#        +-----------------------------------------------------------------------------+
+#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        |                                                                             |
+#        | This program is free software; you can redistribute it and/or               |
+#        | modify it under the terms of the GNU General Public License                 |
+#        | as published by the Free Software Foundation; either version 2              |
+#        | of the License, or (at your option) any later version.                      |
+#        |                                                                             |
+#        | This program is distributed in the hope that it will be useful,             |
+#        | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+#        | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+#        | GNU General Public License for more details.                                |
+#        |                                                                             |
+#        | You should have received a copy of the GNU General Public License           |
+#        | along with this program; if not, write to the Free Software                 |
+#        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+#        +-----------------------------------------------------------------------------+
+
+'''
+Provides a panel indicator that can be used to control and monitor the Gnome15
+desktop service (g15-desktop-service). It will display a list of currently active
+screens on activation, and allow the configuration UI to be launched (g15-config)
+'''
+
+import sys
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gnome
+import gnome.ui
+import os
+import appindicator
+import gconf
+import traceback
+
+# Logging
+import logging
+logging.basicConfig()
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+# Allow running from local path
+path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..", "gnome15", "src", "main", "python")
+if os.path.exists(path):
+    sys.path.insert(0, path)
+
+import gnome15.g15globals as g15globals
+import gnome15.g15service as g15service
+import gnome15.g15screen as g15screen
+import gnome15.g15util as g15util
+import gnome15.g15desktop as g15desktop
+    
+import dbus
+import gobject
+
+from threading import RLock
+
+# Threading / DBUS setup
+from dbus.mainloop.glib import DBusGMainLoop
+from dbus.mainloop.glib import threads_init
+gobject.threads_init()
+dbus.mainloop.glib.threads_init()
+DBusGMainLoop(set_as_default=True)
+loop = gobject.MainLoop()
+
+class G15Indicator(g15desktop.G15DesktopComponent):
+       
+    """
+    G15DesktopComponent required functions
+    """
+    def _append_item(self, item):
+        self.last_items.append(item)
+        self.menu.append(item)
+            
+    def rebuild_desktop_component(self):
+        logger.debug("Removing old menu items")
+        for item in self.last_items:
+            self.menu.remove(item)
+            item.destroy()
+            
+        self.last_items = []
+        i = 0
+        
+        # Remove the notify handles used for the previous cycle components
+        logger.debug("Removing old notify handles")
+        for h in self.notify_handles:
+            self.conf_client.notify_remove(h)
+        self.notify_handles = []
+        
+        logger.debug("Building new menu")
+        if self.service and self.connected:
+            item = gtk.MenuItem("Stop Desktop Service")
+            item.connect("activate", self.stop_desktop_service)
+            self._append_item(item)
+            self._append_item(gtk.MenuItem())
+            for device_path in self.service.GetDevices():
+                remote_device = self.session_bus.get_object('org.gnome15.Gnome15', device_path)
+                screen_path = remote_device.GetScreen()
+                
+                screen = self.screens[screen_path] if len(screen_path) > 0 and screen_path in self.screens else None
+                if i > 0:
+                    logger.debug("Adding separator")
+                    self._append_item(gtk.MenuItem())
+                
+                if screen:
+                    # Disable
+                    item = gtk.MenuItem("Disable %s"  % screen.device_model_fullname)
+                    item.connect("activate", self._disable, remote_device)
+                    self._append_item(item)
+                    
+                    # Cycle screens
+                    item = gtk.CheckMenuItem("Cycle screens automatically")
+                    item.set_active(self.conf_client.get_bool("/apps/gnome15/%s/cycle_screens" % screen.device_uid))
+                    self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/cycle_screens" % screen.device_uid, self._cycle_screens_option_changed))
+                    item.connect("toggled", self._cycle_screens_changed, screen.device_uid)
+                    self._append_item(item)
+                    
+                    # Alert message            
+                    if screen.message:
+                        self._append_item(gtk.MenuItem(screen.message))
+                    
+                    logger.debug("Adding items")
+                    for item_key in screen.items:
+                        text = screen.items[item_key]
+                        logger.debug("Adding item %s = %s " % (item_key, text ) )
+                        item = gtk.MenuItem(text)
+                        item.connect("activate", self._show_page, item_key)
+                        self._append_item(item)
+                else:
+                    # Enable
+                    item = gtk.MenuItem("Enable %s" % remote_device.GetModelFullName())
+                    item.connect("activate", self._enable, remote_device)
+                    self._append_item(item)
+                i += 1
+        else:
+            item = gtk.MenuItem("Start Desktop Service")
+            item.connect("activate", self.start_desktop_service)
+            self._append_item(item)
+
+        self.menu.show_all()
+        self.check_attention()
+    
+    def initialise_desktop_component(self):
+        
+        self.last_items = []
+        self.start_service_item = None
+        self.attention_item = None
+        self.notify_handles = []
+
+        # Create the indicator
+        self.indicator = appindicator.Indicator("gnome15",
+                               self.get_icon_path("logitech-g-keyboard-panel"), 
+                               appindicator.CATEGORY_HARDWARE)
+        self.indicator.set_status (appindicator.STATUS_ACTIVE)
+        
+        # Indicator menu
+        self.menu = gtk.Menu()
+        
+        item = gtk.MenuItem("Preferences")
+        item.connect("activate", self.show_configuration)
+        self.menu.append(item)
+        
+        item = gtk.MenuItem("About Gnome15")
+        item.connect("activate", self._about_info)
+        self.menu.append(item)
+        
+        self.menu.append(gtk.MenuItem())
+        
+        self.menu.show_all()
+        self.indicator.set_menu(self.menu)
+        
+        
+    def clear_attention(self):
+        self._remove_attention_menu_item()
+        if self.conf_client.get_bool("/apps/gnome15/indicate_only_on_error"):
+            self.indicator.set_status (appindicator.STATUS_PASSIVE)
+        else:
+            self.indicator.set_status (appindicator.STATUS_ACTIVE)
+        
+    def attention(self, message = None):
+        self.indicator.set_status (appindicator.STATUS_ATTENTION)
+        
+    """
+    Private
+    """
+        
+    def _show_page(self,event, page_sequence_number):
+        self.show_page(page_sequence_number)
+        
+    def _about_info(self, widget):         
+        about = gnome.ui.About("Gnome15", g15globals.version, "GPL", \
+                               "Desktop integration for Logitech 'G' keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
+                               ["Brett Smith <tanktarta@blueyonder.co.uk>"], "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
+        about.show()
+        
+    def _remove_attention_menu_item(self):              
+        if self.attention_item != None:
+            self.menu.remove(self.attention_item)
+            self.attention_item.destroy()
+            self.menu.show_all()
+            self.attention_item = None            
+        
+    def _cycle_screens_changed(self, widget, device_uid):
+        self.conf_client.set_bool("/apps/gnome15/%s/cycle_screens" % device_uid, widget.get_active())
+        
+    def indicator_options_changed(self, client, connection_id, entry, args):
+        if self.get_status() == appindicator.STATUS_PASSIVE or self.get_status() == appindicator.STATUS_ACTIVE:
+            self._clear_attention()
+        
+    def icons_changed(self):
+        self.indicator.set_icon(self.get_icon_path("logitech-g-keyboard-panel"))        
+        self.indicator.set_attention_icon(self.get_icon_path("logitech-g-keyboard-error-panel"))
+    
+# run it in a gtk window
+if __name__ == "__main__":
+    try :
+        import setproctitle
+        setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
+    except:
+        pass
+    
+    G15Indicator().start()                       
+    gtk.main()
