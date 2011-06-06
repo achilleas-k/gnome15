@@ -293,6 +293,7 @@ class G15Screen():
         self.cycle_timer = None
         self._started_plugins = False
         self.shutting_down = False
+        self.reconnect_timer = None
         self.plugins = self.plugin_manager_module.G15Plugins(self)
         
         if not self._load_driver():
@@ -339,7 +340,6 @@ class G15Screen():
         self.conf_client.add_dir(screen_key, gconf.CLIENT_PRELOAD_NONE)
         self.notify_handles.append(self.conf_client.notify_add("%s/cycle_screens" % screen_key, self.resched_cycle))
         self.notify_handles.append(self.conf_client.notify_add("%s/active_profile" % screen_key, self.active_profile_changed))
-        self.notify_handles.append(self.conf_client.notify_add("%s/profiles" % screen_key, self.profiles_changed))
         self.notify_handles.append(self.conf_client.notify_add("%s/driver" % screen_key, self.driver_changed))
         
         logger.info("Connection for %s is complete." % self.device.uid)
@@ -592,7 +592,7 @@ class G15Screen():
         """
         self.page_model_lock.acquire()
         try :
-            if page != None:    
+            if page != None and page in self.pages:    
                 logger.info("Deleting page %s" % page.id)
                     
                 # Remove any timers that might be running on this page
@@ -638,7 +638,7 @@ class G15Screen():
             logger.info("Grabbed keyboard")
             self.clear_attention()
                 
-            self.splash.complete()
+            gobject.idle_add(self.splash.complete)
             self.loading_complete = True
             logger.info("Loading complete")
         except Exception as e:
@@ -728,8 +728,10 @@ class G15Screen():
         self.conf_client.set_string("/apps/gnome15/" + control.id, "%d,%d,%d" % (color[0], color[1], color[2] ) )
         
     def driver_changed(self, client, connection_id, entry, args):
+        if self.reconnect_timer:
+            self.reconnect_timer.cancel()
         if self.driver == None or self.driver.id != entry.value.get_string():
-            g15util.schedule("DriveChange", 1.0, self._reload_driver)
+            g15util.schedule("DriverChange", 1.0, self._reload_driver)
         
     def active_profile_changed(self, client, connection_id, entry, args):
         # Check if the active profile has change
@@ -794,6 +796,7 @@ class G15Screen():
             return True
                 
     def _reload_driver(self):
+        logger.info("Reloading driver")
         if self.driver and self.driver.is_connected() :
             self.driver.disconnect()
             # Let any clients receive their disconnecting. Driver changes should be rare so this is not a big deal
@@ -806,11 +809,12 @@ class G15Screen():
         # Get the driver. If it is not configured, configuration will be required at this point
         try :
             self.driver = g15drivermanager.get_driver(self.conf_client, self.device, on_close=self.on_driver_close)
+            self.driver.on_driver_options_change = self._reload_driver
             return True
         except Exception as e:
             self._process_exception(e)
             self.driver = None
-            return False     
+            return False
         
     def profiles_changed(self, client, connection_id, entry, args):
         self.set_color_for_mkey()
@@ -818,7 +822,7 @@ class G15Screen():
     def error(self, error_text=None): 
         self.attention(error_text)
 
-    def on_driver_close(self, retry=True):
+    def on_driver_close(self, driver, retry=True):
         logger.info("Driver closed")
     
         for handle in self.control_handles:
@@ -832,7 +836,7 @@ class G15Screen():
             self.del_page(page)
 
         for listener in self.screen_change_listeners:
-            listener.driver_disconnected(self.driver)
+            listener.driver_disconnected(driver)
                 
         if not self.service.shutting_down and not self.shutting_down:
             if retry:
@@ -939,7 +943,8 @@ class G15Screen():
                 return
         
             if self.driver == None:
-                self.driver = g15drivermanager.get_driver(self.conf_client, self.device, on_close=self.on_driver_close)
+                if not self._load_driver():
+                    raise
 
             if self.driver.is_connected():
                 logger.warning("WARN: Attempt to reconnect when already connected.")

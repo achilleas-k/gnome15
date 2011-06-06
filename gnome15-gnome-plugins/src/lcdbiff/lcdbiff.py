@@ -26,20 +26,22 @@ import gnome15.g15driver as g15driver
 import gnome15.g15globals  as g15globals
 import gnome15.g15screen  as g15screen
 import gobject
-import subprocess
-import time
 import os
-import re
-import feedparser
 import gtk
-import gconf
 import traceback
 import gnomekeyring as gk
+import re
+from poplib import POP3_SSL
+from poplib import POP3
+from imaplib import IMAP4
+from imaplib import IMAP4_SSL
  
 from threading import Lock
 from lxml import etree
-from poplib import *
-from imaplib import *
+
+# Logging
+import logging
+logger = logging.getLogger("lcdbiff")
 
 # Plugin details - All of these must be provided
 id = "lcdbiff"
@@ -50,7 +52,7 @@ author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = "Copyright (C)2010 Brett Smith"
 site = "http://www.gnome15.org/"
 has_preferences = True
-unsupported_models = [ g15driver.MODEL_G110 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 # Constants
 
@@ -61,8 +63,8 @@ TYPES = [ POP3, IMAP ]
 def create(gconf_key, gconf_client, screen):
     return G15Biff(gconf_client, gconf_key, screen)
 
-def show_preferences(parent, gconf_client, gconf_key):
-    G15BiffPreferences(parent, gconf_client, gconf_key)
+def show_preferences(parent, device, gconf_client, gconf_key):
+    G15BiffPreferences(parent, device, gconf_client, gconf_key)
 
 def changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
@@ -390,7 +392,7 @@ class G15BiffPreferences():
     '''
      
     
-    def __init__(self, parent, gconf_client, gconf_key):
+    def __init__(self, parent, device, gconf_client, gconf_key):
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
         self.visible_options = None
@@ -532,10 +534,11 @@ Account menu item
 '''
  
 class MailItem(g15theme.MenuItem):
-    def __init__(self, account):
+    def __init__(self, gconf_client, account):
         g15theme.MenuItem.__init__(self)
         self.account = account
         self.count = 0
+        self.gconf_client = gconf_client
         self.icon_path = g15util.get_icon_path("indicator-messages")
         self.status = "Unknown"
         self.error = None
@@ -559,6 +562,14 @@ class MailItem(g15theme.MenuItem):
         
         self.theme.draw(canvas, item_properties)
         return self.theme.bounds[3]
+    
+    def activate(self):
+        email_client = self.gconf_client.get_string("/desktop/gnome/url-handlers/mailto/command")
+        logger.info("Running email client %s" % email_client)
+        if email_client != None:
+            call_str = "%s &" % email_client.replace("%s", "").replace("%U", "mailto:")
+            print str(call_str)
+            os.system(call_str)
          
 '''
 Gnome15 LCDBiff plugin
@@ -586,12 +597,6 @@ class G15Biff():
         self._reload_menu()        
         self.update_time_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/update_time", self._update_time_changed)
         self.schedule_refresh(10.0)
-        
-    def handle_key(self, keys, state, post):
-        for page in self.pages:
-            if self.pages[page].handle_key(keys, state, post):
-                return True
-        return False
         
     def schedule_refresh(self, time = - 1):
         if time == -1:
@@ -650,16 +655,9 @@ class G15Biff():
         pass
     
     def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP and self.screen.get_visible_page() == self.page:
+        if not post and state == g15driver.KEY_STATE_DOWN and self.screen.get_visible_page() == self.page:
             if self.menu.handle_key(keys, state, post):
-                return True
-            elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
-                if self.index != -1:
-                    email_client = self.gconf_client.get_string("/desktop/gnome/url-handlers/mailto/command")
-                    if email_client != None:
-                        os.system("%s &" % email_client.replace("%s", ""))
-                return True
-                
+                return True                
         return False
         
     '''
@@ -672,7 +670,7 @@ class G15Biff():
         self.menu.clear_items()
         self.account_manager.load()
         for account in self.account_manager.accounts:
-            self.menu.add_item(MailItem(account))
+            self.menu.add_item(MailItem(self.gconf_client, account))
         items = self.menu.get_items()
         self.menu.selected = items[0] if len(items) > 0 else None
         self.screen.redraw(self.page)

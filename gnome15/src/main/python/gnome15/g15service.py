@@ -289,8 +289,7 @@ class G15Service(Thread):
             for listener in self.service_listeners:
                 listener.screen_removed(screen)
             logger.info("Disabled device %s" % device.uid)
-             
-        
+            
     def _get_screen_for_device(self, device):
         for screen in self.screens:
             if screen.device.uid == device.uid:

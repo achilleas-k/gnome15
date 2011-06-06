@@ -20,16 +20,12 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15screen as g15screen 
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
-import datetime
 from threading import Timer
-import time
 import gtk
 import os
-import sys
 import select
 import gobject
 import tempfile
@@ -48,7 +44,7 @@ author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = "Copyright (C)2010 Brett Smith"
 site = "http://localhost"
 has_preferences = False
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
 
 ''' 
 This simple plugin displays system statistics
@@ -265,12 +261,6 @@ class G15VideoPlayer():
             if self.hide_timer != None:
                 self.hide_timer.cancel()
             self.hide_timer = g15util.schedule("HideSidebar", after, self.hide_sidebar)
-    
-    def get_frame_path(self, idx):
-        return os.path.join(self.playing.temp_dir, "%08d.jpg" % self.frame_index)
-    
-    def frame_exists(self, idx):
-        return os.path.exists(get_frame_path(idx))
     
     def paint(self, canvas):
         self.lock.acquire()

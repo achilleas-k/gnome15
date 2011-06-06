@@ -23,7 +23,6 @@
 
 import os
 import gconf
-import g15setup as g15setup
 import logging
 logger = logging.getLogger("driver")
 
@@ -38,7 +37,17 @@ for d in driverfiles:
         imported_drivers[d] = mod
     except Exception as e:
         logger.warning("Failed to load driver. %s" % str(e))
+        
+def get_driver_mod(id):
+    '''
+    Get a driver module given it's ID.
     
+    Keyword arguments:
+    id    --    driver ID
+    '''
+    for driver_mod in imported_drivers.values():
+        if driver_mod.id == id:
+            return driver_mod
 
 def get_configured_driver(device, force_config = False):
     '''

@@ -50,7 +50,7 @@ supported_models = [ g15driver.MODEL_G19 ]
 def create(gconf_key, gconf_client, screen):
     return G15CairoClock(gconf_key, gconf_client, screen)
 
-def show_preferences(parent, gconf_client, gconf_key):
+def show_preferences(parent, device, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cairo-clock.glade"))
     

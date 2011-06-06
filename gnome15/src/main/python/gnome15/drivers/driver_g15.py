@@ -26,10 +26,13 @@ keyboard
 """
 
 import gnome15.g15driver as g15driver
-import gnome15.g15devices as g15devices
 import gnome15.g15globals as g15globals
+import gnome15.g15util as g15util
+import gtk
+import os.path
 import socket
 import cairo
+import gconf
 import ImageMath
 import Image
 from threading import Thread
@@ -49,8 +52,9 @@ description="For use with the Logitech G15v1, G15v2, G13, G510 and G110. This dr
             "<a href=\"http://www.g15tools.com/\">g15tools</a>. The g15deaemon service " + \
             "must be installed and running when starting Gnome15. Note, you may have to patch " + \
             "g15daemon and tools for support for newer models."
-has_preferences=False
+has_preferences=True
 
+DEFAULT_PORT=15550
 
 CLIENT_CMD_KB_BACKLIGHT = 0x08
 CLIENT_CMD_CONTRAST = 0x40
@@ -106,6 +110,7 @@ lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 7
 invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
 controls = {
+  g15driver.MODEL_G11 : [ backlight_control ],
   g15driver.MODEL_G15_V1 : [ backlight_control, lcd_contrast_control, lcd_backlight_control, invert_control ], 
   g15driver.MODEL_G15_V2 : [ backlight_control, lcd_backlight_control, invert_control ],
   g15driver.MODEL_G13 : [ backlight_control, lcd_backlight_control, invert_control ],
@@ -113,6 +118,12 @@ controls = {
   g15driver.MODEL_Z10 : [ backlight_control, lcd_backlight_control, invert_control ],
   g15driver.MODEL_G110 : [ color_backlight_control ],
             }   
+
+def show_preferences(device, parent, gconf_client):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15.glade"))
+    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/g15daemon_port" % device.uid, "Port", DEFAULT_PORT, widget_tree, False)
+    return widget_tree.get_object("DriverComponent")
 
 def fix_sans_style(root):
     for element in root.iter():
@@ -267,17 +278,17 @@ class G15Async(Thread):
 
 class Driver(g15driver.AbstractDriver):
 
-    def __init__(self, device, host = 'localhost', port= 15550, on_close = None):
+    def __init__(self, device, on_close = None):
         g15driver.AbstractDriver.__init__(self, "g15")
-        self.remote_host=host
         self.device = device
         self.lock = Lock()
-        self.remote_port=port
         self.dispatcher = None
         self.on_close = on_close
         self.socket = None
         self.connected = False
         self.async = None
+        self.change_timer = None
+        self.conf_client = gconf.client_get_default()
         
     def get_size(self):
         return self.device.lcd_size
@@ -334,7 +345,7 @@ class Driver(g15driver.AbstractDriver):
         return "g15daemon driver"
     
     def get_model_names(self):
-        return [ g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G110, g15driver.MODEL_G510, g15driver.MODEL_G13 ]
+        return [ g15driver.MODEL_G11, g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G110, g15driver.MODEL_G510, g15driver.MODEL_G13 ]
     
     def get_model_name(self):
         return self.device.model_name
@@ -342,6 +353,7 @@ class Driver(g15driver.AbstractDriver):
     def disconnect(self):
         if not self.is_connected():
             raise Exception("Already disconnected")
+        self.conf_client.notify_remove(self.notify_handle)
         self.connected = False
         if self.dispatcher != None:
             self.dispatcher.running = False
@@ -349,7 +361,7 @@ class Driver(g15driver.AbstractDriver):
         self.socket = None
         self.dispatcher = None
         if self.on_close != None:
-            self.on_close()
+            self.on_close(self)
     
     def is_connected(self):
         return self.connected
@@ -363,16 +375,36 @@ class Driver(g15driver.AbstractDriver):
         if self.is_connected():
             raise Exception("Already connected")
         
+        
+        port = 15550
+        e = self.conf_client.get("/apps/gnome15/%s/g15daemon_port" % self.device.uid)
+        if e:
+            port = e.get_int()
+        
         map = {}
             
         self.socket  = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(5.0)
-        self.socket.connect((self.remote_host, self.remote_port))
+        self.socket.connect(("127.0.0.1", port))
         
         self.dispatcher = G15Dispatcher(map, self.socket)
         self.async = G15Async(map).start()   
         self.dispatcher.wait_for_handshake()  
         self.connected = True
+        
+        self.notify_handle = self.conf_client.notify_add("/apps/gnome15/%s/g15daemon_port" % self.device.uid, self.config_changed, None)
+        
+    def config_changed(self, client, connection_id, entry, args):
+        if self.change_timer != None:
+            self.change_timer.cancel()
+        self.change_timer = g15util.schedule("ChangeG15DaemonConfiguration", 3.0, self.update_conf)
+        
+    def update_conf(self):
+        logger.info("Configuration changed")
+        if self.connected:
+            logger.info("Reconnecting")
+            self.disconnect()
+            self.connect()
         
     def set_mkey_lights(self, lights):
         self.send(chr(CLIENT_CMD_MKEY_LIGHTS  + lights),socket.MSG_OOB)

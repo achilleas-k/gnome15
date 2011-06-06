@@ -25,6 +25,7 @@ import sys
 import g15globals as pglobals
 import g15driver as g15driver
 import gconf
+import gobject
 import traceback
 import threading
 
@@ -202,7 +203,8 @@ class G15Plugins():
             for plugin in self.started:
                 mod = self.plugin_map[plugin]
                 logger.debug("Activating %s" % mod.id)
-                self._activate_instance(plugin, callback, idx)
+                gobject.idle_add(self._activate_instance, plugin, callback, idx)
+#                self._activate_instance(plugin, callback, idx)
                 idx += 1
         finally:
             self.lock.release()

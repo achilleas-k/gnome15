@@ -43,7 +43,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2011 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
-unsupported_models = [ g15driver.MODEL_G110 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 def create(gconf_key, gconf_client, screen):
     return G15Places(gconf_client, gconf_key, screen)
@@ -162,12 +162,11 @@ class G15Places(g15plugin.G15MenuPlugin):
         g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, POSSIBLE_ICON_NAMES, id, name)
         self._signal_handles = []
         self._handle = None
+        self._modes = [ "free", "used", "size" ]
+        self._mode = "free"
         
     def activate(self):
         g15plugin.G15MenuPlugin.activate(self)
-        
-        self._modes = [ "free", "used", "size" ]
-        self._mode = "free"
         
         # Get the initial list of volumes and mounts
         self.volume_monitor = gio.VolumeMonitor()

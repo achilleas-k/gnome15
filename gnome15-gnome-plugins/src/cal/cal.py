@@ -26,12 +26,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import datetime
 import time
-from threading import Timer
-from threading import Thread
-import gtk
 import os
-import sys
-import calendar
 import evolution.ecal
 import vobject
 
@@ -45,7 +40,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
-unsupported_models = [ g15driver.MODEL_G110 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 # How often refresh from the evolution calendar. This can be a slow process, so not too often
 REFRESH_INTERVAL = 15 * 60.0

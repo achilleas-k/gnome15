@@ -109,6 +109,62 @@ AX_PYTHON_MODULE(setproctitle, [])
 AS_IF([test "x${HAVE_PYMOD_SETPROCTITLE}" = "xno"],
      [AC_MSG_WARN([It is recommend that setproctitle is installed])])
      
+dnl Dependencies for panel integration components
+dnl
+dnl Tries to work out the best one to use. If appindicator is available
+dnl by default that will be used. Failing that, the systemtray will
+dnl be used. Finally, if gnomeapplet is available, that will be used.
+dnl The defauolt component(s) built can be changed using --enabled
+dnl and --disable flags
+
+AC_ARG_ENABLE([indicator],
+	[AS_HELP_STRING([--enable-indicator],
+		[Enable Indicator panel integration. Requires python-appindicator])],
+	[case "${enableval}" in
+ 				yes)	indicator=yes ;;
+ 				no)		indicator=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-indicator]) ;;
+ 	esac],
+	[indicator=yes])
+AX_PYTHON_MODULE(appindicator, [])
+AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
+	  [indicator=$indicator],
+	  [indicator=no])
+AM_CONDITIONAL([ENABLE_INDICATOR], [test x$indicator = xyes])
+
+AC_ARG_ENABLE([systemtray],
+	[AS_HELP_STRING([--enable-systemtray],
+		[Enable System Tray panel integration.])],
+	[case "${enableval}" in
+ 				yes)	systemtray=yes ;;
+ 				no)		systemtray=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-systemtray]) ;;
+ 	esac],
+	[case "${indicator}" in
+ 				yes)	systemtray=no ;;
+ 				no)		systemtray=yes ;;
+ 	esac])
+AM_CONDITIONAL([ENABLE_SYSTEMTRAY], [test x$systemtray = xyes])
+
+AC_ARG_ENABLE([applet],
+	[AS_HELP_STRING([--enable-applet],
+		[Enable GNOME panel applet integration.])],
+	[case "${enableval}" in
+ 				yes)	applet=yes ;;
+ 				no)		applet=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-applet]) ;;
+ 	esac],
+ 	[case "${indicator}:${systemtray}" in
+ 				"no:no")	applet=yes ;;
+ 					  *)	applet=no ;;
+ 	esac])
+AX_PYTHON_MODULE(gnomeapplet, [])
+AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xyes"],
+	  [applet=$applet],
+	  [applet=no])
+AM_CONDITIONAL([ENABLE_APPLET], [test x$applet = xyes])
+
+     
 dnl Dependencies for plugins
 
 AX_PYTHON_MODULE(alsaaudio, [])
@@ -194,10 +250,14 @@ src/themes/Makefile
 src/themes/default/Makefile
 src/udev/Makefile
 src/gnome/Makefile
+src/gnome/applet/Makefile
+src/gnome/applet/GNOME_G15Applet.server
 src/gnome/applications/Makefile
 src/gnome/applications/g15-config.desktop
 src/gnome/autostart/Makefile
 src/gnome/autostart/gnome15.desktop
+src/gnome/autostart/g15-indicator.desktop
+src/gnome/autostart/g15-systemtray.desktop
 src/gnome/dbus/Makefile
 src/main/Makefile
 src/main/python/Makefile
@@ -229,6 +289,21 @@ src/man/Makefile
 ])
 
 AS_ECHO("Available features :-")
+AS_ECHO("")
+AS_ECHO("Panel Integration")
+AS_ECHO("-----------------")
+AS_ECHO_N("indicator                   - ")
+AS_IF([test "x$indicator" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled (missing python-appindicator library)")])
+AS_ECHO_N("systemtray                  - ")
+AS_IF([test "x$systemtray" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("GNOME panel applet          - ")
+AS_IF([test "x$applet" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
 AS_ECHO("")
 AS_ECHO("Drivers")
 AS_ECHO("-------")

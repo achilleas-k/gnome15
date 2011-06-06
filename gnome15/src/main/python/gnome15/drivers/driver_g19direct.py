@@ -26,18 +26,15 @@ with the keyboard
 """
 
 from cStringIO import StringIO
-from gnome15.g15exceptions import NotConnectedException
-from threading import RLock, Thread
+from threading import RLock
 import cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
-import gnome15.g15devices as g15devices
 import sys
 import os
 import gconf
 import gtk
-import re
 import usb
 import traceback 
 import logging
@@ -113,13 +110,10 @@ controls = [ keyboard_backlight_control, default_keyboard_backlight_control, lcd
 def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.glade"))    
-    dialog = widget_tree.get_object("DriverDialog")
-    dialog.set_transient_for(parent)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/reset_usb" % device.uid, "Reset", False, widget_tree, True)
     g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
     g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/reset_wait" % device.uid, "ResetWait", 0, widget_tree, False)
-    dialog.run()
-    dialog.hide()
+    return widget_tree.get_object("DriverComponent")
 
 class Driver(g15driver.AbstractDriver):
 
@@ -196,7 +190,7 @@ class Driver(g15driver.AbstractDriver):
             self.lg19.stop_event_handling()
             self.connected = False
             if self.on_close != None:
-                self.on_close()
+                self.on_close(self)
         else:
             raise Exception("Not connected")
         

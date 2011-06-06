@@ -22,6 +22,7 @@
  
 import gnome15.g15util as g15util
 import gnome15.g15screen as g15screen
+import gnome15.g15driver as g15driver
 import gtk
 import opencv
 import os
@@ -37,12 +38,13 @@ description="Watch webcam video on your keyboard's LCD"
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
-has_preferences=True 
+has_preferences=True
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ] 
 
 def create(gconf_key, gconf_client, screen):
     return G15Webcam(gconf_client, gconf_key, screen)
 
-def show_preferences(parent, gconf_client, gconf_key):
+def show_preferences(parent, device, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "webcam.glade"))    
     dialog = widget_tree.get_object("WebcamDialog") 

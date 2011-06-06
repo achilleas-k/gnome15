@@ -43,7 +43,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
-unsupported_models = [ g15driver.MODEL_G110 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 def create(gconf_key, gconf_client, screen):
     return G15IndicatorMessages(gconf_client, screen)
@@ -139,7 +139,6 @@ class G15IndicatorMessages():
                     return True           
                 elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
                     self._menu.selected.dbus_menu_entry.activate()
-                    self._screen.service.resched_cycle()
                     return True
                 
         return False

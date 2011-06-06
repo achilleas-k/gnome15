@@ -20,11 +20,11 @@ import dbus
 import os
 import sys
 import g15globals
-import g15setup
 import g15profile
 import gconf
 import g15pluginmanager
 import g15driver
+import g15desktop
 import g15drivermanager
 import g15devices
 import g15util
@@ -34,7 +34,6 @@ import logging
 import traceback
 
 logger = logging.getLogger("config")
-logger.setLevel(logging.DEBUG)
 
 # Determine if appindicator is available, this decides that nature
 # of the message displayed when the Gnome15 service is not running
@@ -104,6 +103,7 @@ class G15Config:
         self.color_button = None
         self.screen_services = {}
         self.state = STOPPED
+        self.driver = None
         
         # Load main Glade file
         g15Config = os.path.join(g15globals.glade_dir, 'g15-config.glade')        
@@ -129,7 +129,6 @@ class G15Config:
         self.cycle_seconds_widget = self.widget_tree.get_object("CycleSeconds")
         self.plugin_model = self.widget_tree.get_object("PluginModel")
         self.plugin_tree = self.widget_tree.get_object("PluginTree")
-        self.driver_button = self.widget_tree.get_object("DriverButton")
         self.plugin_enabled_renderer = self.widget_tree.get_object("PluginEnabledRenderer")
         self.main_vbox = self.widget_tree.get_object("MainVBox")
         self.profiles_tree = self.widget_tree.get_object("ProfilesTree")
@@ -175,6 +174,13 @@ class G15Config:
         self.device_enabled = self.widget_tree.get_object("DeviceEnabled")
         self.tabs = self.widget_tree.get_object("Tabs")
         self.stop_service_button = self.widget_tree.get_object("StopServiceButton")
+        self.driver_model = self.widget_tree.get_object("DriverModel")
+        self.driver_combo = self.widget_tree.get_object("DriverCombo")
+        self.global_options_button = self.widget_tree.get_object("GlobalOptionsButton")
+        self.start_desktop_service_on_login = self.widget_tree.get_object("StartDesktopServiceOnLogin")
+        self.start_indicator_on_login = self.widget_tree.get_object("StartIndicatorOnLogin")
+        self.start_system_tray_on_login = self.widget_tree.get_object("StartSystemTrayOnLogin")
+        
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -192,10 +198,7 @@ class G15Config:
 
         # Indicator options
         # TODO move this out of here        
-        if HAS_APPINDICATOR:  
-            g15util.configure_checkbox_from_gconf(self.conf_client, "/apps/gnome15/indicate_only_on_error", "OnlyShowIndicatorOnError", False, self.widget_tree, True)
-        else:
-            self.widget_tree.get_object("OnlyShowIndicatorOnError").destroy()
+        g15util.configure_checkbox_from_gconf(self.conf_client, "/apps/gnome15/indicate_only_on_error", "OnlyShowIndicatorOnError", False, self.widget_tree, True)
         
         # Bind to events
         self.cycle_seconds.connect("value-changed", self._cycle_seconds_changed)
@@ -204,7 +207,6 @@ class G15Config:
         self.plugin_tree.connect("cursor-changed", self._select_plugin)
         self.plugin_enabled_renderer.connect("toggled", self._toggle_plugin)
         self.widget_tree.get_object("PreferencesButton").connect("clicked", self._show_preferences)
-        self.widget_tree.get_object("DriverButton").connect("clicked", self._show_setup)
         self.widget_tree.get_object("AddButton").connect("clicked", self._add_profile)
         self.widget_tree.get_object("ActivateButton").connect("clicked", self._activate)
         self.activate_on_focus.connect("toggled", self._activate_on_focus_changed)
@@ -236,6 +238,11 @@ class G15Config:
         self.stop_service_button.connect("clicked", self._stop_service)
         self.device_view.connect("selection-changed", self._device_selection_changed)
         self.device_enabled.connect("toggled", self._device_enabled_changed)
+        self.driver_combo.connect("changed", self._driver_changed)
+        self.global_options_button.connect("clicked", self._show_global_options)        
+        self.start_desktop_service_on_login.connect("toggled", self._change_desktop_service, "gnome15")
+        self.start_indicator_on_login.connect("toggled", self._change_desktop_service, "g15-indicator")
+        self.start_system_tray_on_login.connect("toggled", self._change_desktop_service, "g15-systemtray")
         
         # Connection to BAMF for running applications list
         try :
@@ -297,7 +304,7 @@ class G15Config:
         while True:
             opt = self.main_window.run()
             logger.debug("Option %s" % str(opt))         
-            if opt != 1:
+            if opt != 1 and opt != 2:
                 break
             
         self.main_window.hide()
@@ -441,7 +448,7 @@ class G15Config:
                                       "to the keyboard driver. The error message given was <b>%s</b>" % first_error, False)
                 else:
                     self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is running, but only %d out of %d keyboards " + \
-                                      "are connected. The first error message given was <b>%s</b>" % ( connected, screen_count, first_error ), False)
+                                      "are connected. The first error message given was <b>%s</b>" % ( connected, screen_count, str(first_error) ), False)
             else:
                 self._hide_warning()
             self.stop_service_button.set_sensitive(True)
@@ -497,33 +504,42 @@ class G15Config:
             self.conf_client.set_int(self._get_full_key(control.id), val)
         else:
             self.conf_client.set_int(self._get_full_key(control.id), int(widget.get_value()))
-        
-    def _show_setup(self, widget):        
-        setup = g15setup.G15Setup(self.selected_device, self.main_window , False, False)
-        old_driver = self.conf_client.get_string(self._get_full_key("driver"))
-        new_driver = setup.setup()
-        if new_driver and new_driver != old_driver:            
-            self._add_controls()
-            self._load_model()
     
     def _show_preferences(self, widget):
         plugin = self._get_selected_plugin()
-        plugin.show_preferences(self.main_window, self.conf_client, self._get_full_key("plugins/%s" % plugin.id))
+        plugin.show_preferences(self.main_window, self.selected_device, self.conf_client, self._get_full_key("plugins/%s" % plugin.id))
         
-    def _load_model(self):
+    def _load_plugins(self):
+        """
+        Loads what drivers and plugins are appropriate for the selected
+        device
+        """
         self.plugin_model.clear()
         if self.selected_device:
+            # Plugins appropriate
             for mod in sorted(g15pluginmanager.imported_plugins, key=lambda key: key.name):
                 key = self._get_full_key("plugins/%s/enabled" % mod.id )
-                if self.driver.get_model_name() in g15pluginmanager.get_supported_models(mod):
+                if self.driver and self.driver.get_model_name() in g15pluginmanager.get_supported_models(mod):
                     enabled = self.conf_client.get_bool(key)
                     self.plugin_model.append([enabled, mod.name, mod.id])
                     if mod.id == self.selected_id:
                         self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(len(self.plugin_model) - 1)))
             if len(self.plugin_model) > 0 and self._get_selected_plugin() == None:            
-                self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(0)))            
-            
+                self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(0)))
+
         self._select_plugin(None)
+        
+    def _load_drivers(self):
+        self.driver_model.clear()
+        if self.selected_device:
+            for driver_mod_key in g15drivermanager.imported_drivers:
+                driver_mod = g15drivermanager.imported_drivers[driver_mod_key]
+                driver = driver_mod.Driver(self.selected_device)
+                if self.selected_device.model_name in driver.get_model_names():
+                    self.driver_model.append((driver_mod.id, driver_mod.name))
+            
+        self.driver_combo.set_sensitive(len(self.driver_model) > 1)
+        self._set_driver_from_configuration()
         
     def _get_selected_plugin(self):
         (model, path) = self.plugin_tree.get_selection().get_selected()
@@ -585,7 +601,8 @@ class G15Config:
         self._set_cycle_seconds_value_from_configuration()
         
     def _plugins_changed(self, client, connection_id, entry, args):
-        self._load_model()
+        self._load_plugins()
+        self._load_drivers()
         
     def _cycle_screens_changed(self, widget=None):
         self.conf_client.set_bool(self._get_full_key("cycle_screens"), self.cycle_screens.get_active())
@@ -611,6 +628,9 @@ class G15Config:
         if not self.adjusting:
             self.selected_profile.send_delays = self.send_delays.get_active()
             self.selected_profile.save()
+            
+    def _change_desktop_service(self, widget, application_name):
+        g15desktop.set_autostart_application(application_name, widget.get_active())
         
     def _activate_on_focus_changed(self, widget=None):
         if not self.adjusting:
@@ -651,6 +671,38 @@ class G15Config:
                             
                 self.selected_profile.save()
                 
+    def _driver_configuration_changed(self, *args):
+        self._set_driver_from_configuration()
+        self._load_plugins()
+        
+    def _set_driver_from_configuration(self):        
+        selected_driver = self.conf_client.get_string(self._get_full_key("driver"))
+        i = 0
+        sel = False
+        for ( id, name ) in self.driver_model:
+            if id == selected_driver:
+                self.driver_combo.set_active(i)
+                sel = True
+            i += 1
+        if len(self.driver_model) > 0 and not sel:            
+            self.conf_client.set_string(self._get_full_key("driver"), self.driver_model[0][0])
+        else:
+            controls = self.widget_tree.get_object("DriverOptionsBox")
+            for c in controls.get_children():
+                controls.remove(c)
+            driver_mod = g15drivermanager.get_driver_mod(selected_driver)
+            widget = None
+            if driver_mod and driver_mod.has_preferences:
+                widget = driver_mod.show_preferences(self.selected_device, controls, self.conf_client)
+            if not widget:
+                widget = gtk.Label("This driver has no configuration options")
+            controls.pack_start(widget, False, False)
+            controls.show_all()
+            
+    def _driver_options_changed(self):
+        self._load_plugins()
+        self._add_controls()
+            
     def _device_enabled_configuration_changed(self, client, connection_id, entry, args):
         self._set_enabled_value_from_configuration()
         
@@ -662,9 +714,19 @@ class G15Config:
                 
     def _device_enabled_changed(self, widget = None):
         gobject.idle_add(self._set_device)
+                
+    def _driver_changed(self, widget = None):
+        if len(self.driver_model) > 0:
+            sel = self.driver_combo.get_active()
+            if sel >= 0:
+                row = self.driver_model[sel]
+                current =  self.conf_client.get_string(self._get_full_key("driver"))
+                if not current or row[0] != current:
+                    self.conf_client.set_string(self._get_full_key("driver"), row[0])
         
     def _set_device(self):
-        g15devices.set_enabled(self.conf_client, self.selected_device, self.device_enabled.get_active())
+        if self.selected_device:
+            g15devices.set_enabled(self.conf_client, self.selected_device, self.device_enabled.get_active())
         
     def _memory_changed(self, widget):
         self._load_configuration(self.selected_profile)
@@ -688,12 +750,14 @@ class G15Config:
             self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("plugins"), self._plugins_changed))
             self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("active_profile"), self._active_profile_changed))
             self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("enabled"), self._device_enabled_configuration_changed))
+            self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("driver"), self._driver_configuration_changed))
             self.selected_profile = g15profile.get_active_profile(self.selected_device)  
             self._set_cycle_seconds_value_from_configuration()
             self._set_cycle_screens_value_from_configuration()
         self._load_profile_list()
         self._add_controls()
-        self._load_model()
+        self._load_plugins()
+        self._load_drivers()
         self._do_status_change()
         
     def _get_device_conf_key(self):
@@ -893,6 +957,19 @@ class G15Config:
             keys = g15profile.get_keys_from_key(key_list_key)
             self.selected_profile.delete_macro(memory, keys)
             self._load_profile_list()
+            
+    def _show_global_options(self, widget):        
+        dialog = self.widget_tree.get_object("GlobalOptionsDialog")
+        
+        self.widget_tree.get_object("OnlyShowIndicatorOnError").set_visible(g15desktop.is_desktop_application_installed("g15-indicator"))
+        self.start_indicator_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-indicator"))
+        self.start_system_tray_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-systemtray"))
+        self.start_desktop_service_on_login.set_active(g15desktop.is_autostart_application("gnome15"))
+        self.start_indicator_on_login.set_active(g15desktop.is_autostart_application("g15-indicator"))
+        self.start_system_tray_on_login.set_active(g15desktop.is_autostart_application("g15-systemtray"))
+        dialog.set_transient_for(self.main_window)
+        dialog.run()
+        dialog.hide()
         
     def _add_profile(self, widget):
         dialog = self.widget_tree.get_object("AddProfileDialog") 
@@ -921,7 +998,10 @@ class G15Config:
         sel_device_name = self.conf_client.get_string("/apps/gnome15/config_device_name")
         idx = 0
         for device in self.devices:
-            icon_file = g15util.get_app_icon(self.conf_client,  device.model_name)
+            if device.model_name == 'virtual':
+                icon_file = g15util.get_icon_path(["preferences-system-window", "gnome-window-manager", "window_fullscreen"])
+            else:
+                icon_file = g15util.get_app_icon(self.conf_client,  device.model_name)
             pixb = gtk.gdk.pixbuf_new_from_file(icon_file)
             self.device_model.append([pixb.scale_simple(96, 96, gtk.gdk.INTERP_BILINEAR), device.model_fullname, 96, gtk.WRAP_WORD, pango.ALIGN_CENTER])
             if not sel_device_name or device.uid == sel_device_name:
@@ -1104,15 +1184,18 @@ class G15Config:
         for nh in self.control_notify_handles:
             self.conf_client.notify_remove(nh)            
         
+        driver_controls = None
         if self.selected_device != None:
             # Driver. We only need this to get the controls. Perhaps they should be moved out of the driver
             # class and the values stored separately
-            self.driver = g15drivermanager.get_driver(self.conf_client, self.selected_device)
-            
-            # Controls
-            driver_controls = self.driver.get_controls()
-        else:
-            driver_controls = None
+            try :
+                self.driver = g15drivermanager.get_driver(self.conf_client, self.selected_device)
+                self.driver.on_driver_options_change = self._driver_options_changed
+                
+                # Controls
+                driver_controls = self.driver.get_controls()
+            except Exception as e:
+                logger.error("Failed to load driver to query controls. %s" % str(e))
             
         if not driver_controls:
             driver_controls = []

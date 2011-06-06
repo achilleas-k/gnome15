@@ -46,7 +46,6 @@ DEVICE_IF_NAME="org.gnome15.Device"
 # Logging
 import logging
 logger = logging.getLogger("dbus")
-logger.setLevel(logging.DEBUG)
 
 '''
 Blinks keyboard backlight at configured rate

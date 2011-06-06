@@ -24,18 +24,13 @@ import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
-import gnome15.g15globals as g15globals
 import os
-import sys
 import dbus
-import cairo
-import traceback
-import base64
 import time
+import gobject
 import gtop
-from cStringIO import StringIO
 
-from Xlib import X, display, error, Xatom, Xutil
+from Xlib import X
 import Xlib.protocol.event
 
 import logging
@@ -51,7 +46,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
 reserved_keys = [ g15driver.G_KEY_SETTINGS ]
 
 def create(gconf_key, gconf_client, screen):
@@ -121,7 +116,7 @@ class G15Processes():
         if not post and state == g15driver.KEY_STATE_DOWN:              
             if self._screen.get_visible_page() == self._page:                    
                 if self._menu.handle_key(keys, state, post):
-                     True  
+                     return True  
                 elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
                     self._reschedule()
                     if self._menu.selected != None:
@@ -146,7 +141,7 @@ class G15Processes():
     Private
     '''
 
-    def _send_event(win, ctype, data, mask=None):
+    def _send_event(self, win, ctype, data, mask=None):
         """ Send a ClientMessage event to the root """
         data = (data+[0]*(5-len(data)))[:5]
         ev = Xlib.protocol.event.ClientMessage(window=win, client_type=ctype, data=(32,(data)))
@@ -241,6 +236,9 @@ class G15Processes():
         return result
 
     def _reload_menu(self):
+        gobject.idle_add(self._do_reload_menu)
+        
+    def _do_reload_menu(self):
         
         # Get the new list of active applications / processes
         item_map = {}

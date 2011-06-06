@@ -48,7 +48,7 @@ gobject.threads_init()
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 from dbus.mainloop.glib import threads_init
-dbus.mainloop.glib.threads_init()
+threads_init()
 DBusGMainLoop(set_as_default=True)
 
 # Server host class
@@ -87,8 +87,6 @@ if __name__ == "__main__":
         default=False, help="Run desktop service in foreground.")
     parser.add_option("-n", "--notrap", action="store_true", dest="no_trap",
         default=False, help="Do not try to trap signals.")
-    parser.add_option("-c", "--configure", action="store_true", dest="configure",
-        default=False, help="Configure the driver and exit.")
     (options, args) = parser.parse_args()
     
     level = logging.NOTSET
@@ -106,12 +104,9 @@ if __name__ == "__main__":
             
     if len(args) == 0 or ( len(args) == 1 and ( args[0] == "start" or args[0] == "restart" ) ):
         import gnome15.g15drivermanager as g15drivermanager
-        if options.configure:
-            g15drivermanager.get_configured_driver(True)
+        session_bus = dbus.SessionBus()
+        if check_service_status(session_bus):
+            print "Gnome15 desktop service already running"
         else:
-            session_bus = dbus.SessionBus()
-            if check_service_status(session_bus):
-                print "Gnome15 desktop service already running"
-            else:
-                if options.foreground or ( not options.foreground and os.fork() == 0 ):
-                    start_service(options.no_trap)
+            if options.foreground or ( not options.foreground and os.fork() == 0 ):
+                start_service(options.no_trap)

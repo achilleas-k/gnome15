@@ -22,7 +22,6 @@ from threading import Thread
 import select
 import pyinputevent.scancodes as S
 import gnome15.g15driver as g15driver
-import gnome15.g15devices as g15devices
 import gnome15.g15util as g15util
 import gnome15.g15globals as g15globals
 import gconf
@@ -46,7 +45,7 @@ logger = logging.getLogger("driver")
 id = "kernel"
 name = "Kernel Drivers"
 description = "Requires ali123's Logitech Kernel drivers. This method requires no other " + \
-            "daemons to be running, and works with the G13, G15 and G19 keyboards. " 
+            "daemons to be running, and works with the G13, G15, G19 and G110 keyboards. " 
 has_preferences = True
 
 g19_key_map = {
@@ -96,6 +95,7 @@ g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness
 g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint=g15driver.HINT_FOREGROUND)
 g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint=g15driver.HINT_BACKGROUND)
 g19_controls = [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control]
+g110_controls = [ g19_keyboard_backlight_control ]
 
 g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 0, 0, 2, hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
@@ -103,6 +103,7 @@ g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 
 g15_lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 48, hint=g15driver.HINT_SHADEABLE)
 g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint=g15driver.HINT_SWITCH)
 g15_controls = [ g15_backlight_control, g15_invert_control, g15_lcd_backlight_control, g15_lcd_contrast_control ]  
+g11_controls = [ g15_backlight_control ]
 
 class DeviceInfo:
     def __init__(self, leds, controls, key_map, led_prefix, keydev_pattern):
@@ -114,10 +115,11 @@ class DeviceInfo:
         
 device_info = {
                g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", "Logitech_G19_Gaming_Keyboard.*if*"), 
+               g15driver.MODEL_G11: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g11_controls, g15_key_map, "g15", "G15_Keyboard_G15.*if*"), 
                g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", "G15_Keyboard_G15.*if*"), 
                g15driver.MODEL_G15_V2: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", "G15_Keyboard_G15.*if*"),
                g15driver.MODEL_G13: DeviceInfo(["red:m1", "red:m2", "red:m3", "blue:mr" ], g15_controls, g15_key_map, "g13", "G13_Keyboard_G13.*if*"),
-               g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g15_controls, g15_key_map, "g110", "G110_Keyboard_G15.*if*")
+               g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g110_controls, g19_key_map, "g110", "G110_Keyboard_G15.*if*")
                }
         
 
@@ -126,9 +128,7 @@ EVIOCGRAB = 0x40044590
 
 def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_kernel.glade"))    
-    dialog = widget_tree.get_object("DriverDialog")
-    dialog.set_transient_for(parent)  
+    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_kernel.glade"))  
     device_model = widget_tree.get_object("DeviceModel")
     device_model.clear()
     device_model.append(["auto"])
@@ -136,8 +136,7 @@ def show_preferences(device, parent, gconf_client):
         if dir.startswith("fb"):
             device_model.append(["/dev/" + dir])    
     g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/fb_device" % device.uid, "DeviceCombo", "auto", widget_tree)
-    dialog.run()
-    dialog.hide()
+    return widget_tree.get_object("DriverComponent")
     
 class KeyboardReceiveThread(Thread):
     def __init__(self, device):
@@ -263,17 +262,13 @@ class Driver(g15driver.AbstractDriver):
         self.fb.__del__()
         self.fb = None
         if self.on_close != None:
-            g15util.schedule("Close", 0, self.on_close)
+            g15util.schedule("Close", 0, self.on_close, self)
         
     def is_connected(self):
         return self.fb != None
-        
-    def window_closed(self, window, evt):
-        if self.on_close != None:
-            self.on_close(retry=False)
     
     def get_model_names(self):
-        return [ g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G13, g15driver.MODEL_G19 ]
+        return device_info.keys()
             
     def get_name(self):
         return "Linux Logitech Kernel Driver"
@@ -411,7 +406,8 @@ class Driver(g15driver.AbstractDriver):
                         v = 0 
             buf = arrbuf.tostring()
                 
-        self.fb.buffer[0:len(buf)] = buf
+        if self.fb and self.fb.buffer:
+            self.fb.buffer[0:len(buf)] = buf
             
     def process_svg(self, document):  
         if self.get_bpp() == 1:

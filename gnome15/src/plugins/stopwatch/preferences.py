@@ -31,7 +31,7 @@ import sys
 
 class G15StopwatchPreferences():
 
-    def __init__(self, parent, gconf_client, gconf_key):
+    def __init__(self, parent, device, gconf_client, gconf_key):
         widget_tree = gtk.Builder()
         widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "stopwatch.glade"))
 

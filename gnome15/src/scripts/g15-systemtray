@@ -26,6 +26,7 @@ desktop service (g15-desktop-service). It will display a list of currently activ
 screens on activation, and allow the configuration UI to be launched (g15-config)
 '''
 
+
 import sys
 import pygtk
 pygtk.require('2.0')
@@ -67,42 +68,54 @@ dbus.mainloop.glib.threads_init()
 DBusGMainLoop(set_as_default=True)
 loop = gobject.MainLoop()
 
-class G15Indicator(g15desktop.G15GtkMenuPanelComponent):
+class G15SystemTray(g15desktop.G15GtkMenuPanelComponent):
     
     def __init__(self):
         g15desktop.G15GtkMenuPanelComponent.__init__(self)
         
     def create_component(self):
+        self.status_icon = gtk.StatusIcon()
         
-        item = gtk.MenuItem("Preferences")
+        self.prefs_menu = gtk.Menu()
+        item = gtk.MenuItem("Properties")
         item.connect("activate", self.show_configuration)
-        self.menu.append(item)
-        
-        item = gtk.MenuItem("About Gnome15")
+        self.prefs_menu.append(item)        
+        item = gtk.MenuItem("About")
         item.connect("activate", self.about_info)
-        self.menu.append(item)
+        self.prefs_menu.append(item) 
+        self.status_icon.menu = self.prefs_menu
+        self.prefs_menu.show_all()
         
-        self.menu.append(gtk.MenuItem())
-        
-        self.indicator = appindicator.Indicator("gnome15",
-                               self.get_icon_path("logitech-g-keyboard-panel"), 
-                               appindicator.CATEGORY_HARDWARE)
-        self.indicator.set_status (appindicator.STATUS_ACTIVE)
-        self.indicator.set_menu(self.menu)
+        self.status_icon.connect('popup-menu', self._on_popup_menu)
+        self.status_icon.connect('activate', self._on_activate)
         
     def clear_attention(self):
         self.remove_attention_menu_item()
-        if self.conf_client.get_bool("/apps/gnome15/indicate_only_on_error"):
-            self.indicator.set_status (appindicator.STATUS_PASSIVE)
-        else:
-            self.indicator.set_status (appindicator.STATUS_ACTIVE)
+        self.status_icon.set_from_pixbuf(self.normal_icon)
+        self.status_icon.set_tooltip("")
+        self.status_icon.set_visible(not self.conf_client.get_bool("/apps/gnome15/indicate_only_on_error"))
         
-    def attention(self, message = None):
-        self.indicator.set_status (appindicator.STATUS_ATTENTION)
+    def attention(self, message=None):
+        self.status_icon.set_visible(True)
+        self.status_icon.set_from_pixbuf(self.attention_icon)
+        self.status_icon.set_tooltip(message if message != None else self.default_message)
+        
+    def _on_popup_menu(self, status, button, time):
+        self.prefs_menu.popup(None, None, None, button, time)
+        
+    def _on_activate(self, status):       
+        self.menu.popup(None, None, None, 1, gtk.get_current_event_time())
+        pass
+        
+    def _about_info(self, widget):         
+        about = gnome.ui.About("Gnome15", g15globals.version, "GPL", \
+                               "Desktop integration for Logitech 'G' keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
+                               g15desktop.AUTHORS, "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
+        about.show()
         
     def icons_changed(self):
-        self.indicator.set_icon(self.get_icon_path("logitech-g-keyboard-panel"))        
-        self.indicator.set_attention_icon(self.get_icon_path("logitech-g-keyboard-error-panel"))
+        self.normal_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15util.get_icon_path("logitech-g-keyboard-panel"), self.status_icon.get_size(), self.status_icon.get_size())
+        self.attention_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15util.get_icon_path("logitech-g-keyboard-error-panel"), self.status_icon.get_size(), self.status_icon.get_size())
     
 # run it in a gtk window
 if __name__ == "__main__":
@@ -112,5 +125,5 @@ if __name__ == "__main__":
     except:
         pass
     
-    G15Indicator().start()                       
+    G15SystemTray().start()                       
     gtk.main()

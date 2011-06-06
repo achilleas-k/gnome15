@@ -13,7 +13,6 @@
 # Description:       Configure lg4l kernel module for Logitech keyboards
 ### END INIT INFO
 
-
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 NAME=gnome15-kernel
 DESC="Gnome15 Kernel Driver Setup"

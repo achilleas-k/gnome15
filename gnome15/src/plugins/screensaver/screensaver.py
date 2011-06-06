@@ -49,7 +49,7 @@ This plugin displays a high priority screen when the screensaver activates
 def create(gconf_key, gconf_client, screen):
     return G15ScreenSaver(gconf_key, gconf_client, screen)
 
-def show_preferences(parent, gconf_client, gconf_key):
+def show_preferences(parent, device, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "screensaver.glade"))
     
@@ -60,8 +60,7 @@ def show_preferences(parent, gconf_client, gconf_key):
     dim_keyboard.set_active(gconf_client.get_bool(gconf_key + "/dim_keyboard"))
     dim_h = dim_keyboard.connect("toggled", changed, gconf_key + "/dim_keyboard", gconf_client)
     
-    driver = g15drivermanager.get_driver(gconf_client)
-    if driver.get_bpp() == 0:
+    if device.bpp == 0:
         widget_tree.get_object("MessageFrame").hide()
         
     text_buffer = widget_tree.get_object("TextBuffer")

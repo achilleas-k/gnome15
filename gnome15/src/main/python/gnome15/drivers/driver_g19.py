@@ -31,8 +31,11 @@ from threading import RLock, Thread
 import cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
-import gnome15.g15devices as g15devices
+import gnome15.g15globals as g15globals
+import gconf
 import socket
+import gtk
+import os.path
 import struct
 import sys
 import traceback
@@ -46,8 +49,9 @@ description="For use with the Logitech G19 only, this driver uses <i>G19D</i>, "
             "a sub-project of Gnome15. The g19daemon service must be running when " + \
             "starting Gnome15. This method is intended as a temporary measure until " + \
             "kernel support is available for this keyboard."
-has_preferences=False
+has_preferences=True
 
+DEFAULT_PORT=15551
 MAX_X=320
 MAX_Y=240
 
@@ -90,8 +94,13 @@ KEY_MAP = {
     }
 
 """
-
 """
+
+def show_preferences(device, parent, gconf_client):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19.glade"))
+    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/g19d_port" % device.uid, "Port", DEFAULT_PORT, widget_tree, False)
+    return widget_tree.get_object("DriverComponent")
 
 class EventReceive(Thread):
     def __init__(self, socket, callback, on_error):
@@ -142,16 +151,16 @@ controls = [ keyboard_backlight_control, default_keyboard_backlight_control, lcd
 
 class Driver(g15driver.AbstractDriver):
 
-    def __init__(self, device, host = 'localhost', port= 15551, on_close = None):
+    def __init__(self, device, on_close = None):
         g15driver.AbstractDriver.__init__(self, "g19")
         self.init_string="GBUF"
-        self.remote_host=host
         self.device = device
+        self.change_timer = None
         self.socket = None
         self.on_close = on_close
         self.lock = RLock()
-        self.remote_port=port
         self.thread = None
+        self.conf_client = gconf.client_get_default()
     
     def get_antialias(self):
         return cairo.ANTIALIAS_SUBPIXEL
@@ -191,12 +200,31 @@ class Driver(g15driver.AbstractDriver):
         if self.is_connected():
             raise Exception("Already connected")
         
+        port = DEFAULT_PORT
+        e = self.conf_client.get("/apps/gnome15/%s/g19d_port" % self.device.uid)
+        if e:
+            port = e.get_int()
+        
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(30.0)
-        s.connect((self.remote_host, self.remote_port))
+        s.connect(("127.0.0.1", port))
         self.socket = s
         for control in self.get_controls():
             self._do_update_control(control)
+        
+        self.notify_handle = self.conf_client.notify_add("/apps/gnome15/%s/g19d_port" % self.device.uid, self.config_changed, None)
+        
+    def config_changed(self, client, connection_id, entry, args):
+        if self.change_timer != None:
+            self.change_timer.cancel()
+        self.change_timer = g15util.schedule("ChangeG15DaemonConfiguration", 3.0, self.update_conf)
+            
+    def update_conf(self):
+        logger.info("Configuration changed")
+        if self.is_connected():
+            logger.info("Reconnecting")
+            self.disconnect()
+            self.connect()
             
     def disconnect(self):  
         if self.is_connected():  
@@ -206,7 +234,7 @@ class Driver(g15driver.AbstractDriver):
             self.socket.close()
             self.socket = None
             if self.on_close != None:
-                self.on_close()
+                self.on_close(self)
         else:
             raise Exception("Not connected")
         
@@ -321,7 +349,3 @@ class Driver(g15driver.AbstractDriver):
         elif control == lcd_brightness_control:
             self.write_out("L" + chr(control.value) );
             
-    def _init_driver(self):        
-        self.device = g15devices.find_device([g15driver.MODEL_G19])
-        if self.device == None:
-            raise Exception("Could not find a G19 keyboard")

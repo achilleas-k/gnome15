@@ -48,7 +48,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
-unsupported_models = [ g15driver.MODEL_G110 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 DEFAULT_LOCATION="london,england"
 
@@ -63,7 +63,7 @@ KELVIN=2
 def create(gconf_key, gconf_client, screen):
     return G15Weather(gconf_key, gconf_client, screen)
 
-def show_preferences(parent, gconf_client, gconf_key):
+def show_preferences(parent, device, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "weather.glade"))
     

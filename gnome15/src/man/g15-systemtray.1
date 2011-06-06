@@ -1,22 +1,27 @@
 .\" Process this file with
 .\" groff -man -Tascii g15-indicator.1
 .\"
-.TH g15-indicator 1
+.TH g15-systemtray 1
 .SH NAME
-g15-systemtray \- Starts a system tray icon for Gnome15 desktop service
+g15-systemtray \- Adds an icon in the notification area allowing control of Gnome15
 .SH SYNOPSIS
-.B g15-systemtray 
+.B g15-systemtray
 .SH DESCRIPTION
 .B g15-systemtray
+Starts the Gnome15  
+.I System Tray
+that may be used to quickly access configuration, select
+the currently active screen, and start the
+.B g15-desktop-service
+when required.
+ 
 Gnome15 is a suite of applications and plugins that provide
 integration of the Logitech G series keyboards into the 
 GNOME desktop environment.
 
-This application starts an Indicator allowing control and
-monitoring of the Gnome15 desktop service. 
 .SH AUTHOR
 Brett Smith <tanktarta@blueyonder.co.uk>
 .SH "SEE ALSO"
 .BR g15-config (1),
-.BR g15-desktop-service (1)
+.BR g15-desktop-service (1),
 .BR g15-indicator (1)

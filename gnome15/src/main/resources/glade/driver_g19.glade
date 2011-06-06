@@ -2,29 +2,6 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkListStore" id="DeviceModel">
-    <columns>
-      <!-- column-name Device -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">g19</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">g15v1</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">g15v2</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">g13</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">auto</col>
-      </row>
-    </data>
-  </object>
   <object class="GtkAction" id="action1"/>
   <object class="GtkVBox" id="DriverComponent">
     <property name="visible">True</property>
@@ -39,7 +16,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="xalign">0</property>
-            <property name="label" translatable="yes">Device:</property>
+            <property name="label" translatable="yes">Port</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -48,20 +25,22 @@
           </packing>
         </child>
         <child>
-          <object class="GtkComboBox" id="DeviceCombo">
+          <object class="GtkSpinButton" id="Port">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="model">DeviceModel</property>
-            <child>
-              <object class="GtkCellRendererText" id="cellrenderertext1"/>
-              <attributes>
-                <attribute name="text">0</attribute>
-              </attributes>
-            </child>
+            <property name="can_focus">True</property>
+            <property name="invisible_char">●</property>
+            <property name="invisible_char_set">True</property>
+            <property name="primary_icon_activatable">False</property>
+            <property name="secondary_icon_activatable">False</property>
+            <property name="primary_icon_sensitive">True</property>
+            <property name="secondary_icon_sensitive">True</property>
+            <property name="adjustment">PortAdjustment</property>
+            <property name="climb_rate">0.029999999999999999</property>
           </object>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
+            <property name="padding">4</property>
             <property name="position">1</property>
           </packing>
         </child>
@@ -69,8 +48,14 @@
       <packing>
         <property name="expand">False</property>
         <property name="fill">False</property>
+        <property name="padding">4</property>
         <property name="position">0</property>
       </packing>
     </child>
+  </object>
+  <object class="GtkAdjustment" id="PortAdjustment">
+    <property name="upper">65535</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
   </object>
 </interface>

@@ -1,5 +1,4 @@
 # For Python autoconf macros
-ACLOCAL_AMFLAGS = -I m4
 
 scriptsdir = @libdir@/gnome15
 scripts_SCRIPTS = g15-applet

@@ -115,6 +115,7 @@ Models
 """
 MODEL_G15_V1 = "g15v1"
 MODEL_G15_V2 = "g15v2"
+MODEL_G11 = "g11"
 MODEL_G13 = "g13"
 MODEL_G19 = "g19"
 MODEL_G510 = "g510"
@@ -122,7 +123,7 @@ MODEL_G510_AUDIO = "g510audio"
 MODEL_G110 = "g110"
 MODEL_Z10 = "z10"
 
-MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G510_AUDIO, MODEL_G110, MODEL_Z10 ]
+MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G11, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G510_AUDIO, MODEL_G110, MODEL_Z10 ]
 
 HINT_DIMMABLE = 1 << 0
 HINT_SHADEABLE = 1 << 1
@@ -152,6 +153,7 @@ class AbstractDriver(object):
     def __init__(self, id):
         self.id = id
         global seq_no
+        self.on_driver_options_change = None
         seq_no += 1
         self.seq = seq_no
         self.control_update_listeners = []
@@ -264,9 +266,6 @@ class AbstractDriver(object):
     def process_svg(self, document):
         raise NotImplementedError( "Not implemented" )
         
-    '''
-    Utilities
-    '''
     def get_control(self, id):
         controls = self.get_controls()
         if controls:

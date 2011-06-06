@@ -8,7 +8,6 @@ DESTDIR := ${CURDIR}/${BUILDDIR}
 #Just need to copy the rules from the source gnome15 package when they get updated (can this be fixed somehow)   
 #DEB_CONFIGURE_EXTRA_FLAGS := --enable-udev=/lib/udev/rules.d
 
-
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/python-autotools.mk
 

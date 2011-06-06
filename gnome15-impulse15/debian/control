@@ -8,7 +8,7 @@ Homepage: http://www.gnome15.org/
 
 Package: gnome15-impulse15
 Architecture: any
-Depends: ${misc:Depends}, ${python:Depends}, gnome15, libfftw3-3, libpulse0
+Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends}, gnome15, libfftw3-3, libpulse0
 Provides: ${python:Provides}
 Description: Adds a spectrum Analyser to Gnome15
  Based on the "Impulse" screenlet, this package adds an

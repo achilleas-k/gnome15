@@ -43,13 +43,13 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
-unsupported_models = [ g15driver.MODEL_G110 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 def create(gconf_key, gconf_client, screen):
     return G15RSS(gconf_client, gconf_key, screen)
 
-def show_preferences(parent, gconf_client, gconf_key):
-    G15RSSPreferences(parent, gconf_client, gconf_key)
+def show_preferences(parent, device, gconf_client, gconf_key):
+    G15RSSPreferences(parent, device, gconf_client, gconf_key)
 
 def changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
@@ -62,7 +62,7 @@ def get_update_time(gconf_client, gconf_key):
     
 class G15RSSPreferences():
     
-    def __init__(self, parent, gconf_client,gconf_key):
+    def __init__(self, parent, device, gconf_client,gconf_key):
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
         

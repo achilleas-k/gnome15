@@ -40,7 +40,7 @@ author="Nuno Araujo <nuno.araujo@russo79.com>"
 copyright="Copyright (C)2011 Nuno Araujo"
 site="http://www.gnome15.org/"
 has_preferences=True
-unsupported_models = [ g15driver.MODEL_G110 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 
 # 
@@ -50,8 +50,8 @@ unsupported_models = [ g15driver.MODEL_G110 ]
 def create(gconf_key, gconf_client, screen):
     return G15Stopwatch(gconf_key, gconf_client, screen)
 
-def show_preferences(parent, gconf_client, gconf_key):
-    preferences = g15preferences.G15StopwatchPreferences(parent, gconf_client, gconf_key)
+def show_preferences(parent, device, gconf_client, gconf_key):
+    preferences = g15preferences.G15StopwatchPreferences(parent, device, gconf_client, gconf_key)
     preferences.run()
 
 

@@ -2,15 +2,17 @@ Source: gnome15
 Section: gnome
 Priority: optional
 Maintainer: Brett Smith <tanktarta@blueyonder.co.uk>
-Build-Depends: cdbs, debhelper (>= 7), autotools-dev, python-support, python-gobject, python-gtk2, python-gtk2-dev, python-dbus, python-cairo (>= 1.8.3), python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, python-xdg, pkg-config, python-usb, python-xlib, pyinputevent, python-pyinotify, python-gtop, python-gconf, pylibg19
+Build-Depends: cdbs, debhelper (>= 7), autotools-dev, python-support, python-gobject, python-gtk2, python-gtk2-dev, python-dbus, python-cairo (>= 1.8.3), python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, python-xdg, pkg-config, python-usb, python-xlib, pyinputevent, python-pyinotify, python-gtop, python-gconf, pylibg19, python-appindicator
 Standards-Version: 3.8.4
 Homepage: http://www.gnome15.org/
 
 Package: gnome15
 Architecture: all
-Depends: ${python:Depends}, python-gobject, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, cairo-clock, python-xlib, libgtk2.0-bin, python-pyinotify, bamfdaemon, python-gtop, python-usb, python-gconf  
-Recommends: gnome15-g19d | gnome15-g15daemon | gnome15-gtk | gnome15-kernel | gnome15-g19direct
-Suggests: python-setproctitle
+Depends: ${python:Depends}, python-gobject, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, cairo-clock, python-xlib, libgtk2.0-bin, python-pyinotify, bamfdaemon, python-gtop, python-usb, python-gconf, python-appindicator  
+Recommends: gnome15-g19direct | gnome15-g15daemon 
+Suggests: python-setproctitle, gnome15-g19d, gnome15-gtk, gnome15-kernel
+Replaces: gnome15-indicator, gnome15-systemtray, gnome15-applet
+Conflicts: gnome15-indicator, gnome15-systemtray, gnome15-applet
 Provides: ${python:Provides}
 Description: Desktop service for the Logitech "G" keyboards
  This is the core of Gnome15, which provides macro handling, a

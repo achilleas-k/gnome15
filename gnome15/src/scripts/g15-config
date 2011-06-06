@@ -41,7 +41,6 @@ if os.path.exists(path):
     sys.path.insert(0, path)
 
 import gnome15.g15config as g15config
-import gnome15.g15setup as g15setup
 import gnome15.g15globals as pglobals
 import gnome15.g15drivermanager as g15drivermanager
 

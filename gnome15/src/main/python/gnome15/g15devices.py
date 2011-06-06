@@ -23,13 +23,24 @@
 
 import os
 import usb
-import g15driver as g15driver
+import g15driver
+import g15drivermanager
 
 '''
 Keyboard layouts 
 '''
 
 z10_key_layout = []
+
+g11_key_layout = [
+                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
+                  [ g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6 ],
+                  [ g15driver.G_KEY_G7, g15driver.G_KEY_G8, g15driver.G_KEY_G9 ],
+                  [ g15driver.G_KEY_G10, g15driver.G_KEY_G11, g15driver.G_KEY_G12 ],
+                  [ g15driver.G_KEY_G13, g15driver.G_KEY_G14, g15driver.G_KEY_G15 ],
+                  [ g15driver.G_KEY_G16, g15driver.G_KEY_G17, g15driver.G_KEY_G18 ],
+                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
+                  ]
 
 g15v1_key_layout = [
                   [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
@@ -95,34 +106,38 @@ g19_key_layout = [
               ]
 
 device_list = { 
-                  g15driver.MODEL_G19 : [ (0x046d, 0xc229), g19_key_layout, 16, ( 320, 240 ), "Logitech G19 Gaming Keyboard" ], 
-                  g15driver.MODEL_G15_V1 : [ (0x046d, 0xc222), g15v1_key_layout, 1, ( 160, 43 ), "Logitech G15 Gaming Keyboard (version 1)" ], 
-                  g15driver.MODEL_G15_V2 : [ (0x046d, 0xc227), g15v2_key_layout, 1, ( 160, 43 ), "Logitech G15 Gaming Keyboard (version 2)" ],
-                  g15driver.MODEL_G13 : [ (0x046d, 0xc21c), g13_key_layout, 1, ( 160, 43 ), "Logitech G13 Advanced Gameboard" ],
-                  g15driver.MODEL_G510 : [ (0x046d, 0xc22d), g510_key_layout, 1, ( 160, 43 ), "Logitech G510 Keyboard" ],
-                  g15driver.MODEL_G510_AUDIO : [ (0x046d, 0xc22e), g510_key_layout, 1, ( 160, 43 ), "Logitech G510 Keyboard (audio)" ],
-                  g15driver.MODEL_Z10 : [ (0x046d, 0x0a07), z10_key_layout, 1, ( 160, 43 ), "Logitech Z10 Speakers" ],
-                  g15driver.MODEL_G110 : [ (0x046d, 0xc225), g110_key_layout, 0, ( 0, 0 ), "Logitech G110 Keyboard" ],
-                   }
+                'virtual':                    [ (0x0000, 0x0000), [],               0,  ( 0,    0 ),    "Virtual LCD Window" ],
+                g15driver.MODEL_G11 :         [ (0x046d, 0xc225), g11_key_layout,   0,  ( 0,    0 ),    "Logitech G11 Keyboard" ],
+                g15driver.MODEL_G19 :         [ (0x046d, 0xc229), g19_key_layout,   16, ( 320,  240 ),  "Logitech G19 Gaming Keyboard" ], 
+                g15driver.MODEL_G15_V1 :      [ (0x046d, 0xc221), g15v1_key_layout, 1,  ( 160,  43 ),   "Logitech G15 Gaming Keyboard (version 1)" ], 
+                g15driver.MODEL_G15_V2 :      [ (0x046d, 0xc227), g15v2_key_layout, 1,  ( 160,  43 ),   "Logitech G15 Gaming Keyboard (version 2)" ],
+                g15driver.MODEL_G13 :         [ (0x046d, 0xc21c), g13_key_layout,   1,  ( 160,  43 ),   "Logitech G13 Advanced Gameboard" ],
+                g15driver.MODEL_G510 :        [ (0x046d, 0xc22d), g510_key_layout,  1,  ( 160,  43 ),   "Logitech G510 Keyboard" ],
+                g15driver.MODEL_G510_AUDIO :  [ (0x046d, 0xc22e), g510_key_layout,  1,  ( 160,  43 ),   "Logitech G510 Keyboard (audio)" ],
+                g15driver.MODEL_Z10 :         [ (0x046d, 0x0a07), z10_key_layout,   1,  ( 160,  43 ),   "Logitech Z10 Speakers" ],
+                g15driver.MODEL_G110 :        [ (0x046d, 0xc225), g110_key_layout,  0,  ( 0,    0 ),    "Logitech G110 Keyboard" ],
+                }
 
 '''
 Locates which Logitech devices are available by examining the USB bus
 '''
 
 class Device():
-    def __init__(self, device, model_name):
-        device_info = device_list[model_name]
-        
-        # TODO - better UID. need something stable, but unique. 
-        self.uid = str(model_name)
-        
+    def __init__(self, devices, uid, model_name, device_info):
+        self.devices = devices 
+        self.uid = uid
         self.model_name = model_name
-        self.device = device
+        
         self.usb_id = device_info[0]
         self.key_layout = device_info[1]  
         self.bpp = device_info[2]
         self.lcd_size = device_info[3]
         self.model_fullname = device_info[4]
+        
+    def __repr__(self):
+        return "Device %s model: %s (%s) on device %s:%s. Has a %d BPP screen of %dx%d. " %  \
+            ( self.uid, self.model_name, self.model_fullname, hex(self.usb_id[0]), hex(self.usb_id[1]), self.bpp, self.lcd_size[0], self.lcd_size[1])
+    
         
 def is_enabled(conf_client, device):    
     val = conf_client.get("/apps/gnome15/%s/enabled" % device.uid)
@@ -130,26 +145,49 @@ def is_enabled(conf_client, device):
         
 def set_enabled(conf_client, device, enabled):
     conf_client.set_bool("/apps/gnome15/%s/enabled" % device.uid, enabled)
-
+    
 def find_all_devices():
-    devices = []
-    for dev in device_list:
-        l_dev = find_device(dev)
-        if l_dev:
-            devices.append(l_dev)
-    return devices
-
-def find_device(models):
-    for lg_model in device_list:
-        id = device_list[lg_model][0]
-        device = _find_device(id[0], id[1])
-        if device and lg_model in models:
-            return Device(device, lg_model)
-        
-def _find_device(idVendor, idProduct):
+    device_map = {}
     for bus in usb.busses():
         for dev in bus.devices:
-            if dev.idVendor == idVendor and \
-                    dev.idProduct == idProduct:
-                return dev
-    return None
+            device_map[( dev.idVendor, dev.idProduct ) ] = dev
+    devices = {}
+    
+    for device_key in device_map:
+        for model_name in device_list:
+            device_info = device_list[model_name]
+            usb_id = device_info[0]
+            if usb_id == device_key:
+                """
+                TODO - Check - G11 may be a special case, it is a G15v1 with a missing device (LCD), and uses same ID's.
+                Unfortunately, this means this code cannot determine which is which if both are plugged in (hopefully
+                very unlikley!)
+                """
+                if model_name == g15driver.MODEL_G15_V1 and not (0x046d, 0xc222) in device_map:
+                    # Actually a G11
+                    pass
+                elif model_name == g15driver.MODEL_G11 and (0x046d, 0xc222) in device_map:
+                    # Actually a G15
+                    pass
+                else:
+                    usb_device = device_map[device_key] 
+                    devices[usb_id] = Device(usb_device, model_name, model_name, device_info)
+                
+    """
+    If the GTK driver is installed, add a virtual device as well
+    """
+    if g15drivermanager.get_driver_mod("gtk"): 
+        devices[(0, 0)] = Device(None, 'virtual', 'virtual', device_list['virtual'])
+    
+    return devices.values()
+
+def find_device(models):
+    for lg_model in find_all_devices():
+        for model in models:
+            if lg_model.model_name == model:
+                return lg_model
+
+
+if __name__ == "__main__":
+    for device in find_all_devices():
+        print str(device)
