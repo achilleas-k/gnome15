@@ -280,7 +280,7 @@ class G15Screen():
         self.conf_client = service.conf_client
         self.notify_handles = []
         self.connection_lock = RLock()
-        self.defeat_profile_change = False
+        self.defeat_profile_change = 0
         self.first_page = None
         self.attention_message = g15globals.name
         self.attention = False
@@ -292,9 +292,11 @@ class G15Screen():
         self.color_no = 1
         self.cycle_timer = None
         self._started_plugins = False
-        self.shutting_down = False
+        self.stopping = False
         self.reconnect_timer = None
         self.plugins = self.plugin_manager_module.G15Plugins(self)
+        self.mkey_lights_control = None
+        self.pages = []
         
         if not self._load_driver():
             raise Exception("Driver failed to load")
@@ -308,7 +310,7 @@ class G15Screen():
             self.attempt_connection()
         
     def application_changed(self, view):
-        if not self.defeat_profile_change:
+        if self.defeat_profile_change < 1:
             choose_profile = None
             title = view.Name()                                    
             # Active window has changed, see if we have a profile that matches it
@@ -327,9 +329,8 @@ class G15Screen():
             elif active_profile == None or choose_profile.id != active_profile.id:
                 choose_profile.make_active()
         
-    def connect(self):
-        
-        logger.info("Connecting to %s." % self.device.uid)
+    def start(self):
+        logger.info("Starting %s." % self.device.uid)
         
         # Start the driver
         self.attempt_connection() 
@@ -342,43 +343,18 @@ class G15Screen():
         self.notify_handles.append(self.conf_client.notify_add("%s/active_profile" % screen_key, self.active_profile_changed))
         self.notify_handles.append(self.conf_client.notify_add("%s/driver" % screen_key, self.driver_changed))
         
-        logger.info("Connection for %s is complete." % self.device.uid)
+        logger.info("Starting for %s is complete." % self.device.uid)
         
-    def start(self):
-        logger.info("Starting screen")
-        self.content_surface = None
-        self.width = self.driver.get_size()[0]
-        self.height = self.driver.get_size()[1]
-        
-        self.surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
-        self.size = ( self.width, self.height )
-        self.available_size = (0, 0, self.size[0], self.size[1])
-        
-        self.page_model_lock = threading.RLock()
-        self.pages = []
-        self.visible_page = None
-        self.old_canvas = None
-        self.transition_function = None
-        self.background_painter_function = None
-        self.foreground_painter_function = None
-        self.painter_function = None
-        self.mkey = 1
-        self.reverting = { }
-        self.deleting = { }
-           
-        self.redraw()
-        
-    def shutdown(self):       
-        self.shutting_down = True
-        self.plugins.destroy()
+    def stop(self):        
+        self.stopping = True
         if self.driver and self.driver.is_connected():
             self.driver.disconnect()
-        
-    def stop(self):
-        if self.is_active():
+        if self.is_active() and self.driver.get_bpp() > 0:
             self.fade(True)
+        g15util.stop_queue("redrawQueue")
         if self.plugins:
-            self.plugins.deactivate() 
+            self.plugins.deactivate()
+            self.plugins.destroy()
         for h in self.notify_handles:
             self.conf_client.notify_remove(h)
         
@@ -398,6 +374,7 @@ class G15Screen():
         return self.mkey
         
     def set_mkey(self, mkey):
+        logger.info("Setting memory bank to %d" % mkey)
         self.mkey = mkey
         val = 0
         if self.mkey == 1:
@@ -406,7 +383,7 @@ class G15Screen():
             val = g15driver.MKEY_LIGHT_2
         elif self.mkey == 3:
             val = g15driver.MKEY_LIGHT_3
-        self.driver.set_mkey_lights(val)
+        self.mkey_lights_control.set_mkey_lights(val)
         self.set_color_for_mkey()
         for listener in self.screen_change_listeners:
             listener.memory_bank_changed(val)  
@@ -427,7 +404,7 @@ class G15Screen():
                     return True
         
         # Requires long press of L1 to cycle
-        if not post and state == g15driver.KEY_STATE_UP:
+        if self.defeat_profile_change < 1 and not post and state == g15driver.KEY_STATE_UP:
             if g15driver.G_KEY_M1 in keys:
                 self.set_mkey(1)
             elif g15driver.G_KEY_M2 in keys:
@@ -486,6 +463,8 @@ class G15Screen():
         thumbnail_painter --  function to call to paint thumbnails for this page. Defaults to None
         panel_painter -- function to call to paint panel graphics for this page. Defaults to None
         """
+        if self.driver.get_bpp() == 0:
+            raise Exception("The current device has no suitable output device")
         
         logger.info("Creating new page with %s of priority %d" % (id, priority))
         self.page_model_lock.acquire()
@@ -625,8 +604,8 @@ class G15Screen():
             
     def complete_loading(self):              
         try :           
-            logger.info("Activating plugins") 
-            self.plugins.activate(self.splash.update_splash) 
+            logger.info("Activating plugins")
+            self.plugins.activate(self.splash.update_splash if self.splash else None) 
             if self.first_page != None:
                 page = self.get_page(self.first_page)
                 if page:
@@ -638,7 +617,8 @@ class G15Screen():
             logger.info("Grabbed keyboard")
             self.clear_attention()
                 
-            gobject.idle_add(self.splash.complete)
+            if self.splash:
+                self.splash.complete()
             self.loading_complete = True
             logger.info("Loading complete")
         except Exception as e:
@@ -646,20 +626,25 @@ class G15Screen():
                 raise
         
     def key_received(self, keys, state):
-        if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
-            return        
-        
-        if state == g15driver.KEY_STATE_UP:
-            if g15driver.G_KEY_LIGHT in keys and not self.driver.get_model_name() == g15driver.MODEL_G19:
-                self.service.dbus_service._driver_service.CycleKeyboard(1)
-
-            profile = g15profile.get_active_profile(self.device)
-            if profile != None:
-                macro = profile.get_macro(self.get_mkey(), keys)
-                if macro != None:
-                    self.service.handle_macro(macro)
-                            
-        self.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True)
+        try :
+            if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
+                return        
+            
+            if state == g15driver.KEY_STATE_UP:
+                if g15driver.G_KEY_LIGHT in keys and not self.driver.get_model_name() == g15driver.MODEL_G19:
+                    self.service.dbus_service._driver_service.CycleKeyboard(1)
+    
+                profile = g15profile.get_active_profile(self.device)
+                if profile != None:
+                    macro = profile.get_macro(self.get_mkey(), keys)
+                    if macro != None:
+                        self.service.handle_macro(macro)
+                                
+            self.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True)
+        except Exception as e:
+            logger.error("Error in key handling. %s" % str(e))
+            if logger.level == logging.DEBUG:
+                traceback.print_exc(file=sys.stderr)
             
     def screen_cycle(self):
         page = self.get_visible_page()
@@ -714,8 +699,13 @@ class G15Screen():
                     break
             self.redraw()
         
-    def set_defeat_profile_change(self, defeat):
-        self.defeat_profile_change = defeat
+    def request_defeat_profile_change(self):
+        self.defeat_profile_change += 1
+        
+    def release_defeat_profile_change(self):
+        if self.defeat_profile_change < 1:
+            raise Exception("Cannot release defeat profile change if not requested")
+        self.defeat_profile_change -= 1
         
     def cycle_color(self, val, control):
         logger.debug("Cycling of %s color by %d" % (control.id, val))
@@ -772,6 +762,29 @@ class G15Screen():
     '''
     Private
     '''    
+    def _init_screen(self):
+        logger.info("Starting screen")
+        self.pages = []
+        self.content_surface = None
+        self.width = self.driver.get_size()[0]
+        self.height = self.driver.get_size()[1]
+        
+        self.surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
+        self.size = ( self.width, self.height )
+        self.available_size = (0, 0, self.size[0], self.size[1])
+        
+        self.page_model_lock = threading.RLock()
+        self.visible_page = None
+        self.old_canvas = None
+        self.transition_function = None
+        self.background_painter_function = None
+        self.foreground_painter_function = None
+        self.painter_function = None
+        self.mkey = 1
+        self.reverting = { }
+        self.deleting = { }
+        self._do_redraw()
+        
     def _cancel_timer(self):
         self.reschedule_lock.acquire()
         try:      
@@ -786,10 +799,9 @@ class G15Screen():
         self.request_attention(str(exception))
         self.resched_cycle()   
         self.driver = None      
-        print "EXCEPTION IS >>> %s" % str(exception)    
         if self.should_reconnect(exception):
-            print "SHOULD RECONNECT IS TRUE!!"
-            traceback.print_exc(file=sys.stderr)
+            if logger.level == logging.DEBUG:
+                traceback.print_exc(file=sys.stderr)
             self.reconnect_timer = g15util.schedule("ReconnectTimer", 5.0, self.attempt_connection)
         else:
             traceback.print_exc(file=sys.stderr)
@@ -832,18 +844,19 @@ class G15Screen():
         self.plugins.deactivate()
         
         # Delete any remaining pages
-        for page in list(self.pages):
-            self.del_page(page)
+        if self.pages:
+            for page in list(self.pages):
+                self.del_page(page)
 
         for listener in self.screen_change_listeners:
             listener.driver_disconnected(driver)
                 
-        if not self.service.shutting_down and not self.shutting_down:
+        if not self.service.shutting_down and not self.stopping:
             if retry:
                 logger.info("Testing if connection should be retried")
                 self._process_exception(NotConnectedException("Keyboard driver disconnected."))
         
-        self.shutting_down = False
+        self.stopping = False
             
     def is_active(self):
         """
@@ -883,19 +896,18 @@ class G15Screen():
         return o_transition
     
     def cycle_to(self, page, transitions = True):
-        g15util.clear_jobs("cycleQueue")
-        g15util.execute("cycleQueue", "cycleTo", self._do_cycle_to, page, transitions)
+        g15util.clear_jobs("redrawQueue")
+        g15util.execute("redrawQueue", "cycleTo", self._do_cycle_to, page, transitions)
             
     def cycle(self, number, transitions = True):
-        g15util.clear_jobs("cycleQueue")
-        g15util.execute("cycleQueue", "doCycle", self._do_cycle, number, transitions)
+        g15util.clear_jobs("redrawQueue")
+        g15util.execute("redrawQueue", "doCycle", self._do_cycle, number, transitions)
             
     def redraw(self, page = None, direction="up", transitions = True, redraw_content = True):
         if page:
             logger.debug("Redrawing %s" % page.id)
         else:
             logger.debug("Redrawing current page")
-        current_page = self._get_next_page_to_display()
         g15util.execute("redrawQueue", "redraw", self._do_redraw, page, direction, transitions, redraw_content)
         
     def set_color_for_mkey(self):
@@ -934,7 +946,6 @@ class G15Screen():
         Fader(self, stay_faded=stay_faded).run()
         
     def attempt_connection(self, delay=0.0):
-            
         logger.debug("Attempting connection" if delay == 0 else "Attempting connection in %f" % delay)
         self.connection_lock.acquire()
         try :            
@@ -963,13 +974,14 @@ class G15Screen():
                             
             try :
                 self.driver.connect() 
-                
+                self.driver.light_controls = []
+                self.mkey_lights_control = self.driver.acquire_mkey_lights()
                 for control in self.driver.get_controls():
                     self.control_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/%s" %( self.device.uid, control.id), self.control_configuration_changed));
-                
-                self.start()
+                self._init_screen()
                 if self.splash == None:
-                    self.splash = G15Splash(self, self.conf_client)
+                    if self.driver.get_bpp() > 0:
+                        self.splash = G15Splash(self, self.conf_client)
                 else:
                     self.splash.update_splash(0, 100, "Starting up ..")
                 self.set_mkey(1)
@@ -1266,7 +1278,7 @@ class G15Splash():
     def complete(self):
         self.progress = 100
         self.screen.redraw(self.page)
-        gobject.timeout_add(2000, self.hide)
+        g15util.schedule("ClearSplash", 2.0, self.hide)
         
     def hide(self):
         self.screen.del_page(self.page)

@@ -1,0 +1,631 @@
+#!/usr/bin/env python
+ 
+#        +-----------------------------------------------------------------------------+
+#        | GPL                                                                         |
+#        +-----------------------------------------------------------------------------+
+#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        |                                                                             |
+#        | This program is free software; you can redistribute it and/or               |
+#        | modify it under the terms of the GNU General Public License                 |
+#        | as published by the Free Software Foundation; either version 2              |
+#        | of the License, or (at your option) any later version.                      |
+#        |                                                                             |
+#        | This program is distributed in the hope that it will be useful,             |
+#        | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+#        | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+#        | GNU General Public License for more details.                                |
+#        |                                                                             |
+#        | You should have received a copy of the GNU General Public License           |
+#        | along with this program; if not, write to the Free Software                 |
+#        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+#        +-----------------------------------------------------------------------------+
+ 
+import gnome15.g15screen as g15screen
+import gnome15.g15util as g15util
+import gnome15.g15globals as pglobals
+import gnome15.g15theme as g15theme
+import gnome15.g15driver as g15driver
+import gconf
+import time
+import dbus
+import dbus.service
+import dbus.exceptions
+import os
+import gtk
+import gtk.gdk
+import Image
+import subprocess
+import traceback
+import tempfile
+import lxml.html
+import Queue
+import gobject
+
+from threading import Timer
+from threading import Thread
+from threading import RLock
+from dbus.exceptions import NameExistsException
+
+# Logging
+import logging
+logger = logging.getLogger("notify")
+
+
+# Plugin details - All of these must be provided
+id="notify-lcd"
+name="Notify"
+description="Displays desktop notification messages on the keyboard's screen (when available), and provides " + \
+            "various other methods of notification, such as blinking the keyboard backlight, " + \
+            "blinking the M-Key lights, or changing the backlight colour. On some desktops, " + \
+            "Gnome15 can completely take over the notification service and display messages " + \
+            "on the keyboard only."
+author="Brett Smith <tanktarta@blueyonder.co.uk>"
+copyright="Copyright (C)2010 Brett Smith"
+site="http://www.gnome15.org/"
+has_preferences=True
+single_instance=True
+
+IF_NAME="org.freedesktop.Notifications"
+BUS_NAME="/org/freedesktop/Notifications"
+
+# List of processes to try and kill so the notification DBUS server can be replaced
+OTHER_NOTIFY_DAEMON_PROCESS_NAMES = [ 'notify-osd', 'notification-daemon', 'knotify4' ]
+
+# NotificationClosed reasons
+NOTIFICATION_EXPIRED = 1
+NOTIFICATION_DISMISSED = 2
+NOTIFICATION_CLOSED = 3
+NOTIFICATION_UNDEFINED = 4
+
+def create(gconf_key, gconf_client, screen):
+    return G15NotifyLCD(gconf_client, gconf_key, screen)
+
+def show_preferences(parent, device, gconf_client, gconf_key):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "notify-lcd.glade"))
+    dialog = widget_tree.get_object("NotifyLCDDialog")
+    dialog.set_transient_for(parent)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/respect_timeout", "RespectTimeout", False, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_actions", "AllowActions", False, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_cancel", "AllowCancel", False, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/on_keyboard_screen", "OnKeyboardScreen", True, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/on_desktop", "OnDesktop", False, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_keyboard_backlight", "BlinkKeyboardBacklight", True, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_memory_bank", "BlinkMemoryBank", True, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/change_keyboard_backlight_color", "ChangeKeyboardBacklightColor", False, widget_tree, True)
+    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/blink_delay", "DelayAdjustment", 500, widget_tree)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/enable_sounds", "EnableSounds", True, widget_tree, True)
+    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/keyboard_backlight_color", "KeyboardBacklightColor", ( 128, 128, 128 ), widget_tree, None)
+    
+    set_available(None, widget_tree)
+    widget_tree.get_object("ChangeKeyboardBacklightColor").connect("toggled", set_available, widget_tree)
+    widget_tree.get_object("BlinkKeyboardBacklight").connect("toggled", set_available, widget_tree)
+    
+    dialog.run()
+    dialog.hide()
+    
+def set_available(widget, widget_tree):
+    widget_tree.get_object("KeyboardBacklightColor").set_sensitive(widget_tree.get_object("ChangeKeyboardBacklightColor").get_active())
+    widget_tree.get_object("BlinkDelay").set_sensitive(widget_tree.get_object("BlinkKeyboardBacklight").get_active())
+
+'''
+Blinks keyboard backlight at configured rate
+'''
+class Blinker(Thread):
+    def __init__(self, blink_delay, color, driver, control_values):
+        self._driver = driver
+        self._cancelled = False
+        self._control_values = control_values
+        self.blink_delay = blink_delay
+        self.color = color
+        Thread.__init__(self)
+        self.start()
+    
+    def cancel(self):
+        self._cancelled = True
+        
+    def run(self):
+        controls = []
+        for c in self._driver.get_controls():
+            if c.hint & g15driver.HINT_DIMMABLE != 0:
+                controls.append(c)
+        
+        for j in range(0, 5):
+            # Off
+            if self._cancelled:
+                break
+            for c in controls:
+                if isinstance(c.value,int):
+                    c.value = c.lower
+                else:
+                    c.value = (0, 0, 0)
+                self._driver.update_control(c)
+                
+            time.sleep(float(self.blink_delay) / 1000)
+                
+            # On
+            i = 0
+            for c in controls:
+                if self._cancelled:
+                    break
+                if isinstance(c.value,int):
+                    c.value = c.upper
+                else:
+                    c.value = self.color if self.color else self._control_values[i]
+                self._driver.update_control(c)
+                i += 1
+                
+            time.sleep(float(self.blink_delay) / 1000)
+            
+        i = 0
+        for c in controls:
+            c.value = self._control_values[i]
+            self._driver.update_control(c)
+            i += 1
+        
+'''
+Changes keyboard backlight color for a few seconds
+'''
+class ColorChanger():
+    def __init__(self, color, driver, control_values):
+        self._driver = driver
+        self._control_values = control_values
+        
+        self.controls = []            
+        for c in self._driver.get_controls():
+            if c.hint & g15driver.HINT_DIMMABLE != 0:
+                if isinstance(c.value, tuple):
+                    self.controls.append(c)
+                    c.value = color
+                    self._driver.update_control(c)
+                
+        self.timer = g15util.schedule("ResetKeyboardLights", 3.0, self.reset)
+                
+    def reset(self):        
+        i = 0
+        for c in self.controls:
+            c.value = self._control_values[i]
+            self._driver.update_control(c)
+            i += 1  
+    
+    def cancel(self):
+        self.timer.cancel()
+       
+'''
+Queued notification message
+'''     
+class G15Message():
+    
+    def __init__(self, id, icon, summary, body, timeout, actions, hints):
+        self.id  = id
+        self.set_details(icon, summary, body, timeout, actions, hints)
+    
+    def set_details(self, icon, summary, body, timeout, actions, hints):
+        self.icon = icon
+        self.summary = "None" if summary == None else summary
+        if body != None and len(body) > 0:
+            self.body = lxml.html.fromstring(body).text_content()
+        else:
+            self.body = body
+        self.timeout = timeout
+#            if timeout <= 0.0:
+#                timeout = 10.0
+        self.timeout = 10.0
+        self.actions = []
+        i = 0
+        if actions != None:
+            for j in range(0, len(actions), 2):
+                self.actions.append((actions[j], actions[j + 1]))
+        self.hints = hints
+        self.embedded_image = None
+        
+        if "image_path" in self.hints:
+            self.icon = self.hints["image_path"]
+            
+        if "image_data" in self.hints:
+            image_struct = self.hints["image_data"]
+            img_width = image_struct[0]
+            img_height = image_struct[1]
+            img_stride = image_struct[2]
+            has_alpha = image_struct[3]
+            bits_per_sample = image_struct[4]
+            channels = image_struct[5]
+            buf = ""
+            for b in image_struct[6]:
+                buf += chr(b)
+                
+            try :
+                pixbuf = gtk.gdk.pixbuf_new_from_data(buf, gtk.gdk.COLORSPACE_RGB, has_alpha, bits_per_sample, img_width, img_height, img_stride)
+                fh, self.embedded_image = tempfile.mkstemp(suffix=".png",prefix="notify-lcd")
+                file = os.fdopen(fh)
+                file.close()
+                pixbuf.save(self.embedded_image, "png")
+                self.icon = None
+            except :
+                # Sometimes the image data seems to be bad
+                logger.warn("Failed to decode notification image")
+                
+            if self.embedded_image == None and ( self.icon == None or self.icon == "" ):
+                self.icon = g15util.get_icon_path("dialog-information", 1024)
+    
+    def close(self):
+        if self.embedded_image != None:
+            os.remove(self.embedded_image)
+   
+'''
+DBus service implementing the freedesktop notification specification
+'''     
+class G15NotifyService(dbus.service.Object):
+    
+    def __init__(self, gconf_client, gconf_key, screen, bus_name, plugin):
+        dbus.service.Object.__init__(self, bus_name, BUS_NAME)
+        self._gconf_client = gconf_client
+        self._gconf_key = gconf_key
+        self._screen = screen
+        self._plugin = plugin
+    
+    @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
+    def GetServerInformation(self):
+        return ( pglobals.name, "TT", pglobals.version, "1.1" ) 
+    
+    @dbus.service.method(IF_NAME, in_signature='', out_signature='as')
+    def GetCapabilities(self):
+        logger.debug("Getting capabilities")
+        caps = [ "body", "body-images", "icon-static" ]
+        if self._gconf_client.get_bool(self._gconf_key + "/allow_actions"):
+            caps.append("actions")
+        if self._plugin._get_enable_sounds():
+            caps.append("sounds")
+            
+        logger.debug("Got capabilities %s" % str(caps))
+        return caps     
+    
+    @dbus.service.method(IF_NAME, in_signature='susssasa{sv}i', out_signature='u')
+    def Notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
+        return self._plugin.notify(app_name, id, icon, summary, body, actions, hints, timeout)
+    
+    @dbus.service.method(IF_NAME, in_signature='u', out_signature='')
+    def CloseNotification(self, id):        
+        self._plugin.close_notification(id)
+        
+    @dbus.service.signal(dbus_interface=IF_NAME,
+                         signature='us')
+    
+    def ActionInvoked(self, id, action_key):
+        pass
+    
+    @dbus.service.signal(dbus_interface=IF_NAME,
+                         signature='uu')
+    def NotificationClosed(self, id, reason):
+        pass
+    
+'''
+Gnome15 notification plugin
+'''        
+class G15NotifyLCD():
+    
+    def __init__(self, gconf_client,gconf_key, screen):
+        self._screen = screen;
+        self._last_variant = None
+        self._gconf_key = gconf_key
+        self._session_bus = dbus.SessionBus()
+        self._gconf_client = gconf_client
+        self._lock = RLock()
+        self._displayed_notification = 0
+        self._active = True
+        self._timer = None
+        self._redraw_timer = None
+        self._blink_thread = None
+        self._control_values = []
+        self._message_queue = []
+        self._message_map = {}
+        self._current_message = None
+        self._service = None
+        self.id = 1
+        self.notify_handle = None
+        
+    def _load_configuration(self):
+        self.respect_timeout = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/respect_timeout", False)
+        self.allow_actions = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_actions", False)
+        self.allow_cancel = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_cancel", False)
+        self.on_keyboard_screen = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_keyboard_screen", True)
+        self.on_desktop = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_desktop", False)
+        self.blink_keyboard_backlight = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/blink_keyboard_backlight", True)
+        self.blink_memory_bank = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/blink_memory_bank", True)
+        self.change_keyboard_backlight_color = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/change_keyboard_backlight_color", False)
+        self.enable_sounds = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/enable_sounds", True)
+        self.blink_delay = g15util.get_int_or_default(self._gconf_client, self._gconf_key + "/blink_delay", 500)
+        self.keyboard_backlight_color  = g15util.get_rgb_or_default(self._gconf_client, self._gconf_key + "/keyboard_backlight_color", ( 128, 128, 128 ))
+
+    def activate(self):
+        self._bus = dbus.SessionBus()
+        self._load_configuration()
+        
+        if not self.on_desktop:        
+            # Already running
+            for i in range(0, 6):
+                try :            
+                    for pn in OTHER_NOTIFY_DAEMON_PROCESS_NAMES:
+                        process = subprocess.Popen(['killall', '--quiet', pn])
+                        process.wait()
+                    self._bus_name = dbus.service.BusName(IF_NAME, bus=self._bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
+                    break
+                except NameExistsException:
+                    time.sleep(1.0)
+                    if i == 2:
+                        raise
+            
+            try :
+            	self._service = G15NotifyService(self._gconf_client, self._gconf_key, self._screen, self._bus_name, self)
+            except KeyError:
+                logger.error("DBUS notify service failed to start. May already be started.")
+            
+        if not self._service:
+            # Just monitor raw DBUS events
+            self._bus.add_match_string_non_blocking("interface='org.freedesktop.Notifications'")
+            self._bus.add_message_filter(self.msg_cb)
+            
+        self.notify_handle = self._gconf_client.notify_add(self._gconf_key, self._load_configuration)
+            
+    def msg_cb(self, bus, msg):
+        # Only interested in method calls
+        if msg.get_type() == 1 and isinstance(msg, dbus.lowlevel.MethodCallMessage):
+            if msg.get_member() == "Notify":
+                print "== New message =="
+                print "member = %s" % msg.get_member()
+                print "args = %s" % str(msg.get_args_list())
+                print "type = %d" % msg.get_type()
+                print "sender = " + msg.get_sender()
+                self.notify(*msg.get_args_list())  
+            
+    def deactivate(self):
+        # TODO How do we properly 'unexport' a service? This seems to kind of work, in
+        # that notify-osd can take over again, but trying to re-activate the plugin
+        # doesn't reclaim the bus name (I think because it is cached)
+        if self.notify_handle:
+            self._gconf_client.notify_remove(self.notify_handle)
+        if self._service:
+            if not self._screen.service.shutting_down:
+                logger.warn("Deactivated notify service. Currently the service cannot be reactivated once deactivated. You must completely restart Gnome15")
+            self._service.active = False
+            self._service.remove_from_connection()
+            self._bus_name.__del__()
+            del self._bus_name
+        else:
+            # Stop monitoring DBUS
+            self._bus.remove_match_string("interface='org.freedesktop.Notifications'")
+            self._bus.remove_message_filter(self.msg_cb)
+        
+    def destroy(self):
+        pass 
+                    
+    def handle_key(self, keys, state, post):
+        if not post and state == g15driver.KEY_STATE_UP:            
+            page = self._screen.get_page("NotifyLCD")
+            if page != None:            
+                if g15driver.G_KEY_BACK in keys or g15driver.G_KEY_L3 in keys:
+                    self.clear()
+                    return True   
+                if g15driver.G_KEY_RIGHT in keys or g15driver.G_KEY_L4 in keys:
+                    self.next()
+                    return True
+                if g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
+                    self.action()
+                    return True  
+                
+    
+    def notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
+        logger.info("Notify app=%s id=%s '%s' {%s}", app_name, id, summary, hints)
+        try :                
+            if self._active:
+                timeout = float(timeout) / 1000.0
+                if not self.respect_timeout:
+                    timeout = 10.0                
+                if not self._service or not self.allow_actions:
+                    actions = None
+                
+                # Check if this notification should be ignored, currently we ignore
+                # volume change notifications
+                if "x-canonical-private-synchronous" in hints and hints["x-canonical-private-synchronous"] == "volume":
+                    return
+                    
+                # Strip markup
+                if body:
+                    body = g15util.strip_tags(body) 
+                if summary:
+                    summary  = g15util.strip_tags(summary)
+                
+                # If a message with this ID is already queued, replace it's details
+                if id in self._message_map:
+                    message = self._message_map[id]
+                    message.set_details(icon, summary, body, timeout, actions, hints) 
+                    
+                    # If this message is the visible one, then reset the timer
+                    if message == self._message_queue[0]:
+                        self._start_timer(message)
+                    else:                        
+                        page = self._screen.get_page("NotifyLCD")
+                        if page != None:
+                            self._screen.redraw(page)
+                else:
+                    # Otherwise queue a new message
+                    message = G15Message(self.id, icon, summary, body, timeout, actions, hints)
+                    self._message_queue.append(message)
+                    self._message_map[self.id] = message                
+                    self.id += 1
+                    
+                    if len(self._message_queue) == 1:
+                        try :                
+                            self._notify()                         
+                        except Exception as blah:
+                            traceback.print_exc()
+                    else:                               
+                        page = self._screen.get_page("NotifyLCD")
+                        if page != None:
+                            self._screen.redraw(page)
+                return message.id                         
+        except Exception as blah:
+            traceback.print_exc()
+    
+    def close_notification(self, id):        
+        logger.info("Closing notification " % id)
+        self._lock.acquire()
+        try :
+            if self.allow_cancel and len(self._message_queue) > 0:
+                message = self._message_queue[0]
+                if message.id == id:
+                    self._cancel_timer()
+                    self._move_to_next(NOTIFICATION_CLOSED)
+                else:
+                    del self._message_map[id]
+                    for m in self._message_queue:
+                        if m.id == id:
+                            self._message_queue.remove(m)
+                            if self._service:
+                                self._service.NotificationClosed(id, NOTIFICATION_CLOSED)
+                            break
+        finally :
+            self._lock.release()
+        
+    def clear(self):
+        self._lock.acquire()
+        try :
+            for message in self._message_queue:
+                message.close()
+            self._message_queue = []
+            self._message_map = {}
+            self._cancel_timer()
+            page = self._screen.get_page("NotifyLCD")
+            if page != None:
+                self._screen.del_page(page)  
+        finally:
+            self._lock.release()
+    
+    def next(self):
+        self._cancel_timer()
+        self._move_to_next()
+    
+    def action(self):
+        self._cancel_timer()
+        message = self._message_queue[0]
+        action = message.actions[0]
+        if self._service:
+            self._service.ActionInvoked(message.id, action[0])
+        self._move_to_next()
+      
+    ''' 
+    Private
+    '''       
+    def _reload_theme(self):        
+        self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen, self._last_variant)
+        
+    def _paint(self, canvas):
+        width_available = self._screen.width
+        properties = {}        
+        properties["title"] = self._current_message.summary
+        properties["message"] = self._current_message.body
+        if self._current_message.icon != None and len(self._current_message.icon) > 0:
+            properties["icon"] = g15util.get_icon_path(self._current_message.icon)
+        elif self._current_message.embedded_image != None:
+            properties["icon"] = self._current_message.embedded_image
+                    
+        properties["next"] = len(self._message_queue) > 1
+        action = 1
+        for a in self._current_message.actions:
+            properties["action%d" % action] = a[1] 
+            action += 1
+        if len(self._current_message.actions) > 0:        
+            properties["action"] = True
+            
+        time_displayed = time.time() - self._displayed_notification
+        remaining = self._current_message.timeout - time_displayed
+        remaining_pc = ( remaining / self._current_message.timeout ) * 100.0
+        properties["remaining"] = int(remaining_pc / 10) * 10 
+                    
+        self._theme.draw(canvas, properties)
+
+    def _notify(self):
+        if len(self._message_queue) != 0:   
+            message = self._message_queue[0] 
+            
+                
+            # Which theme variant should we use
+            self._last_variant = ""
+            if message.body == None or message.body == "":
+                self._last_variant = "nobody"
+                
+            self._current_message = message
+    
+            # Get the page
+             
+            page = self._screen.get_page("NotifyLCD")
+            if page == None:
+                self._control_values = []
+                for c in self._screen.driver.get_controls():
+                    if c.hint & g15driver.HINT_DIMMABLE != 0:
+                        self._control_values.append(c.value)
+                self._reload_theme()
+                page = self._screen.new_page(self._paint, priority=g15screen.PRI_HIGH, id="NotifyLCD")
+            else:
+                self._reload_theme()
+                self._screen.raise_page(page)
+                
+            self._start_timer(message)         
+            self._do_redraw()
+            
+            # Play sound
+            if self.enable_sounds and "sound-file" in message.hints and ( not "suppress-sound" in message.hints or not message.hints["suppress-sound"]):
+                logger.debug("Will play sound",message.hints["sound-file"]) 
+                os.system("aplay '%s' &" % message.hints["sound-file"])
+                
+            if self.blink_keyboard_backlight:
+                self._blink_thread = Blinker(self.blink_delay, self.keyboard_backlight_color if self.change_keyboard_backlight_color else None, self._screen.driver, list(self._control_values))
+                
+            if self.change_keyboard_backlight_color:
+                self._blink_thread = ColorChanger(self.keyboard_backlight_color, self._screen.driver, list(self._control_values))
+                
+            if self.blink_memory_bank:
+                control = self._screen.driver.acquire_mkey_lights(release_after = 3.0, val = g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3 | g15driver.MKEY_LIGHT_MR)
+                control.blink(delay = 0.5)
+                
+                
+    def _do_redraw(self):
+        page = self._screen.get_page("NotifyLCD")
+        if page != None:
+            self._screen.redraw(page)
+            self._redraw_timer = g15util.schedule("Notification", 1.0, self._do_redraw)
+          
+    def _cancel_redraw(self):
+        if self._redraw_timer != None:
+            self._redraw_timer.cancel()
+          
+    def _cancel_timer(self):
+        if self._timer != None:
+            self._timer.cancel()
+        
+    def _move_to_next(self, reason = NOTIFICATION_DISMISSED):
+        logger.debug("Dismissing current message. Reason code %d", reason)  
+        self._lock.acquire()
+        try :      
+            if len(self._message_queue) > 0:
+                message = self._message_queue[0]
+                message.close()
+                del self._message_queue[0]
+                del self._message_map[message.id]
+                if self._service:
+                    self._service.NotificationClosed(message.id, reason)
+            if len(self._message_queue) != 0:
+                self._notify()  
+            else:
+                self._screen.del_page(self._screen.get_page("NotifyLCD"))
+        finally:
+            self._lock.release()
+                  
+    def _hide_notification(self): 
+        self._move_to_next(NOTIFICATION_EXPIRED)
+        
+    def _start_timer(self, message):
+        self._cancel_timer() 
+        self._displayed_notification = time.time()                       
+        self._timer = g15util.schedule("Notification", message.timeout, self._hide_notification)
+                   

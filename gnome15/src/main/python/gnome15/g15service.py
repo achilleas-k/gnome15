@@ -97,6 +97,7 @@ class G15Service(Thread):
     def __init__(self, service_host, no_trap=False):
         Thread.__init__(self)
         self.name = "Service"
+        self.active_plugins = {}
         self.session_active = True
         self.service_host = service_host
         self.active_window = None
@@ -121,8 +122,7 @@ class G15Service(Thread):
         # run first, and in a thread, as starting the Gnome15 will send
         # DBUS events (which are sent on the loop). 
         self.loop = gobject.MainLoop()
-
-        gobject.idle_add(self.start_service)
+        self.start()
         
     def start_loop(self):
         logger.info("Starting GLib loop")
@@ -131,8 +131,8 @@ class G15Service(Thread):
         
     def start_service(self):
         try:
-#            self._do_start_service()
-            self.start()
+            self._do_start_service()
+#            self.start()
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             logger.error("Failed to start service. %s" % str(e))
@@ -140,7 +140,7 @@ class G15Service(Thread):
     def run(self):        
         # Now start the service, which will connect to all devices and
         # start their plugins
-        self._do_start_service()
+        self.start_service()
     
     def sigint_handler(self, signum, frame):
         logger.info("Got SIGINT signal, shutting down")
@@ -170,9 +170,6 @@ class G15Service(Thread):
     def shutdown(self):
         logger.info("Shutting down")
         self.stop()
-        logger.info("Shutting down screens")
-        for screen in self.screens:
-            screen.shutdown()
         logger.info("Stopping all schedulers")
         g15util.stop_all_schedulers()
         for listener in self.service_listeners:
@@ -207,7 +204,7 @@ class G15Service(Thread):
         
         # Start each screen's plugin manager
         for screen in self.screens:
-            screen.connect()
+            screen.start()
             
         # Watch for logout (should probably move this to a plugin)
         try :
@@ -241,19 +238,9 @@ class G15Service(Thread):
         try :
             logger.info("Connecting to system bus") 
             system_bus = dbus.SystemBus()
-            console_kit_object = system_bus.get_object("org.freedesktop.ConsoleKit", '/org/freedesktop/ConsoleKit/Manager')
-            console_kit_manager = dbus.Interface(console_kit_object, 'org.freedesktop.ConsoleKit.Manager')
-            logger.info("Seats %s " % str(console_kit_manager.GetSeats())) 
-            self.this_session_path = console_kit_manager.GetSessionForCookie (os.environ['XDG_SESSION_COOKIE'])
-            logger.info("This session %s " % self.this_session_path)
-            
-            # TODO GetCurrentSession doesn't seem to work as i would expect. Investigate. For now, assume we are the active session
-#            current_session = console_kit_manager.GetCurrentSession()
-#            logger.info("Current session %s " % current_session)            
-#            self.session_active = current_session == self.this_session_path
-
             system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
             self.session_active = True 
+            logger.info("Connected to system bus") 
         except Exception as e:
             logger.warning("ConsoleKit not available, will not track active desktop session. %s" % str(e))
             self.session_active = True
@@ -278,13 +265,12 @@ class G15Service(Thread):
             # Enable screen
             screen = self._add_screen(device)
             if screen:
-                screen.connect()
+                screen.start()
                 logger.info("Enabled device %s" % device.uid)
         elif not enabled and screen:
             # Disable screen
             logger.info("Disabling device %s" % device.uid)
             screen.stop()
-            screen.shutdown()
             self.screens.remove(screen)
             for listener in self.service_listeners:
                 listener.screen_removed(screen)

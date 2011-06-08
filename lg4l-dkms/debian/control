@@ -1,0 +1,35 @@
+Source: lg4l
+Section: unknown
+Priority: optional
+Maintainer: Brett Smith <tanktarta@blueyonder.co.uk>
+Build-Depends: cdbs, debhelper (>= 7.0.50~), linux-headers-generic
+Standards-Version: 3.9.1
+Homepage: https://github.com/ali1234/lg4l
+#Vcs-Git: git://git.debian.org/collab-maint/lg4l.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/lg4l.git;a=summary
+ 
+Package: lg4l-linux
+Architecture: all
+Depends: lg4l-dkms, ${misc:Depends}
+Description: Logitech G series drivers
+ Kernel driver for a range of Logitech G series keyboards, including
+ the G13, G15, G19 and G110.
+ 046d:c229	Logitech G19
+ 046d:c222	Logitech G15 (version 1)
+ 046d:c227	Logitech G15 (version 2)
+ 046d:c21c	Logitech G13
+ .
+ This package includes the minimal Linux specific userspace parts: udev
+ configuration, a service script (to work around a bug)
+
+Package: lg4l-dkms
+Architecture: all
+Depends: dkms, ${misc:Depends}
+Description: Logitech G series drivers
+ Kernel driver for a range of Logitech G series keyboards, including
+ the G13, G15, G19 and G110.
+ 046d:c229	Logitech G19
+ 046d:c222	Logitech G15 (version 1)
+ 046d:c227	Logitech G15 (version 2)
+ 046d:c21c	Logitech G13
+ 046d:c225	Logitech G110

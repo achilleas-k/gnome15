@@ -297,7 +297,7 @@ class Driver(g15driver.AbstractDriver):
         return self.device.bpp
     
     def get_controls(self):
-        return controls[self.device.model_name]
+        return controls[self.device.model_id]
     
     def get_antialias(self):
         return cairo.ANTIALIAS_NONE
@@ -348,7 +348,7 @@ class Driver(g15driver.AbstractDriver):
         return [ g15driver.MODEL_G11, g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G110, g15driver.MODEL_G510, g15driver.MODEL_G13 ]
     
     def get_model_name(self):
-        return self.device.model_name
+        return self.device.model_id
     
     def disconnect(self):
         if not self.is_connected():
@@ -407,6 +407,7 @@ class Driver(g15driver.AbstractDriver):
             self.connect()
         
     def set_mkey_lights(self, lights):
+        self.lights = lights
         self.send(chr(CLIENT_CMD_MKEY_LIGHTS  + lights),socket.MSG_OOB)
         
     def grab_keyboard(self, callback):

@@ -1,1 +1,0 @@
-SUBDIRS = indicator-me indicator-messages 

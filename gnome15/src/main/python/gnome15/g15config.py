@@ -16,7 +16,7 @@ pygtk.require('2.0')
 import gtk
 import gobject
 import pango
-import dbus
+import dbus.service
 import os
 import sys
 import g15globals
@@ -448,7 +448,7 @@ class G15Config:
                                       "to the keyboard driver. The error message given was <b>%s</b>" % first_error, False)
                 else:
                     self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is running, but only %d out of %d keyboards " + \
-                                      "are connected. The first error message given was <b>%s</b>" % ( connected, screen_count, str(first_error) ), False)
+                                      "are connected. The first error message given was <b>%s</b>" % ( connected, screen_count, str(first_error) if first_error else "None" ), False)
             else:
                 self._hide_warning()
             self.stop_service_button.set_sensitive(True)
@@ -535,7 +535,7 @@ class G15Config:
             for driver_mod_key in g15drivermanager.imported_drivers:
                 driver_mod = g15drivermanager.imported_drivers[driver_mod_key]
                 driver = driver_mod.Driver(self.selected_device)
-                if self.selected_device.model_name in driver.get_model_names():
+                if self.selected_device.model_id in driver.get_model_names():
                     self.driver_model.append((driver_mod.id, driver_mod.name))
             
         self.driver_combo.set_sensitive(len(self.driver_model) > 1)
@@ -998,10 +998,10 @@ class G15Config:
         sel_device_name = self.conf_client.get_string("/apps/gnome15/config_device_name")
         idx = 0
         for device in self.devices:
-            if device.model_name == 'virtual':
+            if device.model_id == 'virtual':
                 icon_file = g15util.get_icon_path(["preferences-system-window", "gnome-window-manager", "window_fullscreen"])
             else:
-                icon_file = g15util.get_app_icon(self.conf_client,  device.model_name)
+                icon_file = g15util.get_app_icon(self.conf_client,  device.model_id)
             pixb = gtk.gdk.pixbuf_new_from_file(icon_file)
             self.device_model.append([pixb.scale_simple(96, 96, gtk.gdk.INTERP_BILINEAR), device.model_fullname, 96, gtk.WRAP_WORD, pango.ALIGN_CENTER])
             if not sel_device_name or device.uid == sel_device_name:

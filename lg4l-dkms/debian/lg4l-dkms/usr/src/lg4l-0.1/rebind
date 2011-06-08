@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# run me as root
+
+# first unbind them all
+for dev in `ls /sys/bus/hid/drivers/generic-usb/ | egrep '046D:(C21C|C222|C229|C22B)'`
+do
+    echo Unbinding $dev
+    echo -n $dev > /sys/bus/hid/drivers/generic-usb/unbind
+done
+if [ "$1" = "-u" ]
+then exit
+fi
+# now bind to correct module
+for dev in `ls /sys/bus/hid/devices/ | egrep '046D:C21C'`
+do 
+   echo Binding G13 $dev
+   echo -n $dev > /sys/bus/hid/drivers/hid-g13/bind
+done
+
+for dev in `ls /sys/bus/hid/devices/ | egrep '046D:C222'`
+do 
+   echo Binding G15 $dev
+   echo -n $dev > /sys/bus/hid/drivers/hid-g15/bind
+done
+
+for dev in `ls /sys/bus/hid/devices/ | egrep '046D:C229'`
+do 
+   echo Binding G19 $dev
+   echo -n $dev > /sys/bus/hid/drivers/hid-g19/bind
+done
+
+for dev in `ls /sys/bus/hid/devices/ | egrep '046D:C22B'`
+do 
+   echo Binding G110 $dev
+   echo -n $dev > /sys/bus/hid/drivers/hid-g110/bind
+done

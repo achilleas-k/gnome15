@@ -138,7 +138,7 @@ class G15Plugins():
                 plugin_dir_key = self._get_plugin_key(mod.id) 
                 self.conf_client.add_dir(plugin_dir_key, gconf.CLIENT_PRELOAD_NONE)
                 key = "%s/enabled" % plugin_dir_key
-                self.conf_client.notify_add(key, self.plugin_changed);
+                self.conf_client.notify_add(key, self._plugin_changed);
                 if self.conf_client.get(key) == None:
                     self.conf_client.set_bool(key, False)
                 if self.conf_client.get_bool(key):
@@ -154,7 +154,7 @@ class G15Plugins():
             self.lock.release()
         logger.info("Started plugin manager")
                 
-    def plugin_changed(self, client, connection_id, entry, args):
+    def _plugin_changed(self, client, connection_id, entry, args):
         self.lock.acquire()
         try : 
             path = entry.key.split("/")
@@ -171,8 +171,7 @@ class G15Plugins():
                     self._activate_instance(instance)
             elif not now_enabled and instance != None:
                 if instance in self.activated:
-                    instance.deactivate()
-                    self.activated.remove(instance)
+                    self._deactivate_instance(instance)
                 if instance in self.started:
                     self.started.remove(instance)
                 del self.module_map[plugin_id]
@@ -202,28 +201,33 @@ class G15Plugins():
             idx = 0
             for plugin in self.started:
                 mod = self.plugin_map[plugin]
-                logger.debug("Activating %s" % mod.id)
-                gobject.idle_add(self._activate_instance, plugin, callback, idx)
-#                self._activate_instance(plugin, callback, idx)
+                self._activate_instance(plugin, callback, idx)
                 idx += 1
         finally:
             self.lock.release()
         logger.debug("Activated plugins")
+        
+    def _deactivate_instance(self, plugin):
+        mod = self.plugin_map[plugin]
+        logger.debug("De-activating %s" % mod.id)
+        if not plugin in self.activated:
+            raise Exception("%s is not activated" % mod.id)
+        try :
+            plugin.deactivate()
+        except:
+            logger.warning("Failed to deactive plugin properly.")           
+            traceback.print_exc(file=sys.stderr)
+        finally:                    
+            del self.screen.service.active_plugins[self.plugin_map[plugin].id]
+        self.activated.remove(plugin)
     
     def deactivate(self):
         logger.info("De-activating plugins")
         self.lock.acquire()
         try :
             self.mgr_active = False
-            traceback.print_exc(file=sys.stderr)
             for plugin in list(self.activated):
-                logger.debug("De-activating %s" % self.plugin_map[plugin].id)
-                try :
-                    plugin.deactivate()
-                except:
-                    logger.warning("Failed to deactive plugin properly.")           
-                    traceback.print_exc(file=sys.stderr)
-                self.activated.remove(plugin)
+                self._deactivate_instance(plugin)
         finally:
             self.lock.release()
         logger.info("De-activated plugins")
@@ -239,9 +243,15 @@ class G15Plugins():
     '''
             
     def _activate_instance(self, instance, callback=None, idx=0):
-        mod = self.plugin_map[instance]
-        try : 
+        mod = self.plugin_map[instance] 
+        logger.info("Activating %s" % mod.id)
+        try :             
+            if self._is_single_instance(mod):
+                logger.info("%s may only be run once, checking if there is another instance" % mod.id)
+                if  mod.id in self.screen.service.active_plugins:
+                    raise Exception("Plugin may %s only run on one device at a time." % mod.id)
             instance.activate()
+            self.screen.service.active_plugins[mod.id] = True
             self.activated.append(instance)
             if callback != None:
                 callback(idx, len(self.started), mod.name)
@@ -250,11 +260,18 @@ class G15Plugins():
             self.conf_client.set_bool(self._get_plugin_key("%s/enabled" % mod.id ), False)              
             traceback.print_exc(file=sys.stderr)
         
+    def _is_single_instance(self, module):
+        try :
+            return module.single_instance
+        except AttributeError: 
+            pass
+        return False
             
     def _create_instance(self, module, key):
         logger.info("Loading %s" % module.id)
         instance = module.create(key, self.conf_client, screen=self.screen)
         self.module_map[module.id] = instance
         self.plugin_map[instance] = module
+        logger.info("Loaded %s" % module.id)
         return instance
     

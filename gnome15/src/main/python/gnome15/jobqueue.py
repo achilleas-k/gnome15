@@ -16,7 +16,6 @@ import Queue
 import threading
 import traceback
 import sys
-import gobject
 import time
 
 # Can be adjusted to aid debugging
@@ -25,26 +24,6 @@ TIME_FACTOR=1.0
 # Logging
 import logging
 logger = logging.getLogger("jobs")
-
-class GTimer:    
-    def __init__(self, task_queue, task_name, interval, function, *args):
-        if function == None:
-            logger.warning("Attempt to run empty job %s on %s" % ( task_name, task_queue.name ) )
-            traceback.print_stack()
-            return
-        
-        self.task_queue = task_queue
-        self.task_name = task_name
-        self.source = gobject.timeout_add(int(float(interval) * 1000.0 * TIME_FACTOR), self.exec_item, function, *args)
-        
-    def exec_item(self, function, *args):
-        logger.debug("Executing GTimer %s" % str(self.task_name))
-        self.task_queue.run(function, *args)
-        logger.debug("Executed GTimer %s" % str(self.task_name))
-        
-    def cancel(self, *args):
-        gobject.source_remove(self.source)
-        logger.debug("Cancelled GTimer %s" % str(self.task_name))
         
 '''
 Task scheduler. Tasks may be added to the queue to execute
@@ -74,26 +53,36 @@ class JobScheduler():
         logger.debug("Executing on queue %s" % ( queue_name ) )     
         if not queue_name in self.queues:
             self.queues[queue_name] = JobQueue(name=queue_name)   
-        self.queues[queue_name].run(function, *args)        
+        return self.queues[queue_name].run(name, function, *args)        
+        
+    def stop_queue(self, queue_name):
+        if not queue_name in self.queues:
+            self.queues[queue_name].stop()
     
     def queue(self, queue_name, name, interval, function, *args):
         logger.debug("Queueing %s on %s for execution in %f" % ( name, queue_name, interval ) )
         if not queue_name in self.queues:
             self.queues[queue_name] = JobQueue(name=queue_name)
-        timer = GTimer(self.queues[queue_name], name, interval, function, *args)
+        job = self.queues[queue_name].queue(name, interval, function, *args)
         logger.debug("Queued %s" % name)
-        return timer
-
+        return job                
 
 class JobQueue():
     
     class JobItem():
-        def __init__(self, item, args = None):
+        def __init__(self, queue, name, interval, item, args = None):
+            self.name = name
+            self.queue = queue
             self.args = args
             self.item = item
             self.queued = time.time()
+            self.start_at = self.queued + interval
             self.started = None
             self.finished = None
+            self.cancel_job = False
+            
+        def cancel(self):
+            self.cancel_job = True
         
     def __init__(self,number_of_workers=1, name="JobQueue"):
         logger.debug("Creating job queue %s with %d workers" % (name, number_of_workers))
@@ -115,7 +104,7 @@ class JobQueue():
         self.stopping = True
         self.clear()
         for i in range(0, self.number_of_workers):
-            self.work_queue.put(self.JobItem(self._dummy))
+            self.work_queue.put(self.JobItem(self, "DummyJob", 0, self._dummy))
         logger.info("Stopped queue %s" % self.name)
         
     def _dummy(self):
@@ -133,21 +122,23 @@ class JobQueue():
                 pass
             logger.info("Cleared queue %s" % self.name)
             
-    def run(self, item, *args):
+    def run(self, name, item, *args):
+        return self.queue(name, 0.0, item, *args)
+            
+    def queue(self, name, interval, item, *args):
         if self.stopping:
-            return
+            return None
         if item == None:
-            logger.warning("Attempt to run empty job.")
-            traceback.print_stack()
-            return
+            raise Exception("Attempt to run empty job.")
         self.lock.acquire()
         try :
             logger.debug("Queued task on %s", self.name)
-            self.work_queue.put(self.JobItem(item, args))
+            job = self.JobItem(self, name, interval, item, args)
+            self.work_queue.put(job)
             jobs = self.work_queue.qsize()
             if jobs > 1:
                 logger.debug("Queue %s filling, now at %d jobs." % (self.name, jobs ) )
-                
+            return job                
         finally :
             self.lock.release()
             
@@ -156,18 +147,35 @@ class JobQueue():
             item = self.work_queue.get()
             try:
                 if item != None:
-                    logger.debug("Running task on %s", self.name)
-                    item.started = time.time()
-                    if item.args and len(item.args) > 0:
-                        item.item(*item.args)
-                    else:
-                        item.item()
-                    item.finished = time.time()
-                    logger.debug("Ran task on %s", self.name)
+                    logger.debug("Checking task on %s", self.name)
+                    now = time.time()
+                    if not item.cancel_job:
+                        if now >= item.start_at:                    
+                            logger.debug("Starting task on %s", self.name)
+                            item.started = time.time()
+                            if item.args and len(item.args) > 0:
+                                item.item(*item.args)
+                            else:
+                                item.item()
+                            item.finished = time.time()
+                            logger.debug("Ran task on %s", self.name)
+                        else:
+                            # Job is not ready to run, put it back on the end of the queue
+                            self.work_queue.put(item)
             except:
+                logger.error("Error running job %s" % item.name)
                 traceback.print_exc(file=sys.stderr)
             self.work_queue.task_done()
+            time.sleep(0.1)
             
         if logger:
             logger.info("Exited queue %s" % self.name)
- 
+         
+def test_job(no):
+    print "Started %s!!" % no
+    
+if __name__ == "__main__":
+    s = JobScheduler()
+    s.schedule("test1", 5.0, test_job, 1)
+    s.schedule("test3", 15.0, test_job, 3)
+    s.schedule("test2", 10.0, test_job, 2)

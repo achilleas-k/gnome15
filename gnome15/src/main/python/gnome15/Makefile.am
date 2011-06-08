@@ -17,6 +17,7 @@ gnome15_PYTHON = 		\
 	g15profile.py \
 	g15exceptions.py \
 	g15screen.py \
+	g15system.py \
 	g15theme.py \
 	g15util.py \
 	jobqueue.py \

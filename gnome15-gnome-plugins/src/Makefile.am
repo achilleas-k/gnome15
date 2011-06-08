@@ -1,1 +1,0 @@
-SUBDIRS = cal lcdbiff 

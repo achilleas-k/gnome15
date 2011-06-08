@@ -26,7 +26,7 @@ import glib
 
 # Logging
 import logging
-logging.basicConfig()
+logging.basicConfig(format='%(threadName)s:%(name)s:%(message)s')
 logger = logging.getLogger()
 
 LEVELS = {'debug': logging.DEBUG,
@@ -103,7 +103,6 @@ if __name__ == "__main__":
             session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service').Stop();
             
     if len(args) == 0 or ( len(args) == 1 and ( args[0] == "start" or args[0] == "restart" ) ):
-        import gnome15.g15drivermanager as g15drivermanager
         session_bus = dbus.SessionBus()
         if check_service_status(session_bus):
             print "Gnome15 desktop service already running"

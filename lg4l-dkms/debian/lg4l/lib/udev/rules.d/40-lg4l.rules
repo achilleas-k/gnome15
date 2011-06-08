@@ -1,0 +1,12 @@
+# This file maintains permissions for Logitech G keyboard devices
+# See udev(7) for syntax.
+#
+
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", GROUP="video", MODE="0664"
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c222", GROUP="video", MODE="0664"
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c227", GROUP="video", MODE="0664"
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c21c", GROUP="video", MODE="0664"
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22d", GROUP="video", MODE="0664"
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="046d", GROUP="video", MODE="0664"
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0a07", GROUP="video", MODE="0664"
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c225", GROUP="video", MODE="0664"

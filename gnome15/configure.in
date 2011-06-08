@@ -164,32 +164,6 @@ AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xyes"],
 	  [applet=no])
 AM_CONDITIONAL([ENABLE_APPLET], [test x$applet = xyes])
 
-     
-dnl Dependencies for plugins
-
-AX_PYTHON_MODULE(alsaaudio, [])
-AS_IF([test "x${HAVE_PYMOD_ALSAAUDIO}" = "xyes"],
-	  [enable_volume_plugin=yes])
-AM_CONDITIONAL([ENABLE_VOLUME_PLUGIN], [test x$enable_volume_plugin = xyes])
-
-AX_PYTHON_MODULE(feedparser, [])
-AS_IF([test "x${HAVE_PYMOD_FEEDPARSER}" = "xyes"],
-	  [enable_rss_plugin=yes])
-AM_CONDITIONAL([ENABLE_RSS_PLUGIN], [test x$enable_volume_plugin = xyes])
-
-AX_PYTHON_MODULE(gtop, [])
-AS_IF([test "x${HAVE_PYMOD_GTOP}" = "xyes"],
-	  [enable_processes_plugin=yes])
-AM_CONDITIONAL([ENABLE_PROCESSES_PLUGIN], [test x$enable_processes_plugin = xyes])
-AS_IF([test "x${HAVE_PYMOD_GTOP}" = "xyes"],
-      [enable_sysmon_plugin=yes])
-AM_CONDITIONAL([ENABLE_SYSMON_PLUGIN], [test x$enable_sysmon_plugin = xyes])
-
-AX_PYTHON_MODULE(opencv, [])
-AS_IF([test "x${HAVE_PYMOD_OPENCV}" = "xyes"],
-     [enable_webcam_plugin=yes])
-AM_CONDITIONAL([ENABLE_WEBCAM_PLUGIN], [test x$enable_webcam_plugin = xyes])
-
 PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
 AC_SUBST(PYGTK_CFLAGS)
 AC_SUBST(PYGTK_LIBS)
@@ -206,46 +180,6 @@ AC_OUTPUT([
 Makefile
 src/Makefile
 src/scripts/Makefile
-src/plugins/Makefile
-src/plugins/background/Makefile
-src/plugins/cairo-clock/Makefile
-src/plugins/clock/Makefile
-src/plugins/clock/default/Makefile
-src/plugins/fx/Makefile
-src/plugins/g15daemon-server/Makefile
-src/plugins/macro-recorder/Makefile
-src/plugins/macro-recorder/default/Makefile
-src/plugins/macros/Makefile
-src/plugins/macros/default/Makefile
-src/plugins/mpris/Makefile
-src/plugins/mpris/default/Makefile
-src/plugins/mounts/Makefile
-src/plugins/mounts/default/Makefile
-src/plugins/menu/Makefile
-src/plugins/panel/Makefile
-src/plugins/processes/Makefile
-src/plugins/processes/default/Makefile
-src/plugins/im/Makefile
-src/plugins/im/default/Makefile
-src/plugins/notify-lcd/Makefile
-src/plugins/notify-lcd/default/Makefile
-src/plugins/screensaver/Makefile
-src/plugins/screensaver/default/Makefile
-src/plugins/stopwatch/Makefile
-src/plugins/stopwatch/default/Makefile
-src/plugins/sysmon/Makefile
-src/plugins/sysmon/default/Makefile
-src/plugins/rss/Makefile
-src/plugins/rss/default/Makefile
-src/plugins/sysmon/dials/Makefile
-src/plugins/volume/Makefile
-src/plugins/volume/default/Makefile
-src/plugins/videoplayer/Makefile
-src/plugins/videoplayer/default/Makefile
-src/plugins/weather/Makefile
-src/plugins/weather/default/Makefile
-src/plugins/webcam/Makefile
-src/plugins/webcam/default/Makefile
 src/themes/Makefile
 src/themes/default/Makefile
 src/udev/Makefile
@@ -317,26 +251,3 @@ AS_ECHO_N("driver_kernel               - ")
 AS_IF([test "x$pyinputevent" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled (missing pyinputevent library)")])
-AS_ECHO("")
-AS_ECHO("Optional plugins")
-AS_ECHO("----------------")
-AS_ECHO_N("volume                      - ")
-AS_IF([test "x$enable_volume_plugin" = "xyes" ],
-     [AS_ECHO("Enabled")],
-     [AS_ECHO("Disabled (missing Python Alsa Audio library)")])
-AS_ECHO_N("rss                         - ")
-AS_IF([test "x$enable_rss_plugin" = "xyes" ],
-     [AS_ECHO("Enabled")],
-     [AS_ECHO("Disabled (missing Python Feed Parser library)")])
-AS_ECHO_N("processes                   - ")
-AS_IF([test "x$enable_processes_plugin" = "xyes" ],
-     [AS_ECHO("Enabled")],
-     [AS_ECHO("Disabled (missing Python Gtop library)")])
-AS_ECHO_N("sysmon                      - ")
-AS_IF([test "x$enable_sysmon_plugin" = "xyes" ],
-     [AS_ECHO("Enabled")],
-     [AS_ECHO("Disabled (missing Python Gtop library)")])
-AS_ECHO_N("webcam                      - ")
-AS_IF([test "x$enable_webcam_plugin" = "xyes" ],
-     [AS_ECHO("Enabled")],
-     [AS_ECHO("Disabled (missing Python OpenCV library)")])

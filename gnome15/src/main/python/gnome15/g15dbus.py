@@ -28,6 +28,7 @@ import g15driver
 import g15devices
 import gc
 import objgraph
+import gobject
 
 from cStringIO import StringIO
 
@@ -145,9 +146,9 @@ class AbstractG15DBUSService(dbus.service.Object):
                     p.append(k)
             if len(p) > 0:
                 if state == g15driver.KEY_STATE_UP:
-                    self.KeysReleased(p)
+                    gobject.idle_add(self.KeysReleased,p)
                 elif state == g15driver.KEY_STATE_DOWN:
-                    self.KeysPressed(p)
+                    gobject.idle_add(self.KeysPressed, p)
                 return True
     
 class G15DBUSDebugService(dbus.service.Object):
@@ -229,26 +230,26 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         
     def memory_bank_changed(self, new_memory_bank):
         logger.debug("Sending memory bank changed signel (%d)" % new_memory_bank)
-        self.MemoryBankChanged(self._get_screen_path(), new_memory_bank)
+        gobject.idle_add(self.MemoryBankChanged, self._get_screen_path(), new_memory_bank)
         
     def attention_cleared(self):
         logger.debug("Sending attention cleared signal")
-        self.AttentionCleared(self._get_screen_path())
+        gobject.idle_add(self.AttentionCleared,self._get_screen_path())
         logger.debug("Sent attention cleared signal")
             
     def attention_requested(self, message):
         logger.debug("Sending attention requested signal")
-        self.AttentionRequested(self._get_screen_path(), message if message != None else "")
+        gobject.idle_add(self.AttentionRequested, self._get_screen_path(), message if message != None else "")
         logger.debug("Sent attention requested signal")
             
     def driver_connected(self, driver):
         logger.debug("Sending driver connected signal")
-        self.Connected(self._get_screen_path(), driver.get_name())
+        gobject.idle_add(self.Connected, self._get_screen_path(), driver.get_name())
         logger.debug("Sent driver connected signal")
             
     def driver_disconnected(self, driver):
         logger.debug("Sending driver disconnected signal")
-        self.Disconnected(self._get_screen_path(), driver.get_name())
+        gobject.idle_add(self.Disconnected, self._get_screen_path(), driver.get_name())
         logger.debug("Sent driver disconnected signal")
         
     def page_changed(self, page):
@@ -261,14 +262,14 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         logger.debug("Sending new page signal for %s" % page.id)
         dbus_page = G15DBUSPageService(self, page, self._dbus_service._page_sequence_number)
         self._dbus_pages[page.id] = dbus_page
-        self.PageCreated(self._get_screen_path(), self._dbus_service._page_sequence_number, page.title)
+        gobject.idle_add(self.PageCreated, self._get_screen_path(), self._dbus_service._page_sequence_number, page.title)
         self._dbus_service._page_sequence_number += 1
         logger.debug("Sent new page signal for %s" % page.id)
         
     def title_changed(self, page, title):
         logger.debug("Sending title changed signal for %s" % page.id)
         dbus_page = self._dbus_pages[page.id]
-        self.PageTitleChanged(self._get_screen_path(), dbus_page._sequence_number, title)
+        gobject.idle_add(self.PageTitleChanged, self._get_screen_path(), dbus_page._sequence_number, title)
         logger.debug("Sent title changed signal for %s" % page.id)
     
     def deleting_page(self, page):
@@ -277,7 +278,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
             dbus_page = self._dbus_pages[page.id]
             if dbus_page in page.key_handlers: 
                 page.key_handlers.remove(dbus_page)
-            self.PageDeleting(self._get_screen_path(), dbus_page._sequence_number)
+            gobject.idle_add(self.PageDeleting, self._get_screen_path(), dbus_page._sequence_number, )
         else:
             logger.warning("DBUS Page %s is deleting, but it never existed. Huh? %s" % ( page.id, str(self._dbus_pages) ))
         logger.debug("Sent page deleting signal for %s" % page.id)
@@ -286,7 +287,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         logger.debug("Sending page deleted signal for %s" % page.id)
         if page.id in self._dbus_pages:
             dbus_page = self._dbus_pages[page.id]
-            self.PageDeleted(self._get_screen_path(), dbus_page._sequence_number)
+            gobject.idle_add(self.PageDeleted, self._get_screen_path(), dbus_page._sequence_number)
             dbus_page.remove_from_connection()
             del self._dbus_pages[page.id]
         else:
@@ -330,7 +331,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='ssss')
     def GetDeviceInformation(self):
         device = self._screen.device
-        return ( device.uid, device.model_name, "%s:%s" % ( hex(device.usb_id[0]),hex(device.usb_id[1]) ), device.model_fullname )
+        return ( device.uid, device.model_id, "%s:%s" % ( hex(device.usb_id[0]),hex(device.usb_id[1]) ), device.model_fullname )
     
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='ssnnn')
     def GetDriverInformation(self):
@@ -697,33 +698,33 @@ class G15DBUSService(AbstractG15DBUSService):
     service listener
     '''
     def screen_added(self, screen):
-        logger.debug("Screen added for %s" % screen.device.model_name)        
+        logger.debug("Screen added for %s" % screen.device.model_id)        
         screen_service = G15DBUSScreenService(self, screen)
         self._dbus_screens[screen.device.uid] = screen_service
-        self.ScreenAdded("%s/%s" % ( SCREEN_NAME, screen.device.uid ))
+        gobject.idle_add(self.ScreenAdded, "%s/%s" % ( SCREEN_NAME, screen.device.uid ))
         
     def screen_removed(self, screen):
-        logger.debug("Screen removed for %s" % screen.device.model_name)
+        logger.debug("Screen removed for %s" % screen.device.model_id)
         screen_service = self._dbus_screens[screen.device.uid]
         screen_service.remove_from_connection()  
         del self._dbus_screens[screen.device.uid]
-        self.ScreenRemoved("%s/%s" % ( SCREEN_NAME, screen.device.uid ))
+        gobject.idle_add(self.ScreenRemoved, "%s/%s" % ( SCREEN_NAME, screen.device.uid ))
         
     def service_stopping(self):
         logger.debug("Sending stopping down signal")
-        self.Stopping()
+        gobject.idle_add(self.Stopping)
         
     def service_stopped(self):
         logger.debug("Sending stopped down signal")
-        self.Stopped()
+        gobject.idle_add(self.Stopped)
         
     def service_starting_up(self):
         logger.debug("Sending starting up signal")
-        self.Starting()
+        gobject.idle_add(self.Starting)
         
     def service_started_up(self):
         logger.debug("Sending started up signal")
-        self.Started()
+        gobject.idle_add(self.Started)
        
     '''
     DBUS Signals
@@ -780,7 +781,7 @@ class G15DBUSService(AbstractG15DBUSService):
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='ssss')
     def GetDeviceInformation(self):
         device = self._screen.device
-        return ( device.uid, device.model_name, "%s:%s" % ( hex(device.usb_id[0]),hex(device.usb_id[1]) ), device.model_fullname )
+        return ( device.uid, device.model_id, "%s:%s" % ( hex(device.usb_id[0]),hex(device.usb_id[1]) ), device.model_fullname )
 
     @dbus.service.method(IF_NAME, out_signature='as')
     def GetDevices(self):

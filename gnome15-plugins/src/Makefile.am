@@ -1,0 +1,87 @@
+if ENABLE_VOLUME_PLUGIN
+    MAYBE_VOLUME = volume
+endif
+if ENABLE_RSS_PLUGIN
+    MAYBE_RSS = rss
+endif
+if ENABLE_SYSMON_PLUGIN
+    MAYBE_SYSMON = sysmon
+endif
+if ENABLE_PROCESSES_PLUGIN
+    MAYBE_PROCESSES = processes
+endif
+if ENABLE_WEBCAM_PLUGIN
+    MAYBE_WEBCAM = webcam
+endif
+if ENABLE_CAL_PLUGIN
+    MAYBE_CAL = cal
+endif
+if ENABLE_LCDBIFF_PLUGIN
+    MAYBE_LCDBIFF = lcdbiff
+endif
+if ENABLE_BACKGROUND_PLUGIN
+    MAYBE_BACKGROUND = background
+endif
+if ENABLE_CAIRO_CLOCK_PLUGIN
+    MAYBE_CAIRO_CLOCK = cairo-clock
+endif
+if ENABLE_CLOCK_PLUGIN
+    MAYBE_CLOCK = clock
+endif
+
+if ENABLE_FX_PLUGIN
+    MAYBE_FX = fx
+endif
+if ENABLE_MACRO_RECORDER_PLUGIN
+    MAYBE_MACRO_RECORDER = macro-recorder
+endif
+if ENABLE_MACROS_PLUGIN
+    MAYBE_MACROS = macros
+endif
+if ENABLE_MOUNTS_PLUGIN
+    MAYBE_MOUNTS = mounts
+endif
+if ENABLE_NOTIFY_LCD_PLUGIN
+    MAYBE_NOTIFY_LCD = notify-lcd
+endif
+if ENABLE_IM_PLUGIN
+    MAYBE_IM = im
+endif
+if ENABLE_WEATHER_PLUGIN
+    MAYBE_WEATHER = weather
+endif
+if ENABLE_MPRIS_PLUGIN
+    MAYBE_MPRIS = mpris
+endif
+if ENABLE_MENU_PLUGIN
+    MAYBE_MENU = menu
+endif
+if ENABLE_PANEL_PLUGIN
+    MAYBE_PANEL = panel
+endif
+if ENABLE_VIDEOPLAYER_PLUGIN
+    MAYBE_VIDEOPLAYER = videoplayer
+endif
+if ENABLE_G15DAEMON_SERVER_PLUGIN
+    MAYBE_G15DAEMON_SERVER = g15daemon-server
+endif
+if ENABLE_STOPWATCH_PLUGIN
+    MAYBE_STOPWATCH = stopwatch
+endif
+if ENABLE_SCREENSAVER_PLUGIN
+    MAYBE_SCREENSAVER = screensaver
+endif
+if ENABLE_INDICATOR_ME_PLUGIN
+    MAYBE_INDICATOR_ME = indicator-me
+endif
+if ENABLE_INDICATOR_MESSAGES_PLUGIN
+    MAYBE_INDICATOR_MESSAGES = indicator-messages
+endif
+
+SUBDIRS = $(MAYBE_BACKGROUND) $(MAYBE_CAIRO_CLOCK) $(MAYBE_CLOCK) $(MAYBE_FX) $(MAYBE_MACRO_RECORDER) $(MAYBE_MACROS) $(MAYBE_MOUNTS) \
+	$(MAYBE_NOTIFY_LCD) $(MAYBE_IM) $(MAYBE_WEATHER) $(MAYBE_MPRIS) $(MAYBE_MENU) $(MAYBE_PANEL) $(MAYBE_VIDEOPLAYER) $(MAYBE_G15DAEMON_SERVER) \
+	$(MAYBE_STOPWATCH) $(MAYBE_SCREENSAVER) $(MAYBE_INDICATOR_ME) $(MAYBE_INDICATOR_MESSAGES) \
+	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_WEBCAM) $(MAYBE_CAL) $(MAYBE_LCDBIFF)
+	
+DIST_SUBDIRS = background cairo-clock clock fx macro-recorder macros mounts notify-lcd im weather mpris menu panel videoplayer g15daemon-server stopwatch \
+	sysmon volume rss processes webcam screensaver cal lcdbiff indicator-me indicator-messages

@@ -59,7 +59,7 @@ controls = {
             }  
 
 def show_preferences(device, parent, gconf_client):
-    if device.model_name != 'virtual':
+    if device.model_id != 'virtual':
         return None
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_gtk.glade")) 
@@ -83,6 +83,7 @@ class Driver(g15driver.AbstractDriver):
         self.device = device
         self.area = None
         self.image = None
+        self.buttons = {}
         self.event_box = None
         self.on_close = on_close
         self.conf_client = gconf.client_get_default()
@@ -110,12 +111,7 @@ class Driver(g15driver.AbstractDriver):
         self.connected = False
         if self.on_close != None:
             self.on_close(self, retry=False)
-        if self.main_window != None:
-            w = self.main_window
-            self.main_window = None
-            w.hide()
-            w.destroy()
-        self.area = None
+        gobject.idle_add(self._close_window)
         
     def is_connected(self):
         return self.connected
@@ -159,14 +155,7 @@ class Driver(g15driver.AbstractDriver):
         self.connected = True     
         self._init_driver()
         logger.info("Starting GTK driver")
-        self._init_ui()
-        control = self.get_control_for_hint(g15driver.HINT_DIMMABLE)        
-        if isinstance(control.value, int):
-            v = ( 65535 / control.upper ) * control.value
-            self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(v, v, v))
-        else:
-            self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(control.value[0] << 8, control.value[1] << 8, control.value[2] << 8))
-            
+        gobject.idle_add(self._init_ui)
     
     def get_size(self):
         return self.lcd_size
@@ -233,6 +222,7 @@ class Driver(g15driver.AbstractDriver):
     
     def set_mkey_lights(self, lights):
         self.lights = lights
+        gobject.idle_add(self._do_set_mkey_lights, lights)
     
     def grab_keyboard(self, callback):
         self.callback = callback;
@@ -240,6 +230,30 @@ class Driver(g15driver.AbstractDriver):
     '''
     Private
     '''
+        
+    def _do_set_mkey_lights(self, lights):
+        if g15driver.G_KEY_M1 in self.buttons:
+            self._modify_button(g15driver.G_KEY_M1, lights, g15driver.MKEY_LIGHT_1)
+        if g15driver.G_KEY_M2 in self.buttons:
+            self._modify_button(g15driver.G_KEY_M2, lights, g15driver.MKEY_LIGHT_2)
+        if g15driver.G_KEY_M3 in self.buttons:
+            self._modify_button(g15driver.G_KEY_M3, lights, g15driver.MKEY_LIGHT_3)
+        if g15driver.G_KEY_MR in self.buttons:
+            self._modify_button(g15driver.G_KEY_MR, lights, g15driver.MKEY_LIGHT_MR)
+        
+    def _modify_button(self, id, lights, mask):
+        on = lights & mask != 0
+        c = self.buttons[id]
+        key_text = " ".join(g15util.get_key_names(list(id)))
+        c.set_label("*%s" % key_text if on else "%s" % key_text)
+        
+    def _close_window(self):
+        if self.main_window != None:
+            w = self.main_window
+            self.main_window = None
+            w.hide()
+            w.destroy()
+        self.area = None
         
     def _mode_changed(self, client, connection_id, entry, args):
         if self.is_connected():
@@ -280,18 +294,19 @@ class Driver(g15driver.AbstractDriver):
         
     def _init_driver(self):      
         logger.info("Initialising GTK driver")
-        if self.device.model_name == 'virtual':
+        if self.device.model_id == 'virtual':
             self.mode = self.conf_client.get_string("/apps/gnome15/%s/gtk_mode" % self.device.uid)
         else:
-            self.mode = self.device.model_name
+            self.mode = self.device.model_id
         if self.mode == None or self.mode == "":
             self.mode = g15driver.MODEL_G19
         logger.info("Mode is now %s" % self.mode)
         self.controls = controls[self.mode]
         import gnome15.g15devices as g15devices
-        self.bpp = g15devices.device_list[self.mode][2]
-        self.lcd_size = g15devices.device_list[self.mode][3]
-        self.key_layout = g15devices.device_list[self.mode][1]
+        device_info = g15devices.get_device_info(self.mode)
+        self.bpp = device_info.bpp
+        self.lcd_size = device_info.lcd_size
+        self.key_layout = device_info.key_layout
         logger.info("Initialised GTK driver")
         
     def _init_ui(self):
@@ -300,6 +315,7 @@ class Driver(g15driver.AbstractDriver):
         self.area.set_double_buffered(True)
         #self.area.connect("expose_event", self._expose)
         self.hboxes = []
+        self.buttons = {}
         
         zoomed_size = self.get_zoomed_size()
          
@@ -313,10 +329,12 @@ class Driver(g15driver.AbstractDriver):
         for row in self.get_key_layout():
             hbox = gtk.HBox()
             for key in row:
-                g_button = gtk.Button(" ".join(g15util.get_key_names(list(key))))
+                key_text = " ".join(g15util.get_key_names(list(key)))
+                g_button = gtk.Button(key_text)
                 g_button.connect("pressed", self.simulate_key, key, g15driver.KEY_STATE_DOWN)
                 g_button.connect("released", self.simulate_key, key, g15driver.KEY_STATE_UP)
                 hbox.add(g_button)
+                self.buttons[key] = g_button
             rows.add(hbox)
             
         self.event_box = gtk.EventBox()
@@ -331,5 +349,13 @@ class Driver(g15driver.AbstractDriver):
         self.main_window.connect("delete-event", self.window_closed)
         
         self.main_window.show_all()
+        
+        control = self.get_control_for_hint(g15driver.HINT_DIMMABLE)        
+        if isinstance(control.value, int):
+            v = ( 65535 / control.upper ) * control.value
+            self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(v, v, v))
+        else:
+            self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(control.value[0] << 8, control.value[1] << 8, control.value[2] << 8))
+            
         logger.info("Initialised GTK UI")
     

@@ -13,5 +13,11 @@ drivers_PYTHON = __init__.py \
 	driver_gtk.py \
 	$(MAYBE_KERNEL) $(MAYBE_G19DIRECT)
 	
-EXTRA_DIST = $(drivers_PYTHON)	
+EXTRA_DIST = __init__.py \
+	driver_g15.py \
+	driver_g19.py \
+	driver_gtk.py \
+	driver_kernel.py \
+	fb.py
+		
 	

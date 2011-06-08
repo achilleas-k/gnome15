@@ -36,6 +36,8 @@ import Image
 import ImageMath
 import array
 import time
+import dbus
+import gobject
 
 # Logging
 import logging
@@ -244,10 +246,6 @@ class Driver(g15driver.AbstractDriver):
         self.device = device
         self.device_info = None
         self.conf_client = gconf.client_get_default()
-        try :
-            self._init_driver()
-        except Exception as e:
-            logger.warning("Failed to initialise driver properly. %s" % str(e))
     
     def get_antialias(self):         
         if self.device.bpp != 1:
@@ -263,6 +261,7 @@ class Driver(g15driver.AbstractDriver):
         self.fb = None
         if self.on_close != None:
             g15util.schedule("Close", 0, self.on_close, self)
+        self.system_service.__del__()
         
     def is_connected(self):
         return self.fb != None
@@ -274,7 +273,7 @@ class Driver(g15driver.AbstractDriver):
         return "Linux Logitech Kernel Driver"
     
     def get_model_name(self):
-        return self.device.model_name if self.device != None else None
+        return self.device.model_id if self.device != None else None
     
     def simulate_key(self, widget, key, state):
         if self.callback != None:
@@ -313,6 +312,11 @@ class Driver(g15driver.AbstractDriver):
         self.empty_buf = ""
         for i in range(0, self.fb.get_fixed_info().smem_len):
             self.empty_buf += chr(0)
+            
+        # Connect to DBUS        
+        system_bus = dbus.SystemBus()
+        system_service_object = system_bus.get_object('org.gnome15.SystemService', '/org/gnome15/SystemService')     
+        self.system_service = dbus.Interface(system_service_object, 'org.gnome15.SystemService')      
         
     def get_size(self):
         return self.device.lcd_size
@@ -443,7 +447,7 @@ class Driver(g15driver.AbstractDriver):
             self._write_to_led(leds[2], lights & g15driver.MKEY_LIGHT_3 != 0)        
             self._write_to_led(leds[3], lights & g15driver.MKEY_LIGHT_MR != 0)
         else:
-            logger.warning(" Setting MKey lights on " + self.device.model_name + " not yet supported. " + \
+            logger.warning(" Setting MKey lights on " + self.device.model_id + " not yet supported. " + \
             "Please report this as a bug, providing the contents of your /sys/class/led" + \
             "directory and the keyboard model you use.")
     
@@ -463,19 +467,23 @@ class Driver(g15driver.AbstractDriver):
         if self.key_thread != None:
             self.key_thread.deactivate()
             self.key_thread = None
+            
+    def _do_write_to_led(self, name, value):
+        logger.info("Writing %d to LED %s" % (value, name ))
+        self.system_service.SetLight(self.device.uid, name, value)
     
     def _write_to_led(self, name, value):
-        logger.info("Writing %d to LED %s" % (value, name ))
-        path = self.led_path_prefix[0] + "/" + self.led_path_prefix[1] + name + "/brightness"
-        try :
-            file = open(path, "w")
-            try :
-                file.write("%d\n" % value)
-            finally :
-                file.close()            
-        except IOError:
-            # Fallback to lgsetled
-            os.system("lgsetled -s -f %s %d" % (self.led_path_prefix[1] + name, value))
+        gobject.idle_add(self._do_write_to_led, name, value)
+#        path = self.led_path_prefix[0] + "/" + self.led_path_prefix[1] + name + "/brightness"
+#        try :
+#            file = open(path, "w")
+#            try :
+#                file.write("%d\n" % value)
+#            finally :
+#                file.close()            
+#        except IOError:
+#            # Fallback to lgsetled
+#            os.system("lgsetled -s -f %s %d" % (self.led_path_prefix[1] + name, value))
 
     
     def _handle_bound_key(self, key):
@@ -496,7 +504,7 @@ class Driver(g15driver.AbstractDriver):
             self.framebuffer_mode = "GFB_QVGA"
         logger.info("Using %s frame buffer mode" % self.framebuffer_mode)
             
-        self.device_info = device_info[self.device.model_name]
+        self.device_info = device_info[self.device.model_id]
                     
         # Try and find the paths for the LED devices.
         # Note, I am told these files may be in different places on different kernels / distros. Will

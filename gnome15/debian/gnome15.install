@@ -3,7 +3,6 @@ usr/bin/*
 usr/share/applications/*
 usr/share/gnome15/glade/g15-*
 usr/share/gnome15/images/*
-usr/share/gnome15/plugins/*
 usr/share/gnome15/themes/*
 usr/share/icons/*
 usr/share/man/*

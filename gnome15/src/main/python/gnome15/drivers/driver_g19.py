@@ -194,7 +194,7 @@ class Driver(g15driver.AbstractDriver):
         return [ g15driver.MODEL_G19 ]
     
     def get_model_name(self):
-        return self.device.model_name
+        return self.device.model_id
         
     def connect(self):          
         if self.is_connected():
@@ -243,7 +243,8 @@ class Driver(g15driver.AbstractDriver):
             self.disconnect()
         self.connect()
         
-    def set_mkey_lights(self, lights):       
+    def set_mkey_lights(self, lights):   
+        self.lights = lights    
         val = 0
         if lights & g15driver.MKEY_LIGHT_1 != 0:
             val += 0x80

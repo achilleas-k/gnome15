@@ -148,15 +148,89 @@ class Control():
         self.upper = upper
         self.value = value
         
+class LightControl(object):
+    
+    def __init__(self, driver):
+        self.driver = driver
+        self.val = 0
+        self.driver.set_mkey_lights(self.val)
+        self.reset_timer = None
+        self.reset_val = 0
+        self.on = False
+        
+    def blink(self, off_val = 0, delay = 0.5):
+        self.cancel_reset()
+        if self.on:
+            self._adjust(self.val)
+        else:
+            self._adjust(off_val)
+        self.on = not self.on
+        self.reset_timer = g15util.schedule("Blink", delay, self.blink, off_val, delay)
+        return self.reset_timer
+    
+    def is_active(self):
+        ctrls = len(self.driver.light_controls)
+        return ctrls > 0 and self in self.driver.light_controls and self.driver.light_controls.index(self) == ctrls - 1
+    
+    def _adjust(self, val):
+        if self.is_active():
+            self.driver.set_mkey_lights(val)
+        
+    def set_mkey_lights(self, val, reset_after = None):
+        old_val = val
+        self.val = val
+        self.on = True
+        self._adjust(val)
+        self.cancel_reset()        
+        if reset_after:
+            self.reset_val = old_val
+            self.reset_timer = g15util.schedule("LEDReset", reset_after, self.reset)
+            return self.reset_timer
+            
+    def reset(self):
+        self.set_mkey_lights(self.reset_val)
+            
+    def cancel_reset(self):
+        if self.reset_timer:            
+            self.reset_timer.cancel()
+            self.reset_timer = None
+        
+    def get_mkey_lights(self):
+        return self.val
+        
 class AbstractDriver(object):
     
     def __init__(self, id):
         self.id = id
+        self.lights = 0
         global seq_no
         self.on_driver_options_change = None
         seq_no += 1
         self.seq = seq_no
         self.control_update_listeners = []
+        self.initial_mkey_lights_value = 0
+        self.light_controls = []
+        
+    def acquire_mkey_lights(self, release_after = None, val = None):
+        if len(self.light_controls) == 0:
+            self.initial_mkey_lights_value = self.get_mkey_lights()
+        control = LightControl(self)
+        self.light_controls.append(control)
+        if val:
+            control.set_mkey_lights(val)
+        if release_after:
+            g15util.schedule("ReleaseMKeyLights", release_after, self.release_mkey_lights, control)
+        return control
+    
+    def release_mkey_lights(self, control):
+        control.cancel_reset()
+        self.light_controls.remove(control)
+        ctrls = len(self.light_controls)
+        if ctrls > 0:
+            self.set_mkey_lights(self.light_controls[ctrls - 1].val)
+        else:
+            self.set_mkey_lights(self.initial_mkey_lights_value)
+    
     
     """
     Start the driver
@@ -265,6 +339,9 @@ class AbstractDriver(object):
     """
     def process_svg(self, document):
         raise NotImplementedError( "Not implemented" )
+    
+    def get_mkey_lights(self):
+        return self.lights 
         
     def get_control(self, id):
         controls = self.get_controls()

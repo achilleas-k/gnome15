@@ -8,7 +8,7 @@ Homepage: http://www.gnome15.org/
 
 Package: gnome15-ubuntu
 Architecture: all
-Depends: gnome15, gnome15-impulse15, gnome15-mono-icons, gnome15-accessibility-icons, gnome15-gnome-plugins, gnome15-ubuntu-plugins
+Depends: gnome15, gnome15-impulse15, gnome15-mono-icons, gnome15-accessibility-icons, gnome15-base-plugins, gnome15-gnome-plugins, gnome15-ubuntu-plugins
 Recommends: gnome15-g19direct | gnome15-g15daemon 
 Suggests: python-setproctitle, gnome15-g19d, gnome15-gtk, gnome15-kernel
 Description: Meta-package for Gnome15 

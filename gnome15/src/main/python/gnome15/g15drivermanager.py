@@ -67,10 +67,9 @@ def get_best_driver(conf_client, device, on_close = None):
     for driver_mod_key in imported_drivers:
         driver_mod = imported_drivers[driver_mod_key]
         driver = driver_mod.Driver(device, on_close = on_close)
-        if device.model_name in driver.get_model_names():
+        if device.model_id in driver.get_model_names():
             driver.set_controls_from_configuration(conf_client)
             return driver
-    
     
 def get_driver(conf_client, device, on_close = None):
     '''
@@ -81,9 +80,9 @@ def get_driver(conf_client, device, on_close = None):
         # If no driver has yet been configured, always use the best driver
         driver = get_best_driver(conf_client, device, on_close)
         if driver == None:
-            raise Exception("No drivers support the model %s" % device.model_name)
+            raise Exception("No drivers support the model %s" % device.model_id)
             
-        logger.info("Using first available driver for %s, %s" % ( device.model_name, driver.get_name()))
+        logger.info("Using first available driver for %s, %s" % ( device.model_id, driver.get_name()))
         return driver
     
     driver_mod_key = "driver_" + driver_name
@@ -92,12 +91,12 @@ def get_driver(conf_client, device, on_close = None):
     driver_mod = imported_drivers[driver_mod_key]
     driver = driver_mod.Driver(device, on_close = on_close)
     
-    if not device.model_name in driver.get_model_names():
+    if not device.model_id in driver.get_model_names():
         # If the configured driver is now incorrect for the device model, just use the best driver
         # If no driver has yet been configured, always use the best driver
         driver = get_best_driver(conf_client, device, on_close)
         if driver == None:
-            raise Exception("No drivers support the model %s" % device.model_name)
+            raise Exception("No drivers support the model %s" % device.model_id)
         logger.warning("Ignoring configured driver %s, as the model is not supported by it. Looking for best driver" % driver)
         return driver
     else:

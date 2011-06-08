@@ -1,0 +1,10 @@
+lg4l for Debian
+---------------
+
+Please see ./README.md for a description of the lg4l software.
+
+The Debian lg4l DKMS source package provides:,
+
+ * lg4l-dkms, which provides the source for the kernel modules
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon, 30 May 2011 17:07:11 +0100

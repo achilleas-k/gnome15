@@ -23,6 +23,7 @@ import gtk.gdk
 import gobject
 import os
 import cairo
+import time
 import pangocairo
 import pango
 import math
@@ -243,6 +244,21 @@ def radio_changed(widget, key, gconf_client, gconf_value):
     gconf_client.set_string(key, gconf_value)
     
 '''
+gconf utilities
+'''
+def get_bool_or_default(gconf_client, key, default = None):
+    bool_val = gconf_client.get(key)
+    return default if bool_val == None else bool_val.get_bool()
+
+def get_int_or_default(gconf_client, key, default = None):
+    int_val = gconf_client.get(key)
+    return default if int_val == None else int_val.get_int()
+
+def get_rgb_or_default(gconf_client, key, default = None):
+    val = gconf_client.get_string(key)
+    return default if val == None or val == "" else to_rgb(val)
+    
+'''
 Task scheduler. Tasks may be added to the queue to execute
 after a specified interval. The timer is done by the gobject
 event loop, which then executes the job on a different thread
@@ -252,16 +268,38 @@ def clear_jobs(queue_name = None):
     scheduler.clear_jobs(queue_name)
 
 def execute(queue_name, job_name, function, *args):
-    scheduler.execute(queue_name, job_name, function, *args)
+    return scheduler.execute(queue_name, job_name, function, *args)
 
 def schedule(job_name, interval, function, *args):
     return scheduler.schedule(job_name, interval, function, *args)
+
+def stop_queue(queue_name):
+    scheduler.stop_queue(queue_name)
 
 def queue(queue_name, job_name, interval, function, *args):    
     return scheduler.queue(queue_name, job_name, interval, function, *args)
 
 def stop_all_schedulers():
     scheduler.stop_all()
+    
+#class IdleJob():
+#    def __init__(self, job_function, *args):
+#        self.done = False
+#        gobject.idle_add(self.run_job, job_function, *args)
+#        
+#    def wait_complete(self):
+#        while not self.done:
+#            time.sleep(0)
+#        
+#    def run_job(self, job_function, *args):
+#        try:
+#            job_function(*args)
+#        finally:
+#            self.done = True
+#        
+#def run_on_idle_and_wait(job_function, *args):
+#    job = IdleJob(job_function, *args)
+#    job.wait_complete()    
 
 '''
 General utilities
