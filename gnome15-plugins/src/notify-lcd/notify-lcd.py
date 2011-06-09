@@ -365,7 +365,7 @@ class G15NotifyLCD():
             self._bus.add_match_string_non_blocking("interface='org.freedesktop.Notifications'")
             self._bus.add_message_filter(self.msg_cb)
             
-        self.notify_handle = self._gconf_client.notify_add(self._gconf_key, self._load_configuration)
+        self.notify_handle = self._gconf_client.notify_add(self._gconf_key, self._configuration_changed)
             
     def msg_cb(self, bus, msg):
         # Only interested in method calls
@@ -515,7 +515,10 @@ class G15NotifyLCD():
       
     ''' 
     Private
-    '''       
+    '''     
+    def _configuration_changed(self, client, connection_id, entry, args):
+        self._load_configuration()
+          
     def _reload_theme(self):        
         self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen, self._last_variant)
         

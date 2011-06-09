@@ -218,7 +218,9 @@ class G15Plugins():
             logger.warning("Failed to deactive plugin properly.")           
             traceback.print_exc(file=sys.stderr)
         finally:                    
-            del self.screen.service.active_plugins[self.plugin_map[plugin].id]
+            mod_id = self.plugin_map[plugin].id
+            if mod_id in self.screen.service.active_plugins:
+                del self.screen.service.active_plugins[mod_id]
         self.activated.remove(plugin)
     
     def deactivate(self):

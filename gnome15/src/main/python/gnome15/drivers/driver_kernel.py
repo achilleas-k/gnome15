@@ -261,7 +261,7 @@ class Driver(g15driver.AbstractDriver):
         self.fb = None
         if self.on_close != None:
             g15util.schedule("Close", 0, self.on_close, self)
-        self.system_service.__del__()
+        del self.system_service
         
     def is_connected(self):
         return self.fb != None

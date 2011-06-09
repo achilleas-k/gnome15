@@ -122,6 +122,8 @@ class Menu(Component):
         self.add_item(MenuSeparator())
         
     def add_item(self, item):
+        if not self.theme:
+            raise Exception("Menu must be added to theme before items can be added it it")
         item.configure(self.theme)
         self._items.append(item)
         

@@ -2,7 +2,9 @@
 # See udev(7) for syntax.
 #
 
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", GROUP="video", MODE="0664"
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", GROUP="video", MODE="0664", RUN="/usr/bin/g15-system-service"
+SUBSYSTEM=="input", ACTION=="remove", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", RUN="/usr/bin/g15-system-service stop"
+
 SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c222", GROUP="video", MODE="0664"
 SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c227", GROUP="video", MODE="0664"
 SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c21c", GROUP="video", MODE="0664"

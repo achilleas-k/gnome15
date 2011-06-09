@@ -300,7 +300,7 @@ class G15Weather():
                 theme_icon = "weather-clear"
             elif base_icon == "mostlysunny":
                 theme_icon = "weather-few-clouds"
-            elif base_icon == "partlycloudy":
+            elif base_icon == "partly_cloudy":
                 theme_icon = "weather-clouds"
             elif base_icon == "mostlycloudy" or icon == "cloudy":
                 theme_icon = "weather-overcast"

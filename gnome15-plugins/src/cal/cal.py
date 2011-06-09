@@ -29,6 +29,7 @@ import time
 import os
 import evolution.ecal
 import vobject
+import gobject
 
 id="cal"
 name="Calendar"
@@ -63,13 +64,17 @@ class G15Cal():
         self.loaded = 0
         self.page = None
         self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-            
         self.loaded = time.time()
-        self.load_month_events(datetime.datetime.now())
         self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_NORMAL, on_shown=self.on_shown, on_hidden=self.on_hidden, id="Calendar")
         self.page.set_title("Evolution Calendar")
+        gobject.idle_add(self._first_load)
+        
+    def _first_load(self):
+        print "First load of calendar"
+        self.load_month_events(datetime.datetime.now())
         self.screen.redraw(self.page)
         self.schedule_redraw()
+        print "Finished first load of calendar"
         
     def redraw(self):
         t = time.time()

@@ -113,7 +113,7 @@ do
               then echo " Autotools"
                    make clean
                    make distclean
-                   if autoreconf -f && ./configure --prefix=/usr && make && make dist
+                   if autoreconf -f && ./configure --prefix=/usr --enable-udev=/etc/udev/rules.d && make && make dist
                    then echo "  Created source dist"
                    else echo "$0: Failed to make dist" >&2
                         exit 1

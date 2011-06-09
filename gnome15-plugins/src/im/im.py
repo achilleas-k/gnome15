@@ -564,19 +564,13 @@ class G15Im():
         """
         Reload the SVG theme and configure it
         """
-        
-        # Get the mode that was last used
         mode = self._gconf_client.get_string(self._gconf_key + "/mode")
-        
-        # Create the menu
-        self._menu = ContactMenu(self._screen, mode)
-        self._menu.on_selected = self._redraw
-        self._menu.on_update = self._redraw
-        
-        # Setup the theme
         self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen)
+        self._menu = ContactMenu(self._screen, mode)
         self._theme.add_component(self._menu)
         self._theme.add_component(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
+        self._menu.on_selected = self._redraw
+        self._menu.on_update = self._redraw
         
     def _redraw(self):
         self._screen.redraw(self._page)

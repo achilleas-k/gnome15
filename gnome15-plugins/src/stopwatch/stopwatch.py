@@ -283,9 +283,7 @@ class G15Stopwatch():
 
     def _schedule_redraw(self):
         self._cancel_refresh()
-
         delay = g15util.total_seconds( datetime.timedelta( seconds = 1 ))
-
         self.timer = g15util.schedule("StopwatchRedraw", delay, self._redraw)
 
     def _reload_theme(self):        

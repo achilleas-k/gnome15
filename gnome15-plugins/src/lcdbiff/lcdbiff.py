@@ -650,7 +650,7 @@ class G15Biff():
     def deactivate(self):
         if self.refresh_timer:
             self.refresh_timer.cancel()
-            self.refresh_timer.queue.stop()
+            self.refresh_timer.task_queue.stop()
         self.gconf_client.notify_remove(self.update_time_changed_handle)
         self.screen.del_page(self.page)
         self.page = None

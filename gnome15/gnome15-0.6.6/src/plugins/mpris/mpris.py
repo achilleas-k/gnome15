@@ -53,6 +53,8 @@ unsupported_models = [ g15driver.MODEL_G110 ]
 # Players that are not supported
 mpris_blacklist = [ "org.mpris.xbmc" ]
 
+MRPIS_DATA_QUEUE = "mprisDataQueue"
+
 def create(gconf_key, gconf_client, screen):
     return G15MPRIS(gconf_client, screen)
 
@@ -289,7 +291,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.check_status()
         
         # Start polling for status, position and track changes        
-        self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 1.0, self.update_track)            
+        self.timer = g15util.queue(MPRIS_DATA_QUEUE, "UpdateTrackData", 1.0, self.update_track)            
         session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def update_track(self):
@@ -297,9 +299,9 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.playback_started = time.time()
         self.check_status()
         if self.status == "Playing":        
-            self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 1.0, self.update_track)
+            self.timer = g15util.queue(MPRIS_DATA_QUEUE, "UpdateTrackData", 1.0, self.update_track)
         else:        
-            self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 5.0, self.update_track)
+            self.timer = g15util.queue(MPRIS_DATA_QUEUE, "UpdateTrackData", 5.0, self.update_track)
         
     def on_stop(self):
         if self.timer != None:
@@ -307,7 +309,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.session_bus.remove_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def track_changed_handler(self, detail):
-        g15util.queue("mprisDataQueue", "LoadTrackDetails", 1.0, self.load_and_draw)
+        g15util.queue(MPRIS_DATA_QUEUE, "LoadTrackDetails", 1.0, self.load_and_draw)
         
     def load_and_draw(self):
         self.load_song_details()
@@ -493,6 +495,7 @@ class G15MPRIS():
                                      signal_name='NameOwnerChanged')  
     
     def deactivate(self):
+        g15util.stop_queue(MPRIS_DATA_QUEUE)
         for key in self.players.keys():
             self.players[key].stop()
         self.session_bus.remove_signal_receiver(self._name_owner_changed,

@@ -1,3 +1,5 @@
+etc/*
 usr/lib/python2.*/dist-packages/gnome15/drivers/driver_kernel.py
 usr/lib/python2.*/dist-packages/gnome15/drivers/fb.py
 usr/share/gnome15/glade/driver_kernel.glade
+lib/*
