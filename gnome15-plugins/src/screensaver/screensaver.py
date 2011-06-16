@@ -24,7 +24,6 @@ import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
-import gnome15.g15drivermanager as g15drivermanager
 from threading import Timer
 import gtk
 import dbus
@@ -138,6 +137,10 @@ class G15ScreenSaver():
         if self._session_bus:
             self._session_bus.remove_signal_receiver(self._screensaver_changed_handler, dbus_interface = self._dbus_interface, signal_name = "ActiveChanged")
         
+    def handle_key(self, keys, state, post):
+        # Sinks all keyboard events when the page is active
+        return self._page is not None
+        
     ''' Functions specific to plugin
     ''' 
     
@@ -148,10 +151,13 @@ class G15ScreenSaver():
             
     def _check_page(self):
         if self._in_screensaver:
-            self._page = self._screen.get_page("Screensaver")
             if self._screen.driver.get_bpp() != 0 and self._page == None:
                 self._reload_theme()
-                self._page = self._screen.new_page(self._paint, g15screen.PRI_EXCLUSIVE, id="Screensaver")
+                self._page = g15theme.G15Page(id, self._screen, priority = g15screen.PRI_EXCLUSIVE, \
+                                              title = name, theme = self._theme,
+                                              theme_properties_callback = self._get_theme_properties)
+                self._page.key_handlers.append(self)
+                self._screen.add_page(self._page)
                 self._screen.redraw(self._page)
             if not self.dimmed and self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
                 self._dim_keyboard()
@@ -196,13 +202,13 @@ class G15ScreenSaver():
         variant = ""
         if text == None or text == "":
             variant = "nomessage"
-        self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen, variant)
+        self._theme = g15theme.G15Theme(self, variant)
         
-    def _paint(self, canvas):
+    def _get_theme_properties(self):
         
         properties = {}
         properties["title"] = "Workstation Locked"
         properties["message"] = self._gconf_client.get_string(self._gconf_key + "/message_text")
         properties["icon"] = g15util.get_icon_path("sleep", self._screen.height)
         
-        self._theme.draw(canvas, properties)
+        return properties

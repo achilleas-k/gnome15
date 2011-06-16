@@ -120,10 +120,20 @@ class G15Clock():
         page actually gets shown and hidden.
         
         A thumbnail painter function is also provided. This is used by other plugins want a thumbnail representation
-        of the current screen. For example, this could be used in the 'panel', or the 'menu' plugins 
+        of the current screen. For example, this could be used in the 'panel', or the 'menu' plugins
+        
+        A page is actually a Component, and other components may be added to it. 
         '''        
-        self.page = self.screen.new_page(self.paint, id="Clock", thumbnail_painter = self.paint_thumbnail, panel_painter = self.paint_thumbnail)
+        self.page = g15theme.G15Page("Clock", self.screen, 
+                                     theme_properties_callback = self._get_properties,
+                                     thumbnail_painter = self.paint_thumbnail, panel_painter = self.paint_thumbnail,
+                                     theme = self.theme)
         self.page.title = "Simple Clock"
+        
+        '''
+        Add the page to the screen
+        '''
+        self.screen.add_page(self.page)
         
         ''' 
         Once created, we should always ask for the screen to be drawn (even if another higher
@@ -175,16 +185,6 @@ class G15Clock():
     * the function paint() is the convention                     *
     **************************************************************    
     '''
-    
-    def paint(self, canvas):
-        '''
-        Invoked when this plugins page is active and needs to be redrawn. You should NOT
-        call this function yourself, it is called automatically by the screen manager. 
-        The function should draw everything as quickly as possible (i.e. not go off to 
-        the internet to gather data or anything like that!)
-         
-        '''
-        self.theme.draw(canvas, self._get_properties())
         
     '''
     Paint the thumbnail. You are given the MAXIMUM amount of space that is allocated for
@@ -256,6 +256,7 @@ class G15Clock():
         option has been change)
         '''
         self._reload_theme()
+        self.page.set_theme(self.theme)
         
         '''
         In this case, we temporarily raise the priority of the page. This will force
@@ -300,7 +301,7 @@ class G15Clock():
         variant = None
         if self.display_date:
             variant = "with-date"
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen, variant)
+        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), variant)
         
     '''
     Get the properties dictionary

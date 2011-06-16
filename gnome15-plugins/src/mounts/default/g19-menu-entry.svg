@@ -162,28 +162,6 @@
          x="104.54774"
          y="784.11218" />
     </clipPath>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
-       id="clipPath3820">
-      <rect
-         style="fill:#ff0000;fill-opacity:1;stroke:none"
-         id="rect3822"
-         width="175"
-         height="15"
-         x="103.67242"
-         y="786.00006" />
-    </clipPath>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
-       id="clipPath3831">
-      <rect
-         style="fill:#ff0000;fill-opacity:1;stroke:none;display:inline"
-         id="rect3833"
-         width="175"
-         height="15"
-         x="103.67242"
-         y="788.00006" />
-    </clipPath>
     <linearGradient
        y2="857.36218"
        x2="250"
@@ -300,6 +278,120 @@
          x="104.54774"
          y="784.11218" />
     </clipPath>
+    <linearGradient
+       y2="857.36218"
+       x2="250"
+       y1="857.36218"
+       x1="80.000015"
+       gradientTransform="matrix(0.47226893,0,0,1.4999991,156.21849,-491.18535)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient3872-1"
+       xlink:href="#linearGradient3812-6-6-2-3"
+       inkscape:collect="always" />
+    <linearGradient
+       id="linearGradient3812-6-6-2-3">
+      <stop
+         style="stop-color:#13f116;stop-opacity:1;"
+         offset="0"
+         id="stop3814-4-7-6-7" />
+      <stop
+         id="stop3820-5-56-9-7"
+         offset="0.71428573"
+         style="stop-color:#e64b0e;stop-opacity:1;" />
+      <stop
+         style="stop-color:#ff000d;stop-opacity:1;"
+         offset="1"
+         id="stop3816-4-9-4-2" />
+    </linearGradient>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2999-5-0-7-2-6">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3001-8-8-9-6-4"
+         width="205"
+         height="21.999977"
+         x="104.54774"
+         y="784.11218" />
+    </clipPath>
+    <linearGradient
+       y2="857.36218"
+       x2="250"
+       y1="857.36218"
+       x1="80.000015"
+       gradientTransform="matrix(0.4705883,0,0,1.4999991,156.35293,-491.11396)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient3033-52"
+       xlink:href="#linearGradient3812-6-6-0"
+       inkscape:collect="always" />
+    <linearGradient
+       id="linearGradient3812-6-6-0">
+      <stop
+         style="stop-color:#13f116;stop-opacity:1;"
+         offset="0"
+         id="stop3814-4-7-2" />
+      <stop
+         id="stop3820-5-56-90"
+         offset="0.71428573"
+         style="stop-color:#e64b0e;stop-opacity:1;" />
+      <stop
+         style="stop-color:#ff000d;stop-opacity:1;"
+         offset="1"
+         id="stop3816-4-9-9" />
+    </linearGradient>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2999-5-0-7-9">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3001-8-8-9-4"
+         width="205"
+         height="21.999977"
+         x="104.54774"
+         y="784.11218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3210">
+      <rect
+         y="786.00006"
+         x="103.67242"
+         height="15"
+         width="140"
+         id="rect3212"
+         style="fill:#ff0000;fill-opacity:1;stroke:none" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3215">
+      <rect
+         y="788.00006"
+         x="103.67242"
+         height="15"
+         width="155"
+         id="rect3217"
+         style="fill:#ff0000;fill-opacity:1;stroke:none;display:inline" />
+    </clipPath>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3812-6-6-0"
+       id="linearGradient3229"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.47446859,0,0,1.5,156.0425,-491.74164)"
+       x1="80.000015"
+       y1="857.36218"
+       x2="250"
+       y2="857.36218" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3812-6-6-2"
+       id="linearGradient3231"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.47647066,0,0,1.4999991,156.16806,-492.02671)"
+       x1="80.000015"
+       y1="857.36218"
+       x2="250"
+       y2="857.36218" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -308,16 +400,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8"
-     inkscape:cx="143.28537"
-     inkscape:cy="59.436437"
+     inkscape:zoom="11.2"
+     inkscape:cx="233.17511"
+     inkscape:cy="8.4147132"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1-5-7"
+     inkscape:current-layer="layer1-5"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1255"
      inkscape:window-height="940"
-     inkscape:window-x="2154"
+     inkscape:window-x="2161"
      inkscape:window-y="68"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -367,12 +459,46 @@
        y="798.28217"
        id="text2999-0"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath3831)"
+       clip-path="url(#clipPath3215)"
        transform="translate(-54.672419,-8.3652344e-5)"><tspan
          sodipodi:role="line"
          id="tspan3001-7"
          x="107.22406"
          y="798.28217">${item_name}</tspan></text>
+    <g
+       transform="matrix(1.0042195,0,0,1,-1.6666498,0.19848633)"
+       style="display:inline"
+       id="g3055-5"
+       title="del !sel_disk_usage">
+      <rect
+         y="784.80151"
+         x="191.85712"
+         height="19"
+         width="84.642853"
+         id="rect3000-5-4-5-4-4-8"
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none;display:inline" />
+      <rect
+         y="786.80151"
+         x="194"
+         height="15"
+         width="80.65966"
+         id="sel_disk_usage_progress"
+         style="fill:url(#linearGradient3229);fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
+         class="progress" />
+      <text
+         transform="matrix(1.0000023,0,0,1,99.82929,-0.71436934)"
+         clip-path="url(#clipPath2999-5-0-7-9)"
+         sodipodi:linespacing="125%"
+         id="text2999-0-1-7-6"
+         y="798.28217"
+         x="176.15961"
+         style="font-size:9.99998856px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
+         xml:space="preserve"><tspan
+           y="798.28217"
+           x="176.15961"
+           id="tspan3001-7-9-0-0"
+           sodipodi:role="line">${item_alt}</tspan></text>
+    </g>
     <image
        class="embedded_image"
        y="785.11218"
@@ -384,34 +510,6 @@
        xlink:href="/home/tanktarta/dummy.png"
        sodipodi:absref="/home/tanktarta/dummy.png"
        title="item_icon" />
-    <rect
-       style="fill:#000000;fill-opacity:0.50196081;stroke:none;display:inline"
-       id="rect3000-5-4-5-4-4-7"
-       width="84.642853"
-       height="18"
-       x="192.28571"
-       y="785.51575" />
-    <rect
-       class="progress"
-       style="fill:url(#linearGradient3872);fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;display:inline"
-       id="disk_usage_progress"
-       width="80.285706"
-       height="14.999991"
-       x="194"
-       y="787.35712" />
-    <text
-       xml:space="preserve"
-       style="font-size:9.99998856px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
-       x="176.15961"
-       y="798.28217"
-       id="text2999-0-1-7-4"
-       sodipodi:linespacing="125%"
-       clip-path="url(#clipPath2999-5-0-7-2)"
-       transform="matrix(1.0000023,0,0,1,98.82929,-0.71436897)"><tspan
-         sodipodi:role="line"
-         id="tspan3001-7-9-0-5"
-         x="176.15961"
-         y="798.28217">${item_alt}</tspan></text>
   </g>
   <g
      inkscape:label="Deselected Layer"
@@ -436,40 +534,45 @@
        y="798.28217"
        id="text2999-0-9"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath3820)"
+       clip-path="url(#clipPath3210)"
        transform="translate(-54.672419,-8.3652344e-5)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-1"
          x="107.22406"
          y="798.28217">${item_name}</tspan></text>
-    <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke:none;display:inline"
-       id="rect3000-5-4-5-4-4"
-       width="84.642853"
-       height="18"
-       x="191.85712"
-       y="785.80151" />
-    <rect
-       class="progress"
-       style="fill:url(#linearGradient3033);fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
-       id="sel_disk_usage_progress"
-       width="80"
-       height="14.999991"
-       x="194"
-       y="787.42847" />
-    <text
-       xml:space="preserve"
-       style="font-size:9.99998856px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
-       x="176.15961"
-       y="798.28217"
-       id="text2999-0-1-7"
-       sodipodi:linespacing="125%"
-       clip-path="url(#clipPath2999-5-0-7)"
-       transform="matrix(1.0000023,0,0,1,99.82929,-0.71436934)"><tspan
-         sodipodi:role="line"
-         id="tspan3001-7-9-0"
+    <g
+       id="g3055"
+       title="del !disk_usage"
+       transform="translate(-1.2857056,0.48425293)">
+      <rect
+         y="784.51575"
+         x="192.28571"
+         height="19"
+         width="85"
+         id="rect3000-5-4-5-4-4-7"
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none;display:inline" />
+      <rect
+         y="786.51575"
+         x="194.28571"
+         height="14.999991"
+         width="81"
+         id="disk_usage_progress"
+         style="fill:url(#linearGradient3231);fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;display:inline"
+         class="progress" />
+      <text
+         transform="matrix(1.0000023,0,0,1,98.82929,-0.71437)"
+         clip-path="url(#clipPath2999-5-0-7-2)"
+         sodipodi:linespacing="125%"
+         id="text2999-0-1-7-4"
+         y="798.28217"
          x="176.15961"
-         y="798.28217">${item_alt}</tspan></text>
+         style="font-size:9.99998856px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
+         xml:space="preserve"><tspan
+           y="798.28217"
+           x="176.15961"
+           id="tspan3001-7-9-0-5"
+           sodipodi:role="line">${item_alt}</tspan></text>
+    </g>
     <image
        class="embedded_image"
        y="785.11218"

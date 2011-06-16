@@ -38,200 +38,14 @@ import g15theme
 import time
 import threading
 import cairo
-import gobject
-import pangocairo
-import pango
 import gconf
 import os.path
-import xml.sax.saxutils as saxutils
 import traceback
 import sys
 import logging
 from threading import RLock
 from g15exceptions import NotConnectedException
 logger = logging.getLogger("screen")
-
-class G15Page():
-    def __init__(self, screen, painter, id, priority, time, on_shown=None, on_hidden=None, thumbnail_painter = None, panel_painter = None):
-        self.id = id
-        self.screen = screen
-        self.title = self.id
-        self.time = time
-        self.thumbnail_painter = thumbnail_painter
-        self.panel_painter = panel_painter
-        self.on_shown = on_shown
-        self.on_hidden = on_hidden
-        self.priority = priority
-        self.time = time
-        self.value = self.priority * self.time
-        self.painter = painter
-        self.cairo = cairo
-        self.opacity = 0
-        self.key_handlers = []
-        
-        self.theme = None
-        self.properties = {}
-        self.back_buffer = None
-        self.buffer = None
-        self.back_context = None
-        self.font_size = 12.0
-        self.font_family = "Sans"
-        self.font_style = "normal"
-        self.font_weight = "normal"
-        
-        self.new_surface()
-        
-    def is_visible(self):
-        return self.screen.get_visible_page() == self
-        
-    def set_title(self, title):
-        self.title = title   
-        for l in self.screen.screen_change_listeners:
-            l.title_changed(self, title)
-        
-    def set_priority(self, priority):
-        self.priority = priority
-        self.value = self.priority * self.time
-        
-    def set_time(self, time):
-        self.time = time
-        self.value = self.priority * self.time
-        
-    def get_val(self):
-        return self.time * self.priority
-    
-    def new_surface(self):
-        sw = self.screen.driver.get_size()[0]
-        sh = self.screen.driver.get_size()[1]
-        self.back_buffer = cairo.ImageSurface (cairo.FORMAT_ARGB32,sw, sh)
-        self.back_context = cairo.Context(self.back_buffer)
-        self.set_line_width(1.0)
-        
-        rgb = self.screen.driver.get_color(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
-        self.foreground(rgb[0],rgb[1],rgb[2], 255)
-        
-    def draw_surface(self):
-        self.buffer = self.back_buffer
-        
-    def foreground(self, r, g, b, a = 255):
-        self.foreground_rgb = (r, g, b, a)
-        self.back_context.set_source_rgba(float(r) / 255.0, float(g) / 255.0, float(b) / 255.0, float(a) / 255.0)
-        
-    def save(self):
-        self.back_context.save()
-        
-    def restore(self):
-        self.back_context.restore()
-        
-    def set_line_width(self, line_width):
-        self.back_context.set_line_width(line_width)
-        
-    def arc(self, x, y, radius, angle1, angle2, fill = False):
-        self.back_context.arc(x, y, radius, g15util.degrees_to_radians(angle1), g15util.degrees_to_radians(angle2))
-        if fill:
-            self.back_context.fill()
-        else:
-            self.back_context.stroke()
-        
-    def line(self, x1, y1, x2, y2):
-        self.back_context.line_to(x1, y1)
-        self.back_context.line_to(x2, y2)
-        self.back_context.stroke()
-        
-    def image(self, image, x, y):
-        self.back_context.translate(x, y)
-        self.back_context.set_source_surface(image)
-        self.back_context.paint()
-        self.back_context.translate(-x, -y)
-        
-    def rectangle(self, x, y, width, height, fill = False):
-        self.back_context.rectangle(x, y, width, height)
-        if fill:
-            self.back_context.fill()
-        else:
-            self.back_context.stroke()
-        
-    def paint(self, canvas):
-        if self.painter != None:
-            self.painter(canvas)
-        
-        # Paint the theme
-        if self.theme != None:
-            canvas.save()
-            self.theme.draw(canvas, self.properties)
-            canvas.restore()
-            
-        # Paint the canvas
-        if self.buffer != None:
-            canvas.save()
-            canvas.set_source_surface(self.buffer)
-            canvas.paint()
-            canvas.restore()
-            
-    def set_font(self, font_size = None, font_family = None, font_style = None, font_weight = None):
-        if font_size:
-            self.font_size = font_size
-        if font_family:
-            self.font_family = font_family
-        if font_style:
-            self.font_style = font_style
-        if font_weight:
-            self.font_weight = font_weight
-            
-    def text(self, text, x, y, width, height, text_align = "left"):
-        driver = self.screen.driver
-        pango_context = pangocairo.CairoContext(self.back_context)
-        pango_context.set_antialias(driver.get_antialias()) 
-        fo = cairo.FontOptions()
-        fo.set_antialias(driver.get_antialias())
-        if driver.get_antialias() == cairo.ANTIALIAS_NONE:
-            fo.set_hint_style(cairo.HINT_STYLE_NONE)
-            fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
-        
-        buf = "<span"
-        if self.font_size != None:
-            buf += " size=\"%d\"" % ( int(self.font_size * 1000) ) 
-        if self.font_style != None:
-            buf += " style=\"%s\"" % self.font_style
-        if self.font_weight != None:
-            buf += " weight=\"%s\"" % self.font_weight
-        if self.font_family != None:
-            buf += " font_family=\"%s\"" % self.font_family                
-        if self.foreground_rgb != None:
-            buf += " foreground=\"%s\"" % g15util.rgb_to_hex(self.foreground_rgb[0:3])
-            
-        buf += ">%s</span>" % saxutils.escape(text)
-        attr_list = pango.parse_markup(buf)
-        
-        # Create the layout
-        layout = pango_context.create_layout()
-        
-        pangocairo.context_set_font_options(layout.get_context(), fo)      
-        layout.set_attributes(attr_list[0])
-        layout.set_width(int(pango.SCALE * width))
-        layout.set_wrap(pango.WRAP_WORD_CHAR)      
-        layout.set_text(text)
-        spacing = 0
-        layout.set_spacing(spacing)
-        
-        # Alignment
-        if text_align == "right":
-            layout.set_alignment(pango.ALIGN_RIGHT)
-        elif text_align == "center":
-            layout.set_alignment(pango.ALIGN_CENTER)
-        else:
-            layout.set_alignment(pango.ALIGN_LEFT)
-        
-        # Draw text to canvas
-        self.back_context.set_source_rgb(self.foreground_rgb[0], self.foreground_rgb[1], self.foreground_rgb[2])
-        pango_context.save()
-        pango_context.rectangle(x, y, width, height)
-        pango_context.clip()  
-                  
-        pango_context.move_to(x, y)    
-        pango_context.update_layout(layout)
-        pango_context.show_layout(layout)        
-        pango_context.restore()
         
 class ScreenChangeAdapter():
     def memory_bank_changed(self, new_bank_number):
@@ -342,7 +156,8 @@ class G15Screen():
         self.notify_handles.append(self.conf_client.notify_add("%s/cycle_screens" % screen_key, self.resched_cycle))
         self.notify_handles.append(self.conf_client.notify_add("%s/active_profile" % screen_key, self.active_profile_changed))
         self.notify_handles.append(self.conf_client.notify_add("%s/driver" % screen_key, self.driver_changed))
-        
+        for control in self.driver.get_controls():
+            self.notify_handles.append(self.conf_client.notify_add("%s/%s" % ( screen_key, control.id ), self._control_changed))
         logger.info("Starting for %s is complete." % self.device.uid)
         
     def stop(self):        
@@ -449,8 +264,39 @@ class G15Screen():
                 page.set_priority(PRI_LOW)
                 break
     
-    def new_page(self, painter, priority=PRI_NORMAL, on_shown=None, on_hidden=None, 
-                 id="Unknown", thumbnail_painter = None, panel_painter = None, title=None):
+    def add_page(self, page):
+        """
+        Add a new page. Returns the G15Page object
+        
+        Keyword arguments:
+        page     --    page to add
+        """
+        if self.driver.get_bpp() == 0:
+            raise Exception("The current device has no suitable output device")
+        
+        logger.info("Creating new page with %s of priority %d" % (page.id, page.priority))
+        self.page_model_lock.acquire()
+        try :
+            logger.info("Adding page %s" % page.id)
+            self.clear_popup()
+            if page.priority == PRI_EXCLUSIVE:
+                for p in self.pages:
+                    if p.priority == PRI_EXCLUSIVE:
+                        logger.warning("Another page is already exclusive. Lowering %s to HIGH" % id)
+                        page.priority = PRI_HIGH
+                        break
+            self.pages.append(page)   
+            for l in self.screen_change_listeners:
+                l.new_page(page) 
+            return page
+        finally:
+            self.page_model_lock.release() 
+    
+    def new_page(self, painter = None, priority=PRI_NORMAL, on_shown=None, on_hidden=None, on_deleted = None,
+                 id="Unknown", thumbnail_painter = None, panel_painter = None, title=None,\
+                 theme_properties_callback = None, theme_attributes_callback = None):
+        logger.warning("DEPRECATED call to G15Screen.new_page, use G15Screen.add_page instead")
+        
         """
         Create a new page. Returns the G15Page object
         
@@ -459,9 +305,12 @@ class G15Screen():
         priority --  priority of screen, defaults to PRI_NORMAL
         on_shown --  function to call when screen is show. Defaults to None 
         on_hidden --  function to call when screen is hidden. Defaults to None 
+        on_deleted --  function to call when screen is deleted. Defaults to None
         id --  id of screen 
         thumbnail_painter --  function to call to paint thumbnails for this page. Defaults to None
         panel_painter -- function to call to paint panel graphics for this page. Defaults to None
+        theme_properties_callback -- function to call to get theme properties
+        theme_attributes_callback -- function to call to get theme attributes
         """
         if self.driver.get_bpp() == 0:
             raise Exception("The current device has no suitable output device")
@@ -476,7 +325,10 @@ class G15Screen():
                         logger.warning("Another page is already exclusive. Lowering %s to HIGH" % id)
                         priority = PRI_HIGH
                         break
-            page = G15Page(self, painter, id, priority, time.time(), on_shown, on_hidden, thumbnail_painter, panel_painter)
+                    
+            page = g15theme.G15Page(id, self, painter, priority, on_shown, on_hidden, on_deleted,\
+                           thumbnail_painter, panel_painter, theme_properties_callback,\
+                           theme_attributes_callback)
             self.pages.append(page)   
             for l in self.screen_change_listeners:
                 l.new_page(page) 
@@ -527,7 +379,7 @@ class G15Screen():
         try :
             if page != None:
                 old_priority = page.priority
-                page.set_priority(priority)
+                page._do_set_priority(priority)
                 if do_redraw:
                     self.redraw()        
                 if revert_after != 0.0:
@@ -571,25 +423,26 @@ class G15Screen():
         """
         self.page_model_lock.acquire()
         try :
-            if page != None and page in self.pages:    
+            if page != None and page in self.pages:                
                 logger.info("Deleting page %s" % page.id)
-                    
+                   
                 # Remove any timers that might be running on this page
                 if page.id in self.deleting:
                     self.deleting[page.id].cancel()
                     del self.deleting[page.id]
                 if page.id in self.reverting:
                     self.reverting[page.id][1].cancel()
-                    del self.reverting[page.id]                                             
+                    del self.reverting[page.id]   
+                                       
+                for l in self.screen_change_listeners:
+                    l.deleting_page(page)                                            
             
                 if page == self.visible_page:
-                    callback = page.on_hidden
-                    if callback != None:
-                        callback()
-                    self.visible_page = None                
-                for l in self.screen_change_listeners:
-                    l.deleting_page(page) 
-                self.pages.remove(page)                    
+                    self.visible_page = None   
+                    page._do_on_hidden()         
+                    
+                self.pages.remove(page)  
+                page._do_on_deleted()                   
                 self.redraw()                   
                 for l in self.screen_change_listeners:
                     l.deleted_page(page) 
@@ -626,25 +479,7 @@ class G15Screen():
                 raise
         
     def key_received(self, keys, state):
-        try :
-            if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
-                return        
-            
-            if state == g15driver.KEY_STATE_UP:
-                if g15driver.G_KEY_LIGHT in keys and not self.driver.get_model_name() == g15driver.MODEL_G19:
-                    self.service.dbus_service._driver_service.CycleKeyboard(1)
-    
-                profile = g15profile.get_active_profile(self.device)
-                if profile != None:
-                    macro = profile.get_macro(self.get_mkey(), keys)
-                    if macro != None:
-                        self.service.handle_macro(macro)
-                                
-            self.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True)
-        except Exception as e:
-            logger.error("Error in key handling. %s" % str(e))
-            if logger.level == logging.DEBUG:
-                traceback.print_exc(file=sys.stderr)
+        g15util.schedule("KeyReceived", 0, self._do_key_received, keys, state)
             
     def screen_cycle(self):
         page = self.get_visible_page()
@@ -678,9 +513,6 @@ class G15Screen():
         if level < control.lower - 1:
             level = control.upper
         self.conf_client.set_int("/apps/gnome15/" + control.id, level)
-             
-    def control_changed(self, client, connection_id, entry, args):
-        self.driver.set_controls_from_configuration(client)
         
     def control_configuration_changed(self, client, connection_id, entry, args):
         key = os.path.basename(entry.key)
@@ -761,7 +593,8 @@ class G15Screen():
         
     '''
     Private
-    '''    
+    '''
+                
     def _init_screen(self):
         logger.info("Starting screen")
         self.pages = []
@@ -784,6 +617,32 @@ class G15Screen():
         self.reverting = { }
         self.deleting = { }
         self._do_redraw()
+        
+    def _do_key_received(self, keys, state):
+        try :
+            if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
+                return        
+            
+            if state == g15driver.KEY_STATE_UP:
+                if g15driver.G_KEY_LIGHT in keys and not self.driver.get_model_name() == g15driver.MODEL_G19:
+                    self.service.dbus_service._driver_service.CycleKeyboard(1)
+    
+                profile = g15profile.get_active_profile(self.device)
+                if profile != None:
+                    macro = profile.get_macro(self.get_mkey(), keys)
+                    if macro != None:
+                        self.service.handle_macro(macro)
+                                
+            self.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True)
+        except Exception as e:
+            logger.error("Error in key handling. %s" % str(e))
+#            if logger.level == logging.DEBUG:
+            traceback.print_exc(file=sys.stderr)
+             
+    def _control_changed(self, client, connection_id, entry, args):
+        self.driver.set_controls_from_configuration(client)
+        if self.visible_page:
+            self.visible_page.mark_dirty()
         
     def _cancel_timer(self):
         self.reschedule_lock.acquire()
@@ -908,6 +767,7 @@ class G15Screen():
             logger.debug("Redrawing %s" % page.id)
         else:
             logger.debug("Redrawing current page")
+#        traceback.print_stack()
         g15util.execute("redrawQueue", "redraw", self._do_redraw, page, direction, transitions, redraw_content)
         
     def set_color_for_mkey(self):
@@ -1025,13 +885,13 @@ class G15Screen():
             
         self.local_data.surface = surface
         canvas = cairo.Context (surface)
-        canvas.set_antialias(self.driver.get_antialias())
         rgb = self.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
         canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
         canvas.rectangle(0, 0, self.width, self.height)
         canvas.fill()
         rgb = self.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
         canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
+        self.configure_canvas(canvas)
         
         if self.background_painter_function != None:
             self.background_painter_function(canvas)
@@ -1042,15 +902,11 @@ class G15Screen():
             redraw_content = True
             if self.visible_page != None:
                 self.visible_page = visible_page
-                callback = old_page.on_hidden
-                if callback != None:
-                    callback()
+                old_page._do_on_hidden()
             else:                
                 self.visible_page = visible_page
             if self.visible_page != None:
-                callback = self.visible_page.on_shown
-                if callback != None:
-                    callback()
+                self.visible_page._do_on_shown()
                     
             self.resched_cycle()
             for l in self.screen_change_listeners:
@@ -1065,6 +921,7 @@ class G15Screen():
             if self.content_surface == None or redraw_content:
                 self.content_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
                 content_canvas = cairo.Context(self.content_surface)
+                self.configure_canvas(content_canvas)
                 self.visible_page.paint(content_canvas)
             
             tx =  self.available_size[0]
@@ -1107,7 +964,16 @@ class G15Screen():
             
         self.old_canvas = canvas
         self.old_surface = surface
-            
+        
+    def configure_canvas(self, canvas):        
+        canvas.set_antialias(self.driver.get_antialias())
+        fo = cairo.FontOptions()
+        fo.set_antialias(self.driver.get_antialias())
+        if self.driver.get_antialias() == cairo.ANTIALIAS_NONE:
+            fo.set_hint_style(cairo.HINT_STYLE_NONE)
+            fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
+        canvas.set_font_options(fo)
+        return fo
     
     def _do_cycle_to(self, page, transitions = True):            
         self.page_model_lock.acquire()
@@ -1247,8 +1113,6 @@ class Fader():
         canvas.rectangle(0, 0, self.screen.width, self.screen.height)
         canvas.fill()
         self.opacity += 0.025
-        
-        
 
 class G15Splash():
     
@@ -1256,36 +1120,34 @@ class G15Splash():
         self.screen = screen        
         self.progress = 0.0
         self.text = "Starting up .."
-        self.theme = g15theme.G15Theme(g15globals.image_dir, self.screen, "background")
-        self.page = self.screen.new_page(self.paint, priority=PRI_EXCLUSIVE, id="Splash", thumbnail_painter=self.paint_thumbnail)
-        self.screen.redraw(self.page)
         icon_path = g15util.get_icon_path("gnome15")
         if icon_path == None:
             icon_path = os.path.join(g15globals.icons_dir,"hicolor", "apps", "scalable", "gnome15.svg")
         self.logo = g15util.load_surface_from_file(icon_path)
-        
-    def paint(self, canvas):
-        properties = {
-                      "version": g15globals.version,
-                      "progress": self.progress,
-                      "text": self.text
-                      }
-        self.theme.draw(canvas, properties)
-        
-    def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        return g15util.paint_thumbnail_image(allocated_size, self.logo, canvas)
+        self.page = g15theme.G15Page("Splash", self.screen, priority = PRI_EXCLUSIVE, thumbnail_painter=self._paint_thumbnail, \
+                                         theme_properties_callback = self._get_properties, theme = g15theme.G15Theme(g15globals.image_dir, "background"))        
+        self.screen.add_page(self.page)
         
     def complete(self):
         self.progress = 100
         self.screen.redraw(self.page)
-        g15util.schedule("ClearSplash", 2.0, self.hide)
-        
-    def hide(self):
-        self.screen.del_page(self.page)
-        self.screen.redraw()
+        g15util.schedule("ClearSplash", 2.0, self._hide)
         
     def update_splash(self, value, max, text=None):
         self.progress = (float(value) / float(max)) * 100.0
         self.screen.redraw(self.page)
         if text != None:
             self.text = text
+        
+    def _get_properties(self):
+        return { "version": g15globals.version,
+                 "progress": self.progress,
+                 "text": self.text
+                 }
+        
+    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
+        return g15util.paint_thumbnail_image(allocated_size, self.logo, canvas)
+        
+    def _hide(self):
+        self.screen.del_page(self.page)
+        self.screen.redraw()

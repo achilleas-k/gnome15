@@ -39,7 +39,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ] 
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ] 
 
 def create(gconf_key, gconf_client, screen):
     return G15Webcam(gconf_client, gconf_key, screen)
@@ -74,7 +74,8 @@ class G15Webcam():
     
     def activate(self):
         self._load_config()
-        self._page = self._screen.new_page(self.paint, id="Webcam", priority = g15screen.PRI_NORMAL)
+        self._page = self._screen.new_page(id, self._screen, painter = self.paint, priority = g15screen.PRI_NORMAL, title = name)
+        self._screen.add_page(self._page)
         self._redraw()
         self._notify_handler = self._gconf_client.notify_add(self._gconf_key, self._config_changed)
         

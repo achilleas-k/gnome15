@@ -65,12 +65,12 @@ g510_key_layout = [
                   ]
 
 g110_key_layout = [
-                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G2 ],
-                  [ g15driver.G_KEY_G3, g15driver.G_KEY_G4 ], 
-                  [ g15driver.G_KEY_G5, g15driver.G_KEY_G6 ],
-                  [ g15driver.G_KEY_G7, g15driver.G_KEY_G8 ],
-                  [ g15driver.G_KEY_G9, g15driver.G_KEY_G10], 
-                  [ g15driver.G_KEY_G11, g15driver.G_KEY_G12 ],
+                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G7 ],
+                  [ g15driver.G_KEY_G2, g15driver.G_KEY_G8 ], 
+                  [ g15driver.G_KEY_G3, g15driver.G_KEY_G9 ],
+                  [ g15driver.G_KEY_G4, g15driver.G_KEY_G10 ],
+                  [ g15driver.G_KEY_G5, g15driver.G_KEY_G11], 
+                  [ g15driver.G_KEY_G6, g15driver.G_KEY_G12 ],
                   [ g15driver.G_KEY_MIC_MUTE, g15driver.G_KEY_HEADPHONES_MUTE ],
                   [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
                   ]
@@ -105,6 +105,10 @@ g19_key_layout = [
               [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ],
               ]
 
+mx5500_key_layout = [
+                     [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ]
+                     ]
+
 # Registered Logitech models
 device_list = { }
 device_by_usb_id = {}
@@ -133,6 +137,11 @@ class DeviceInfo():
         self.model_fullname = model_fullname
         device_list[self.model_id] = self
         device_by_usb_id[self.usb_id] = self
+        
+        self.all_keys = []
+        for row in self.key_layout:
+            for key in row:
+                self.all_keys.append(key)
            
 class Device():
     """
@@ -152,6 +161,10 @@ class Device():
         self.bpp = device_info.bpp
         self.lcd_size = device_info.lcd_size
         self.model_fullname = device_info.model_fullname
+        self.all_keys = device_info.all_keys
+        
+    def get_key_index(self, key):
+        self.all_keys.index(key)
         
     def __repr__(self):
         return "Device [%s] %s model: %s (%s) on device %s:%s. Has a %d BPP screen of %dx%d. " %  \
@@ -239,6 +252,9 @@ DeviceInfo(g15driver.MODEL_G510, (0x046d, 0xc22d), g510_key_layout,  1,  ( 160, 
 DeviceInfo(g15driver.MODEL_G510_AUDIO, (0x046d, 0xc22e), g510_key_layout,  1,  ( 160,  43 ),   "Logitech G510 Keyboard (audio)")
 DeviceInfo(g15driver.MODEL_Z10, (0x046d, 0x0a07), z10_key_layout,   1,  ( 160,  43 ),   "Logitech Z10 Speakers")
 DeviceInfo(g15driver.MODEL_G110, (0x046d, 0xc225), g110_key_layout,  0,  ( 0,    0 ),    "Logitech G110 Keyboard" )
+
+# When I get hold of an MX5500, I will add Bluetood detection as well
+DeviceInfo(g15driver.MODEL_MX5500, (0x0000, 0x0000), mx5500_key_layout,  1,  ( 136,    32 ),    "Logitech MX5500" )
 
 if __name__ == "__main__":
     for device in find_all_devices():

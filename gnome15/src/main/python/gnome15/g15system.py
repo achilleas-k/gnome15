@@ -59,6 +59,11 @@ class SystemService(dbus.service.Object):
     """
     DBUS API
     """
+    
+    @dbus.service.method(IF_NAME)
+    def Stop(self):
+        self._controller.stop()
+        
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
     def GetInformation(self):
         return ( "%s System Service" % g15globals.name, "Gnome15 Project", g15globals.version, "1.0" )
@@ -147,6 +152,9 @@ class G15SystemServiceController():
             
         self._loop = gobject.MainLoop()
         gobject.idle_add(self._start_service)
+        
+    def stop(self):
+        self._loop.stop()
         
     def start_loop(self):
         logger.info("Starting GLib loop")

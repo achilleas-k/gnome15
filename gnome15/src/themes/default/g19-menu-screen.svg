@@ -54,17 +54,6 @@
     </filter>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3087">
-      <rect
-         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-         id="rect3089"
-         width="201.16251"
-         height="34.797737"
-         x="24.690418"
-         y="796.4826" />
-    </clipPath>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
        id="clipPath3093">
       <rect
          style="fill:#000000;fill-opacity:0.50196078;stroke:none"
@@ -73,6 +62,17 @@
          height="20"
          x="24.547735"
          y="836.11218" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3005">
+      <rect
+         y="799.46527"
+         x="24.690418"
+         height="31.815086"
+         width="263.52289"
+         id="rect3007"
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -91,7 +91,7 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="301"
+     inkscape:window-x="322"
      inkscape:window-y="90"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -144,11 +144,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/themes/default/${icon}"
        xlink:href="${icon}"
-       id="image4256"
-       x="294.54773"
-       y="795.11218"
+       height="24.999987"
        width="24.999987"
-       height="24.999987" />
+       y="795.11218"
+       x="294.54773"
+       id="image4256" />
     <text
        xml:space="preserve"
        style="font-size:28px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
@@ -157,7 +157,7 @@
        id="text4017"
        sodipodi:linespacing="125%"
        transform="matrix(0.99422109,0,0,1.0058125,-7,-13)"
-       clip-path="url(#clipPath3087)"><tspan
+       clip-path="url(#clipPath3005)"><tspan
          sodipodi:role="line"
          id="tspan4019"
          x="23.692986"

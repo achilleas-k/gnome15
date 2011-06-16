@@ -58,8 +58,8 @@ MODE_LIST = list(MODES.keys())
 Represents a mount as a single item in a menu
 """
 class MountMenuItem(g15theme.MenuItem):    
-    def __init__(self, mount, plugin):
-        g15theme.MenuItem.__init__(self)
+    def __init__(self, id, mount, plugin):
+        g15theme.MenuItem.__init__(self, id)
         self.mount = mount
         self._plugin = plugin
         self._refresh()
@@ -79,12 +79,18 @@ class MountMenuItem(g15theme.MenuItem):
         except:
             pass
         
-    def draw(self, selected, canvas, menu_properties, menu_attributes):       
-        item_properties = {}
-        item_properties["item_selected"] = selected == self
+    def get_theme_properties(self):       
+        item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self.mount.get_name()
-        item_properties["item_type"] = ""        
-        item_properties["item_icon"] = g15util.get_icon_path([ self.mount.get_icon().get_names()[0], "gnome-dev-harddisk" ])
+        item_properties["item_type"] = ""     
+        icon_names = []
+        icon = self.mount.get_icon()
+        if isinstance(icon, gio.FileIcon):
+            icon_names.append(icon.get_file().get_path())
+        else:
+            icon_names += icon.get_names()
+        icon_names += "gnome-dev-harddisk"
+        item_properties["item_icon"] = g15util.get_icon_path(icon_names)
         item_properties["disk_usage"] = self.disk_used_pc
         item_properties["sel_disk_usage"] = self.disk_used_pc
         item_properties["disk_used_mb"] =  "%4.2f" % (self.disk_used / 1024.0 / 1024.0 )
@@ -104,11 +110,8 @@ class MountMenuItem(g15theme.MenuItem):
             item_properties["item_alt"] = item_properties["disk_used"]
         elif self._plugin._mode == "size":
             item_properties["item_alt"] = item_properties["disk_size"]
-        self.theme.draw(canvas, item_properties)
-        return self.theme.bounds[3]
-    
-    def get_default_theme_dir(self):
-        return os.path.join(os.path.dirname(__file__), "default")
+            
+        return item_properties
     
     def activate(self):
         if self.mount.can_eject():
@@ -128,21 +131,18 @@ class MountMenuItem(g15theme.MenuItem):
 Represents a volumne as a single item in a menu
 """
 class VolumeMenuItem(g15theme.MenuItem):    
-    def __init__(self, volume):
-        g15theme.MenuItem.__init__(self)
+    def __init__(self, id, volume):
+        g15theme.MenuItem.__init__(self, id)
         self.volume = volume
         
-    def draw(self, selected, canvas, menu_properties, menu_attributes):       
-        item_properties = {}
-        if selected == self:
-            item_properties["item_selected"] = True
+    def get_theme_properties(self):       
+        item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self.volume.get_name()
         item_properties["item_alt"] = ""
         item_properties["item_type"] = ""
         
         item_properties["item_icon"] = g15util.get_icon_path([ self.volume.get_icon().get_names()[0], "gnome-dev-harddisk" ])
-        self.theme.draw(canvas, item_properties)
-        return self.theme.bounds[3]
+        return item_properties
     
     def activate(self):
         if self.volume.can_mount():
@@ -172,7 +172,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         self.volume_monitor = gio.VolumeMonitor()
         for mount in self.volume_monitor.get_mounts():
             self._add_mount(mount)
-        if len(self.menu.get_items()) > 0:
+        if len(self.menu.get_children()) > 0:
             self.menu.add_separator()
         for volume in self.volume_monitor.get_volumes():
             if volume.get_mount() == None:
@@ -193,11 +193,8 @@ class G15Places(g15plugin.G15MenuPlugin):
             self._handle.cancel()
             self._handle = None
             
-    def get_theme_path(self):
-        return os.path.join(os.path.dirname(__file__), "default")
-    
-    def get_theme_properties(self, properties):
-        properties = g15plugin.G15MenuPlugin.get_theme_properties(self, properties)
+    def get_theme_properties(self):
+        properties = g15plugin.G15MenuPlugin.get_theme_properties(self)
         properties["mode"] = MODES[self._mode]        
         idx = MODE_LIST.index(self._mode) + 1
         properties["list"] = MODES[MODE_LIST[0] if idx == len(MODE_LIST) else MODE_LIST[idx]]        
@@ -220,16 +217,17 @@ class G15Places(g15plugin.G15MenuPlugin):
                 return True    
                 
         return False
+    
             
     """
     Private functions
     """
-    
+
     def _refresh(self):
         """
         Refresh the free space etc for all items
         """
-        for item in self.menu.get_items():
+        for item in self.menu.get_children():
             if isinstance(item, MountMenuItem):
                 item._refresh()
         self.screen.redraw(self.page)
@@ -242,7 +240,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         self._add_mount(mount)
         
         # Remove the volume for this remove
-        for item in self.menu.get_items():
+        for item in self.menu.get_children():
             if isinstance(item, VolumeMenuItem) and self._get_key(item.volume) == self._get_key(mount):
                 self._remove_volume(item.volume)
                 
@@ -277,7 +275,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         Remove a volume from the menu
         """ 
         logger.info("Removing volume %s" % str(volume))
-        self.menu.remove_item(self._get_item_for_volume(volume))
+        self.menu.remove_child(self._get_item_for_volume(volume))
         self.screen.redraw(self.page)
         
     def _remove_mount(self, mount):
@@ -285,14 +283,14 @@ class G15Places(g15plugin.G15MenuPlugin):
         Remove a mount from the menu
         """ 
         logger.info("Removing mount %s" % str(mount))
-        self.menu.remove_item(self._get_item_for_mount(mount))
+        self.menu.remove_child(self._get_item_for_mount(mount))
         self.screen.redraw(self.page)
         
     def _get_item_for_mount(self, mount):
         """
         Get the menu item for the given mount
         """
-        for item in self.menu.get_items():
+        for item in self.menu.get_children():
             if isinstance(item, MountMenuItem) and self._get_key(mount) == self._get_key(item.mount):
                 return item
         
@@ -300,7 +298,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         """
         Get the menu item for the given volume
         """
-        for item in self.menu.get_items():
+        for item in self.menu.get_children():
             if isinstance(item, VolumeMenuItem) and self._get_key(volume) == self._get_key(item.volume):
                 return item
         
@@ -309,8 +307,8 @@ class G15Places(g15plugin.G15MenuPlugin):
         Add a new volume to the menu
         """ 
         logger.info("Adding volume %s" % str(volume))
-        item = VolumeMenuItem(volume)
-        self.menu.add_item(item)
+        item = VolumeMenuItem("volumeitem-%s" % self._get_key(volume), volume)
+        self.menu.add_child(item)
         self.screen.redraw(self.page)
     
     def _add_mount(self, mount):
@@ -318,6 +316,6 @@ class G15Places(g15plugin.G15MenuPlugin):
         Add a new mount to the menu
         """ 
         logger.info("Adding mount %s" % str(mount))
-        item = MountMenuItem(mount, self)
-        self.menu.insert_item(0, item)
+        item = MountMenuItem("mountitem-%s" % self._get_key(mount), mount, self)
+        self.menu.add_child(item, 0)
         self.screen.redraw(self.page)

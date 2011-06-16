@@ -44,7 +44,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11,  g15driver.MODEL_MX5500 ]
 reserved_keys = [ g15driver.G_KEY_MENU, g15driver.G_KEY_L2 ]
 
 def create(gconf_key, gconf_client, screen):
@@ -52,8 +52,9 @@ def create(gconf_key, gconf_client, screen):
 
 class MenuItem(g15theme.MenuItem):
     
-    def __init__(self, item_page, plugin):
-        g15theme.MenuItem.__init__(self, "menuitem")
+    
+    def __init__(self, item_page, plugin, id):
+        g15theme.MenuItem.__init__(self, id)
         self._item_page = item_page
         self.thumbnail = None
         self.plugin = plugin
@@ -63,16 +64,13 @@ class MenuItem(g15theme.MenuItem):
         self.theme.screen.resched_cycle()
         self.plugin.hide_menu()
         
-    def draw(self, selected, canvas, menu_properties, menu_attributes):        
-        item_properties = {}
-        if selected == self:
-            item_properties["item_selected"] = True
+    def get_theme_properties(self):        
+        item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self._item_page.title 
         item_properties["item_alt"] = ""
         item_properties["item_type"] = ""
         item_properties["item_icon"] = self.thumbnail
-        self.theme.draw(canvas, item_properties)
-        return self.theme.bounds[3]
+        return item_properties
 
 class G15Menu(g15plugin.G15MenuPlugin):
     
@@ -88,31 +86,15 @@ class G15Menu(g15plugin.G15MenuPlugin):
     def deactivate(self): 
         g15plugin.G15MenuPlugin.deactivate(self)
         self.screen.remove_screen_change_listener(self.listener)
-    
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_DOWN:
-            if g15driver.G_KEY_MENU in keys or g15driver.G_KEY_L2 in keys:
-                if self.page and self.page.is_visible():
-                    self.hide_menu()
-                else:
-                    self._reload_menu()
-                    self.show_menu()
-                return True
-            else:                            
-                if g15plugin.G15MenuPlugin.handle_key(self, keys, state, post):
-                    return True
-                
-        return False
         
-    '''
-    Private
-    '''
-    def _reload_menu(self):
-        self.menu.clear_items()
+    def load_menu_items(self):
+        self.menu.remove_all_children()
+        i = 0
         for page in self.screen.pages:
             if page != self.page and page.priority > g15screen.PRI_INVISIBLE:
-                self.menu.add_item(MenuItem(page, self))
-        items = self.menu.get_items()
+                self.menu.add_child(MenuItem(page, self, "menuitem-%d" % i))
+                i += 1
+        items = self.menu.get_children()
         if len(items) > 0:
             self.menu.selected = items[0]
         else:
@@ -130,8 +112,29 @@ class G15Menu(g15plugin.G15MenuPlugin):
                         
                 except :
                     logger.warning("Problem with painting thumbnail in %s" % item._item_page.id)                   
-                    traceback.print_exc(file=sys.stderr) 
-                    
+                    traceback.print_exc(file=sys.stderr)
+        
+    
+    def handle_key(self, keys, state, post):
+        if not post and state == g15driver.KEY_STATE_DOWN:
+            if g15driver.G_KEY_MENU in keys or g15driver.G_KEY_L2 in keys:
+                if self.page and self.page.is_visible():
+                    self.hide_menu()
+                else:
+                    self.show_menu()
+                    self.page.set_priority(g15screen.PRI_HIGH)
+                return True
+            else:                            
+                if g15plugin.G15MenuPlugin.handle_key(self, keys, state, post):
+                    return True
+                
+        return False
+        
+    '''
+    Private
+    '''
+    def _reload_menu(self):
+        self.load_menu_items()
         self.screen.redraw(self.page)
         
 class MenuScreenChangeListener(g15screen.ScreenChangeAdapter):

@@ -31,15 +31,8 @@
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
-import gnome15.g15screen as g15screen
-import gnome15.g15globals as g15globals
-import os
-import sys
+import gnome15.g15plugin as g15plugin
 import dbus
-import cairo
-import traceback
-import base64
-import time
 import telepathy
 from telepathy.interfaces import (
         CHANNEL,
@@ -113,9 +106,9 @@ Holds list of contacts for a single connection
 class ContactList:
 
     def __init__(self, list_store, conn, screen):
-        self._menu = list_store
+        self.menu = list_store
         self._conn = conn
-        self._screen = screen
+        self.screen = screen
         self._contact_list = {}
         self._conn.call_when_ready(self._connection_ready_cb)
 
@@ -191,7 +184,7 @@ class ContactList:
     def _add_contact(self, handle, contact, presence, alias):
         logger.debug("Add contact %s (%s)" %(str(contact),str(handle)))
         self._contact_list[handle] = contact
-        self._menu.add_contact(self._conn, handle, contact, presence, alias)
+        self.menu.add_contact(self._conn, handle, contact, presence, alias)
 
     def _contact_presence_changed_cb(self, presences):
         logger.debug("Contact presence changed %s" %(str(presences)))
@@ -203,7 +196,7 @@ class ContactList:
 
     def _update_contact_presence(self, handle, presence):
         logger.debug("Updating contact presence for %s" %(str(handle)))
-        self._menu.update_contact_presence(self._conn, handle, presence)
+        self.menu.update_contact_presence(self._conn, handle, presence)
 
     def _error_cb(self, *args):
         logger.error("Error happens: %s" % args)
@@ -213,14 +206,14 @@ Represents a contact as a single item in a menu
 """
 class ContactMenuItem(g15theme.MenuItem):    
     def __init__(self, conn, handle, contact, presence, alias):
-        g15theme.MenuItem.__init__(self)
+        g15theme.MenuItem.__init__(self, "contact-%s-%s" % ( str(conn), str(handle) ) )
         self.conn = conn
         self.handle = handle
         self.contact=  contact
         self.presence = presence
         self.alias = alias  
         
-    def draw(self, selected, canvas, menu_properties, menu_attributes):
+    def get_theme_properties(self):
         """
         Render a single menu item
         
@@ -232,15 +225,12 @@ class ContactMenuItem(g15theme.MenuItem):
         attribtes -- attributes to pass to theme
         
         """       
-        item_properties = {}
-        if selected == self:
-            item_properties["item_selected"] = True
+        item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self.alias
         item_properties["item_alt"] = self._get_status_text(self.presence)
         item_properties["item_type"] = ""
         item_properties["item_icon"] = g15util.get_icon_path(self._get_status_icon_name(self.presence))
-        self.theme.draw(canvas, item_properties)
-        return self.theme.bounds[3]
+        return item_properties
         
     def set_presence(self, presence):
         logger.debug("Setting presence of %s to %s" % (str(self.contact), str(presence)))
@@ -293,7 +283,7 @@ connections.
 """
 class ContactMenu(g15theme.Menu):
 
-    def __init__(self, screen, mode):
+    def __init__(self, mode):
         """
         Create the menu instance
         
@@ -302,12 +292,11 @@ class ContactMenu(g15theme.Menu):
         page -- page object
         mode -- display mode
         """
-        g15theme.Menu.__init__(self, "menu", screen)
+        g15theme.Menu.__init__(self, "menu")
         self.mode = mode
         self.on_update = None
         if not self.mode:
             self.mode = MODE_ONLINE
-        self._screen = screen
         self._contacts = []
         self._contact_lists = {}
         self._connections = []
@@ -362,13 +351,13 @@ class ContactMenu(g15theme.Menu):
     def reload(self):
         """
         Build up the filter menu item list from the stored contacts. Only
-        contacts that are approriate for the current mode will be added
+        contacts that are appropriate for the current mode will be added
         """
         logger.debug("Reloading contacts")
-        self.clear_items()
+        self.remove_all_children()
         for item in self._contacts:
             if self._is_presence_included(item.presence):
-                self.add_item(item)
+                self.add_child(item)
         self.sort_items()
         self.select_first()
         
@@ -376,7 +365,7 @@ class ContactMenu(g15theme.Menu):
         """
         Sort items based on their alias and presence
         """
-        self.set_items(sorted(self.get_items(), cmp=compare_contacts))
+        self.set_children(sorted(self.get_children(), cmp=compare_contacts))
 
     def add_contact(self, conn, handle, contact, presence, alias):
         """
@@ -427,7 +416,7 @@ class ContactMenu(g15theme.Menu):
         Keyword arguments:
         connection -- connection object 
         """
-        self._contact_lists[connection] = ContactList(self, connection, self._screen)
+        self._contact_lists[connection] = ContactList(self, connection, self.screen)
         self._connections.append(connection)
             
     def _is_presence_included(self, presence):
@@ -444,7 +433,8 @@ class ContactMenu(g15theme.Menu):
 """
 Instant Messenger plugin class
 """
-class G15Im():
+
+class G15Im(g15plugin.G15MenuPlugin):
 
     def __init__(self, gconf_client, gconf_key, screen):
         """
@@ -455,40 +445,30 @@ class G15Im():
         gconf_key -- gconf_key for storing plugin preferences
         screen -- screen manager
         """
-        self._screen = screen
-        self.hidden = False
-        self._gconf_client = gconf_client
-        self._gconf_key = gconf_key
-        self._session_bus = dbus.SessionBus()
-        self._icon_path = g15util.get_icon_path(POSSIBLE_ICON_NAMES)
-        self._signal_handle = None
+        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, POSSIBLE_ICON_NAMES, id, name)
         
+        self.hidden = False
+        self._session_bus = dbus.SessionBus()
+        self._signal_handle = None
+
     def activate(self):
         """
         Activate the plugin
         """
-        self._page = None        
-        self._reload_theme()
-        self._show_menu()
+        g15plugin.G15MenuPlugin.activate(self)
         self._signal_handle = self._session_bus.add_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
                                      signal_name='NameOwnerChanged')  
+            
+    def create_menu(self):    
+        mode = self.gconf_client.get_string(self.gconf_key + "/mode")
+        return ContactMenu(mode)
     
     def deactivate(self):
-        """
-        Deactivate the plugin
-        """
-        if self._page != None:
-            self._hide_menu()
+        g15plugin.G15MenuPlugin.deactivate(self)
         if self._signal_handle:
             self._session_bus.remove_signal_receiver(self._signal_handle)
-
-    def destroy(self):
-        """
-        Destroy the plugin
-        """
-        pass
-            
+        
     def handle_key(self, keys, state, post):
         """
         Handle key events. This is called four times in total for every key stroke. Twice when
@@ -505,25 +485,35 @@ class G15Im():
         post -- boolean indicating if this is in the pre or post processing phase
         """
         if not post and state == g15driver.KEY_STATE_DOWN:              
-            if self._screen.get_visible_page() == self._page:    
-                if self._menu.handle_key(keys, state, post):
-                    return True           
-                elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
+            if self.screen.get_visible_page() == self.page:
+                if g15plugin.G15MenuPlugin.handle_key(self, keys, state, post):
                     return True
                 elif g15driver.G_KEY_L3 in keys or g15driver.G_KEY_SETTINGS in keys:
-                    mode_index = MODE_LIST.index(self._menu.mode) + 1
+                    mode_index = MODE_LIST.index(self.menu.mode) + 1
                     if mode_index >= len(MODE_LIST):
                         mode_index = 0
-                    self._menu.mode = MODE_LIST[mode_index]
-                    logger.info("Mode is now %s" % self._menu.mode)
-                    self._gconf_client.set_string(self._gconf_key + "/mode", self._menu.mode)
-                    self._menu.reload()
-                    self._screen.redraw(self._page)
+                    self.menu.mode = MODE_LIST[mode_index]
+                    logger.info("Mode is now %s" % self.menu.mode)
+                    self.gconf_client.set_string(self.gconf_key + "/mode", self.menu.mode)
+                    self.menu.reload()
+                    self.screen.redraw(self.page)
+                    return True
                 
         return False
     
+    def get_theme_properties(self):
+        props = g15plugin.G15MenuPlugin.get_theme_properties(self)
+        props["title"] = MODES[self.menu.mode][1]
+        
+        # Get what mode to switch to
+        mode_index = MODE_LIST.index(self.menu.mode) + 1
+        if mode_index >= len(MODE_LIST):
+            mode_index = 0
+        props["list"] = MODES[MODE_LIST[mode_index]][0]
+        return props 
+    
     """
-    Private functions
+    DBUS callbacks functions
     """
         
     def _name_owner_changed(self, name, old_owner, new_owner):
@@ -534,57 +524,11 @@ class G15Im():
         """
         if name.startswith("org.freedesktop.Telepathy.Connection"):
             logger.info("Telepathy Name owner changed for %s from %s to %s", name, old_owner, new_owner)
-            connected = self._menu.is_connected(name)
+            connected = self.menu.is_connected(name)
             if new_owner == "" and connected:
                 logger.info("Removing %s" % name)
-                g15util.schedule("RemoveConnection", 5.0, self._menu.remove_connection, name)
+                g15util.schedule("RemoveConnection", 5.0, self.menu.remove_connection, name)
             elif old_owner == "" and not connected:
                 logger.info("Adding %s" % name)
-                g15util.schedule("NewConnection", 5.0, self._menu.new_connection, name, self._session_bus)
+                g15util.schedule("NewConnection", 5.0, self.menu.new_connection, name, self._session_bus)
         
-    def _paint(self, canvas):
-        props = { "icon" :  self._icon_path,
-                 "mode" : self._menu.mode, 
-                 "title" : MODES[self._menu.mode][1] }
-        
-        # Get what mode to switch to
-        mode_index = MODE_LIST.index(self._menu.mode) + 1
-        if mode_index >= len(MODE_LIST):
-            mode_index = 0
-        props["list"] = MODES[MODE_LIST[mode_index]][0]
-        
-        # Draw the page
-        self._theme.draw(canvas, props, 
-                        attributes = {
-                                      "items" : self._menu.get_items(),
-                                      "selected" : self._menu.selected
-                                      })
-        
-    def _reload_theme(self):
-        """
-        Reload the SVG theme and configure it
-        """
-        mode = self._gconf_client.get_string(self._gconf_key + "/mode")
-        self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen)
-        self._menu = ContactMenu(self._screen, mode)
-        self._theme.add_component(self._menu)
-        self._theme.add_component(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
-        self._menu.on_selected = self._redraw
-        self._menu.on_update = self._redraw
-        
-    def _redraw(self):
-        self._screen.redraw(self._page)
-        
-    def _show_menu(self):  
-        """
-        Create a new page for the menu and draw it
-        """      
-        self._page = self._screen.new_page(self._paint, id=name, priority = g15screen.PRI_NORMAL)
-        self._screen.redraw(self._page)
-    
-    def _hide_menu(self):
-        """
-        Delete the page
-        """     
-        self._screen.del_page(self._page)
-        self._page = None

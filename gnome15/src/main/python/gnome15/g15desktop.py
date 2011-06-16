@@ -703,7 +703,7 @@ class G15DesktopComponent():
                 remote_screen = self.session_bus.get_object('org.gnome15.Gnome15', screen_path)
                 for page_sequence_number in remote_screen.GetPageSequenceNumbers(g15screen.PRI_LOW):
                     page = self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Page%d' % page_sequence_number)
-                    if page.GetPriority() >= g15screen.PRI_LOW:
+                    if page.GetPriority() >= g15screen.PRI_LOW and page.GetPriority() < g15screen.PRI_HIGH:
                         self._add_page(screen_path, page)
         finally :
             self.lock.release()

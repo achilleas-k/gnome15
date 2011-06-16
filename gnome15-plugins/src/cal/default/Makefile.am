@@ -1,13 +1,11 @@
 themedir = $(datadir)/gnome15/plugins/cal/default
-theme_DATA = cal_common.py \
-	default.svg \
+theme_DATA = default.svg \
 	default-cell.svg \
 	default-event.svg \
-	cal_default_default.py \
 	g19.svg \
 	g19-cell.svg \
 	g19-event.svg \
-	cal_default_g19.py \
+	g19-menu-entry.svg \
 	bell.gif
 
 EXTRA_DIST =  			\

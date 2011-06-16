@@ -106,17 +106,9 @@ class G15Volume():
     def _stop_monitoring(self):
         if self._volthread != None:
             self._volthread._stop_monitoring()
-    
-    def _reload_theme(self):        
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen)
         
-    def _paint(self, canvas):
-                    
-        width = self._screen.width
-        height = self._screen.height
-        
+    def _get_theme_properties(self):
         properties = {}
-        
         icon = "audio-volume-muted"
         if not self._mute:
             if self._volume < 34:
@@ -127,20 +119,15 @@ class G15Volume():
                 icon = "audio-volume-high"
         else:
             properties [ "muted"] = True
-        
-        icon_path = g15util.get_icon_path(icon, height)
-        
+        icon_path = g15util.get_icon_path(icon, self._screen.driver.get_size()[0])
         properties["state"] = icon
         properties["icon"] = icon_path
         properties["vol_pc"] = self._volume
-        
         for i in range(0, ( self._volume / 10 ) + 1, 1):            
             properties["bar" + str(i)] = True
-        
-        self.theme.draw(canvas, properties)
+        return properties
             
     def _release_lights(self):
-        print "**Release mkey lights"
         self._screen.driver.release_mkey_lights(self.light_controls)
         self.light_controls = None
     
@@ -150,18 +137,18 @@ class G15Volume():
             return
         
         if not self.light_controls:
-            print "**Acquiring mkey lights"
             self.light_controls = self._screen.driver.acquire_mkey_lights()
         else:
             self.lights_timer.cancel()
         self.lights_timer = g15util.schedule("ReleaseMKeyLights", 3.0, self._release_lights)
         
-        page = self._screen.get_page("Volume")
+        page = self._screen.get_page(id)
         if page == None:
-            self._reload_theme()
             if self._screen.driver.get_bpp() != 0:
-                page = self._screen.new_page(self._paint, priority=g15screen.PRI_HIGH, id="Volume")
+                page = g15theme.G15Page(id, self._screen, priority=g15screen.PRI_HIGH, title="Volume", theme = g15theme.G15Theme(self), \
+                                        theme_properties_callback = self._get_theme_properties)
                 self._screen.delete_after(3.0, page)
+                self._screen.add_page(page)
         else:
             self._screen.raise_page(page)
             self._screen.delete_after(3.0, page)
@@ -210,7 +197,6 @@ class G15Volume():
         
         self._volume = volume              
         
-        print self._volume
         if self._volume > 90:
             self.light_controls.set_mkey_lights(g15driver.MKEY_LIGHT_MR | g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)        
         elif self._volume > 75:

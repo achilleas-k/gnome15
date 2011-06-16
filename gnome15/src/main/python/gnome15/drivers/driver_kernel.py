@@ -96,7 +96,8 @@ g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard
 g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint=g15driver.HINT_SHADEABLE)
 g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint=g15driver.HINT_FOREGROUND)
 g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint=g15driver.HINT_BACKGROUND)
-g19_controls = [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control]
+g19_highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT)
+g19_controls = [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control, g19_highlight_control ]
 g110_controls = [ g19_keyboard_backlight_control ]
 
 g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
@@ -246,6 +247,7 @@ class Driver(g15driver.AbstractDriver):
         self.device = device
         self.device_info = None
         self.conf_client = gconf.client_get_default()
+        self._init_device()
     
     def get_antialias(self):         
         if self.device.bpp != 1:
@@ -469,7 +471,7 @@ class Driver(g15driver.AbstractDriver):
             self.key_thread = None
             
     def _do_write_to_led(self, name, value):
-        logger.info("Writing %d to LED %s" % (value, name ))
+        logger.debug("Writing %d to LED %s" % (value, name ))
         self.system_service.SetLight(self.device.uid, name, value)
     
     def _write_to_led(self, name, value):
@@ -495,8 +497,12 @@ class Driver(g15driver.AbstractDriver):
             self.disconnect()
         else:
             logger.warning("WARNING: Mode change would cause disconnect when already connected.", entry)
-        
-    def _init_driver(self):
+            
+    def _init_device(self):
+        if not self.device.model_id in device_info:
+            return
+            
+        self.device_info = device_info[self.device.model_id]
         
         if self.device.bpp == 1:
             self.framebuffer_mode = "GFB_MONO"
@@ -504,21 +510,6 @@ class Driver(g15driver.AbstractDriver):
             self.framebuffer_mode = "GFB_QVGA"
         logger.info("Using %s frame buffer mode" % self.framebuffer_mode)
             
-        self.device_info = device_info[self.device.model_id]
-                    
-        # Try and find the paths for the LED devices.
-        # Note, I am told these files may be in different places on different kernels / distros. Will
-        # just have to see how it goes for now
-        self.led_path_prefix = self._find_led_path_prefix(self.device_info.led_prefix)
-        if self.led_path_prefix == None:
-            logger.warning("Could not find control files for LED lights. Some features won't work")
-            
-        # Try and find the paths for the keyboard devices
-        self.keyboard_devices = []
-        dir = "/dev/input/by-id"
-        for p in os.listdir(dir):
-            if re.search(self.device_info.keydev_pattern, p):
-                self.keyboard_devices.append(dir + "/" + p)
                 
         # Determine the framebuffer device to use
         self.device_name = self.conf_client.get_string("/apps/gnome15/%s/fb_device" % self.device.uid)
@@ -546,6 +537,23 @@ class Driver(g15driver.AbstractDriver):
                 self.fb_mode = f.readline().replace("\n", "")
             finally :
                 f.close()
+        
+    def _init_driver(self):
+        self._init_device()
+                    
+        # Try and find the paths for the LED devices.
+        # Note, I am told these files may be in different places on different kernels / distros. Will
+        # just have to see how it goes for now
+        self.led_path_prefix = self._find_led_path_prefix(self.device_info.led_prefix)
+        if self.led_path_prefix == None:
+            logger.warning("Could not find control files for LED lights. Some features won't work")
+            
+        # Try and find the paths for the keyboard devices
+        self.keyboard_devices = []
+        dir = "/dev/input/by-id"
+        for p in os.listdir(dir):
+            if re.search(self.device_info.keydev_pattern, p):
+                self.keyboard_devices.append(dir + "/" + p)
         
                         
     def _find_led_path_prefix(self, led_model):

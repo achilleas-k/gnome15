@@ -45,7 +45,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
-supported_models = [ g15driver.MODEL_G19 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 
 def create(gconf_key, gconf_client, screen):
     return G15CairoClock(gconf_key, gconf_client, screen)
@@ -77,13 +77,16 @@ def show_preferences(parent, device, gconf_client, gconf_key):
     theme = widget_tree.get_object("ThemeCombo")
     theme.connect("changed", theme_changed, gconf_key + "/theme", [ gconf_client, theme_model])
     
-    theme_dir = get_theme_dir(gconf_key, gconf_client)
-    if os.path.exists(theme_dir):
-        for fname in os.listdir(theme_dir):
-            if os.path.isdir(os.path.join(theme_dir, fname)):
-                theme_model.append([fname])
-                if fname == theme_name:
-                    theme.set_active(len(theme_model) - 1) 
+    theme_dirs = get_theme_dirs(device.bpp, gconf_key, gconf_client)
+    themes = {}
+    for d in theme_dirs:
+        if os.path.exists(d):
+            for fname in os.listdir(d):
+                if os.path.isdir(os.path.join(d, fname)) and not fname in themes and ( device.bpp == 16 or fname == "default" ) :
+                    theme_model.append([fname])
+                    themes[fname] = True
+                    if fname == theme_name:
+                        theme.set_active(len(theme_model) - 1) 
     
     dialog.run()
     dialog.hide()
@@ -96,18 +99,29 @@ def theme_changed(widget, key, args):
     model = args[1]
     gconf_client.set_string(key, model[widget.get_active()][0])
     
-def get_theme_dir(gconf_key, gconf_client):    
-    theme_dir = gconf_client.get(gconf_key + "/theme_dir")
-    if theme_dir != None:
-        return theme_dir.get_string()
-    else:  
-        return "/usr/share/cairo-clock/themes"
+def get_theme_dir(bpp, gconf_key, gconf_client, theme_name):
+    for dir in get_theme_dirs(bpp, gconf_key, gconf_client):
+        full_path = "%s/%s" % ( dir, theme_name)
+        if os.path.exists(full_path):
+            return full_path
+    
+def get_theme_dirs(bpp, gconf_key, gconf_client):
+    dirs = []    
+    if bpp == 1:
+        dirs.append(os.path.join(os.path.dirname(__file__), "g15"))
+    else:
+        theme_dir = gconf_client.get(gconf_key + "/theme_dir")
+        if theme_dir != None:
+            dirs.append(theme_dir.get_string())
+        dirs.append(os.path.expanduser("~/.local/share/cairo-clock"))
+        dirs.append("/usr/share/cairo-clock/themes")
+        dirs.append(os.path.join(os.path.dirname(__file__), "g19"))
+    return dirs
 
 class G15CairoClock():
     
     def __init__(self, gconf_key, gconf_client, screen):
         self.screen = screen
-        self.page = None
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
         self.revert_timer = None
@@ -116,21 +130,33 @@ class G15CairoClock():
         self.display_seconds = False
     
     def activate(self): 
-        if self.screen.driver.get_bpp() == 1:
-            raise Exception("Cairo clock not supported on low-res LCD")       
         self.notify_handler = self.gconf_client.notify_add(self.gconf_key, self.config_changed);   
-        self.load_surfaces()         
-        self.page = self.screen.new_page(self.paint, priority=g15screen.PRI_NORMAL, id="Cairo Clock",
-                                        thumbnail_painter = self.paint_thumbnail, panel_painter = self.paint_panel)
-        self.page.set_title("Cairo Clock")
-        self.refresh()
+        self._load_surfaces()         
+        self.page = g15theme.G15Page(name, self.screen, painter = self._paint, priority=g15screen.PRI_NORMAL, 
+                                        thumbnail_painter = self._paint_thumbnail, panel_painter = self._paint_panel,
+                                        title = name)
+        self.screen.add_page(self.page)
+        self._refresh()
     
-    def cancel_refresh(self):
+    def deactivate(self):
+        self._cancel_refresh()
+        self.gconf_client.notify_remove(self.notify_handler);
+        self.screen.del_page(self.page)
+        self.page = None
+        
+    def destroy(self):
+        pass
+    
+    '''
+    Private
+    '''
+    
+    def _cancel_refresh(self):
         if self.timer != None:
             self.timer.cancel()
             self.timer = None
         
-    def load_surfaces(self):
+    def _load_surfaces(self):
         self.display_date = self.gconf_client.get_bool(self.gconf_key + "/display_date")
         self.display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")
         
@@ -142,14 +168,16 @@ class G15CairoClock():
         if theme == None:
             theme = "default"
             
-        self.clock_theme_dir = get_theme_dir(self.gconf_key, self.gconf_client) + "/" + theme          
-        self.behind_hands = self.load_surface_list(["clock-drop-shadow", "clock-face", "clock-marks"])
-        self.hour_surfaces = self.load_surface_list(["clock-hour-hand-shadow", "clock-hour-hand"])
-        self.minute_surfaces = self.load_surface_list(["clock-minute-hand-shadow", "clock-minute-hand"])
-        self.second_surfaces = self.load_surface_list(["clock-secondhand-shadow", "clock-second-hand"])
-        self.above_hands = self.load_surface_list([ "clock-face-shadow", "clock-glass", "clock-frame" ])
+        self.clock_theme_dir = get_theme_dir(self.screen.driver.get_bpp(), self.gconf_key, self.gconf_client, theme)
+        if not self.clock_theme_dir:
+            self.clock_theme_dir = get_theme_dir(self.screen.driver.get_bpp(), self.gconf_key, self.gconf_client, "default")
+        self.behind_hands = self._load_surface_list(["clock-drop-shadow", "clock-face", "clock-marks"])
+        self.hour_surfaces = self._load_surface_list(["clock-hour-hand-shadow", "clock-hour-hand"])
+        self.minute_surfaces = self._load_surface_list(["clock-minute-hand-shadow", "clock-minute-hand"])
+        self.second_surfaces = self._load_surface_list(["clock-secondhand-shadow", "clock-second-hand"])
+        self.above_hands = self._load_surface_list([ "clock-face-shadow", "clock-glass", "clock-frame" ])
             
-    def load_surface_list(self, names):
+    def _load_surface_list(self, names):
         list = []        
         for i in names:
             path = self.clock_theme_dir + "/" + i + ".svg"
@@ -172,7 +200,13 @@ class G15CairoClock():
                 list.append(((svg_size[0] * scale, svg_size[1] * scale), surface))
         return list
         
-    def schedule_refresh(self):
+    def config_changed(self, client, connection_id, entry, args):
+        self._load_surfaces()
+        self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
+        self._cancel_refresh()
+        self._refresh()
+        
+    def _schedule_refresh(self):
         if self.page == None:
             return
         
@@ -186,35 +220,20 @@ class G15CairoClock():
             next_tick = now + datetime.timedelta(0, 60.0)
             next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, 0)
         delay = g15util.total_seconds( next_tick - now )        
-        self.timer = g15util.schedule("CairoRefresh", delay, self.refresh)
+        self.timer = g15util.schedule("CairoRefresh", delay, self._refresh)
     
-    def deactivate(self):
-        self.cancel_refresh()
-        self.gconf_client.notify_remove(self.notify_handler);
-        self.screen.del_page(self.page)
-        self.page = None
+    def _refresh(self):
+        self.screen.redraw(self.page)
+        self._schedule_refresh()
         
-    def config_changed(self, client, connection_id, entry, args):
-        self.load_surfaces()
-        self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
-        self.cancel_refresh()
-        self.refresh()
-        
-    def destroy(self):
-        pass
-    
-    def refresh(self):
-        self.screen.redraw(self.page, redraw_content = self.page != None and self.page == self.screen.get_visible_page())
-        self.schedule_refresh()
-        
-    def paint_thumbnail(self, canvas, allocated_size, horizontal):
+    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         scale = allocated_size / self.height
         canvas.scale(scale, scale)
         self._do_paint(canvas, self.width, self.height, False)
         canvas.scale(1 / scale, 1 / scale)
         return allocated_size 
     
-    def paint_panel(self, canvas, allocated_size, horizontal):
+    def _paint_panel(self, canvas, allocated_size, horizontal):
         if not self.screen.is_visible(self.page):
             # Don't display the date or seconds on mono displays, not enough room as it is
             if self.screen.driver.get_bpp() == 1:
@@ -253,7 +272,7 @@ class G15CairoClock():
             else:
                 return height + 4
         
-    def paint(self, canvas, draw_date = True):
+    def _paint(self, canvas, draw_date = True):
             
         width = float(self.screen.width)
         height = float(self.screen.height)
@@ -318,10 +337,10 @@ class G15CairoClock():
         else:
             h_deg = float( now.hour % 12 ) * 30.0 + (  float ( now.minute * 0.5 ) )
             
-        self.draw_hand(drawing_context, self.hour_surfaces, clock_width, clock_height, h_deg)
-        self.draw_hand(drawing_context, self.minute_surfaces, clock_width, clock_height, m_deg)
+        self._draw_hand(drawing_context, self.hour_surfaces, clock_width, clock_height, h_deg)
+        self._draw_hand(drawing_context, self.minute_surfaces, clock_width, clock_height, m_deg)
         if self.display_seconds:
-            self.draw_hand(drawing_context, self.second_surfaces, clock_width, clock_height, s_deg)
+            self._draw_hand(drawing_context, self.second_surfaces, clock_width, clock_height, s_deg)
             
         # Above hands          
         for svg_size, surface in self.above_hands:
@@ -337,7 +356,7 @@ class G15CairoClock():
         canvas.paint()
         
         
-    def draw_hand(self, drawing_context, hand_surfaces, width, height, deg):
+    def _draw_hand(self, drawing_context, hand_surfaces, width, height, deg):
         for svg_size, surface in hand_surfaces:
             drawing_context.save()
             drawing_context.translate(svg_size[0] / 2.0, svg_size[1] / 2.0)

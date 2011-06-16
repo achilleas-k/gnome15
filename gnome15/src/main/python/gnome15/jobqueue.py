@@ -36,11 +36,18 @@ class GTimer:
         self.task_queue = task_queue
         self.task_name = task_name
         self.source = gobject.timeout_add(int(float(interval) * 1000.0 * TIME_FACTOR), self.exec_item, function, *args)
+        self.complete = False
         
     def exec_item(self, function, *args):
-        logger.debug("Executing GTimer %s" % str(self.task_name))
-        self.task_queue.run(function, *args)
-        logger.debug("Executed GTimer %s" % str(self.task_name))
+        try:
+            logger.debug("Executing GTimer %s" % str(self.task_name))
+            self.task_queue.run(function, *args)
+            logger.debug("Executed GTimer %s" % str(self.task_name))
+        finally:
+            self.complete = True
+        
+    def is_complete(self):
+        return self.complete
         
     def cancel(self, *args):
         gobject.source_remove(self.source)

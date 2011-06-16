@@ -86,12 +86,12 @@
      inkscape:cx="129.9052"
      inkscape:cy="141.01064"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="svg2"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="1969"
+     inkscape:window-x="1976"
      inkscape:window-y="71"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -142,13 +142,13 @@
        rx="4"
        ry="4" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/macros/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/macros/default/${icon}"
        xlink:href="${icon}"
-       height="24.999987"
-       width="24.999987"
-       y="795.11218"
+       id="image4256"
        x="294.54773"
-       id="image4256" />
+       y="795.11218"
+       width="24.999987"
+       height="24.999987" />
     <text
        xml:space="preserve"
        style="font-size:28px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
@@ -212,8 +212,7 @@
        y="811.80066"
        id="text4017-2"
        sodipodi:linespacing="125%"
-       transform="scale(0.99422109,1.0058125)"
-       clip-path="none"><tspan
+       transform="scale(0.99422109,1.0058125)"><tspan
          sodipodi:role="line"
          id="tspan4019-0"
          x="286.00589"
@@ -225,7 +224,6 @@
        y="946.75452"
        id="text3006"
        sodipodi:linespacing="125%"
-       clip-path="none"
        transform="scale(1.0512726,0.95122807)"
        title="del !no_items"><tspan
          sodipodi:role="line"

@@ -23,8 +23,7 @@
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
-import gnome15.g15globals  as g15globals
-import gnome15.g15screen  as g15screen
+import gnome15.g15plugin as g15plugin
 import gobject
 import os
 import gtk
@@ -47,12 +46,13 @@ logger = logging.getLogger("lcdbiff")
 id = "lcdbiff"
 name = "POP3 / IMAP Email Notification"
 description = "Periodically checks your email accounts for any waiting messages. Currently supports POP3 and IMAP " + \
-        "protocols."
+        "protocols. For models without a screen, the M-Key lights will be flashed when there is an email " + \
+        "waiting. For models with a screen, a page showing all unread mail counts will be displayed, and an " + \
+        "icon added to the panel indicating overall status."
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = "Copyright (C)2010 Brett Smith"
 site = "http://www.gnome15.org/"
 has_preferences = True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 # Constants
 
@@ -534,8 +534,8 @@ Account menu item
 '''
  
 class MailItem(g15theme.MenuItem):
-    def __init__(self, gconf_client, account):
-        g15theme.MenuItem.__init__(self)
+    def __init__(self, id, gconf_client, account):
+        g15theme.MenuItem.__init__(self, id)
         self.account = account
         self.count = 0
         self.gconf_client = gconf_client
@@ -543,13 +543,9 @@ class MailItem(g15theme.MenuItem):
         self.status = "Unknown"
         self.error = None
         
-    def draw(self, selected, canvas, menu_properties, menu_attributes):        
-        item_properties = {}
-        if selected == self:
-            item_properties["item_selected"] = True
-       
+    def get_theme_properties(self):        
+        item_properties = g15theme.MenuItem.get_theme_properties(self)       
         item_properties["item_name"] = self.account.name
-        
         if self.error != None:
             item_properties["item_alt"] = "Error"
         else: 
@@ -559,9 +555,7 @@ class MailItem(g15theme.MenuItem):
                 item_properties["item_alt"] = "None"
         item_properties["item_type"] = ""
         item_properties["item_icon"] =  g15util.load_surface_from_file(self.icon_path)
-        
-        self.theme.draw(canvas, item_properties)
-        return self.theme.bounds[3]
+        return item_properties
     
     def activate(self):
         email_client = self.gconf_client.get_string("/desktop/gnome/url-handlers/mailto/command")
@@ -574,31 +568,50 @@ class MailItem(g15theme.MenuItem):
 '''
 Gnome15 LCDBiff plugin
 '''
-           
-class G15Biff():
-    
+            
+class G15Biff(g15plugin.G15MenuPlugin):
+
     def __init__(self, gconf_client, gconf_key, screen):
-        self.screen = screen;
-        self.gconf_key = gconf_key
-        self.gconf_client = gconf_client
+        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, ["mail-inbox"], id, "Email")
         self.refresh_timer = None
 
     def activate(self):
         gk.is_available()
         keyrings = gk.list_keyring_names_sync()
-
         self.total_count = 0
         self.attention = False
         self.thumb_icon = None
         self.index = 0
+        self.light_control = None
         self.account_manager = G15BiffAccountManager()
-        self._reload_theme()
-        self.page = self.screen.new_page(self._paint, id="Biff", priority=g15screen.PRI_NORMAL, panel_painter = self._paint_panel, thumbnail_painter = self._paint_thumbnail)
-        self.page.set_title("Email")
-        self._reload_menu()        
+        if self.screen.driver.get_bpp() > 0:
+            g15plugin.G15MenuPlugin.activate(self)
         self.update_time_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/update_time", self._update_time_changed)
         self.schedule_refresh(10.0)
+            
+    def deactivate(self):
+        g15plugin.G15MenuPlugin.deactivate(self)
+        if self.refresh_timer:
+            self.refresh_timer.cancel()
+            self.refresh_timer.task_queue.stop()
+        self.gconf_client.notify_remove(self.update_time_changed_handle)
         
+    def load_menu_items(self):
+        self.menu.remove_all_children()
+        self.account_manager.load()
+        i = 0
+        for account in self.account_manager.accounts:
+            self.menu.add_child(MailItem("mailitem-%d" % i, self.gconf_client, account))
+            i += 1
+        items = self.menu.get_children()
+        self.menu.selected = items[0] if len(items) > 0 else None
+        
+    def create_page(self):
+        page = g15plugin.G15MenuPlugin.create_page(self)
+        page.panel_painter = self._paint_panel
+        page.thumbnail_painter = self._paint_thumbnail
+        return page
+    
     def schedule_refresh(self, time = - 1):
         if time == -1:
             time = get_update_time(self.gconf_client, self.gconf_key) * 60.0        
@@ -608,7 +621,7 @@ class G15Biff():
         self._reload_menu()
         self.total_count = 0
         self.total_errors = 0
-        for item in self.menu.get_items():
+        for item in self.menu.get_children():
             try :
                 status = self.account_manager.check_account(item.account)
                 item.count  = status[0]
@@ -626,81 +639,66 @@ class G15Biff():
                 traceback.print_exc()
         
         if self.total_errors > 0:
+            self._stop_blink()
             self.attention = True   
             if self.screen.driver.get_bpp() == 1:
                 self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-error.gif"))
-            else:
+            elif self.screen.driver.get_bpp() > 0:
                 self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("new-messages-red"))
         else:
             if self.total_count > 0:
+                self._start_blink()
                 self.attention = True
                 if self.screen.driver.get_bpp() == 1:
                     self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
-                else:
+                elif self.screen.driver.get_bpp() > 0:
                     self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages-new"))
             else:
+                self._stop_blink()
+                self.attention = False   
                 if self.screen.driver.get_bpp() == 1:
-                    self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
-                else:
+                    self.thumb_icon = None
+                elif self.screen.driver.get_bpp() > 0:
                     self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages"))
-        
-        self.screen.redraw(self.page)
+
+        if self.screen.driver.get_bpp() > 0:        
+            self.screen.redraw(self.page)
+            
         self.schedule_refresh()
     
-    def deactivate(self):
-        if self.refresh_timer:
-            self.refresh_timer.cancel()
-            self.refresh_timer.task_queue.stop()
-        self.gconf_client.notify_remove(self.update_time_changed_handle)
-        self.screen.del_page(self.page)
-        self.page = None
-
-    def destroy(self):
-        pass
-    
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_DOWN and self.screen.get_visible_page() == self.page:
-            if self.menu.handle_key(keys, state, post):
-                return True                
-        return False
-        
     '''
     Private
     '''
-    def _selection_changed(self): 
-        self.screen.redraw(self.page)
         
+    def _start_blink(self):
+        if not self.light_control:
+            self.light_control = self.screen.driver.acquire_mkey_lights(val = g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)
+            self.light_control.blink(off_val = self._get_mkey_value)
+            
+    def _get_mkey_value(self):
+        mkey = self.screen.get_mkey()
+        if mkey == 1:
+            return g15driver.MKEY_LIGHT_1
+        elif mkey == 2:
+            return g15driver.MKEY_LIGHT_2
+        elif mkey == 3:
+            return g15driver.MKEY_LIGHT_3
+        return 0
+            
+    def _stop_blink(self):
+        if self.light_control:
+            self.screen.driver.release_mkey_lights(self.light_control)
+            self.light_control = None
+            
     def _reload_menu(self):
-        self.menu.clear_items()
-        self.account_manager.load()
-        for account in self.account_manager.accounts:
-            self.menu.add_item(MailItem(self.gconf_client, account))
-        items = self.menu.get_items()
-        self.menu.selected = items[0] if len(items) > 0 else None
-        self.screen.redraw(self.page)
-        
-    def _reload_theme(self):        
-        self.theme = g15theme.G15Theme(os.path.join(g15globals.themes_dir, "default"), self.screen, "menu-screen")
-        self.menu = g15theme.Menu("menu", self.screen)
-        self.menu.on_selected = self._selection_changed
-        self.theme.add_component(self.menu)
-        self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
+        self.load_menu_items()
+        if self.screen.driver.get_bpp() == 1:
+            self.screen.redraw(self.page)
     
     def _update_time_changed(self, client, connection_id, entry, args):
         self.refresh_timer.cancel()
         self.schedule_refresh()
         
-    def _paint(self, canvas):
-        self.theme.draw(canvas,
-                        properties={
-                                      "title" : "Email",
-                                      "icon" : g15util.get_icon_path("mail-inbox")
-                                      },
-                        attributes={
-                                      "items" : self.menu.get_items(),
-                                      "selected" : self.menu.selected
-                                      })
-    
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None:
             if self.thumb_icon != None:
@@ -709,7 +707,7 @@ class G15Biff():
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
         if self.page != None:
-            if self.thumb_icon != None and self.attention == 1:
+            if self.thumb_icon != None and self.attention:
                 size = g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
                 return size
             

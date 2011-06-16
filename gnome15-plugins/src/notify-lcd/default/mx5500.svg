@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="136"
+   height="32"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.1 r9760"
+   sodipodi:docname="mx5500.svg">
+  <defs
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3002">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none"
+         id="rect3004"
+         width="103.98342"
+         height="7.6302881"
+         x="0"
+         y="1020.185" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3015">
+      <rect
+         style="fill:#696969;fill-opacity:1;stroke:none"
+         id="rect3017"
+         width="104"
+         height="18"
+         x="-1.0217938e-07"
+         y="1027.3622" />
+    </clipPath>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="6.6838235"
+     inkscape:cx="56.109912"
+     inkscape:cy="16.028784"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     borderlayer="false"
+     inkscape:window-width="1398"
+     inkscape:window-height="620"
+     inkscape:window-x="440"
+     inkscape:window-y="121"
+     inkscape:window-maximized="0">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3986"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+    <sodipodi:guide
+       position="0,0"
+       orientation="0,160"
+       id="guide3016" />
+    <sodipodi:guide
+       position="160,0"
+       orientation="-43,0"
+       id="guide3018" />
+    <sodipodi:guide
+       position="160,43"
+       orientation="0,-160"
+       id="guide3020" />
+    <sodipodi:guide
+       position="0,43"
+       orientation="43,0"
+       id="guide3022" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-1020.3622)">
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="-1.1428572"
+       y="1020.1479"
+       id="text2985"
+       sodipodi:linespacing="125%"
+       text-rendering="optimizeLegibility" />
+    <image
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/notify-lcd/default/${icon}"
+       xlink:href="${icon}"
+       height="32"
+       width="32"
+       y="1020.3622"
+       x="104"
+       id="image3051" />
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
+       x="-0.49804688"
+       y="1033.1141"
+       sodipodi:linespacing="125%"
+       clip-path="url(#clipPath3015)"
+       id="msg"><tspan
+         sodipodi:role="line"
+         id="tspan3763"
+         x="-0.49804688"
+         y="1033.1141">${body}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.99994135px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="-0.49804199"
+       y="1025.3737"
+       id="text2993"
+       sodipodi:linespacing="125%"
+       transform="scale(0.9999902,1.0000098)"
+       clip-path="url(#clipPath3002)"><tspan
+         sodipodi:role="line"
+         id="tspan2995"
+         x="-0.49804199"
+         y="1025.3737">${title}</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.99992985;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:0;stroke-opacity:1;stroke-dasharray:none"
+       d="m 0.49996441,1027.8622 103.00007559,0"
+       id="path3041"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="102.6377"
+       y="1050.2772"
+       id="text3032-4-4"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3034-7-4"
+         x="102.6377"
+         y="1050.2772">&gt; Next</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.99998283px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="-0.63574034"
+       y="1050.3807"
+       id="text3032-4"
+       sodipodi:linespacing="125%"
+       title="del !action"
+       transform="scale(0.9999972,1.0000028)"><tspan
+         sodipodi:role="line"
+         id="tspan3034-7"
+         x="-0.63574034"
+         y="1050.3807">&lt; ${action1}</tspan></text>
+    <rect
+       class="progress"
+       style="fill-opacity:1;stroke:none"
+       id="remaining_progress"
+       width="104"
+       height="2"
+       x="0"
+       y="1050.3622" />
+  </g>
+</svg>

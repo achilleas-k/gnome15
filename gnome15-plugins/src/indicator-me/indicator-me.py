@@ -132,10 +132,13 @@ class G15IndicatorMe():
             
         self._me_menu = IndicatorMeMenu(self._session_bus)
         
+        # Watch for events
         self._status_changed_handle = self._me_service.connect_to_signal("StatusIconsChanged", self._status_icon_changed)
         self._user_changed_handle = self._me_service.connect_to_signal("UserChanged", self._user_changed)
+        self._me_menu.on_change = self._menu_changed        
+        self._menu_theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), "menu-screen") 
+        self._popup_theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"))
 
-        self._reload_theme()
         self._get_details()
         self._create_pages()
     
@@ -163,13 +166,24 @@ class G15IndicatorMe():
     Private
     '''     
     def _create_pages(self):  
-        self._menu_page = self._screen.new_page(self._paint_menu, id="Indicator Me Status", priority = g15screen.PRI_NORMAL, on_shown = self._on_menu_page_show)
-        self._menu_page.set_title(self._get_status_text())
+        self._menu_page = g15theme.G15Page("Indicator Me Status", self._screen, priority = g15screen.PRI_NORMAL, \
+                                           on_shown = self._on_menu_page_show, title = self._get_status_text(), theme = self._menu_theme,
+                                           theme_properties_callback = self._get_menu_properties,
+                                           thumbnail_painter = self._paint_popup_thumbnail)
+        self._popup_page = g15theme.G15Page("Indicator Me Popup", self._screen, priority = g15screen.PRI_INVISIBLE, \
+                                            panel_painter = self._paint_popup_thumbnail, theme = self._popup_theme,
+                                            theme_properties_callback = self._get_popup_properties)
+        self._screen.add_page(self._menu_page)
+        self._screen.add_page(self._popup_page)
+        
+        # Create the menu
+        self._menu = g15theme.DBusMenu(self._me_menu)
+        self._menu_page.add_child(self._menu)
+        self._menu_page.add_child(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
         self._screen.redraw(self._menu_page)
-        self._popup_page = self._screen.new_page(self._paint_popup, priority=g15screen.PRI_INVISIBLE, id="Indicator Me Popup", panel_painter = self._paint_popup_thumbnail)
         
     def _on_menu_page_show(self):
-        for item in self._menu.get_items():
+        for item in self._menu.get_children():
             if isinstance(item, g15theme.DBusMenuItem) and self._icon == item.dbus_menu_entry.get_icon_name():
                 self._menu.selected = item
                 self._screen.redraw(self._menu_page)
@@ -200,44 +214,22 @@ class G15IndicatorMe():
     def _get_status_text(self):
         return "Status - %s" % STATUS_ICONS[self._icon]
         
-    def _reload_theme(self):       
-        
-        # Create the menu
-        self._menu = g15theme.DBusMenu(self._screen, self._me_menu)
-        self._menu.on_selected = self._redraw_menu
-        self._me_menu.on_change = self._menu_changed
-        
-        # Setup the theme
-        self._menu_theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen, "menu-screen") 
-        self._popup_theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen)
-        self._menu_theme.add_component(self._menu)
-        self._menu_theme.add_component(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
-        
-    def _redraw_menu(self):
-        self._screen.redraw(self._menu_page)
-    
     def _paint_popup_thumbnail(self, canvas, allocated_size, horizontal):
         if self._popup_page != None:
             if self._icon_image != None and self._screen.driver.get_bpp() != 1:
                 return g15util.paint_thumbnail_image(allocated_size, self._icon_image, canvas)
             
-    def _paint_menu(self, canvas):
+    def _get_menu_properties(self):
         props = { "icon" :  g15util.get_icon_path(self._icon),
                  "title" : "Status",
                  "status": STATUS_ICONS[self._icon] }
-        
-        # Draw the page
-        self._menu_theme.draw(canvas, props, 
-                        attributes = {
-                                      "items" : self._menu.get_items(),
-                                      "selected" : self._menu.selected
-                                      })
+        return props
 
-    def _paint_popup(self, canvas):     
+    def _get_popup_properties(self):     
         properties = { "icon" : g15util.get_icon_path(self._icon, self._screen.width) }
         properties["text"] = "Unknown"
         if self._icon in STATUS_ICONS:
             properties["text"] = STATUS_ICONS[self._icon]
         else:
             logger.warning("Unknown status icon %s" % self._icon)
-        self._popup_theme.draw(canvas, properties)
+        return properties

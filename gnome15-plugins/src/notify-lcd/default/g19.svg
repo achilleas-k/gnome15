@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="g19.svg">
   <defs
      id="defs4">
@@ -52,6 +52,28 @@
            in="SourceGraphic" />
       </feMerge>
     </filter>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3021">
+      <rect
+         y="796.4826"
+         x="19.661356"
+         height="29.826633"
+         width="301.74374"
+         id="rect3023"
+         style="fill:#000000;fill-opacity:0.50196078;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3046">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none"
+         id="rect3048"
+         width="160"
+         height="105"
+         x="24.547735"
+         y="856.11218" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -60,22 +82,24 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.979899"
-     inkscape:cx="155.99618"
-     inkscape:cy="85.9967"
+     inkscape:zoom="3.959798"
+     inkscape:cx="149.61549"
+     inkscape:cy="143.08938"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2209"
+     inkscape:window-x="2223"
      inkscape:window-y="38"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
-     fit-margin-bottom="0">
+     fit-margin-bottom="0"
+     showguides="false"
+     inkscape:snap-global="false">
     <inkscape:grid
        type="xygrid"
        id="grid3986"
@@ -92,7 +116,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -111,7 +135,7 @@
        rx="11.999999"
        ry="11.999999" />
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15/src/plugins/notify-lcd/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/notify-lcd/default/${icon}"
        xlink:href="${icon}"
        y="862.11218"
        x="209.98557"
@@ -129,16 +153,17 @@
        ry="6" />
     <text
        xml:space="preserve"
-       style="font-size:18.46029472px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
-       x="165.50417"
-       y="817.36169"
+       style="font-size:18px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="173.65182"
+       y="817.36163"
        id="text4017"
        sodipodi:linespacing="125%"
-       transform="scale(0.99422109,1.0058125)"><tspan
+       transform="scale(0.99422109,1.0058125)"
+       clip-path="url(#clipPath3021)"><tspan
          sodipodi:role="line"
          id="tspan4019"
-         x="165.50417"
-         y="817.36169">${title}</tspan></text>
+         x="173.65182"
+         y="817.36163">${title}</tspan></text>
     <rect
        style="fill:#696969;fill-opacity:0.50196078;stroke:none"
        id="rect3012"
@@ -148,21 +173,15 @@
        y="852.11218"
        rx="6"
        ry="6" />
-    <rect
-       style="fill-opacity:0.50196078;stroke:none"
-       id="message"
-       width="150"
-       height="94.083717"
-       x="29.547735"
-       y="863.02844"
-       class="textbox" />
     <text
        xml:space="preserve"
-       style="font-size:11px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
        x="28.547737"
        y="872.11218"
        id="message_text"
-       sodipodi:linespacing="125%"><tspan
+       sodipodi:linespacing="125%"
+       clip-path="url(#clipPath3046)"
+       title="vertical-wrap"><tspan
          sodipodi:role="line"
          id="tspan3798"
          x="28.547737"

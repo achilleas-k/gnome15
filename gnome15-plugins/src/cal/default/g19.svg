@@ -13,7 +13,7 @@
    height="240"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="g19.svg">
   <defs
      id="defs4" />
@@ -25,16 +25,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="108.87277"
+     inkscape:cx="78.87277"
      inkscape:cy="92.184027"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
-     inkscape:window-width="1914"
-     inkscape:window-height="992"
+     inkscape:window-width="1920"
+     inkscape:window-height="1056"
      inkscape:window-x="0"
-     inkscape:window-y="1"
+     inkscape:window-y="24"
      inkscape:window-maximized="1">
     <inkscape:grid
        type="xygrid"
@@ -263,28 +263,87 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
-       x="159.28571"
-       y="197.5"
-       id="text5255"
-       sodipodi:linespacing="125%"
-       transform="translate(0,812.36218)"
-       title="del !message"><tspan
-         sodipodi:role="line"
-         id="tspan5257"
-         x="159.28571"
-         y="197.5">${message}</tspan></text>
-    <text
-       xml:space="preserve"
        style="font-size:24px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
        x="52.07143"
-       y="965.14789"
+       y="963.14789"
        id="text5911"
        sodipodi:linespacing="125%"
        title="del !events"><tspan
          sodipodi:role="line"
          id="tspan5913"
          x="52.07143"
-         y="965.14789">Events</tspan></text>
+         y="963.14789">Events</tspan></text>
+    <rect
+       style="fill:none;stroke:none;display:inline"
+       id="menu"
+       width="295"
+       height="70.000015"
+       x="10"
+       y="972.36218"
+       rx="6.5073528"
+       ry="2.2105291"
+       class="listView" />
+    <rect
+       style="fill:#696969;fill-opacity:0.50196078;stroke:none"
+       id="rect3000-6"
+       width="23.33333"
+       height="72.908607"
+       x="285"
+       y="970.62024"
+       rx="2.6666658"
+       ry="1.5268816" />
+    <g
+       transform="matrix(0.66666643,0,0,0.3817204,91.968256,653.74949)"
+       id="viewScrollbar"
+       class="scrollbar">
+      <rect
+         ry="3.9999995"
+         rx="4"
+         y="836.11218"
+         x="304.54773"
+         height="179.99998"
+         width="5.0000038"
+         id="rect3000-6-4"
+         style="fill:#696969;fill-opacity:0.50196078;stroke:none"
+         class="track" />
+      <rect
+         ry="4"
+         rx="4"
+         y="836.11218"
+         x="294.54773"
+         height="30"
+         width="25"
+         id="rect3017"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+         class="knob" />
+    </g>
+    <rect
+       style="fill:none;stroke:#ff0000;stroke-opacity:1"
+       id="rect2986-1-5"
+       width="310"
+       height="80.000015"
+       x="4.5"
+       y="967.36218"
+       ry="12"
+       rx="12"
+       title="del !menu_focused" />
+    <rect
+       style="fill:none;stroke:#ff0000;stroke-width:0.99999875;stroke-opacity:1"
+       id="rect2986-9"
+       width="165"
+       height="138.33301"
+       x="150"
+       y="824.52917"
+       ry="11.99997"
+       rx="12"
+       title="del !calendar_focused" />
+    <rect
+       style="fill:#000000;fill-opacity:0.50196078;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none"
+       id="calendar"
+       width="155"
+       height="95"
+       x="155"
+       y="50"
+       transform="translate(0,812.36218)" />
   </g>
 </svg>

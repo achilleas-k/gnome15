@@ -72,7 +72,7 @@ class AbstractMPRISPlayer():
         self.interface_name = interface_name
         self.players = players
         self.gconf_client = gconf_client     
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
+        self.theme = g15theme.G15Theme(self)
         self.status = "Stopped"
         self.cover_image = None
         self.thumb_image = None
@@ -130,14 +130,17 @@ class AbstractMPRISPlayer():
         self.load_song_details()
         self.page = self.screen.get_page(id="MPRIS%s" % self.title)
         if self.page == None:
-            self.page = self.screen.new_page(self.paint, on_shown=self.on_shown, on_hidden=self.on_hidden, id="MPRIS%s" % self.title, panel_painter = self.paint_thumbnail, thumbnail_painter = self.paint_thumbnail)
-            self.page.set_title(self.title)
+            self.page = g15theme.G15Page("MPRIS%s" % self.title, self.screen, on_shown=self.on_shown, \
+                                         on_hidden=self.on_hidden, theme_properties_callback = self._get_properties, \
+                                         panel_painter = self.paint_panel, thumbnail_painter = self.paint_thumbnail, \
+                                         theme = self.theme, title = self.title)
+            self.screen.add_page(self.page)
             self.screen.redraw(self.page)
         else:
             self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
         
     def hide_page(self):
-        self.screen.del_page(self.page)    
+        self.screen.del_page(self.page)
         self.page = None
         
     def redraw(self):
@@ -164,15 +167,15 @@ class AbstractMPRISPlayer():
             self.redraw_timer.cancel()
             self.redraw_timer = None
         
-    def paint(self, canvas):
-        properties = dict(self.song_properties)
-        self.theme.draw(canvas, properties) 
-    
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if self.page != None:
-            if self.thumb_image != None:
-                size = g15util.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
-                return size
+        if self.page != None and self.thumb_image != None:
+            size = g15util.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
+            return size
+        
+    def paint_panel(self, canvas, allocated_size, horizontal):
+        if self.page != None and self.thumb_image != None and self.status == "Playing":
+            size = g15util.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
+            return size
             
     def process_properties(self):
         
@@ -220,10 +223,14 @@ class AbstractMPRISPlayer():
             if self.status == "Playing":
                 if self.screen.driver.get_bpp() == 1:
                     self.thumb_image = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "play.gif"))
+                else:
+                    self.thumb_image = self.cover_image
                 self.song_properties["playing"] = True
             else:
                 if self.screen.driver.get_bpp() == 1:
-                    self.thumb_image = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "pause.gif"))                
+                    self.thumb_image = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "pause.gif"))
+                else:
+                    self.thumb_image = self.cover_image                
                 self.song_properties["paused"] = True
             self.song_properties["icon"] = self.cover_uri
             
@@ -271,6 +278,9 @@ class AbstractMPRISPlayer():
     
     def on_stop(self):
         raise Exception("Not implemented.")
+    
+    def _get_properties(self):
+        return dict(self.song_properties)
     
 class MPRIS1Player(AbstractMPRISPlayer):
     

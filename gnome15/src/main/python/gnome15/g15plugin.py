@@ -43,9 +43,9 @@ class G15MenuPlugin():
         self.session_bus = dbus.SessionBus()
         self._icon_path = g15util.get_icon_path(menu_title_icon)
         self._title = title
+        self.thumb_icon = g15util.load_surface_from_file(self._icon_path)
 
-    def activate(self):
-        self.page = None        
+    def activate(self):        
         self.reload_theme() 
         self.show_menu()
     
@@ -64,16 +64,7 @@ class G15MenuPlugin():
                 
         return False
     
-    def get_theme_path(self):
-        """
-        Get the directory theme files should be loaded from. By default, this
-        is the Gnome15 global theme. If a plugin has a customised menu page,
-        it should override this function to provide the location of the theme
-        files (usually in the same place as the plugin itself)
-        """
-        return os.path.join(g15globals.themes_dir, "default")
-    
-    def get_theme_properties(self, properties):
+    def get_theme_properties(self):
         """
         Get the properties to pass to the SVG theme file for rendering. Sub-classes
         may override to provide more properties if needed.
@@ -84,32 +75,44 @@ class G15MenuPlugin():
         Keyword arguments:
         properties -- properties
         """
+        properties = {}
         properties["icon"] = self._icon_path
         properties["title"] = self._title
-        properties["no_items"] = self.menu.get_item_count() == 0
+        properties["no_items"] = self.menu.get_child_count() == 0
         return properties
-        
+    
     def reload_theme(self):
         """
         Reload the SVG theme and configure it
         """
-        
-        # Create the menu
-        self.menu = g15theme.Menu("menu", self.screen)
-        self.menu.on_selected = self.redraw
-        self.menu.on_update = self.redraw
-        
-        # Setup the theme
-        self.theme = g15theme.G15Theme(self.get_theme_path(), self.screen, "menu-screen")
-        self.theme.add_component(self.menu)
-        self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
+        self.theme = g15theme.G15Theme(self, "menu-screen")
         
     def show_menu(self):  
         """
-        Create a new page for the menu and draw it
+        Create the component tree for the menu page and draw it
         """      
-        self.page = self.screen.new_page(self.paint, id=self.page_id, priority=g15screen.PRI_NORMAL, title = self._title)
+        self.page = self.create_page()
+        self.menu = self.create_menu()
+        self.page.add_child(self.menu)
+        self.page.add_child(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
+        self.screen.add_page(self.page)
+        self.load_menu_items()
         self.screen.redraw(self.page)
+        
+    def create_page(self):
+        """
+        Create the page. Subclasses may override.
+        """
+        return g15theme.G15Page(self.page_id, self.screen, priority=g15screen.PRI_NORMAL, title = self._title, theme = self.theme, \
+                                     theme_properties_callback = self.get_theme_properties,
+                                     thumbnail_painter = self.paint_thumbnail)
+        
+    def create_menu(self):
+        """
+        Create the menu component. Subclasses may override to create or configure
+        different components.
+        """
+        return g15theme.Menu("menu")
     
     def hide_menu(self):
         """
@@ -118,17 +121,13 @@ class G15MenuPlugin():
         self.screen.del_page(self.page)
         self.page = None
         
-    def redraw(self):
-        self.screen.redraw(self.page)
-
+    def load_menu_items(self):
+        """
+        Subclasses should override to set the initial menu items
+        """
+        pass
     
-    """
-    Private functions
-    """        
-    def paint(self, canvas):
-        # Draw the page
-        self.theme.draw(canvas, self.get_theme_properties({}),
-                        attributes={
-                                      "items" : self.menu.get_items(),
-                                      "selected" : self.menu.selected
-                                      })
+    def paint_thumbnail(self, canvas, allocated_size, horizontal):
+        if self.page != None and self.thumb_icon != None and self.screen.driver.get_bpp() == 16:
+            return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+    

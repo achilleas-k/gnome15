@@ -447,8 +447,8 @@ class G15Config:
                     self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is running, but failed to connect " + \
                                       "to the keyboard driver. The error message given was <b>%s</b>" % first_error, False)
                 else:
-                    self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is running, but only %d out of %d keyboards " + \
-                                      "are connected. The first error message given was <b>%s</b>" % ( connected, screen_count, str(first_error) if first_error else "None" ), False)
+                    mesg = "The Gnome15 desktop service is running, but only %d out of %d keyboards are connected. The first error message given was %s" % ( connected, screen_count, first_error )
+                    self._show_message(gtk.MESSAGE_WARNING, mesg, False)
             else:
                 self._hide_warning()
             self.stop_service_button.set_sensitive(True)

@@ -146,7 +146,8 @@ default_keyboard_backlight_control = g15driver.Control("default_backlight_colour
 lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
 foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND)
 background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
-controls = [ keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control]
+highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT)
+controls = [ keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control, highlight_control ]
 
 
 class Driver(g15driver.AbstractDriver):

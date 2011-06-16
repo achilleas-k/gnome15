@@ -23,7 +23,7 @@
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
-import gnome15.g15screen as g15screen
+import gnome15.g15plugin as g15plugin
 import os
 import dbus
 import time
@@ -54,19 +54,18 @@ def create(gconf_key, gconf_client, screen):
 
 class ProcessMenuItem(g15theme.MenuItem):
     
-    def __init__(self,  process_id, process_name):
-        g15theme.MenuItem.__init__(self, "menuitem")
+    def __init__(self,  item_id, plugin, process_id, process_name):
+        g15theme.MenuItem.__init__(self, item_id)
         self.icon = None
         self.process_id = process_id
         self.process_name = process_name
+        self.plugin = plugin
     
     def get_default_theme_dir(self):
         return os.path.join(os.path.dirname(__file__), "default")
         
-    def draw(self, selected, canvas, menu_properties, menu_attributes):        
-        item_properties = {}
-        if selected == self:
-            item_properties["item_selected"] = True
+    def get_theme_properties(self):        
+        item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self.process_name if len(self.process_name) > 0 else "Unamed" 
         if isinstance(self.process_id, int):
             item_properties["item_alt"] = self.process_id
@@ -74,57 +73,46 @@ class ProcessMenuItem(g15theme.MenuItem):
             item_properties["item_alt"] = ""
         item_properties["item_type"] = ""
         item_properties["item_icon"] = self.icon
-        self.theme.draw(canvas, item_properties)
-        return self.theme.bounds[3]
-
-class G15Processes():
+        return item_properties
     
-    def __init__(self, gconf_client, gconf_key, screen):
-        self._screen = screen
-        self.hidden = False
-        self.gconf_client = gconf_client
-        self.gconf_key = gconf_key
-        self.i = 0
+    def activate(self):
+        kill_name = str(self.process_id) if isinstance(self.process_id, int) else self.process_name 
+        g15theme.ConfirmationScreen(self.get_screen(), "Kill Process", "Are you sure you want to kill %s" % kill_name,  
+                                    g15util.get_icon_path("utilities-system-monitor"), self.plugin._kill_process, self.process_id)
         
-        # Connection to BAMF for running applications list
-        self.bamf_matcher = None
+                    
+     
+class G15Processes(g15plugin.G15MenuPlugin):
+
+    def __init__(self, gconf_client, gconf_key, screen):
+        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, ["utilities-system-monitor"], id, name)
+        self.i = 0
         
         # Can't work out how to kill an application/window given its XID, so only wnck is used for killing
         self.session_bus = dbus.SessionBus()
+        self.bamf_matcher = None
 #        try :
 #            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
 #        except:
 #            logger.warning("BAMF not available, falling back to WNCK")
-    
+
     def activate(self):
         self._modes = [ "applications", "all", "user" ]
         self._mode = "applications"
-        self._reload_theme()
         self._timer = None
-        self._page = None
-        self._menu.selected = None
-        self._show_menu()
-    
+        g15plugin.G15MenuPlugin.activate(self)
+            
     def deactivate(self):
-        if self._page != None:
-            self._hide_menu()
+        g15plugin.G15MenuPlugin.deactivate(self)
         
-    def destroy(self):
+    def load_menu_items(self):
         pass
-                    
+        
     def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_DOWN:              
-            if self._screen.get_visible_page() == self._page:                    
-                if self._menu.handle_key(keys, state, post):
-                     return True  
-                elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
-                    self._reschedule()
-                    if self._menu.selected != None:
-                        kill_name = str(self._menu.selected.process_id) if isinstance(self._menu.selected.process_id, int) else self._menu.selected.process_name 
-                        g15theme.ConfirmationScreen(self._screen, "Kill Process", "Are you sure you want to kill %s" % kill_name,  
-                                                    g15util.get_icon_path("utilities-system-monitor"), self._kill_process, self._menu.selected.process_id)
-                    
-                    return True
+            if self.screen.get_visible_page() == self.page:                    
+                if g15plugin.G15MenuPlugin.handle_key(self, keys, state, post):
+                    return True  
                 elif g15driver.G_KEY_L3 in keys or g15driver.G_KEY_SETTINGS in keys:
                     if self._mode == "applications":
                         self._mode = "all"
@@ -137,6 +125,32 @@ class G15Processes():
                 
         return False
     
+    def create_menu(self):
+        menu = g15plugin.G15MenuPlugin.create_menu(self)
+        menu.on_move = self._reschedule
+        return menu
+    
+    def create_page(self):
+        page = g15plugin.G15MenuPlugin.create_page(self)
+        page.on_shown = self._page_shown
+        page.on_hidden = self._page_hidden
+        return page
+    
+    def get_theme_properties(self):
+        props = g15plugin.G15MenuPlugin.get_theme_properties(self)
+        
+        props["mode"] = self._mode
+        if self._mode == "applications":
+            props["title"] = "Applications"
+            props["list"] = "All"
+        elif self._mode == "all":
+            props["title"] = "All Processes"
+            props["list"] = "Usr"
+        elif self._mode == "user":
+            props["title"] = "User Processes"
+            props["list"] = "App"
+        return props
+        
     '''
     Private
     '''
@@ -149,45 +163,13 @@ class G15Processes():
         if not mask:
             mask = (X.SubstructureRedirectMask|X.SubstructureNotifyMask)
         
-        display = self._screen.service.get_x_display()
+        display = self.screen.service.get_x_display()
         screen = display.screen()
         root = screen.root
 
         root.send_event(ev, event_mask=mask)
         display.flush()
-    
-    def _check_selected(self):
-        items = self._menu.get_items()
-        if not self._menu.selected in items:
-            if self.i > len(items):
-                return
-            self._menu.selected = items[self.i]
             
-    def _do_selected(self):
-        self._menu.selected = self._menu.get_items()[self.i]
-        self._screen.service.resched_cycle()
-        self._screen.redraw(self._page)
-        
-    def _move_up(self, amount = 1):
-        self._reschedule()
-        self._check_selected()
-        items = self._menu.get_items()
-        self.i = items.index(self._menu.selected)
-        self.i -= amount
-        if self.i < 0:
-            self.i = len(items) - 1
-        self._do_selected()
-        
-    def _move_down(self, amount = 1):
-        self._reschedule()
-        self._check_selected()
-        items = self._menu.items
-        self.i = items.index(self._menu.selected)
-        self.i += amount
-        if self.i >= len(items):
-            self.i = 0
-        self._do_selected()
-    
     def _kill_process(self, process_id):
         if isinstance(process_id, int):
             os.system("kill %d" % process_id)
@@ -199,32 +181,7 @@ class G15Processes():
         else:
             # TODO kill using XID if possible
             pass
-        self._reload_menu()        
-    
-    def paint(self, canvas):
-        props = { "icon" : g15util.get_icon_path("utilities-system-monitor") }
-        
-        props["mode"] = self._mode
-        if self._mode == "applications":
-            props["title"] = "Applications"
-            props["list"] = "All"
-        elif self._mode == "all":
-            props["title"] = "All Processes"
-            props["list"] = "Usr"
-        elif self._mode == "user":
-            props["title"] = "User Processes"
-            props["list"] = "App"
-        
-        self._theme.draw(canvas, 
-                        props, 
-                        attributes = {
-                                      "items" : self._menu.get_items(),
-                                      "selected" : self._menu.selected
-                                      })
-        
-    '''
-    Private
-    '''
+        self._reload_menu()
 
     def _get_process_name(self, args, cmd):
         result = cmd
@@ -241,8 +198,7 @@ class G15Processes():
     def _do_reload_menu(self):
         
         # Get the new list of active applications / processes
-        item_map = {}
-        current_items = list(self._menu.get_items())
+        current_items = list(self.menu.get_children())
         current_item_map = {}
         for item in current_items:
             current_item_map[item.process_id] = item
@@ -271,8 +227,8 @@ class G15Processes():
                 screen = wnck.screen_get_default()
                 for window in screen.get_windows():
                     pid = window.get_pid()
-                    if pid > 0:
-                        item = ProcessMenuItem(pid, window.get_name())
+                    if pid > 0 and not pid in item_map:
+                        item = ProcessMenuItem("process-%d" % len(items), self, pid, window.get_name())
                         if window.has_icon_name():
                             icon_path = g15util.get_icon_path(window.get_icon_name(), warning = False)
                             if icon_path:
@@ -293,11 +249,11 @@ class G15Processes():
                     proc_args = gtop.proc_args(pid)
 
                     if self._mode == "all":
-                        item = ProcessMenuItem(pid, self._get_process_name(proc_args, proc_state.cmd))
+                        item = ProcessMenuItem("process-%d" % len(items), self, pid, self._get_process_name(proc_args, proc_state.cmd))
                         items.append(item)
                         item_map[pid] = item
                     elif proc_state.uid == os.getuid():
-                        item = ProcessMenuItem(pid, self._get_process_name(proc_args, proc_state.cmd))
+                        item = ProcessMenuItem("process-%d" % len(items), pid, self._get_process_name(proc_args, proc_state.cmd))
                         item_map[pid] = item
                         items.append(item)
                 except :
@@ -321,34 +277,22 @@ class G15Processes():
                 
         # Sort
         current_items = sorted(current_items, key=lambda item: item.process_name)
-        self._menu.set_items(current_items)
+        self.menu.set_children(current_items)
         
         # Make sure selected still exists
-        if self._menu.selected != None and not self._menu.selected in current_items:
+        if self.menu.selected != None and not self.menu.selected in current_items:
             if len(current_items) > 0:
-                self._menu.selected  = current_items[0]
+                self.menu.selected  = current_items[0]
             else:
-                self._menu.selected = None
+                self.menu.selected = None
 
-        self._screen.redraw(self._page)
-        
-    def _reload_theme(self):
-        self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen)
-        self._menu = g15theme.Menu("menu", self._screen)
-        self._menu.on_selected = self._on_selected
-        self._menu.on_move = self._on_move
-        self._theme.add_component(self._menu)
-        self._theme.add_component(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
+        self.screen.redraw(self.page)
         
     def _on_move(self):
         self._reschedule()
         
     def _on_selected(self):
-        self._screen.redraw(self._page)
-        
-    def _show_menu(self):        
-        self._page = self._screen.new_page(self.paint, id=name, priority = g15screen.PRI_NORMAL,  on_shown=self._page_shown, on_hidden=self._page_hidden)
-        self._screen.redraw(self._page)
+        self.screen.redraw(self.page)
         
     def _page_shown(self):
         logger.debug("Process list activated")
@@ -358,11 +302,6 @@ class G15Processes():
     def _page_hidden(self):
         self._cancel_timer()
     
-    def _hide_menu(self):     
-        self._screen.del_page(self._page)
-        self._page = None
-        self._cancel_timer()
-        
     def _refresh(self):
         self._reload_menu()
         self._schedule_refresh()

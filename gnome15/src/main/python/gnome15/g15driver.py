@@ -122,14 +122,16 @@ MODEL_G510 = "g510"
 MODEL_G510_AUDIO = "g510audio"
 MODEL_G110 = "g110"
 MODEL_Z10 = "z10"
+MODEL_MX5500 = "mx5500"
 
-MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G11, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G510_AUDIO, MODEL_G110, MODEL_Z10 ]
+MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G11, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G510_AUDIO, MODEL_G110, MODEL_Z10, MODEL_MX5500 ]
 
 HINT_DIMMABLE = 1 << 0
 HINT_SHADEABLE = 1 << 1
 HINT_FOREGROUND = 1 << 2
 HINT_BACKGROUND = 1 << 3
-HINT_SWITCH = 1 << 4
+HINT_HIGHLIGHT = 1 << 4
+HINT_SWITCH = 1 << 5
 
 # 16bit 565
 CAIRO_IMAGE_FORMAT=4
@@ -163,7 +165,7 @@ class LightControl(object):
         if self.on:
             self._adjust(self.val)
         else:
-            self._adjust(off_val)
+            self._adjust(off_val if isinstance(off_val, int) else off_val())
         self.on = not self.on
         self.reset_timer = g15util.schedule("Blink", delay, self.blink, off_val, delay)
         return self.reset_timer

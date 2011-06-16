@@ -23,7 +23,6 @@ else:
 	font_dir = "/usr/share/gnome15"
 	plugin_dir = "/usr/share/gnome15/plugins"
 	themes_dir = "/usr/share/gnome15/themes"
-	themes_dir = "/usr/share/gnome15/themes"
 	icons_dir = "/usr/share/icons"
 	scripts_dir = "/usr/bin"
 

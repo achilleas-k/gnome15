@@ -43,19 +43,21 @@ g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard
 g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
 g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND)
 g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
+g19_highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT)
 
 g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
 controls = { 
   g15driver.MODEL_G11 : [ g15_backlight_control ], 
-  g15driver.MODEL_G19 : [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control], 
+  g15driver.MODEL_G19 : [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control, g19_highlight_control ], 
   g15driver.MODEL_G15_V1 : [ g15_backlight_control, g15_invert_control ], 
   g15driver.MODEL_G15_V2 : [ g15_backlight_control, g15_invert_control ],
   g15driver.MODEL_G13 : [ g15_backlight_control, g15_invert_control ],
   g15driver.MODEL_G510 : [ g19_keyboard_backlight_control, g15_invert_control ],
   g15driver.MODEL_Z10 : [ g15_backlight_control, g15_invert_control ],
   g15driver.MODEL_G110 : [ g19_keyboard_backlight_control ],
+  g15driver.MODEL_MX5500 : [ g15_invert_control ],
             }  
 
 def show_preferences(device, parent, gconf_client):
@@ -350,12 +352,13 @@ class Driver(g15driver.AbstractDriver):
         
         self.main_window.show_all()
         
-        control = self.get_control_for_hint(g15driver.HINT_DIMMABLE)        
-        if isinstance(control.value, int):
-            v = ( 65535 / control.upper ) * control.value
-            self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(v, v, v))
-        else:
-            self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(control.value[0] << 8, control.value[1] << 8, control.value[2] << 8))
+        control = self.get_control_for_hint(g15driver.HINT_DIMMABLE) 
+        if control:       
+            if isinstance(control.value, int):
+                v = ( 65535 / control.upper ) * control.value
+                self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(v, v, v))
+            else:
+                self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(control.value[0] << 8, control.value[1] << 8, control.value[2] << 8))
             
         logger.info("Initialised GTK UI")
     

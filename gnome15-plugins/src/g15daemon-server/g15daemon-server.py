@@ -124,8 +124,9 @@ class G15DaemonClient(asyncore.dispatcher):
         self.plugin.join(self)
         self.handshake = False
                 
-        self.page = self.plugin.screen.new_page(self._paint, id="G15Daemon%d" % self.plugin.screen_index)
+        self.page = g15theme.G15Page("G15Daemon%d" % self.plugin.screen_index, plugin.screen, self._paint)
         self.page.set_title("G15Daemon Screen %d" % self.plugin.screen_index)
+        self.plugin.screen.add_page(self.page)
         self.plugin.screen_index += 1
         self.plugin.screen.redraw(self.page)
         

@@ -44,7 +44,7 @@ author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = "Copyright (C)2010 Brett Smith"
 site = "http://localhost"
 has_preferences = False
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 
 ''' 
 This simple plugin displays system statistics
@@ -56,43 +56,46 @@ def create(gconf_key, gconf_client, screen):
 
 class PlayThread(Thread):
     
-    def __init__(self, plugin):
+    def __init__(self, page):
         Thread.__init__(self)
         self.name = "PlayThread" 
         self.setDaemon(True)
-        self.plugin = plugin
+        self._page = page
           
         self.temp_dir = tempfile.mkdtemp("g15", "tmp")
-        self.process = subprocess.Popen(['mplayer', '-slave', '-noconsolecontrols','-really-quiet', 
-                                         '-vo', 'jpeg', self.plugin.movie_path], cwd=self.temp_dir, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        self._process = subprocess.Popen(['mplayer', '-slave', '-noconsolecontrols','-really-quiet', 
+                                         '-vo', 'jpeg', self._page._movie_path], cwd=self.temp_dir, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        self._page.redraw()
         
-        self.plugin.screen.redraw(self.plugin.page)
+    def _playing(self):
+        return self._process.poll() == None
         
-    def playing(self):
-        return self.process.poll() == None
+    def _stop(self):
+        try:
+            self._process.terminate()
+        except OSError:
+            # Got killed
+            pass
+        self._page.redraw()
         
-    def stop(self):
-        self.process.terminate()
-        self.plugin.screen.redraw(self.plugin.page)
-        
-    def mute(self, mute):
+    def _mute(self, mute):
         if mute:
-            print self.command("mute", "1")
+            print self._command("mute", "1")
         else:
-            print self.command("mute", "0")
+            print self._command("mute", "0")
             
-    def readlines(self):
+    def _readlines(self):
         ret = []
-        while any(select.select([self.process.stdout.fileno()], [], [], 0.6)):
-            ret.append( self.process.stdout.readline() )
+        while any(select.select([self._process.stdout.fileno()], [], [], 0.6)):
+            ret.append( self._process.stdout.readline() )
         return ret
     
-    def command(self, name, *args):
+    def _command(self, name, *args):
         cmd = '%s%s%s\n'%(name,
                 ' ' if args else '',
                 ' '.join(repr(a) for a in args)
                 )
-        self.process.stdin.write(cmd)
+        self._process.stdin.write(cmd)
         if name == 'quit':
             return
         return self.readlines()
@@ -102,23 +105,93 @@ class PlayThread(Thread):
 #        self.command("switch_ratio",str(float(aspect[0]) / float(aspect[1])))
         
     def run(self):      
-        self.process.wait()
+        self._process.wait()
         
-class G15VideoPlayer():
+class G15VideoPage(g15theme.G15Page):
     
+    def __init__(self, screen):
+        g15theme.G15Page.__init__(self, id, screen, title = name, theme = g15theme.G15Theme(self), thumbnail_painter = self._paint_thumbnail)
+        self._sidebar_offset = 0
+        self._muted = False
+        self._lock = Lock()
+        self._surface = None
+        self._hide_timer = None
+        self._screen = screen
+        self._full_screen = self._screen.driver.get_size()
+        self._aspect = self._full_screen
+        self._playing = None
+        self._active = True
+        self._frame_index = 1
+        self._frame_wait = 0.04
+        self._thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player" ]))
+            
+    def get_theme_properties(self):
+        properties = g15theme.G15Page.get_theme_properties(self)
+        properties["aspect"] = "%d:%d" % self._aspect
+        return properties
     
-    def __init__(self, gconf_key, gconf_client, screen):
-        self.screen = screen
-        self.sidebar_offset = 0
-        self.gconf_client = gconf_client
-        self.gconf_key = gconf_key
-        self.hidden = True
-        self.muted = False
-        self.lock = Lock()
-        self.surface = None
-        self.hide_timer = None
+    def paint_theme(self, canvas, properties, attributes):
+        canvas.save()        
+            
+        if self._sidebar_offset < 0 and self._sidebar_offset > -(self.theme.bounds[2]):
+            self._sidebar_offset -= 5
+            
+        canvas.translate(self._sidebar_offset, 0)
+        g15theme.G15Page.paint_theme(self, canvas, properties, attributes)
+        canvas.restore()
+    
+    def paint(self, canvas):
+        g15theme.G15Page.paint(self, canvas)
+        wait = self._frame_wait
+        size = self._screen.driver.get_size()
+            
+        if self._playing != None:
+            
+            # Process may have been killed
+            if not self._playing._playing():
+                self._stop()
+            
+            dir = sorted(os.listdir(self._playing.temp_dir), reverse=True)
+            if len(dir) > 1:
+                dir = dir[1:]
+                file = os.path.join(self._playing.temp_dir, dir[0])
+                self._surface = g15util.load_surface_from_file(file)
+                for path in dir:
+                    file = os.path.join(self._playing.temp_dir, path)
+                    os.remove(file)
+            else:
+                wait = 0.1
+            
+            if self._surface != None:
+                target_size = ( float(size[0]), float(size[0]) * (float(self._aspect[1]) ) / float(self._aspect[0]) )
+                sx = float(target_size[0]) / float(self._surface.get_width())
+                sy = float(target_size[1]) / float(self._surface.get_height())
+                canvas.save()
+                canvas.translate((size[0] - target_size[0]) / 2.0,(size[1] - target_size[1]) / 2.0)
+                canvas.scale(sx, sy)
+                canvas.set_source_surface(self._surface)
+                canvas.paint()
+                canvas.restore()   
         
-    def open(self):
+        if self._playing != None:
+            timer = Timer(wait, self.redraw)
+            timer.name = "VideoRedrawTimer"
+            timer.setDaemon(True)
+            timer.start()
+    
+    ''' Functions specific to plugin
+    ''' 
+    def _hide_sidebar(self, after = 0.0):
+        if after == 0.0:
+            self._sidebar_offset = -1    
+            self._hide_timer = None
+        else:    
+            self._sidebar_offset = 0 
+            if self._hide_timer != None:
+                self._hide_timer.cancel()
+            self._hide_timer = g15util.schedule("HideSidebar", after, self._hide_sidebar)
+        
+    def _open(self):
         dialog = gtk.FileChooserDialog("Open..",
                                None,
                                gtk.FILE_CHOOSER_ACTION_OPEN,
@@ -161,169 +234,91 @@ class G15VideoPlayer():
             gtk.main_iteration(False) 
         if response == gtk.RESPONSE_OK:
             print dialog.get_filename(), 'selected'
-            self.movie_path = dialog.get_filename()
-            if self.playing:
-                self.stop()
-            self.play()
+            self._movie_path = dialog.get_filename()
+            if self._playing:
+                self._stop()
+            self._play()
         dialog.destroy() 
         return False
     
-    def change_aspect(self):
-        if self.aspect == (16, 9):
-            self.aspect = (4, 3)
-        elif self.aspect == (4, 3):
+    def _change_aspect(self):
+        if self._aspect == (16, 9):
+            self._aspect = (4, 3)
+        elif self._aspect == (4, 3):
             # Just take up the most room
-            self.aspect = (24, 9)
-        elif self.aspect == (24, 9):
-            self.aspect = self.full_screen
+            self._aspect = (24, 9)
+        elif self._aspect == (24, 9):
+            self._aspect = self._full_screen
         else:
-            self.aspect = (16, 9)
-        self.screen.redraw(self.page)
+            self._aspect = (16, 9)
+        self._screen.redraw(self._page)
     
-    def play(self):
-        self.lock.acquire()
+    def _play(self):
+        self._lock.acquire()
         try:
-            self.hide_sidebar(3.0)
-            self.playing = PlayThread(self)
-            self.playing.set_aspect(self.aspect)
-            self.playing.mute(self.muted)
-            self.playing.start()
+            self._hide_sidebar(3.0)
+            self._playing = PlayThread(self)
+            self._playing.set_aspect(self._aspect)
+            self._playing.mute(self.muted)
+            self._playing.start()
         finally:
-            self.lock.release()
+            self._lock.release()
     
-    def stop(self):
-        self.lock.acquire()
+    def _stop(self):
+        self._lock.acquire()
         try:
-            if self.hide_timer != None:
-                self.hide_timer.cancel()
-            self.sidebar_offset = 0
-            self.playing.stop()
-            self.playing = None
+            if self._hide_timer != None:
+                self._hide_timer.cancel()
+            self._sidebar_offset = 0
+            self._playing._stop()
+            self._playing = None
         finally:
-            self.lock.release()
+            self._lock.release()
+    
+    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
+        if self._thumb_icon != None and self._screen.driver.get_bpp() == 16:
+            return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
+
+        
+class G15VideoPlayer():
+    
+    
+    def __init__(self, gconf_key, gconf_client, screen):
+        self._screen = screen
+        self._gconf_client = gconf_client
+        self._gconf_key = gconf_key
     
     def activate(self):
-        self.full_screen = self.screen.driver.get_size()
-        self.aspect = self.full_screen
-        self.playing = None
-        self.active = True
-        self.frame_index = 1
-        self.frame_wait = 0.04
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-        self.page = self.screen.new_page(self.paint, id="Video Player", on_hidden=self.on_hidden, on_shown=self.on_shown)
-        self.screen.redraw(self.page)
+        self._page = G15VideoPage(self._screen)
+        self._screen.add_page(self._page)
+        self._screen.redraw(self._page)
     
     def deactivate(self):
-        if self.playing != None:
-            self.stop()
-        self.screen.del_page(self.page)
-        
-    def on_shown(self):
-        self.hidden = False
-        
-    def on_hidden(self):
-        self.hidden = True
+        if self._page._playing != None:
+            self._page._stop()
+        self._screen.del_page(self._page)
         
     def destroy(self):
         pass
     
     def handle_key(self, keys, state, post=False):
-        # Requires long press of L1 to cycle
-        if not self.hidden and not post and state == g15driver.KEY_STATE_UP:
+        if self._page is not None and self._page.is_visible() and not post and state == g15driver.KEY_STATE_DOWN:
             if g15driver.G_KEY_G1 in keys:
-                gobject.idle_add(self.open)
+                gobject.idle_add(self._page._open)
             if g15driver.G_KEY_G2 in keys:
-                if self.playing == None:
-                    self.play()
+                if self._page._playing == None:
+                    self._page._play()
             if g15driver.G_KEY_G3 in keys:
-                if self.playing != None:
-                    self.stop()
+                if self._page._playing != None:
+                    self._page._stop()
             if g15driver.G_KEY_G4 in keys:
-                if self.playing != None:
-                    self.hide_sidebar(3.0)
-                self.change_aspect()
+                if self._page._playing != None:
+                    self._page._hide_sidebar(3.0)
+                self._change_aspect()
             if g15driver.G_KEY_G5 in keys:
-                self.muted = not self.muted
-                if self.playing != None:
-                    self.hide_sidebar(3.0)
-                    self.playing.mute(self.muted)
+                self._page.muted = not self._page.muted
+                if self._page._playing != None:
+                    self._page._hide_sidebar(3.0)
+                    self._playing.mute(self._page.muted)
             return True
         return False
-    
-    ''' Functions specific to plugin
-    ''' 
-    def hide_sidebar(self, after = 0.0):
-        if after == 0.0:
-            self.sidebar_offset = -1    
-            self.hide_timer = None
-        else:    
-            self.sidebar_offset = 0 
-            if self.hide_timer != None:
-                self.hide_timer.cancel()
-            self.hide_timer = g15util.schedule("HideSidebar", after, self.hide_sidebar)
-    
-    def paint(self, canvas):
-        self.lock.acquire()
-        try:        
-            wait = self.frame_wait
-            size = self.screen.driver.get_size()
-                
-            if self.playing != None:
-                
-                # Process may have been killed
-                if not self.playing.playing():
-                    self.stop()
-                
-                dir = sorted(os.listdir(self.playing.temp_dir), reverse=True)
-                if len(dir) > 1:
-                    dir = dir[1:]
-                    file = os.path.join(self.playing.temp_dir, dir[0])
-                    self.surface = g15util.load_surface_from_file(file)
-                    for path in dir:
-                        file = os.path.join(self.playing.temp_dir, path)
-                        os.remove(file)
-                else:
-                    wait = 0.1
-                
-                if self.surface != None:
-                    
-#                    target_size = ( float(size[1]) * (float(self.aspect[0]) ) / float(self.aspect[1]), float(size[1]) ) 
-                    target_size = ( float(size[0]), float(size[0]) * (float(self.aspect[1]) ) / float(self.aspect[0]) )
-                    
-                    sx = float(target_size[0]) / float(self.surface.get_width())
-                    sy = float(target_size[1]) / float(self.surface.get_height())
-#                    scale = max(sx, sy)
-
-                    canvas.save()
-                    canvas.translate((size[0] - target_size[0]) / 2.0,(size[1] - target_size[1]) / 2.0)
-                    canvas.scale(sx, sy)
-                    canvas.set_source_surface(self.surface)
-                    canvas.paint()
-                    canvas.restore()
-                
-            properties = {}
-            properties["aspect"] = "%d:%d" % self.aspect
-            
-            canvas.translate(self.sidebar_offset, 0)
-            self.theme.draw(canvas, properties)
-            
-            if self.sidebar_offset < 0 and self.sidebar_offset > -(size[0]):
-                self.sidebar_offset -= 5                
-                
-    #        if not self.aspect == self.full_screen:        
-    #            canvas.draw_text("G1", (w - 50, 4), emboss="White")
-    #            canvas.draw_text("Open", (w - 30, 4), emboss="White")
-    #            canvas.draw_text("G2", (w - 50, 13), emboss="White")
-    #            canvas.draw_text("Play", (w - 30, 13), emboss="White")
-    #            canvas.draw_text("G3", (w - 50, 22), emboss="White")
-    #            canvas.draw_text("Stop", (w - 30, 22), emboss="White")
-    #            canvas.draw_text("G4", (w - 50, 31), emboss="White")
-    #            canvas.draw_text("Ratio", (w - 30, 31), emboss="White")
-            
-            if self.playing != None:
-                timer = Timer(wait, self.screen.redraw, [self.page])
-                timer.name = "VideoRedrawTimer"
-                timer.setDaemon(True)
-                timer.start()
-        finally:
-            self.lock.release()

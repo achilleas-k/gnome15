@@ -108,10 +108,11 @@ class G15Service(Thread):
         self.service_listeners = []
         self.use_x_test = None
         self.notify_handles = []
+        self.font_faces = {}
                 
         # Expose Gnome15 functions via DBus
         logger.debug("Starting the DBUS service")
-        self.dbus_service = g15dbus.G15DBUSService(self) 
+        self.dbus_service = g15dbus.G15DBUSService(self)
         
         # Watch for signals
         if not no_trap:
@@ -178,131 +179,6 @@ class G15Service(Thread):
         self.loop.quit() 
         logger.info("Stopping DBus service")
         self.dbus_service.stop()
-            
-    def _do_start_service(self):
-        for listener in self.service_listeners:
-            listener.service_starting_up()
-        
-        self.session_bus = dbus.SessionBus()
-        
-        # Create a screen for each device        
-        self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
-        devices = g15devices.find_all_devices()
-        if len(devices) == 0:
-            logger.error("No devices found. Gnome15 will now exit")
-            self.shutdown()
-            return
-        else:
-            for device in devices:
-                val = self.conf_client.get("/apps/gnome15/%s/enabled" % device.uid)
-                h = self.conf_client.notify_add("/apps/gnome15/%s/enabled" % device.uid, self._device_enabled_configuration_changed, device)
-                self.notify_handles.append(h)
-                if val == None or val.get_bool():
-                    self._add_screen(device)
-            if len(self.screens) == 0:
-                logger.warning("No screens found yet. Will stay running waiting for one to be enabled.")
-        
-        # Start each screen's plugin manager
-        for screen in self.screens:
-            screen.start()
-            
-        # Watch for logout (should probably move this to a plugin)
-        try :
-            self.session_bus.add_signal_receiver(self._session_over, dbus_interface="org.gnome.SessionManager", signal_name="SessionOver")
-        except Exception as e:
-            logger.warning("GNOME session manager not available, will not detect logout signal for clean shutdown. %s" % str(e))
-            
-        # Monitor active application    
-        logger.info("Attempting to set up BAMF")
-        try :
-            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')   
-            self.session_bus.add_signal_receiver(self.application_changed, dbus_interface="org.ayatana.bamf.matcher", signal_name="ActiveApplicationChanged")
-            logger.info("Will be using BAMF for window matching")
-        except:
-            logger.warning("BAMF not available, falling back to WNCK")
-            try :                
-                import wnck
-                wnck.__file__
-                gobject.timeout_add(500, self.timeout_callback, self)
-            except:
-                logger.warning("Python Wnck not available either, no automatic profile switching")
-                
-        self.starting_up = False
-        for listener in self.service_listeners:
-            listener.service_started_up()
-            
-        self._monitor_session()
-            
-    def _monitor_session(self):
-        # Monitor active session (we shut down the driver when becoming inactive)
-        try :
-            logger.info("Connecting to system bus") 
-            system_bus = dbus.SystemBus()
-            system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
-            self.session_active = True 
-            logger.info("Connected to system bus") 
-        except Exception as e:
-            logger.warning("ConsoleKit not available, will not track active desktop session. %s" % str(e))
-            self.session_active = True
-            
-    def _add_screen(self, device):
-        try:
-            screen = g15screen.G15Screen(g15pluginmanager, self, device)
-            self.screens.append(screen)
-            for listener in self.service_listeners:
-                listener.screen_added(screen)
-            return screen
-        except Exception:
-            traceback.print_exc(file=sys.stdout)
-            logger.error("Failed to load driver for device %s." % device.uid)
-            
-    def _device_enabled_configuration_changed(self, client, connection_id, entry, device):
-        enabled = g15devices.is_enabled(self.conf_client, device)
-        screen = self._get_screen_for_device(device)
-        logger.info("EN device %s = %s = %s" % (device.uid, str(enabled), str(screen)))
-        if enabled and not screen:
-            logger.info("Enabling device %s" % device.uid)
-            # Enable screen
-            screen = self._add_screen(device)
-            if screen:
-                screen.start()
-                logger.info("Enabled device %s" % device.uid)
-        elif not enabled and screen:
-            # Disable screen
-            logger.info("Disabling device %s" % device.uid)
-            screen.stop()
-            self.screens.remove(screen)
-            for listener in self.service_listeners:
-                listener.screen_removed(screen)
-            logger.info("Disabled device %s" % device.uid)
-            
-    def _get_screen_for_device(self, device):
-        for screen in self.screens:
-            if screen.device.uid == device.uid:
-                return screen
-            
-    def _session_over(self, object_path):        
-        logger.info("Logout")
-        self.shutdown()
-            
-    def _active_session_changed(self, object_path):        
-        logger.debug("Adding seat %s" % object_path)
-        self.session_active = object_path == self.this_session_path
-        if self.session_active:
-            logger.info("g15-desktop service is running on the active session")
-        else:
-            logger.info("g15-desktop service is NOT running on the active session")
-        
-        for screen in self.screens:
-            screen.active_session_changed(screen, self.session_active)
-        
-    def __del__(self):
-        for screen in self.screens:
-            if screen.plugins.get_active():
-                screen.plugins.deactivate()
-            if screen.plugins.get_started():
-                screen.plugins.destroy()
-        del self.screens
         
     def handle_macro(self, macro):
         
@@ -469,3 +345,147 @@ class G15Service(Thread):
             traceback.print_exc(file=sys.stdout)
             
         gobject.timeout_add(500, self.timeout_callback, self)
+        
+    """
+    Private
+    """
+    
+            
+    def _do_start_service(self):
+        for listener in self.service_listeners:
+            listener.service_starting_up()
+        
+        self.session_bus = dbus.SessionBus()
+        
+        # Create a screen for each device        
+        self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
+        devices = g15devices.find_all_devices()
+        if len(devices) == 0:
+            logger.error("No devices found. Gnome15 will now exit")
+            self.shutdown()
+            return
+        else:
+            for device in devices:
+                val = self.conf_client.get("/apps/gnome15/%s/enabled" % device.uid)
+                h = self.conf_client.notify_add("/apps/gnome15/%s/enabled" % device.uid, self._device_enabled_configuration_changed, device)
+                self.notify_handles.append(h)
+                if val == None or val.get_bool():
+                    self._add_screen(device)
+            if len(self.screens) == 0:
+                logger.warning("No screens found yet. Will stay running waiting for one to be enabled.")
+                
+        # Watch for scrolling settings changing
+        self._load_scroll_configuration()
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/scroll_delay", self._scroll_configuration_changed))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/scroll_amount", self._scroll_configuration_changed))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/animation_delay", self._scroll_configuration_changed))
+        
+        # Start each screen's plugin manager
+        for screen in self.screens:
+            screen.start()
+            
+        # Watch for logout (should probably move this to a plugin)
+        try :
+            self.session_bus.add_signal_receiver(self._session_over, dbus_interface="org.gnome.SessionManager", signal_name="SessionOver")
+        except Exception as e:
+            logger.warning("GNOME session manager not available, will not detect logout signal for clean shutdown. %s" % str(e))
+            
+        # Monitor active application    
+        logger.info("Attempting to set up BAMF")
+        try :
+            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')   
+            self.session_bus.add_signal_receiver(self.application_changed, dbus_interface="org.ayatana.bamf.matcher", signal_name="ActiveApplicationChanged")
+            logger.info("Will be using BAMF for window matching")
+        except:
+            logger.warning("BAMF not available, falling back to WNCK")
+            try :                
+                import wnck
+                wnck.__file__
+                gobject.timeout_add(500, self.timeout_callback, self)
+            except:
+                logger.warning("Python Wnck not available either, no automatic profile switching")
+                
+        self.starting_up = False
+        for listener in self.service_listeners:
+            listener.service_started_up()
+            
+        self._monitor_session()
+            
+    def _monitor_session(self):
+        # Monitor active session (we shut down the driver when becoming inactive)
+        try :
+            logger.info("Connecting to system bus") 
+            system_bus = dbus.SystemBus()
+            system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
+            self.session_active = True 
+            logger.info("Connected to system bus") 
+        except Exception as e:
+            logger.warning("ConsoleKit not available, will not track active desktop session. %s" % str(e))
+            self.session_active = True
+            
+    def _add_screen(self, device):
+        try:
+            screen = g15screen.G15Screen(g15pluginmanager, self, device)
+            self.screens.append(screen)
+            for listener in self.service_listeners:
+                listener.screen_added(screen)
+            return screen
+        except Exception:
+            traceback.print_exc(file=sys.stdout)
+            logger.error("Failed to load driver for device %s." % device.uid)
+            
+    def _scroll_configuration_changed(self, client, connection_id, entry, device):
+        self._load_scroll_configuration()
+        
+    def _load_scroll_configuration(self):
+        self.scroll_delay = float(g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_delay', 300)) / 1000.0
+        self.scroll_amount = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_amount', 2)
+        self.animation_delay = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/animation_delay', 100) / 1000.0
+            
+    def _device_enabled_configuration_changed(self, client, connection_id, entry, device):
+        enabled = g15devices.is_enabled(self.conf_client, device)
+        screen = self._get_screen_for_device(device)
+        logger.info("EN device %s = %s = %s" % (device.uid, str(enabled), str(screen)))
+        if enabled and not screen:
+            logger.info("Enabling device %s" % device.uid)
+            # Enable screen
+            screen = self._add_screen(device)
+            if screen:
+                screen.start()
+                logger.info("Enabled device %s" % device.uid)
+        elif not enabled and screen:
+            # Disable screen
+            logger.info("Disabling device %s" % device.uid)
+            screen.stop()
+            self.screens.remove(screen)
+            for listener in self.service_listeners:
+                listener.screen_removed(screen)
+            logger.info("Disabled device %s" % device.uid)
+            
+    def _get_screen_for_device(self, device):
+        for screen in self.screens:
+            if screen.device.uid == device.uid:
+                return screen
+            
+    def _session_over(self, object_path):        
+        logger.info("Logout")
+        self.shutdown()
+            
+    def _active_session_changed(self, object_path):        
+        logger.debug("Adding seat %s" % object_path)
+        self.session_active = object_path == self.this_session_path
+        if self.session_active:
+            logger.info("g15-desktop service is running on the active session")
+        else:
+            logger.info("g15-desktop service is NOT running on the active session")
+        
+        for screen in self.screens:
+            screen.active_session_changed(screen, self.session_active)
+        
+    def __del__(self):
+        for screen in self.screens:
+            if screen.plugins.get_active():
+                screen.plugins.deactivate()
+            if screen.plugins.get_started():
+                screen.plugins.destroy()
+        del self.screens

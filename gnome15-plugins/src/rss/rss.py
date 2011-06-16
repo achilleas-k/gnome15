@@ -54,17 +54,11 @@ def show_preferences(parent, device, gconf_client, gconf_key):
 def changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
     
-def get_update_time(gconf_client, gconf_key):
-    val = gconf_client.get_int(gconf_key + "/update_time")
-    if val == 0:
-        val = 60
-    return val
-    
 class G15RSSPreferences():
     
     def __init__(self, parent, device, gconf_client,gconf_key):
-        self.gconf_client = gconf_client
-        self.gconf_key = gconf_key
+        self._gconf_client = gconf_client
+        self._gconf_key = gconf_key
         
         widget_tree = gtk.Builder()
         widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "rss.glade"))
@@ -77,8 +71,7 @@ class G15RSSPreferences():
         
         # Updates
         self.update_adjustment = widget_tree.get_object("UpdateAdjustment")
-        self.update_adjustment.set_value(get_update_time(gconf_client, gconf_key))
-        self.update_adjustment.set_value(get_update_time(gconf_client, gconf_key))
+        self.update_adjustment.set_value(g15util.get_int_or_default(self._gconf_client, "%s/update_time" % self._gconf_key, 60))
         
         # Connect to events
         self.update_adjustment.connect("value-changed", self.update_time_changed)
@@ -96,16 +89,16 @@ class G15RSSPreferences():
         gconf_client.notify_remove(ah);
         
     def update_time_changed(self, widget):
-        self.gconf_client.set_int(self.gconf_key + "/update_time", int(widget.get_value()))
+        self._gconf_client.set_int(self._gconf_key + "/update_time", int(widget.get_value()))
         
     def url_edited(self, widget, row_index, value):
         row = self.feed_model[row_index] 
         if value != "":
-            urls = self.gconf_client.get_list(self.gconf_key + "/urls", gconf.VALUE_STRING)
+            urls = self._gconf_client.get_list(self._gconf_key + "/urls", gconf.VALUE_STRING)
             if row[0] in urls:
                 urls.remove(row[0])
             urls.append(value)
-            self.gconf_client.set_list(self.gconf_key + "/urls", gconf.VALUE_STRING, urls)
+            self._gconf_client.set_list(self._gconf_key + "/urls", gconf.VALUE_STRING, urls)
         else:
             self.feed_model.remove(self.feed_model.get_iter(row_index))
         
@@ -114,7 +107,7 @@ class G15RSSPreferences():
         
     def reload_model(self):
         self.feed_model.clear()
-        for url in self.gconf_client.get_list(self.gconf_key + "/urls", gconf.VALUE_STRING):
+        for url in self._gconf_client.get_list(self._gconf_key + "/urls", gconf.VALUE_STRING):
             self.feed_model.append([ url, True ])
         
     def new_url(self, widget):
@@ -125,23 +118,21 @@ class G15RSSPreferences():
     def remove_url(self, widget):        
         (model, path) = self.feed_list.get_selection().get_selected()
         url = model[path][0]
-        urls = self.gconf_client.get_list(self.gconf_key + "/urls", gconf.VALUE_STRING)
+        urls = self._gconf_client.get_list(self._gconf_key + "/urls", gconf.VALUE_STRING)
         if url in urls:
             urls.remove(url)
-            self.gconf_client.set_list(self.gconf_key + "/urls", gconf.VALUE_STRING, urls)   
+            self._gconf_client.set_list(self._gconf_key + "/urls", gconf.VALUE_STRING, urls)   
         
 class G15FeedsMenuItem(g15theme.MenuItem):
-    def __init__(self, entry):
-        g15theme.MenuItem.__init__(self)
+    def __init__(self, id, entry):
+        g15theme.MenuItem.__init__(self, id)
         self.entry = entry
         
     def on_configure(self):
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.theme.screen, "menu-entry")
+        self.set_theme(g15theme.G15Theme(self.parent.get_theme().dir, "menu-entry"))
         
-    def draw(self, selected, canvas, menu_properties, menu_attributes):
-        
-        element_properties = {}
-        element_properties["ent_selected"] = self == selected
+    def get_theme_properties(self):        
+        element_properties = g15theme.MenuItem.get_theme_properties(self)
         element_properties["ent_title"] = self.entry.title
         element_properties["ent_link"] = self.entry.link
         element_properties["ent_description"] = self.entry.description
@@ -157,147 +148,152 @@ class G15FeedsMenuItem(g15theme.MenuItem):
         element_properties["ent_full_date"] = time.strftime("%A %d %B", self.entry.date_parsed)
         element_properties["ent_month_year"] = time.strftime("%m/%y", self.entry.date_parsed)
                         
-        self.theme.draw(canvas, element_properties)
-        return self.theme.bounds[3] 
+        return element_properties 
     
     def activate(self):
         logger.info("xdg-open '%s'" % self.entry.link)
         subprocess.Popen(['xdg-open', self.entry.link])
         return True
         
-class G15FeedPage():
+class G15FeedPage(g15theme.G15Page):
     
-    def __init__(self, plugin, url):            
-        self.gconf_client = plugin.gconf_client        
-        self.gconf_key = plugin.gconf_key
-        self.screen = plugin.screen
-        self.icon_surface = None
-        self.icon_embedded = None
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
+    def __init__(self, plugin, url):   
+        
+        self._gconf_client = plugin._gconf_client        
+        self._gconf_key = plugin._gconf_key
+        self._screen = plugin._screen
+        self._icon_surface = None
+        self._icon_embedded = None
         self.url = url
         self.index = -1
-        self.menu = g15theme.Menu("menu", self.screen)
-        self.menu.on_selected = self.selection_changed
-        self.theme.add_component(self.menu)
-        self.theme.add_component(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
-        self.reload() 
-        self.page = self.screen.new_page(self.paint, id="Feed " + str(plugin.page_serial), thumbnail_painter = self.paint_thumbnail)
-        plugin.page_serial += 1
-        self.page.set_title(self.title)
-        self.screen.redraw(self.page)
+        self._menu = g15theme.Menu("menu")
+        g15theme.G15Page.__init__(self, "Feed " + str(plugin._page_serial), self._screen, 
+                                     thumbnail_painter = self._paint_thumbnail,  
+                                     theme = g15theme.G15Theme(self, "menu-screen"), theme_properties_callback = self._get_theme_properties)
+        self.add_child(self._menu)
+        self.add_child(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
+        plugin._page_serial += 1
+        self._reload() 
+        self._screen.add_page(self)
+        self._screen.redraw(self)
+            
+    """
+    Private
+    """
         
-    def reload(self):
+    def _reload(self):
         self.feed = feedparser.parse(self.url)
         if "icon" in self.feed["feed"]:
             icon = self.feed["feed"]["icon"]
         elif "image" in self.feed["feed"]:
             icon = self.feed["feed"]["image"]["url"]
         else:
-            icon = g15util.get_icon_path("application-rss+xml", self.screen.height )
+            icon = g15util.get_icon_path("application-rss+xml", self._screen.height )
             
         if icon == None:
-            self.icon_surface = None
-            self.icon_embedded = None
+            self._icon_surface = None
+            self._icon_embedded = None
         else:
             try :
                 icon_surface = g15util.load_surface_from_file(icon)
-                self.icon_surface = icon_surface
-                self.icon_embedded = g15util.get_embedded_image_url(icon_surface)
+                self._icon_surface = icon_surface
+                self._icon_embedded = g15util.get_embedded_image_url(icon_surface)
             except:
                 logger.warning("Failed to get icon %s" % str(icon))
-                self.icon_surface = None
-                self.icon_embedded = None
-        self.title = self.feed["feed"]["title"] if "title" in self.feed["feed"] else self.url
-        self.subtitle = self.feed["feed"]["subtitle"] if "subtitle" in self.feed["feed"] else ""
-        self.set_properties()
-        
-    def set_properties(self):
-        self.properties = {}
-        self.attributes = {}
-        self.properties["title"] = self.title
-        self.attributes["icon"] = self.icon_surface
-        self.properties["icon"] = self.icon_embedded
-        self.properties["subtitle"] = self.subtitle
-        self.properties["updated"] = "%s %s" % ( time.strftime("%H:%M", self.feed.updated), time.strftime("%a %d %b", self.feed.updated) )
-        self.menu.clear_items()
+                self._icon_surface = None
+                self._icon_embedded = None
+        self.set_title(self.feed["feed"]["title"] if "title" in self.feed["feed"] else self.url)
+        self._subtitle = self.feed["feed"]["subtitle"] if "subtitle" in self.feed["feed"] else ""
+        self._menu.remove_all_children()
+        i = 0
         for entry in self.feed.entries:
-            self.menu.add_item(G15FeedsMenuItem(entry))
+            self._menu.add_child(G15FeedsMenuItem("feeditem-%d" % i, entry))
+            i += 1
         
-    def selection_changed(self):    
-        self.screen.redraw(self.page)
-                    
-    def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if "icon" in self.attributes:
-            return g15util.paint_thumbnail_image(allocated_size, self.attributes["icon"], canvas)
+    def _get_theme_properties(self):
+        properties = {}
+        properties["title"] = self.title
+        properties["icon"] = self._icon_embedded
+        properties["subtitle"] = self._subtitle
+        try:
+            properties["updated"] = "%s %s" % ( time.strftime("%H:%M", self.feed.updated), time.strftime("%a %d %b", self.feed.updated) )
+        except AttributeError:
+            pass
+        return properties 
         
-    def paint(self, canvas):
-        self.theme.draw(canvas, self.properties, self.attributes)
-    
+    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
+        if self._icon_surface:
+            return g15util.paint_thumbnail_image(allocated_size, self._icon_surface, canvas)
+        
 class G15RSS():
     
     def __init__(self, gconf_client,gconf_key, screen):
-        self.screen = screen;
-        self.gconf_key = gconf_key
-        self.gconf_client = gconf_client
-        self.page_serial = 1
+        self._screen = screen;
+        self._gconf_key = gconf_key
+        self._gconf_client = gconf_client
+        self._page_serial = 1
 
     def activate(self):
-        self.pages = {}       
-        self.schedule_refresh() 
-        self.update_time_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/update_time", self.update_time_changed)
-        self.urls_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/urls", self.urls_changed)
-        self.load_feeds()
-        
-    def handle_key(self, keys, state, post):
-        for page in self.pages:
-            if self.pages[page].page.is_visible() and self.pages[page].menu.handle_key(keys, state, post):
-                return True
-        return False
-        
-    def schedule_refresh(self):
-        schedule_seconds = get_update_time(self.gconf_client, self.gconf_key) * 60.0
-        self.refresh_timer = g15util.schedule("FeedRefreshTimer", schedule_seconds, self.refresh)
-        
-    def refresh(self):
-        for page_id in self.pages:
-            page = self.pages[page_id]        
-            page.reload()
-            page.page.set_title(page.feed["feed"]["title"])
-            self.screen.redraw(page.page)
-        self.schedule_refresh()
+        self._pages = {}       
+        self._schedule_refresh() 
+        self._update_time_changed_handle = self._gconf_client.notify_add(self._gconf_key + "/update_time", self._update_time_changed)
+        self._urls_changed_handle = self._gconf_client.notify_add(self._gconf_key + "/urls", self._urls_changed)
+        self._load_feeds()
     
     def deactivate(self):
-        self.gconf_client.notify_remove(self.update_time_changed_handle);
-        self.gconf_client.notify_remove(self.urls_changed_handle);
-        for page in self.pages:
-            self.screen.del_page(self.pages[page].page)
-        self.pages = {}
+        self._gconf_client.notify_remove(self._update_time_changed_handle);
+        self._gconf_client.notify_remove(self._urls_changed_handle);
+        for page in self._pages:
+            self._screen.del_page(self._pages[page])
+        self._pages = {}
+        
+    def handle_key(self, keys, state, post):
+        for page in self._pages:
+            if self._pages[page].is_visible() and self._pages[page]._menu.handle_key(keys, state, post):
+                return True
+        return False
+    
+    '''
+    Private
+    '''
+        
+    def _schedule_refresh(self):
+        schedule_seconds = g15util.get_int_or_default(self._gconf_client, "%s/update_time" % self._gconf_key, 60) * 60.0
+        self._refresh_timer = g15util.schedule("FeedRefreshTimer", schedule_seconds, self._refresh)
+        
+    def _refresh(self):
+        logger.info("Refreshing RSS feeds")
+        for page_id in self._pages:
+            page = self._pages[page_id]        
+            page._reload()
+            page.redraw()
+        self._schedule_refresh()
         
     def destroy(self):
         pass 
     
-    def update_time_changed(self, client, connection_id, entry, args):
-        self.refresh_timer.cancel()
-        self.schedule_refresh()
+    def _update_time_changed(self, client, connection_id, entry, args):
+        self._refresh_timer.cancel()
+        self._schedule_refresh()
     
-    def urls_changed(self, client, connection_id, entry, args):
-        self.load_feeds()
+    def _urls_changed(self, client, connection_id, entry, args):
+        self._load_feeds()
     
-    def load_feeds(self):
-        feed_list = self.gconf_client.get_list(self.gconf_key + "/urls", gconf.VALUE_STRING)
+    def _load_feeds(self):
+        feed_list = self._gconf_client.get_list(self._gconf_key + "/urls", gconf.VALUE_STRING)
         
         # Add new pages
         for url in feed_list:
-            if not url in self.pages:
-                self.pages[url] = G15FeedPage(self, url)
+            if not url in self._pages:
+                self._pages[url] = G15FeedPage(self, url)
                 
         # Remove pages that no longer exist
         to_remove = []
-        for page_url in self.pages:
-            page = self.pages[page_url]
+        for page_url in self._pages:
+            page = self._pages[page_url]
             if not page.url in feed_list:
-                self.screen.del_page(page.page)
+                self._screen.del_page(page)
                 to_remove.append(page_url)
         for page in to_remove:
-            del self.pages[page]
+            del self._pages[page]
             

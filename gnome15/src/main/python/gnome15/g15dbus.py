@@ -167,6 +167,10 @@ class G15DBUSDebugService(dbus.service.Object):
     def MostCommonTypes(self):
         objgraph.show_most_common_types(limit=200)
         
+    @dbus.service.method(DEBUG_IF_NAME)
+    def ShowGraph(self):
+        objgraph.show_refs(self._service)
+        
 class G15DBUSDeviceService(AbstractG15DBUSService):
     
     def __init__(self, dbus_service, device):
@@ -260,6 +264,8 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         
     def new_page(self, page): 
         logger.debug("Sending new page signal for %s" % page.id)
+        if page.id in self._dbus_pages:
+            raise Exception("Page %s already in DBUS service." % page.id)
         dbus_page = G15DBUSPageService(self, page, self._dbus_service._page_sequence_number)
         self._dbus_pages[page.id] = dbus_page
         gobject.idle_add(self.PageCreated, self._get_screen_path(), self._dbus_service._page_sequence_number, page.title)
@@ -622,11 +628,11 @@ class G15DBUSPageService(AbstractG15DBUSService):
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='ss')
     def LoadTheme(self, dir, variant):
-        self._page.theme = g15theme.G15Theme(dir, self._screen_service._screen, variant)
+        self._page.add_theme(g15theme.G15Theme(dir, self._screen_service._screen, variant))
         
     @dbus.service.method(PAGE_IF_NAME, in_signature='s')
     def SetThemeSVG(self, svg_text):
-        self._page.theme = g15theme.G15Theme(None, self._screen_service._screen, None, svg_text = svg_text)
+        self._page.add_theme(g15theme.G15Theme(None, self._screen_service._screen, None, svg_text = svg_text))
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='ss')
     def SetThemeProperty(self, name, value):

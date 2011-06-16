@@ -59,8 +59,8 @@ class G15SysMon():
         self._net_icon = g15util.get_icon_path([ "network-transmit-receive", "gnome-fs-network" ], self.screen.height)
         self._cpu_icon = g15util.get_icon_path( [ "utilities-system-monitor", "gnome-cpu-frequency-applet", "computer" ],  self.screen.height)
         self._mem_icon = g15util.get_icon_path( [ "media-memory", "media-flash" ],  self.screen.height)
+        self._thumb_icon = g15util.load_surface_from_file(self._cpu_icon)
         
-        self.properties = None
         self.active = True
         self.last_time_list = None
         self.last_time = 0
@@ -93,10 +93,12 @@ class G15SysMon():
         self.used = 0
         
         # Initial stats load and create the page 
+        self.page = g15theme.G15Page(id, self.screen, on_shown=self._on_shown, on_hidden=self._on_hidden, \
+                                     title = name, theme = g15theme.G15Theme(self),
+                                     thumbnail_painter = self._paint_thumbnail )
         self._get_stats()
-        self._reload_theme()
-        self.page = self.screen.new_page(self._paint, id="System Monitor", on_shown=self._on_shown, on_hidden=self._on_hidden)
-        self.page.set_title("System Monitor")
+        self._build_properties()
+        self.screen.add_page(self.page)
         self.screen.redraw(self.page)
     
     def deactivate(self):
@@ -128,13 +130,6 @@ class G15SysMon():
     ''' Private
     '''
         
-    def _reload_theme(self):        
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-    
-    def _paint(self, canvas):
-        if self.properties != None:
-            self.theme.draw(canvas, self.properties) 
-            
     def _on_shown(self):
         self._reschedule_refresh()
             
@@ -285,7 +280,11 @@ class G15SysMon():
         properties["net_no"] = self.net_list[self.net_no].upper()
         properties["next_net_no"] =  self.net_list[self.net_no + 1].upper() if self.net_no < ( len(self.net_list) - 1) else self.net_list[0].upper()
         
-        self.properties = properties
+        self.page.theme_properties = properties
+    
+    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
+        if self.page != None and self._thumb_icon != None and self.screen.driver.get_bpp() == 16:
+            return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
         
     def _refresh(self):
         self._get_stats()

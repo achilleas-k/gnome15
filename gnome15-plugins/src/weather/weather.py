@@ -31,7 +31,6 @@ from threading import Timer
 import gtk
 import os
 import pywapi
-import gconf
 import pango
 import logging
 logger = logging.getLogger("weather")
@@ -103,94 +102,92 @@ def get_location(gconf_client, gconf_key):
 
 class G15Weather():
     
-    ''' Lifecycle functions. You must provide activate and deactivate,
-        the constructor and destroy function are optional
-    '''
-    
     def __init__(self, gconf_key, gconf_client, screen):
-        self.screen = screen
-        self.gconf_client = gconf_client
-        self.gconf_key = gconf_key
-        self.page = None
-        self.change_timer = None
-        self.timer = None
+        self._screen = screen
+        self._gconf_client = gconf_client
+        self._gconf_key = gconf_key
+        self._page = None
+        self._change_timer = None
+        self._timer = None
         
     def activate(self):
-        self.reload_theme()
-        self.properties = {}
-        self.attributes = {}
-        self.get_weather()
-        self.page = self.screen.new_page(self.paint, id="Weather", 
-                                        thumbnail_painter = self.paint_thumbnail,
-                                        panel_painter = self.paint_thumbnail)
-        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self.loc_changed, None)
-        self.screen.redraw(self.page)
-        self.refresh_after_interval()
-        
-    def refresh_after_interval(self):
-        self.cancel_timer()
-        val = self.gconf_client.get_int(self.gconf_key + "/update")
-        if val == 0:
-            val = 3600
-        self.timer = g15util.schedule("WeatherRefreshTimer", val * 60.0, self.refresh)
-        
-    def loc_changed(self, client, connection_id, entry, args):
-        # Only actually go and refresh after the value hasn't changed for a few seconds
-        self.cancel_change_timer()            
-        self.cancel_timer()
-        self.change_timer = Timer(3.0, self.refresh, ())
-        self.change_timer.name = "WeatherLocationChangeTimer"
-        self.change_timer.setDaemon(True)
-        self.change_timer.start()
-        
-        # And now start the main timer
-        self.refresh_after_interval()
+        self._page = g15theme.G15Page(id, self._screen, thumbnail_painter = self._paint_thumbnail,
+                                        panel_painter = self._paint_thumbnail, \
+                                        theme = g15theme.G15Theme(self))
+        self._get_weather()
+        self._screen.add_page(self._page)
+        self._notify_handle = self._gconf_client.notify_add(self._gconf_key, self._loc_changed, None)
+        self._screen.redraw(self._page)
+        self._refresh_after_interval()
     
     def deactivate(self):
-        self.gconf_client.notify_remove(self.notify_handle);
-        self.cancel_timer()
-        self.cancel_change_timer()
-        self.screen.del_page(self.page)
-        self.page = None
-        
-    def cancel_timer(self):
-        if self.timer != None:
-            self.timer.cancel()
-            self.timer = None
-    
-    def cancel_change_timer(self):
-        if self.change_timer != None:
-            self.change_timer.cancel()
-            self.change_timer = None
+        self._gconf_client.notify_remove(self._notify_handle);
+        self._cancel_timer()
+        self._cancel_change_timer()
+        self._screen.del_page(self._page)
+        self._page = None
     
     def destroy(self):
         pass
         
-    def refresh(self):
-        if self.page != None:
-            self.get_weather()
-            self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
+    """
+    Private
+    """
+        
+    def _refresh(self):
+        if self._page != None:
+            self._get_weather()
+            self._screen.set_priority(self._page, g15screen.PRI_HIGH, revert_after = 3.0)
+        
+    def _cancel_timer(self):
+        if self._timer != None:
+            self._timer.cancel()
+            self._timer = None
     
-    def get_weather(self):
+    def _cancel_change_timer(self):
+        if self._change_timer != None:
+            self._change_timer.cancel()
+            self._change_timer = None
+        
+    def _refresh_after_interval(self):
+        self._cancel_timer()
+        val = self._gconf_client.get_int(self._gconf_key + "/update")
+        if val == 0:
+            val = 3600
+        self._timer = g15util.schedule("WeatherRefreshTimer", val * 60.0, self._refresh)
+        
+    def _loc_changed(self, client, connection_id, entry, args):
+        # Only actually go and refresh after the value hasn't changed for a few seconds
+        self._cancel_change_timer()            
+        self._cancel_timer()
+        self._change_timer = Timer(3.0, self._refresh, ())
+        self._change_timer.name = "WeatherLocationChangeTimer"
+        self._change_timer.setDaemon(True)
+        self._change_timer.start()
+        
+        # And now start the main timer
+        self._refresh_after_interval()
+    
+    def _get_weather(self):
         properties = {}
         attributes = {}
         try :
-            loc = get_location(self.gconf_client, self.gconf_key)
+            loc = get_location(self._gconf_client, self._gconf_key)
             print "Getting weather for %s" % loc
-            self.weather = pywapi.get_weather_from_google(loc,  hl = ''  )
+            self._weather = pywapi.get_weather_from_google(loc,  hl = ''  )
             
             properties["location"] = loc
-            current = self.weather['current_conditions']
+            current = self._weather['current_conditions']
             
             if len(current) == 0:
                 properties["message"] = "No weather data for location:-\n%s" % loc
             else:                                            
                 properties["message"] = ""
-                t_icon = self.translate_icon(current['icon'])
+                t_icon = self._translate_icon(current['icon'])
                 if t_icon != None:
                     attributes["icon"] = g15util.load_surface_from_file(t_icon)
                     properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])
-                mono_thumb = self.get_mono_thumb_icon(current['icon'])        
+                mono_thumb = self._get_mono_thumb_icon(current['icon'])        
                 if mono_thumb != None:
                     attributes["mono_thumb_icon"] = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
                 properties["condition"] = current['condition']
@@ -199,7 +196,7 @@ class G15Weather():
                 properties["temp_f"] = "%3.1f°F" % float(current['temp_f'])
                 properties["temp_k"] = "%3.1f°K" % ( float(current['temp_c']) + 273.15 )
                 
-                units = self.gconf_client.get_int(self.gconf_key + "/units")
+                units = self._gconf_client.get_int(self._gconf_key + "/units")
                 if units == CELSIUS:                 
                     properties["temp"] = properties["temp_c"]              
                     properties["temp_short"] = "%2.0f°" % float(current['temp_c'])
@@ -211,7 +208,7 @@ class G15Weather():
                     properties["temp_short"] = "%2.0f°" % ( float(current['temp_c']) + 273.15 )
                     
                 y = 1
-                for forecast in self.weather['forecasts']:        
+                for forecast in self._weather['forecasts']:        
                     properties["condition" + str(y)] = forecast['condition']
                     lo_f = float(forecast['low'])
                     lo_c = ( ( lo_f - 32 ) / 9 ) * 5
@@ -232,21 +229,19 @@ class G15Weather():
 
                     properties["day" + str(y)] = forecast['day_of_week']
                     properties["day_letter" + str(y)] = forecast['day_of_week'][:1]
-                    properties["icon" + str(y)] = self.translate_icon(forecast['icon'])
+                    properties["icon" + str(y)] = self._translate_icon(forecast['icon'])
                     y += 1
             
-            self.properties = properties
-            self.attributes = attributes
+            self._page.theme_properties = properties
+            self._page.theme_attributes = attributes
         except Exception as e:
             print e
-            self.weather = None
-            self.properties = {}
-            self.attributes = {}
+            self._weather = None
+            if self._page:
+                self._page.theme_properties = {}
+                self._page.theme_attributes = {}
         
-    def reload_theme(self):        
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-        
-    def get_mono_thumb_icon(self, icon):
+    def _get_mono_thumb_icon(self, icon):
         if icon == None or icon == "":
             return None
         else :
@@ -273,7 +268,7 @@ class G15Weather():
             elif base_icon == "thunderstorm" or icon == "chance_of_tstorm":
                 return "mono-thunder.gif"
         
-    def translate_icon(self, icon):
+    def _translate_icon(self, icon):
         
         '''
         http://www.blindmotion.com/?p=73
@@ -345,35 +340,35 @@ class G15Weather():
             base_icon = base_icon[8:]
         return base_icon
     
-    def paint_thumbnail(self, canvas, allocated_size, horizontal):
+    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         total_taken = 0
-        if self.screen.driver.get_bpp() == 1:
-            if "mono_thumb_icon" in self.attributes:
-                size = g15util.paint_thumbnail_image(allocated_size, self.attributes["mono_thumb_icon"], canvas)
+        if self._screen.driver.get_bpp() == 1:
+            if "mono_thumb_icon" in self._page.theme_attributes:
+                size = g15util.paint_thumbnail_image(allocated_size, self._page.theme_attributes["mono_thumb_icon"], canvas)
                 canvas.translate(size + 2, 0)
                 total_taken += size + 2
-            if "temp_short" in self.properties:
-                pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp_short"], font_desc = g15globals.fixed_size_font_name, font_absolute_size =  6 * pango.SCALE / 2)
+            if "temp_short" in self._page.theme_properties:
+                pango_context, layout = g15util.create_pango_context(canvas, self._screen, self._page.theme_properties["temp_short"], font_desc = g15globals.fixed_size_font_name, font_absolute_size =  6 * pango.SCALE / 2)
                 x, y, width, height = g15util.get_extents(layout)
                 total_taken += width
                 pango_context.update_layout(layout)
                 pango_context.show_layout(layout)
         else:
-            if "icon" in self.attributes:
-                size = g15util.paint_thumbnail_image(allocated_size, self.attributes["icon"], canvas)
+            if "icon" in self._page.theme_attributes:
+                size = g15util.paint_thumbnail_image(allocated_size, self._page.theme_attributes["icon"], canvas)
                 if horizontal:
                     canvas.translate(size, 0)
                 else:
                     canvas.translate(0, size)
                 total_taken += size
-            if "temp" in self.properties:
+            if "temp" in self._page.theme_properties:
                 if horizontal: 
-                    pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 2)
+                    pango_context, layout = g15util.create_pango_context(canvas, self._screen, self._page.theme_properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 2)
                     x, y, width, height = g15util.get_extents(layout)
                     pango_context.move_to(0, (allocated_size / 2) - height / 2)
                     total_taken += width + 4
                 else:  
-                    pango_context, layout = g15util.create_pango_context(canvas, self.screen, self.properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 4)
+                    pango_context, layout = g15util.create_pango_context(canvas, self._screen, self._page.theme_properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 4)
                     x, y, width, height = g15util.get_extents(layout)
                     pango_context.move_to((allocated_size / 2) - width / 2, 0)
                     total_taken += height + 4     
@@ -381,6 +376,3 @@ class G15Weather():
                 pango_context.show_layout(layout)
         return total_taken
             
-    def paint(self, canvas):
-        loc = get_location(self.gconf_client, self.gconf_key)
-        self.theme.draw(canvas, self.properties)                

@@ -76,28 +76,25 @@ class G15Stopwatch():
         self._reload_theme()
 
         if self.screen.device.bpp == 16:
-            self.page = self.screen.new_page(self.paint, id="Stopwatch", thumbnail_painter = self.paint_thumbnail, panel_painter = self.paint_thumbnail)
+            self.page = g15theme.G15Page(id, self.screen, thumbnail_painter = self.paint_thumbnail, \
+                                         panel_painter = self.paint_thumbnail, title = name,
+                                         theme = self.theme, theme_properties_callback = self._get_properties)
         else:
             """
             Don't show on the panel for G15, there just isn't enough room
             Long term, this will be configurable per plugin
             """
-            self.page = self.screen.new_page(self.paint, id="Stopwatch", thumbnail_painter = self.paint_thumbnail)
-            
-        self.page.title = "Stopwatch"
-
+            self.page = g15theme.G15Page(id, self.screen, thumbnail_painter = self.paint_thumbnail, \
+                                         title = name,
+                                         theme = self.theme)
+        self.screen.add_page(self.page)
         self.screen.redraw(self.page)
-
         self._schedule_redraw()
-
         self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self._config_changed);
 
     def deactivate(self):
-
         self.gconf_client.notify_remove(self.notify_handle);
-
         self._cancel_refresh()
-
         self.screen.del_page(self.page)
 
     def destroy(self):
@@ -158,25 +155,23 @@ class G15Stopwatch():
                     self._redraw()
                     return True
 
-
-    def paint(self, canvas):
+    def draw(self, element, theme):
         timer_label = None
         other_timer_label = None
         if self.active_timer == self.timer1:
-            timer_label = self.theme.get_element("timer1_label")
-            other_timer_label = self.theme.get_element("timer2_label")
+            timer_label = theme.get_element("timer1_label")
+            other_timer_label = theme.get_element("timer2_label")
         elif self.active_timer == self.timer2:
-            timer_label = self.theme.get_element("timer2_label")
-            other_timer_label = self.theme.get_element("timer1_label")
+            timer_label = theme.get_element("timer2_label")
+            other_timer_label = theme.get_element("timer1_label")
         if timer_label != None:
-            styles = self.theme.parse_css(timer_label.get("style"))
+            styles = theme.parse_css(timer_label.get("style"))
             styles["font-weight"] = "bold"
-            timer_label.set("style", self.theme.format_styles(styles))
+            timer_label.set("style", theme.format_styles(styles))
         if other_timer_label != None:
-            styles = self.theme.parse_css(other_timer_label.get("style"))
+            styles = theme.parse_css(other_timer_label.get("style"))
             styles["font-weight"] = "normal"
-            other_timer_label.set("style", self.theme.format_styles(styles))
-        self.theme.draw(canvas, self._get_properties())
+            other_timer_label.set("style", theme.format_styles(styles))
 
     '''
     Paint the thumbnail. You are given the MAXIMUM amount of space that is allocated for
@@ -292,7 +287,9 @@ class G15Stopwatch():
             variant = "two_timers"
         elif self.timer1.get_enabled() or self.timer2.get_enabled():
             variant = "one_timer"
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen, variant)
+        self.theme = g15theme.G15Theme(self, variant)
+        if self.page != None:
+            self.page.set_theme(self.theme)
 
     def _get_properties(self):
         properties = { }

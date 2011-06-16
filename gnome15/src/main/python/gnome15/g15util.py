@@ -44,6 +44,44 @@ from threading import Thread
 
 from HTMLParser import HTMLParser
 
+'''
+Lookup tables
+'''
+
+pt_to_px = { 
+            6.0: 8.0, 
+            7.0: 9, 
+            7.5: 10, 
+            8.0: 11, 
+            9.0: 12, 
+            10.0: 13, 
+            10.5: 14, 
+            11.0: 15, 
+            12.0: 16, 
+            13.0: 17, 
+            13.5: 18, 
+            14.0: 19, 
+            14.5: 20, 
+            15.0: 21, 
+            16.0: 22, 
+            17.0: 23, 
+            18.0: 24, 
+            20.0: 26, 
+            22.0: 29, 
+            24.0: 32, 
+            26.0: 35, 
+            27.0: 36, 
+            28.0: 37, 
+            29.0: 38, 
+            30.0: 40, 
+            32.0: 42, 
+            34.0: 45, 
+            36.0: 48
+            }
+px_to_pt = {}
+for pt in pt_to_px:
+    px_to_pt[pt_to_px[pt]] = pt
+
 
 ''' 
 Default scheduler
@@ -376,6 +414,11 @@ def load_surface_from_file(filename, size = None):
         logger.warning("Empty filename requested")
         return None
     if "://" in filename:
+        
+        if filename.startswith("http:"):
+            print "** Loading from HTTP!! Not goood"
+        
+        
         try:
             file = urllib.urlopen(filename)
             data = file.read()
@@ -594,6 +637,16 @@ def get_scale(target, actual):
 '''
 Pango
 '''
+
+def approx_px_to_pt(px):
+    if px % 1 >= 0.5:
+        px = round(px)
+    else:
+        px = round(px) + 0.5
+    if px in px_to_pt:
+        return px_to_pt[px]
+    else:
+        return int(px * 72.0 / 96)
              
 def create_pango_context(canvas, screen, text, wrap = None, align = None, width = None, spacing = None, font_desc = None, font_absolute_size = None):
     pango_context = pangocairo.CairoContext(canvas)
@@ -669,6 +722,8 @@ def get_transforms(element, position_only = False):
                     list.append(cairo.Matrix(float(args[0]), float(args[1]), float(args[2]), float(args[3]),float(args[4]),float(args[5])))
                 else:
                     list.append(cairo.Matrix(1, 0, 0, 1, float(args[4]),float(args[5])))
+            elif name == "scale":
+                list.append(cairo.Matrix(float(args[0]), 0.0, 0.0, float(args[1]), 0.0, 0.0))
             else:
                 logger.warning("Unspported transform %s" % name)
             start = end_args + 1
@@ -713,8 +768,11 @@ def get_location(element):
 
 def get_actual_bounds(element):
     id = element.get("id")
-    transforms = []
     bounds = get_bounds(element)
+    transforms = []
+    t = cairo.Matrix()
+    t.translate(bounds[0],bounds[1])
+    transforms.append(t)
     while element != None:
         transforms += get_transforms(element, position_only=True)
         element = element.getparent()
@@ -723,9 +781,6 @@ def get_actual_bounds(element):
         t = transforms[0]
         for i in range(1, len(transforms)):
             t = t.multiply(transforms[i])
-    else:
-        t = cairo.Matrix()
-    t.translate(bounds[0],bounds[1])
     args = str(t)[13:-1].split(", ")
     b = (float(args[4]),float(args[5]),bounds[2],bounds[3])
     return b

@@ -1,4 +1,4 @@
-etc/*
+etc/xdg/*
 usr/bin/*
 usr/share/applications/*
 usr/share/gnome15/glade/g15-*

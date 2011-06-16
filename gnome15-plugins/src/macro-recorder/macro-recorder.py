@@ -51,7 +51,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
-unsupported_models = [ g15driver.MODEL_Z10 ]
+unsupported_models = [ g15driver.MODEL_Z10, g15driver.MODEL_MX5500 ]
 reserved_keys = [ g15driver.G_KEY_MR ]
 
 
@@ -114,7 +114,7 @@ class G15MacroRecorder():
         self._lights_control = None
     
     def activate(self):
-        self._reload_theme()
+        self._theme = g15theme.G15Theme(self)
         self._listener = MacroRecorderScreenChangeListener(self)
         self._screen.add_screen_change_listener(self._listener)
     
@@ -126,7 +126,7 @@ class G15MacroRecorder():
         if self._record_thread != None:
             self._record_thread.disable_record_context()
     
-    def handle_key(self, keys, state, post):    
+    def handle_key(self, keys, state, post):
         if not post and state == g15driver.KEY_STATE_DOWN:
             # Memory keys
             if g15driver.G_KEY_MR in keys:              
@@ -135,8 +135,6 @@ class G15MacroRecorder():
                 else:
                     self._start_recording()
                 return True
-            elif g15driver.G_KEY_M1 in keys or g15driver.G_KEY_M2 in keys or g15driver.G_KEY_M3 in keys:
-                pass
             else:
                 # All other keys end recording
                 self._last_keys = keys                    
@@ -144,8 +142,9 @@ class G15MacroRecorder():
                     self._record_keys = keys
                     self._done_recording()
                     return True
-                
-        return False
+                              
+        
+        return self._record_thread != None
                 
     '''
     Private
@@ -255,16 +254,14 @@ class G15MacroRecorder():
         if self._page != None:
             self._screen.redraw(self._page)     
         
-    def _reload_theme(self):        
-        self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen)
-    
     def _start_recording(self):      
         self._script_model = []      
         if self._screen.device.bpp > 0:
-            self._page = self._screen.get_page("Macro Recorder")
             if self._page == None:
-                self._page = self._screen.new_page(self._paint, priority=g15screen.PRI_EXCLUSIVE,  id="Macro Recorder")
-            self._page.title = "Macro Recorder"
+                self._page = g15theme.G15Page(id, self._screen, priority=g15screen.PRI_EXCLUSIVE,\
+                                              title = name, theme_properties_callback = self._get_theme_properties, \
+                                              theme = self._theme)
+                self._screen.add_page(self._page)
         self.icon = "media-record"
         self._message = None
         self._redraw()
@@ -275,7 +272,7 @@ class G15MacroRecorder():
         self._lights_control.blink(0, 0.5)
         self._screen.request_defeat_profile_change()
         
-    def _paint(self, canvas):
+    def _get_theme_properties(self):
         
         active_profile = g15profile.get_active_profile(self._screen.device)
         
@@ -296,4 +293,4 @@ class G15MacroRecorder():
             properties["profile_icon"] = ""
             properties["message"] = "You have no profiles configured. Configure one now using the Macro tool"
             
-        self._theme.draw(canvas, properties)
+        return properties

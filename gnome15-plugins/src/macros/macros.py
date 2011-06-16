@@ -41,7 +41,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 
 def create(gconf_key, gconf_client, screen):
     return G15Macros(gconf_client, gconf_key, screen)
@@ -51,19 +51,17 @@ def create(gconf_key, gconf_client, screen):
 Represents a mount as a single item in a menu
 """
 class MacroMenuItem(g15theme.MenuItem):    
-    def __init__(self, macro, plugin):
-        g15theme.MenuItem.__init__(self)
+    def __init__(self, macro, plugin, id):
+        g15theme.MenuItem.__init__(self, id)
         self.macro = macro
         self._plugin = plugin
         
-    def draw(self, selected, canvas, menu_proties, menu_attributes):       
-        item_properties = {}
-        item_properties["item_selected"] = selected == self
+    def get_theme_properties(self):       
+        item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self.macro.name
         item_properties["item_type"] = ""        
         item_properties["item_key"] = ", ".join(g15util.get_key_names(self.macro.keys))
-        self.theme.draw(canvas, item_properties)
-        return self.theme.bounds[3]
+        return item_properties
     
     def get_default_theme_dir(self):
         return os.path.join(os.path.dirname(__file__), "default")
@@ -97,8 +95,8 @@ class G15Macros(g15plugin.G15MenuPlugin):
     def get_theme_path(self):
         return os.path.join(os.path.dirname(__file__), "default")
     
-    def get_theme_properties(self, properties):
-        properties = g15plugin.G15MenuPlugin.get_theme_properties(self, properties)
+    def get_theme_properties(self):
+        properties = g15plugin.G15MenuPlugin.get_theme_properties(self)
         properties["title"] = self._active_profile.name
         properties["mkey"] = "M%d" % self._mkey
         properties["icon"] = self._get_active_profile_icon_path()
@@ -131,12 +129,17 @@ class G15Macros(g15plugin.G15MenuPlugin):
         """
         Reload all items for the current profile and bank
         """
-        self.menu.clear_items()
+        self._get_configuration()
+        self.menu.remove_all_children()
         self.page.set_title("Macros - %s" % self._active_profile.name)
-        macros = self._active_profile.macros[self._mkey - 1]        
-        for macro in sorted(macros, key=lambda key: key.key_list_key):
+        macros = list(self._active_profile.macros[self._mkey - 1])
+        macros.sort(self._comparator)
+        for macro in macros:
             self._add_macro(macro)
         self.screen.redraw(self.page)
+        
+    def _comparator(self, o1, o2):
+        return o1.compare(o2)
         
     def _get_configuration(self):
         self._mkey = self.screen.get_mkey()
@@ -154,14 +157,14 @@ class G15Macros(g15plugin.G15MenuPlugin):
         Remove a macro from the menu
         """ 
         logger.info("Removing macro %s" % str(macro.name))
-        self.menu.remove_item(self._get_item_for_macro(macro))
+        self.menu.remove_child(self._get_item_for_macro(macro))
         self.screen.redraw(self.page)
         
     def _get_item_for_macro(self, macro):
         """
         Get the menu item for the given macro
         """
-        for item in self.menu.get_items():
+        for item in self.menu.get_children():
             if isinstance(item, MacroMenuItem) and item.macro == macro:
                 return item
     
@@ -170,8 +173,8 @@ class G15Macros(g15plugin.G15MenuPlugin):
         Add a new macro to the menu
         """ 
         logger.info("Adding macro %s" % str(macro.name))
-        item = MacroMenuItem(macro, self)
-        self.menu.add_item(item)
+        item = MacroMenuItem(macro, self, "macro-%s" % macro.key_list_key)
+        self.menu.add_child(item)
         self.screen.redraw(self.page)
         
 class MacrosScreenChangeAdapter(g15screen.ScreenChangeAdapter):

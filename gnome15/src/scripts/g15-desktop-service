@@ -26,7 +26,7 @@ import glib
 
 # Logging
 import logging
-logging.basicConfig(format='%(threadName)s:%(name)s:%(message)s')
+logging.basicConfig(format='%(levelname)s:%(threadName)s:%(name)s:%(message)s')
 logger = logging.getLogger()
 
 LEVELS = {'debug': logging.DEBUG,

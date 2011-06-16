@@ -306,23 +306,11 @@ class G15NotifyLCD():
     
     def __init__(self, gconf_client,gconf_key, screen):
         self._screen = screen;
-        self._last_variant = None
         self._gconf_key = gconf_key
         self._session_bus = dbus.SessionBus()
         self._gconf_client = gconf_client
         self._lock = RLock()
-        self._displayed_notification = 0
-        self._active = True
-        self._timer = None
-        self._redraw_timer = None
-        self._blink_thread = None
-        self._control_values = []
-        self._message_queue = []
-        self._message_map = {}
-        self._current_message = None
-        self._service = None
         self.id = 1
-        self.notify_handle = None
         
     def _load_configuration(self):
         self.respect_timeout = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/respect_timeout", False)
@@ -338,8 +326,21 @@ class G15NotifyLCD():
         self.keyboard_backlight_color  = g15util.get_rgb_or_default(self._gconf_client, self._gconf_key + "/keyboard_backlight_color", ( 128, 128, 128 ))
 
     def activate(self):
+        self._last_variant = None
+        self._displayed_notification = 0
+        self._active = True
+        self._timer = None
+        self._redraw_timer = None
+        self._blink_thread = None
+        self._control_values = []
+        self._message_queue = []
+        self._message_map = {}
+        self._current_message = None
+        self._service = None
         self._bus = dbus.SessionBus()
         self._load_configuration()
+        self._notify_handle = None
+        self._page = None
         
         if not self.on_desktop:        
             # Already running
@@ -365,7 +366,7 @@ class G15NotifyLCD():
             self._bus.add_match_string_non_blocking("interface='org.freedesktop.Notifications'")
             self._bus.add_message_filter(self.msg_cb)
             
-        self.notify_handle = self._gconf_client.notify_add(self._gconf_key, self._configuration_changed)
+        self._notify_handle = self._gconf_client.notify_add(self._gconf_key, self._configuration_changed)
             
     def msg_cb(self, bus, msg):
         # Only interested in method calls
@@ -382,8 +383,8 @@ class G15NotifyLCD():
         # TODO How do we properly 'unexport' a service? This seems to kind of work, in
         # that notify-osd can take over again, but trying to re-activate the plugin
         # doesn't reclaim the bus name (I think because it is cached)
-        if self.notify_handle:
-            self._gconf_client.notify_remove(self.notify_handle)
+        if self._notify_handle:
+            self._gconf_client.notify_remove(self._notify_handle)
         if self._service:
             if not self._screen.service.shutting_down:
                 logger.warn("Deactivated notify service. Currently the service cannot be reactivated once deactivated. You must completely restart Gnome15")
@@ -400,9 +401,8 @@ class G15NotifyLCD():
         pass 
                     
     def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP:            
-            page = self._screen.get_page("NotifyLCD")
-            if page != None:            
+        if not post and state == g15driver.KEY_STATE_DOWN:            
+            if self._page != None:            
                 if g15driver.G_KEY_BACK in keys or g15driver.G_KEY_L3 in keys:
                     self.clear()
                     return True   
@@ -443,10 +443,9 @@ class G15NotifyLCD():
                     # If this message is the visible one, then reset the timer
                     if message == self._message_queue[0]:
                         self._start_timer(message)
-                    else:                        
-                        page = self._screen.get_page("NotifyLCD")
-                        if page != None:
-                            self._screen.redraw(page)
+                    else:            
+                        if self._page != None:
+                            self._screen.redraw(self._page)
                 else:
                     # Otherwise queue a new message
                     message = G15Message(self.id, icon, summary, body, timeout, actions, hints)
@@ -460,9 +459,8 @@ class G15NotifyLCD():
                         except Exception as blah:
                             traceback.print_exc()
                     else:                               
-                        page = self._screen.get_page("NotifyLCD")
-                        if page != None:
-                            self._screen.redraw(page)
+                        if self._page != None:
+                            self._screen.redraw(self._page)
                 return message.id                         
         except Exception as blah:
             traceback.print_exc()
@@ -495,9 +493,8 @@ class G15NotifyLCD():
             self._message_queue = []
             self._message_map = {}
             self._cancel_timer()
-            page = self._screen.get_page("NotifyLCD")
-            if page != None:
-                self._screen.del_page(page)  
+            if self._page != None:
+                self._screen.del_page(self._page)  
         finally:
             self._lock.release()
     
@@ -507,11 +504,12 @@ class G15NotifyLCD():
     
     def action(self):
         self._cancel_timer()
-        message = self._message_queue[0]
-        action = message.actions[0]
-        if self._service:
-            self._service.ActionInvoked(message.id, action[0])
-        self._move_to_next()
+        if len(self._message_queue) > 0:
+            message = self._message_queue[0]
+            action = message.actions[0]
+            if self._service:
+                self._service.ActionInvoked(message.id, action[0])
+            self._move_to_next()
       
     ''' 
     Private
@@ -519,18 +517,17 @@ class G15NotifyLCD():
     def _configuration_changed(self, client, connection_id, entry, args):
         self._load_configuration()
           
-    def _reload_theme(self):        
-        self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self._screen, self._last_variant)
-        
-    def _paint(self, canvas):
+    def _get_theme_properties(self):
         width_available = self._screen.width
-        properties = {}        
+        properties = {}  
         properties["title"] = self._current_message.summary
         properties["message"] = self._current_message.body
         if self._current_message.icon != None and len(self._current_message.icon) > 0:
             properties["icon"] = g15util.get_icon_path(self._current_message.icon)
         elif self._current_message.embedded_image != None:
             properties["icon"] = self._current_message.embedded_image
+        else:
+            properties["icon"] = g15util.get_icon_path(["dialog-info", "stock_dialog-info", "messagebox_info" ])            
                     
         properties["next"] = len(self._message_queue) > 1
         action = 1
@@ -543,9 +540,8 @@ class G15NotifyLCD():
         time_displayed = time.time() - self._displayed_notification
         remaining = self._current_message.timeout - time_displayed
         remaining_pc = ( remaining / self._current_message.timeout ) * 100.0
-        properties["remaining"] = int(remaining_pc / 10) * 10 
-                    
-        self._theme.draw(canvas, properties)
+        properties["remaining"] = int(remaining_pc) 
+        return properties
 
     def _notify(self):
         if len(self._message_queue) != 0:   
@@ -561,17 +557,17 @@ class G15NotifyLCD():
     
             # Get the page
              
-            page = self._screen.get_page("NotifyLCD")
-            if page == None:
+            if self._page == None:
                 self._control_values = []
                 for c in self._screen.driver.get_controls():
                     if c.hint & g15driver.HINT_DIMMABLE != 0:
                         self._control_values.append(c.value)
-                self._reload_theme()
-                page = self._screen.new_page(self._paint, priority=g15screen.PRI_HIGH, id="NotifyLCD")
+                self._page = g15theme.G15Page(id, self._screen, priority=g15screen.PRI_HIGH, title = name, \
+                                              theme_properties_callback = self._get_theme_properties, \
+                                              theme = g15theme.G15Theme(self, self._last_variant))
+                self._screen.add_page(self._page)
             else:
-                self._reload_theme()
-                self._screen.raise_page(page)
+                self._screen.raise_page(self._page)
                 
             self._start_timer(message)         
             self._do_redraw()
@@ -593,10 +589,9 @@ class G15NotifyLCD():
                 
                 
     def _do_redraw(self):
-        page = self._screen.get_page("NotifyLCD")
-        if page != None:
-            self._screen.redraw(page)
-            self._redraw_timer = g15util.schedule("Notification", 1.0, self._do_redraw)
+        if self._page != None:
+            self._screen.redraw(self._page)
+            self._redraw_timer = g15util.schedule("Notification", self._screen.service.animation_delay, self._do_redraw)
           
     def _cancel_redraw(self):
         if self._redraw_timer != None:
@@ -620,7 +615,8 @@ class G15NotifyLCD():
             if len(self._message_queue) != 0:
                 self._notify()  
             else:
-                self._screen.del_page(self._screen.get_page("NotifyLCD"))
+                self._screen.del_page(self._page)
+                self._page = None
         finally:
             self._lock.release()
                   

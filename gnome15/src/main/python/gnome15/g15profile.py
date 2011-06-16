@@ -165,6 +165,26 @@ class G15Macro:
         section_name = "m%d" % self.memory
         if not self.profile.parser.has_section(section_name):
             self.profile.parser.add_section(section_name)
+            
+    def compare(self, o):
+        return self._get_total(self.keys) - self._get_total(o.keys)
+    
+    def _get_total(self, keys):
+        t = 0
+        for i in range(0, len(keys)):
+            t += self._get_key_val(keys[i])
+        return t
+            
+    def _get_key_val(self, key):        
+        if key.startswith("g"):
+            return int(key[1:])
+        elif key.startswith("m"):
+            return 50 + int(key[1:])
+        elif key.startswith("l"):
+            return 100 + int(key[1:])
+        else:
+            return 200 + self.profile.device.get_key_index(key)
+        
         
     def set_keys(self, keys):
         section_name = "m%d" % self.memory     
@@ -363,6 +383,6 @@ class G15Profile():
     def _get_filename(self):
         return "%s/%s/%d.macros" % ( conf_dir, self.device.uid, self.id )
         
-# Create the default
+# Create the default for all devices
 for device in g15devices.find_all_devices():
     create_default(device)

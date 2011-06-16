@@ -14,10 +14,22 @@
    height="43"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="default.svg">
   <defs
-     id="defs4" />
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3004">
+      <rect
+         style="fill:#000000;fill-opacity:0.50196078;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none"
+         id="rect3006"
+         width="160"
+         height="8.8928576"
+         x="0"
+         y="1009.3622" />
+    </clipPath>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -34,8 +46,8 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="620"
-     inkscape:window-x="2030"
-     inkscape:window-y="1"
+     inkscape:window-x="2036"
+     inkscape:window-y="33"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -87,7 +99,7 @@
        sodipodi:linespacing="125%"
        text-rendering="optimizeLegibility" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/notify-lcd/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/notify-lcd/default/${icon}"
        xlink:href="${icon}"
        height="29"
        width="29"
@@ -119,7 +131,8 @@
        x="0.33593473"
        y="1016.0575"
        id="text2993"
-       sodipodi:linespacing="125%"><tspan
+       sodipodi:linespacing="125%"
+       clip-path="url(#clipPath3004)"><tspan
          sodipodi:role="line"
          id="tspan2995"
          x="0.33593473"
