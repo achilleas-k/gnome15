@@ -106,7 +106,7 @@ g15_action_keys = { g15screen.NEXT_SELECTION: ActionBinding(g15screen.NEXT_SELEC
                     g15screen.SELECT: ActionBinding(g15screen.SELECT, [ g15driver.G_KEY_L5 ], g15driver.KEY_STATE_UP),
                     g15screen.MENU: ActionBinding(g15screen.MENU, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_HELD),
                     g15screen.CLEAR: ActionBinding(g15screen.CLEAR, [ g15driver.G_KEY_L5 ], g15driver.KEY_STATE_HELD),
-                    g15screen.VIEW: ActionBinding(g15screen.VIEW, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_HELD),
+                    g15screen.VIEW: ActionBinding(g15screen.VIEW, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_UP),
                     g15screen.NEXT_PAGE: ActionBinding(g15screen.NEXT_PAGE, [ g15driver.G_KEY_L4 ], g15driver.KEY_STATE_HELD),
                     g15screen.PREVIOUS_PAGE: ActionBinding(g15screen.PREVIOUS_PAGE, [ g15driver.G_KEY_L3 ], g15driver.KEY_STATE_HELD)
                    }
@@ -149,10 +149,10 @@ mx5500_key_layout = [
                      ]
 mx5500_action_keys = { g15screen.NEXT_SELECTION: ActionBinding(g15screen.NEXT_SELECTION, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_UP),
                     g15screen.PREVIOUS_SELECTION: ActionBinding(g15screen.PREVIOUS_SELECTION, [ g15driver.G_KEY_UP ], g15driver.KEY_STATE_UP),
-                    g15screen.SELECT: ActionBinding(g15screen.SELECT, [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_UP),
+                    g15screen.SELECT: ActionBinding(g15screen.SELECT, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_HELD),
                     g15screen.MENU: ActionBinding(g15screen.MENU, [ g15driver.G_KEY_UP ], g15driver.KEY_STATE_HELD),
                     g15screen.CLEAR: ActionBinding(g15screen.CLEAR, [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_HELD),
-                    g15screen.VIEW: ActionBinding(g15screen.VIEW, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_HELD)
+                    g15screen.VIEW: ActionBinding(g15screen.VIEW, [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_UP)
                    }
 
 # Registered Logitech models

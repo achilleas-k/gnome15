@@ -40,6 +40,39 @@
          x="0"
          y="1064.6735" />
     </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3007">
+      <rect
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3009"
+         width="155.14336"
+         height="12.37565"
+         x="0"
+         y="1044.0533" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3013">
+      <rect
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3015"
+         width="155.14261"
+         height="9.2817831"
+         x="0"
+         y="1055.4028" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3019">
+      <rect
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3021"
+         width="155.14424"
+         height="8.2503862"
+         x="0"
+         y="1066.736" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -57,7 +90,7 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="197"
+     inkscape:window-x="204"
      inkscape:window-y="90"
      inkscape:window-maximized="0">
     <inkscape:grid
@@ -141,11 +174,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/mpris/default/${icon}"
        xlink:href="${icon}"
-       height="31"
-       width="31"
-       y="1009.3622"
+       id="image3051"
        x="0"
-       id="image3051" />
+       y="1009.3622"
+       width="31"
+       height="31" />
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.99999994;stroke-opacity:1"
        id="rect2990"
@@ -184,7 +217,7 @@
        sodipodi:linespacing="125%"
        transform="scale(1.0312983,0.96965152)"
        class="shadow"
-       clip-path="url(#clipPath3777)"><tspan
+       clip-path="url(#clipPath3019)"><tspan
          sodipodi:role="line"
          id="tspan3776-9-9"
          x="78.973198"
@@ -199,7 +232,7 @@
        sodipodi:linespacing="125%"
        transform="scale(1.0313092,0.9696413)"
        class="shadow"
-       clip-path="url(#clipPath3771)"><tspan
+       clip-path="url(#clipPath3013)"><tspan
          sodipodi:role="line"
          id="tspan3776-9-9-6"
          x="77.694199"
@@ -209,15 +242,16 @@
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.5;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
        x="77.512329"
-       y="1051.3781"
+       y="1055.5033"
        id="text3774-0-1-3-3"
        sodipodi:linespacing="125%"
        transform="scale(1.0313042,0.96964601)"
-       class="shadow"><tspan
+       class="shadow"
+       clip-path="url(#clipPath3007)"><tspan
          sodipodi:role="line"
          id="tspan3776-9-9-6-3"
          x="77.512329"
-         y="1051.3781"
+         y="1055.5033"
          style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;stroke:none;font-family:Sans;-inkscape-font-specification:Sans">${artist}</tspan></text>
   </g>
 </svg>

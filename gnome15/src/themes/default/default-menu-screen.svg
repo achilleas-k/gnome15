@@ -19,14 +19,14 @@
      id="defs4">
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3014">
+       id="clipPath2996">
       <rect
-         style="fill:#000000;fill-opacity:1;stroke:none"
-         id="rect3016"
-         width="99.99984"
-         height="8.0000124"
+         y="1009.3638"
          x="0"
-         y="1009.3638" />
+         height="8.0000124"
+         width="89.999855"
+         id="rect2998"
+         style="fill:#000000;fill-opacity:1;stroke:none" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -45,7 +45,7 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="350"
+     inkscape:window-x="371"
      inkscape:window-y="82"
      inkscape:window-maximized="0">
     <inkscape:grid
@@ -90,7 +90,7 @@
        sodipodi:linespacing="125%"
        transform="scale(1.0000016,0.9999984)"
        class="shadow"
-       clip-path="url(#clipPath3014)"><tspan
+       clip-path="url(#clipPath2996)"><tspan
          sodipodi:role="line"
          id="tspan3039"
          x="0.33593482"
@@ -132,7 +132,7 @@
     <text
        xml:space="preserve"
        style="font-size:8.0000124px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="158.25766"
+       x="94.52343"
        y="1016.0591"
        id="text3037-4"
        sodipodi:linespacing="125%"
@@ -140,7 +140,7 @@
        class="shadow"><tspan
          sodipodi:role="line"
          id="tspan3039-9"
-         x="158.25766"
+         x="94.52343"
          y="1016.0591">${alt_title}</tspan></text>
   </g>
 </svg>

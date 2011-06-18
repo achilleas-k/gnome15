@@ -69,6 +69,9 @@ class G15Timer():
             self.pause()
         else:
             self.resume()
+            
+    def is_running(self):
+        return self.__running
 
     def pause(self):
         self._last_value = self.__value()

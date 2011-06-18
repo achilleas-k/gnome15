@@ -18,16 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
 
-import gnome15.g15screen as g15screen 
-import gnome15.g15theme as g15theme 
 import gnome15.g15util as g15util
-import gnome15.g15driver as g15driver
-import gnome15.g15globals as g15globals
-import datetime
 import gtk
-import pango
 import os
-import sys
 
 class G15StopwatchPreferences():
 
@@ -78,6 +71,7 @@ class G15StopwatchPreferences():
         g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer2_seconds", "sb_timer2_seconds", 0, widget_tree, False)
 
         g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer2_loop", "cb_timer2_loop", False, widget_tree, True)
+        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/keep_page_visible", "cb_keep_page_visible", True, widget_tree, True)
 
         # Refresh UI state
         self._timer_timer_mode(None, widget_tree, "1", rb_timer1_countdown.get_active())

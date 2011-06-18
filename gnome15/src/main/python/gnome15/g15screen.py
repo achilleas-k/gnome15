@@ -657,9 +657,13 @@ class G15Screen():
                     if timer.is_complete():
                         # Key "hold" completed
                         logger.info("Consuming key %s" %k)
+                        if k in self.active_key_state:
+                            del self.active_key_state[k]
                         keys.remove(k)
                     self.keys_held[k].cancel()
-                    del self.keys_held[k]            
+                    del self.keys_held[k]
+                if len(self.keys_held) == 0:
+                    self.active_key_state = {}
             elif state == g15driver.KEY_STATE_HELD:
                 logger.info("Keys %s HELD" % str(keys))
                         
@@ -699,10 +703,11 @@ class G15Screen():
                             f = 0
                             for k in binding.keys:
                                 if k in self.active_key_state and binding.state == self.active_key_state[k]:
+                                    del self.active_key_state[k]
                                     f += 1
                             if f == len(binding.keys): 
                                 logger.info("Invoking action '%s'" % binding.action)
-                                for l in self.action_listeners:
+                                for l in self.action_listeners:                                    
                                     l.action_performed(binding)
                 
                 

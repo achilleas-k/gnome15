@@ -20,11 +20,11 @@
      id="defs4">
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3004">
+       id="clipPath3005">
       <rect
          style="fill:#000000;fill-opacity:0.50196078;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none"
-         id="rect3006"
-         width="160"
+         id="rect3008"
+         width="92.321426"
          height="8.8928576"
          x="0"
          y="1009.3622" />
@@ -46,7 +46,7 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="620"
-     inkscape:window-x="2036"
+     inkscape:window-x="2050"
      inkscape:window-y="33"
      inkscape:window-maximized="0">
     <inkscape:grid
@@ -132,7 +132,7 @@
        y="1016.0575"
        id="text2993"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath3004)"><tspan
+       clip-path="url(#clipPath3005)"><tspan
          sodipodi:role="line"
          id="tspan2995"
          x="0.33593473"

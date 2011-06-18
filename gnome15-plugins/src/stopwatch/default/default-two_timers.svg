@@ -16,7 +16,52 @@
    inkscape:version="0.48.1 r9760"
    sodipodi:docname="default-two_timers.svg">
   <defs
-     id="defs4" />
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3038">
+      <rect
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3040"
+         width="62.759743"
+         height="12.269011"
+         x="-0.2241419"
+         y="1085.574" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3042">
+      <rect
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3044"
+         width="62.759743"
+         height="12.269011"
+         x="0"
+         y="1119.1147" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3058">
+      <rect
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3060"
+         width="64.552879"
+         height="11.153646"
+         x="78.897957"
+         y="1135.3275" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3067">
+      <rect
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3069"
+         width="62.759686"
+         height="11.153657"
+         x="79.730408"
+         y="1099.7964" />
+    </clipPath>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -25,16 +70,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
-     inkscape:cx="58.482138"
+     inkscape:cx="69.374995"
      inkscape:cy="25.662595"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
-     inkscape:window-width="1680"
-     inkscape:window-height="1026"
-     inkscape:window-x="1680"
-     inkscape:window-y="0"
+     inkscape:window-width="1920"
+     inkscape:window-height="1056"
+     inkscape:window-x="0"
+     inkscape:window-y="24"
      inkscape:window-maximized="1">
     <inkscape:grid
        type="xygrid"
@@ -66,15 +111,17 @@
        xml:space="preserve"
        style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="31.882812"
-       y="1143.6528"
+       y="1094.5771"
        id="timer1_label"
        sodipodi:linespacing="125%"
-       transform="scale(1.1153647,0.89656774)"
-       inkscape:label="#text4014"><tspan
+       transform="matrix(1.1185629,0,0,0.89656774,0,44.058072)"
+       inkscape:label="#text4014"
+       title="del timer1_active"
+       clip-path="url(#clipPath3038)"><tspan
          sodipodi:role="line"
          id="tspan4016"
          x="31.882812"
-         y="1143.6528">${timer1_label}</tspan></text>
+         y="1094.5771">${timer1_label}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:14px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
@@ -89,7 +136,7 @@
          y="1159.2679">${timer1}</tspan></text>
     <g
        id="g3276"
-       transform="matrix(0.28124975,0,0,0.37499967,38.531288,658.1237)">
+       transform="matrix(0.28124975,0,0,0.37499967,74.531288,658.1237)">
       <path
          sodipodi:type="star"
          id="path3064"
@@ -126,7 +173,7 @@
     </g>
     <g
        id="g3281"
-       transform="matrix(0.37499975,0,0,0.37499975,48.812529,658.12362)">
+       transform="matrix(0.37499975,0,0,0.37499975,80.812529,658.12362)">
       <g
          id="g3166"
          transform="translate(10,-2.6171874e-6)">
@@ -160,26 +207,26 @@
     <text
        xml:space="preserve"
        style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="39.044876"
+       x="75.044785"
        y="1050.0493"
        id="text3004"
        sodipodi:linespacing="125%"
        transform="scale(1.0000029,0.99999711)"><tspan
          sodipodi:role="line"
          id="tspan3006"
-         x="40.318314"
+         x="76.318222"
          y="1050.0493">L3 </tspan></text>
     <text
        xml:space="preserve"
        style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="83.044716"
+       x="115.04459"
        y="1050.0532"
        id="text3004-9"
        sodipodi:linespacing="125%"
        transform="scale(1.0000029,0.99999711)"><tspan
          sodipodi:role="line"
          id="tspan3006-8"
-         x="84.318153"
+         x="116.31802"
          y="1050.0532">L4 </tspan></text>
     <text
        xml:space="preserve"
@@ -201,7 +248,9 @@
        id="timer2_label"
        sodipodi:linespacing="125%"
        transform="scale(1.1153647,0.89656774)"
-       inkscape:label="#text4014-5"><tspan
+       inkscape:label="#text4014-5"
+       title="del timer2_active"
+       clip-path="url(#clipPath3058)"><tspan
          sodipodi:role="line"
          id="tspan4016-3"
          x="111.90787"
@@ -209,25 +258,78 @@
     <text
        xml:space="preserve"
        style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="130.04459"
-       y="1049.9966"
+       x="26.044893"
+       y="1050.3652"
        id="text3004-4"
        sodipodi:linespacing="125%"
        transform="scale(1.0000029,0.99999711)"><tspan
          sodipodi:role="line"
          id="tspan3006-7"
-         x="131.31802"
-         y="1049.9966">L5 </tspan></text>
+         x="27.318331"
+         y="1050.3652">L2 </tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-weight:bold;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
-       x="137.64285"
-       y="1049.6791"
+       style="font-size:7.99987173px;font-style:normal;font-weight:bold;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
+       x="33.643486"
+       y="1050.3175"
        id="text3023"
-       sodipodi:linespacing="125%"><tspan
+       sodipodi:linespacing="125%"
+       transform="scale(0.999984,1.000016)"><tspan
          sodipodi:role="line"
          id="tspan3025"
-         x="137.64285"
-         y="1049.6791">A/B</tspan></text>
+         x="33.643486"
+         y="1050.3175">A/B</tspan></text>
+    <g
+       id="g3071"
+       transform="translate(0,32.250017)"
+       title="del !timer2_active">
+      <rect
+         y="986.11218"
+         x="89.035713"
+         height="10"
+         width="70"
+         id="rect3028"
+         style="fill:#000000;fill-opacity:1;stroke:none" />
+      <text
+         clip-path="url(#clipPath3067)"
+         inkscape:label="#text4014-5"
+         transform="scale(1.1153657,0.89656693)"
+         sodipodi:linespacing="125%"
+         id="timer2_label-0"
+         y="1108.0273"
+         x="111.70932"
+         style="font-size:8.00000668px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+         xml:space="preserve"><tspan
+           y="1108.0273"
+           x="111.70932"
+           id="tspan4016-3-9"
+           sodipodi:role="line">${timer2_label}</tspan></text>
+    </g>
+    <g
+       id="g3046"
+       transform="translate(-0.107145,14.285784)"
+       title="del !timer1_active">
+      <rect
+         y="1004.0764"
+         x="0.107145"
+         height="10"
+         width="70"
+         id="rect3824"
+         style="fill:#000000;fill-opacity:1;stroke:none" />
+      <text
+         clip-path="url(#clipPath3042)"
+         inkscape:label="#text4014"
+         transform="scale(1.1153647,0.89656774)"
+         sodipodi:linespacing="125%"
+         id="timer1_label-9"
+         y="1128.3168"
+         x="31.978876"
+         style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+         xml:space="preserve"><tspan
+           y="1128.3168"
+           x="31.978876"
+           id="tspan4016-95"
+           sodipodi:role="line">${timer1_label}</tspan></text>
+    </g>
   </g>
 </svg>

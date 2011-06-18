@@ -34,8 +34,8 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="620"
-     inkscape:window-x="462"
-     inkscape:window-y="196"
+     inkscape:window-x="1957"
+     inkscape:window-y="160"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -89,11 +89,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/themes/default/${icon}"
        xlink:href="${icon}"
-       height="32"
-       width="32"
-       y="1020.3622"
+       id="image3051"
        x="104"
-       id="image3051" />
+       y="1020.3622"
+       width="32"
+       height="32" />
     <rect
        style="fill:#696969;fill-opacity:1;stroke:none"
        id="text"
@@ -133,24 +133,39 @@
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="41.411133"
+       x="35.411133"
        y="1052.2772"
        id="text3032"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3034"
-         x="41.411133"
-         y="1052.2772">L2 Yes</tspan></text>
+         x="35.411133"
+         y="1052.2772">No</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="82.637695"
+       x="76.703125"
        y="1052.2772"
        id="text3032-4-4"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3034-7-4"
-         x="82.637695"
-         y="1052.2772">L4 No</tspan></text>
+         x="76.703125"
+         y="1052.2772">Yes</tspan></text>
+    <image
+       y="1048.3622"
+       x="28"
+       id="image3063"
+       xlink:href="file:///home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/stopwatch/default/up.gif"
+       height="3"
+       width="5" />
+    <image
+       y="-1051.3622"
+       x="60"
+       id="image3063-5"
+       xlink:href="file:///home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/stopwatch/default/up.gif"
+       height="3"
+       width="5"
+       transform="scale(1,-1)" />
   </g>
 </svg>

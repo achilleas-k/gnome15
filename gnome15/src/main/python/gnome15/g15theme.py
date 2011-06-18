@@ -1079,16 +1079,16 @@ class ConfirmationScreen(G15Page):
         self.arg = arg
         self.callback = callback               
         self.screen.add_page(self)
-        self.redraw()           
-        self.key_handlers.append(self)
+        self.redraw()
+        self.screen.action_listeners.append(self)
         
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP:             
-            if g15driver.G_KEY_RIGHT in keys or g15driver.G_KEY_L4 in keys:
-                self.screen.del_page(self)
-            elif g15driver.G_KEY_LEFT in keys or g15driver.G_KEY_L2 in keys:
-                self.callback(self.arg)  
-                self.screen.del_page(self)
+    def action_performed(self, binding):             
+        if binding.action == g15screen.PREVIOUS_SELECTION:
+            self.screen.del_page(self)
+        elif binding.action == g15screen.NEXT_SELECTION:
+            self.callback(self.arg)  
+            self.screen.del_page(self)
+            self.screen.action_listeners.remove(self)
                 
 class G15Theme():    
     def __init__(self, dir, variant = None, svg_text = None, prefix = None, auto_dirty = True):
@@ -1775,7 +1775,7 @@ class G15Theme():
                         element.addprevious(shadowed)
                         
                         # Copy the clip path
-                        if clip_path_element:
+                        if clip_path_element is not None:
                             clip_copy = deepcopy(clip_path_element)
                             clip_id = clip_path_element.get("id")
                             new_clip_id = "%s_%d" % ( clip_id, idx )
