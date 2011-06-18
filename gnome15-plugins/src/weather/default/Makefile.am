@@ -1,6 +1,7 @@
 themedir = $(datadir)/gnome15/plugins/weather/default
 theme_DATA = g19.svg \
 	default.svg \
+	mx5500.svg \
 	mono-clouds.gif \
 	mono-dark-clouds.gif \
 	mono-few-clouds.gif \
