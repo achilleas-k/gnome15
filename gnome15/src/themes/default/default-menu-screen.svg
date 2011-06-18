@@ -13,10 +13,22 @@
    height="43"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="default-menu-screen.svg">
   <defs
-     id="defs4" />
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3014">
+      <rect
+         style="fill:#000000;fill-opacity:1;stroke:none"
+         id="rect3016"
+         width="99.99984"
+         height="8.0000124"
+         x="0"
+         y="1009.3638" />
+    </clipPath>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -24,17 +36,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="7.9195959"
-     inkscape:cx="4.6311685"
-     inkscape:cy="30.452283"
+     inkscape:zoom="5.6"
+     inkscape:cx="68.944064"
+     inkscape:cy="32.39635"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="2155"
-     inkscape:window-y="43"
+     inkscape:window-x="350"
+     inkscape:window-y="82"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -77,7 +89,8 @@
        id="text3037"
        sodipodi:linespacing="125%"
        transform="scale(1.0000016,0.9999984)"
-       class="shadow"><tspan
+       class="shadow"
+       clip-path="url(#clipPath3014)"><tspan
          sodipodi:role="line"
          id="tspan3039"
          x="0.33593482"
@@ -116,5 +129,18 @@
          style="fill:#808080;fill-opacity:1;stroke:none"
          class="knob" />
     </g>
+    <text
+       xml:space="preserve"
+       style="font-size:8.0000124px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="158.25766"
+       y="1016.0591"
+       id="text3037-4"
+       sodipodi:linespacing="125%"
+       transform="scale(1.0000016,0.9999984)"
+       class="shadow"><tspan
+         sodipodi:role="line"
+         id="tspan3039-9"
+         x="158.25766"
+         y="1016.0591">${alt_title}</tspan></text>
   </g>
 </svg>

@@ -104,6 +104,8 @@ class TextBox():
         self.bounds = ( )
         self.text = "" 
         self.css = { }
+        self.normal_shadow = False
+        self.reverse_shadow = False
         self.transforms = []
         self.base = 0
         
@@ -246,9 +248,16 @@ class Component():
     def set_children(self, children):
         self.get_tree_lock().acquire()
         try:
-            self.remove_all_children()
-            for c in children:
+            # Remove any children that we currently have, but are not in the new list
+            for c in list(set(self.children) - set(children)):
+                self.remove_child(c)
+                
+            # Add any new children
+            for c in list(set(children) - set(self.children)):
                 self.add_child(c)
+                
+            # Now just change out child list to the new one so the order is correct
+            self.children = children
         finally:
             self.get_tree_lock().release()
         
@@ -287,6 +296,7 @@ class Component():
         try:
             if not child in self.children:
                 raise Exception("Not a child of this component.")
+            child.notify_remove()
             if child.theme:
                 child.theme._component_removed()
             child.parent = None
@@ -305,6 +315,9 @@ class Component():
         self.view_element = self.get_theme().get_element(self.id)
         self.view_bounds  = g15util.get_actual_bounds(self.view_element) if self.view_element is not None else None
         self.on_configure()
+        
+    def is_visible(self):
+        return self.parent == None or self.parent.is_visible()
                 
     def on_configure(self):
         pass
@@ -385,7 +398,10 @@ class Component():
     
     def notify_add(self, component):
         if self.parent:
-            self.parent.notify_add(component)        
+            self.parent.notify_add(component)     
+            
+    def notify_remove(self):
+        self.remove_all_children()
     
     '''
     Private
@@ -456,7 +472,7 @@ class G15Page(Component):
             return
 
         if self.focused_component and self.focused_component in focus_list:
-            i = focus_list.index(self.focused)
+            i = focus_list.index(self.focused_component)
             i += 1
             if i >= len(focus_list):
                 i = 0
@@ -506,6 +522,7 @@ class G15Page(Component):
         sh = screen.driver.get_size()[1]
         self.back_buffer = cairo.ImageSurface (cairo.FORMAT_ARGB32,sw, sh)
         self.back_context = cairo.Context(self.back_buffer)
+        screen.configure_canvas(self.back_context)
         self.set_line_width(1.0)
         
         rgb = screen.driver.get_color(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
@@ -719,9 +736,30 @@ class Menu(Component):
         menu_theme = self.load_theme()
         if menu_theme:
             self.set_theme(menu_theme)
+        self.get_screen().action_listeners.append(self)
+        
+    def notify_remove(self):
+        Component.notify_remove(self)
+        self.get_screen().action_listeners.remove(self)
           
     def load_theme(self):
         pass
+    
+    def add_child(self, child, index = -1):
+        Component.add_child(self, child, index)
+        self.select_first()
+    
+    def remove_child(self, child):
+        Component.remove_child(self, child)
+        self.select_first()
+    
+    def set_children(self, children):
+        was_selected = self.selected
+        Component.set_children(self, children)
+        if was_selected in self.children:
+            self.selected = was_selected
+        else:
+            self.select_first()
         
     def get_scroll_values(self):
         max_val = 0
@@ -785,6 +823,20 @@ class Menu(Component):
             return int(self.view_bounds[3] / avg_size)
         finally:
             self.get_tree_lock().release()
+            
+    def action_performed(self, binding):
+        if self.is_visible():
+            if binding.action == g15screen.NEXT_SELECTION:
+                self._move_down(1)
+            elif binding.action == g15screen.PREVIOUS_SELECTION:
+                self._move_up(1)
+            if binding.action == g15screen.NEXT_PAGE:
+                self._move_down(10)
+            elif binding.action == g15screen.PREVIOUS_PAGE:
+                self._move_up(10)
+            elif binding.action == g15screen.SELECT:
+                if self.selected:
+                    self.selected.activate()
         
     def handle_key(self, keys, state, post):   
         self.select_first()   
@@ -814,7 +866,7 @@ class Menu(Component):
             if not self.selected == None and not self.contains_child(self.selected):
                 self.selected = None
             if self.selected == None:
-                if self.get_child_count():
+                if self.get_child_count() > 0:
                     self.selected  = self.get_child(0)
                 else:
                     self.selected = None
@@ -1312,15 +1364,10 @@ class G15Theme():
                 # the clip path, then this element may be scrolled. This clipped text can also
                 # be used to wrap and scroll vertical text, replacing the old 'text box' mechanism  
                 for element in root.xpath('//svg:text[@clip-path]',namespaces=self.nsmap):
-                    clip_val = element.get("clip-path")
+                    id = element.get("id")
+                    clip_path_node = self._get_clip_path_element(element)
                     vertical_wrap = "vertical-wrap" == element.get("title")
-                    if len(clip_val) > 0 and clip_val != "none":
-                        id = clip_val[5:-1] 
-                        clip_path_node = root.xpath('//svg:clipPath[@id=\'' + id + '\']',namespaces=self.nsmap)
-                        if len(clip_path_node) == 0:
-                            raise Exception("Text node had clip path (%s), but no clip path element with matching ID of %s could be found" % ( id, element.get("clip-path") ) )
-                        clip_path_node = clip_path_node[0]
-                        
+                    if clip_path_node is not None:
                         t_span_node = element.find("svg:tspan", namespaces=self.nsmap)
                         t_span_text = element.findtext("svg:tspan", namespaces=self.nsmap)
                         if not t_span_text:
@@ -1332,6 +1379,12 @@ class G15Theme():
                         text_box = TextBox()            
                         text_box.text = Template(t_span_text).safe_substitute(properties) 
                         text_box.css = self.parse_css(element.get("style"))
+                        text_class = element.get("class")
+                        if text_class:
+                            if "reverseshadow" in text_class:
+                                text_box.reverse_shadow = True
+                            elif "shadow" in text_class:
+                                text_box.normal_shadow = True
                         text_box.bounds = clip_path_bounds
                         
                         layout = self._create_pango_layout(text_box, pango_context, vertical_wrap)
@@ -1366,6 +1419,7 @@ class G15Theme():
                                 else:
                                     scroll_item = HorizontalScrollState(element)
                                     scroll_item.step = self.screen.service.scroll_amount
+                                    
                                     self.scroll_state[id] = scroll_item
                                     diff = text_width - clip_path_bounds[2]
                                     scroll_item.alignment = layout.get_alignment()
@@ -1450,6 +1504,15 @@ class G15Theme():
         self._render_document(canvas, self.render)
         return self.render.document
     
+    def _get_clip_path_element(self, element):
+        clip_val = element.get("clip-path")
+        if clip_val and len(clip_val) > 0 and clip_val != "none":
+            id = clip_val[5:-1]
+            el = self.get_element(id, element.getroottree().getroot())
+            if el is None:
+                raise Exception("Text node had clip path (%s), but no clip path element with matching ID of %s could be found" % ( id, element.get("clip-path") ) )
+            return el
+    
     def _component_removed(self):
         self.scroll_state = {}
         pass
@@ -1471,7 +1534,7 @@ class G15Theme():
 #        print "------------------------------"
 #        print xml
 #        print "------------------------------"
-#            print "XML size %d" % len(xml)
+#        print "XML size %d" % len(xml)
         try :
             svg.write(xml)
         except:
@@ -1482,18 +1545,34 @@ class G15Theme():
          
         if len(render.text_boxes) > 0:
             rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+            bg_rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
             for text_box in render.text_boxes:                
                 pango_context = pangocairo.CairoContext(canvas)
                 layout = self._create_pango_layout(text_box, pango_context, wrap = True)
-                
-                # Draw text to canvas                
-                canvas.set_source_rgb(rgb[0], rgb[1], rgb[2])
+
                 pango_context.save()
-                pango_context.rectangle(text_box.bounds[0], text_box.bounds[1], text_box.bounds[2], text_box.bounds[3])
+                pango_context.rectangle(text_box.bounds[0] - 1, text_box.bounds[1] - 1, text_box.bounds[2] + 2, text_box.bounds[3] + 2)
                 pango_context.clip()
+                
+                if text_box.normal_shadow or text_box.reverse_shadow:
+                    if text_box.normal_shadow:
+                        canvas.set_source_rgb(bg_rgb[0], bg_rgb[1], bg_rgb[2])
+                    else:
+                        canvas.set_source_rgb(rgb[0], rgb[1], rgb[2])
+                    for x in range(-1, 2):
+                        for y in range(-1, 2):
+                            if x != 0 or y != 0:
+                                pango_context.move_to(text_box.bounds[0] + x, text_box.bounds[1] + y - text_box.base)    
+                                pango_context.update_layout(layout)
+                                pango_context.show_layout(layout)
+                
+                # Draw primary text to canvas                
+                canvas.set_source_rgb(rgb[0], rgb[1], rgb[2])
                 pango_context.move_to(text_box.bounds[0], text_box.bounds[1]  - text_box.base)    
                 pango_context.update_layout(layout)
                 pango_context.show_layout(layout)
+                
+                
                 pango_context.restore()
                 
         # Paint all GTK components that may have been added
@@ -1671,15 +1750,21 @@ class G15Theme():
         color         --    3 element tuple for RGB values of colour to use for shadow
         root          --    SVG document root
         """
-        idx = 1
+        
+        
         for element in root.xpath('//svg:*[@class=\'%s\']' % id,namespaces=self.nsmap):
+            clip_path_element = self._get_clip_path_element(element)
+            bounds = g15util.get_bounds(element)
+            idx = 1
             for x in range(-1, 2):
                 for y in range(-1, 2):
                     if x != 0 or y != 0:
-                        shadowed = deepcopy(element)
-                        shadowed.set("id", shadowed.get("id") + "_" + str(idx))
+                        shadowed_id = element.get("id") + "_" + str(idx)
+                        
+                        # Copy the element itself
+                        shadowed = deepcopy(element)                        
+                        shadowed.set("id", shadowed_id)
                         for bound_element in shadowed.iter():
-                            bounds = g15util.get_bounds(bound_element)
                             bound_element.set("x", str(bounds[0] + x))
                             bound_element.set("y", str(bounds[1] + y))                        
                         styles = self.parse_css(shadowed.get("style"))
@@ -1688,4 +1773,15 @@ class G15Theme():
                         styles["fill"] = color
                         shadowed.set("style", self.format_styles(styles))
                         element.addprevious(shadowed)
+                        
+                        # Copy the clip path
+                        if clip_path_element:
+                            clip_copy = deepcopy(clip_path_element)
+                            clip_id = clip_path_element.get("id")
+                            new_clip_id = "%s_%d" % ( clip_id, idx )
+                            clip_copy.set("id", new_clip_id )
+                            shadowed.set("clip-path", "url(#%s)" % new_clip_id)
+                            clip_path_element.addprevious(clip_copy)
+                        
+                        
                         idx += 1

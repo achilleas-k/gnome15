@@ -171,6 +171,32 @@ class G15DBUSDebugService(dbus.service.Object):
     def ShowGraph(self):
         objgraph.show_refs(self._service)
         
+    @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
+    def Referrers(self, typename):
+        print "%d instances of type %s. Referrers :-" % ( objgraph.count(typename), typename)
+        done = {}
+        for r in objgraph.by_type(typename):
+            for o in gc.get_referrers(r):
+                name = type(o).__name__
+                if name != "type" and name != typename and name != "frame" and not name in done:
+                    done[name] = True
+                    count = objgraph.count(name)
+                    if count > 1:
+                        print "   %s  (%d)" % ( name, count )
+        
+    @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
+    def Refererents(self, typename):
+        print "%d instances of  type %s. Referents :-" % ( objgraph.count(typename), typename)
+        done = {}
+        for r in objgraph.by_type(typename):
+            for o in gc.get_referents(r):
+                name = type(o).__name__
+                if name != "type" and name != typename and not name in done:
+                    done[name] = True
+                    count = objgraph.count(name)
+                    if count > 1:
+                        print "   %s  (%d)" % ( name, count )
+        
 class G15DBUSDeviceService(AbstractG15DBUSService):
     
     def __init__(self, dbus_service, device):

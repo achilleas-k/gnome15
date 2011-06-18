@@ -136,8 +136,8 @@ class G15IndicatorMe():
         self._status_changed_handle = self._me_service.connect_to_signal("StatusIconsChanged", self._status_icon_changed)
         self._user_changed_handle = self._me_service.connect_to_signal("UserChanged", self._user_changed)
         self._me_menu.on_change = self._menu_changed        
-        self._menu_theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), "menu-screen") 
-        self._popup_theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"))
+        self._menu_theme = g15theme.G15Theme(self, "menu-screen") 
+        self._popup_theme = g15theme.G15Theme(self)
 
         self._get_details()
         self._create_pages()
@@ -150,17 +150,6 @@ class G15IndicatorMe():
         
     def destroy(self):
         pass
-    
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_DOWN:              
-            if self._screen.get_visible_page() == self._menu_page:    
-                if self._menu.handle_key(keys, state, post):
-                    return True           
-                elif g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
-                    self._menu.selected.dbus_menu_entry.activate()
-                    return True
-                
-        return False
         
     '''
     Private
@@ -222,7 +211,7 @@ class G15IndicatorMe():
     def _get_menu_properties(self):
         props = { "icon" :  g15util.get_icon_path(self._icon),
                  "title" : "Status",
-                 "status": STATUS_ICONS[self._icon] }
+                 "alt_title": STATUS_ICONS[self._icon] }
         return props
 
     def _get_popup_properties(self):     

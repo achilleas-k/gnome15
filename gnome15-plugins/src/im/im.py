@@ -32,6 +32,7 @@ import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
+import gnome15.g15screen as g15screen
 import dbus
 import telepathy
 from telepathy.interfaces import (
@@ -458,7 +459,7 @@ class G15Im(g15plugin.G15MenuPlugin):
         g15plugin.G15MenuPlugin.activate(self)
         self._signal_handle = self._session_bus.add_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
-                                     signal_name='NameOwnerChanged')  
+                                     signal_name='NameOwnerChanged')
             
     def create_menu(self):    
         mode = self.gconf_client.get_string(self.gconf_key + "/mode")
@@ -469,37 +470,23 @@ class G15Im(g15plugin.G15MenuPlugin):
         if self._signal_handle:
             self._session_bus.remove_signal_receiver(self._signal_handle)
         
-    def handle_key(self, keys, state, post):
+    def action_performed(self, binding):
         """
-        Handle key events. This is called four times in total for every key stroke. Twice when
-        the key is pressed, the second of which will set post to True. Then twice
-        again when the key is released, again with post set to True on the second call. Acting
-        on post=False allows overriding of other key mappings.
-        
-        True should be returned if the key is considered "handled" and should not be passed on
-        to other key listeners.
+        Handle actions. Most actions will be handle by the abstract menu plugin class, 
+        but we want to switch the mode when the "View" action is selected.
          
         Keyword arguments:
-        keys -- list of key codes
-        state -- keystate (up or down)
-        post -- boolean indicating if this is in the pre or post processing phase
+        binding -- binding
         """
-        if not post and state == g15driver.KEY_STATE_DOWN:              
-            if self.screen.get_visible_page() == self.page:
-                if g15plugin.G15MenuPlugin.handle_key(self, keys, state, post):
-                    return True
-                elif g15driver.G_KEY_L3 in keys or g15driver.G_KEY_SETTINGS in keys:
-                    mode_index = MODE_LIST.index(self.menu.mode) + 1
-                    if mode_index >= len(MODE_LIST):
-                        mode_index = 0
-                    self.menu.mode = MODE_LIST[mode_index]
-                    logger.info("Mode is now %s" % self.menu.mode)
-                    self.gconf_client.set_string(self.gconf_key + "/mode", self.menu.mode)
-                    self.menu.reload()
-                    self.screen.redraw(self.page)
-                    return True
-                
-        return False
+        if binding.action == g15screen.VIEW:
+            mode_index = MODE_LIST.index(self.menu.mode) + 1
+            if mode_index >= len(MODE_LIST):
+                mode_index = 0
+            self.menu.mode = MODE_LIST[mode_index]
+            logger.info("Mode is now %s" % self.menu.mode)
+            self.gconf_client.set_string(self.gconf_key + "/mode", self.menu.mode)
+            self.menu.reload()
+            self.screen.redraw(self.page)
     
     def get_theme_properties(self):
         props = g15plugin.G15MenuPlugin.get_theme_properties(self)

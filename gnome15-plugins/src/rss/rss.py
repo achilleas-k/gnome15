@@ -19,7 +19,8 @@
 #        | along with this program; if not, write to the Free Software                 |
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
- 
+
+import gnome15.objgraph as objgraph 
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -33,16 +34,16 @@ import logging
 logger = logging.getLogger("rss")
 
 # Plugin details - All of these must be provided
-id="rss"
-name="RSS"
-description="A simple RSS reader. Multiple feeds may be added, with a screen being " \
+id = "rss"
+name = "RSS"
+description = "A simple RSS reader. Multiple feeds may be added, with a screen being " \
         + "allocated to each one once it has loaded. You may move up and down " \
         + "through the entries using the Up and Down keys on the G19, or L3 and L4 on " \
         + "other models G15. The entry may then be viewed in the browser using OK (G19), or L5 (other models)."
-author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
-site="http://www.gnome15.org/"
-has_preferences=True
+author = "Brett Smith <tanktarta@blueyonder.co.uk>"
+copyright = "Copyright (C)2010 Brett Smith"
+site = "http://www.gnome15.org/"
+has_preferences = True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 def create(gconf_key, gconf_client, screen):
@@ -56,7 +57,7 @@ def changed(widget, key, gconf_client):
     
 class G15RSSPreferences():
     
-    def __init__(self, parent, device, gconf_client,gconf_key):
+    def __init__(self, parent, device, gconf_client, gconf_key):
         self._gconf_client = gconf_client
         self._gconf_key = gconf_key
         
@@ -112,7 +113,7 @@ class G15RSSPreferences():
         
     def new_url(self, widget):
         self.feed_model.append(["", True])
-        self.feed_list.set_cursor_on_cell(str(len(self.feed_model) - 1), focus_column = self.feed_list.get_column(0), focus_cell = self.url_renderer, start_editing = True)
+        self.feed_list.set_cursor_on_cell(str(len(self.feed_model) - 1), focus_column=self.feed_list.get_column(0), focus_cell=self.url_renderer, start_editing=True)
         self.feed_list.grab_focus()
         
     def remove_url(self, widget):        
@@ -167,9 +168,9 @@ class G15FeedPage(g15theme.G15Page):
         self.url = url
         self.index = -1
         self._menu = g15theme.Menu("menu")
-        g15theme.G15Page.__init__(self, "Feed " + str(plugin._page_serial), self._screen, 
-                                     thumbnail_painter = self._paint_thumbnail,  
-                                     theme = g15theme.G15Theme(self, "menu-screen"), theme_properties_callback = self._get_theme_properties)
+        g15theme.G15Page.__init__(self, "Feed " + str(plugin._page_serial), self._screen,
+                                     thumbnail_painter=self._paint_thumbnail,
+                                     theme=g15theme.G15Theme(self, "menu-screen"), theme_properties_callback=self._get_theme_properties)
         self.add_child(self._menu)
         self.add_child(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
         plugin._page_serial += 1
@@ -188,7 +189,7 @@ class G15FeedPage(g15theme.G15Page):
         elif "image" in self.feed["feed"]:
             icon = self.feed["feed"]["image"]["url"]
         else:
-            icon = g15util.get_icon_path("application-rss+xml", self._screen.height )
+            icon = g15util.get_icon_path("application-rss+xml", self._screen.height)
             
         if icon == None:
             self._icon_surface = None
@@ -209,14 +210,15 @@ class G15FeedPage(g15theme.G15Page):
         for entry in self.feed.entries:
             self._menu.add_child(G15FeedsMenuItem("feeditem-%d" % i, entry))
             i += 1
-        
+            
     def _get_theme_properties(self):
         properties = {}
         properties["title"] = self.title
         properties["icon"] = self._icon_embedded
         properties["subtitle"] = self._subtitle
+        properties["alt_title"] = ""
         try:
-            properties["updated"] = "%s %s" % ( time.strftime("%H:%M", self.feed.updated), time.strftime("%a %d %b", self.feed.updated) )
+            properties["updated"] = "%s %s" % (time.strftime("%H:%M", self.feed.updated), time.strftime("%a %d %b", self.feed.updated))
         except AttributeError:
             pass
         return properties 
@@ -227,7 +229,7 @@ class G15FeedPage(g15theme.G15Page):
         
 class G15RSS():
     
-    def __init__(self, gconf_client,gconf_key, screen):
+    def __init__(self, gconf_client, gconf_key, screen):
         self._screen = screen;
         self._gconf_key = gconf_key
         self._gconf_client = gconf_client
@@ -246,12 +248,6 @@ class G15RSS():
         for page in self._pages:
             self._screen.del_page(self._pages[page])
         self._pages = {}
-        
-    def handle_key(self, keys, state, post):
-        for page in self._pages:
-            if self._pages[page].is_visible() and self._pages[page]._menu.handle_key(keys, state, post):
-                return True
-        return False
     
     '''
     Private
@@ -263,7 +259,7 @@ class G15RSS():
         
     def _refresh(self):
         logger.info("Refreshing RSS feeds")
-        for page_id in self._pages:
+        for page_id in list(self._pages):
             page = self._pages[page_id]        
             page._reload()
             page.redraw()

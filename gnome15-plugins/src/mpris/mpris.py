@@ -76,6 +76,7 @@ class AbstractMPRISPlayer():
         self.status = "Stopped"
         self.cover_image = None
         self.thumb_image = None
+        self.cover_uri = None
         self.song_properties = {}
         self.status = None      
         self.redraw_timer = None  
@@ -151,7 +152,8 @@ class AbstractMPRISPlayer():
             self.schedule_redraw()
             
     def schedule_redraw(self): 
-        self.redraw_timer = g15util.schedule("MPRIS2Redraw", 1.0, self.redraw)
+        self.cancel_redraw()
+        self.redraw_timer = g15util.queue("mprisDataQueue", "MPRIS2Redraw", 1.0, self.redraw)
         
     def on_shown(self):
         self.hidden = False
@@ -184,39 +186,42 @@ class AbstractMPRISPlayer():
         self.recalc_progress()
         # Find the best icon for the media
         
+        
         if "art_uri" in self.song_properties and self.song_properties["art_uri"] != "":
-            self.cover_uri = self.song_properties["art_uri"]
+            new_cover_uri = self.song_properties["art_uri"]
         else:   
             cover_art = os.path.expanduser("~/.cache/rhythmbox/covers/" + self.song_properties["artist"] + " - " + self.song_properties["album"] + ".jpg")
-            self.cover_uri = None
+            new_cover_uri = None
             if cover_art != None and os.path.exists(cover_art):
-                self.cover_uri = cover_art
+                new_cover_uri = cover_art
             else:
                 mime_type = mime.get_type(self.playing_uri)
                 if mime_type != None:
                     mime_icon = g15util.get_icon_path(str(mime_type).replace("/","-"), size=self.screen.height)
                     if mime_icon != None:                    
-                        self.cover_uri = mime_icon  
-            if self.cover_uri != None:
+                        new_cover_uri = mime_icon  
+            if new_cover_uri != None:
                 try :            
-                    self.cover_uri = "file://" + urllib.pathname2url(self.cover_uri)
+                    new_cover_uri = "file://" + urllib.pathname2url(new_cover_uri)
                 except :
-                    self.cover_uri = None
+                    new_cover_uri = None
                                   
-            if self.cover_uri == None:                      
-                self.cover_uri = g15util.get_icon_path(["audio-player", "applications-multimedia" ], size=self.screen.height)
+            if new_cover_uri == None:                      
+                new_cover_uri = g15util.get_icon_path(["audio-player", "applications-multimedia" ], size=self.screen.height)
                 
-        logger.info("Getting cover art from %s" % self.cover_uri)
-                
-        self.cover_image = None
-        self.thumb_image = None
-        if self.cover_uri != None:
-            self.cover_image = g15util.load_surface_from_file(self.cover_uri)
+        if new_cover_uri != self.cover_uri:
+            self.cover_uri = new_cover_uri
+            logger.info("Getting cover art from %s" % self.cover_uri)
+            self.cover_image = None
+            self.thumb_image = None
+            if self.cover_uri != None:
+                self.cover_image = g15util.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
+                self.cover_uri = g15util.get_embedded_image_url(self.cover_image)
                   
         # Track status
         if self.status == "Stopped":
             self.song_properties["stopped"] = True
-            self.song_properties["icon"] = g15util.get_icon_path("media-stop", self.screen.height)
+            self.song_properties["icon"] = g15util.get_icon_path(["media-stop", "media-playback-stop", "gtk-media-stop", "player_stop" ], self.screen.height)
             self.song_properties["title"] = "No track playing"
             self.song_properties["time_text"] = ""
         else:            

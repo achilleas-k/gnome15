@@ -167,6 +167,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         
     def activate(self):
         g15plugin.G15MenuPlugin.activate(self)
+        self.screen.action_listeners.append(self)
         
         # Get the initial list of volumes and mounts
         self.volume_monitor = gio.VolumeMonitor()
@@ -187,6 +188,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         
     def deactivate(self):
         g15plugin.G15MenuPlugin.deactivate(self)
+        self.screen.action_listeners.remove(self)
         for handle in self._signal_handles:
             self.session_bus.remove_signal_receiver(handle)
         if self._handle:
@@ -195,7 +197,7 @@ class G15Places(g15plugin.G15MenuPlugin):
             
     def get_theme_properties(self):
         properties = g15plugin.G15MenuPlugin.get_theme_properties(self)
-        properties["mode"] = MODES[self._mode]        
+        properties["alt_title"] = MODES[self._mode]        
         idx = MODE_LIST.index(self._mode) + 1
         properties["list"] = MODES[MODE_LIST[0] if idx == len(MODE_LIST) else MODE_LIST[idx]]        
         if isinstance(self.menu.selected, VolumeMenuItem):
@@ -205,18 +207,12 @@ class G15Places(g15plugin.G15MenuPlugin):
         else:
             properties["sel"] = ""
         return properties
-            
-    def handle_key(self, keys, state, post):        
-        if not post and state == g15driver.KEY_STATE_DOWN and self.page == self.screen.get_visible_page(): 
-            if g15plugin.G15MenuPlugin.handle_key(self, keys, state, post):
-                return True
-            elif g15driver.G_KEY_L3 in keys or g15driver.G_KEY_SETTINGS in keys:
-                idx = MODE_LIST.index(self._mode) + 1
-                self._mode = MODE_LIST[0] if idx == len(MODE_LIST) else MODE_LIST[idx]
-                self.screen.redraw(self.page)
-                return True    
-                
-        return False
+    
+    def action_performed(self, binding):
+        if binding.action == g15screen.VIEW:
+            idx = MODE_LIST.index(self._mode) + 1
+            self._mode = MODE_LIST[0] if idx == len(MODE_LIST) else MODE_LIST[idx]
+            self.screen.redraw(self.page)
     
             
     """

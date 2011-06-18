@@ -13,7 +13,7 @@
    height="43"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="default.svg">
   <defs
      id="defs4" />
@@ -24,17 +24,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6"
-     inkscape:cx="91.948539"
-     inkscape:cy="44.363871"
+     inkscape:zoom="3.959798"
+     inkscape:cx="84.798512"
+     inkscape:cy="19.356369"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="352"
-     inkscape:window-y="105"
+     inkscape:window-x="2085"
+     inkscape:window-y="58"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -104,26 +104,26 @@
     <text
        xml:space="preserve"
        style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="-0.44921875"
+       x="0.3359203"
        y="1024.995"
        id="text3012"
        sodipodi:linespacing="125%"
        transform="scale(1.0000172,0.9999828)"><tspan
          sodipodi:role="line"
          id="tspan3014"
-         x="-0.44921875"
+         x="0.3359203"
          y="1024.995">${cpu_no}:</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="0.21482655"
+       x="0.3359203"
        y="1034.295"
        id="text3012-0"
        sodipodi:linespacing="125%"
        transform="scale(1.0000172,0.9999828)"><tspan
          sodipodi:role="line"
          id="tspan3014-9"
-         x="0.21482655"
+         x="0.3359203"
          y="1034.295">${net_no}</tspan></text>
     <text
        xml:space="preserve"

@@ -24,6 +24,7 @@ import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
+import gnome15.g15screen as g15screen
 import os
 import dbus
 import time
@@ -101,29 +102,28 @@ class G15Processes(g15plugin.G15MenuPlugin):
         self._mode = "applications"
         self._timer = None
         g15plugin.G15MenuPlugin.activate(self)
+        self.screen.action_listeners.append(self)
             
     def deactivate(self):
         g15plugin.G15MenuPlugin.deactivate(self)
+        self.screen.action_listeners.remove(self)
         
     def load_menu_items(self):
         pass
-        
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_DOWN:              
-            if self.screen.get_visible_page() == self.page:                    
-                if g15plugin.G15MenuPlugin.handle_key(self, keys, state, post):
-                    return True  
-                elif g15driver.G_KEY_L3 in keys or g15driver.G_KEY_SETTINGS in keys:
-                    if self._mode == "applications":
-                        self._mode = "all"
-                    elif self._mode == "all":
-                        self._mode = "user"
-                    elif self._mode == "user":
-                        self._mode = "applications"
-                    self._cancel_timer()
-                    self._refresh()
-                
-        return False
+    
+                    
+    def action_performed(self, binding):            
+        if self.page != None and self.page.is_visible():            
+            if binding.action == g15screen.VIEW:
+                self.menu.remove_all_children()
+                if self._mode == "applications":
+                    self._mode = "all"
+                elif self._mode == "all":
+                    self._mode = "user"
+                elif self._mode == "user":
+                    self._mode = "applications"
+                self._cancel_timer()
+                self._refresh()
     
     def create_menu(self):
         menu = g15plugin.G15MenuPlugin.create_menu(self)
@@ -252,10 +252,11 @@ class G15Processes(g15plugin.G15MenuPlugin):
                         item = ProcessMenuItem("process-%d" % len(items), self, pid, self._get_process_name(proc_args, proc_state.cmd))
                         items.append(item)
                         item_map[pid] = item
-                    elif proc_state.uid == os.getuid():
-                        item = ProcessMenuItem("process-%d" % len(items), pid, self._get_process_name(proc_args, proc_state.cmd))
-                        item_map[pid] = item
-                        items.append(item)
+                    else:
+                        if proc_state.uid == os.getuid():
+                            item = ProcessMenuItem("process-%d" % len(items), self, pid, self._get_process_name(proc_args, proc_state.cmd))
+                            item_map[pid] = item
+                            items.append(item)
                 except :
                     # In case the process disappears
                     pass

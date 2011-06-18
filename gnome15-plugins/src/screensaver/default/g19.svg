@@ -91,7 +91,7 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="347"
+     inkscape:window-x="354"
      inkscape:window-y="60"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -138,10 +138,10 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/screensaver/default/${icon}"
        xlink:href="${icon}"
-       transform="matrix(0.4797619,0,0,0.4797619,120.40488,804.11217)"
-       width="240"
+       id="image3055"
        height="240"
-       id="image3055" />
+       width="240"
+       transform="matrix(0.4797619,0,0,0.4797619,120.40488,804.11217)" />
     <rect
        style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
        id="rect2994"
@@ -165,6 +165,6 @@
          sodipodi:role="line"
          id="tspan3000"
          x="81.045799"
-         y="956.35071">${message}</tspan></text>
+         y="956.35071">${body}</tspan></text>
   </g>
 </svg>

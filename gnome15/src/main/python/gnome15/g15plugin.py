@@ -55,14 +55,6 @@ class G15MenuPlugin():
 
     def destroy(self):
         pass
-            
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_DOWN:              
-            if self.screen.get_visible_page() == self.page:    
-                if self.menu.handle_key(keys, state, post):
-                    return True    
-                
-        return False
     
     def get_theme_properties(self):
         """
@@ -78,6 +70,7 @@ class G15MenuPlugin():
         properties = {}
         properties["icon"] = self._icon_path
         properties["title"] = self._title
+        properties["alt_title"] = ""
         properties["no_items"] = self.menu.get_child_count() == 0
         return properties
     

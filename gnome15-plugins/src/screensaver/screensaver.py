@@ -201,14 +201,14 @@ class G15ScreenSaver():
         text = self._gconf_client.get_string(self._gconf_key + "/message_text")
         variant = ""
         if text == None or text == "":
-            variant = "nomessage"
+            variant = "nobody"
         self._theme = g15theme.G15Theme(self, variant)
         
     def _get_theme_properties(self):
         
         properties = {}
         properties["title"] = "Workstation Locked"
-        properties["message"] = self._gconf_client.get_string(self._gconf_key + "/message_text")
+        properties["body"] = self._gconf_client.get_string(self._gconf_key + "/message_text")
         properties["icon"] = g15util.get_icon_path("sleep", self._screen.height)
         
         return properties

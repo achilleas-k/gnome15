@@ -138,6 +138,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
     def get_theme_properties(self):  
         return  {
                   "title" : "Messages",
+                  "alt_title" : "",
                   "icon" : g15util.get_icon_path("indicator-messages-new" if self._attention else "indicator-messages"),
                   "attention": self._attention
                   }  

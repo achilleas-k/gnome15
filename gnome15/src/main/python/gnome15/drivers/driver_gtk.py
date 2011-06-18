@@ -82,6 +82,7 @@ class Driver(g15driver.AbstractDriver):
         self.bpp = device.bpp
         self.lcd_size = device.lcd_size
         self.callback = None
+        self.action_keys = None
         self.device = device
         self.area = None
         self.image = None
@@ -130,6 +131,9 @@ class Driver(g15driver.AbstractDriver):
     
     def get_model_name(self):
         return self.mode
+    
+    def get_action_keys(self):
+        return self.action_keys
     
     def simulate_key(self, widget, key, state):
         if self.callback != None:
@@ -307,6 +311,7 @@ class Driver(g15driver.AbstractDriver):
         import gnome15.g15devices as g15devices
         device_info = g15devices.get_device_info(self.mode)
         self.bpp = device_info.bpp
+        self.action_keys = device_info.action_keys
         self.lcd_size = device_info.lcd_size
         self.key_layout = device_info.key_layout
         logger.info("Initialised GTK driver")

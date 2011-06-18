@@ -67,13 +67,46 @@
        clipPathUnits="userSpaceOnUse"
        id="clipPath3005">
       <rect
-         y="799.46527"
-         x="24.690418"
-         height="31.815086"
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3008"
          width="263.52289"
-         id="rect3007"
-         style="fill:#000000;fill-opacity:0.50196078;stroke:none" />
+         height="31.815086"
+         x="24.690418"
+         y="799.46527" />
     </clipPath>
+    <filter
+       id="filter3010"
+       inkscape:label="Drop shadow"
+       width="1.5"
+       height="1.5"
+       x="-.25"
+       y="-.25">
+      <feGaussianBlur
+         id="feGaussianBlur3012"
+         in="SourceAlpha"
+         stdDeviation="2"
+         result="blur" />
+      <feColorMatrix
+         id="feColorMatrix3014"
+         result="bluralpha"
+         type="matrix"
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 " />
+      <feOffset
+         id="feOffset3016"
+         in="bluralpha"
+         dx="4"
+         dy="4"
+         result="offsetBlur" />
+      <feMerge
+         id="feMerge3018">
+        <feMergeNode
+           id="feMergeNode3020"
+           in="offsetBlur" />
+        <feMergeNode
+           id="feMergeNode3022"
+           in="SourceGraphic" />
+      </feMerge>
+    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -83,7 +116,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="148.39284"
+     inkscape:cx="89.821411"
      inkscape:cy="141.01064"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -91,7 +124,7 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="322"
+     inkscape:window-x="336"
      inkscape:window-y="90"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -205,5 +238,16 @@
        rx="6"
        ry="6"
        class="listView" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;font-family:Sans;filter:url(#filter3010);"
+       x="277.96988"
+       y="810.54077"
+       id="text3004"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3006"
+         x="277.96988"
+         y="810.54077">${alt_title}</tspan></text>
   </g>
 </svg>

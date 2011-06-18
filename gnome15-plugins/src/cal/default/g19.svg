@@ -25,7 +25,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="78.87277"
+     inkscape:cx="20.301341"
      inkscape:cy="92.184027"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -338,7 +338,7 @@
        rx="12"
        title="del !calendar_focused" />
     <rect
-       style="fill:#000000;fill-opacity:0.50196078;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none"
+       style="fill:#000000;fill-opacity:0;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none"
        id="calendar"
        width="155"
        height="95"

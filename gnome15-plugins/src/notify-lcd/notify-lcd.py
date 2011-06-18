@@ -366,6 +366,7 @@ class G15NotifyLCD():
             self._bus.add_match_string_non_blocking("interface='org.freedesktop.Notifications'")
             self._bus.add_message_filter(self.msg_cb)
             
+        self._screen.action_listeners.append(self)
         self._notify_handle = self._gconf_client.notify_add(self._gconf_key, self._configuration_changed)
             
     def msg_cb(self, bus, msg):
@@ -385,6 +386,7 @@ class G15NotifyLCD():
         # doesn't reclaim the bus name (I think because it is cached)
         if self._notify_handle:
             self._gconf_client.notify_remove(self._notify_handle)
+        self._screen.action_listeners.remove(self)
         if self._service:
             if not self._screen.service.shutting_down:
                 logger.warn("Deactivated notify service. Currently the service cannot be reactivated once deactivated. You must completely restart Gnome15")
@@ -400,19 +402,14 @@ class G15NotifyLCD():
     def destroy(self):
         pass 
                     
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_DOWN:            
-            if self._page != None:            
-                if g15driver.G_KEY_BACK in keys or g15driver.G_KEY_L3 in keys:
-                    self.clear()
-                    return True   
-                if g15driver.G_KEY_RIGHT in keys or g15driver.G_KEY_L4 in keys:
-                    self.next()
-                    return True
-                if g15driver.G_KEY_OK in keys or g15driver.G_KEY_L5 in keys:
-                    self.action()
-                    return True  
-                
+    def action_performed(self, binding):            
+        if self._page != None and self._page.is_visible():            
+            if binding.action == g15screen.CLEAR:
+                self.clear()  
+            elif bind.action == g15screen.NEXT_SELECTION:
+                self.next()  
+            elif bind.action == g15screen.SELECT:
+                self.action()
     
     def notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
         logger.info("Notify app=%s id=%s '%s' {%s}", app_name, id, summary, hints)

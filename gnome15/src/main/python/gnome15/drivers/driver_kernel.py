@@ -223,7 +223,7 @@ class ForwardDevice(SimpleDevice):
                 # Drop auto repeat for now
                 return
             else:
-                self._event(event, g15driver.KEY_STATE_DOWN if event.evalue == 0 else g15driver.KEY_STATE_UP)
+                self._event(event, g15driver.KEY_STATE_DOWN if event.evalue == 1 else g15driver.KEY_STATE_UP)
         elif event.etype == 0:
             return
         else:
@@ -246,6 +246,7 @@ class Driver(g15driver.AbstractDriver):
         self.key_thread = None
         self.device = device
         self.device_info = None
+        self.system_service = None
         self.conf_client = gconf.client_get_default()
         self._init_device()
     
@@ -263,10 +264,10 @@ class Driver(g15driver.AbstractDriver):
         self.fb = None
         if self.on_close != None:
             g15util.schedule("Close", 0, self.on_close, self)
-        del self.system_service
+        self.system_service = None
         
     def is_connected(self):
-        return self.fb != None
+        return self.system_service != None
     
     def get_model_names(self):
         return device_info.keys()
@@ -282,6 +283,9 @@ class Driver(g15driver.AbstractDriver):
             keys = []
             keys.append(key)
             self.callback(keys, state)
+    
+    def get_action_keys(self):
+        return self.device.action_keys
         
     def get_key_layout(self):
         return self.device.key_layout
@@ -471,6 +475,8 @@ class Driver(g15driver.AbstractDriver):
             self.key_thread = None
             
     def _do_write_to_led(self, name, value):
+        if not self.system_service:
+            raise Exception("Attempt to write to LED when not connected")
         logger.debug("Writing %d to LED %s" % (value, name ))
         self.system_service.SetLight(self.device.uid, name, value)
     

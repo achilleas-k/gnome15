@@ -44,7 +44,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11,  g15driver.MODEL_MX5500 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
 reserved_keys = [ g15driver.G_KEY_MENU, g15driver.G_KEY_L2 ]
 
 def create(gconf_key, gconf_client, screen):
@@ -82,10 +82,21 @@ class G15Menu(g15plugin.G15MenuPlugin):
         self.reload_theme()
         self.listener = MenuScreenChangeListener(self)
         self.screen.add_screen_change_listener(self.listener)
+        self.screen.action_listeners.append(self)
         
     def deactivate(self): 
         g15plugin.G15MenuPlugin.deactivate(self)
+        self.screen.action_listeners.remove(self)
         self.screen.remove_screen_change_listener(self.listener)
+        
+    def action_performed(self, binding):
+        if binding.action == g15screen.MENU:
+            if self.page and self.page.is_visible():
+                self.hide_menu()
+            else:
+                self.show_menu()
+                self.page.set_priority(g15screen.PRI_HIGH)
+            
         
     def load_menu_items(self):
         self.menu.remove_all_children()
@@ -113,22 +124,6 @@ class G15Menu(g15plugin.G15MenuPlugin):
                 except :
                     logger.warning("Problem with painting thumbnail in %s" % item._item_page.id)                   
                     traceback.print_exc(file=sys.stderr)
-        
-    
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_DOWN:
-            if g15driver.G_KEY_MENU in keys or g15driver.G_KEY_L2 in keys:
-                if self.page and self.page.is_visible():
-                    self.hide_menu()
-                else:
-                    self.show_menu()
-                    self.page.set_priority(g15screen.PRI_HIGH)
-                return True
-            else:                            
-                if g15plugin.G15MenuPlugin.handle_key(self, keys, state, post):
-                    return True
-                
-        return False
         
     '''
     Private

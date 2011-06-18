@@ -155,6 +155,7 @@ class G15Panel():
         else:
             panel_img = cairo.ImageSurface(cairo.FORMAT_ARGB32, panel_height, self.screen.height)
         panel_canvas = cairo.Context (panel_img)
+        self.screen.configure_canvas(panel_canvas)
             
         actual_size = 0
         if position == "top" or position == "bottom":

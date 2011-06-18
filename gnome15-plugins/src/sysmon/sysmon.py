@@ -23,6 +23,7 @@
 import gnome15.g15theme as g15theme 
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
+import gnome15.g15screen as g15screen
 import time
 import os
 import gtop
@@ -99,18 +100,21 @@ class G15SysMon():
         self._get_stats()
         self._build_properties()
         self.screen.add_page(self.page)
+        self.screen.action_listeners.append(self)
         self.screen.redraw(self.page)
     
     def deactivate(self):
+        self.screen.action_listeners.remove(self)
         self._cancel_refresh()
         self.screen.del_page(self.page)
         
     def destroy(self):
         pass
-                    
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP and self.screen.get_visible_page() == self.page:
-            if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
+    
+
+    def action_performed(self, binding):
+        if self.page and self.page.is_visible():
+            if binding.action == g15screen.PREVIOUS_SELECTION:
                 self.last_time_list = None
                 self.cpu_no += 1
                 if self.cpu_no == len(self.cpu_list):
@@ -118,7 +122,7 @@ class G15SysMon():
                 self.gconf_client.set_string(self.gconf_key + "/cpu", self.cpu_list[self.cpu_no])
                 self._reschedule_refresh()
                 return True
-            if g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
+            elif binding.action == g15screen.NEXT_SELECTION:
                 self.net_no += 1
                 if self.net_no == len(self.net_list):
                     self.net_no = 0

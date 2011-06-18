@@ -25,6 +25,7 @@ Constants for key codes
 """
 KEY_STATE_UP = 0
 KEY_STATE_DOWN = 1
+KEY_STATE_HELD = 2
 
 """
 G keys

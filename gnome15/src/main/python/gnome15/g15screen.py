@@ -19,7 +19,10 @@
 #        | along with this program; if not, write to the Free Software                 |
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
-    
+   
+"""
+Page priorities
+""" 
 PRI_POPUP=999
 PRI_EXCLUSIVE=100
 PRI_HIGH=99
@@ -27,6 +30,21 @@ PRI_NORMAL=50
 PRI_LOW=20
 PRI_INVISIBLE=0
 
+"""
+Default actions
+"""
+NEXT_SELECTION = "next-sel"
+PREVIOUS_SELECTION = "prev-sel"
+NEXT_PAGE = "next-page"
+PREVIOUS_PAGE = "prev-page"
+SELECT = "select"
+VIEW = "view"
+CLEAR = "clear"
+MENU = "menu"
+
+"""
+Simple colors
+"""
 COLOURS = [(0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
 
 import g15driver
@@ -99,6 +117,7 @@ class G15Screen():
         self.attention_message = g15globals.name
         self.attention = False
         self.splash = None
+        self.active_key_state = {}
         self.reschedule_lock = RLock()        
         self.last_error = None
         self.loading_complete = False
@@ -111,6 +130,8 @@ class G15Screen():
         self.plugins = self.plugin_manager_module.G15Plugins(self)
         self.mkey_lights_control = None
         self.pages = []
+        self.keys_held = {}
+        self.action_listeners = []
         
         if not self._load_driver():
             raise Exception("Driver failed to load")
@@ -439,7 +460,9 @@ class G15Screen():
             
                 if page == self.visible_page:
                     self.visible_page = None   
-                    page._do_on_hidden()         
+                    page._do_on_hidden()
+                    
+                page.remove_all_children()      
                     
                 self.pages.remove(page)  
                 page._do_on_deleted()                   
@@ -491,7 +514,7 @@ class G15Screen():
     def resched_cycle(self, arg1=None, arg2=None, arg3=None, arg4=None):
         self.reschedule_lock.acquire()
         try:
-            logger.info("Rescheduling cycle")
+            logger.debug("Rescheduling cycle")
             self._cancel_timer()
             cycle_screens = self.conf_client.get_bool("/apps/gnome15/%s/cycle_screens" % self.device.uid)
             active = self.driver != None and self.driver.is_connected() and cycle_screens
@@ -619,21 +642,70 @@ class G15Screen():
         self._do_redraw()
         
     def _do_key_received(self, keys, state):
-        try :
-            if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
-                return        
-            
-            if state == g15driver.KEY_STATE_UP:
-                if g15driver.G_KEY_LIGHT in keys and not self.driver.get_model_name() == g15driver.MODEL_G19:
-                    self.service.dbus_service._driver_service.CycleKeyboard(1)
-    
-                profile = g15profile.get_active_profile(self.device)
-                if profile != None:
-                    macro = profile.get_macro(self.get_mkey(), keys)
-                    if macro != None:
-                        self.service.handle_macro(macro)
+        try :            
+            # Watch for keys that are being held down
+            if state == g15driver.KEY_STATE_DOWN:
+                logger.info("Keys %s pressed" % str(keys))
+                for k in keys:
+                    logger.info("Keys %s held" % str(k))
+                    self.keys_held[k] = g15util.schedule("HoldKey%s" % str(k), self.service.key_hold_duration, self.key_received, keys, g15driver.KEY_STATE_HELD)
+            elif state == g15driver.KEY_STATE_UP:
+                logger.info("Keys %s released" % str(keys))
+                for k in self.keys_held.keys():
+                    logger.info("Keys %s unheld" % str(k))
+                    timer = self.keys_held[k]
+                    if timer.is_complete():
+                        # Key "hold" completed
+                        logger.info("Consuming key %s" %k)
+                        keys.remove(k)
+                    self.keys_held[k].cancel()
+                    del self.keys_held[k]            
+            elif state == g15driver.KEY_STATE_HELD:
+                logger.info("Keys %s HELD" % str(keys))
+                        
+            if len(keys) > 0:                     
+                
+                # See if the screen itself, or the plugins,  want to handle the key 
+                if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
+                    return        
+                
+                # Special case for the light key
+                if state == g15driver.KEY_STATE_UP:
+                    if g15driver.G_KEY_LIGHT in keys and not self.driver.get_model_name() == g15driver.MODEL_G19:
+                        self.service.dbus_service._driver_service.CycleKeyboard(1)
+        
+                    profile = g15profile.get_active_profile(self.device)
+                    if profile != None:
+                        macro = profile.get_macro(self.get_mkey(), keys)
+                        if macro != None:
+                            self.service.handle_macro(macro)                
+                                    
+                # See if there is any 'post' handling by the screen itself or by the plugins
+                if not self.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True):
+                    # See if any action sequences have been type
+                    action_keys = self.driver.get_action_keys()
+                    if action_keys:
+                        if self.active_key_state == None:
+                            # An action sequence could be starting
+                            if state != g15driver.KEY_STATE_DOWN:
+                                logger.warning("Action keys in unexpected state %d" % state)
+                            self.active_key_state = {}
                                 
-            self.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True)
+                        for k in keys:
+                            self.active_key_state[k] = state
+                            
+                        for action in action_keys:
+                            binding = action_keys[action]
+                            f = 0
+                            for k in binding.keys:
+                                if k in self.active_key_state and binding.state == self.active_key_state[k]:
+                                    f += 1
+                            if f == len(binding.keys): 
+                                logger.info("Invoking action '%s'" % binding.action)
+                                for l in self.action_listeners:
+                                    l.action_performed(binding)
+                
+                
         except Exception as e:
             logger.error("Error in key handling. %s" % str(e))
 #            if logger.level == logging.DEBUG:
@@ -786,21 +858,10 @@ class G15Screen():
     def get_current_surface(self):
         return self.local_data.surface
     
-    def get_desktop_surface(self):        
-        scale = self.get_desktop_scale()
-        surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width * scale, self.height * scale)
-        ctx = cairo.Context(surface)
-        tx =  ( float(self.width) - ( float(self.available_size[0] * scale ) ) ) / 2.0
-        ctx.translate(-tx, 0)
-        ctx.set_source_surface(self.surface)
-        ctx.paint()
-        return surface
-    
     def get_desktop_scale(self):
         sx = float(self.available_size[2]) / float(self.width)
         sy = float(self.available_size[3]) / float(self.height)
         return min(sx, sy)
-    
 
     def fade(self, stay_faded=False):
         Fader(self, stay_faded=stay_faded).run()

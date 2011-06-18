@@ -22,6 +22,7 @@
  
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
+import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import datetime
 import time
@@ -136,11 +137,13 @@ class G15Cal():
         
         # Screen
         self._screen.add_page(self._page)
+        self._screen.action_listeners.append(self)
         self._calendar.set_focused(True)
         
         gobject.idle_add(self._first_load)
         
     def deactivate(self):
+        self._screen.action_listeners.remove(self)
         if self._timer != None:
             self._timer.cancel()
         if self._page != None:
@@ -149,32 +152,22 @@ class G15Cal():
     def destroy(self):
         pass
                     
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_DOWN and self._screen.get_visible_page() == self._page:
-            if self._menu.is_focused() and self._menu.handle_key(keys, state, post):
-                return True
-            elif g15driver.G_KEY_UP in keys:
+    def action_performed(self, binding):
+        if self._page and self._page.is_visible():
+            if binding.action == g15screen.PREVIOUS_PAGE:
                 self._adjust_calendar_date(-7)
-                return True
-            elif g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
+            elif binding.action == g15screen.NEXT_PAGE:
                 self._adjust_calendar_date(7)
-                return True
-            elif g15driver.G_KEY_LEFT in keys or g15driver.G_KEY_L3 in keys:
+            elif binding.action == g15screen.PREVIOUS_SELECTION:
                 self._adjust_calendar_date(-1)
-                return True
-            elif g15driver.G_KEY_RIGHT in keys or g15driver.G_KEY_L5 in keys:
+            elif binding.action == g15screen.NEXT_SELECTION:
                 self._adjust_calendar_date(1)
-                return True
-            elif g15driver.G_KEY_BACK in keys:
+            elif binding.action == g15screen.CLEAR:
                 self._calendar_date = None
                 self._loaded_minute =- -1
                 self._screen.redraw(self._page)
-                return True
-            elif g15driver.G_KEY_SETTINGS:
+            elif binding.action == g15screen.VIEW:
                 self._page.next_focus()
-                return True
-                
-        return False
     
     """
     Private

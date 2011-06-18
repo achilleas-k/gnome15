@@ -14,10 +14,33 @@
    height="43"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="default.svg">
   <defs
-     id="defs4" />
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3771">
+      <rect
+         style="fill-opacity:0.50196078;stroke:none"
+         id="rect3773"
+         width="155.14261"
+         height="10.313092"
+         x="0"
+         y="1055.4028" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3777">
+      <rect
+         style="fill-opacity:0.50196078;stroke:none"
+         id="rect3779"
+         width="155.14424"
+         height="10.312984"
+         x="0"
+         y="1064.6735" />
+    </clipPath>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -25,16 +48,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="6.7784068"
-     inkscape:cx="81.308772"
-     inkscape:cy="32.474349"
+     inkscape:zoom="3.3892034"
+     inkscape:cx="79.285964"
+     inkscape:cy="5.5391167"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="190"
+     inkscape:window-x="197"
      inkscape:window-y="90"
      inkscape:window-maximized="0">
     <inkscape:grid
@@ -116,13 +139,13 @@
        sodipodi:linespacing="125%"
        text-rendering="optimizeLegibility" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/mpris/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/mpris/default/${icon}"
        xlink:href="${icon}"
-       id="image3051"
-       x="0"
-       y="1009.3622"
+       height="31"
        width="31"
-       height="31" />
+       y="1009.3622"
+       x="0"
+       id="image3051" />
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.99999994;stroke-opacity:1"
        id="rect2990"
@@ -160,7 +183,8 @@
        id="text3774-0-1"
        sodipodi:linespacing="125%"
        transform="scale(1.0312983,0.96965152)"
-       class="shadow"><tspan
+       class="shadow"
+       clip-path="url(#clipPath3777)"><tspan
          sodipodi:role="line"
          id="tspan3776-9-9"
          x="78.973198"
@@ -170,21 +194,22 @@
        xml:space="preserve"
        style="font-size:8.0000391px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.5;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
        x="77.694199"
-       y="1065.4426"
+       y="1063.38"
        id="text3774-0-1-3"
        sodipodi:linespacing="125%"
-       transform="scale(1.0313092,0.96964129)"
-       class="shadow"><tspan
+       transform="scale(1.0313092,0.9696413)"
+       class="shadow"
+       clip-path="url(#clipPath3771)"><tspan
          sodipodi:role="line"
          id="tspan3776-9-9-6"
          x="77.694199"
-         y="1065.4426"
+         y="1063.38"
          style="font-size:8.0000391px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;stroke:none;font-family:Sans;-inkscape-font-specification:Sans">${album}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.5;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
        x="77.512329"
-       y="1057.5659"
+       y="1051.3781"
        id="text3774-0-1-3-3"
        sodipodi:linespacing="125%"
        transform="scale(1.0313042,0.96964601)"
@@ -192,7 +217,7 @@
          sodipodi:role="line"
          id="tspan3776-9-9-6-3"
          x="77.512329"
-         y="1057.5659"
+         y="1051.3781"
          style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;stroke:none;font-family:Sans;-inkscape-font-specification:Sans">${artist}</tspan></text>
   </g>
 </svg>

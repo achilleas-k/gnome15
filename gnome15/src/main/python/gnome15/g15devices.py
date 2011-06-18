@@ -25,6 +25,13 @@ import os
 import usb
 import g15driver
 import g15drivermanager
+import g15screen
+
+class ActionBinding():
+    def __init__(self, action, keys, state):
+        self.action = action
+        self.state = state
+        self.keys = keys
 
 '''
 Keyboard layouts 
@@ -91,6 +98,22 @@ g13_key_layout = [
                   [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
                   ]
 
+""" 
+Unfortunately we have to leave L1 clear for g15daemon for the moment
+"""
+g15_action_keys = { g15screen.NEXT_SELECTION: ActionBinding(g15screen.NEXT_SELECTION, [ g15driver.G_KEY_L4 ], g15driver.KEY_STATE_UP),
+                    g15screen.PREVIOUS_SELECTION: ActionBinding(g15screen.PREVIOUS_SELECTION, [ g15driver.G_KEY_L3 ], g15driver.KEY_STATE_UP),
+                    g15screen.SELECT: ActionBinding(g15screen.SELECT, [ g15driver.G_KEY_L5 ], g15driver.KEY_STATE_UP),
+                    g15screen.MENU: ActionBinding(g15screen.MENU, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_HELD),
+                    g15screen.CLEAR: ActionBinding(g15screen.CLEAR, [ g15driver.G_KEY_L5 ], g15driver.KEY_STATE_HELD),
+                    g15screen.VIEW: ActionBinding(g15screen.VIEW, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_HELD),
+                    g15screen.NEXT_PAGE: ActionBinding(g15screen.NEXT_PAGE, [ g15driver.G_KEY_L4 ], g15driver.KEY_STATE_HELD),
+                    g15screen.PREVIOUS_PAGE: ActionBinding(g15screen.PREVIOUS_PAGE, [ g15driver.G_KEY_L3 ], g15driver.KEY_STATE_HELD)
+                   }
+
+"""
+G19
+"""
 g19_key_layout = [
               [ g15driver.G_KEY_G1, g15driver.G_KEY_G7 ],
               [ g15driver.G_KEY_G2, g15driver.G_KEY_G8 ],
@@ -104,10 +127,33 @@ g19_key_layout = [
               [ g15driver.G_KEY_MENU, g15driver.G_KEY_BACK, g15driver.G_KEY_SETTINGS ],
               [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ],
               ]
+g19_action_keys = { g15screen.NEXT_SELECTION: ActionBinding(g15screen.NEXT_SELECTION, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_DOWN),
+                    g15screen.PREVIOUS_SELECTION: ActionBinding(g15screen.PREVIOUS_SELECTION, [ g15driver.G_KEY_UP ], g15driver.KEY_STATE_DOWN),
+                    g15screen.SELECT: ActionBinding(g15screen.SELECT, [ g15driver.G_KEY_OK ], g15driver.KEY_STATE_DOWN),
+                    g15screen.MENU: ActionBinding(g15screen.MENU, [ g15driver.G_KEY_MENU ], g15driver.KEY_STATE_DOWN),
+                    g15screen.CLEAR: ActionBinding(g15screen.CLEAR, [ g15driver.G_KEY_BACK ], g15driver.KEY_STATE_DOWN),
+                    g15screen.VIEW: ActionBinding(g15screen.VIEW, [ g15driver.G_KEY_SETTINGS ], g15driver.KEY_STATE_DOWN),
+                    g15screen.NEXT_PAGE: ActionBinding(g15screen.NEXT_PAGE, [ g15driver.G_KEY_RIGHT ], g15driver.KEY_STATE_DOWN),
+                    g15screen.PREVIOUS_PAGE: ActionBinding(g15screen.PREVIOUS_PAGE, [ g15driver.G_KEY_LEFT ], g15driver.KEY_STATE_DOWN)
+                   }
+
+"""
+MX5500
+
+Only two keys near the LCD, so various combinrations of keys and holding keys is used to
+provide the 6 most basic actions
+"""
 
 mx5500_key_layout = [
                      [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ]
                      ]
+mx5500_action_keys = { g15screen.NEXT_SELECTION: ActionBinding(g15screen.NEXT_SELECTION, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_UP),
+                    g15screen.PREVIOUS_SELECTION: ActionBinding(g15screen.PREVIOUS_SELECTION, [ g15driver.G_KEY_UP ], g15driver.KEY_STATE_UP),
+                    g15screen.SELECT: ActionBinding(g15screen.SELECT, [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_UP),
+                    g15screen.MENU: ActionBinding(g15screen.MENU, [ g15driver.G_KEY_UP ], g15driver.KEY_STATE_HELD),
+                    g15screen.CLEAR: ActionBinding(g15screen.CLEAR, [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_HELD),
+                    g15screen.VIEW: ActionBinding(g15screen.VIEW, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_HELD)
+                   }
 
 # Registered Logitech models
 device_list = { }
@@ -117,7 +163,7 @@ class DeviceInfo():
     """
     Represents the characteristics of a single model of a Logitech device.  
     """
-    def __init__(self, model_id, usb_id, key_layout, bpp, lcd_size, model_fullname):
+    def __init__(self, model_id, usb_id, key_layout, bpp, lcd_size, model_fullname, action_keys):
         """
         Creates a new DeviceInfo and add's it to the registered device types
         
@@ -128,12 +174,14 @@ class DeviceInfo():
         bpp               --    the number of bits per pixel (or 0 for no LCD)
         lcd_size          --    the size of the LCD (or None for no LCD)
         model_fullname    --    full name of the model
+        action_keys       --    default keybinds to use for actions
         """
         self.model_id = model_id
         self.usb_id = usb_id
         self.key_layout = key_layout
         self.bpp = bpp
         self.lcd_size = lcd_size
+        self.action_keys = action_keys
         self.model_fullname = model_fullname
         device_list[self.model_id] = self
         device_by_usb_id[self.usb_id] = self
@@ -162,6 +210,7 @@ class Device():
         self.lcd_size = device_info.lcd_size
         self.model_fullname = device_info.model_fullname
         self.all_keys = device_info.all_keys
+        self.action_keys = device_info.action_keys
         
     def get_key_index(self, key):
         self.all_keys.index(key)
@@ -242,19 +291,19 @@ def find_device(models):
 Register all supported models
 """
 if g15drivermanager.get_driver_mod("gtk"): 
-    DeviceInfo('virtual', (0x0000, 0x0000), [], 0, ( 0,    0 ), "Virtual LCD Window")
-DeviceInfo(g15driver.MODEL_G11, (0x046d, 0xc225), g11_key_layout,   0,  ( 0,    0 ),    "Logitech G11 Keyboard")
-DeviceInfo(g15driver.MODEL_G19, (0x046d, 0xc229), g19_key_layout,   16, ( 320,  240 ),  "Logitech G19 Gaming Keyboard")
-DeviceInfo(g15driver.MODEL_G15_V1, (0x046d, 0xc221), g15v1_key_layout, 1,  ( 160,  43 ),   "Logitech G15 Gaming Keyboard (version 1)") 
-DeviceInfo(g15driver.MODEL_G15_V2, (0x046d, 0xc227), g15v2_key_layout, 1,  ( 160,  43 ),   "Logitech G15 Gaming Keyboard (version 2)")
-DeviceInfo(g15driver.MODEL_G13, (0x046d, 0xc21c), g13_key_layout,   1,  ( 160,  43 ),   "Logitech G13 Advanced Gameboard")
-DeviceInfo(g15driver.MODEL_G510, (0x046d, 0xc22d), g510_key_layout,  1,  ( 160,  43 ),   "Logitech G510 Keyboard")
-DeviceInfo(g15driver.MODEL_G510_AUDIO, (0x046d, 0xc22e), g510_key_layout,  1,  ( 160,  43 ),   "Logitech G510 Keyboard (audio)")
-DeviceInfo(g15driver.MODEL_Z10, (0x046d, 0x0a07), z10_key_layout,   1,  ( 160,  43 ),   "Logitech Z10 Speakers")
-DeviceInfo(g15driver.MODEL_G110, (0x046d, 0xc225), g110_key_layout,  0,  ( 0,    0 ),    "Logitech G110 Keyboard" )
+    DeviceInfo('virtual', (0x0000, 0x0000), [], 0, ( 0,    0 ), "Virtual LCD Window", None)
+DeviceInfo(g15driver.MODEL_G11, (0x046d, 0xc225), g11_key_layout,   0,  ( 0,    0 ),    "Logitech G11 Keyboard", None)
+DeviceInfo(g15driver.MODEL_G19, (0x046d, 0xc229), g19_key_layout,   16, ( 320,  240 ),  "Logitech G19 Gaming Keyboard", g19_action_keys)
+DeviceInfo(g15driver.MODEL_G15_V1, (0x046d, 0xc221), g15v1_key_layout, 1,  ( 160,  43 ),   "Logitech G15 Gaming Keyboard (version 1)", g15_action_keys) 
+DeviceInfo(g15driver.MODEL_G15_V2, (0x046d, 0xc227), g15v2_key_layout, 1,  ( 160,  43 ),   "Logitech G15 Gaming Keyboard (version 2)", g15_action_keys)
+DeviceInfo(g15driver.MODEL_G13, (0x046d, 0xc21c), g13_key_layout,   1,  ( 160,  43 ),   "Logitech G13 Advanced Gameboard", g15_action_keys)
+DeviceInfo(g15driver.MODEL_G510, (0x046d, 0xc22d), g510_key_layout,  1,  ( 160,  43 ),   "Logitech G510 Keyboard", g15_action_keys)
+DeviceInfo(g15driver.MODEL_G510_AUDIO, (0x046d, 0xc22e), g510_key_layout,  1,  ( 160,  43 ),   "Logitech G510 Keyboard (audio)", g19_action_keys)
+DeviceInfo(g15driver.MODEL_Z10, (0x046d, 0x0a07), z10_key_layout,   1,  ( 160,  43 ),   "Logitech Z10 Speakers", g19_action_keys)
+DeviceInfo(g15driver.MODEL_G110, (0x046d, 0xc225), g110_key_layout,  0,  ( 0,    0 ),    "Logitech G110 Keyboard", None)
 
 # When I get hold of an MX5500, I will add Bluetood detection as well
-DeviceInfo(g15driver.MODEL_MX5500, (0x0000, 0x0000), mx5500_key_layout,  1,  ( 136,    32 ),    "Logitech MX5500" )
+DeviceInfo(g15driver.MODEL_MX5500, (0x0000, 0x0000), mx5500_key_layout,  1,  ( 136,    32 ),    "Logitech MX5500", mx5500_action_keys)
 
 if __name__ == "__main__":
     for device in find_all_devices():

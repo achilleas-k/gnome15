@@ -124,7 +124,7 @@
      borderlayer="false"
      inkscape:window-width="1920"
      inkscape:window-height="1056"
-     inkscape:window-x="1920"
+     inkscape:window-x="0"
      inkscape:window-y="24"
      inkscape:window-maximized="1"
      fit-margin-top="0"
@@ -177,13 +177,13 @@
        rx="4"
        ry="4" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/places/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/mounts/default/${icon}"
        xlink:href="${icon}"
-       id="image4256"
-       x="294.54773"
-       y="795.11218"
+       height="24.999987"
        width="24.999987"
-       height="24.999987" />
+       y="795.11218"
+       x="294.54773"
+       id="image4256" />
     <text
        xml:space="preserve"
        style="font-size:28px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
@@ -479,6 +479,6 @@
          sodipodi:role="line"
          id="tspan4019-7"
          x="285.5715"
-         y="806.54004">${mode}</tspan></text>
+         y="806.54004">${alt_title}</tspan></text>
   </g>
 </svg>

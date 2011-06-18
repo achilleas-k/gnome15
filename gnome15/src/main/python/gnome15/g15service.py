@@ -374,11 +374,12 @@ class G15Service(Thread):
             if len(self.screens) == 0:
                 logger.warning("No screens found yet. Will stay running waiting for one to be enabled.")
                 
-        # Watch for scrolling settings changing
-        self._load_scroll_configuration()
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/scroll_delay", self._scroll_configuration_changed))
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/scroll_amount", self._scroll_configuration_changed))
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/animation_delay", self._scroll_configuration_changed))
+        # Load hidden configuration and monitor for changes
+        self._load_hidden_configuration()
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/scroll_delay", self._hidden_configuration_changed))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/scroll_amount", self._hidden_configuration_changed))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/animation_delay", self._hidden_configuration_changed))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/key_hold_delay", self._hidden_configuration_changed))
         
         # Start each screen's plugin manager
         for screen in self.screens:
@@ -434,13 +435,14 @@ class G15Service(Thread):
             traceback.print_exc(file=sys.stdout)
             logger.error("Failed to load driver for device %s." % device.uid)
             
-    def _scroll_configuration_changed(self, client, connection_id, entry, device):
-        self._load_scroll_configuration()
+    def _hidden_configuration_changed(self, client, connection_id, entry, device):
+        self._load_hidden_configuration()
         
-    def _load_scroll_configuration(self):
+    def _load_hidden_configuration(self):
         self.scroll_delay = float(g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_delay', 300)) / 1000.0
         self.scroll_amount = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_amount', 2)
         self.animation_delay = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/animation_delay', 100) / 1000.0
+        self.key_hold_duration = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/key_hold_duration', 2000) / 1000.0
             
     def _device_enabled_configuration_changed(self, client, connection_id, entry, device):
         enabled = g15devices.is_enabled(self.conf_client, device)

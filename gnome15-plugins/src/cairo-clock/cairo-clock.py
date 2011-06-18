@@ -38,14 +38,15 @@ import pango
 # Plugin details - All of these must be provided
 id="cairo-clock"
 name="Cairo Clock"
-description="Port of MacSlow's SVG clock to Gnome15. " \
-    + "Requires cairo-clock to be installed (at least the themes). " \
-    + "Note, only works on the G19."
+description="Port of MacSlow's SVG clock to Gnome15. Standard cairo-clock " \
+    + "themes may be used on a G19, however, for all other models " \
+    + "you must use specially crafted themes (using GIF files instead of SVG). " \
+    + "One default theme for low resolution screens is provided."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 def create(gconf_key, gconf_client, screen):
     return G15CairoClock(gconf_key, gconf_client, screen)
@@ -57,17 +58,11 @@ def show_preferences(parent, device, gconf_client, gconf_key):
     dialog = widget_tree.get_object("ClockDialog")
     dialog.set_transient_for(parent)
     
-    display_seconds = widget_tree.get_object("DisplaySecondsCheckbox")
-    display_seconds.set_active(gconf_client.get_bool(gconf_key + "/display_seconds"))
-    display_seconds.connect("toggled", changed, gconf_key + "/display_seconds", gconf_client)
-    
-    display_date = widget_tree.get_object("DisplayDateCheckbox")
-    display_date.set_active(gconf_client.get_bool(gconf_key + "/display_date"))
-    display_date.connect("toggled", changed, gconf_key + "/display_date", gconf_client)
-    
-    twenty_four_hour = widget_tree.get_object("TwentyFourHourCheckbox")
-    twenty_four_hour.set_active(gconf_client.get_bool(gconf_key + "/twenty_four_hour"))
-    twenty_four_hour.connect("toggled", changed, gconf_key + "/twenty_four_hour", gconf_client)
+    g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_seconds" % gconf_key, "DisplaySecondsCheckbox", True, widget_tree)
+    g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_date" % gconf_key, "DisplayDateCheckbox", True, widget_tree)
+    g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour" % gconf_key, "TwentyFourHourCheckbox", True, widget_tree)
+    g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_digital_time" % gconf_key, "DisplayDigitalTimeCheckbox", True, widget_tree)
+    g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_year" % gconf_key, "DisplayYearCheckbox", True, widget_tree)
 
     e = gconf_client.get(gconf_key + "/theme")
     theme_name = "default"
@@ -77,7 +72,7 @@ def show_preferences(parent, device, gconf_client, gconf_key):
     theme = widget_tree.get_object("ThemeCombo")
     theme.connect("changed", theme_changed, gconf_key + "/theme", [ gconf_client, theme_model])
     
-    theme_dirs = get_theme_dirs(device.bpp, gconf_key, gconf_client)
+    theme_dirs = get_theme_dirs(device.model_id, gconf_key, gconf_client)
     themes = {}
     for d in theme_dirs:
         if os.path.exists(d):
@@ -99,23 +94,27 @@ def theme_changed(widget, key, args):
     model = args[1]
     gconf_client.set_string(key, model[widget.get_active()][0])
     
-def get_theme_dir(bpp, gconf_key, gconf_client, theme_name):
-    for dir in get_theme_dirs(bpp, gconf_key, gconf_client):
+def get_theme_dir(model_name, gconf_key, gconf_client, theme_name):
+    for dir in get_theme_dirs(model_name, gconf_key, gconf_client):
         full_path = "%s/%s" % ( dir, theme_name)
         if os.path.exists(full_path):
             return full_path
     
-def get_theme_dirs(bpp, gconf_key, gconf_client):
-    dirs = []    
-    if bpp == 1:
-        dirs.append(os.path.join(os.path.dirname(__file__), "g15"))
-    else:
-        theme_dir = gconf_client.get(gconf_key + "/theme_dir")
-        if theme_dir != None:
-            dirs.append(theme_dir.get_string())
+def get_theme_dirs(model_name, gconf_key, gconf_client):
+    dirs = []
+    model_dir = "g15"
+    if model_name == g15driver.MODEL_G19:
+        model_dir = "g19"
+    elif model_name == g15driver.MODEL_MX5500:
+        model_dir = "mx5500"
+    dirs.append(os.path.join(os.path.dirname(__file__), model_dir))
+    dirs.append(os.path.expanduser("~/.local/share/gnome15/cairo-clock/%s" % model_dir))
+    theme_dir = gconf_client.get(gconf_key + "/theme_dir")
+    if theme_dir != None:
+        dirs.append(theme_dir.get_string())
+    if model_name == g15driver.MODEL_G19:
         dirs.append(os.path.expanduser("~/.local/share/cairo-clock"))
         dirs.append("/usr/share/cairo-clock/themes")
-        dirs.append(os.path.join(os.path.dirname(__file__), "g19"))
     return dirs
 
 class G15CairoClock():
@@ -157,8 +156,11 @@ class G15CairoClock():
             self.timer = None
         
     def _load_surfaces(self):
-        self.display_date = self.gconf_client.get_bool(self.gconf_key + "/display_date")
-        self.display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")
+        self.display_date = g15util.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
+        self.display_seconds = g15util.get_bool_or_default(self.gconf_client, "%s/display_seconds" % self.gconf_key, True)
+        self.display_date = g15util.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
+        self.display_year = g15util.get_bool_or_default(self.gconf_client, "%s/display_year" % self.gconf_key, True)
+        self.display_digital_time = g15util.get_bool_or_default(self.gconf_client, "%s/display_digital_time" % self.gconf_key, True)
         
         self.svg_size = None
         self.width = self.screen.width
@@ -168,9 +170,11 @@ class G15CairoClock():
         if theme == None:
             theme = "default"
             
-        self.clock_theme_dir = get_theme_dir(self.screen.driver.get_bpp(), self.gconf_key, self.gconf_client, theme)
+        self.clock_theme_dir = get_theme_dir(self.screen.driver.get_model_name(), self.gconf_key, self.gconf_client, theme)
         if not self.clock_theme_dir:
-            self.clock_theme_dir = get_theme_dir(self.screen.driver.get_bpp(), self.gconf_key, self.gconf_client, "default")
+            self.clock_theme_dir = get_theme_dir(self.screen.driver.get_model_name(), self.gconf_key, self.gconf_client, "default")
+            if not self.clock_theme_dir:
+                raise Exception("No themes could be found.")
         self.behind_hands = self._load_surface_list(["clock-drop-shadow", "clock-face", "clock-marks"])
         self.hour_surfaces = self._load_surface_list(["clock-hour-hand-shadow", "clock-hour-hand"])
         self.minute_surfaces = self._load_surface_list(["clock-minute-hand-shadow", "clock-minute-hand"])
@@ -193,11 +197,23 @@ class G15CairoClock():
                 scale = min(sx, sy)                      
                 surface = cairo.SVGSurface(None, svg_size[0] * scale * 2,svg_size[1] * scale * 2)  
                 context = cairo.Context(surface)
+                self.screen.configure_canvas(context)
                 context.scale(scale, scale)
                 context.translate(svg_size[0], svg_size[1])
                 svg.render_cairo(context)
                 context.translate(-svg_size[0], -svg_size[1])
                 list.append(((svg_size[0] * scale, svg_size[1] * scale), surface))
+                
+            path = self.clock_theme_dir + "/" + i + ".gif"
+            if os.path.exists(path):
+                img_surface = g15util.load_surface_from_file(path, self.height)
+                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, img_surface.get_width() * 2, img_surface.get_height() * 2)  
+                context = cairo.Context(surface)
+                self.screen.configure_canvas(context)
+                context.translate(img_surface.get_width(), img_surface.get_height())
+                context.set_source_surface(img_surface)
+                context.paint()
+                list.append(((img_surface.get_width(), img_surface.get_height()), surface))
         return list
         
     def config_changed(self, client, connection_id, entry, args):
@@ -277,7 +293,7 @@ class G15CairoClock():
         width = float(self.screen.width)
         height = float(self.screen.height)
             
-        self._do_paint(canvas, width, height, self.display_date)
+        self._do_paint(canvas, width, height, self.display_date, self.display_digital_time)
         
     def _get_time_text(self, display_seconds = None):
         if display_seconds == None:
@@ -288,9 +304,44 @@ class G15CairoClock():
         return datetime.datetime.now().strftime(time_format)
     
     def _get_date_text(self):
-        return datetime.datetime.now().strftime("%d/%m")
+        if self.display_year:
+            return datetime.datetime.now().strftime("%d/%m/%y")
+        else:
+            return datetime.datetime.now().strftime("%d/%m")    
         
-    def _do_paint(self, canvas, width, height, draw_date = True):
+    def _do_paint(self, canvas, width, height, draw_date = True, draw_time = True): 
+        canvas.save()   
+        self._do_paint_clock(canvas, width, height, draw_date and self.screen.driver.get_bpp() != 1, draw_time and self.screen.driver.get_bpp() != 1)
+        canvas.restore()
+        
+        if self.screen.driver.get_bpp() == 1:
+            if draw_date:        
+                date_text = self._get_date_text()
+                canvas.select_font_face(g15globals.fixed_size_font_name,
+                            cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+                canvas.set_font_size(12.0)
+                rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+                canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])   
+                x_bearing, y_bearing, text_width, text_height = canvas.text_extents(date_text)[:4]         
+                tx = 0       
+                ty = ( ( self.height - text_height ) / 2 ) - y_bearing
+                canvas.move_to(tx, ty )
+                canvas.show_text(date_text)
+                
+            if draw_time:        
+                time_text = self._get_time_text()
+                canvas.select_font_face(g15globals.fixed_size_font_name,
+                            cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+                canvas.set_font_size(12.0)
+                rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+                canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])   
+                x_bearing, y_bearing, text_width, text_height = canvas.text_extents(time_text)[:4]         
+                tx = self.width - text_width - x_bearing       
+                ty = ( ( self.height - text_height ) / 2 ) - y_bearing
+                canvas.move_to(tx, ty )
+                canvas.show_text(time_text)
+        
+    def _do_paint_clock(self, canvas, width, height, draw_date = True, draw_time = True):
             
         now = datetime.datetime.now()
         properties = { }
@@ -302,6 +353,7 @@ class G15CairoClock():
         
         drawing_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, int(clock_width), int(clock_height))
         drawing_context = cairo.Context(drawing_surface)
+        self.screen.configure_canvas(drawing_context)
         
         # Below hands          
         for svg_size, surface in self.behind_hands:
@@ -312,6 +364,7 @@ class G15CairoClock():
             drawing_context.restore()
             
         # Date
+        t_offset = 0
         if draw_date:
             drawing_context.save()
             date_text = self._get_date_text()
@@ -323,9 +376,27 @@ class G15CairoClock():
             drawing_context.set_source_rgb(rgb[0],rgb[1],rgb[2])            
             tx = ( ( clock_width - text_width ) / 2 ) - x_bearing
             ty = clock_height * 0.665
+            t_offset += text_height + 4
             drawing_context.move_to( tx, ty )
 
             drawing_context.show_text(date_text)
+            drawing_context.restore()
+            
+        # Date
+        if draw_time:
+            drawing_context.save()
+            time_text = self._get_time_text()
+            drawing_context.select_font_face("Liberation Sans",
+                        cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+            drawing_context.set_font_size(27.0)
+            x_bearing, y_bearing, text_width, text_height = drawing_context.text_extents(time_text)[:4]
+            rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+            drawing_context.set_source_rgb(rgb[0],rgb[1],rgb[2])            
+            tx = ( ( clock_width - text_width ) / 2 ) - x_bearing
+            ty = ( clock_height * 0.665 ) + t_offset
+            drawing_context.move_to( tx, ty )
+
+            drawing_context.show_text(time_text)
             drawing_context.restore()
             
         # The hand
@@ -351,7 +422,7 @@ class G15CairoClock():
             drawing_context.restore()
         
         # Paint to clock, centering it on the screen
-        canvas.translate( ( width - height)  / 2, 0)
+        canvas.translate( int(( width - height)  / 2), 0)
         canvas.set_source_surface(drawing_surface)
         canvas.paint()
         

@@ -69,99 +69,75 @@ class G15Stopwatch():
     def activate(self):
         self.timer = None
         self.notify_timer = None
-        self.timer1 = timer.G15Timer()
-        self.timer2 = timer.G15Timer()
+        self._timer1 = timer.G15Timer()
+        self._timer2 = timer.G15Timer()
         self.load_configuration()
 
         self._reload_theme()
 
+        self.page = g15theme.G15Page(id, self.screen, thumbnail_painter = self.paint_thumbnail, \
+                                     title = name, theme = self.theme, theme_properties_callback = self._get_properties)
         if self.screen.device.bpp == 16:
-            self.page = g15theme.G15Page(id, self.screen, thumbnail_painter = self.paint_thumbnail, \
-                                         panel_painter = self.paint_thumbnail, title = name,
-                                         theme = self.theme, theme_properties_callback = self._get_properties)
-        else:
             """
             Don't show on the panel for G15, there just isn't enough room
             Long term, this will be configurable per plugin
             """
-            self.page = g15theme.G15Page(id, self.screen, thumbnail_painter = self.paint_thumbnail, \
-                                         title = name,
-                                         theme = self.theme)
+            self.page.panel_painter = self.paint_thumbnail
         self.screen.add_page(self.page)
         self.screen.redraw(self.page)
+        self.screen.action_listeners.append(self)
         self._schedule_redraw()
         self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self._config_changed);
 
     def deactivate(self):
         self.gconf_client.notify_remove(self.notify_handle);
+        self.screen.action_listeners.remove(self)
         self._cancel_refresh()
         self.screen.del_page(self.page)
 
     def destroy(self):
         pass
 
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP and self.screen.get_visible_page() == self.page:
-            if self.timer1.get_enabled() and self.timer2.get_enabled():
-                if g15driver.G_KEY_UP in keys:
-                    self.timer1.toggle()
-                    self._redraw()
-                    return True
-                if g15driver.G_KEY_DOWN in keys:
-                    self.timer1.reset()
-                    self._redraw()
-                    return True
-                if g15driver.G_KEY_LEFT in keys:
-                    self.timer2.toggle()
-                    self._redraw()
-                    return True
-                if g15driver.G_KEY_RIGHT in keys:
-                    self.timer2.reset()
-                    self._redraw()
-                    return True
-                if g15driver.G_KEY_L3 in keys:
-                    self.active_timer.toggle()
-                    self._redraw()
-                    return True
-                if g15driver.G_KEY_L4 in keys:
-                    self.active_timer.reset()
-                    self._redraw()
-                    return True
-                if g15driver.G_KEY_L5 in keys:
-                    if self.active_timer == self.timer1:
-                        self.active_timer = self.timer2
+    def action_performed(self, binding):
+        if self.page and self.page.is_visible():
+            # G19 we make use of more keys
+            if self.screen.driver.get_model_name() == g15driver.MODEL_G19:                
+                if self._timer1s.get_enabled():
+                    if binding.action == g15screen.NEXT_SELECTION:
+                        self._timer1.toggle()
+                        self._redraw()
+                    elif binding.action == g15screen.PREVIOUS_SELECTION:
+                        self._timer1.reset()
+                                    
+                if self._timer2.get_enabled():
+                    if binding.action == g15screen.NEXT_PAGE:
+                        self._timer2.toggle()
+                        self._redraw()
+                    elif binding.action == g15screen.PREVIOUS_PAGE:
+                        self._timer2.reset()
+            else:
+                # Everything we allow switching between timers
+                if binding.action == g15screen.VIEW:
+                    if self.active_timer == self._timer1:
+                        self.active_timer = self._timer2
                     else:
-                        self.active_timer = self.timer1
+                        self.active_timer = self._timer1
                     self._redraw()
-                    return True
-            elif self.timer1.get_enabled():
-                self.active_timer = self.timer1
-                if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
+                
+                if binding.action == g15screen.NEXT_SELECTION:
                     self.active_timer.toggle()
                     self._redraw()
-                    return True
-                if g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
+                elif binding.action == g15screen.PREVIOUS_SELECTION:
                     self.active_timer.reset()
                     self._redraw()
-                    return True
-            elif self.timer2.get_enabled():
-                self.active_timer = self.timer2
-                if g15driver.G_KEY_UP in keys or g15driver.G_KEY_L3 in keys:
-                    self.active_timer.toggle()
-                    self._redraw()
-                    return True
-                if g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L4 in keys:
-                    self.active_timer.reset()
-                    self._redraw()
-                    return True
 
     def draw(self, element, theme):
         timer_label = None
         other_timer_label = None
-        if self.active_timer == self.timer1:
+        if self.active_timer == self._timer1:
             timer_label = theme.get_element("timer1_label")
             other_timer_label = theme.get_element("timer2_label")
-        elif self.active_timer == self.timer2:
+        elif self.active_timer == self._timer2:
             timer_label = theme.get_element("timer2_label")
             other_timer_label = theme.get_element("timer1_label")
         if timer_label != None:
@@ -183,12 +159,12 @@ class G15Stopwatch():
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         if not self.page or self.screen.is_visible(self.page):
             return
-        if not (self.timer1.get_enabled() or self.timer2.get_enabled()):
+        if not (self._timer1.get_enabled() or self._timer2.get_enabled()):
             return
         properties = self._get_properties()
         # Don't display the date or seconds on mono displays, not enough room as it is
         if self.screen.driver.get_bpp() == 1:
-            if self.timer1.get_enabled() and self.timer2.get_enabled():
+            if self._timer1.get_enabled() and self._timer2.get_enabled():
                 text = "%s %s" % ( properties["timer1"], properties["timer2"] ) 
             else:
                 text = properties["timer"]
@@ -199,7 +175,7 @@ class G15Stopwatch():
         else:
             factor = 1 if horizontal else 2
             font_name = "Sans"
-            if self.timer1.get_enabled() and self.timer2.get_enabled():
+            if self._timer1.get_enabled() and self._timer2.get_enabled():
                 text = "%s\n%s" % (properties["timer1"], properties["timer2"])
                 font_size = allocated_size / 3
             else:
@@ -253,19 +229,19 @@ class G15Stopwatch():
             timer_object.initial_value = datetime.timedelta(0, 0, 0)
 
     def load_configuration(self):
-        self._load_timer(self.timer1, '1')
-        self._load_timer(self.timer2, '2')
+        self._load_timer(self._timer1, '1')
+        self._load_timer(self._timer2, '2')
 
         # Set active timer
-        if self.active_timer == None and self.timer1.get_enabled() and self.timer2.get_enabled():
-            self.active_timer = self.timer1
-        elif self.timer1.get_enabled() and self.timer2.get_enabled():
+        if self.active_timer == None and self._timer1.get_enabled() and self._timer2.get_enabled():
+            self.active_timer = self._timer1
+        elif self._timer1.get_enabled() and self._timer2.get_enabled():
             #Keeps the current timer active
             pass
-        elif self.timer1.get_enabled():
-            self.active_timer = self.timer1
-        elif self.timer2.get_enabled():
-            self.active_timer = self.timer2
+        elif self._timer1.get_enabled():
+            self.active_timer = self._timer1
+        elif self._timer2.get_enabled():
+            self.active_timer = self._timer2
 
     def _redraw(self):
         self.screen.redraw(self.page) 
@@ -283,9 +259,9 @@ class G15Stopwatch():
 
     def _reload_theme(self):        
         variant = None
-        if self.timer1.get_enabled() and self.timer2.get_enabled():
+        if self._timer1.get_enabled() and self._timer2.get_enabled():
             variant = "two_timers"
-        elif self.timer1.get_enabled() or self.timer2.get_enabled():
+        elif self._timer1.get_enabled() or self._timer2.get_enabled():
             variant = "one_timer"
         self.theme = g15theme.G15Theme(self, variant)
         if self.page != None:
@@ -293,21 +269,21 @@ class G15Stopwatch():
 
     def _get_properties(self):
         properties = { }
-        if self.timer1.get_enabled() and self.timer2.get_enabled():
-            properties["timer1_label"] = self.timer1.label
-            properties["timer1"] = self.__format_time_delta(self.timer1.value())
-            properties["timer2_label"] = self.timer2.label
-            properties["timer2"] = self.__format_time_delta(self.timer2.value())
-        elif self.timer1.get_enabled():
-            properties["timer_label"] = self.timer1.label
-            properties["timer"] = self.__format_time_delta(self.timer1.value())
-        elif self.timer2.get_enabled():
-            properties["timer_label"] = self.timer2.label
-            properties["timer"] = self.__format_time_delta(self.timer2.value())
+        if self._timer1.get_enabled() and self._timer2.get_enabled():
+            properties["timer1_label"] = self._timer1.label
+            properties["timer1"] = self._format_time_delta(self._timer1.value())
+            properties["timer2_label"] = self._timer2.label
+            properties["timer2"] = self._format_time_delta(self._timer2.value())
+        elif self._timer1.get_enabled():
+            properties["timer_label"] = self._timer1.label
+            properties["timer"] = self._format_time_delta(self._timer1.value())
+        elif self._timer2.get_enabled():
+            properties["timer_label"] = self._timer2.label
+            properties["timer"] = self._format_time_delta(self._timer2.value())
 
         return properties
 
-    def __format_time_delta(self, td): 
+    def _format_time_delta(self, td): 
         hours = td.seconds // 3600 
         minutes = (td.seconds % 3600) // 60 
         seconds = td.seconds % 60 

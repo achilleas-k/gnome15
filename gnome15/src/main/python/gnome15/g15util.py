@@ -408,28 +408,51 @@ def flip_vertical(context, width, height):
 def flip_hv_centered_on(context, fx, fy, cx, cy):    
     mtrx = cairo.Matrix(fx,0,0,fy,cx*(1-fx),cy*(fy-1))
     context.transform(mtrx)
-
+    
 def load_surface_from_file(filename, size = None):
     if filename == None:
         logger.warning("Empty filename requested")
         return None
+        
+    if filename.startswith("http:"):
+        cache_file = base64.urlsafe_b64encode(filename)
+        cache_dir = os.path.expanduser("~/.cache/gnome15")
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+        full_cache_path = "%s/%s.img" % ( cache_dir, cache_file )
+        if os.path.exists(full_cache_path):
+            meta_fileobj = open(full_cache_path + "m", "r")
+            type = meta_fileobj.readline()
+            meta_fileobj.close()
+            print "Reading %s from cached copy %s" % ( filename, full_cache_path )
+            if type == "image/svg+xml" or filename.lower().endswith(".svg"):
+                return load_svg_as_surface(filename, size)
+            else:
+                return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(full_cache_path), size)
+                
     if "://" in filename:
-        
-        if filename.startswith("http:"):
-            print "** Loading from HTTP!! Not goood"
-        
         
         try:
             file = urllib.urlopen(filename)
             data = file.read()
             type = file.info().gettype()
+            
+            if filename.startswith("http:"):
+                print "Caching %s" % filename
+                cache_fileobj = open(full_cache_path, "w")
+                cache_fileobj.write(data)
+                cache_fileobj.close()
+                meta_fileobj = open(full_cache_path + "m", "w")
+                meta_fileobj.write(type + "\n")
+                meta_fileobj.close()
+            
             if type == "image/svg+xml" or filename.lower().endswith(".svg"):
                 svg = rsvg.Handle()
                 svg.write(data)
                 svg_size = svg.get_dimension_data()[2:4]
                 if size == None:
                     size = svg_size
-                surface = cairo.ImageSurface(0, int(size[0]), int(size[1]))
+                surface = cairo.ImageSurface(0, int(size[0]) if not isinstance(size, int) else size, int(size[1]) if not isinstance(size, int) else size)
                 context = cairo.Context(surface)
                 if size != svg_size:
                     scale = get_scale(size, svg_size)
@@ -448,21 +471,24 @@ def load_surface_from_file(filename, size = None):
     else:
         if os.path.exists(filename):
             if filename.lower().endswith(".svg"):
-                svg = rsvg.Handle(filename)
-                svg_size = svg.get_dimension_data()[2:4]
-                if size == None:
-                    size = svg_size
-                sx = int(size) if isinstance(size, int) or isinstance(size, float) else int(size[0])
-                sy = int(size) if isinstance(size, int) or isinstance(size, float) else int(size[1])
-                surface = cairo.ImageSurface(0, sx, sy)
-                context = cairo.Context(surface)
-                if size != svg_size:
-                    scale = get_scale(size, svg_size)
-                    context.scale(scale, scale)
-                svg.render_cairo(context)
-                return surface
+                return load_svg_as_surface(filename, size)
             else:
                 return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
+            
+def load_svg_as_surface(filename, size):
+    svg = rsvg.Handle(filename)
+    svg_size = svg.get_dimension_data()[2:4]
+    if size == None:
+        size = svg_size
+    sx = int(size) if isinstance(size, int) or isinstance(size, float) else int(size[0])
+    sy = int(size) if isinstance(size, int) or isinstance(size, float) else int(size[1])
+    surface = cairo.ImageSurface(0, sx, sy)
+    context = cairo.Context(surface)
+    if size != svg_size:
+        scale = get_scale(size, svg_size)
+        context.scale(scale, scale)
+    svg.render_cairo(context)
+    return surface
     
 def image_to_surface(image, type = "ppm"):
     # TODO make better
