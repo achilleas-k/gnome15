@@ -58,7 +58,7 @@ def create(gconf_key, gconf_client, screen):
 This function must be provided if you set has_preferences to True. You
 should display a dialog for editing the plugins preferences
 '''
-def show_preferences(parent, device, gconf_client, gconf_key):
+def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "clock.glade"))
     

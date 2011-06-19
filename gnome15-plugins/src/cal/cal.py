@@ -154,19 +154,19 @@ class G15Cal():
                     
     def action_performed(self, binding):
         if self._page and self._page.is_visible():
-            if binding.action == g15screen.PREVIOUS_PAGE:
+            if binding.action == g15driver.PREVIOUS_PAGE:
                 self._adjust_calendar_date(-7)
-            elif binding.action == g15screen.NEXT_PAGE:
+            elif binding.action == g15driver.NEXT_PAGE:
                 self._adjust_calendar_date(7)
-            elif binding.action == g15screen.PREVIOUS_SELECTION:
+            elif binding.action == g15driver.PREVIOUS_SELECTION:
                 self._adjust_calendar_date(-1)
-            elif binding.action == g15screen.NEXT_SELECTION:
+            elif binding.action == g15driver.NEXT_SELECTION:
                 self._adjust_calendar_date(1)
-            elif binding.action == g15screen.CLEAR:
+            elif binding.action == g15driver.CLEAR:
                 self._calendar_date = None
                 self._loaded_minute =- -1
                 self._screen.redraw(self._page)
-            elif binding.action == g15screen.VIEW:
+            elif binding.action == g15driver.VIEW:
                 self._page.next_focus()
     
     """

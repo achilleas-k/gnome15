@@ -62,7 +62,7 @@ KELVIN=2
 def create(gconf_key, gconf_client, screen):
     return G15Weather(gconf_key, gconf_client, screen)
 
-def show_preferences(parent, device, gconf_client, gconf_key):
+def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "weather.glade"))
     

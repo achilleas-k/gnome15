@@ -50,8 +50,8 @@ unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 def create(gconf_key, gconf_client, screen):
     return G15Stopwatch(gconf_key, gconf_client, screen)
 
-def show_preferences(parent, device, gconf_client, gconf_key):
-    preferences = g15preferences.G15StopwatchPreferences(parent, device, gconf_client, gconf_key)
+def show_preferences(parent, driver, gconf_client, gconf_key):
+    preferences = g15preferences.G15StopwatchPreferences(parent, driver, gconf_client, gconf_key)
     preferences.run()
 
 
@@ -104,23 +104,23 @@ class G15Stopwatch():
             # G19 we make use of more keys
             if self._screen.driver.get_model_name() == g15driver.MODEL_G19:                
                 if self._timer1.get_enabled():
-                    if binding.action == g15screen.PREVIOUS_SELECTION:
+                    if binding.action == g15driver.PREVIOUS_SELECTION:
                         self._timer1.toggle()                        
                         self._check_page_priority()
                         self._redraw()
-                    elif binding.action == g15screen.NEXT_SELECTION:
+                    elif binding.action == g15driver.NEXT_SELECTION:
                         self._timer1.reset()
                                     
                 if self._timer2.get_enabled():
-                    if binding.action == g15screen.PREVIOUS_PAGE:
+                    if binding.action == g15driver.PREVIOUS_PAGE:
                         self._timer2.toggle()                        
                         self._check_page_priority()
                         self._redraw()
-                    elif binding.action == g15screen.NEXT_PAGE:
+                    elif binding.action == g15driver.NEXT_PAGE:
                         self._timer2.reset()
             else:
                 # For everything else we allow switching between timers
-                if binding.action == g15screen.VIEW:
+                if binding.action == g15driver.VIEW:
                     if self._active_timer == self._timer1:
                         self._active_timer = self._timer2
                     else:
@@ -128,11 +128,11 @@ class G15Stopwatch():
                     self._redraw()
                 
                 if self._active_timer:
-                    if binding.action == g15screen.PREVIOUS_SELECTION:
+                    if binding.action == g15driver.PREVIOUS_SELECTION:
                         self._active_timer.toggle()                        
                         self._check_page_priority()
                         self._redraw()
-                    elif binding.action == g15screen.NEXT_SELECTION:
+                    elif binding.action == g15driver.NEXT_SELECTION:
                         self._active_timer.reset()                        
                         self._check_page_priority()
                         self._redraw()

@@ -33,6 +33,7 @@ import urllib
 import base64
 import sys
 import traceback
+import xdg.Mime as mime
 
 # Logging
 import logging
@@ -424,7 +425,6 @@ def load_surface_from_file(filename, size = None):
             meta_fileobj = open(full_cache_path + "m", "r")
             type = meta_fileobj.readline()
             meta_fileobj.close()
-            print "Reading %s from cached copy %s" % ( filename, full_cache_path )
             if type == "image/svg+xml" or filename.lower().endswith(".svg"):
                 return load_svg_as_surface(filename, size)
             else:
@@ -437,8 +437,15 @@ def load_surface_from_file(filename, size = None):
             data = file.read()
             type = file.info().gettype()
             
+            if filename.startswith("file://"):
+                type = str(mime.get_type(filename))
+                
+                # Workaround for xnoise, seems to report JPEG images as text/plain
+                if "xnoise" in filename and type == "text/plain":
+                    type = "image/jpeg"
+                    
+            
             if filename.startswith("http:"):
-                print "Caching %s" % filename
                 cache_fileobj = open(full_cache_path, "w")
                 cache_fileobj.write(data)
                 cache_fileobj.close()
@@ -447,26 +454,35 @@ def load_surface_from_file(filename, size = None):
                 meta_fileobj.close()
             
             if type == "image/svg+xml" or filename.lower().endswith(".svg"):
+                print "RSVG loading %s, %s" % ( type, filename )
                 svg = rsvg.Handle()
-                svg.write(data)
-                svg_size = svg.get_dimension_data()[2:4]
-                if size == None:
-                    size = svg_size
-                surface = cairo.ImageSurface(0, int(size[0]) if not isinstance(size, int) else size, int(size[1]) if not isinstance(size, int) else size)
-                context = cairo.Context(surface)
-                if size != svg_size:
-                    scale = get_scale(size, svg_size)
-                    context.scale(scale, scale)
-                svg.render_cairo(context)
-                return surface
+                try:
+                    if not svg.write(data):
+                        print "DATA = %s" % data
+                        raise Exception("Failed to load SVG")
+                    svg_size = svg.get_dimension_data()[2:4]
+                    if size == None:
+                        size = svg_size
+                    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, int(size[0]) if not isinstance(size, int) else size, int(size[1]) if not isinstance(size, int) else size)
+                    context = cairo.Context(surface)
+                    if size != svg_size:
+                        scale = get_scale(size, svg_size)
+                        context.scale(scale, scale)
+                    svg.render_cairo(context)
+                    surface.flush()
+                    return surface
+                finally:
+                    svg.close()
             else:
+                print "Pixbuf loading %s, %s" % ( type, filename )
                 pbl = gtk.gdk.pixbuf_loader_new_with_mime_type(type)
                 pbl.write(data)
                 pixbuf = pbl.get_pixbuf()
                 pbl.close()
                 return pixbuf_to_surface(pixbuf, size)
-        except IOError as e:
-            logger.warning("({})".format(e))
+            return None
+        except Exception as e:
+            logger.warning("Failed to get image. {}".format(e))
             return None
     else:
         if os.path.exists(filename):
@@ -477,18 +493,21 @@ def load_surface_from_file(filename, size = None):
             
 def load_svg_as_surface(filename, size):
     svg = rsvg.Handle(filename)
-    svg_size = svg.get_dimension_data()[2:4]
-    if size == None:
-        size = svg_size
-    sx = int(size) if isinstance(size, int) or isinstance(size, float) else int(size[0])
-    sy = int(size) if isinstance(size, int) or isinstance(size, float) else int(size[1])
-    surface = cairo.ImageSurface(0, sx, sy)
-    context = cairo.Context(surface)
-    if size != svg_size:
-        scale = get_scale(size, svg_size)
-        context.scale(scale, scale)
-    svg.render_cairo(context)
-    return surface
+    try:
+        svg_size = svg.get_dimension_data()[2:4]
+        if size == None:
+            size = svg_size
+        sx = int(size) if isinstance(size, int) or isinstance(size, float) else int(size[0])
+        sy = int(size) if isinstance(size, int) or isinstance(size, float) else int(size[1])
+        surface = cairo.ImageSurface(0, sx, sy)
+        context = cairo.Context(surface)
+        if size != svg_size:
+            scale = get_scale(size, svg_size)
+            context.scale(scale, scale)
+        svg.render_cairo(context)
+        return surface
+    finally:
+        svg.close()
     
 def image_to_surface(image, type = "ppm"):
     # TODO make better
@@ -562,32 +581,38 @@ def local_icon_or_default(icon_name, size = 128):
 def get_embedded_image_url(path):
     
     file_str = StringIO()
-    img_data = StringIO()
-    file_str.write("data:")
-    
-    if isinstance(path, cairo.Surface):
-        # Cairo canvas
-        file_str.write("image/png")
-        path.write_to_png(img_data)
-    else:
-        if not "://" in path:
-            # File
-            surface = load_surface_from_file(path)
-            file_str.write("image/png")
-            surface.write_to_png(img_data)
-        else:
-            # URL        
-            pagehandler = urllib.urlopen(path)
-            file_str.write(pagehandler.info().gettype())
-            while 1:
-                data = pagehandler.read(512)
-                if not data:
-                    break
-                img_data.write(data)
-    
-    file_str.write(";base64,")
-    file_str.write(base64.b64encode(img_data.getvalue()))
-    return file_str.getvalue()
+    try:
+        img_data = StringIO()
+        try:
+            file_str.write("data:")
+            
+            if isinstance(path, cairo.ImageSurface):
+                # Cairo canvas
+                file_str.write("image/png")
+                path.write_to_png(img_data)
+            else:
+                if not "://" in path:
+                    # File
+                    surface = load_surface_from_file(path)
+                    file_str.write("image/png")
+                    surface.write_to_png(img_data)
+                else:
+                    # URL        
+                    pagehandler = urllib.urlopen(path)
+                    file_str.write(pagehandler.info().gettype())
+                    while 1:
+                        data = pagehandler.read(512)
+                        if not data:
+                            break
+                        img_data.write(data)
+            
+            file_str.write(";base64,")
+            file_str.write(base64.b64encode(img_data.getvalue()))
+            return file_str.getvalue()
+        finally:
+            img_data.close()
+    finally:
+        file_str.close()
 
 def get_icon_path(icon = None, size = 128, warning = True):
     o_icon = icon
@@ -838,9 +863,11 @@ def image_to_pixbuf(im, type = "ppm"):
     if type == "ppm":
         p_type = "pnm"
     file1 = StringIO()  
-    im.save(file1, type)  
-    contents = file1.getvalue()  
-    file1.close()  
+    try:
+        im.save(file1, type)  
+        contents = file1.getvalue()  
+    finally:
+        file1.close()  
     loader = gtk.gdk.PixbufLoader(p_type)  
     loader.write(contents, len(contents))  
     pixbuf = loader.get_pixbuf()  
@@ -848,18 +875,17 @@ def image_to_pixbuf(im, type = "ppm"):
     return pixbuf
 
 def surface_to_pixbuf(surface):  
-    file1 = StringIO()
-    surface.write_to_png(file1) 
-    contents = file1.getvalue()  
-    file1.close()  
+    try:
+        file1 = StringIO()
+        surface.write_to_png(file1) 
+        contents = file1.getvalue() 
+    finally:
+        file1.close()   
     loader = gtk.gdk.PixbufLoader("png")  
     loader.write(contents, len(contents))  
     pixbuf = loader.get_pixbuf()  
     loader.close()  
     return pixbuf
-
-def Xsurface_to_pixbuf(surface):
-    return gtk.gdk.pixbuf_new_from_data(surface.get_data(), gtk.gdk.COLORSPACE_RGB, True, 8, surface.get_width(), surface.get_height(), surface.get_width() * 4)
 
 """
 Get the string name of the key given it's code

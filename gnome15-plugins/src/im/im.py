@@ -478,7 +478,7 @@ class G15Im(g15plugin.G15MenuPlugin):
         Keyword arguments:
         binding -- binding
         """
-        if binding.action == g15screen.VIEW:
+        if binding.action == g15driver.VIEW:
             mode_index = MODE_LIST.index(self.menu.mode) + 1
             if mode_index >= len(MODE_LIST):
                 mode_index = 0

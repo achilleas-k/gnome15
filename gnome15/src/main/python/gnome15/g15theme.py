@@ -826,15 +826,15 @@ class Menu(Component):
             
     def action_performed(self, binding):
         if self.is_visible():
-            if binding.action == g15screen.NEXT_SELECTION:
+            if binding.action == g15driver.NEXT_SELECTION:
                 self._move_down(1)
-            elif binding.action == g15screen.PREVIOUS_SELECTION:
+            elif binding.action == g15driver.PREVIOUS_SELECTION:
                 self._move_up(1)
-            if binding.action == g15screen.NEXT_PAGE:
+            if binding.action == g15driver.NEXT_PAGE:
                 self._move_down(10)
-            elif binding.action == g15screen.PREVIOUS_PAGE:
+            elif binding.action == g15driver.PREVIOUS_PAGE:
                 self._move_up(10)
-            elif binding.action == g15screen.SELECT:
+            elif binding.action == g15driver.SELECT:
                 if self.selected:
                     self.selected.activate()
         
@@ -1083,9 +1083,9 @@ class ConfirmationScreen(G15Page):
         self.screen.action_listeners.append(self)
         
     def action_performed(self, binding):             
-        if binding.action == g15screen.PREVIOUS_SELECTION:
+        if binding.action == g15driver.PREVIOUS_SELECTION:
             self.screen.del_page(self)
-        elif binding.action == g15screen.NEXT_SELECTION:
+        elif binding.action == g15driver.NEXT_SELECTION:
             self.callback(self.arg)  
             self.screen.del_page(self)
             self.screen.action_listeners.remove(self)
@@ -1150,8 +1150,25 @@ class G15Theme():
         else:
             raise Exception("Must either supply theme directory or SVG text")
             
-        self.driver.process_svg(self.document)
+        self.process_svg()
         self.bounds = g15util.get_bounds(self.document.getroot())
+        
+    def process_svg(self):        
+        self.driver.process_svg(self.document)
+                
+        # Remove sodipodi attributes
+        self.del_namespace("sodipodi", "http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd")
+        self.del_namespace("inkscape", "http://www.inkscape.org/namespaces/inkscape")
+        
+    def del_namespace(self, prefix, uri):
+        for e in self.document.getroot().xpath("//*[namespace-uri()='%s' or @*[namespace-uri()='%s']]" % ( uri, uri ) ,namespaces=self.nsmap):
+            attr = e.attrib
+            for k in list(attr.keys()):
+                if k.startswith("{%s}" % uri):
+                    del attr[k]
+            if e.getparent() is not None and e.prefix == prefix:
+                e.getparent().remove(e)
+        
 
     def get_path_for_variant(self, dir, variant, extension, fatal = True, prefix = ""):
         if variant == None:

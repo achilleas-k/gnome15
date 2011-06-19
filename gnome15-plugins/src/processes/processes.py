@@ -114,7 +114,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
                     
     def action_performed(self, binding):            
         if self.page != None and self.page.is_visible():            
-            if binding.action == g15screen.VIEW:
+            if binding.action == g15driver.VIEW:
                 print "Processes is visible!"
                 self.menu.remove_all_children()
                 if self._mode == "applications":

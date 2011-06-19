@@ -21,11 +21,9 @@
 #        +-----------------------------------------------------------------------------+
  
 
-import os
 import usb
 import g15driver
 import g15drivermanager
-import g15screen
 
 class ActionBinding():
     def __init__(self, action, keys, state):
@@ -101,14 +99,14 @@ g13_key_layout = [
 """ 
 Unfortunately we have to leave L1 clear for g15daemon for the moment
 """
-g15_action_keys = { g15screen.NEXT_SELECTION: ActionBinding(g15screen.NEXT_SELECTION, [ g15driver.G_KEY_L4 ], g15driver.KEY_STATE_UP),
-                    g15screen.PREVIOUS_SELECTION: ActionBinding(g15screen.PREVIOUS_SELECTION, [ g15driver.G_KEY_L3 ], g15driver.KEY_STATE_UP),
-                    g15screen.SELECT: ActionBinding(g15screen.SELECT, [ g15driver.G_KEY_L5 ], g15driver.KEY_STATE_UP),
-                    g15screen.MENU: ActionBinding(g15screen.MENU, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_HELD),
-                    g15screen.CLEAR: ActionBinding(g15screen.CLEAR, [ g15driver.G_KEY_L5 ], g15driver.KEY_STATE_HELD),
-                    g15screen.VIEW: ActionBinding(g15screen.VIEW, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_UP),
-                    g15screen.NEXT_PAGE: ActionBinding(g15screen.NEXT_PAGE, [ g15driver.G_KEY_L4 ], g15driver.KEY_STATE_HELD),
-                    g15screen.PREVIOUS_PAGE: ActionBinding(g15screen.PREVIOUS_PAGE, [ g15driver.G_KEY_L3 ], g15driver.KEY_STATE_HELD)
+g15_action_keys = { g15driver.NEXT_SELECTION: ActionBinding(g15driver.NEXT_SELECTION, [ g15driver.G_KEY_L4 ], g15driver.KEY_STATE_UP),
+                    g15driver.PREVIOUS_SELECTION: ActionBinding(g15driver.PREVIOUS_SELECTION, [ g15driver.G_KEY_L3 ], g15driver.KEY_STATE_UP),
+                    g15driver.SELECT: ActionBinding(g15driver.SELECT, [ g15driver.G_KEY_L5 ], g15driver.KEY_STATE_UP),
+                    g15driver.MENU: ActionBinding(g15driver.MENU, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_HELD),
+                    g15driver.CLEAR: ActionBinding(g15driver.CLEAR, [ g15driver.G_KEY_L5 ], g15driver.KEY_STATE_HELD),
+                    g15driver.VIEW: ActionBinding(g15driver.VIEW, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_UP),
+                    g15driver.NEXT_PAGE: ActionBinding(g15driver.NEXT_PAGE, [ g15driver.G_KEY_L4 ], g15driver.KEY_STATE_HELD),
+                    g15driver.PREVIOUS_PAGE: ActionBinding(g15driver.PREVIOUS_PAGE, [ g15driver.G_KEY_L3 ], g15driver.KEY_STATE_HELD)
                    }
 
 """
@@ -127,14 +125,14 @@ g19_key_layout = [
               [ g15driver.G_KEY_MENU, g15driver.G_KEY_BACK, g15driver.G_KEY_SETTINGS ],
               [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ],
               ]
-g19_action_keys = { g15screen.NEXT_SELECTION: ActionBinding(g15screen.NEXT_SELECTION, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_DOWN),
-                    g15screen.PREVIOUS_SELECTION: ActionBinding(g15screen.PREVIOUS_SELECTION, [ g15driver.G_KEY_UP ], g15driver.KEY_STATE_DOWN),
-                    g15screen.SELECT: ActionBinding(g15screen.SELECT, [ g15driver.G_KEY_OK ], g15driver.KEY_STATE_DOWN),
-                    g15screen.MENU: ActionBinding(g15screen.MENU, [ g15driver.G_KEY_MENU ], g15driver.KEY_STATE_DOWN),
-                    g15screen.CLEAR: ActionBinding(g15screen.CLEAR, [ g15driver.G_KEY_BACK ], g15driver.KEY_STATE_DOWN),
-                    g15screen.VIEW: ActionBinding(g15screen.VIEW, [ g15driver.G_KEY_SETTINGS ], g15driver.KEY_STATE_DOWN),
-                    g15screen.NEXT_PAGE: ActionBinding(g15screen.NEXT_PAGE, [ g15driver.G_KEY_RIGHT ], g15driver.KEY_STATE_DOWN),
-                    g15screen.PREVIOUS_PAGE: ActionBinding(g15screen.PREVIOUS_PAGE, [ g15driver.G_KEY_LEFT ], g15driver.KEY_STATE_DOWN)
+g19_action_keys = { g15driver.NEXT_SELECTION: ActionBinding(g15driver.NEXT_SELECTION, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_DOWN),
+                    g15driver.PREVIOUS_SELECTION: ActionBinding(g15driver.PREVIOUS_SELECTION, [ g15driver.G_KEY_UP ], g15driver.KEY_STATE_DOWN),
+                    g15driver.SELECT: ActionBinding(g15driver.SELECT, [ g15driver.G_KEY_OK ], g15driver.KEY_STATE_DOWN),
+                    g15driver.MENU: ActionBinding(g15driver.MENU, [ g15driver.G_KEY_MENU ], g15driver.KEY_STATE_DOWN),
+                    g15driver.CLEAR: ActionBinding(g15driver.CLEAR, [ g15driver.G_KEY_BACK ], g15driver.KEY_STATE_DOWN),
+                    g15driver.VIEW: ActionBinding(g15driver.VIEW, [ g15driver.G_KEY_SETTINGS ], g15driver.KEY_STATE_DOWN),
+                    g15driver.NEXT_PAGE: ActionBinding(g15driver.NEXT_PAGE, [ g15driver.G_KEY_RIGHT ], g15driver.KEY_STATE_DOWN),
+                    g15driver.PREVIOUS_PAGE: ActionBinding(g15driver.PREVIOUS_PAGE, [ g15driver.G_KEY_LEFT ], g15driver.KEY_STATE_DOWN)
                    }
 
 """
@@ -147,12 +145,12 @@ provide the 6 most basic actions
 mx5500_key_layout = [
                      [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ]
                      ]
-mx5500_action_keys = { g15screen.NEXT_SELECTION: ActionBinding(g15screen.NEXT_SELECTION, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_UP),
-                    g15screen.PREVIOUS_SELECTION: ActionBinding(g15screen.PREVIOUS_SELECTION, [ g15driver.G_KEY_UP ], g15driver.KEY_STATE_UP),
-                    g15screen.SELECT: ActionBinding(g15screen.SELECT, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_HELD),
-                    g15screen.MENU: ActionBinding(g15screen.MENU, [ g15driver.G_KEY_UP ], g15driver.KEY_STATE_HELD),
-                    g15screen.CLEAR: ActionBinding(g15screen.CLEAR, [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_HELD),
-                    g15screen.VIEW: ActionBinding(g15screen.VIEW, [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_UP)
+mx5500_action_keys = { g15driver.NEXT_SELECTION: ActionBinding(g15driver.NEXT_SELECTION, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_UP),
+                    g15driver.PREVIOUS_SELECTION: ActionBinding(g15driver.PREVIOUS_SELECTION, [ g15driver.G_KEY_UP ], g15driver.KEY_STATE_UP),
+                    g15driver.SELECT: ActionBinding(g15driver.SELECT, [ g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_HELD),
+                    g15driver.MENU: ActionBinding(g15driver.MENU, [ g15driver.G_KEY_UP ], g15driver.KEY_STATE_HELD),
+                    g15driver.CLEAR: ActionBinding(g15driver.CLEAR, [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_HELD),
+                    g15driver.VIEW: ActionBinding(g15driver.VIEW, [ g15driver.G_KEY_UP, g15driver.G_KEY_DOWN ], g15driver.KEY_STATE_UP)
                    }
 
 # Registered Logitech models

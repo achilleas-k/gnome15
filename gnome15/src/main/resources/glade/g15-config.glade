@@ -959,7 +959,7 @@ delete any macro currently assigned to that key</property>
           </packing>
         </child>
         <child>
-          <object class="GtkHPaned" id="hpaned1">
+          <object class="GtkHPaned" id="MainPane">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>

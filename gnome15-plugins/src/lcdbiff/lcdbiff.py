@@ -63,8 +63,8 @@ TYPES = [ POP3, IMAP ]
 def create(gconf_key, gconf_client, screen):
     return G15Biff(gconf_client, gconf_key, screen)
 
-def show_preferences(parent, device, gconf_client, gconf_key):
-    G15BiffPreferences(parent, device, gconf_client, gconf_key)
+def show_preferences(parent, driver, gconf_client, gconf_key):
+    G15BiffPreferences(parent, driver, gconf_client, gconf_key)
 
 def changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
@@ -392,7 +392,7 @@ class G15BiffPreferences():
     '''
      
     
-    def __init__(self, parent, device, gconf_client, gconf_key):
+    def __init__(self, parent, driver, gconf_client, gconf_key):
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
         self.visible_options = None
@@ -615,7 +615,7 @@ class G15Biff(g15plugin.G15MenuPlugin):
     def schedule_refresh(self, time = - 1):
         if time == -1:
             time = get_update_time(self.gconf_client, self.gconf_key) * 60.0        
-        self.refresh_timer = g15util.queue("lcdbiff", "MailRefreshTimer", time, self.refresh)
+        self.refresh_timer = g15util.queue("lcdbiff-%s" % self.screen.device.uid, "MailRefreshTimer", time, self.refresh)
         
     def refresh(self):
         self._reload_menu()

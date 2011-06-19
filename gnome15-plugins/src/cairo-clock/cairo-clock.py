@@ -51,7 +51,7 @@ unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 def create(gconf_key, gconf_client, screen):
     return G15CairoClock(gconf_key, gconf_client, screen)
 
-def show_preferences(parent, device, gconf_client, gconf_key):
+def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cairo-clock.glade"))
     
@@ -72,7 +72,7 @@ def show_preferences(parent, device, gconf_client, gconf_key):
     theme = widget_tree.get_object("ThemeCombo")
     theme.connect("changed", theme_changed, gconf_key + "/theme", [ gconf_client, theme_model])
     
-    theme_dirs = get_theme_dirs(device.model_id, gconf_key, gconf_client)
+    theme_dirs = get_theme_dirs(driver.get_model_name(), gconf_key, gconf_client)
     themes = {}
     for d in theme_dirs:
         if os.path.exists(d):
@@ -186,23 +186,26 @@ class G15CairoClock():
         for i in names:
             path = self.clock_theme_dir + "/" + i + ".svg"
             if os.path.exists(path):  
-                svg = rsvg.Handle(path)   
-                if self.svg_size == None:
-                    self.svg_size = svg.get_dimension_data()[2:4]
-                    
-                svg_size = self.svg_size
-                     
-                sx = self.width / svg_size[0]
-                sy = self.height / svg_size[1]
-                scale = min(sx, sy)                      
-                surface = cairo.SVGSurface(None, svg_size[0] * scale * 2,svg_size[1] * scale * 2)  
-                context = cairo.Context(surface)
-                self.screen.configure_canvas(context)
-                context.scale(scale, scale)
-                context.translate(svg_size[0], svg_size[1])
-                svg.render_cairo(context)
-                context.translate(-svg_size[0], -svg_size[1])
-                list.append(((svg_size[0] * scale, svg_size[1] * scale), surface))
+                svg = rsvg.Handle(path)
+                try: 
+                    if self.svg_size == None:
+                        self.svg_size = svg.get_dimension_data()[2:4]
+                        
+                    svg_size = self.svg_size
+                         
+                    sx = self.width / svg_size[0]
+                    sy = self.height / svg_size[1]
+                    scale = min(sx, sy)                      
+                    surface = cairo.SVGSurface(None, svg_size[0] * scale * 2,svg_size[1] * scale * 2)  
+                    context = cairo.Context(surface)
+                    self.screen.configure_canvas(context)
+                    context.scale(scale, scale)
+                    context.translate(svg_size[0], svg_size[1])
+                    svg.render_cairo(context)
+                    context.translate(-svg_size[0], -svg_size[1])
+                    list.append(((svg_size[0] * scale, svg_size[1] * scale), surface))
+                finally:
+                    svg.close()
                 
             path = self.clock_theme_dir + "/" + i + ".gif"
             if os.path.exists(path):

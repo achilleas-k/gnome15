@@ -80,7 +80,7 @@ NOTIFICATION_UNDEFINED = 4
 def create(gconf_key, gconf_client, screen):
     return G15NotifyLCD(gconf_client, gconf_key, screen)
 
-def show_preferences(parent, device, gconf_client, gconf_key):
+def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "notify-lcd.glade"))
     dialog = widget_tree.get_object("NotifyLCDDialog")
@@ -404,11 +404,11 @@ class G15NotifyLCD():
                     
     def action_performed(self, binding):            
         if self._page != None and self._page.is_visible():            
-            if binding.action == g15screen.CLEAR:
+            if binding.action == g15driver.CLEAR:
                 self.clear()  
-            elif bind.action == g15screen.NEXT_SELECTION:
+            elif bind.action == g15driver.NEXT_SELECTION:
                 self.next()  
-            elif bind.action == g15screen.SELECT:
+            elif bind.action == g15driver.SELECT:
                 self.action()
     
     def notify(self, app_name, id, icon, summary, body, actions, hints, timeout):

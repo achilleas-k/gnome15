@@ -49,7 +49,7 @@ unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 def create(gconf_key, gconf_client, screen):
     return G15RSS(gconf_client, gconf_key, screen)
 
-def show_preferences(parent, device, gconf_client, gconf_key):
+def show_preferences(parent, driver, gconf_client, gconf_key):
     G15RSSPreferences(parent, device, gconf_client, gconf_key)
 
 def changed(widget, key, gconf_client):
@@ -57,7 +57,7 @@ def changed(widget, key, gconf_client):
     
 class G15RSSPreferences():
     
-    def __init__(self, parent, device, gconf_client, gconf_key):
+    def __init__(self, parent, driver, gconf_client, gconf_key):
         self._gconf_client = gconf_client
         self._gconf_key = gconf_key
         

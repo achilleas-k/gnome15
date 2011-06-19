@@ -78,7 +78,8 @@ class G15Menu(g15plugin.G15MenuPlugin):
         g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, [ "gnome-main-menu" ], id, name)
     
     def activate(self):
-        self.page = None        
+        self.page = None   
+        self.delete_timer = None     
         self.reload_theme()
         self.listener = MenuScreenChangeListener(self)
         self.screen.add_screen_change_listener(self.listener)
@@ -90,13 +91,21 @@ class G15Menu(g15plugin.G15MenuPlugin):
         self.screen.remove_screen_change_listener(self.listener)
         
     def action_performed(self, binding):
-        if binding.action == g15screen.MENU:
-            if self.page and self.page.is_visible():
+        if self.page is not None:
+            self._reset_delete_timer()
+        if binding.action == g15driver.MENU:
+            if self.page is not None:
                 self.hide_menu()
             else:
                 self.show_menu()
                 self.page.set_priority(g15screen.PRI_HIGH)
-            
+                
+    def hide_menu(self):
+        g15plugin.G15MenuPlugin.hide_menu(self)   
+                
+    def show_menu(self):
+        g15plugin.G15MenuPlugin.show_menu(self)
+        self._reset_delete_timer()   
         
     def load_menu_items(self):
         self.menu.remove_all_children()
@@ -128,6 +137,11 @@ class G15Menu(g15plugin.G15MenuPlugin):
     '''
     Private
     '''
+    def _reset_delete_timer(self):
+        if self.delete_timer:
+            self.delete_timer.cancel()        
+        self.delete_timer = self.screen.delete_after(10.0, self.page)
+                    
     def _reload_menu(self):
         self.load_menu_items()
         self.screen.redraw(self.page)

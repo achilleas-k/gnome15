@@ -170,6 +170,7 @@ class G15Config:
         self.allow_combination = self.widget_tree.get_object("AllowCombination")
         self.device_model = self.widget_tree.get_object("DeviceModel")
         self.device_view = self.widget_tree.get_object("DeviceView")
+        self.main_pane = self.widget_tree.get_object("MainPane")
         self.device_title = self.widget_tree.get_object("DeviceTitle")
         self.device_enabled = self.widget_tree.get_object("DeviceEnabled")
         self.tabs = self.widget_tree.get_object("Tabs")
@@ -507,7 +508,7 @@ class G15Config:
     
     def _show_preferences(self, widget):
         plugin = self._get_selected_plugin()
-        plugin.show_preferences(self.main_window, self.selected_device, self.conf_client, self._get_full_key("plugins/%s" % plugin.id))
+        plugin.show_preferences(self.main_window, self.driver, self.conf_client, self._get_full_key("plugins/%s" % plugin.id))
         
     def _load_plugins(self):
         """
@@ -564,7 +565,7 @@ class G15Config:
             self.widget_tree.get_object("CopyrightLabel").set_text(plugin.copyright)
             self.widget_tree.get_object("SiteLabel").set_uri(plugin.site)
             self.widget_tree.get_object("SiteLabel").set_label(plugin.site)
-            self.widget_tree.get_object("PreferencesButton").set_sensitive(plugin.has_preferences)
+            self.widget_tree.get_object("PreferencesButton").set_sensitive(plugin.has_preferences and self.driver is not None)
             self.widget_tree.get_object("PluginDetails").set_visible(True)
         else:
             self.widget_tree.get_object("PluginDetails").set_visible(False)
@@ -1008,6 +1009,12 @@ class G15Config:
                 sel_device_name = device.uid
                 self.device_view.select_path((idx,))
             idx += 1
+            
+        if idx == 1:
+            main_parent = self.main_pane.get_parent() 
+            main_parent.remove(self.main_pane)
+            self.main_vbox.reparent(main_parent)
+            
         
     def _load_profile_list(self):
         current_selection = self.selected_profile

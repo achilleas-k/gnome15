@@ -13,6 +13,18 @@
 ############################################################################
 
 """
+Default actions
+"""
+NEXT_SELECTION = "next-sel"
+PREVIOUS_SELECTION = "prev-sel"
+NEXT_PAGE = "next-page"
+PREVIOUS_PAGE = "prev-page"
+SELECT = "select"
+VIEW = "view"
+CLEAR = "clear"
+MENU = "menu"
+
+"""
 Bitmask values for setting the M key LED lights. See set_mkey_lights()
 """
 MKEY_LIGHT_1 = 1<<0

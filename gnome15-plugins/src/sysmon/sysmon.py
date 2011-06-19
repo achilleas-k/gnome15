@@ -114,7 +114,7 @@ class G15SysMon():
 
     def action_performed(self, binding):
         if self.page and self.page.is_visible():
-            if binding.action == g15screen.PREVIOUS_SELECTION:
+            if binding.action == g15driver.PREVIOUS_SELECTION:
                 self.last_time_list = None
                 self.cpu_no += 1
                 if self.cpu_no == len(self.cpu_list):
@@ -122,7 +122,7 @@ class G15SysMon():
                 self.gconf_client.set_string(self.gconf_key + "/cpu", self.cpu_list[self.cpu_no])
                 self._reschedule_refresh()
                 return True
-            elif binding.action == g15screen.NEXT_SELECTION:
+            elif binding.action == g15driver.NEXT_SELECTION:
                 self.net_no += 1
                 if self.net_no == len(self.net_list):
                     self.net_no = 0

@@ -209,7 +209,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         return properties
     
     def action_performed(self, binding):
-        if binding.action == g15screen.VIEW:
+        if binding.action == g15driver.VIEW:
             idx = MODE_LIST.index(self._mode) + 1
             self._mode = MODE_LIST[0] if idx == len(MODE_LIST) else MODE_LIST[idx]
             self.screen.redraw(self.page)

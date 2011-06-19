@@ -78,7 +78,7 @@ class AbstractMPRISPlayer():
         self.thumb_image = None
         self.cover_uri = None
         self.song_properties = {}
-        self.status = None      
+        self.status = "Stopped"      
         self.redraw_timer = None  
         
     def check_status(self):        
@@ -92,7 +92,7 @@ class AbstractMPRISPlayer():
                 self.screen.redraw(self.page)
                     
     def reset_elapsed(self):
-        logger.info("Reset track elapsed time")
+        logger.debug("Reset track elapsed time")
         self.start_elapsed = self.get_progress()
         self.playback_started = time.time()
         
@@ -153,7 +153,7 @@ class AbstractMPRISPlayer():
             
     def schedule_redraw(self): 
         self.cancel_redraw()
-        self.redraw_timer = g15util.queue("mprisDataQueue", "MPRIS2Redraw", 1.0, self.redraw)
+        self.redraw_timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "MPRIS2Redraw", 1.0, self.redraw)
         
     def on_shown(self):
         self.hidden = False
@@ -194,20 +194,9 @@ class AbstractMPRISPlayer():
             new_cover_uri = None
             if cover_art != None and os.path.exists(cover_art):
                 new_cover_uri = cover_art
-            else:
-                mime_type = mime.get_type(self.playing_uri)
-                if mime_type != None:
-                    mime_icon = g15util.get_icon_path(str(mime_type).replace("/","-"), size=self.screen.height)
-                    if mime_icon != None:                    
-                        new_cover_uri = mime_icon  
-            if new_cover_uri != None:
-                try :            
-                    new_cover_uri = "file://" + urllib.pathname2url(new_cover_uri)
-                except :
-                    new_cover_uri = None
-                                  
-            if new_cover_uri == None:                      
-                new_cover_uri = g15util.get_icon_path(["audio-player", "applications-multimedia" ], size=self.screen.height)
+                
+        if new_cover_uri == None:
+            new_cover_uri = self.get_default_cover()
                 
         if new_cover_uri != self.cover_uri:
             self.cover_uri = new_cover_uri
@@ -215,8 +204,21 @@ class AbstractMPRISPlayer():
             self.cover_image = None
             self.thumb_image = None
             if self.cover_uri != None:
-                self.cover_image = g15util.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
-                self.cover_uri = g15util.get_embedded_image_url(self.cover_image)
+                cover_image = g15util.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
+                if cover_image:
+                    self.cover_image = cover_image
+#                    if not self.cover_uri.startswith("file:"):
+#                        self.cover_uri = g15util.get_embedded_image_url(self.cover_image)
+                    self.cover_uri = g15util.get_embedded_image_url(self.cover_image)
+                else:
+                    cover_image = self.get_default_cover()
+                    logger.warning("Failed to loaded preferred cover art, falling back to default of %s" % cover_image)
+                    if cover_image:
+                        self.cover_image = cover_image
+#                        if not self.cover_uri.startswith("file:"):
+#                            self.cover_uri = g15util.get_embedded_image_url(self.cover_image)
+                        self.cover_uri = g15util.get_embedded_image_url(self.cover_image)
+                        self.cover_image = g15util.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
                   
         # Track status
         if self.status == "Stopped":
@@ -239,6 +241,22 @@ class AbstractMPRISPlayer():
                 self.song_properties["paused"] = True
             self.song_properties["icon"] = self.cover_uri
             
+    def get_default_cover(self):
+        mime_type = mime.get_type(self.playing_uri)
+        if mime_type != None:
+            mime_icon = g15util.get_icon_path(str(mime_type).replace("/","-"), size=self.screen.height)
+            if mime_icon != None:                    
+                new_cover_uri = mime_icon  
+        if new_cover_uri != None:
+            try :            
+                new_cover_uri = "file://" + urllib.pathname2url(new_cover_uri)
+            except :
+                new_cover_uri = None
+                              
+        if new_cover_uri == None:                      
+            new_cover_uri = g15util.get_icon_path(["audio-player", "applications-multimedia" ], size=self.screen.height)
+            
+        return new_cover_uri
         
     def recalc_progress(self):
         logger.debug("Recalculating progress")
@@ -289,14 +307,14 @@ class AbstractMPRISPlayer():
     
 class MPRIS1Player(AbstractMPRISPlayer):
     
-    def __init__(self, gconf_client, screen, players, interface_name, session_bus):
+    def __init__(self, gconf_client, screen, players, bus_name, session_bus):
         self.timer = None
-        root_obj = session_bus.get_object(interface_name, '/')                    
+        root_obj = session_bus.get_object(bus_name, '/')                    
         root = dbus.Interface(root_obj, 'org.freedesktop.MediaPlayer')
-        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, interface_name, session_bus, root.Identity())
+        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, bus_name, session_bus, root.Identity())
         
         # There is no seek / position changed event in MPRIS1, so we poll        
-        player_obj = session_bus.get_object(interface_name, '/Player')
+        player_obj = session_bus.get_object(bus_name, '/Player')
         self.player = dbus.Interface(player_obj, 'org.freedesktop.MediaPlayer')            
         
         # Set the initial status
@@ -304,7 +322,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.check_status()
         
         # Start polling for status, position and track changes        
-        self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 1.0, self.update_track)            
+        self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)            
         session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def update_track(self):
@@ -312,9 +330,9 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.playback_started = time.time()
         self.check_status()
         if self.status == "Playing":        
-            self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 1.0, self.update_track)
+            self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)
         else:        
-            self.timer = g15util.queue("mprisDataQueue", "UpdateTrackData", 5.0, self.update_track)
+            self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 5.0, self.update_track)
         
     def on_stop(self):
         if self.timer != None:
@@ -322,7 +340,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.session_bus.remove_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def track_changed_handler(self, detail):
-        g15util.queue("mprisDataQueue", "LoadTrackDetails", 1.0, self.load_and_draw)
+        g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "LoadTrackDetails", 1.0, self.load_and_draw)
         
     def load_and_draw(self):
         self.load_song_details()
@@ -379,17 +397,28 @@ class MPRIS1Player(AbstractMPRISPlayer):
 
 class MPRIS2Player(AbstractMPRISPlayer):
     
-    def __init__(self, gconf_client, screen, players, interface_name, session_bus):
+    def __init__(self, gconf_client, screen, players, bus_name, session_bus):
         self.last_properties = None
+        self.tracks = []
         
         # Connect to DBUS        
-        player_obj = session_bus.get_object(interface_name, '/org/mpris/MediaPlayer2')     
+        player_obj = session_bus.get_object(bus_name, '/org/mpris/MediaPlayer2')     
         self.player = dbus.Interface(player_obj, 'org.mpris.MediaPlayer2.Player')                   
         self.player_properties = dbus.Interface(player_obj, 'org.freedesktop.DBus.Properties')
         props = self.player_properties.GetAll("org.mpris.MediaPlayer2")
         
+        # Connect to DBUS        
+        try:  
+            self.track_list = dbus.Interface(player_obj, 'org.mpris.MediaPlayer2.TrackList')                   
+            self.track_list_properties = dbus.Interface(self.track_list, 'org.freedesktop.DBus.Properties')
+            self.load_track_list()
+        except dbus.DBusException:
+            self.track_list = None
+            self.track_list_properties = None
+            logger.info("No TrackList interface")     
+        
         # Configure the initial state 
-        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, interface_name, session_bus, props["Identity"] if "Identity" in props else "MPRIS2")
+        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, bus_name, session_bus, props["Identity"] if "Identity" in props else "MPRIS2")
         
         session_bus.add_signal_receiver(self.properties_changed_handler, dbus_interface = "org.freedesktop.DBus.Properties", signal_name = "PropertiesChanged") 
         session_bus.add_signal_receiver(self.seeked, dbus_interface = "org.mpris.MediaPlayer2.Player", signal_name = "Seeked")
@@ -397,7 +426,23 @@ class MPRIS2Player(AbstractMPRISPlayer):
         # Set the initial status
         self.check_status()
         
+        # Workarounds
+        self.timer = None
+        
+        # xnoise doesn't send seeked signals, so we need to refresh
+        if "xnoise" in bus_name:
+            self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)        
+        
+    def load_track_list(self):
+        logger.info("Loading tracklist")        
+        track_list_props = self.track_list_properties.GetAll("org.mpris.MediaPlayer2.TrackList")
+        self.tracks = []
+        for track in track_list_props["Tracks"]:
+            logger.info("   Track %s" % track)
+        
     def on_stop(self): 
+        if self.timer:
+            self.timer.cancel()
         self.session_bus.remove_signal_receiver(self.properties_changed_handler, dbus_interface = "org.freedesktop.DBus.Properties", signal_name = "PropertiesChanged") 
         self.session_bus.remove_signal_receiver(self.seeked, dbus_interface = "org.mpris.MediaPlayer2.Player", signal_name = "Seeked")        
         
@@ -421,7 +466,15 @@ class MPRIS2Player(AbstractMPRISPlayer):
         if "PlaybackStatus" in properties:
             self.set_status(properties["PlaybackStatus"])
             
-        if "xesam:url" in properties and properties["xesam:url"] != self.playing_uri:
+        # Check if the track has changed
+        meta = {}
+        if "Metadata" in properties:
+            meta = properties["Metadata"]
+        if ( "xesam:url" in meta and meta["xesam:url"] != self.playing_uri ) or \
+            ( "mpris:trackid" in meta and meta["mpris:trackid"] != self.playing_track_id ) or \
+            ( "xesam:title" in meta and meta["xesam:title"] != self.playing_track_id ) or \
+            ( "xesam:artist" in meta and meta["xesam:artist"] != self.playing_track_id ) or \
+            ( "xesam:album" in meta and meta["xesam:album"] != self.playing_track_id ):
             self.reset_elapsed()
             
         if "Volume" in properties:
@@ -432,6 +485,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
         else:
             for key in properties:
                 self.last_properties[key] = properties[key]
+                
         if "Metadata" in self.last_properties:
             self.load_meta()
             self.schedule_redraw()
@@ -455,12 +509,18 @@ class MPRIS2Player(AbstractMPRISPlayer):
         else:
             bitrate = str(bitrate / 1024)
         
-        self.playing_uri = g15util.value_or_blank(meta_data,"xesam:url")            
+        self.playing_uri = g15util.value_or_blank(meta_data,"xesam:url")         
+        self.playing_track_id = g15util.value_or_blank(meta_data,"mpris:trackid")
+        self.playing_title = g15util.value_or_blank(meta_data,"xesam:title")
+        self.playing_artist = g15util.value_or_blank(meta_data,"xesam:artist")
+        self.playing_album = g15util.value_or_blank(meta_data,"xesam:album")
                             
         # General properties                    
         self.song_properties = {
                                 "status": self.status,
+                                "tracklist": len(self.tracks) > 0,
                                 "uri": self.playing_uri,
+                                "track_id": self.playing_track_id,
                                 "title": g15util.value_or_blank(meta_data,"xesam:title"),
                                 "art_uri": g15util.value_or_blank(meta_data,"mpris:artUrl"),
                                 "genre": ",".join(list(g15util.value_or_empty(meta_data,"xesam:genre"))),
@@ -486,6 +546,11 @@ class MPRIS2Player(AbstractMPRISPlayer):
             except:
                 pass
         return 0
+    
+    def update_track(self):
+        logger.debug("Updating elapsed time")
+        self.reset_elapsed()
+        self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0 if self.status == "Playing" else 5.0, self.update_track)
             
 class G15MPRIS():
     

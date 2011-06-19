@@ -23,10 +23,7 @@
 import dbus
 import g15util
 import g15theme
-import g15globals
 import g15screen
-import g15driver
-import os.path
     
 class G15MenuPlugin():
     '''
@@ -86,9 +83,10 @@ class G15MenuPlugin():
         """      
         self.page = self.create_page()
         self.menu = self.create_menu()
+        self.page.on_deleted = self.page_deleted
         self.page.add_child(self.menu)
         self.page.add_child(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
-        self.screen.add_page(self.page)
+        self.screen.add_page(self.page)     
         self.load_menu_items()
         self.screen.redraw(self.page)
         
@@ -99,6 +97,12 @@ class G15MenuPlugin():
         return g15theme.G15Page(self.page_id, self.screen, priority=g15screen.PRI_NORMAL, title = self._title, theme = self.theme, \
                                      theme_properties_callback = self.get_theme_properties,
                                      thumbnail_painter = self.paint_thumbnail)
+        
+    def page_deleted(self):
+        """
+        Invoked when the page is removed from the screen
+        """
+        self.page = None
         
     def create_menu(self):
         """
@@ -112,7 +116,6 @@ class G15MenuPlugin():
         Delete the page
         """     
         self.screen.del_page(self.page)
-        self.page = None
         
     def load_menu_items(self):
         """

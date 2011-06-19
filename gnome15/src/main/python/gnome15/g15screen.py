@@ -31,18 +31,6 @@ PRI_LOW=20
 PRI_INVISIBLE=0
 
 """
-Default actions
-"""
-NEXT_SELECTION = "next-sel"
-PREVIOUS_SELECTION = "prev-sel"
-NEXT_PAGE = "next-page"
-PREVIOUS_PAGE = "prev-page"
-SELECT = "select"
-VIEW = "view"
-CLEAR = "clear"
-MENU = "menu"
-
-"""
 Simple colors
 """
 COLOURS = [(0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
@@ -187,7 +175,6 @@ class G15Screen():
             self.driver.disconnect()
         if self.is_active() and self.driver.get_bpp() > 0:
             self.fade(True)
-        g15util.stop_queue("redrawQueue")
         if self.plugins:
             self.plugins.deactivate()
             self.plugins.destroy()
