@@ -74,6 +74,22 @@
          x="24.547735"
          y="856.11218" />
     </clipPath>
+    <filter
+       id="filter3020"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3022"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3024"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -91,7 +107,7 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2223"
+     inkscape:window-x="2230"
      inkscape:window-y="38"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -116,7 +132,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -137,11 +153,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/notify-lcd/default/${icon}"
        xlink:href="${icon}"
-       y="862.11218"
-       x="209.98557"
-       id="image4256"
+       height="95"
        width="99.562164"
-       height="95" />
+       id="image4256"
+       x="209.98557"
+       y="862.11218" />
     <rect
        style="fill:#696969;fill-opacity:0.48557691;stroke:#000000;stroke-width:0.90452361;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0"
        id="rect2985-2-0-5"
@@ -290,7 +306,7 @@
        ry="6" />
     <rect
        class="progress"
-       style="fill-opacity:1;stroke:none"
+       style="fill-opacity:1;stroke:none;filter:url(#filter3020);fill:#ff0000"
        id="remaining_progress"
        width="287.66666"
        height="10"

@@ -268,7 +268,7 @@ class G15MacroRecorder():
         self._record_thread = RecordThread(self._record_callback)
         self._record_thread.start()
         self._lights_control = self._screen.driver.acquire_mkey_lights()
-        self._lights_control.set_mkey_lights(self._screen.get_mkey() | g15driver.MKEY_LIGHT_MR)
+        self._lights_control.set_value(self._screen.get_mkey() | g15driver.MKEY_LIGHT_MR)
         self._lights_control.blink(0, 0.5)
         self._screen.request_defeat_profile_change()
         

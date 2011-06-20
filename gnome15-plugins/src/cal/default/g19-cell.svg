@@ -13,7 +13,7 @@
    height="15.000001"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="g19-cell.svg">
   <defs
      id="defs4">
@@ -65,9 +65,9 @@
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1920"
-     inkscape:window-height="1052"
-     inkscape:window-x="1920"
-     inkscape:window-y="0"
+     inkscape:window-height="1056"
+     inkscape:window-x="0"
+     inkscape:window-y="24"
      inkscape:window-maximized="1"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -99,7 +99,7 @@
      id="layer1"
      transform="translate(-7,-810.36218)">
     <rect
-       style="opacity:0.52863434;fill:#f60000;fill-opacity:1;stroke:none"
+       style="opacity:0.52863433999999998;fill:#ff0000;fill-opacity:1;stroke:none"
        id="rect3838"
        width="21"
        height="15.000001"

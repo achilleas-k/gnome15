@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="g19.svg">
   <defs
      id="defs4">
@@ -444,8 +444,8 @@
      borderlayer="false"
      inkscape:window-width="1290"
      inkscape:window-height="538"
-     inkscape:window-x="2265"
-     inkscape:window-y="92"
+     inkscape:window-x="2110"
+     inkscape:window-y="61"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -540,29 +540,29 @@
        x="75"
        y="922.36218" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/sysmon/default/${cpu_icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/sysmon/default/${cpu_icon}"
        xlink:href="${cpu_icon}"
-       y="842.92181"
-       x="14.746178"
+       height="36"
+       width="36"
        id="image3130"
+       x="14.746178"
+       y="842.92181" />
+    <image
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/sysmon/default/${mem_icon}"
+       xlink:href="${mem_icon}"
+       y="904.92181"
+       x="14.746178"
+       id="image3130-3"
        width="36"
        height="36" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/sysmon/default/${mem_icon}"
-       xlink:href="${mem_icon}"
-       height="36"
-       width="36"
-       id="image3130-3"
-       x="14.746178"
-       y="904.92181" />
-    <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/sysmon/default/${net_icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/sysmon/default/${net_icon}"
        xlink:href="${net_icon}"
-       height="36"
-       width="36"
-       id="image3130-6"
+       y="964.92181"
        x="14.746178"
-       y="964.92181" />
+       id="image3130-6"
+       width="36"
+       height="36" />
     <text
        xml:space="preserve"
        style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
@@ -635,7 +635,7 @@
          inkscape:connector-curvature="0"
          id="rect3791"
          d="m 95.01627,1027.7769 9.032,15.6 c -6.0214,0 -12.0427,0 -18.064,0 z"
-         style="fill:#ff4500;fill-opacity:1;stroke:none" />
+         style="fill:#ff0000;fill-opacity:1;stroke:none" />
       <text
          sodipodi:linespacing="125%"
          id="text3842"
@@ -665,7 +665,7 @@
          inkscape:connector-curvature="0"
          id="rect3791-4"
          d="m 163.01627,1044.1302 9.032,-15.6 c -6.0214,0 -12.0427,0 -18.064,0 z"
-         style="fill:#ff4500;fill-opacity:1;stroke:none" />
+         style="fill:#ff0000;fill-opacity:1;stroke:none" />
       <text
          sodipodi:linespacing="125%"
          id="text3842-4"

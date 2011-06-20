@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="g19-nobody.svg">
   <defs
      id="defs4">
@@ -52,6 +52,22 @@
            in="SourceGraphic" />
       </feMerge>
     </filter>
+    <filter
+       id="filter3013"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3015"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3017"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -69,8 +85,8 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="993"
-     inkscape:window-x="416"
-     inkscape:window-y="19"
+     inkscape:window-x="423"
+     inkscape:window-y="24"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -111,15 +127,15 @@
        rx="11.999999"
        ry="11.999999" />
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15/src/plugins/notify-lcd/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/notify-lcd/default/${icon}"
        xlink:href="${icon}"
-       style="filter:url(#filter3967)"
-       height="95"
-       width="99.562164"
-       id="image4256"
-       x="200.43784"
+       transform="matrix(1.0850055,0,0,1.0850055,-103.64052,-133.53069)"
        y="907.36218"
-       transform="matrix(1.0850055,0,0,1.0850055,-103.64052,-133.53069)" />
+       x="200.43784"
+       id="image4256"
+       width="99.562164"
+       height="95"
+       style="filter:url(#filter3967)" />
     <rect
        style="fill:#696969;fill-opacity:0.48627451;stroke:#000000;stroke-width:0.90452354999999995;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0"
        id="rect2985-2-0-5"
@@ -159,7 +175,7 @@
          inkscape:connector-curvature="0"
          id="rect3791"
          d="m 275.36401,1010.3269 -15.6,9.032 c 0,-6.0214 0,-12.0427 0,-18.064 z"
-         style="fill:#ff4500;fill-opacity:1;stroke:none" />
+         style="fill:#ff0000;fill-opacity:1;stroke:none" />
       <text
          sodipodi:linespacing="125%"
          id="text3842"
@@ -188,7 +204,7 @@
          inkscape:connector-curvature="0"
          id="rect3791-5"
          d="m 33.360235,1004.2997 0,3.8125 8,0 0,5 -8,0 0,3.7187 -10.8125,-6.2812 10.8125,-6.25 z"
-         style="fill:#ff4500;fill-opacity:1;stroke:none" />
+         style="fill:#ff0000;fill-opacity:1;stroke:none" />
       <text
          sodipodi:linespacing="125%"
          id="text3842-9"
@@ -230,7 +246,7 @@
          id="text3842-9-7-0"
          y="1015.1122"
          x="130.65359"
-         style="font-size:14.40000153px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff4500;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+         style="font-size:14.40000153000000083px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
          xml:space="preserve"><tspan
            y="1015.1122"
            x="130.65359"
@@ -248,7 +264,7 @@
        ry="6" />
     <rect
        class="progress"
-       style="fill-opacity:1;stroke:none"
+       style="fill-opacity:1;stroke:none;fill:#ff0000;filter:url(#filter3013)"
        id="remaining_progress"
        width="287.66666"
        height="10"

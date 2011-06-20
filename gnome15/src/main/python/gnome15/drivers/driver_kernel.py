@@ -100,10 +100,9 @@ g19_highlight_control = g15driver.Control("highlight", "Default Highlight Color"
 g19_controls = [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control, g19_highlight_control ]
 g110_controls = [ g19_keyboard_backlight_control ]
 
-g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 0, 0, 2, hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-#g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 0, 0, 1, hint=g15driver.HINT_SWITCH)
-g15_lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 48, hint=g15driver.HINT_SHADEABLE)
+g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint=g15driver.HINT_DIMMABLE)
+g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 0, 0, 2, g15driver.HINT_SHADEABLE)
+g15_lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 48, 0)
 g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint=g15driver.HINT_SWITCH)
 g15_controls = [ g15_backlight_control, g15_invert_control, g15_lcd_backlight_control, g15_lcd_contrast_control ]  
 g11_controls = [ g15_backlight_control ]

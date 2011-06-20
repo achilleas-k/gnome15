@@ -31,10 +31,10 @@
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
-     inkscape:window-width="1918"
-     inkscape:window-height="997"
-     inkscape:window-x="0"
-     inkscape:window-y="25"
+     inkscape:window-width="1920"
+     inkscape:window-height="1056"
+     inkscape:window-x="1920"
+     inkscape:window-y="24"
      inkscape:window-maximized="1">
     <inkscape:grid
        type="xygrid"
@@ -274,7 +274,7 @@
          inkscape:connector-curvature="0"
          id="rect3791"
          d="m 63.01627,1020.5302 9.032,15.6 c -6.0214,0 -12.0427,0 -18.064,0 z"
-         style="fill:#ff4500;fill-opacity:1;stroke:none" />
+         style="fill:#ff0000;fill-opacity:1;stroke:none" />
     </g>
     <g
        id="g3843"
@@ -289,7 +289,7 @@
          rx="2"
          ry="2" />
       <path
-         style="fill:#ff4500;fill-opacity:1;stroke:none"
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
          d="m 213.01627,1036.1302 9.032,-15.6 c -6.0214,0 -12.0427,0 -18.064,0 z"
          id="path3786"
          inkscape:connector-curvature="0"
@@ -311,7 +311,7 @@
            rx="2"
            ry="2" />
         <path
-           style="fill:#ff4500;fill-opacity:1;stroke:none"
+           style="fill:#ff0000;fill-opacity:1;stroke:none"
            d="m 55.216186,1028.3302 15.600168,-9.0319 c 0,6.0213 0,12.0426 0,18.0638 z"
            id="rect3791-1"
            inkscape:connector-curvature="0"
@@ -334,7 +334,7 @@
            rx="2"
            ry="2" />
         <path
-           style="fill:#ff4500;fill-opacity:1;stroke:none"
+           style="fill:#ff0000;fill-opacity:1;stroke:none"
            d="m 190.21764,1023.3302 15.60016,-9.0319 c 0,6.0213 0,12.0426 0,18.0638 z"
            id="rect3791-1-9"
            inkscape:connector-curvature="0"

@@ -198,15 +198,15 @@ class G15Volume():
         self._volume = volume              
         
         if self._volume > 90:
-            self.light_controls.set_mkey_lights(g15driver.MKEY_LIGHT_MR | g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)        
+            self.light_controls.set_value(g15driver.MKEY_LIGHT_MR | g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)        
         elif self._volume > 75:
-            self.light_controls.set_mkey_lights(g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)        
+            self.light_controls.set_value(g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)        
         elif self._volume > 50:
-            self.light_controls.set_mkey_lights(g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2)        
+            self.light_controls.set_value(g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2)        
         elif self._volume > 25:
-            self.light_controls.set_mkey_lights(g15driver.MKEY_LIGHT_1)        
+            self.light_controls.set_value(g15driver.MKEY_LIGHT_1)        
         else:
-            self.light_controls.set_mkey_lights(0)
+            self.light_controls.set_value(0)
           
         self._mute = mute
         

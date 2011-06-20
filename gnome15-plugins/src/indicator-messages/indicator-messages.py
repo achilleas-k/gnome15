@@ -123,6 +123,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
     
     def deactivate(self):
         g15plugin.G15MenuPlugin.deactivate(self)
+        self._stop_blink()
         if self._messages_menu.natty:
             self._session_bus.remove_signal_receiver(self._icon_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "IconChanged")
             self._session_bus.remove_signal_receiver(self._attention_changed, dbus_interface = "com.canonical.indicator.messages.service", signal_name = "AttentionChanged")

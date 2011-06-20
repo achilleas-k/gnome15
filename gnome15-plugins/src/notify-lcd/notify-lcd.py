@@ -108,88 +108,6 @@ def set_available(widget, widget_tree):
     widget_tree.get_object("KeyboardBacklightColor").set_sensitive(widget_tree.get_object("ChangeKeyboardBacklightColor").get_active())
     widget_tree.get_object("BlinkDelay").set_sensitive(widget_tree.get_object("BlinkKeyboardBacklight").get_active())
 
-'''
-Blinks keyboard backlight at configured rate
-'''
-class Blinker(Thread):
-    def __init__(self, blink_delay, color, driver, control_values):
-        self._driver = driver
-        self._cancelled = False
-        self._control_values = control_values
-        self.blink_delay = blink_delay
-        self.color = color
-        Thread.__init__(self)
-        self.start()
-    
-    def cancel(self):
-        self._cancelled = True
-        
-    def run(self):
-        controls = []
-        for c in self._driver.get_controls():
-            if c.hint & g15driver.HINT_DIMMABLE != 0:
-                controls.append(c)
-        
-        for j in range(0, 5):
-            # Off
-            if self._cancelled:
-                break
-            for c in controls:
-                if isinstance(c.value,int):
-                    c.value = c.lower
-                else:
-                    c.value = (0, 0, 0)
-                self._driver.update_control(c)
-                
-            time.sleep(float(self.blink_delay) / 1000)
-                
-            # On
-            i = 0
-            for c in controls:
-                if self._cancelled:
-                    break
-                if isinstance(c.value,int):
-                    c.value = c.upper
-                else:
-                    c.value = self.color if self.color else self._control_values[i]
-                self._driver.update_control(c)
-                i += 1
-                
-            time.sleep(float(self.blink_delay) / 1000)
-            
-        i = 0
-        for c in controls:
-            c.value = self._control_values[i]
-            self._driver.update_control(c)
-            i += 1
-        
-'''
-Changes keyboard backlight color for a few seconds
-'''
-class ColorChanger():
-    def __init__(self, color, driver, control_values):
-        self._driver = driver
-        self._control_values = control_values
-        
-        self.controls = []            
-        for c in self._driver.get_controls():
-            if c.hint & g15driver.HINT_DIMMABLE != 0:
-                if isinstance(c.value, tuple):
-                    self.controls.append(c)
-                    c.value = color
-                    self._driver.update_control(c)
-                
-        self.timer = g15util.schedule("ResetKeyboardLights", 3.0, self.reset)
-                
-    def reset(self):        
-        i = 0
-        for c in self.controls:
-            c.value = self._control_values[i]
-            self._driver.update_control(c)
-            i += 1  
-    
-    def cancel(self):
-        self.timer.cancel()
        
 '''
 Queued notification message
@@ -574,15 +492,16 @@ class G15NotifyLCD():
                 logger.debug("Will play sound",message.hints["sound-file"]) 
                 os.system("aplay '%s' &" % message.hints["sound-file"])
                 
-            if self.blink_keyboard_backlight:
-                self._blink_thread = Blinker(self.blink_delay, self.keyboard_backlight_color if self.change_keyboard_backlight_color else None, self._screen.driver, list(self._control_values))
-                
-            if self.change_keyboard_backlight_color:
-                self._blink_thread = ColorChanger(self.keyboard_backlight_color, self._screen.driver, list(self._control_values))
+            control = self._screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
+            if control and self.blink_keyboard_backlight:
+                acquired_control = self._screen.driver.acquire_control(control, release_after = 3.0, val = self.keyboard_backlight_color if self.change_keyboard_backlight_color else control.value)
+                acquired_control.blink(delay = self.blink_delay / 1000.0)
+            elif control and self.change_keyboard_backlight_color:                
+                acquired_control = self._screen.driver.acquire_control(control, release_after = 3.0, val = self.keyboard_backlight_color)
                 
             if self.blink_memory_bank:
-                control = self._screen.driver.acquire_mkey_lights(release_after = 3.0, val = g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3 | g15driver.MKEY_LIGHT_MR)
-                control.blink(delay = 0.5)
+                acquired_control = self._screen.driver.acquire_mkey_lights(release_after = 3.0, val = g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3 | g15driver.MKEY_LIGHT_MR)
+                acquired_control.blink(delay = self.blink_delay / 1000.0)
                 
                 
     def _do_redraw(self):

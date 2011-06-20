@@ -54,10 +54,8 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     
     dialog = widget_tree.get_object("ScreenSaverDialog")
     dialog.set_transient_for(parent)
-    
-    dim_keyboard = widget_tree.get_object("DimKeyboardCheckbox")
-    dim_keyboard.set_active(gconf_client.get_bool(gconf_key + "/dim_keyboard"))
-    dim_h = dim_keyboard.connect("toggled", changed, gconf_key + "/dim_keyboard", gconf_client)
+
+    g15util.configure_checkbox_from_gconf(gconf_client, "%s/dim_keyboard" % gconf_key,"DimKeyboardCheckbox", True, widget_tree)    
     
     if driver.get_bpp() == 0:
         widget_tree.get_object("MessageFrame").hide()
@@ -71,7 +69,6 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     
     dialog.run()
     dialog.hide()
-    dim_keyboard.disconnect(dim_h)
     text_buffer.disconnect(text_h)
     
 def changed(widget, key, gconf_client):
@@ -159,12 +156,12 @@ class G15ScreenSaver():
                 self._page.key_handlers.append(self)
                 self._screen.add_page(self._page)
                 self._screen.redraw(self._page)
-            if not self.dimmed and self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
+            if not self.dimmed and g15util.get_bool_or_default(self._gconf_client, "%s/dim_keyboard" % self._gconf_key, True):
                 self._dim_keyboard()
         else:
             if self._screen.driver.get_bpp() != 0:
                 self._remove_page()
-            if self.dimmed and self._gconf_client.get_bool(self._gconf_key + "/dim_keyboard"):
+            if self.dimmed and g15util.get_bool_or_default(self._gconf_client,"%s/dim_keyboard" % self._gconf_key, True):
                 self._light_keyboard()
         
     def _screensaver_changed_handler(self, value):
@@ -173,28 +170,16 @@ class G15ScreenSaver():
             self._check_page()
         
     def _dim_keyboard(self):
-        self._control_values  = []
+        self._acquisitions  = []
         for c in self._controls:
-            self._control_values .append(c.value)
-            if c.hint & g15driver.HINT_DIMMABLE != 0:
-                if isinstance(c.value,int):
-                    c.value = 0
-                else:
-                    c.value = (0, 0, 0)
-            else:
-                if isinstance(c.value,int):
-                    c.value = int(c.value * 0.1)
-                else:
-                    c.value = (c.value[0] * 0.1,c.value[1] * 0.1,c.value[2] * 0.1)
-            self._screen.driver.update_control(c)
+            acquisition = self._screen.driver.acquire_control(c, val = c.value)
+            self._acquisitions.append(acquisition)
+            acquisition.fade(100.0 if c.hint & g15driver.HINT_DIMMABLE != 0 else 0.5, 3.0)
         self.dimmed = True
     
     def _light_keyboard(self):
-        i = 0
-        for c in self._controls:
-            c.value = self._control_values [i]
-            i += 1
-            self._screen.driver.update_control(c)
+        for c in self._acquisitions:
+            self._screen.driver.release_control(c)
         self.dimmed = False
             
     def _reload_theme(self):        

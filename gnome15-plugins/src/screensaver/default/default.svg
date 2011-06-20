@@ -14,10 +14,22 @@
    height="43"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="default.svg">
   <defs
-     id="defs4" />
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3010">
+      <rect
+         style="fill:#696969;fill-opacity:1;stroke:none"
+         id="rect3012"
+         width="126"
+         height="34"
+         x="-1.0217938e-07"
+         y="1018.5409" />
+    </clipPath>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -34,8 +46,8 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="2108"
-     inkscape:window-y="144"
+     inkscape:window-x="591"
+     inkscape:window-y="152"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -71,28 +83,21 @@
        sodipodi:linespacing="125%"
        text-rendering="optimizeLegibility" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/screensaver/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/screensaver/default/${icon}"
        xlink:href="${icon}"
-       id="image3051"
-       x="126"
-       y="1018.3622"
-       width="34"
-       height="34" />
-    <rect
-       style="fill:#696969;fill-opacity:1;stroke:none"
-       id="message"
-       width="126"
        height="34"
-       x="-1.0217938e-07"
-       y="1018.5409"
-       class="textbox" />
+       width="34"
+       y="1018.3622"
+       x="126"
+       id="image3051" />
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
        x="-0.058663368"
        y="1023.6122"
        id="message_text"
-       sodipodi:linespacing="125%"><tspan
+       sodipodi:linespacing="125%"
+       clip-path="url(#clipPath3010)"><tspan
          sodipodi:role="line"
          id="tspan3763"
          x="-0.058663368"

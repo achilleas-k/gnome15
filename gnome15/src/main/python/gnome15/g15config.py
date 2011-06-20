@@ -1258,6 +1258,7 @@ class G15Config:
                 
                 color_button.connect("color-set", self._color_changed, control, None)
                 color_button.show()
+                print "Setting %s to %s" % (control.id, str(control.value))
                 color_button.set_color(self._to_color(control.value))
                 hbox.add(color_button)
                 self.control_notify_handles.append(self.conf_client.notify_add(self._get_full_key(control.id), self._control_configuration_changed, [ control, color_button]));

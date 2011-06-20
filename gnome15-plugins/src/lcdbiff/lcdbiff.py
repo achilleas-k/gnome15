@@ -591,6 +591,7 @@ class G15Biff(g15plugin.G15MenuPlugin):
             
     def deactivate(self):
         g15plugin.G15MenuPlugin.deactivate(self)
+        self._stop_blink()
         if self.refresh_timer:
             self.refresh_timer.cancel()
             self.refresh_timer.task_queue.stop()

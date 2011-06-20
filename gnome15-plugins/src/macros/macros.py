@@ -172,7 +172,6 @@ class G15Macros(g15plugin.G15MenuPlugin):
         """
         Add a new macro to the menu
         """ 
-        logger.info("Adding macro %s" % str(macro.name))
         item = MacroMenuItem(macro, self, "macro-%s" % macro.key_list_key)
         self.menu.add_child(item)
         self.screen.redraw(self.page)

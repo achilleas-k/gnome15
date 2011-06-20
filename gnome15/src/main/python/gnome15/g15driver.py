@@ -150,6 +150,8 @@ HINT_SWITCH = 1 << 5
 CAIRO_IMAGE_FORMAT=4
 
 import g15util as g15util
+import time
+import colorsys
 
 seq_no = 0
 
@@ -163,55 +165,138 @@ class Control():
         self.upper = upper
         self.value = value
         
-class LightControl(object):
+        
+class AbstractControlAcquisition(object):
     
-    def __init__(self, driver):
+    def __init__(self, driver, initial_value = 0):
         self.driver = driver
-        self.val = 0
-        self.driver.set_mkey_lights(self.val)
+        self.val = initial_value
+        self.adjust(self.val)
         self.reset_timer = None
-        self.reset_val = 0
+        self.reset_val = initial_value
         self.on = False
         
-    def blink(self, off_val = 0, delay = 0.5):
+    def fade(self, percentage = 100.0, duration = 1.0):
+        target_val = self.get_target_value(self.val, percentage)
+        if self.val != target_val:
+            self._reduce(duration / float( self.val - target_val ), target_val)
+        
+    def _reduce(self, interval, target_val):
+        if self.val > target_val:
+            self.set_value(self.val - 1)
+            g15util.schedule("Fade", interval, self._reduce, interval, target_val)
+        
+    def get_target_value(self, val, percentage):
+        return val - int ( ( float(val) / 100.0 ) * percentage )
+        
+        
+    def blink(self, off_val = 0, delay = 0.5, duration = None, blink_started = None):
+        if blink_started == None:
+            blink_started = time.time()
         self.cancel_reset()
         if self.on:
-            self._adjust(self.val)
+            self.adjust(self.val)
         else:
-            self._adjust(off_val if isinstance(off_val, int) else off_val())
+            self.adjust(off_val if isinstance(off_val, int) or isinstance(off_val, tuple) else off_val())
         self.on = not self.on
-        self.reset_timer = g15util.schedule("Blink", delay, self.blink, off_val, delay)
+        if duration == None or time.time() < blink_started + duration:
+            self.reset_timer = g15util.schedule("Blink", delay, self.blink, off_val, delay, duration, blink_started)
         return self.reset_timer
     
     def is_active(self):
-        ctrls = len(self.driver.light_controls)
-        return ctrls > 0 and self in self.driver.light_controls and self.driver.light_controls.index(self) == ctrls - 1
+        raise Exception("Not implemented")
     
-    def _adjust(self, val):
-        if self.is_active():
-            self.driver.set_mkey_lights(val)
+    def adjust(self, val):
+        raise Exception("Not implemented")
         
-    def set_mkey_lights(self, val, reset_after = None):
+    def set_value(self, val, reset_after = None):
         old_val = val
-        self.val = val
-        self.on = True
-        self._adjust(val)
-        self.cancel_reset()        
-        if reset_after:
-            self.reset_val = old_val
-            self.reset_timer = g15util.schedule("LEDReset", reset_after, self.reset)
-            return self.reset_timer
+        if val != self.val or reset_after is not None:
+            self.val = val
+            self.on = True
+            self.adjust(val)
+            self.cancel_reset()        
+            if reset_after:
+                self.reset_val = old_val
+                self.reset_timer = g15util.schedule("LEDReset", reset_after, self.reset)
+                return self.reset_timer
             
     def reset(self):
-        self.set_mkey_lights(self.reset_val)
+        self.set_value(self.reset_val)
             
     def cancel_reset(self):
         if self.reset_timer:            
             self.reset_timer.cancel()
             self.reset_timer = None
         
-    def get_mkey_lights(self):
+    def get_value(self):
         return self.val
+    
+        
+class ControlAcquisition(AbstractControlAcquisition):
+    
+    def __init__(self, driver, control, val = None):
+        self.control = control
+        AbstractControlAcquisition.__init__(self, driver, ( (0,0,0) if isinstance(control.value, tuple) else 0) if val == None else val)
+        
+    def is_active(self):
+        ctrls = self.driver.acquired_controls[self.control.id]
+        return len(ctrls) > 0 and self in ctrls and ctrls.index(self) == len(ctrls) - 1
+    
+    def blink(self, off_val = None, delay = 0.5, duration = None, blink_started = None):
+        AbstractControlAcquisition.blink(self, ( (0,0,0) if isinstance(self.control.value, tuple) else 0 ) if off_val is None else off_val , delay, duration, blink_started)
+    
+    def adjust(self, val):
+        if self.is_active():
+            self.control.value = val
+            self.driver.update_control(self.control)
+        
+    def fade(self, percentage = 100.0, duration = 1.0):
+        if isinstance(self.val, int):
+            AbstractControlAcquisition.fade(self, percentage, duration)
+        else:
+            target_val = self.get_target_value(self.val, percentage)
+            h, s, v = self.rgb_to_hsv(self.val)
+            t_h, t_s, t_v = self.rgb_to_hsv(target_val)
+            self._reduce(duration / float( v - t_v ), target_val)
+        
+    def _reduce(self, interval, target_val):
+        if isinstance(self.val, int):
+            AbstractControlAcquisition._reduce(self, interval, target_val)
+        else:
+            h, s, v = self.rgb_to_hsv(self.val)
+            v -= 1
+            if v > self.rgb_to_hsv(target_val)[2]:
+                new_rgb = self.hsv_to_rgb((h, s, v))
+                self.set_value(new_rgb)
+                g15util.schedule("Fade", interval, self._reduce, interval, target_val)
+        
+    def get_target_value(self, val, percentage):
+        if isinstance(self.val, int):
+            return AbstractControlAcquisition.get_target_value(self, val, percentage)
+        else:
+            h, s, v = self.rgb_to_hsv(val)
+            return self.hsv_to_rgb(( h, s, AbstractControlAcquisition.get_target_value(self, v, percentage) ))
+            
+    def rgb_to_hsv(self, val):        
+        r, g, b = val
+        h, s, v = colorsys.rgb_to_hsv(float(r) / 255.0, float(g) / 255.0, float(b) / 255.0)
+        return ( int(h * 255.0), int(s * 255.0), int(v * 255.0 ))
+            
+    def hsv_to_rgb(self, val):        
+        h, s, v = val
+        r, g, b = colorsys.hsv_to_rgb(float(h) / 255.0, float(s) / 255.0, float(v) / 255.0)
+        return ( int(r * 255.0), int(g * 255.0), int(b * 255.0 ))
+        
+class LightControlAcquisition(AbstractControlAcquisition):
+    
+    def is_active(self):
+        ctrls = self.driver.acquired_mkey_lights
+        return len(ctrls) > 0 and self in ctrls and ctrls.index(self) == len(ctrls) - 1
+    
+    def adjust(self, val):
+        if self.is_active():
+            self.driver.set_mkey_lights(val)
         
 class AbstractDriver(object):
     
@@ -224,25 +309,61 @@ class AbstractDriver(object):
         self.seq = seq_no
         self.control_update_listeners = []
         self.initial_mkey_lights_value = 0
-        self.light_controls = []
+        self.acquired_mkey_lights = []
+        self.acquired_controls = {}
+        self.initial_acquired_control_values = {}
+        
+    def release_all_acquisitions(self):
+        self.acquired_mkey_lights = []
+        self.acquired_controls = {}
+        for k in self.initial_acquired_control_values:
+            c = self.get_control(k)
+            c.value = self.initial_acquired_control_values[k]
+            self.update_control(c)
+        self.set_mkey_lights(self.initial_mkey_lights_value)
+        
+    def acquire_control(self, control, release_after = None, val = None):
+        control_acquisitions = self.acquired_controls[control.id] if control.id in self.acquired_controls else []
+        self.acquired_controls[control.id] = control_acquisitions
+        if len(control_acquisitions) == 0:
+            self.initial_acquired_control_values[control.id] = control.value
+            
+        control_acquisition = ControlAcquisition(self, control, val)
+        control_acquisitions.append(control_acquisition)
+        if release_after:
+            g15util.schedule("ReleaseControl", release_after, self.release_control, control_acquisition)
+        return control_acquisition
         
     def acquire_mkey_lights(self, release_after = None, val = None):
-        if len(self.light_controls) == 0:
+        if len(self.acquired_mkey_lights) == 0:
             self.initial_mkey_lights_value = self.get_mkey_lights()
-        control = LightControl(self)
-        self.light_controls.append(control)
+        control_acquisition = LightControlAcquisition(self)
+        self.acquired_mkey_lights.append(control_acquisition)
         if val:
-            control.set_mkey_lights(val)
+            control_acquisition.set_value(val)
         if release_after:
-            g15util.schedule("ReleaseMKeyLights", release_after, self.release_mkey_lights, control)
-        return control
+            g15util.schedule("ReleaseMKeyLights", release_after, self.release_mkey_lights, control_acquisition)
+        return control_acquisition
+    
+    def release_control(self, control_acquisition):
+        control_acquisitions = self.acquired_controls[control_acquisition.control.id]
+        control_acquisition.cancel_reset()
+        control_acquisitions.remove(control_acquisition)
+        ctrls = len(control_acquisitions)
+        if ctrls > 0:
+            control_acquisition.control.value = control_acquisitions[ctrls - 1].val
+            self.update_control(control_acquisition.control)
+        else:
+            print "No more acquisitions for %s, resetting to original of %s" % ( control_acquisition.control.id, str(self.initial_acquired_control_values[control_acquisition.control.id])) 
+            control_acquisition.control.value = self.initial_acquired_control_values[control_acquisition.control.id]
+            self.update_control(control_acquisition.control)
     
     def release_mkey_lights(self, control):
         control.cancel_reset()
-        self.light_controls.remove(control)
-        ctrls = len(self.light_controls)
+        self.acquired_mkey_lights.remove(control)
+        ctrls = len(self.acquired_mkey_lights)
         if ctrls > 0:
-            self.set_mkey_lights(self.light_controls[ctrls - 1].val)
+            self.set_mkey_lights(self.acquired_mkey_lights[ctrls - 1].val)
         else:
             self.set_mkey_lights(self.initial_mkey_lights_value)
     
@@ -379,7 +500,7 @@ class AbstractDriver(object):
                 self.set_control_from_configuration(control, conf_client)
             
     def set_control_from_configuration(self, control, conf_client):
-        entry = conf_client.get("/apps/gnome15/" + control.id)
+        entry = conf_client.get("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ))
         if entry != None:
             if isinstance(control.value, int):
                 control.value = entry.get_int()

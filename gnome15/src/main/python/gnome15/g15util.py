@@ -285,6 +285,10 @@ def radio_changed(widget, key, gconf_client, gconf_value):
 '''
 gconf utilities
 '''
+def get_float_or_default(gconf_client, key, default = None):
+    float_val = gconf_client.get(key)
+    return default if float_val == None else float_val.get_float()
+
 def get_bool_or_default(gconf_client, key, default = None):
     bool_val = gconf_client.get(key)
     return default if bool_val == None else bool_val.get_bool()

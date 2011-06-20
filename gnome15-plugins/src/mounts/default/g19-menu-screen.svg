@@ -179,11 +179,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/mounts/default/${icon}"
        xlink:href="${icon}"
-       height="24.999987"
-       width="24.999987"
-       y="795.11218"
+       id="image4256"
        x="294.54773"
-       id="image4256" />
+       y="795.11218"
+       width="24.999987"
+       height="24.999987" />
     <text
        xml:space="preserve"
        style="font-size:28px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
@@ -258,7 +258,7 @@
          inkscape:connector-curvature="0"
          id="rect3791"
          d="m 63.01627,1020.5302 9.032,15.6 c -6.0214,0 -12.0427,0 -18.064,0 z"
-         style="fill:#ff4500;fill-opacity:1;stroke:none" />
+         style="fill:#ff0000;fill-opacity:1;stroke:none" />
     </g>
     <g
        id="g3843"
@@ -273,7 +273,7 @@
          rx="2"
          ry="2" />
       <path
-         style="fill:#ff4500;fill-opacity:1;stroke:none"
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
          d="m 213.01627,1036.1302 9.032,-15.6 c -6.0214,0 -12.0427,0 -18.064,0 z"
          id="path3786"
          inkscape:connector-curvature="0"
@@ -295,7 +295,7 @@
            rx="2"
            ry="2" />
         <path
-           style="fill:#ff4500;fill-opacity:1;stroke:none"
+           style="fill:#ff0000;fill-opacity:1;stroke:none"
            d="m 55.216186,1028.3302 15.600168,-9.0319 c 0,6.0213 0,12.0426 0,18.0638 z"
            id="rect3791-1"
            inkscape:connector-curvature="0"
@@ -318,7 +318,7 @@
            rx="2"
            ry="2" />
         <path
-           style="fill:#ff4500;fill-opacity:1;stroke:none"
+           style="fill:#ff0000;fill-opacity:1;stroke:none"
            d="m 190.21764,1023.3302 15.60016,-9.0319 c 0,6.0213 0,12.0426 0,18.0638 z"
            id="rect3791-1-9"
            inkscape:connector-curvature="0"
@@ -365,9 +365,9 @@
          id="text3126-8-4-0"
          y="1015.3265"
          x="263.81448"
-         style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+         style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
          xml:space="preserve"><tspan
-           style="font-weight:bold;fill:#ff4500;-inkscape-font-specification:Sans Bold"
+           style="font-weight:bold;fill:#ff0000;-inkscape-font-specification:Sans Bold"
            y="1015.3265"
            x="263.81448"
            id="tspan3128-4-1-7"
@@ -420,7 +420,7 @@
          transform="matrix(1.3382774,0,0,1.3382774,20.213311,-185.01484)"
          id="g3851">
         <rect
-           style="fill:#ff4500;fill-opacity:1;stroke:none"
+           style="fill:#ff0000;fill-opacity:1;stroke:none"
            id="rect2999-4-1-3-4-6"
            width="10.000017"
            height="8.9999723"

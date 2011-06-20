@@ -120,6 +120,8 @@ class G15Screen():
         self.pages = []
         self.keys_held = {}
         self.action_listeners = []
+        self.memory_bank_color_control = None
+        self.acquired_controls = {}
         
         if not self._load_driver():
             raise Exception("Driver failed to load")
@@ -206,7 +208,7 @@ class G15Screen():
             val = g15driver.MKEY_LIGHT_2
         elif self.mkey == 3:
             val = g15driver.MKEY_LIGHT_3
-        self.mkey_lights_control.set_mkey_lights(val)
+        self.mkey_lights_control.set_value(val)
         self.set_color_for_mkey()
         for listener in self.screen_change_listeners:
             listener.memory_bank_changed(val)  
@@ -499,6 +501,7 @@ class G15Screen():
             self.resched_cycle()
         
     def resched_cycle(self, arg1=None, arg2=None, arg3=None, arg4=None):
+        
         self.reschedule_lock.acquire()
         try:
             logger.debug("Rescheduling cycle")
@@ -526,18 +529,16 @@ class G15Screen():
         
     def control_configuration_changed(self, client, connection_id, entry, args):
         key = os.path.basename(entry.key)
-        logger.debug("Controls changed %s", str(key))
+        logger.info("Controls changed %s", str(key))
         if self.driver != None:
             for control in self.driver.get_controls():
                 if key == control.id:
                     if isinstance(control.value, int):
-                        control.value = entry.value.get_int()
+                        value = entry.value.get_int()
                     else:
                         rgb = entry.value.get_string().split(",")
-                        control.value = (int(rgb[0]), int(rgb[1]), int(rgb[2]))
-                        
-                    self.driver.update_control(control)
-                    
+                        value = (int(rgb[0]), int(rgb[1]), int(rgb[2]))
+                    self.acquired_controls[control.id].set_value(value)                    
                     break
             self.redraw()
         
@@ -566,12 +567,15 @@ class G15Screen():
             g15util.schedule("DriverChange", 1.0, self._reload_driver)
         
     def active_profile_changed(self, client, connection_id, entry, args):
-        # Check if the active profile has change
+        # Check if the active profile has change)
         new_profile = g15profile.get_active_profile(self.device)
         if new_profile == None:
+            logger.info("No profile active")
             self.deactivate_profile()
         else:
+            logger.info("Active profile changed to %s" % new_profile.name)
             self.activate_profile()
+        self.set_color_for_mkey()
                 
         return 1
 
@@ -763,7 +767,8 @@ class G15Screen():
         for handle in self.control_handles:
             self.conf_client.notify_remove(handle);
         self.control_handles = []
-    
+        self.acquired_controls = {}
+        self.memory_bank_color_control = None   
         self.plugins.deactivate()
         
         # Delete any remaining pages
@@ -836,16 +841,22 @@ class G15Screen():
         
     def set_color_for_mkey(self):
         control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
+        rgb = None
         if control != None and not isinstance(control.value, int):
             profile = g15profile.get_active_profile(self.device)
             if profile != None:
                 rgb = profile.get_mkey_color(self.mkey)
-                if rgb != None:                    
-                    control.value = rgb
-                    self.driver.update_control(control)
-                    return
-            self.driver.set_control_from_configuration(control, self.service.conf_client)
-            self.driver.update_control(control)
+        
+        if rgb is not None:
+            if self.memory_bank_color_control is None:
+                print "Acquiring new memory bank color control"
+                self.memory_bank_color_control = self.driver.acquire_control(control)
+            print "Setting value it to %s" % str(rgb)
+            self.memory_bank_color_control.set_value(rgb)
+        elif self.memory_bank_color_control is not None:
+            print "Releasing  memory bank color control"
+            self.driver.release_control(self.memory_bank_color_control)
+            self.memory_bank_color_control = None
             
     def get_current_surface(self):
         return self.local_data.surface
@@ -886,10 +897,15 @@ class G15Screen():
                 return
                             
             try :
-                self.driver.connect() 
-                self.driver.light_controls = []
-                self.mkey_lights_control = self.driver.acquire_mkey_lights()
+                self.acquired_controls = {}
+                self.driver.connect()
+                self.driver.set_controls_from_configuration(self.conf_client)
+                self.driver.release_all_acquisitions()
+                self.mkey_lights_control = self.driver.acquire_mkey_lights()                
                 for control in self.driver.get_controls():
+                    self.driver.update_control(control)
+                    self.acquired_controls[control.id] = self.driver.acquire_control(control, val = control.value)
+                    logger.info("Acquired control of %s with value of %s" % (control.id, str(control.value)))
                     self.control_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/%s" %( self.device.uid, control.id), self.control_configuration_changed));
                 self._init_screen()
                 if self.splash == None:

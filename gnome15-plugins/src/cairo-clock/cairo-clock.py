@@ -77,7 +77,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     for d in theme_dirs:
         if os.path.exists(d):
             for fname in os.listdir(d):
-                if os.path.isdir(os.path.join(d, fname)) and not fname in themes and ( device.bpp == 16 or fname == "default" ) :
+                if os.path.isdir(os.path.join(d, fname)) and not fname in themes and ( driver.get_bpp() == 16 or fname == "default" ) :
                     theme_model.append([fname])
                     themes[fname] = True
                     if fname == theme_name:

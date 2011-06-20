@@ -22,7 +22,6 @@
  
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
-import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import datetime
 import time
@@ -154,19 +153,20 @@ class G15Cal():
                     
     def action_performed(self, binding):
         if self._page and self._page.is_visible():
-            if binding.action == g15driver.PREVIOUS_PAGE:
-                self._adjust_calendar_date(-7)
-            elif binding.action == g15driver.NEXT_PAGE:
-                self._adjust_calendar_date(7)
-            elif binding.action == g15driver.PREVIOUS_SELECTION:
-                self._adjust_calendar_date(-1)
-            elif binding.action == g15driver.NEXT_SELECTION:
-                self._adjust_calendar_date(1)
-            elif binding.action == g15driver.CLEAR:
-                self._calendar_date = None
-                self._loaded_minute =- -1
-                self._screen.redraw(self._page)
-            elif binding.action == g15driver.VIEW:
+            if self._calendar.is_focused():
+                if binding.action == g15driver.PREVIOUS_PAGE:
+                    self._adjust_calendar_date(-1)
+                elif binding.action == g15driver.NEXT_PAGE:
+                    self._adjust_calendar_date(1)
+                elif binding.action == g15driver.PREVIOUS_SELECTION:
+                    self._adjust_calendar_date(-7)
+                elif binding.action == g15driver.NEXT_SELECTION:
+                    self._adjust_calendar_date(7)
+                elif binding.action == g15driver.CLEAR:
+                    self._calendar_date = None
+                    self._loaded_minute =- -1
+                    self._screen.redraw(self._page)
+            if binding.action == g15driver.VIEW:
                 self._page.next_focus()
     
     """

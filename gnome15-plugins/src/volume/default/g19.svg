@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="g19.svg">
   <defs
      id="defs4">
@@ -76,17 +76,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="-172.61041"
-     inkscape:cy="65.838074"
+     inkscape:zoom="2.8"
+     inkscape:cx="197.6662"
+     inkscape:cy="12.915739"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1347"
      inkscape:window-height="927"
-     inkscape:window-x="2173"
-     inkscape:window-y="75"
+     inkscape:window-x="250"
+     inkscape:window-y="74"
      inkscape:window-maximized="0"
      inkscape:snap-global="true">
     <inkscape:grid
@@ -136,20 +136,19 @@
        ry="12" />
     <rect
        class="progress"
-       style="fill-opacity:1;stroke:none;filter:url(#filter3880)"
+       style="fill-opacity:1;stroke:none;filter:url(#filter3880);fill:#ff0000"
        id="vol_pc_progress"
        width="220"
        height="10"
-       x="20"
-       y="210"
-       transform="matrix(1.1030303,0,0,1,14.272727,813.36218)" />
+       x="48"
+       y="1022.7142" />
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/volume/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/volume/default/${icon}"
        xlink:href="${icon}"
-       y="842.36218"
-       x="90"
-       width="140"
+       id="image3884"
        height="140"
-       id="image3884" />
+       width="140"
+       x="90"
+       y="842.36218" />
   </g>
 </svg>

@@ -255,6 +255,38 @@
          x="3.4610789"
          y="95.571434" />
     </clipPath>
+    <filter
+       id="filter3067"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3069"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3071"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3073"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3075"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3077"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -263,17 +295,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="86.114405"
-     inkscape:cy="185.56569"
+     inkscape:zoom="1.979899"
+     inkscape:cx="136.55713"
+     inkscape:cy="88.013718"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1327"
      inkscape:window-height="862"
-     inkscape:window-x="227"
-     inkscape:window-y="128"
+     inkscape:window-x="1985"
+     inkscape:window-y="94"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -315,12 +347,13 @@
          id="rect2985-2"
          style="fill:#696969;fill-opacity:0.48627450999999999;stroke:#000000;stroke-width:4.55508614000000023;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0" />
       <image
+         sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/mpris/default/${icon}"
          xlink:href="${icon}"
-         height="256"
-         width="256"
-         transform="matrix(0.4765625,0,0,0.4765625,18,832.36218)"
+         style="fill:#696969"
          id="image3050"
-         style="fill:#696969" />
+         transform="matrix(0.4765625,0,0,0.4765625,18,832.36218)"
+         width="256"
+         height="256" />
     </g>
     <g
        id="g3987"
@@ -339,11 +372,11 @@
       <image
          sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/mpris/default/${vol_icon}"
          xlink:href="${vol_icon}"
-         id="image3050-6"
-         transform="matrix(0.15625,0,0,0.15625,260,832.36218)"
-         width="256"
+         style="fill:#696969"
          height="256"
-         style="fill:#696969" />
+         width="256"
+         transform="matrix(0.15625,0,0,0.15625,260,832.36218)"
+         id="image3050-6" />
     </g>
     <rect
        style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
@@ -356,7 +389,7 @@
        ry="12" />
     <rect
        class="progress"
-       style="fill-opacity:1;stroke:none;"
+       style="fill-opacity:1;stroke:none;fill:#ff0000;filter:url(#filter3067)"
        id="track_progress_pc_progress"
        width="220"
        height="10"
@@ -432,7 +465,8 @@
          id="tspan3084">${bitrate}bps</tspan></text>
     <g
        id="g3824"
-       title="del !paused">
+       title="del !paused"
+       style="filter:url(#filter3073)">
       <rect
          ry="12"
          rx="12"
@@ -448,14 +482,14 @@
          height="80"
          width="30"
          id="rect3042"
-         style="fill-opacity:0.50196078;stroke:none" />
+         style="fill-opacity:0.50196078000000000;stroke:none;fill:#ff0000" />
       <rect
          y="880.36218"
          x="166"
          height="80"
          width="30"
          id="rect3044"
-         style="fill-opacity:0.50196078;stroke:none" />
+         style="fill-opacity:0.50196078000000000;stroke:none;fill:#ff0000" />
     </g>
     <rect
        style="fill:#ff0000;fill-opacity:0;stroke:none"

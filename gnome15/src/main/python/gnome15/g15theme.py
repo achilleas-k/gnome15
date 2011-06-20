@@ -170,7 +170,7 @@ class Component():
         return self._tree_lock
         
     def is_focused(self):
-        return self.get_root().focused == self
+        return self.get_root().focused_component == self
         
     def set_focused(self, focused):
         if not self.focusable:

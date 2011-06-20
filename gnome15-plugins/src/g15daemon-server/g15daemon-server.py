@@ -124,11 +124,13 @@ class G15DaemonClient(asyncore.dispatcher):
         self.plugin.join(self)
         self.handshake = False
                 
-        self.page = g15theme.G15Page("G15Daemon%d" % self.plugin.screen_index, plugin.screen, self._paint)
+        self.page = g15theme.G15Page("G15Daemon%d" % self.plugin.screen_index, plugin.screen, painter = self._paint, on_shown = self._on_shown, on_hidden = self._on_hidden)
         self.page.set_title("G15Daemon Screen %d" % self.plugin.screen_index)
         self.plugin.screen.add_page(self.page)
         self.plugin.screen_index += 1
         self.plugin.screen.redraw(self.page)
+        self.backlight_acquire = None
+        self.keyboard_backlight_acquire = None
         
         self.out_buffer += "G15 daemon HELLO"
         self.oob_buffer = ""
@@ -151,7 +153,7 @@ class G15DaemonClient(asyncore.dispatcher):
         elif val == CLIENT_CMD_IS_USER_SELECTED:
             self.oob_buffer += "1" if self.plugin.screen.get_visible_page() == self.page and self.page.priority == g15screen.PRI_NORMAL else "0"
         elif val & CLIENT_CMD_MKEY_LIGHTS > 0:
-            self.screen.driver.set_mkey_lights(val - CLIENT_CMD_MKEY_LIGHTS)
+            self.screen.driver.set_value(val - CLIENT_CMD_MKEY_LIGHTS)
         elif val & CLIENT_CMD_KEY_HANDLER > 0:
             # TODO - the semantics are slightly different here. gnome15 is already grabbing the keyboard, always.
             # So instead, we just only send keyboard events if the client requests this.
@@ -164,10 +166,10 @@ class G15DaemonClient(asyncore.dispatcher):
                 bl = self.plugin.default_lcd_brightness / 2
             elif level == 2:
                 bl = self.plugin.default_lcd_brightness
-                
-            control = self.screen.driver.get_control("lcd_brightness")
-            control.value = bl            
-            self.screen.driver.update_control(control)
+            if self.backlight_acquire:                
+                self.backlight_acquire.set_value(bl)
+            else:
+                logger.warning("g15daemon client requested backlight be changed, but there is no backlight to change")
         elif val & CLIENT_CMD_KB_BACKLIGHT:
             level = val - CLIENT_CMD_KB_BACKLIGHT
             if level == 0:
@@ -177,9 +179,10 @@ class G15DaemonClient(asyncore.dispatcher):
             elif level == 2:
                 bl = self.plugin.default_backlight
                 
-            control = self.screen.driver.get_control("backlight")
-            control.value = bl            
-            self.screen.driver.update_control(control)
+            if self.keyboard_backlight_acquire:                
+                self.keyboard_backlight_acquire.set_value(bl)
+            else:
+                logger.warning("g15daemon client requested keyboard backlight be changed, but there is no backlight to change")
         elif val & CLIENT_CMD_CONTRAST:
             logger.warning("Ignoring contrast command")
             
@@ -279,6 +282,33 @@ class G15DaemonClient(asyncore.dispatcher):
             sent = self.socket.send(self.oob_buffer, socket.MSG_OOB)
             self.oob_buffer = self.oob_buffer[sent:]
             
+    def handle_key(self, keys, state):
+        val = 0
+        for key in keys:
+            if key in KEY_MAP:
+                val += KEY_MAP[key]                
+                self.out_buffer += struct.pack("<L",val)                            
+                self.out_buffer += struct.pack("<L",0)
+            else:
+                logger.warning("Unmapped G19 -> G15 key")
+                
+    """
+    Private
+    """
+                
+    def _on_hidden(self):
+        if self.keyboard_backlight_acquire:
+            self.plugin.screen.driver.release_control(self.keyboard_backlight_acquire)
+        if self.backlight_acquire:
+            self.plugin.screen.driver.release_control(self.backlight_acquire)
+        
+    def _on_shown(self):
+        self.backlight_control = self.plugin.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
+        if self.backlight_control:
+            self.backlight_acquire = self.plugin.screen.driver.acquire_control(self.backlight_control, val = self.backlight_control.value)
+        self.keyboard_backlight_control = self.plugin.screen.driver.get_control_for_hint(g15driver.HINT_SHADEABLE)
+        if self.keyboard_backlight_control:
+            self.keyboard_backlight_acquire = self.plugin.screen.driver.acquire_control(self.keyboard_backlight_control, val = self.backlight_control.value)
         
     def _paint(self, canvas):
         if self.surface != None:
@@ -292,16 +322,6 @@ class G15DaemonClient(asyncore.dispatcher):
             #canvas.scale(2.0, 3.0)
             canvas.set_source_surface(self.surface)
             canvas.paint()
-            
-    def handle_key(self, keys, state):
-        val = 0
-        for key in keys:
-            if key in KEY_MAP:
-                val += KEY_MAP[key]                
-                self.out_buffer += struct.pack("<L",val)                            
-                self.out_buffer += struct.pack("<L",0)
-            else:
-                logger.warning("Unmapped G19 -> G15 key")
         
 class G15Async(Thread):
     def __init__(self):
@@ -376,11 +396,11 @@ class G15DaemonServer():
         self.palette[766] = foreground_control.value[1]
         self.palette[767] = foreground_control.value[2]
         
-        backlight_control = self.screen.driver.get_control("backlight_colour")
-        self.default_backlight = backlight_control.value 
+        backlight_control = self.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
+        self.default_backlight = backlight_control.value if backlight_control is not None else None 
         
-        lcd_brightness_control = self.screen.driver.get_control("lcd_brightness")
-        self.default_lcd_brightness = lcd_brightness_control.value
+        lcd_brightness_control = self.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
+        self.default_lcd_brightness = lcd_brightness_control.value if lcd_brightness_control is not None else None
     
     def leave(self, client):
         if client in self.clients:

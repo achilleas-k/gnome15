@@ -90,8 +90,6 @@ special_X_keysyms = {
     '~' : "asciitilde"
     }
 
-
-
 class G15Service(Thread):
     
     def __init__(self, service_host, no_trap=False):
