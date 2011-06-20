@@ -108,13 +108,14 @@ class G15Menu(g15plugin.G15MenuPlugin):
         self._reset_delete_timer()   
         
     def load_menu_items(self):
-        self.menu.remove_all_children()
+        items = []
         i = 0
         for page in self.screen.pages:
             if page != self.page and page.priority > g15screen.PRI_INVISIBLE:
-                self.menu.add_child(MenuItem(page, self, "menuitem-%d" % i))
+                items.append(MenuItem(page, self, "menuitem-%d" % i))
                 i += 1
-        items = self.menu.get_children()
+        items = sorted(items, key=lambda item: item._item_page.title)
+        self.menu.set_children(items)
         if len(items) > 0:
             self.menu.selected = items[0]
         else:

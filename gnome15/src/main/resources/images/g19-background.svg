@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="g19-background.svg">
   <defs
      id="defs4">
@@ -431,7 +431,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="99.992155"
+     inkscape:cx="97.135012"
      inkscape:cy="180.80861"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -439,7 +439,7 @@
      borderlayer="false"
      inkscape:window-width="1327"
      inkscape:window-height="862"
-     inkscape:window-x="74"
+     inkscape:window-x="81"
      inkscape:window-y="37"
      inkscape:window-maximized="0">
     <inkscape:grid
@@ -497,12 +497,12 @@
        inkscape:connector-curvature="0" />
     <path
        d="m 70,912.36218 c 0.95595,7.30046 -5.35573,10.90577 -11.53702,6.19943 -19.6777,-14.98172 32.58086,-22.45576 29.13617,-42.9236 -2.85922,-16.98948 -54.987387,-11.75896 -60.923428,14.82455 -4.018095,17.97997 16.539568,42.92447 37.990138,42.92447 10.55258,0 22.72431,-9.52841 25.00149,-21.59911 C 91.40654,902.58335 69.20209,906.27156 70,912.36218 l 0,0 z"
-       style="fill:#00bfff;fill-opacity:1;fill-rule:nonzero;stroke:none;filter:url(#filter3871)"
+       style="fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:none;filter:url(#filter3871)"
        id="path3783"
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#00bfff;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans;filter:url(#filter3865)"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#ff0000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans;filter:url(#filter3865)"
        x="110"
        y="886.36218"
        id="text3057"
@@ -527,7 +527,7 @@
          y="917.36218"
          id="tspan3065">G15 and G19 keyboards</tspan></text>
     <rect
-       style="fill:#00bfff;fill-opacity:1;stroke:none;filter:url(#filter3909)"
+       style="fill:#ff0000;fill-opacity:1;stroke:none;filter:url(#filter3909)"
        id="progress_progress"
        width="200"
        height="20"

@@ -2,7 +2,7 @@
 
 #modules="../pyinputevent pylibg19 g19d lgsetled gnome15 gnome15-gnome-plugins gnome15-ubuntu-plugins gnome15-impulse15 gnome15-ubuntu gnome15-iconpack"
 modules="gnome15 gnome15-plugins gnome15-impulse15 gnome15-iconpack gnome15-ubuntu"
-modules="gnome15 gnome15-plugins"
+modules="gnome15 gnome15-plugins gnome15-impulse15"
 base_dist="natty"
 arch=$(dpkg --print-architecture)
 

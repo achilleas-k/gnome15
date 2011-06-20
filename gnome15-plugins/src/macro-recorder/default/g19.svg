@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="g19.svg">
   <defs
      id="defs4">
@@ -52,6 +52,20 @@
            in="SourceGraphic" />
       </feMerge>
     </filter>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3005">
+      <rect
+         style="opacity:0.5;fill:#ff0000;fill-opacity:1"
+         id="rect3007"
+         width="160"
+         height="150"
+         x="145"
+         y="75"
+         transform="translate(-12,10)"
+         rx="2.9237456"
+         ry="3.4079909" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -69,8 +83,8 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2041"
-     inkscape:window-y="71"
+     inkscape:window-x="486"
+     inkscape:window-y="49"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -111,7 +125,7 @@
        rx="11.999999"
        ry="11.999999" />
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/macro-recorder/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/macro-recorder/default/${icon}"
        xlink:href="${icon}"
        height="95"
        width="99.562164"
@@ -129,7 +143,7 @@
        rx="60"
        ry="12.000001" />
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/src/plugins/macro-recorder/default/${profile_icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/macro-recorder/default/${profile_icon}"
        xlink:href="${profile_icon}"
        height="64"
        width="64"
@@ -192,12 +206,13 @@
        class="textbox" />
     <text
        xml:space="preserve"
-       style="font-size:11px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
        x="135.70113"
        y="99.083717"
        id="message_text"
        sodipodi:linespacing="125%"
-       transform="translate(31.547735,786.11217)"><tspan
+       transform="translate(21.547735,776.11217)"
+       clip-path="url(#clipPath3005)"><tspan
          sodipodi:role="line"
          id="tspan3798"
          x="135.70113"

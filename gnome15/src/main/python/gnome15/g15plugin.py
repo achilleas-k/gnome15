@@ -24,6 +24,110 @@ import dbus
 import g15util
 import g15theme
 import g15screen
+
+class G15RefreshingPlugin():
+    
+    """
+    Base plugin class that may be used for plugins that refresh at set intervals. This
+    abstract class will take care of disabling the refresh while the page is not
+    visible 
+    """
+    
+    def __init__(self, gconf_client, gconf_key, screen, icon, page_id, title, refresh_interval = 1.0):
+        """
+        Constructor
+        
+        Keyword arguments:
+        gconf_client            - gconf client
+        gconf_key               - gconf key for plugin
+        screen                  - screen
+        icon                    - icon to use for thumbnail
+        title                   - title for page (displayed in menu etc)
+        refresh_interval        - how often to refresh the page
+        """
+        self.page_id = page_id
+        self.screen = screen
+        self.refresh_interval = refresh_interval
+        self.hidden = False
+        self.gconf_client = gconf_client
+        self.gconf_key = gconf_key
+        self.session_bus = dbus.SessionBus()
+        self._icon_path = g15util.get_icon_path(icon)
+        self._title = title
+        self.thumb_icon = g15util.load_surface_from_file(self._icon_path)
+        self.timer = None
+    
+    def activate(self):
+        self.active = True        
+        self.page = self.create_page()
+        self.populate_page()
+        self.refresh()
+        self.screen.add_page(self.page)
+        self.screen.redraw(self.page)
+        
+    def create_page(self):
+        return g15theme.G15Page(self.page_id, self.screen, on_shown=self._on_shown, on_hidden=self._on_hidden, \
+                                     title = self._title, theme = g15theme.G15Theme(self),
+                                     thumbnail_painter = self._paint_thumbnail )
+        
+    def populate_page(self):
+        """
+        Populate page. Subclasses may override to create or configure
+        additional components.
+        """
+        pass
+    
+    def deactivate(self):
+        self._cancel_refresh()
+        self.screen.del_page(self.page)
+        
+    def destroy(self):
+        pass
+    
+    def refresh(self):
+        """
+        Sub-classes should implement and perform the recurring actions. There is no need to 
+        to redraw the page, it is done automatically.
+        """        
+        raise Exception("Not implemented")
+    
+    def get_next_tick(self):
+        """
+        Get how long to wait before the next refresh. By default this uses the 'refresh
+        interval', but sub-classes may override to provide custom tick logic.
+        """
+        return self.refresh_interval
+    
+    ''' Private
+    '''
+        
+    def _on_shown(self):
+        self._reschedule_refresh()
+            
+    def _on_hidden(self):
+        self._reschedule_refresh()
+            
+    def _reschedule_refresh(self):
+        self._cancel_refresh()
+        self._schedule_refresh()
+        
+    def _cancel_refresh(self):
+        if self.timer != None:
+            self.timer.cancel()
+            self.timer = None
+        
+    def _schedule_refresh(self):
+        if self.screen.is_visible(self.page):
+            self.timer = g15util.schedule("%s-Redraw" % self.page.id, self.get_next_tick(), self._refresh)
+    
+    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
+        if self.page != None and self.thumb_icon != None and self.screen.driver.get_bpp() == 16:
+            return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+        
+    def _refresh(self):
+        self.refresh()
+        self.screen.redraw(self.page)
+        self._schedule_refresh()  
     
 class G15MenuPlugin():
     '''
@@ -32,6 +136,17 @@ class G15MenuPlugin():
     '''
     
     def __init__(self, gconf_client, gconf_key, screen, menu_title_icon, page_id, title):
+        """
+        Constructor
+        
+        Keyword arguments:
+        gconf_client            - gconf client
+        gconf_key               - gconf key for plugin
+        screen                  - screen
+        menu_title_icon         - icon to use for thumbnail and the menu title
+        title                   - title for page (displayed in menu etc)
+        refresh_interval        - how often to refresh the page
+        """
         self.page_id = page_id
         self.screen = screen
         self.hidden = False

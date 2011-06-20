@@ -24,7 +24,6 @@ import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
-import gnome15.g15screen as g15screen
 import os
 import dbus
 import time

@@ -56,6 +56,7 @@ special_X_keysyms = {
     '\n' : "Return", # for some reason this needs to be cr, not lf
     '\r' : "Return",
     '\e' : "Escape",
+    '\b' : "BackSpace",
     '!' : "exclam",
     '#' : "numbersign",
     '%' : "percent",
@@ -185,9 +186,27 @@ class G15Service(Thread):
             os.system(macro.command)
         elif macro.type == g15profile.MACRO_SIMPLE:
             logger.debug("Simple macro '%s'" % macro.simple_macro)
-            for c in macro.simple_macro:                            
-                self.send_string(c, True)                            
-                self.send_string(c, False)
+            esc = False
+            for c in macro.simple_macro:
+                if c == '\\' and not esc:
+                    esc = True
+                else:          
+                    if esc and c == 'p':
+                        time.sleep(1.0)
+                    else:         
+                        if esc and c == 't':
+                            c = '\t'                  
+                        elif esc and c == 'r':
+                            c = '\r'              
+                        elif esc and c == 'n':
+                            c = '\r'    
+                        elif esc and c == 'b':
+                            c = '\b' 
+                        elif esc and c == 'e':
+                            c = '\e'
+                        self.send_string(c, True)                            
+                        self.send_string(c, False)
+                    esc = False
         else:
             self.send_macro(macro)
         
@@ -206,6 +225,7 @@ class G15Service(Thread):
                     self.send_string(val, False)
     
     def get_keysym(self, ch) :
+        print "Getting sym for %d (%s)" % ( ord(ch), str(ch) )
         keysym = Xlib.XK.string_to_keysym(ch)
         if keysym == 0 :
             # Unfortunately, although this works to get the correct keysym
@@ -256,9 +276,9 @@ class G15Service(Thread):
                 keycode = 0
         else:
             keysym = self.get_keysym(ch)
-            keycode = self.local_dpy.keysym_to_keycode(keysym)        
+            keycode = 0 if keysym == 0 else self.local_dpy.keysym_to_keycode(keysym)        
         if keycode == 0 :
-            logger.warning("Sorry, can't map", ch)
+            logger.warning("Sorry, can't map (character %d)", ord(ch))
     
         if self.is_shifted(ch):
             shift_mask = Xlib.X.ShiftMask
@@ -270,6 +290,7 @@ class G15Service(Thread):
             
     def send_string(self, ch, press) :
         keycode, shift_mask = self.char_to_keycode(ch)
+        print "Sending keychar %s keycode %d" % (ch, int(keycode))
         logger.debug("Sending keychar %s keycode %d" % (ch, int(keycode)))
         if (self.use_x_test) :
             if press:

@@ -127,21 +127,23 @@ class G15MacroRecorder():
             self._record_thread.disable_record_context()
     
     def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_DOWN:
-            # Memory keys
-            if g15driver.G_KEY_MR in keys:              
-                if self._record_thread != None:
-                    self._cancel_macro(None)
-                else:
-                    self._start_recording()
-                return True
+        # Memory keys
+        if not post and state == g15driver.KEY_STATE_DOWN and g15driver.G_KEY_MR in keys:              
+            if self._record_thread != None:
+                self._cancel_macro(None)
             else:
-                # All other keys end recording
-                self._last_keys = keys                    
-                if self._record_thread != None:
-                    self._record_keys = keys
-                    self._done_recording()
-                    return True
+                self._start_recording()
+            return True
+        elif not post and state == g15driver.KEY_STATE_UP and not g15driver.G_KEY_MR in keys:
+            """
+            All other keys end recording. We use the UP keystate, so it doesn't trigger the
+            macro itself when it is released at the end of recording
+            """
+            self._last_keys = keys                    
+            if self._record_thread != None:
+                self._record_keys = keys
+                self._done_recording()
+                return True
                               
         
         return self._record_thread != None

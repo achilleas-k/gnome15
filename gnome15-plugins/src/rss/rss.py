@@ -50,7 +50,7 @@ def create(gconf_key, gconf_client, screen):
     return G15RSS(gconf_client, gconf_key, screen)
 
 def show_preferences(parent, driver, gconf_client, gconf_key):
-    G15RSSPreferences(parent, device, gconf_client, gconf_key)
+    G15RSSPreferences(parent, driver, gconf_client, gconf_key)
 
 def changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())

@@ -43,7 +43,6 @@ import xdg.DesktopEntry
 
 # Logging
 import logging
-logging.basicConfig()
 logger = logging.getLogger()
 
 from threading import RLock
