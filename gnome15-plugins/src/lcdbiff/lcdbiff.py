@@ -579,6 +579,7 @@ class G15Biff(g15plugin.G15MenuPlugin):
         gk.is_available()
         keyrings = gk.list_keyring_names_sync()
         self.total_count = 0
+        self.items = []
         self.attention = False
         self.thumb_icon = None
         self.index = 0
@@ -598,14 +599,17 @@ class G15Biff(g15plugin.G15MenuPlugin):
         self.gconf_client.notify_remove(self.update_time_changed_handle)
         
     def load_menu_items(self):
-        self.menu.remove_all_children()
+        items = []
         self.account_manager.load()
         i = 0
         for account in self.account_manager.accounts:
-            self.menu.add_child(MailItem("mailitem-%d" % i, self.gconf_client, account))
+            items.append(MailItem("mailitem-%d" % i, self.gconf_client, account))
             i += 1
-        items = self.menu.get_children()
-        self.menu.selected = items[0] if len(items) > 0 else None
+        if self.screen.driver.get_bpp() != 0:
+            self.menu.selected = items[0] if len(items) > 0 else None
+            self.menu.remove_all_children()
+            self.menu.set_children(items)
+        self.items = items
         
     def create_page(self):
         page = g15plugin.G15MenuPlugin.create_page(self)
@@ -622,7 +626,7 @@ class G15Biff(g15plugin.G15MenuPlugin):
         self._reload_menu()
         self.total_count = 0
         self.total_errors = 0
-        for item in self.menu.get_children():
+        for item in self.items:
             try :
                 status = self.account_manager.check_account(item.account)
                 item.count  = status[0]

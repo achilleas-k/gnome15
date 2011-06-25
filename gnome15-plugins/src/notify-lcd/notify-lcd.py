@@ -478,10 +478,12 @@ class G15NotifyLCD():
                 for c in self._screen.driver.get_controls():
                     if c.hint & g15driver.HINT_DIMMABLE != 0:
                         self._control_values.append(c.value)
-                self._page = g15theme.G15Page(id, self._screen, priority=g15screen.PRI_HIGH, title = name, \
-                                              theme_properties_callback = self._get_theme_properties, \
-                                              theme = g15theme.G15Theme(self, self._last_variant))
-                self._screen.add_page(self._page)
+                        
+                if self._screen.driver.get_bpp() != 0:
+                    self._page = g15theme.G15Page(id, self._screen, priority=g15screen.PRI_HIGH, title = name, \
+                                                  theme_properties_callback = self._get_theme_properties, \
+                                                  theme = g15theme.G15Theme(self, self._last_variant))
+                    self._screen.add_page(self._page)
             else:
                 self._page.set_theme(g15theme.G15Theme(self, self._last_variant))
                 self._screen.raise_page(self._page)

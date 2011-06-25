@@ -35,7 +35,6 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith, Ian Halpern"
 site="https://launchpad.net/impulse.bzr"
 has_preferences=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 
 def create(gconf_key, gconf_client, screen):
@@ -279,7 +278,7 @@ class G15Impulse():
         self.peak_heights = [ 0 for i in range( self.bars ) ]
 
         paint = self.gconf_client.get_string(self.gconf_key + "/paint")
-        if paint != self.last_paint:
+        if paint != self.last_paint and self.screen.driver.get_bpp() != 0:
             self.last_paint = paint
             if paint == "screen":
                 self._clear_background_painter()

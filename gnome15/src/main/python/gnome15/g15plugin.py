@@ -148,6 +148,7 @@ class G15MenuPlugin():
         refresh_interval        - how often to refresh the page
         """
         self.page_id = page_id
+        self.page = None
         self.screen = screen
         self.hidden = False
         self.gconf_client = gconf_client

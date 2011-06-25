@@ -21,9 +21,12 @@
 #        +-----------------------------------------------------------------------------+
 
 import gnome15.g15driver as g15driver
+import gnome15.g15globals as g15globals
 import os.path 
 import logging
-logger = logging.getLogger("volume")
+import gtk
+import gnome15.g15util as g15util
+logger = logging.getLogger("lcdshot")
 
 # Plugin details - All of these must be provided
 id="lcdshot"
@@ -32,7 +35,8 @@ description="Takes a screenshot of the LCD"
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
-has_preferences=False
+has_preferences=True
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 ''' 
 This simple plugin takes a screenshot of the LCD
@@ -40,6 +44,40 @@ This simple plugin takes a screenshot of the LCD
 
 def create(gconf_key, gconf_client, screen):
     return G15LCDShot(screen, gconf_client, gconf_key)
+
+def show_preferences(parent, driver, gconf_client, gconf_key):
+    LCDShotPreferences(parent, driver, gconf_client, gconf_key)
+    
+class LCDShotPreferences():
+    def __init__(self, parent, driver, gconf_client, gconf_key):
+        self.gconf_client = gconf_client
+        self.gconf_key = gconf_key
+        widget_tree = gtk.Builder()
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "lcdshot.glade"))
+        dialog = widget_tree.get_object("LCDShotDialog")
+        dialog.set_transient_for(parent)        
+        chooser = gtk.FileChooserDialog("Open..",
+                               None,
+                               gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                               (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        chooser.set_default_response(gtk.RESPONSE_OK)
+        chooser_button = widget_tree.get_object("FileChooserButton")        
+        chooser_button.dialog = chooser 
+        chooser_button.connect("file-set", self.file_set)
+        chooser_button.connect("file-activated", self.file_activated)
+        chooser_button.connect("current-folder-changed", self.file_activated)
+        bg_img = g15util.get_string_or_default(self.gconf_client, "%s/folder" % self.gconf_key, os.path.expanduser("~/Desktop"))
+        chooser_button.set_filename(bg_img)
+        dialog.run()
+        dialog.hide()
+          
+    def file_set(self, widget):
+        self.gconf_client.set_string(self.gconf_key + "/folder", widget.get_filename())  
+        
+    def file_activated(self, widget):
+        self.gconf_client.set_string(self.gconf_key + "/folder", widget.get_filename())
+        
             
 class G15LCDShot():
     
@@ -59,12 +97,19 @@ class G15LCDShot():
     
     def handle_key(self, keys, state, post):
         # TODO better key
-        if not post and state == g15driver.KEY_STATE_DOWN and g15driver.G_KEY_G1 in keys:
+        if not post and state == g15driver.KEY_STATE_HELD and g15driver.G_KEY_MR in keys:
             if self._screen.old_surface:
                 self._screen.draw_lock.acquire()
                 try:
-                    self._screen.old_surface.write_to_png(os.path.expanduser("~/Desktop/lcd.png"))
+                    for i in range(1, 9999):
+                        path = "%s/%s-%s-%d.png" % ( g15util.get_string_or_default(self._gconf_client, "%s/folder" % \
+                                                                                   self._gconf_key, os.path.expanduser("~/Desktop")), \
+                                                    g15globals.name, self._screen.get_visible_page().title, i )
+                        if not os.path.exists(path):
+                            self._screen.old_surface.write_to_png(path)
+                            logger.info("Written to screenshot to %s" % path)
+                            return True
+                    logger.warning("Too many screenshots in destination directory")
                 finally:
                     self._screen.draw_lock.release()
-            print "Screen shot"
         

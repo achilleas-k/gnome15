@@ -1030,6 +1030,10 @@ class G15Config:
             main_parent = self.main_pane.get_parent() 
             main_parent.remove(self.main_pane)
             self.main_vbox.reparent(main_parent)
+            self.widget_tree.get_object("DeviceDetails").set_visible(False)
+            self.device_title.set_visible(False)
+            self.device_enabled.set_visible(False)
+            self.device_enabled.set_active(True)
             
         
     def _load_profile_list(self):

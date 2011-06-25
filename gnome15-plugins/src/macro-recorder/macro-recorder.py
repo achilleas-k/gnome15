@@ -128,11 +128,11 @@ class G15MacroRecorder():
     
     def handle_key(self, keys, state, post):
         # Memory keys
-        if not post and state == g15driver.KEY_STATE_DOWN and g15driver.G_KEY_MR in keys:              
-            if self._record_thread != None:
-                self._cancel_macro(None)
-            else:
-                self._start_recording()
+        if not post and state == g15driver.KEY_STATE_UP and g15driver.G_KEY_MR in keys and self._record_thread != None:              
+            self._cancel_macro(None)
+            return True
+        elif not post and state == g15driver.KEY_STATE_UP and g15driver.G_KEY_MR in keys and self._record_thread is None:
+            self._start_recording()
             return True
         elif not post and state == g15driver.KEY_STATE_UP and not g15driver.G_KEY_MR in keys:
             """
