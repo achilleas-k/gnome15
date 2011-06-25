@@ -19,7 +19,7 @@ import sys
 import gobject
 import time
 
-# Can be adjusted to aid debugging
+# Can be adjusted to speed up time to aid debugging.
 TIME_FACTOR=1.0
 
 # Logging
@@ -27,16 +27,19 @@ import logging
 logger = logging.getLogger("jobs")
 
 class GTimer:    
-    def __init__(self, task_queue, task_name, interval, function, *args):
+    def __init__(self, scheduler, task_queue, task_name, interval, function, *args):
+        self.function = function
         if function == None:
             logger.warning("Attempt to run empty job %s on %s" % ( task_name, task_queue.name ) )
             traceback.print_stack()
             return
         
+        self.scheduler = scheduler
         self.task_queue = task_queue
         self.task_name = task_name
         self.source = gobject.timeout_add(int(float(interval) * 1000.0 * TIME_FACTOR), self.exec_item, function, *args)
         self.complete = False
+        self.scheduler.all_jobs.append(self)
         
     def exec_item(self, function, *args):
         try:
@@ -44,12 +47,16 @@ class GTimer:
             self.task_queue.run(function, *args)
             logger.debug("Executed GTimer %s" % str(self.task_name))
         finally:
+            if self in self.scheduler.all_jobs:
+                self.scheduler.all_jobs.remove(self)
             self.complete = True
         
     def is_complete(self):
         return self.complete
         
     def cancel(self, *args):
+        if self in self.scheduler.all_jobs:
+            self.scheduler.all_jobs.remove(self)
         gobject.source_remove(self.source)
         logger.debug("Cancelled GTimer %s" % str(self.task_name))
         
@@ -63,6 +70,18 @@ class JobScheduler():
     
     def __init__(self):
         self.queues = {}
+        self.all_jobs = []
+        
+    def print_all_jobs(self):
+        print "Scheduled"
+        print "------"
+        for j in self.all_jobs:
+            print "    %s - %s" % ( j.task_name, str(j.function))
+        print
+        print "Running"
+        print "-------"
+        for q in self.queues:
+            self.queues[q].print_all_jobs()
         
     def schedule(self, name, interval, function, *args):
         return self.queue("default", name, interval, function, *args)
@@ -89,7 +108,7 @@ class JobScheduler():
         logger.debug("Queueing %s on %s for execution in %f" % ( name, queue_name, interval ) )
         if not queue_name in self.queues:
             self.queues[queue_name] = JobQueue(name=queue_name)
-        timer = GTimer(self.queues[queue_name], name, interval, function, *args)
+        timer = GTimer(self, self.queues[queue_name], name, interval, function, *args)
         logger.debug("Queued %s" % name)
         return timer
 
@@ -107,6 +126,7 @@ class JobQueue():
     def __init__(self,number_of_workers=1, name="JobQueue"):
         logger.debug("Creating job queue %s with %d workers" % (name, number_of_workers))
         self.work_queue = Queue.Queue()
+        self.queued_jobs = []
         self.name = name
         self.stopping = False
         self.lock = threading.Lock()
@@ -118,6 +138,11 @@ class JobQueue():
             t.setDaemon(True)
             t.start()
             self.threads.append(t)
+            
+    def print_all_jobs(self):
+        print "Queue %s" % self.name
+        for s in self.queued_jobs:
+            print "     %s - %s" % (str(s.item), str(s.queued))
             
     def stop(self):
         logger.info("Stopping queue %s" % self.name)
@@ -138,6 +163,7 @@ class JobQueue():
                 while True:
                     item = self.work_queue.get_nowait()
                     logger.info("Removed func = %s, args = %s, queued = %s, started = %s, finished = %s" % ( str(item.item), str(item.args), str(item.queued), str(item.started), str(item.finished) ) )
+                    self.queued_jobs.remove(item)
             except Queue.Empty:
                 pass
             logger.info("Cleared queue %s" % self.name)
@@ -152,7 +178,9 @@ class JobQueue():
         self.lock.acquire()
         try :
             logger.debug("Queued task on %s", self.name)
-            self.work_queue.put(self.JobItem(item, args))
+            ji = self.JobItem(item, args)
+            self.queued_jobs.append(ji)
+            self.work_queue.put(ji)
             jobs = self.work_queue.qsize()
             if jobs > 1:
                 logger.debug("Queue %s filling, now at %d jobs." % (self.name, jobs ) )
@@ -165,14 +193,18 @@ class JobQueue():
             item = self.work_queue.get()
             try:
                 if item != None:
-                    logger.debug("Running task on %s", self.name)
-                    item.started = time.time()
-                    if item.args and len(item.args) > 0:
-                        item.item(*item.args)
-                    else:
-                        item.item()
-                    item.finished = time.time()
-                    logger.debug("Ran task on %s", self.name)
+                    try:
+                        logger.debug("Running task on %s", self.name)
+                        item.started = time.time()
+                        if item.args and len(item.args) > 0:
+                            item.item(*item.args)
+                        else:
+                            item.item()
+                        item.finished = time.time()
+                        logger.debug("Ran task on %s", self.name)
+                    finally:
+                        if item in self.queued_jobs: 
+                            self.queued_jobs.remove(item)
             except:
                 traceback.print_exc(file=sys.stderr)
             self.work_queue.task_done()

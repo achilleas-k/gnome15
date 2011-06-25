@@ -25,6 +25,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util 
 import gnome15.g15driver as g15driver 
 import gnome15.g15globals as g15globals
+import gnome15.g15text as g15text
 import datetime
 from threading import Timer
 import time
@@ -129,6 +130,7 @@ class G15CairoClock():
         self.display_seconds = False
     
     def activate(self): 
+        self.text = g15text.new_text(self.screen)
         self.notify_handler = self.gconf_client.notify_add(self.gconf_key, self.config_changed);   
         self._load_surfaces()         
         self.page = g15theme.G15Page(name, self.screen, painter = self._paint, priority=g15screen.PRI_NORMAL, 
@@ -253,7 +255,9 @@ class G15CairoClock():
         return allocated_size 
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
-        if not self.screen.is_visible(self.page):
+        if not self.screen.is_visible(self.page) and self.screen.service.text_boxes:
+            self.text.set_canvas(canvas)
+            
             # Don't display the date or seconds on mono displays, not enough room as it is
             if self.screen.driver.get_bpp() == 1:
                 text = self._get_time_text(False)
@@ -274,18 +278,17 @@ class G15CairoClock():
                 x = 4
                 gap = 8
                 
-            pango_context, layout = g15util.create_pango_context(canvas, self.screen, text, align = pango.ALIGN_CENTER, font_desc = font_name, font_absolute_size =  font_size * pango.SCALE / factor)
-            x, y, width, height = g15util.get_extents(layout)
+            self.text.set_attributes(text, align = pango.ALIGN_CENTER, font_desc = font_name, font_absolute_size = font_size * pango.SCALE / factor)
+            x, y, width, height = self.text.measure()
             if horizontal: 
                 if self.screen.driver.get_bpp() == 1:
                     y = 0
                 else:
                     y = (allocated_size / 2) - height / 2
-                pango_context.move_to(x, y)
             else:      
-                pango_context.move_to((allocated_size / 2) - width / 2, 0)
-            pango_context.update_layout(layout)
-            pango_context.show_layout(layout)
+                x = (allocated_size / 2) - width / 2
+                y = 0
+            self.text.draw(x, y)
             if horizontal:
                 return width + gap
             else:

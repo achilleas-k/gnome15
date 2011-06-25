@@ -20,7 +20,6 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
 
-import gnome15.objgraph as objgraph 
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -234,6 +233,7 @@ class G15RSS():
         self._gconf_key = gconf_key
         self._gconf_client = gconf_client
         self._page_serial = 1
+        self._refresh_timer = None
 
     def activate(self):
         self._pages = {}       
@@ -243,6 +243,7 @@ class G15RSS():
         self._load_feeds()
     
     def deactivate(self):
+        self._cancel_refresh()
         self._gconf_client.notify_remove(self._update_time_changed_handle);
         self._gconf_client.notify_remove(self._urls_changed_handle);
         for page in self._pages:
@@ -269,8 +270,12 @@ class G15RSS():
         pass 
     
     def _update_time_changed(self, client, connection_id, entry, args):
-        self._refresh_timer.cancel()
+        self._cancel_refresh()
         self._schedule_refresh()
+        
+    def _cancel_refresh(self):
+        if self._refresh_timer:        
+            self._refresh_timer.cancel()
     
     def _urls_changed(self, client, connection_id, entry, args):
         self._load_feeds()

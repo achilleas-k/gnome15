@@ -204,8 +204,10 @@ class G15Service(Thread):
                             c = '\b' 
                         elif esc and c == 'e':
                             c = '\e'
-                        self.send_string(c, True)                            
-                        self.send_string(c, False)
+                        self.send_string(c, True) 
+                        time.sleep(0.1)                           
+                        self.send_string(c, False) 
+                        time.sleep(0.1)          
                     esc = False
         else:
             self.send_macro(macro)
@@ -225,7 +227,6 @@ class G15Service(Thread):
                     self.send_string(val, False)
     
     def get_keysym(self, ch) :
-        print "Getting sym for %d (%s)" % ( ord(ch), str(ch) )
         keysym = Xlib.XK.string_to_keysym(ch)
         if keysym == 0 :
             # Unfortunately, although this works to get the correct keysym
@@ -290,7 +291,6 @@ class G15Service(Thread):
             
     def send_string(self, ch, press) :
         keycode, shift_mask = self.char_to_keycode(ch)
-        print "Sending keychar %s keycode %d" % (ch, int(keycode))
         logger.debug("Sending keychar %s keycode %d" % (ch, int(keycode)))
         if (self.use_x_test) :
             if press:
@@ -462,6 +462,8 @@ class G15Service(Thread):
         self.scroll_amount = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_amount', 2)
         self.animation_delay = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/animation_delay', 100) / 1000.0
         self.key_hold_duration = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/key_hold_duration', 2000) / 1000.0
+        self.text_boxes = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/text_boxes', True)
+        self.use_pango = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/use_pango', True)
             
     def _device_enabled_configuration_changed(self, client, connection_id, entry, device):
         enabled = g15devices.is_enabled(self.conf_client, device)

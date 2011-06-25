@@ -201,9 +201,10 @@ class G15Impulse():
         if self.active:
             self.timer = g15util.schedule("ImpulseRedraw", self.refresh_interval, self.redraw)
             
-    def _release_mkey_acquisition(self):                
-        self.screen.driver.release_mkey_lights(self.mkey_acquisition)
-        self.mkey_acquisition = None
+    def _release_mkey_acquisition(self):      
+        if self.mkey_acquisition:          
+            self.screen.driver.release_mkey_lights(self.mkey_acquisition)
+            self.mkey_acquisition = None
         
     def _release_backlight_acquisition(self):          
         if self.backlight_acquisition is not None:      

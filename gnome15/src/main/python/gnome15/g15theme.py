@@ -20,6 +20,30 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+ 
+"""
+This module contains all the classes required for the Gnome15 component and themeing 
+system.
+
+The basis of this is a component hierarchy that starts with a G15Page (actually, the
+'screen' is kind of the root component, but that anomaly will be fixed). 
+
+All components may contain children. Whether or not they are rendered is down to 
+the individual parent component. There is currently a limited set of container type
+components, including Component itself, Page and Menu. Menu's children must be MenuItem
+objects (or a subclass of MenuItem). Page's may contain any type of child.
+
+Each component has a 'Theme' associated with it. This is an SVG file that is rendered
+at painting time. A Page's theme will take up all available space and be rendered at
+0,0, where as child components will be rendered at and within bounds defined in the
+parent's theme file (by using an svg:rect with an ID that links the two), or at a
+place calculated by the component itself (for example, MenuItem children).
+
+The Theme is also response for handling automatic text scrolling, as well as processing
+the SVG by doing string replacements and other manipulations such as those required
+for progress bars, scroll bars.
+"""
+
 import os
 import cairo
 import rsvg
@@ -32,6 +56,7 @@ import g15driver
 import g15globals
 import g15screen
 import g15util
+import g15text
 import xml.sax.saxutils as saxutils
 import base64
 import dbusmenu
@@ -43,6 +68,9 @@ from copy import deepcopy
 from cStringIO import StringIO
 from lxml import etree
 from threading import RLock
+
+import objgraph
+import gc
 
 BASE_PX=18.0
 
@@ -68,6 +96,10 @@ class ScrollState():
         self.val = 0
         self.original = 0
         
+    def reset(self):
+        self.adjust = 0.0
+        self.do_transform()
+        
     def next(self):
         self.adjust += -self.step if self.reversed else self.step
         if self.adjust < self.range[0]:
@@ -76,6 +108,9 @@ class ScrollState():
         elif self.adjust > self.range[1]:
             self.adjust = self.range[1]
             self.reversed = True
+        self.do_transform()
+            
+    def do_transform(self):
         self.val = self.adjust + self.original
         self.transform_elements()
             
@@ -102,7 +137,10 @@ class VerticalWrapScrollState(ScrollState):
 class TextBox():
     def __init__(self):
         self.bounds = ( )
+        self.clip = ()
+        self.align = "start"
         self.text = "" 
+        self.wrap = False
         self.css = { }
         self.normal_shadow = False
         self.reverse_shadow = False
@@ -168,6 +206,10 @@ class Component():
 #        else:
 #            return self.parent.get_tree_lock()
         return self._tree_lock
+    
+    def clear_scroll(self):
+        if self.theme:
+            self.theme.clear_scroll()
         
     def is_focused(self):
         return self.get_root().focused_component == self
@@ -369,8 +411,6 @@ class Component():
                 canvas.save()
                 if not self.do_clip or c.view_bounds is None or self.overlaps(self.view_bounds, c.view_bounds):
                     c.paint(canvas)
-    #            else:
-    #                print "Skipping painting %s because it is not in view -  %s   - %s" % ( c.id, str(self.view_bounds), str(c.view_bounds))
                 canvas.restore()
             
             canvas.restore()
@@ -446,6 +486,7 @@ class G15Page(Component):
         self.theme_properties_callback = theme_properties_callback    
         self.theme_attributes_callback = theme_attributes_callback
         self.screen = screen
+        self.scroll_lock = RLock()
         self.focused_component = None
         if theme:
             self.set_theme(theme)
@@ -523,8 +564,7 @@ class G15Page(Component):
         self.back_buffer = cairo.ImageSurface (cairo.FORMAT_ARGB32,sw, sh)
         self.back_context = cairo.Context(self.back_buffer)
         screen.configure_canvas(self.back_context)
-        self.set_line_width(1.0)
-        
+        self.set_line_width(1.0)        
         rgb = screen.driver.get_color(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
         self.foreground(rgb[0],rgb[1],rgb[2], 255)
         
@@ -586,16 +626,24 @@ class G15Page(Component):
         self.check_scroll_and_reschedule()
             
     def check_scroll_and_reschedule(self):
-        scroll = self.check_for_scroll()
-        if scroll and self.theme_scroll_timer == None:
-            self.theme_scroll_timer = g15util.schedule("ScrollRedraw", self.screen.service.scroll_delay, self.scroll_and_reschedule)
-        elif not scroll and self.theme_scroll_timer != None:
-            self.theme_scroll_timer.cancel()
+        self.scroll_lock.acquire()
+        try:
+            scroll = self.check_for_scroll()
+            if scroll and self.theme_scroll_timer == None:
+                self.theme_scroll_timer = g15util.schedule("ScrollRedraw", self.screen.service.scroll_delay, self.scroll_and_reschedule)
+            elif not scroll and self.theme_scroll_timer != None:
+                self.theme_scroll_timer.cancel()
+        finally:
+            self.scroll_lock.release()
     
     def scroll_and_reschedule(self):
-        self.do_scroll()
-        self.theme_scroll_timer = None
-        self.redraw()
+        self.scroll_lock.acquire()
+        try:
+            self.do_scroll()
+            self.theme_scroll_timer = None
+            self.redraw()
+        finally:
+            self.scroll_lock.release()
             
     def set_font(self, font_size = None, font_family = None, font_style = None, font_weight = None):
         if font_size:
@@ -608,7 +656,10 @@ class G15Page(Component):
             self.font_weight = font_weight
             
     def text(self, text, x, y, width, height, text_align = "left"):
+        
+        raise Exception("THIS IS BROKEN!!!!!!!! BUG ME TO FIX IT")
         driver = self.get_screen().driver
+        
         pango_context = pangocairo.CairoContext(self.back_context)
         pango_context.set_antialias(driver.get_antialias()) 
         fo = cairo.FontOptions()
@@ -827,14 +878,19 @@ class Menu(Component):
     def action_performed(self, binding):
         if self.is_visible():
             if binding.action == g15driver.NEXT_SELECTION:
+                self.get_screen().resched_cycle()
                 self._move_down(1)
             elif binding.action == g15driver.PREVIOUS_SELECTION:
+                self.get_screen().resched_cycle()
                 self._move_up(1)
             if binding.action == g15driver.NEXT_PAGE:
+                self.get_screen().resched_cycle()
                 self._move_down(10)
             elif binding.action == g15driver.PREVIOUS_PAGE:
+                self.get_screen().resched_cycle()
                 self._move_up(10)
             elif binding.action == g15driver.SELECT:
+                self.get_screen().resched_cycle()
                 if self.selected:
                     self.selected.activate()
         
@@ -893,6 +949,8 @@ class Menu(Component):
         self.selected = self.get_child(self.i)
         if self.on_selected:
             self.on_selected()
+        if old_selected:
+            old_selected.clear_scroll()
         self.selected.mark_dirty()
         if old_selected:
             old_selected.mark_dirty()
@@ -1120,6 +1178,10 @@ class G15Theme():
             'inkscape': 'http://www.inkscape.org/namespaces/inkscape'
             }
         
+    def clear_scroll(self):
+        for s in self.scroll_state:
+            self.scroll_state[s].reset()
+        
     def _set_component(self, component):
         self.component = component
         page = component.get_root()
@@ -1132,6 +1194,7 @@ class G15Theme():
             self.page.on_hidden_listeners.append(self._page_visibility_changed)
             
         self.screen = self.page.get_screen()
+        self.text = g15text.new_text(self.screen)       
         self.driver = self.screen.driver
         if self.dir != None:
             self.theme_name = os.path.basename(self.dir)
@@ -1248,6 +1311,8 @@ class G15Theme():
             style_args = style.lstrip().rstrip().split(":")
             if len(style_args) > 1:
                 styles[style_args[0].rstrip()] = style_args[1].lstrip().rstrip()
+        if not "text-align" in styles:
+            styles["text-align"] = "start"
         return styles
     
     def format_styles(self, styles):
@@ -1281,6 +1346,8 @@ class G15Theme():
                self.render.properties.values() != properties.values() or self.render.attributes.values() != attributes.values():
                 self.dirty = True
         
+        self.text.set_canvas(canvas)
+        
         if self.render == None or self.dirty:
             self.render_lock.acquire()
             try:
@@ -1299,186 +1366,20 @@ class G15Theme():
                         # Doesn't exist
                         pass
                     
-                root = document.getroot()  
-                pango_context = pangocairo.CairoContext(canvas)
-                    
-                # Remove all elements that are dependent on properties having non blank values
-                for element in root.xpath('//svg:*[@title]',namespaces=self.nsmap):
-                    title = element.get("title")
-                    if title != None:
-                        args = title.split(" ")
-                        if args[0] == "del":
-                            var = args[1]
-                            set = True
-                            if var.startswith("!"):
-                                var = var[1:]
-                                set = False
-                            if ( set and var in properties and properties[var] != "" and properties[var] != False ) or \
-                                ( not set and ( not var in properties or properties[var] == "" or properties[var] == False ) ):
-                                element.getparent().remove(element)
-                    
-                # Process any components
-                if self.component:
-                    for component_id in self.component.child_map.keys():
-                        component_elements = root.xpath('//svg:*[@id=\'%s\']' % component_id,namespaces=self.nsmap)
-                        if len(component_elements) > 0:
-                            self.component.child_map[component_id].draw(self, component_elements[0])
-                        else:
-                            logger.warning("Cannot find SVG element for component %s" % component_id)
-                          
-                # Set any progress bars (always measure in percentage). Progress bars have
-                # their width attribute altered 
-                for element in root.xpath('//svg:rect[@class=\'progress\']',namespaces=self.nsmap):
-                    bounds = g15util.get_bounds(element)
-                    id = element.get("id")
-                    if id.endswith("_progress"):
-                        property_key = id[:-9]
-                        if property_key in properties:
-                            value = float(properties[property_key])
-                            if value == 0:
-                                value = 0.1
-                            element.set("width", str(int((bounds[2] / 100.0) * value)))
-                        else:
-                            logger.warning("Found progress element with an ID that doesn't exist in " + \
-                                           "theme properties. Theme directory is %s, variant is %s." % (self.dir, self.variant ))
-                    else:
-                        logger.warning("Found progress element with an ID that doesn't end in _progress")
-                        
-                # Populate any embedded images
-                 
-        #        for element in root.xpath('//svg:image[@class=\'embedded_image\']',namespaces=self.nsmap):
-                for element in root.xpath('//svg:image',namespaces=self.nsmap):
-                    id = element.get("title")
-                    if id != None and id in properties and properties[id] != None:
-                        file_str = StringIO()
-                        val = properties[id]
-                        if isinstance(val, str) and str(val).startswith("file:"):
-                            file_str.write(val[5:])
-                        elif isinstance(val, str) and str(val).startswith("/"):
-                            file_str.write(val)
-                        else:
-                            file_str.write("data:image/png;base64,")
-                            img_data = StringIO()
-                            if isinstance(val, cairo.Surface):
-                                val.write_to_png(img_data)
-                                file_str.write(base64.b64encode(img_data.getvalue()))
-                            else: 
-                                file_str.write(val)
-                        element.set("{http://www.w3.org/1999/xlink}href", file_str.getvalue())
-                        
-                        
+                root = document.getroot()
+                         
+                # Process the SVG         
+                self._process_deletes(root, properties)
+                self._process_components(root)
+                self._set_progress_bars(root, properties) 
+                self._convert_image_urls(root, properties)
                 self._do_shadow("shadow", self.screen.driver.get_color_as_hexrgb(g15driver.HINT_BACKGROUND, (255, 255,255)), root)
                 self._do_shadow("reverseshadow", self.screen.driver.get_color_as_hexrgb(g15driver.HINT_FOREGROUND, (0, 0, 0)), root)
+                self._set_highlight_color(root)
                 
                 text_boxes = []
-                
-                highlight_control = self.screen.driver.get_control_for_hint(g15driver.HINT_HIGHLIGHT)
-                if highlight_control:  
-                    for element in root.xpath('//svg:*[@style]',namespaces=self.nsmap):
-                        element.set("style", element.get("style").replace(DEFAULT_HIGHLIGHT_COLOR, self.screen.driver.get_color_as_hexrgb(g15driver.HINT_HIGHLIGHT, (255, 0, 0 ))))
-                
-                # Look for text elements that have a clip path. If the rendered text is wider than
-                # the clip path, then this element may be scrolled. This clipped text can also
-                # be used to wrap and scroll vertical text, replacing the old 'text box' mechanism  
-                for element in root.xpath('//svg:text[@clip-path]',namespaces=self.nsmap):
-                    id = element.get("id")
-                    clip_path_node = self._get_clip_path_element(element)
-                    vertical_wrap = "vertical-wrap" == element.get("title")
-                    if clip_path_node is not None:
-                        t_span_node = element.find("svg:tspan", namespaces=self.nsmap)
-                        t_span_text = element.findtext("svg:tspan", namespaces=self.nsmap)
-                        if not t_span_text:
-                            raise Exception("Text node had clip path, but no tspan->text could be found")
-                        
-                        clip_path_rect_node = clip_path_node.find("svg:rect", namespaces=self.nsmap)
-                        clip_path_bounds = self._get_actual_element_bounds(clip_path_rect_node, element)
-                        
-                        text_box = TextBox()            
-                        text_box.text = Template(t_span_text).safe_substitute(properties) 
-                        text_box.css = self.parse_css(element.get("style"))
-                        text_class = element.get("class")
-                        if text_class:
-                            if "reverseshadow" in text_class:
-                                text_box.reverse_shadow = True
-                            elif "shadow" in text_class:
-                                text_box.normal_shadow = True
-                        text_box.bounds = clip_path_bounds
-                        
-                        layout = self._create_pango_layout(text_box, pango_context, vertical_wrap)
-                        text_width, text_height = layout.get_pixel_size()
-                        text_width, text_height = self._get_actual_size(element, text_width, text_height)
-            
-                        if vertical_wrap:
-                            text_boxes.append(text_box)
-                            if text_height > clip_path_bounds[3]:
-                                if id in self.scroll_state:
-                                    scroll_item = self.scroll_state[id]
-                                    scroll_item.text_box = text_box
-                                    text_box.base = scroll_item.val
-                                else:
-                                    scroll_item = VerticalWrapScrollState(text_box)
-                                    scroll_item.vertical = True
-                                    scroll_item.step = self.screen.service.scroll_amount
-                                    self.scroll_state[id] = scroll_item
-                                    diff = text_height - clip_path_bounds[3]
-                                    scroll_item.range = ( 0, diff)                                
-                                scroll_item.transform_elements()
-                            elif id in self.scroll_state:
-                                del self.scroll_state[id]
-                                
-                            element.getparent().remove(element)
-                        else:
-                            # Enable or disable scrolling            
-                            if text_width > clip_path_bounds[2]:
-                                if id in self.scroll_state:
-                                    scroll_item = self.scroll_state[id]
-                                    scroll_item.element = element
-                                else:
-                                    scroll_item = HorizontalScrollState(element)
-                                    scroll_item.step = self.screen.service.scroll_amount
-                                    
-                                    self.scroll_state[id] = scroll_item
-                                    diff = text_width - clip_path_bounds[2]
-                                    scroll_item.alignment = layout.get_alignment()
-                                    scroll_item.original = float(element.get("x"))
-                                    if scroll_item.alignment == pango.ALIGN_CENTER:
-                                        scroll_item.range = ( -(diff / 2), (diff / 2))
-                                        scroll_item.adjust = diff / 2
-                                    elif scroll_item.alignment == pango.ALIGN_LEFT:
-                                        scroll_item.range = ( -diff, 0)
-                                    elif scroll_item.alignment == pango.ALIGN_RIGHT:
-                                        scroll_item.range = ( 0, diff)
-                                    if self.screen.driver.get_bpp() > 1:
-                                        self.screen.step = 3
-                                    
-                                scroll_item.other_elements = [t_span_node]
-                                scroll_item.transform_elements()
-                            elif id in self.scroll_state:
-                                del self.scroll_state[id]
-        
-                # Find all of the  text boxes. This is a hack to get around rsvg not supporting
-                # flowText completely. The SVG must contain two elements. The first must have
-                # a class attribute of 'textbox' and the ID must be the property key that it 
-                # will contain. The next should be the text element (which defines style etc)
-                # and must have an id attribute of <propertyKey>_text. The text layer is
-                # then rendered by after the SVG using Pango.
-                for element in root.xpath('//svg:rect[@class=\'textbox\']',namespaces=self.nsmap):
-                    id = element.get("id")
-                    text_node = root.xpath('//*[@id=\'' + id + '_text\']',namespaces=self.nsmap)[0]
-                    if text_node != None:            
-                        styles = self.parse_css(text_node.get("style"))                
-        
-                        # Store the text box
-                        text_box = TextBox()            
-                        text_box.text = properties[id]
-                        text_box.css = styles
-                        text_boxes.append(text_box)
-                        text_box.bounds = self._get_actual_element_bounds(element)
-                        
-                        # Remove the textnod SVG element
-                        text_node.getparent().remove(text_node)
-                        element.getparent().remove(element)
-        
+                if self.screen.service.text_boxes: 
+                    self._handle_text_boxes(root, text_boxes, properties, canvas)        
                     
                 # Pass the SVG document to the SVG processor if there is one
                 if self.svg_processor != None:
@@ -1495,22 +1396,8 @@ class G15Theme():
                     except AttributeError:                
                         # Doesn't exist
                         pass
-                
-                # Set the default fill color to be the default foreground. If elements don't specify their
-                # own colour, they will inherit this
-                
-                root_style = root.get("style")
-                fg_c = self.screen.driver.get_control_for_hint(g15driver.HINT_FOREGROUND)
-                fg_h = None
-                if fg_c != None:
-                    val = fg_c.value
-                    fg_h = "#%02x%02x%02x" % ( val[0],val[1],val[2] )
-                    if root_style != None:
-                        root_styles = self.parse_css(root_style)
-                    else:
-                        root_styles = { }
-                    root_styles["fill"] = fg_h
-                    root.set("style", self.format_styles(root_styles))
+                    
+                self._set_default_style(root)
                     
                 self.render = Render(document, properties, text_boxes, attributes, processing_result)
                 self.dirty = False
@@ -1520,6 +1407,262 @@ class G15Theme():
                         
         self._render_document(canvas, self.render)
         return self.render.document
+            
+    def is_scroll_required(self):
+        return len(self.scroll_state) > 0
+            
+    def do_scroll(self):
+        try:
+            self.render_lock.acquire()
+            if len(self.scroll_state) > 0:
+                for key in self.scroll_state:
+                    self.scroll_state[key].next()
+                return True
+        finally:
+            self.render_lock.release()
+    
+    """
+    Private
+    """
+    
+    def _process_components(self, root):
+        """
+        Find all elements that are associated with child components in the component this
+        theme is attached to, and draw them too.
+        
+        Keyword arguments:
+        root        -- root of document
+        """
+        if self.component:
+            for component_id in self.component.child_map.keys():
+                component_elements = root.xpath('//svg:*[@id=\'%s\']' % component_id,namespaces=self.nsmap)
+                if len(component_elements) > 0:
+                    self.component.child_map[component_id].draw(self, component_elements[0])
+                else:
+                    logger.warning("Cannot find SVG element for component %s" % component_id)
+    
+    def _process_deletes(self, root, properties):
+        """
+        Remove all elements that are dependent on properties having non blank values
+        
+        Keyword arguments:
+        root        -- root of document 
+        properties  -- theme properties
+        """ 
+        for element in root.xpath('//svg:*[@title]',namespaces=self.nsmap):
+            title = element.get("title")
+            if title != None:
+                args = title.split(" ")
+                if args[0] == "del":
+                    var = args[1]
+                    set = True
+                    if var.startswith("!"):
+                        var = var[1:]
+                        set = False
+                    if ( set and var in properties and properties[var] != "" and properties[var] != False ) or \
+                        ( not set and ( not var in properties or properties[var] == "" or properties[var] == False ) ):
+                        element.getparent().remove(element)
+    
+    def _set_progress_bars(self, root, properties):
+        """
+        Sets the width attribute for any elements that have a style of "progress" based on
+        the value in the theme properties (with a key that is equal to the ID of the
+        element, less the _progress suffix).
+        
+        Keyword arguments:
+        root        -- root of document 
+        properties  -- theme properties
+        """ 
+        for element in root.xpath('//svg:rect[@class=\'progress\']',namespaces=self.nsmap):
+            bounds = g15util.get_bounds(element)
+            id = element.get("id")
+            if id.endswith("_progress"):
+                property_key = id[:-9]
+                if property_key in properties:
+                    value = float(properties[property_key])
+                    if value == 0:
+                        value = 0.1
+                    element.set("width", str(int((bounds[2] / 100.0) * value)))
+                else:
+                    logger.warning("Found progress element with an ID that doesn't exist in " + \
+                                   "theme properties. Theme directory is %s, variant is %s." % (self.dir, self.variant ))
+            else:
+                logger.warning("Found progress element with an ID that doesn't end in _progress")
+    
+    def _set_highlight_color(self, root):
+        """
+        Replaces any elements that have a color equal to the "highlight" colour
+        default with the configured highlight color
+        
+        Keyword arguments:
+        root        -- root of document
+        """
+        highlight_control = self.screen.driver.get_control_for_hint(g15driver.HINT_HIGHLIGHT)
+        if highlight_control:  
+            for element in root.xpath('//svg:*[@style]',namespaces=self.nsmap):
+                element.set("style", element.get("style").replace(DEFAULT_HIGHLIGHT_COLOR, self.screen.driver.get_color_as_hexrgb(g15driver.HINT_HIGHLIGHT, (255, 0, 0 ))))
+    
+    def _convert_image_urls(self, root, properties):
+        """
+        Inserts either a local file URL or an embedded image URL into all
+        elements that have 'title' attribute whose value exists as a property
+        in the theme properties.
+        
+        Keyword arguments:
+        root        -- root of document
+        properties  -- theme properties
+        """
+        for element in root.xpath('//svg:image',namespaces=self.nsmap):
+            id = element.get("title")
+            if id != None and id in properties and properties[id] != None:
+                file_str = StringIO()
+                val = properties[id]
+                if isinstance(val, str) and str(val).startswith("file:"):
+                    file_str.write(val[5:])
+                elif isinstance(val, str) and str(val).startswith("/"):
+                    file_str.write(val)
+                else:
+                    file_str.write("data:image/png;base64,")
+                    img_data = StringIO()
+                    if isinstance(val, cairo.Surface):
+                        val.write_to_png(img_data)
+                        file_str.write(base64.b64encode(img_data.getvalue()))
+                    else: 
+                        file_str.write(val)
+                element.set("{http://www.w3.org/1999/xlink}href", file_str.getvalue())
+    
+    def _set_default_style(self, root):        
+        """
+        Set the default fill color to be the default foreground. If elements don't specify their
+        own colour, they will inherit this
+        
+        Keyword arguments:
+        root        -- root document element
+        """
+        root_style = root.get("style")
+        fg_c = self.screen.driver.get_control_for_hint(g15driver.HINT_FOREGROUND)
+        fg_h = None
+        if fg_c != None:
+            val = fg_c.value
+            fg_h = "#%02x%02x%02x" % ( val[0],val[1],val[2] )
+            if root_style != None:
+                root_styles = self.parse_css(root_style)
+            else:
+                root_styles = { }
+            root_styles["fill"] = fg_h
+            root.set("style", self.format_styles(root_styles))
+    
+    def _handle_text_boxes(self, root, text_boxes, properties, canvas):
+        
+        # Look for text elements that have a clip path. If the rendered text is wider than
+        # the clip path, then this element may be scrolled. This clipped text can also
+        # be used to wrap and scroll vertical text, replacing the old 'text box' mechanism
+        
+        for element in root.xpath('//svg:text[@clip-path]',namespaces=self.nsmap):
+            id = element.get("id")
+            clip_path_node = self._get_clip_path_element(element)
+            vertical_wrap = "vertical-wrap" == element.get("title")
+            if clip_path_node is not None:
+                t_span_node = element.find("svg:tspan", namespaces=self.nsmap)
+                t_span_text = element.findtext("svg:tspan", namespaces=self.nsmap)
+                if not t_span_text:
+                    raise Exception("Text node had clip path, but no tspan->text could be found")
+                
+                clip_path_rect_node = clip_path_node.find("svg:rect", namespaces=self.nsmap)
+                clip_path_bounds = g15util.get_actual_bounds(clip_path_rect_node, element)
+                text_bounds = g15util.get_actual_bounds(element)
+                
+                text_box = TextBox()            
+                text_box.text = Template(t_span_text).safe_substitute(properties) 
+                text_box.css = self.parse_css(element.get("style"))
+                text_class = element.get("class")
+                if text_class:
+                    if "reverseshadow" in text_class:
+                        text_box.reverse_shadow = True
+                    elif "shadow" in text_class:
+                        text_box.normal_shadow = True
+                text_box.clip = clip_path_bounds
+                
+                self._update_text(text_box, vertical_wrap)
+                tx, ty, text_width, text_height = self.text.measure()
+                text_width, text_height = self._get_actual_size(element, text_width, text_height)
+                text_box.bounds = ( text_bounds[0], text_bounds[1], text_width, text_height )
+    
+                if vertical_wrap:
+                    text_box.wrap = True
+                    text_boxes.append(text_box)
+                    if text_height > clip_path_bounds[3]:
+                        if id in self.scroll_state:
+                            scroll_item = self.scroll_state[id]
+                            scroll_item.text_box = text_box
+                            text_box.base = scroll_item.val
+                        else:
+                            scroll_item = VerticalWrapScrollState(text_box)
+                            scroll_item.vertical = True
+                            scroll_item.step = self.screen.service.scroll_amount
+                            self.scroll_state[id] = scroll_item
+                            diff = text_height - clip_path_bounds[3]
+                            scroll_item.range = ( 0, diff)                                
+                        scroll_item.transform_elements()
+                    elif id in self.scroll_state:
+                        del self.scroll_state[id]
+                        
+                    element.getparent().remove(element)
+                else:
+#                    text_boxes.append(text_box)
+                    
+                    # Enable or disable scrolling            
+                    if text_width > clip_path_bounds[2]:
+                        if id in self.scroll_state:
+                            scroll_item = self.scroll_state[id]
+                            scroll_item.element = element
+                        else:
+                            scroll_item = HorizontalScrollState(element)
+                            scroll_item.step = self.screen.service.scroll_amount
+                            
+                            self.scroll_state[id] = scroll_item
+                            diff = text_width - clip_path_bounds[2] + ( clip_path_bounds[0] - text_box.bounds[0] )
+                            scroll_item.alignment = text_box.css["text-align"]
+                            scroll_item.original = float(element.get("x"))
+                            if scroll_item.alignment == "middle":
+                                scroll_item.range = ( -(diff / 2), (diff / 2))
+                            elif scroll_item.alignment == "start":
+                                scroll_item.range = ( -diff, 0)
+                            elif scroll_item.alignment == "end":
+                                scroll_item.range = ( 0, diff)
+                                
+                            scroll_item.reset()
+                            
+                        scroll_item.other_elements = [t_span_node]
+                        scroll_item.transform_elements()
+                    elif id in self.scroll_state:
+                        del self.scroll_state[id]      
+#                    element.getparent().remove(element)                  
+
+        # Find all of the  text boxes. This is a hack to get around rsvg not supporting
+        # flowText completely. The SVG must contain two elements. The first must have
+        # a class attribute of 'textbox' and the ID must be the property key that it 
+        # will contain. The next should be the text element (which defines style etc)
+        # and must have an id attribute of <propertyKey>_text. The text layer is
+        # then rendered by after the SVG using Pango.
+        for element in root.xpath('//svg:rect[@class=\'textbox\']',namespaces=self.nsmap):
+            id = element.get("id")
+            text_node = root.xpath('//*[@id=\'' + id + '_text\']',namespaces=self.nsmap)[0]
+            if text_node != None:            
+                styles = self.parse_css(text_node.get("style"))                
+
+                # Store the text box
+                text_box = TextBox()            
+                text_box.text = properties[id]
+                text_box.css = styles
+                text_box.wrap = True
+                text_boxes.append(text_box)
+                text_box.bounds = g15util.get_actual_bounds(element)
+                text_box.clip = text_box.bounds
+                
+                # Remove the textnod SVG element
+                text_node.getparent().remove(text_node)
+                element.getparent().remove(element)
     
     def _get_clip_path_element(self, element):
         clip_val = element.get("clip-path")
@@ -1563,34 +1706,8 @@ class G15Theme():
         if len(render.text_boxes) > 0:
             rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
             bg_rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
-            for text_box in render.text_boxes:                
-                pango_context = pangocairo.CairoContext(canvas)
-                layout = self._create_pango_layout(text_box, pango_context, wrap = True)
-
-                pango_context.save()
-                pango_context.rectangle(text_box.bounds[0] - 1, text_box.bounds[1] - 1, text_box.bounds[2] + 2, text_box.bounds[3] + 2)
-                pango_context.clip()
-                
-                if text_box.normal_shadow or text_box.reverse_shadow:
-                    if text_box.normal_shadow:
-                        canvas.set_source_rgb(bg_rgb[0], bg_rgb[1], bg_rgb[2])
-                    else:
-                        canvas.set_source_rgb(rgb[0], rgb[1], rgb[2])
-                    for x in range(-1, 2):
-                        for y in range(-1, 2):
-                            if x != 0 or y != 0:
-                                pango_context.move_to(text_box.bounds[0] + x, text_box.bounds[1] + y - text_box.base)    
-                                pango_context.update_layout(layout)
-                                pango_context.show_layout(layout)
-                
-                # Draw primary text to canvas                
-                canvas.set_source_rgb(rgb[0], rgb[1], rgb[2])
-                pango_context.move_to(text_box.bounds[0], text_box.bounds[1]  - text_box.base)    
-                pango_context.update_layout(layout)
-                pango_context.show_layout(layout)
-                
-                
-                pango_context.restore()
+            for text_box in render.text_boxes:
+                self._render_text_box(canvas, text_box, rgb, bg_rgb)
                 
         # Paint all GTK components that may have been added
         for offscreen_window, offscreen_bounds in self.offscreen_windows:
@@ -1615,18 +1732,27 @@ class G15Theme():
                 # Doesn't exist
                 pass
             
-    def is_scroll_required(self):
-        return len(self.scroll_state) > 0
-            
-    def do_scroll(self):
-        try:
-            self.render_lock.acquire()
-            if len(self.scroll_state) > 0:
-                for key in self.scroll_state:
-                    self.scroll_state[key].next()
-                return True
-        finally:
-            self.render_lock.release()
+    def _render_text_box(self, canvas, text_box, rgb, bg_rgb):
+        self._update_text(text_box, text_box.wrap)
+        
+#        if "fill" in text_css:
+#            rgb = g15util. css["fill"]
+#        else:
+#            foreground = None
+        
+        if text_box.normal_shadow or text_box.reverse_shadow:
+            if text_box.normal_shadow:
+                canvas.set_source_rgb(bg_rgb[0], bg_rgb[1], bg_rgb[2])
+            else:
+                canvas.set_source_rgb(rgb[0], rgb[1], rgb[2])
+            for x in range(-1, 2):
+                for y in range(-1, 2):
+                    if x != 0 or y != 0:
+                        self.text.draw(text_box.bounds[0] + x, text_box.bounds[1] + y - text_box.base)
+        
+        # Draw primary text to canvas                
+        canvas.set_source_rgb(rgb[0], rgb[1], rgb[2])
+        self.text.draw(text_box.bounds[0], text_box.bounds[1] - text_box.base)
             
     def _get_actual_size(self, element, width, height):
         list_transforms = [ cairo.Matrix(width, 0.0, 0.0, height, float(element.get("x")), float(element.get("y"))) ]
@@ -1641,88 +1767,21 @@ class G15Theme():
         xx, yx, xy, yy, x0, y0 = t
         return ( xx, yy )
     
-    def _get_actual_element_bounds(self, element, clipped_node = None):
-        # Traverse the parents to the root to get any tranlations to apply so the box gets placed at
-        # the correct position
-        el = element
-        list_transforms = [ cairo.Matrix(1.0, 0.0, 0.0, 1.0, float(element.get("x")), float(element.get("y"))) ]
+    def _update_text(self, text_box, wrap = False):
         
-        # If the element is a clip path and the associated clipped_node is provided, the work out the transforms from 
-        # the parent of the clipped_node, not the clip itself
-        if clipped_node is not None:
-            el = clipped_node.getparent() 
+        css = text_box.css         
         
-        while el != None:
-            list_transforms += g15util.get_transforms(el)
-            el = el.getparent()
-        list_transforms.reverse()
-        t = list_transforms[0]
-        for i in range(1, len(list_transforms)):
-            t = t.multiply(list_transforms[i])
-                    
-        xx, yx, xy, yy, x0, y0 = t
-        width = element.get("width")
-        if not width:
-            width = 0
-        height = element.get("height")
-        if not height:
-            height = 0
-        return ( x0, y0, float(width), float(height))
-    
-    def _create_pango_layout(self, text_box, pango_context, wrap = False):
-        fo = pango_context.get_font_options()
-        attr_list, text_align = self._create_pango_for_text_box(text_box)
-        layout = pango_context.create_layout()                
-        pangocairo.context_set_font_options(layout.get_context(), fo)      
-        layout.set_attributes(attr_list[0])
-        if wrap:
-            layout.set_width(int(pango.SCALE * text_box.bounds[2]))
-            layout.set_wrap(pango.WRAP_WORD_CHAR)
-        else:      
-            layout.set_width(-1)
-        layout.set_text(text_box.text)
-        spacing = 0
-        layout.set_spacing(spacing)
-        
-        # Alignment
-        if text_align == "right":
-            layout.set_alignment(pango.ALIGN_RIGHT)
-        elif text_align == "center":
-            layout.set_alignment(pango.ALIGN_CENTER)
-        else:
-            layout.set_alignment(pango.ALIGN_LEFT)
-            
-        return layout
-    
-    def _create_pango_for_text_box(self, text_box):
-        """
-        Turns a TextBox into pango attributes that may be rendered using
-        cairo. A 2 element tuple is returned contain the pango attribute
-        list and a text alignment.
-        
-        Keyword arguments:
-        text_box        --    text_box
-        """        
-        css = text_box.css
-         
-        # Workout font size
         font_size_css = css["font-size"]
-        font_size = None
+        font_pt_size = None
         if font_size_css:
-            nw = "".join(font_size_css.split()).lower()            
+            nw = "".join(font_size_css.split()).lower()                 
             if nw.endswith("px"):   
                 fs = float(font_size_css[:-2])
-                font_size = int(g15util.approx_px_to_pt(fs) * 1000.0)
-            elif nw.endswith("pt"):   
-                fs = float(font_size_css[:-2])
-                font_size = int(fs * 1000.0)
+                font_pt_size = int(g15util.approx_px_to_pt(fs))
+            elif nw.endswith("pt"):
+                font_pt_size = int(font_size_css[:-2])
+                
 
-        # TODO The size of the text produced by this code does not exactly match what size would be produce
-        # when rendered by RSVG. Find out why this is
-        if font_size:
-            font_size *= 1.08              
-        
-        
         font_family = css["font-family"]
         font_weight = css["font-weight"]
         font_style = css["font-style"]
@@ -1730,30 +1789,26 @@ class G15Theme():
             text_align = css["text-align"]
         else:
             text_align = "start"
-#                line_height = "80%"
-#                if "line-height" in css:
-#                    line_height = css["line-height"]
-        if "fill" in css:
-            foreground = css["fill"]
-        else:
-            foreground = None
+        alignment = pango.ALIGN_LEFT
+        if text_align == "end":
+            alignment =pango.ALIGN_RIGHT
+        elif text_align == "center":
+            alignment = pango.ALIGN_CENTER
         
-        buf = "<span"
-        if font_size != None:
-            buf += " size=\"%d\"" % font_size 
-        if font_style != None:
-            buf += " style=\"%s\"" % font_style
-        if font_weight != None:
-            buf += " weight=\"%s\"" % font_weight
-        if font_family != None:
-            buf += " font_family=\"%s\"" % font_family                
-        if foreground != None and foreground != "none":
-            buf += " foreground=\"%s\"" % foreground
+        # Determine wrap and width to use
+        if wrap:
+            width = int(pango.SCALE * text_box.clip[2])
+            wrap = pango.WRAP_WORD_CHAR
+        else:      
+            wrap = 0
+            width = -1
             
-        buf += ">%s</span>" % saxutils.escape(text_box.text)
-        
-        attr_list = pango.parse_markup(buf)
-        return attr_list, text_align
+        # Update the text handler
+        self.text.set_attributes(text_box.text, bounds = text_box.clip, wrap = wrap, align = alignment, \
+                                 width = width, spacing = 0,  \
+                                 style = font_style, weight = font_weight, \
+                                 font_pt_size = font_pt_size, \
+                                 font_desc = font_family)
     
     def _do_shadow(self, id, color, root):
         """

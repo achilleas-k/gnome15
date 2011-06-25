@@ -83,7 +83,6 @@ class IndicatorMeMenuEntry(dbusmenu.DBUSMenuEntry):
         dbusmenu.DBUSMenuEntry.__init__(self, id, properties, menu)
         
     def set_properties(self, properties):
-        print "props: %s" % str(properties)
         dbusmenu.DBUSMenuEntry.set_properties(self, properties)        
         if self.type == TYPE_INDICATOR_ITEM and INDICATOR_LABEL in self.properties:
             self.label = self.properties[INDICATOR_LABEL]
@@ -188,7 +187,6 @@ class G15IndicatorMe():
         self._menu.menu_changed(menu, property, value)
         
     def _popup(self):    
-        print "Popup!"
         self._get_details()
         self._screen.set_priority(self._popup_page, g15screen.PRI_HIGH, revert_after = 3.0)
         self._screen.redraw(self._popup_page)

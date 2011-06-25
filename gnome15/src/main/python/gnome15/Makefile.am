@@ -19,6 +19,7 @@ gnome15_PYTHON = 		\
 	g15screen.py \
 	g15system.py \
 	g15theme.py \
+	g15text.py \
 	g15util.py \
 	jobqueue.py \
 	objgraph.py \

@@ -29,6 +29,8 @@ import g15devices
 import gc
 import objgraph
 import gobject
+import sys
+import traceback
 
 from cStringIO import StringIO
 
@@ -165,11 +167,34 @@ class G15DBUSDebugService(dbus.service.Object):
         
     @dbus.service.method(DEBUG_IF_NAME)
     def MostCommonTypes(self):
+        print "Most used objects"
+        print "-----------------"
+        print
         objgraph.show_most_common_types(limit=200)
+        print "Job Queues"
+        print "----------"
+        print
+        g15util.scheduler.print_all_jobs()
+        print "Threads"
+        print "-------"
+        for threadId, stack in sys._current_frames().items():
+            print "ThreadID: %s" % threadId
+            for filename, lineno, name, line in traceback.extract_stack(stack):
+                print '    File: "%s", line %d, in %s' % (filename, lineno, name)
         
     @dbus.service.method(DEBUG_IF_NAME)
     def ShowGraph(self):
         objgraph.show_refs(self._service)
+        
+    @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
+    def Objects(self, typename):
+        print "%d instances of type %s. Referrers :-" % ( objgraph.count(typename), typename)
+        done = {}
+        for r in objgraph.by_type(typename):
+            if isinstance(r, list):
+                print "%s" % str(r[:min(20, len(r))])
+            else:
+                print "%s" % str(r)
         
     @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
     def Referrers(self, typename):

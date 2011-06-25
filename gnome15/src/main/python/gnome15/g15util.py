@@ -17,22 +17,15 @@
 THIS HAS TURNED INTO A DUMPING GROUND AND NEEDS REFACTORING
 '''
 
-import g15driver as g15driver
 import g15globals as pglobals
 import gtk.gdk
-import gobject
 import os
 import cairo
-import time
-import pangocairo
-import pango
 import math
 import Image
 import rsvg
 import urllib
 import base64
-import sys
-import traceback
 import xdg.Mime as mime
 
 # Logging
@@ -41,7 +34,6 @@ logger = logging.getLogger("util")
 
 from cStringIO import StringIO
 import jobqueue
-from threading import Thread
 
 from HTMLParser import HTMLParser
 
@@ -228,7 +220,6 @@ def boolean_conf_value_change(client, connection_id, entry, args):
 def radio_conf_value_change(client, connection_id, entry, args):
     widget, key, gconf_value = args
     str_value = entry.get_value().get_string()
-    print "Radio changed for %s - %s = %s / %s" % (str(widget), key, gconf_value, str_value)
     widget.set_active(str_value == gconf_value)
         
 def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, watch_changes = False):
@@ -458,11 +449,9 @@ def load_surface_from_file(filename, size = None):
                 meta_fileobj.close()
             
             if type == "image/svg+xml" or filename.lower().endswith(".svg"):
-                print "RSVG loading %s, %s" % ( type, filename )
                 svg = rsvg.Handle()
                 try:
                     if not svg.write(data):
-                        print "DATA = %s" % data
                         raise Exception("Failed to load SVG")
                     svg_size = svg.get_dimension_data()[2:4]
                     if size == None:
@@ -478,7 +467,6 @@ def load_surface_from_file(filename, size = None):
                 finally:
                     svg.close()
             else:
-                print "Pixbuf loading %s, %s" % ( type, filename )
                 pbl = gtk.gdk.pixbuf_loader_new_with_mime_type(type)
                 pbl.write(data)
                 pixbuf = pbl.get_pixbuf()
@@ -689,56 +677,12 @@ def get_scale(target, actual):
         scale = max(sx, sy)
     return scale
 
-'''
-Pango
-'''
-
 def approx_px_to_pt(px):
-    if px % 1 >= 0.5:
-        px = round(px)
-    else:
-        px = round(px) + 0.5
+    px = round(px)
     if px in px_to_pt:
         return px_to_pt[px]
     else:
         return int(px * 72.0 / 96)
-             
-def create_pango_context(canvas, screen, text, wrap = None, align = None, width = None, spacing = None, font_desc = None, font_absolute_size = None):
-    pango_context = pangocairo.CairoContext(canvas)
-    
-    # Font options, set anti-alias
-    pango_context.set_antialias(screen.driver.get_antialias()) 
-    fo = cairo.FontOptions()
-    fo.set_antialias(screen.driver.get_antialias())
-    if screen.driver.get_antialias() == cairo.ANTIALIAS_NONE:
-        fo.set_hint_style(cairo.HINT_STYLE_NONE)
-        fo.set_hint_metrics(cairo.HINT_METRICS_OFF)                
-    layout = pango_context.create_layout()            
-    pangocairo.context_set_font_options(layout.get_context(), fo)
-    
-    # Font
-    font_desc = pango.FontDescription("Sans 10" if font_desc == None else font_desc)
-    if font_absolute_size != None:
-        font_desc.set_absolute_size(font_absolute_size)
-    layout.set_font_description(font_desc)
-    
-    # Layout
-    if align != None:
-        layout.set_alignment(align)
-    if spacing != None:
-        layout.set_spacing(spacing)
-    if width != None:
-        layout.set_width(width)
-    if wrap != None:
-        layout.set_wrap(wrap)      
-    layout.set_text(text)
-    canvas.set_source_rgb(*screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 )))
-    return pango_context, layout
-
-def get_extents(layout):
-    text_extents = layout.get_extents()[1]
-    return text_extents[0] / pango.SCALE, text_extents[1] / pango.SCALE, text_extents[2] / pango.SCALE, text_extents[3] / pango.SCALE 
-
 '''
 SVG utilties
 '''
@@ -821,13 +765,20 @@ def get_location(element):
         y += i[1]  
     return (x, y)
 
-def get_actual_bounds(element):
+def get_actual_bounds(element, relative_to = None):
     id = element.get("id")
+    
     bounds = get_bounds(element)
     transforms = []
     t = cairo.Matrix()
     t.translate(bounds[0],bounds[1])
     transforms.append(t)
+    
+    # If the element is a clip path and the associated clipped_node is provided, the work out the transforms from 
+    # the parent of the clipped_node, not the clip itself
+    if relative_to is not None:
+        element = relative_to.getparent() 
+    
     while element != None:
         transforms += get_transforms(element, position_only=True)
         element = element.getparent()

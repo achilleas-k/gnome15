@@ -73,8 +73,6 @@ class G15Backlight():
             self.offscreen_window.handle_key(keys, state, post)
     
     def paint(self, canvas):
-        print "Painting"
-        
         backlight_control = self.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
         color = backlight_control.value
         properties = {
@@ -99,7 +97,6 @@ class G15Backlight():
         color = list(backlight_control.value)
         color[octet] = int(widget.get_value())
         self.gconf_client.set_string("/apps/gnome15/" + backlight_control.id, "%d,%d,%d" % ( color[0],color[1],color[2]))
-        print "New color is",color
         
     def _create_offscreen_window(self):
         

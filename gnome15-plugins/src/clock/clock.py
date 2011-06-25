@@ -25,6 +25,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
+import gnome15.g15text as g15text
 import datetime
 import gtk
 import pango
@@ -99,18 +100,25 @@ class G15Clock():
         self.page = None
     
     def activate(self):
-        self.timer = None
-        self.load_configuration()
         
         '''
         The activate function is invoked when gnome15 starts up, or the plugin is re-enabled
         after it has been disabled
         '''
         
+        self.timer = None
+        self.load_configuration()
+        
+        '''
+        We will be drawing text manually in the thumbnail, so it is recommended you use the
+        G15Text class which simplifies drawing and measuring text in an efficient manner  
+        '''
+        self.text = g15text.new_text(self.screen)
+        
         '''
         Most plugins will delegate their drawing to a 'Theme'. A theme usually consists of an SVG file, one
-        for each model that is supported, and optionally a fragement of Python for anything that can't
-        be done with the SVG
+        for each model that is supported, and optionally a fragment of Python for anything that can't
+        be done with SVG and the built in theme facilities
         '''
         self._reload_theme()
         
@@ -121,8 +129,6 @@ class G15Clock():
         
         A thumbnail painter function is also provided. This is used by other plugins want a thumbnail representation
         of the current screen. For example, this could be used in the 'panel', or the 'menu' plugins
-        
-        A page is actually a Component, and other components may be added to it. 
         '''        
         self.page = g15theme.G15Page("Clock", self.screen, 
                                      theme_properties_callback = self._get_properties,
@@ -143,7 +149,8 @@ class G15Clock():
         self.screen.redraw(self.page)
         
         '''
-        Schedule another redraw if appropriate
+        As this is a Clock, we want to redraw at fixed intervals. So, schedule another redraw
+        if appropriate
         '''        
         self._schedule_redraw()
         
@@ -194,7 +201,7 @@ class G15Clock():
     the amount of space you have (i.e. 6 pixels high maximum and limited width)
     ''' 
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if self.page and not self.screen.is_visible(self.page):
+        if self.page and not self.screen.is_visible(self.page) and self.screen.service.text_boxes:
             properties = self._get_properties()
             # Don't display the date or seconds on mono displays, not enough room as it is
             if self.screen.driver.get_bpp() == 1:
@@ -216,18 +223,19 @@ class G15Clock():
                 x = 4
                 gap = 8
                 
-            pango_context, layout = g15util.create_pango_context(canvas, self.screen, text, align = pango.ALIGN_CENTER, font_desc = font_name, font_absolute_size =  font_size * pango.SCALE / factor)
-            x, y, width, height = g15util.get_extents(layout)
+            self.text.set_canvas(canvas)
+            self.text.set_attributes(text, align = pango.ALIGN_CENTER, font_desc = font_name, \
+                                     font_absolute_size = font_size * pango.SCALE / factor)
+            x, y, width, height = self.text.measure()
             if horizontal: 
                 if self.screen.driver.get_bpp() == 1:
                     y = 0
                 else:
                     y = (allocated_size / 2) - height / 2
-                pango_context.move_to(x, y)
             else:      
-                pango_context.move_to((allocated_size / 2) - width / 2, 0)
-            pango_context.update_layout(layout)
-            pango_context.show_layout(layout)
+                x = (allocated_size / 2) - width / 2
+                y = 0
+            self.text.draw(x, y)
             if horizontal:
                 return width + gap
             else:

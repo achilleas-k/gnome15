@@ -23,6 +23,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
+import gnome15.g15text as g15text
 import datetime
 import pango
 import os
@@ -68,6 +69,7 @@ class G15Stopwatch():
 
     def activate(self):
         self._timer = None
+        self._text = g15text.new_text(self._screen)
         self._notify_timer = None
         self._timer1 = timer.G15Timer()
         self._timer2 = timer.G15Timer()
@@ -145,6 +147,8 @@ class G15Stopwatch():
     the amount of space you have (i.e. 6 pixels high maximum and limited width)
     ''' 
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
+        if not self._screen.service.text_boxes:
+            return
         if not self._page or self._screen.is_visible(self._page):
             return
         if not (self._timer1.get_enabled() or self._timer2.get_enabled()):
@@ -170,19 +174,19 @@ class G15Stopwatch():
                 text = properties["timer"]
                 font_size = allocated_size / 2
             gap = 8
-
-        pango_context, layout = g15util.create_pango_context(canvas, self._screen, text, align = pango.ALIGN_CENTER, font_desc = font_name, font_absolute_size =  font_size * pango.SCALE / factor)
-        x, y, width, height = g15util.get_extents(layout)
+            
+        self._text.set_canvas(canvas)
+        self._text.set_attributes(text, align = pango.ALIGN_CENTER, font_desc = font_name, font_absolute_size = font_size * pango.SCALE / factor)
+        x, y, width, height = self._text.measure()
         if horizontal:
             if self._screen.driver.get_bpp() == 1:
                 y = 0
             else:
                 y = (allocated_size / 2) - height / 2
-            pango_context.move_to(x, y)
         else:
-            pango_context.move_to((allocated_size / 2) - width / 2, 0)
-        pango_context.update_layout(layout)
-        pango_context.show_layout(layout)
+            x = (allocated_size / 2) - width / 2
+            y = 0
+        self._text.draw(x, y)
         if horizontal:
             return width + gap
         else:

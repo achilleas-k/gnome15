@@ -26,6 +26,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
+import gnome15.g15text as g15text
 import datetime
 from threading import Timer
 import gtk
@@ -111,6 +112,7 @@ class G15Weather():
         self._timer = None
         
     def activate(self):
+        self._text = g15text.new_text(self._screen)
         self._page = g15theme.G15Page(id, self._screen, thumbnail_painter = self._paint_thumbnail,
                                         panel_painter = self._paint_thumbnail, \
                                         theme = g15theme.G15Theme(self))
@@ -173,7 +175,6 @@ class G15Weather():
         attributes = {}
         try :
             loc = get_location(self._gconf_client, self._gconf_key)
-            print "Getting weather for %s" % loc
             self._weather = pywapi.get_weather_from_google(loc,  hl = ''  )
             
             properties["location"] = loc
@@ -341,18 +342,22 @@ class G15Weather():
         return base_icon
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
-        total_taken = 0
+        total_taken = 0 
+        if not self._screen.service.text_boxes:
+            return
+        self._text.set_canvas(canvas)
         if self._screen.driver.get_bpp() == 1:
             if "mono_thumb_icon" in self._page.theme_attributes:
                 size = g15util.paint_thumbnail_image(allocated_size, self._page.theme_attributes["mono_thumb_icon"], canvas)
                 canvas.translate(size + 2, 0)
                 total_taken += size + 2
             if "temp_short" in self._page.theme_properties:
-                pango_context, layout = g15util.create_pango_context(canvas, self._screen, self._page.theme_properties["temp_short"], font_desc = g15globals.fixed_size_font_name, font_absolute_size =  6 * pango.SCALE / 2)
-                x, y, width, height = g15util.get_extents(layout)
+                self._text.set_attributes(self._page.theme_properties["temp_short"], \
+                                          font_desc = g15globals.fixed_size_font_name, \
+                                          font_absolute_size =  6 * pango.SCALE / 2)
+                x, y, width, height = self._text.measure()
                 total_taken += width
-                pango_context.update_layout(layout)
-                pango_context.show_layout(layout)
+                self._text.draw(x, y)
         else:
             if "icon" in self._page.theme_attributes:
                 size = g15util.paint_thumbnail_image(allocated_size, self._page.theme_attributes["icon"], canvas)
@@ -362,17 +367,15 @@ class G15Weather():
                     canvas.translate(0, size)
                 total_taken += size
             if "temp" in self._page.theme_properties:
-                if horizontal: 
-                    pango_context, layout = g15util.create_pango_context(canvas, self._screen, self._page.theme_properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 2)
-                    x, y, width, height = g15util.get_extents(layout)
-                    pango_context.move_to(0, (allocated_size / 2) - height / 2)
+                if horizontal:
+                    self._text.set_attributes(self._page.theme_properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 2)
+                    x, y, width, height = self._text.measure()
+                    self._text.draw(0, (allocated_size / 2) - height / 2)
                     total_taken += width + 4
                 else:  
-                    pango_context, layout = g15util.create_pango_context(canvas, self._screen, self._page.theme_properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 4)
-                    x, y, width, height = g15util.get_extents(layout)
-                    pango_context.move_to((allocated_size / 2) - width / 2, 0)
+                    self._text.set_attributes(self._page.theme_properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 4)
+                    x, y, width, height = self._text.measure()
+                    self._text.draw((allocated_size / 2) - width / 2, 0)
                     total_taken += height + 4     
-                pango_context.update_layout(layout)
-                pango_context.show_layout(layout)
         return total_taken
             

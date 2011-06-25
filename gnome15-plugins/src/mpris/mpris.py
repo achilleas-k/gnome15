@@ -243,6 +243,7 @@ class AbstractMPRISPlayer():
             
     def get_default_cover(self):
         mime_type = mime.get_type(self.playing_uri)
+        new_cover_uri = None
         if mime_type != None:
             mime_icon = g15util.get_icon_path(str(mime_type).replace("/","-"), size=self.screen.height)
             if mime_icon != None:                    

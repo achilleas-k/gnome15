@@ -354,7 +354,6 @@ class AbstractDriver(object):
             control_acquisition.control.value = control_acquisitions[ctrls - 1].val
             self.update_control(control_acquisition.control)
         else:
-            print "No more acquisitions for %s, resetting to original of %s" % ( control_acquisition.control.id, str(self.initial_acquired_control_values[control_acquisition.control.id])) 
             control_acquisition.control.value = self.initial_acquired_control_values[control_acquisition.control.id]
             self.update_control(control_acquisition.control)
     

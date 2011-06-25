@@ -235,13 +235,9 @@ class G15Window(gtk.OffscreenWindow):
         self.lock = Lock()
         
     def _do_capture(self):
-        print "_do_capture()"
         pixbuf = gtk.gdk.Pixbuf( gtk.gdk.COLORSPACE_RGB, False, 8, self.area_width, self.area_height)
-        print "created pixbuf"
         pixbuf.get_from_drawable(self.content.window, self.content.get_colormap(), 0, 0, 0, 0, self.area_width, self.area_height)
-        print "built pixbuf"
         self.surface = g15util.pixbuf_to_surface(pixbuf)
-        print "created surface"
         self.pixbuf = pixbuf
         if self.lock != None:
             self.lock.release()

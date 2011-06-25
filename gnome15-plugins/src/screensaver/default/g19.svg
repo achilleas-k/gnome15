@@ -65,14 +65,14 @@
     </clipPath>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3004">
+       id="clipPath3000">
       <rect
-         style="fill:#aa0000;fill-opacity:0.50196078;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none"
-         id="rect3006"
-         width="290"
+         y="941.11218"
+         x="24.547737"
          height="69.999985"
-         x="24.547735"
-         y="941.11218" />
+         width="290"
+         id="rect3002"
+         style="fill:#aa0000;fill-opacity:0.50196078;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -91,8 +91,8 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="354"
-     inkscape:window-y="60"
+     inkscape:window-x="2034"
+     inkscape:window-y="84"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -138,10 +138,10 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/screensaver/default/${icon}"
        xlink:href="${icon}"
-       id="image3055"
-       height="240"
+       transform="matrix(0.4797619,0,0,0.4797619,120.40488,804.11217)"
        width="240"
-       transform="matrix(0.4797619,0,0,0.4797619,120.40488,804.11217)" />
+       height="240"
+       id="image3055" />
     <rect
        style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
        id="rect2994"
@@ -155,16 +155,15 @@
     <text
        xml:space="preserve"
        style="font-size:18px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Sans"
-       x="81.045799"
+       x="175.04581"
        y="956.35071"
        id="text2998"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath3004)"
-       title="vertical-wrap"
-       transform="translate(96,0)"><tspan
+       clip-path="url(#clipPath3000)"
+       title="vertical-wrap"><tspan
          sodipodi:role="line"
          id="tspan3000"
-         x="81.045799"
+         x="137.47696"
          y="956.35071">${body}</tspan></text>
   </g>
 </svg>

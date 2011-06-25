@@ -100,6 +100,7 @@ class G15Screen():
         self.conf_client = service.conf_client
         self.notify_handles = []
         self.connection_lock = RLock()
+        self.draw_lock = RLock()
         self.defeat_profile_change = 0
         self.first_page = None
         self.attention_message = g15globals.name
@@ -849,12 +850,9 @@ class G15Screen():
         
         if rgb is not None:
             if self.memory_bank_color_control is None:
-                print "Acquiring new memory bank color control"
                 self.memory_bank_color_control = self.driver.acquire_control(control)
-            print "Setting value it to %s" % str(rgb)
             self.memory_bank_color_control.set_value(rgb)
         elif self.memory_bank_color_control is not None:
-            print "Releasing  memory bank color control"
             self.driver.release_control(self.memory_bank_color_control)
             self.memory_bank_color_control = None
             
@@ -934,105 +932,108 @@ class G15Screen():
     '''
     
     def _draw_page(self, visible_page, direction="down", transitions = True, redraw_content = True):
-        
-        if self.driver == None or not self.driver.is_connected():
-            return
-        
-        # Do not paint if the device has no LCD (i.e. G110)
-        if self.driver.get_bpp() == 0:
-            return
-        
-        surface =  self.surface
-        
-        # If the visible page is changing, creating a new surface. Both surfaces are
-        # then passed to any transition functions registered
-        if visible_page != self.visible_page: 
-            logger.debug("Page has changed, recreating surface")
-            if visible_page.priority == PRI_NORMAL:   
-                self.service.conf_client.set_string("/apps/gnome15/%s/last_page" % self.device.uid, visible_page.id)      
-            surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
+        self.draw_lock.acquire()
+        try:
+            if self.driver == None or not self.driver.is_connected():
+                return
             
-        self.local_data.surface = surface
-        canvas = cairo.Context (surface)
-        rgb = self.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
-        canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
-        canvas.rectangle(0, 0, self.width, self.height)
-        canvas.fill()
-        rgb = self.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
-        canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
-        self.configure_canvas(canvas)
-        
-        if self.background_painter_function != None:
-            self.background_painter_function(canvas)
+            # Do not paint if the device has no LCD (i.e. G110)
+            if self.driver.get_bpp() == 0:
+                return
+            
+            surface =  self.surface
+            
+            # If the visible page is changing, creating a new surface. Both surfaces are
+            # then passed to any transition functions registered
+            if visible_page != self.visible_page: 
+                logger.debug("Page has changed, recreating surface")
+                if visible_page.priority == PRI_NORMAL:   
+                    self.service.conf_client.set_string("/apps/gnome15/%s/last_page" % self.device.uid, visible_page.id)  
+                surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
                 
-        old_page = None
-        if visible_page != self.visible_page:            
-            old_page = self.visible_page
-            redraw_content = True
-            if self.visible_page != None:
-                self.visible_page = visible_page
-                old_page._do_on_hidden()
-            else:                
-                self.visible_page = visible_page
-            if self.visible_page != None:
-                self.visible_page._do_on_shown()
+            self.local_data.surface = surface
+            canvas = cairo.Context (surface)
+            rgb = self.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
+            canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
+            canvas.rectangle(0, 0, self.width, self.height)
+            canvas.fill()
+            rgb = self.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+            canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
+            self.configure_canvas(canvas)
+            
+            if self.background_painter_function != None:
+                self.background_painter_function(canvas)
                     
-            self.resched_cycle()
-            for l in self.screen_change_listeners:
-                l.page_changed(self.visible_page)
-            
-        # Call the screen's painter
-        if self.visible_page != None:
-            logger.debug("Drawing page %s (direction = %s, transitions = %s, redraw_content = %s" % ( self.visible_page.id, direction, str(transitions), str(redraw_content)))
-        
-                     
-            # Paint the content to a new surface so it can be cached
-            if self.content_surface == None or redraw_content:
-                self.content_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
-                content_canvas = cairo.Context(self.content_surface)
-                self.configure_canvas(content_canvas)
-                self.visible_page.paint(content_canvas)
-            
-            tx =  self.available_size[0]
-            ty =  self.available_size[1]
-            
-            # Scale to the available space, and center
-            sx = float(self.available_size[2]) / float(self.width)
-            sy = float(self.available_size[3]) / float(self.height)
-            scale = min(sx, sy)
-            sx = scale
-            sy = scale
-            
-            if tx == 0 and self.available_size[3] != self.size[1]:
-                sx = 1
-            
-            if ty == 0 and self.available_size[2] != self.size[0]:
-                sy = 1
-            
-            canvas.save()
-            canvas.translate(tx, ty)
-            canvas.scale(sx, sy)
-            canvas.set_source_surface(self.content_surface)
-            canvas.paint()
-            canvas.restore()
-            
-        # Now paint the screen's foreground
-        if self.foreground_painter_function != None:
-            self.foreground_painter_function(canvas)
+            old_page = None
+            if visible_page != self.visible_page:            
+                old_page = self.visible_page
+                redraw_content = True
+                if self.visible_page != None:
+                    self.visible_page = visible_page
+                    old_page._do_on_hidden()
+                else:                
+                    self.visible_page = visible_page
+                if self.visible_page != None:
+                    self.visible_page._do_on_shown()
+                        
+                self.resched_cycle()
+                for l in self.screen_change_listeners:
+                    l.page_changed(self.visible_page)
                 
-        # Run any transitions
-        if transitions and self.transition_function != None and self.old_canvas != None:
-            self.transition_function(self.old_surface, surface, old_page, self.visible_page, direction)
+            # Call the screen's painter
+            if self.visible_page != None:
+                logger.debug("Drawing page %s (direction = %s, transitions = %s, redraw_content = %s" % ( self.visible_page.id, direction, str(transitions), str(redraw_content)))
             
-        # Now apply any global transformations and paint
-        
-        if self.painter_function != None:
-            self.painter_function(surface)
-        else:
-            self.driver.paint(surface)
+                         
+                # Paint the content to a new surface so it can be cached
+                if self.content_surface == None or redraw_content:
+                    self.content_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
+                    content_canvas = cairo.Context(self.content_surface)
+                    self.configure_canvas(content_canvas)
+                    self.visible_page.paint(content_canvas)
+                
+                tx =  self.available_size[0]
+                ty =  self.available_size[1]
+                
+                # Scale to the available space, and center
+                sx = float(self.available_size[2]) / float(self.width)
+                sy = float(self.available_size[3]) / float(self.height)
+                scale = min(sx, sy)
+                sx = scale
+                sy = scale
+                
+                if tx == 0 and self.available_size[3] != self.size[1]:
+                    sx = 1
+                
+                if ty == 0 and self.available_size[2] != self.size[0]:
+                    sy = 1
+                
+                canvas.save()
+                canvas.translate(tx, ty)
+                canvas.scale(sx, sy)
+                canvas.set_source_surface(self.content_surface)
+                canvas.paint()
+                canvas.restore()
+                
+            # Now paint the screen's foreground
+            if self.foreground_painter_function != None:
+                self.foreground_painter_function(canvas)
+                    
+            # Run any transitions
+            if transitions and self.transition_function != None and self.old_canvas != None:
+                self.transition_function(self.old_surface, surface, old_page, self.visible_page, direction)
+                
+            # Now apply any global transformations and paint
             
-        self.old_canvas = canvas
-        self.old_surface = surface
+            if self.painter_function != None:
+                self.painter_function(surface)
+            else:
+                self.driver.paint(surface)
+                
+            self.old_canvas = canvas
+            self.old_surface = surface
+        finally:
+            self.draw_lock.release()
         
     def configure_canvas(self, canvas):        
         canvas.set_antialias(self.driver.get_antialias())

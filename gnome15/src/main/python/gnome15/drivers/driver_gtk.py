@@ -200,7 +200,12 @@ class Driver(g15driver.AbstractDriver):
                 pil_img = pil_img.convert("RGB")
                 self.image = pil_img           
             else:
-                self.image = image
+                # Take a copy of the image to prevent flickering
+                argb_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+                argb_context = cairo.Context(argb_surface)
+                argb_context.set_source_surface(image)
+                argb_context.paint()
+                self.image = argb_surface
             gobject.timeout_add(0, self.redraw)
             
     def process_svg(self, document):  

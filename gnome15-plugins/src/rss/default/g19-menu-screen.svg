@@ -91,7 +91,7 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2167"
+     inkscape:window-x="2181"
      inkscape:window-y="37"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -151,12 +151,11 @@
        height="65.999985" />
     <text
        xml:space="preserve"
-       style="font-size:24px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       style="font-size:24px;font-style:normal;font-weight:normal;text-align:start;line-height:100%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans"
        x="23.692986"
        y="824.32098"
        id="text4017"
-       sodipodi:linespacing="125%"
-       transform="matrix(0.99422109,0,0,1.0058125,-2.9369019,-10.500179)"
+       sodipodi:linespacing="100%"
        clip-path="url(#clipPath3009)"><tspan
          sodipodi:role="line"
          id="tspan4019"

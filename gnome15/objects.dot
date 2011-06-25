@@ -1,0 +1,12 @@
+digraph ObjectGraph {
+  node[shape=box, style=filled, fillcolor=white];
+  o64786176[fontcolor=red];
+  o64786176[label="Layout:\n<pango.Layout object at 0x3dc8f00 (Pango"];
+  o64786176[fillcolor="0,0,1"];
+  o69098432 -> o64786176 [label="objs",weight=2];
+  o71643360 -> o64786176 [label="objs",weight=2];
+  o69098432[label="dict:\n6 items"];
+  o69098432[fillcolor="0,0,0.766667"];
+  o71643360[label="dict:\n8 items"];
+  o71643360[fillcolor="0,0,0.766667"];
+}

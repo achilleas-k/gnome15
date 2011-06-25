@@ -291,11 +291,6 @@ class G15NotifyLCD():
         # Only interested in method calls
         if msg.get_type() == 1 and isinstance(msg, dbus.lowlevel.MethodCallMessage):
             if msg.get_member() == "Notify":
-                print "== New message =="
-                print "member = %s" % msg.get_member()
-                print "args = %s" % str(msg.get_args_list())
-                print "type = %d" % msg.get_type()
-                print "sender = " + msg.get_sender()
                 self.notify(*msg.get_args_list())  
             
     def deactivate(self):
@@ -324,9 +319,9 @@ class G15NotifyLCD():
         if self._page != None and self._page.is_visible():            
             if binding.action == g15driver.CLEAR:
                 self.clear()  
-            elif bind.action == g15driver.NEXT_SELECTION:
+            elif binding.action == g15driver.NEXT_PAGE:
                 self.next()  
-            elif bind.action == g15driver.SELECT:
+            elif binding.action == g15driver.SELECT:
                 self.action()
     
     def notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
@@ -438,11 +433,17 @@ class G15NotifyLCD():
         properties["title"] = self._current_message.summary
         properties["message"] = self._current_message.body
         if self._current_message.icon != None and len(self._current_message.icon) > 0:
-            properties["icon"] = g15util.get_icon_path(self._current_message.icon)
+            icon_path = g15util.get_icon_path(self._current_message.icon)
+            
+            # Workaround on Natty missing new email notification icon (from Evolution)?
+            if icon_path == None and self._current_message.icon == "notification-message-email":
+                icon_path = g15util.get_icon_path([ "applications-email-pane", "mail_new", "mail-inbox", "evolution-mail" ])
+                
+            properties["icon"] = icon_path 
         elif self._current_message.embedded_image != None:
-            properties["icon"] = self._current_message.embedded_image
-        else:
-            properties["icon"] = g15util.get_icon_path(["dialog-info", "stock_dialog-info", "messagebox_info" ])            
+            properties["icon"] = self._current_message.embedded_image            
+        if not "icon" in properties or properties["icon"] == None:
+            properties["icon"] = g15util.get_icon_path(["dialog-info", "stock_dialog-info", "messagebox_info" ])
                     
         properties["next"] = len(self._message_queue) > 1
         action = 1
@@ -482,6 +483,7 @@ class G15NotifyLCD():
                                               theme = g15theme.G15Theme(self, self._last_variant))
                 self._screen.add_page(self._page)
             else:
+                self._page.set_theme(g15theme.G15Theme(self, self._last_variant))
                 self._screen.raise_page(self._page)
                 
             self._start_timer(message)         
