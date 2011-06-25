@@ -190,41 +190,54 @@ class G15Service(Thread):
             logger.warning("Running external command '%s'" % macro.command)
             os.system(macro.command)
         elif macro.type == g15profile.MACRO_SIMPLE:
-            logger.debug("Simple macro '%s'" % macro.simple_macro)
-            esc = False
-            i = 0
-            for c in macro.simple_macro:
-                if c == '\\' and not esc:
-                    esc = True
-                else:          
-                    if i > 0:
-                        delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
-                        if logger.level == logging.DEBUG:
-                            logger.debug("Release delay of %f" % delay)
-                        time.sleep(0.1 if not macro.profile.fixed_delays else ( macro.profile.release_delay / 1000 ) )
-                    i += 1
-                    
-                    if esc and c == 'p':
-                        time.sleep(1.0)
-                    else:         
-                        if esc and c == 't':
-                            c = '\t'                  
-                        elif esc and c == 'r':
-                            c = '\r'              
-                        elif esc and c == 'n':
-                            c = '\r'    
-                        elif esc and c == 'b':
-                            c = '\b' 
-                        elif esc and c == 'e':
-                            c = '\e'
-                        self.send_string(c, True)
-                        delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.press_delay) / 1000.0 )
-                        if logger.level == logging.DEBUG:
-                            logger.debug("Press delay of %f" % delay)
-                        self.send_string(c, False) 
-                    esc = False
+            self.send_simple_macro(macro)
         else:
             self.send_macro(macro)
+        
+        
+    def send_simple_macro(self, macro):
+        logger.debug("Simple macro '%s'" % macro.simple_macro)
+        esc = False
+        i = 0
+    
+        press_delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.press_delay) / 1000.0 )
+        release_delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
+                        
+        for c in macro.simple_macro:
+            if c == '\\' and not esc:
+                esc = True
+            else:                     
+                if esc and c == 'p':
+                    time.sleep(release_delay + press_delay)
+                else:                          
+                    if i > 0:
+                        if logger.level == logging.DEBUG:
+                            logger.debug("Release delay of %f" % release_delay)
+                        time.sleep(release_delay)
+                        
+                    if esc and c == 't':
+                        c = '\t'                  
+                    elif esc and c == 'r':
+                        c = '\r'              
+                    elif esc and c == 'n':
+                        c = '\r'    
+                    elif esc and c == 'b':
+                        c = '\b' 
+                    elif esc and c == 'e':
+                        c = '\e'
+                        
+                    if c in special_X_keysyms:
+                        c = special_X_keysyms[c]
+                        
+                    self.send_string(c, True)
+                    time.sleep(press_delay)
+                    if logger.level == logging.DEBUG:
+                        logger.debug("Press delay of %f" % press_delay)
+                    self.send_string(c, False)
+                    
+                    i += 1
+                     
+                esc = False
         
     def send_macro(self, macro):
         
