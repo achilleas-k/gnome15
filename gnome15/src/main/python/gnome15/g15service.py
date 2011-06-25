@@ -106,6 +106,7 @@ class G15Service(Thread):
         self.screens = []
         self.service_listeners = []
         self.use_x_test = None
+        self.x_test_available = None
         self.notify_handles = []
         self.font_faces = {}
                 
@@ -180,6 +181,10 @@ class G15Service(Thread):
         self.dbus_service.stop()
         
     def handle_macro(self, macro):
+        # Get the latest focused window if not using XTest
+        if not self.use_x_test or not self.x_test_available:
+            self.init_xtest()
+            self.window = self.local_dpy.get_input_focus()._data["focus"]; 
         
         if macro.type == g15profile.MACRO_COMMAND:
             logger.warning("Running external command '%s'" % macro.command)
@@ -193,6 +198,9 @@ class G15Service(Thread):
                     esc = True
                 else:          
                     if i > 0:
+                        delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
+                        if logger.level == logging.DEBUG:
+                            logger.debug("Release delay of %f" % delay)
                         time.sleep(0.1 if not macro.profile.fixed_delays else ( macro.profile.release_delay / 1000 ) )
                     i += 1
                     
@@ -210,13 +218,16 @@ class G15Service(Thread):
                         elif esc and c == 'e':
                             c = '\e'
                         self.send_string(c, True)
-                        time.sleep(0.1 if not macro.profile.fixed_delays else ( macro.profile.press_delay / 1000 ) )                           
+                        delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.press_delay) / 1000.0 )
+                        if logger.level == logging.DEBUG:
+                            logger.debug("Press delay of %f" % delay)
                         self.send_string(c, False) 
                     esc = False
         else:
             self.send_macro(macro)
         
     def send_macro(self, macro):
+        
         macros = macro.macro.split("\n")
         i = 0
         for macro_text in macros:
@@ -228,9 +239,15 @@ class G15Service(Thread):
                     time.sleep(float(val) / 1000.0 if not macro.profile.fixed_delays else macro.profile.delay_amount)
                 elif op == "Press":
                     if i > 0:
-                        time.sleep(0 if not macro.profile.fixed_delays else ( macro.profile.release_delay / 1000 ) )
+                        delay = 0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
+                        if logger.level == logging.DEBUG:
+                            logger.debug("Release delay of %f" % delay) 
+                        time.sleep(delay)
                     self.send_string(val, True)
-                    time.sleep(0 if not macro.profile.fixed_delays else ( macro.profile.press_delay / 1000 ) )
+                    delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.press_delay) / 1000.0 )
+                    if logger.level == logging.DEBUG:
+                        logger.debug("Press delay of %f" % delay) 
+                    time.sleep(delay)
                 elif op == "Release":
                     self.send_string(val, False)
                 i += 1
@@ -257,22 +274,21 @@ class G15Service(Thread):
         return self.local_dpy
     
     def init_xtest(self):
-        if self.use_x_test == None:
+        if self.x_test_available == None:
             logger.info("Initialising macro output system")
     
             # Determine whether to use XTest for sending key events to X
-            self.use_x_test  = True
+            self.x_test_available  = True
             try :
                 import Xlib.ext.xtest
             except ImportError:
-                self.use_x_test = False
+                self.x_test_available = False
                  
             self.local_dpy = Xlib.display.Display()
-            self.window = self.local_dpy.get_input_focus()._data["focus"];
             
-            if self.use_x_test  and not self.local_dpy.query_extension("XTEST") :
+            if self.x_test_available  and not self.local_dpy.query_extension("XTEST") :
                 logger.warn("Found XTEST module, but the X extension could not be found")
-                self.use_x_test = False
+                self.x_test_available = False
                 
     def char_to_keycode(self, ch) :        
         self.init_xtest()
@@ -300,8 +316,9 @@ class G15Service(Thread):
             
     def send_string(self, ch, press) :
         keycode, shift_mask = self.char_to_keycode(ch)
-        logger.debug("Sending keychar %s keycode %d" % (ch, int(keycode)))
-        if (self.use_x_test) :
+        if logger.level == logging.DEBUG:
+            logger.debug("Sending keychar %s keycode %d, press = %s" % (ch, int(keycode), str(press)))
+        if (self.x_test_available and self.use_x_test) :
             if press:
                 if shift_mask != 0 :
                     Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyPress, 50)
@@ -321,7 +338,7 @@ class G15Service(Thread):
                                                          state=shift_mask,
                                                          detail=keycode
                                                          )
-                window.send_event(event, propagate=True)
+                self.window.send_event(event, propagate=True)
             else:
                 event = Xlib.protocol.event.KeyRelease(
                                                            time=int(time.time()),
@@ -332,7 +349,7 @@ class G15Service(Thread):
                                                            state=shift_mask,
                                                            detail=keycode
                     )
-                window.send_event(event, propagate=True)
+                self.window.send_event(event, propagate=True)
                 
         self.local_dpy.sync() 
         
@@ -408,6 +425,8 @@ class G15Service(Thread):
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/scroll_amount", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/animation_delay", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/key_hold_delay", self._hidden_configuration_changed))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/text_boxes", self._hidden_configuration_changed))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/use_x_test", self._hidden_configuration_changed))
         
         # Start each screen's plugin manager
         for screen in self.screens:
@@ -472,7 +491,7 @@ class G15Service(Thread):
         self.animation_delay = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/animation_delay', 100) / 1000.0
         self.key_hold_duration = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/key_hold_duration', 2000) / 1000.0
         self.text_boxes = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/text_boxes', True)
-        self.use_pango = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/use_pango', True)
+        self.use_x_test = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/use_x_test', True)
             
     def _device_enabled_configuration_changed(self, client, connection_id, entry, device):
         enabled = g15devices.is_enabled(self.conf_client, device)

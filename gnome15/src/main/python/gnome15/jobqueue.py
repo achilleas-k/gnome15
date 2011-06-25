@@ -18,6 +18,7 @@ import traceback
 import sys
 import gobject
 import time
+from threading import RLock
 
 # Can be adjusted to speed up time to aid debugging.
 TIME_FACTOR=1.0
@@ -47,18 +48,26 @@ class GTimer:
             self.task_queue.run(function, *args)
             logger.debug("Executed GTimer %s" % str(self.task_name))
         finally:
-            if self in self.scheduler.all_jobs:
-                self.scheduler.all_jobs.remove(self)
-            self.complete = True
+            self.scheduler.all_jobs_lock.acquire()
+            try:
+                if self in self.scheduler.all_jobs:
+                    self.scheduler.all_jobs.remove(self)
+                self.complete = True
+            finally:
+                self.scheduler.all_jobs_lock.release()
         
     def is_complete(self):
         return self.complete
         
     def cancel(self, *args):
-        if self in self.scheduler.all_jobs:
-            self.scheduler.all_jobs.remove(self)
-        gobject.source_remove(self.source)
-        logger.debug("Cancelled GTimer %s" % str(self.task_name))
+        self.scheduler.all_jobs_lock.acquire()
+        try:
+            if self in self.scheduler.all_jobs:
+                self.scheduler.all_jobs.remove(self)
+            gobject.source_remove(self.source)
+            logger.debug("Cancelled GTimer %s" % str(self.task_name))
+        finally:
+            self.scheduler.all_jobs_lock.release()
         
 '''
 Task scheduler. Tasks may be added to the queue to execute
@@ -71,6 +80,7 @@ class JobScheduler():
     def __init__(self):
         self.queues = {}
         self.all_jobs = []
+        self.all_jobs_lock = RLock()
         
     def print_all_jobs(self):
         print "Scheduled"
