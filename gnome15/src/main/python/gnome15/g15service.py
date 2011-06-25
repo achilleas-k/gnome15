@@ -187,10 +187,15 @@ class G15Service(Thread):
         elif macro.type == g15profile.MACRO_SIMPLE:
             logger.debug("Simple macro '%s'" % macro.simple_macro)
             esc = False
+            i = 0
             for c in macro.simple_macro:
                 if c == '\\' and not esc:
                     esc = True
                 else:          
+                    if i > 0:
+                        time.sleep(0.1 if not macro.profile.fixed_delays else ( macro.profile.release_delay / 1000 ) )
+                    i += 1
+                    
                     if esc and c == 'p':
                         time.sleep(1.0)
                     else:         
@@ -204,27 +209,31 @@ class G15Service(Thread):
                             c = '\b' 
                         elif esc and c == 'e':
                             c = '\e'
-                        self.send_string(c, True) 
-                        time.sleep(0.1)                           
+                        self.send_string(c, True)
+                        time.sleep(0.1 if not macro.profile.fixed_delays else ( macro.profile.press_delay / 1000 ) )                           
                         self.send_string(c, False) 
-                        time.sleep(0.1)          
                     esc = False
         else:
             self.send_macro(macro)
         
     def send_macro(self, macro):
         macros = macro.macro.split("\n")
+        i = 0
         for macro_text in macros:
             split = macro_text.split(" ")
             op = split[0]
             if len(split) > 1:
                 val = split[1]
-                if op == "Delay" and macro.profile.send_delays:
-                    time.sleep(float(val) / 1000.0)
+                if op == "Delay" and macro.profile.send_delays and not macro.profile.fixed_delays:
+                    time.sleep(float(val) / 1000.0 if not macro.profile.fixed_delays else macro.profile.delay_amount)
                 elif op == "Press":
+                    if i > 0:
+                        time.sleep(0 if not macro.profile.fixed_delays else ( macro.profile.release_delay / 1000 ) )
                     self.send_string(val, True)
+                    time.sleep(0 if not macro.profile.fixed_delays else ( macro.profile.press_delay / 1000 ) )
                 elif op == "Release":
                     self.send_string(val, False)
+                i += 1
     
     def get_keysym(self, ch) :
         keysym = Xlib.XK.string_to_keysym(ch)

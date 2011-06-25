@@ -126,11 +126,14 @@ class G15PangoText(G15Text):
             self.pango_cairo_context.rectangle(self.bounds[0] - 1, self.bounds[1] - 1, self.bounds[2] + 2, self.bounds[3] + 2)
             self.pango_cairo_context.clip()
             
-        y = y - ( self.metrics.get_ascent()  / 1000.0 ) 
-        if self.layout.get_alignment() == pango.ALIGN_CENTER:
-            x = x - ( self.bounds[2] / 2 )
-        elif self.layout.get_alignment() == pango.ALIGN_RIGHT:
-            x = x - ( self.bounds[2] )
+        
+        # Can only align text when they are bounds within which to align it
+        if self.bounds is not None:
+            y = y - ( self.metrics.get_ascent()  / 1000.0 )
+            if self.layout.get_alignment() == pango.ALIGN_CENTER:
+                x = x - ( self.bounds[2] / 2 )
+            elif self.layout.get_alignment() == pango.ALIGN_RIGHT:
+                x = x - ( self.bounds[2] )
         
         self.pango_cairo_context.move_to(x, y)
         self.pango_cairo_context.show_layout(self.layout)

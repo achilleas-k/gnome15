@@ -533,6 +533,24 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkLabel" id="label6">
+                    <property name="width_request">200</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">/r for Return, /e for escape, /b for backspace, /t for tab and /p for pause</property>
+                    <property name="wrap">True</property>
+                    <property name="wrap_mode">word-char</property>
+                    <attributes>
+                      <attribute name="size" value="9000"/>
+                    </attributes>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">4</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkEntry" id="SimpleMacro">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -545,7 +563,7 @@
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="position">4</property>
+                    <property name="position">5</property>
                   </packing>
                 </child>
                 <child>
@@ -571,7 +589,7 @@ Exec &lt;command&gt; - Executes a command
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="position">5</property>
+                    <property name="position">6</property>
                   </packing>
                 </child>
                 <child>
@@ -592,7 +610,7 @@ Exec &lt;command&gt; - Executes a command
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="position">6</property>
+                    <property name="position">7</property>
                   </packing>
                 </child>
               </object>
@@ -1668,6 +1686,7 @@ active</property>
                                               <packing>
                                                 <property name="expand">False</property>
                                                 <property name="fill">False</property>
+                                                <property name="padding">4</property>
                                                 <property name="position">0</property>
                                               </packing>
                                             </child>
@@ -1685,16 +1704,19 @@ the following title has focus</property>
                                               <packing>
                                                 <property name="expand">False</property>
                                                 <property name="fill">False</property>
+                                                <property name="padding">4</property>
                                                 <property name="position">1</property>
                                               </packing>
                                             </child>
                                             <child>
                                               <object class="GtkHBox" id="hbox3">
+                                                <property name="width_request">120</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
                                                 <property name="spacing">1</property>
                                                 <child>
                                                   <object class="GtkLabel" id="WindowLabel">
+                                                    <property name="width_request">120</property>
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">False</property>
                                                     <property name="label" translatable="yes">Window</property>
@@ -1702,7 +1724,6 @@ the following title has focus</property>
                                                   <packing>
                                                     <property name="expand">False</property>
                                                     <property name="fill">False</property>
-                                                    <property name="padding">32</property>
                                                     <property name="position">0</property>
                                                   </packing>
                                                 </child>
@@ -1757,6 +1778,109 @@ the following title has focus</property>
                                               </packing>
                                             </child>
                                             <child>
+                                              <object class="GtkCheckButton" id="FixedDelaysCheckbox">
+                                                <property name="label" translatable="yes">Use fixed delay</property>
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">False</property>
+                                                <property name="use_action_appearance">False</property>
+                                                <property name="draw_indicator">True</property>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="padding">4</property>
+                                                <property name="position">4</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkHBox" id="hbox1">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                                <child>
+                                                  <object class="GtkLabel" id="label18">
+                                                    <property name="width_request">120</property>
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="label" translatable="yes">Press for</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">False</property>
+                                                    <property name="fill">False</property>
+                                                    <property name="position">0</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkSpinButton" id="PressDelay">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">True</property>
+                                                    <property name="invisible_char">●</property>
+                                                    <property name="primary_icon_activatable">False</property>
+                                                    <property name="secondary_icon_activatable">False</property>
+                                                    <property name="primary_icon_sensitive">True</property>
+                                                    <property name="secondary_icon_sensitive">True</property>
+                                                    <property name="adjustment">PressDelayAdjustment</property>
+                                                    <property name="digits">2</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">1</property>
+                                                  </packing>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">False</property>
+                                                <property name="padding">4</property>
+                                                <property name="position">5</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkHBox" id="hbox12">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                                <child>
+                                                  <object class="GtkLabel" id="label19">
+                                                    <property name="width_request">120</property>
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="label" translatable="yes">Release, then wait</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">False</property>
+                                                    <property name="fill">False</property>
+                                                    <property name="position">0</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkSpinButton" id="ReleaseDelay">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">True</property>
+                                                    <property name="invisible_char">●</property>
+                                                    <property name="invisible_char_set">True</property>
+                                                    <property name="primary_icon_activatable">False</property>
+                                                    <property name="secondary_icon_activatable">False</property>
+                                                    <property name="primary_icon_sensitive">True</property>
+                                                    <property name="secondary_icon_sensitive">True</property>
+                                                    <property name="adjustment">ReleaseDelayAdjustment</property>
+                                                    <property name="digits">2</property>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">1</property>
+                                                  </packing>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">False</property>
+                                                <property name="padding">4</property>
+                                                <property name="position">6</property>
+                                              </packing>
+                                            </child>
+                                            <child>
                                               <object class="GtkHBox" id="hbox5">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
@@ -1800,7 +1924,7 @@ the following title has focus</property>
                                               <packing>
                                                 <property name="expand">True</property>
                                                 <property name="fill">False</property>
-                                                <property name="position">4</property>
+                                                <property name="position">7</property>
                                               </packing>
                                             </child>
                                           </object>
@@ -2394,6 +2518,11 @@ the following title has focus</property>
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkAdjustment" id="PressDelayAdjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">0.050000000000000003</property>
+    <property name="page_increment">1</property>
+  </object>
   <object class="GtkMessageDialog" id="ProfileExistsError">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -2460,6 +2589,11 @@ choose another name.</property>
       <!-- column-name Editable -->
       <column type="gboolean"/>
     </columns>
+  </object>
+  <object class="GtkAdjustment" id="ReleaseDelayAdjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">0.050000000000000003</property>
+    <property name="page_increment">1</property>
   </object>
   <object class="GtkListStore" id="WindowModel">
     <columns>

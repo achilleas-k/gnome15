@@ -357,14 +357,18 @@ class G15Screen():
         delete_after -- interval in seconds (float)
         page -- page object to hide
         """
-        if page.id in self.deleting:
-            # If the page was already deleting, cancel previous timer
-            self.deleting[page.id].cancel()
-            del self.deleting[page.id]       
-                      
-        timer = g15util.schedule("DeleteScreen", delete_after, self.del_page, page)
-        self.deleting[page.id] = timer
-        return timer
+        self.page_model_lock.acquire()
+        try :
+            if page.id in self.deleting:
+                # If the page was already deleting, cancel previous timer
+                self.deleting[page.id].cancel()
+                del self.deleting[page.id]       
+                          
+            timer = g15util.schedule("DeleteScreen", delete_after, self.del_page, page)
+            self.deleting[page.id] = timer
+            return timer
+        finally:
+            self.page_model_lock.release()
     
     def is_on_timer(self, page):
         '''
@@ -1128,7 +1132,7 @@ class G15Screen():
                 timer.cancel()                
                 self.set_priority(self.get_page(page_id), old_priority)
             self.reverting = {}
-            for page_id in self.deleting:
+            for page_id in list(self.deleting.keys()):
                 timer = self.deleting[page_id]
                 timer.cancel()
                 self.del_page(self.get_page(page_id))                

@@ -263,6 +263,9 @@ class G15Profile():
         self.parser.set("DEFAULT", "icon", self.icon)
         self.parser.set("DEFAULT", "activate_on_focus", str(self.activate_on_focus))
         self.parser.set("DEFAULT", "send_delays", str(self.send_delays))
+        self.parser.set("DEFAULT", "fixed_delays", str(self.fixed_delays))
+        self.parser.set("DEFAULT", "press_delay", str(self.press_delay))
+        self.parser.set("DEFAULT", "release_delay", str(self.release_delay))
         
         # Remove and re-add the bank sections
         for i in range(1, 4): 
@@ -353,6 +356,9 @@ class G15Profile():
         self.window_name = self.parser.get("DEFAULT", "window_name") if self.parser.has_option("DEFAULT", "window_name") else ""
         self.activate_on_focus = self.parser.getboolean("DEFAULT", "activate_on_focus") if self.parser.has_option("DEFAULT", "activate_on_focus") else False
         self.send_delays = self.parser.getboolean("DEFAULT", "send_delays") if self.parser.has_option("DEFAULT", "send_delays") else False
+        self.fixed_delays = self.parser.getboolean("DEFAULT", "fixed_delays") if self.parser.has_option("DEFAULT", "fixed_delays") else False
+        self.press_delay = self.parser.getint("DEFAULT", "press_delay") if self.parser.has_option("DEFAULT", "press_delay") else 50
+        self.release_delay = self.parser.getint("DEFAULT", "release_delay") if self.parser.has_option("DEFAULT", "release_delay") else 50
         
         # Bank sections
         for i in range(1, 4):

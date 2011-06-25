@@ -149,6 +149,11 @@ class G15Config:
         self.window_label = self.widget_tree.get_object("WindowLabel")
         self.activate_by_default = self.widget_tree.get_object("ActivateByDefaultCheckbox")
         self.send_delays = self.widget_tree.get_object("SendDelaysCheckbox")
+        self.fixed_delays = self.widget_tree.get_object("FixedDelaysCheckbox")
+        self.release_delay = self.widget_tree.get_object("ReleaseDelay")
+        self.press_delay = self.widget_tree.get_object("PressDelay")
+        self.press_delay_adjustment = self.widget_tree.get_object("PressDelayAdjustment")
+        self.release_delay_adjustment = self.widget_tree.get_object("ReleaseDelayAdjustment")
         self.profile_icon = self.widget_tree.get_object("ProfileIcon")
         self.icon_browse_button = self.widget_tree.get_object("BrowseForIcon")
         self.clear_icon_button = self.widget_tree.get_object("ClearIcon")
@@ -226,6 +231,9 @@ class G15Config:
         self.profiles_tree.connect("cursor-changed", self._select_profile)
         self.remove_button.connect("clicked", self._remove_profile)
         self.send_delays.connect("toggled", self._send_delays_changed)
+        self.fixed_delays.connect("toggled", self._send_delays_changed)
+        self.press_delay_adjustment.connect("value-changed", self._send_delays_changed)
+        self.release_delay_adjustment.connect("value-changed", self._send_delays_changed)
         self.window_combo.child.connect("changed", self._window_name_changed)
         self.window_combo.connect("changed", self._window_name_changed)
         self.run_command.connect("toggled", self._macro_type_changed)
@@ -627,7 +635,16 @@ class G15Config:
     def _send_delays_changed(self, widget=None):
         if not self.adjusting:
             self.selected_profile.send_delays = self.send_delays.get_active()
+            self.selected_profile.fixed_delays = self.fixed_delays.get_active()
+            self.selected_profile.press_delay = int(self.press_delay_adjustment.get_value() * 1000)
+            self.selected_profile.release_delay = int(self.release_delay_adjustment.get_value() * 1000)
             self.selected_profile.save()
+            self._set_delay_state()
+            
+    def _set_delay_state(self):
+        self.fixed_delays.set_sensitive(self.selected_profile.send_delays)
+        self.press_delay.set_sensitive(self.selected_profile.fixed_delays and self.selected_profile.send_delays)
+        self.release_delay.set_sensitive(self.selected_profile.fixed_delays and self.selected_profile.send_delays)
             
     def _change_desktop_service(self, widget, application_name):
         g15desktop.set_autostart_application(application_name, widget.get_active())
@@ -1089,6 +1106,10 @@ class G15Config:
             else:
                 self.window_combo.child.set_text("")
             self.send_delays.set_active(profile.send_delays)
+            self.fixed_delays.set_active(profile.fixed_delays)
+            self._set_delay_state()
+            self.press_delay_adjustment.set_value(float(profile.press_delay) / 1000.0)
+            self.release_delay_adjustment.set_value(float(profile.release_delay) / 1000.0)
             self.window_combo.set_sensitive(self.activate_on_focus.get_active())
             
             if profile.icon == None or profile.icon == "":
