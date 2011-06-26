@@ -152,6 +152,8 @@ CAIRO_IMAGE_FORMAT=4
 import g15util as g15util
 import time
 import colorsys
+import traceback
+from threading import Lock
 
 seq_no = 0
 
@@ -175,16 +177,33 @@ class AbstractControlAcquisition(object):
         self.reset_timer = None
         self.reset_val = initial_value
         self.on = False
+        self._released = False
+        self._waiting = False
+        self._condition = Lock()
+        self._condition.acquire()
         
-    def fade(self, percentage = 100.0, duration = 1.0):
+    def wait(self):
+        if self._waiting:
+            raise Exception("Already waiting")
+        self._waiting = True
+        self._condition.acquire()   
+        self._condition.release()
+        self._waiting = False
+        
+    def fade(self, percentage = 100.0, duration = 1.0, release = False):
         target_val = self.get_target_value(self.val, percentage)
         if self.val != target_val:
-            self._reduce(duration / float( self.val - target_val ), target_val)
+            self._reduce(duration / float( self.val - target_val ), target_val, release)
+        elif release:
+            self.driver.release_control(self)
         
-    def _reduce(self, interval, target_val):
+    def _reduce(self, interval, target_val, release):
         if self.val > target_val:
             self.set_value(self.val - 1)
-            g15util.schedule("Fade", interval, self._reduce, interval, target_val)
+            g15util.schedule("Fade", interval, self._reduce, interval, target_val, release)
+        else:
+            if release:
+                self.driver.release_control(self)
         
     def get_target_value(self, val, percentage):
         return val - int ( ( float(val) / 100.0 ) * percentage )
@@ -232,7 +251,15 @@ class AbstractControlAcquisition(object):
     def get_value(self):
         return self.val
     
-        
+    """
+    Private
+    """
+    def _notify_released(self):
+        if self._released:
+            raise Exception("Already released")
+        self._released = True
+        self._condition.release()
+    
 class ControlAcquisition(AbstractControlAcquisition):
     
     def __init__(self, driver, control, val = None):
@@ -251,25 +278,32 @@ class ControlAcquisition(AbstractControlAcquisition):
             self.control.value = val
             self.driver.update_control(self.control)
         
-    def fade(self, percentage = 100.0, duration = 1.0):
+    def fade(self, percentage = 100.0, duration = 1.0, release = False):
         if isinstance(self.val, int):
-            AbstractControlAcquisition.fade(self, percentage, duration)
+            AbstractControlAcquisition.fade(self, percentage, duration, release)
         else:
             target_val = self.get_target_value(self.val, percentage)
             h, s, v = self.rgb_to_hsv(self.val)
             t_h, t_s, t_v = self.rgb_to_hsv(target_val)
-            self._reduce(duration / float( v - t_v ), target_val)
+            diff = float( v - t_v )
+            if diff > 0:
+                self._reduce(duration / diff, target_val, release)
+            elif release:
+                self.driver.release_control(self)
         
-    def _reduce(self, interval, target_val):
+    def _reduce(self, interval, target_val, release):
         if isinstance(self.val, int):
-            AbstractControlAcquisition._reduce(self, interval, target_val)
+            AbstractControlAcquisition._reduce(self, interval, target_val, release)
         else:
             h, s, v = self.rgb_to_hsv(self.val)
             v -= 1
             if v > self.rgb_to_hsv(target_val)[2]:
                 new_rgb = self.hsv_to_rgb((h, s, v))
                 self.set_value(new_rgb)
-                g15util.schedule("Fade", interval, self._reduce, interval, target_val)
+                g15util.schedule("Fade", interval, self._reduce, interval, target_val, release)
+            else:
+                if release and not self._released:
+                    self.driver.release_control(self)
         
     def get_target_value(self, val, percentage):
         if isinstance(self.val, int):
@@ -302,23 +336,20 @@ class AbstractDriver(object):
     
     def __init__(self, id):
         self.id = id
-        self.lights = 0
         global seq_no
         self.on_driver_options_change = None
         seq_no += 1
         self.seq = seq_no
-        self.control_update_listeners = []
-        self.initial_mkey_lights_value = 0
-        self.acquired_mkey_lights = []
-        self.acquired_controls = {}
-        self.initial_acquired_control_values = {}
+        
+        self._reset_state()
         
     def release_all_acquisitions(self):
         self.acquired_mkey_lights = []
         self.acquired_controls = {}
-        for k in self.initial_acquired_control_values:
+        values = dict(self.initial_acquired_control_values)
+        for k in values:
             c = self.get_control(k)
-            c.value = self.initial_acquired_control_values[k]
+            c.value = values[k]
             self.update_control(c)
         self.set_mkey_lights(self.initial_mkey_lights_value)
         
@@ -347,6 +378,7 @@ class AbstractDriver(object):
     
     def release_control(self, control_acquisition):
         control_acquisitions = self.acquired_controls[control_acquisition.control.id]
+        control_acquisition._notify_released()
         control_acquisition.cancel_reset()
         control_acquisitions.remove(control_acquisition)
         ctrls = len(control_acquisitions)
@@ -365,6 +397,17 @@ class AbstractDriver(object):
             self.set_mkey_lights(self.acquired_mkey_lights[ctrls - 1].val)
         else:
             self.set_mkey_lights(self.initial_mkey_lights_value)
+            
+    def disconnect(self):
+        """
+        Disconnect the driver. Callers should use this, and s
+        subclasses should override on_disconnect.
+        """
+        try:
+            self.on_disconnect()
+        finally:
+            self.release_all_acquisitions()
+            self._reset_state()
     
     
     """
@@ -374,9 +417,9 @@ class AbstractDriver(object):
         raise NotImplementedError( "Not implemented" )
     
     """
-    Stop the driver
+    For subclasses to implemented disconnection logic
     """
-    def disconnect(self):
+    def on_disconnect(self):
         raise NotImplementedError( "Not implemented" )
     
     """
@@ -528,3 +571,10 @@ class AbstractDriver(object):
             fg_rgb = fg_control.value
         return fg_rgb
     
+    def _reset_state(self):
+        self.lights = 0
+        self.control_update_listeners = []
+        self.initial_mkey_lights_value = 0
+        self.acquired_mkey_lights = []
+        self.acquired_controls = {}
+        self.initial_acquired_control_values = {}

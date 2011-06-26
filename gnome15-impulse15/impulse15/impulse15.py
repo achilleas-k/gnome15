@@ -64,80 +64,15 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     dialog.run()
     dialog.hide() 
 
-
-class G15Impulse():    
-    def __init__(self, gconf_key, gconf_client, screen):
-        self.screen = screen
-        self.hidden = False
-        self.gconf_client = gconf_client
-        self.gconf_key = gconf_key
-        self.active = False
-        self.last_paint = None
-        self.audio_source_index = 0
-
-        import impulse
-        sys.modules[ __name__ ].impulse = impulse
-        sys.path.append(os.path.join(os.path.dirname(__file__), "themes"))
-
-    def set_audio_source( self, *args, **kwargs ):
-        impulse.setSourceIndex( self.audio_source_index )
-        
-    def activate(self):
-        self.width = self.screen.driver.get_size()[0]
-        self.height = self.screen.driver.get_size()[1]
-        self.mode = "default"
+class G15ImpulsePainter(g15screen.Painter):
+    
+    def __init__(self, plugin):
+        g15screen.Painter.__init__(self, g15screen.BACKGROUND_PAINTER, -5000)
         self.theme_module = None
-        self.active = True
-        self.page = None
-        self.background_painter_set = False
-        self.foreground_painter_set = False
-        self.chained_background_painter = None
-        self.chained_foreground_painter = None
         self.backlight_acquisition = None
-        self.mkey_acquisition = None
-        self.visible = False
-        self.timer = None
-        self._load_config() 
-        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self._config_changed)
-        self.redraw()
-    
-    def deactivate(self): 
-        self._release_backlight_acquisition()
-        self._release_mkey_acquisition()
-        self.active = False
-        self.refresh_interval = 1.0 / 25.0
-        self.gconf_client.notify_remove(self.notify_handle);
-        self.hide_page()
-        self._clear_background_painter()
-        self._clear_foreground_painter()
-    
-    def hide_page(self):   
-        self.stop_redraw()  
-        if self.page != None:
-            self.screen.del_page(self.page)
-            self.page = None
-        
-    def on_shown(self):
-        self.visible = True 
-        self._schedule_redraw()     
-        
-    def on_hidden(self):
-        self.visible = False
-        self.stop_redraw()
-        
-    def stop_redraw(self):  
-        if self.timer != None:
-            self.timer.cancel()
-            self.timer = None
-        
-    def destroy(self):
-        pass
-    
-
-    def on_load_theme (self):
-        if not self.theme_module or self.mode != self.theme_module.__name__:
-            self.theme_module = __import__( self.mode )
-            self.theme_module.load_theme( self )
+        self.mkey_acquisition = None        
+        self.mode = "default"
+        self.plugin = plugin
     
     def paint(self, canvas):
         if not self.theme_module: 
@@ -156,7 +91,7 @@ class G15Impulse():
             self._set_mkey_lights(self._tot_avg(audio_sample_array))
         
         canvas.save()
-        self.theme_module.on_draw( audio_sample_array, canvas, self )
+        self.theme_module.on_draw( audio_sample_array, canvas, self.plugin )
         canvas.restore()
         
     """
@@ -195,47 +130,96 @@ class G15Impulse():
             self.mkey_acquisition.set_value(g15driver.MKEY_LIGHT_1)        
         else:
             self.mkey_acquisition.set_value(0)
-        
-    def _schedule_redraw(self):
-        if self.active:
-            self.timer = g15util.schedule("ImpulseRedraw", self.refresh_interval, self.redraw)
             
     def _release_mkey_acquisition(self):      
         if self.mkey_acquisition:          
-            self.screen.driver.release_mkey_lights(self.mkey_acquisition)
+            self.plugin.screen.driver.release_mkey_lights(self.mkey_acquisition)
             self.mkey_acquisition = None
         
     def _release_backlight_acquisition(self):          
         if self.backlight_acquisition is not None:      
-            self.screen.driver.release_control(self.backlight_acquisition)
+            self.plugin.screen.driver.release_control(self.backlight_acquisition)
             self.backlight_acquisition = None
+
+class G15Impulse():    
+    def __init__(self, gconf_key, gconf_client, screen):
+        self.screen = screen
+        self.hidden = False
+        self.gconf_client = gconf_client
+        self.gconf_key = gconf_key
+        self.active = False
+        self.last_paint = None
+        self.audio_source_index = 0
+
+        import impulse
+        sys.modules[ __name__ ].impulse = impulse
+        sys.path.append(os.path.join(os.path.dirname(__file__), "themes"))
+
+    def set_audio_source( self, *args, **kwargs ):
+        impulse.setSourceIndex( self.audio_source_index )
         
-    def _config_changed(self, client, connection_id, entry, args):
-        self.stop_redraw()
-        self._load_config()        
+    def activate(self):
+        self.painter = G15ImpulsePainter(self)
+        self.width = self.screen.driver.get_size()[0]
+        self.height = self.screen.driver.get_size()[1]
+        self.active = True
+        self.page = None
+        self.visible = False
+        self.timer = None
+        self._load_config() 
+        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self._config_changed)
         self.redraw()
-            
-    def _paint_background(self, canvas):
-        if self.chained_background_painter != None:
-            self.chained_background_painter(canvas)
-        self.paint(canvas)
     
-    def _paint_foreground(self, canvas):
-        if self.chained_foreground_painter != None:
-            self.chained_foreground_painter(canvas)
-        self.paint(canvas)
-            
-    def _clear_background_painter(self):
-        if self.background_painter_set:
-            self.screen.set_background_painter(self.chained_background_painter)
-            self.chained_background_painter = None
-            self.background_painter_set = False
-            
-    def _clear_foreground_painter(self):
-        if self.foreground_painter_set:
-            self.screen.set_foreground_painter(self.chained_foreground_painter)
-            self.chained_foreground_painter = None
-            self.foreground_painter_set = False
+    def deactivate(self): 
+        self.painter._release_backlight_acquisition()
+        self.painter._release_mkey_acquisition()
+        self.active = False
+        self.refresh_interval = 1.0 / 25.0
+        self.gconf_client.notify_remove(self.notify_handle);
+        self.hide_page()
+        self._clear_painter()
+    
+    def hide_page(self):   
+        self.stop_redraw()  
+        if self.page != None:
+            self.screen.del_page(self.page)
+            self.page = None
+        
+    def on_shown(self):
+        self.visible = True 
+        self._schedule_redraw()     
+        
+    def on_hidden(self):
+        self.visible = False
+        self.stop_redraw()
+        
+    def stop_redraw(self):  
+        if self.timer != None:
+            self.timer.cancel()
+            self.timer = None
+        
+    def destroy(self):
+        pass
+    
+    def paint(self, canvas):
+        if not self.theme_module: 
+            return
+
+        fft = False
+        if hasattr( self.theme_module, "fft" ) and self.theme_module.fft:
+            fft = True
+
+        audio_sample_array = impulse.getSnapshot( fft )
+        
+        if self.backlight_acquisition is not None:
+            self.backlight_acquisition.set_value(self._col_avg(audio_sample_array))
+        
+        if self.mkey_acquisition is not None:
+            self._set_mkey_lights(self._tot_avg(audio_sample_array))
+        
+        canvas.save()
+        self.theme_module.on_draw( audio_sample_array, canvas, self )
+        canvas.restore()
     
     def redraw(self):        
         if self.paint_mode == "screen" and self.visible:
@@ -244,6 +228,32 @@ class G15Impulse():
         elif self.paint_mode != "screen": 
             self.screen.redraw(redraw_content = False)
             self._schedule_redraw()
+        
+    """
+    Private
+    """
+        
+    def _schedule_redraw(self):
+        if self.active:
+            self.timer = g15util.schedule("ImpulseRedraw", self.refresh_interval, self.redraw)
+        
+    def _config_changed(self, client, connection_id, entry, args):
+        self.stop_redraw()
+        self._load_config()        
+        self.redraw()
+            
+    def _on_load_theme (self):
+        if not self.painter.theme_module or self.mode != self.painter.theme_module.__name__:
+            self.painter.theme_module = __import__( self.mode )
+            self.painter.theme_module.load_theme(self)
+            
+    def _activate_painter(self):
+        if not self.painter in self.screen.painters:
+            self.screen.painters.append(self.painter)
+            
+    def _clear_painter(self):
+        if self.painter in self.screen.painters:
+            self.screen.painters.remove(self.painter)
     
     def _load_config(self):
         self.audio_source_index = self.gconf_client.get_int(self.gconf_key + "/audio_source")
@@ -257,7 +267,7 @@ class G15Impulse():
         self.paint_mode = self.gconf_client.get_string(self.gconf_key + "/paint")
         if self.paint_mode == None or self.mode == "":
             self.paint_mode = "screen"
-        self.on_load_theme()
+        self._on_load_theme()
             
         self.bars = self.gconf_client.get_int(self.gconf_key + "/bars")
         if self.bars == 0:
@@ -281,34 +291,31 @@ class G15Impulse():
         if paint != self.last_paint and self.screen.driver.get_bpp() != 0:
             self.last_paint = paint
             if paint == "screen":
-                self._clear_background_painter()
-                self._clear_foreground_painter()
+                self._clear_painter()
                 if self.page == None:
-                    self.page = g15theme.G15Page(id, self.screen, title = name, painter = self.paint, on_shown = self.on_shown, on_hidden = self.on_hidden)
+                    self.page = g15theme.G15Page(id, self.screen, title = name, painter = self.painter.paint, on_shown = self.on_shown, on_hidden = self.on_hidden)
                     self.screen.add_page(self.page)
                 else:
                     self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
             elif paint == "foreground":
-                self._clear_background_painter()
-                self.chained_foreground_painter = self.screen.set_foreground_painter(self._paint_foreground)
-                self.foreground_painter_set = True
-                self.hide_page()
-            elif paint == "background":
-                self._clear_foreground_painter()
-                self.chained_background_painter = self.screen.set_background_painter(self._paint_background)
-                self.background_painter_set = True
-                self.hide_page()
+                self.painter.place = g15screen.FOREGROUND_PAINTER
+                self._activate_painter()
+                self.hide_page() 
+            elif paint == "background":    
+                self.painter.place = g15screen.BACKGROUND_PAINTER
+                self._activate_painter()
+                self.hide_page()            
                 
         # Acquire the backlight control if appropriate
         control = self.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
         if control:
-            if self.disco and self.backlight_acquisition is None:
-                self.backlight_acquisition = self.screen.driver.acquire_control(control)
-            elif not self.disco and self.backlight_acquisition is not None:
-                self._release_backlight_acquisition()
+            if self.disco and self.painter.backlight_acquisition is None:
+                self.painter.backlight_acquisition = self.screen.driver.acquire_control(control)
+            elif not self.disco and self.painter.backlight_acquisition is not None:
+                self.painter._release_backlight_acquisition()
                 
         # Acquire the M-Key lights control if appropriate
-        if self.animate_mkeys and self.mkey_acquisition is None:
-            self.mkey_acquisition = self.screen.driver.acquire_mkey_lights()
-        elif not self.animate_mkeys and self.mkey_acquisition is not None:
-            self._release_mkey_acquisition()
+        if self.animate_mkeys and self.painter.mkey_acquisition is None:
+            self.painter.mkey_acquisition = self.screen.driver.acquire_mkey_lights()
+        elif not self.animate_mkeys and self.painter.mkey_acquisition is not None:
+            self.painter._release_mkey_acquisition()

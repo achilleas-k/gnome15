@@ -230,7 +230,7 @@ class Driver(g15driver.AbstractDriver):
             self.disconnect()
             self.connect()
             
-    def disconnect(self):  
+    def on_disconnect(self):  
         if self.is_connected():  
             if self.thread != None:
                 self.thread.running = False

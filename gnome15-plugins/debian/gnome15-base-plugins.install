@@ -9,6 +9,7 @@ usr/share/gnome15/plugins/clock/*
 usr/share/gnome15/plugins/fx/*
 usr/share/gnome15/plugins/g15daemon-server/*
 usr/share/gnome15/plugins/im/*
+usr/share/gnome15/plugins/lcdshot/*
 usr/share/gnome15/plugins/macro-recorder/*
 usr/share/gnome15/plugins/macros/*
 usr/share/gnome15/plugins/menu/*

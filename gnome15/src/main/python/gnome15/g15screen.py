@@ -31,6 +31,12 @@ PRI_LOW=20
 PRI_INVISIBLE=0
 
 """
+Paint stages
+"""
+BACKGROUND_PAINTER = 0
+FOREGROUND_PAINTER = 1
+
+"""
 Simple colors
 """
 COLOURS = [(0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
@@ -52,37 +58,144 @@ import logging
 from threading import RLock
 from g15exceptions import NotConnectedException
 logger = logging.getLogger("screen")
+
+"""
+This module contains the root component for a single device (i.e. the 'screen'), and all
+of the supporting classes. The screen object is responsible for maintaining the connection
+to the driver, starting and stopping all the device's plugins,  tracking the current memory
+bank, performing the actual painting for the associated device and more.
+
+To this screen, 'pages' will be added by plugins and other subsystems. Only a single page
+is ever visible at one time, and the screen is responsible for switching between them. 
+You can think of the screen as the window manager.
+"""
+        
         
 class ScreenChangeAdapter():
+    """
+    Adapter class for screen change listeners to save such listeners having to
+    implement all callbacks, just override the ones you want
+    """
+    
     def memory_bank_changed(self, new_bank_number):
+        """
+        Call when the current memory bank changes
+        
+        Keyword arguments:
+        new_bank_number        -- new memory bank number
+        """
         pass
     
     def attention_cleared(self):
+        """
+        Called when the screen is no longer in attention state (i.e. the 
+        error has been cleared)
+        """
         pass
     
     def attention_requested(self, message):
+        """
+        Called when the screen has some problem and needs attention (e.g.
+        driver problem)
+        
+        Keyword arguments:
+        message        -- message detailing problem
+        """
         pass
     
     def driver_disconnected(self, driver):
+        """
+        Called when the underlying driver is disconnected.
+        
+        Keyword arguments:
+        driver        -- driver that disconnected
+        """
         pass
     
     def driver_connected(self, driver):
+        """
+        Called when the underlying driver is connected.
+        
+        Keyword arguments:
+        driver        -- driver that connected
+        """
         pass
     
     def deleting_page(self, page):
+        """
+        Called when a page is about to be removed from screen
+        
+        Keyword arguments:
+        page        -- page that is to be removed
+        """
         pass
     
     def deleted_page(self, page):
+        """
+        Called when a page has been removed from screen
+        
+        Keyword arguments:
+        page        -- page that has been removed
+        """
         pass
     
     def new_page(self, page):
+        """
+        Called when a page is added to the screen
+        
+        Keyword arguments:
+        page        -- page that has been added
+        """
         pass
     
     def title_changed(self, page, title):
+        """
+        Called when the title of page changes
+        
+        Keyword arguments:
+        page        -- page that has changed
+        title       -- title new title
+        """
         pass
     
     def page_changed(self, page):
+        """
+        Called when the page changes in some other way (e.g. priority)
+        
+        Keyword arguments:
+        page        -- page that has changed
+        """
         pass
+            
+
+class Painter():
+    """
+    Painters may be added to screens to draw stuff either beneath (BACKGROUND_PAINTER)
+    or above (FOREGROUND_PAINTER) the main component (i.e. the currently visible page).
+    Each painter also has z-order which determines when it is painted in relation to
+    other painters of the same place. 
+    """
+
+    
+    def __init__(self, place = BACKGROUND_PAINTER, z_order = 0):
+        """
+        Constructor
+        
+        Keyword arguments:
+        place            -- either BACKGROUND_PAINTER or FOREGROUND_PAINTER
+        z_order          -- the order the painter is called within the place 
+        """
+        self.z_order = z_order
+        self.place = place
+        
+    def paint(self, canvas):
+        """
+        Subclasses must override to do the actual painting
+        
+        Keyword arguments:
+        canvas            -- canvas
+        """
+        raise Exception("Not implemented")
     
     
 class G15Screen():
@@ -123,17 +236,11 @@ class G15Screen():
         self.action_listeners = []
         self.memory_bank_color_control = None
         self.acquired_controls = {}
+        self.painters = []
+        self.fader = None
         
         if not self._load_driver():
-            raise Exception("Driver failed to load")
-        
-    def active_session_changed(self, active):
-        if not active and self.driver != None and self.driver.is_connected():
-            logger.info("Session now inactive, disconnecting from driver")
-            self.plugins.deactivate()
-            self.driver.disconnect()
-        elif active and ( self.driver == None or not self.driver.is_connected() ):
-            self.attempt_connection()
+            raise Exception("Driver failed to load") 
         
     def application_changed(self, view):
         if self.defeat_profile_change < 1:
@@ -158,6 +265,11 @@ class G15Screen():
     def start(self):
         logger.info("Starting %s." % self.device.uid)
         
+        # Remove previous fader is it exists
+        if self.fader:
+            self.painters.remove(self.fader)
+            self.fader = None
+        
         # Start the driver
         self.attempt_connection() 
         
@@ -174,13 +286,34 @@ class G15Screen():
         
     def stop(self):        
         self.stopping = True
-        if self.driver and self.driver.is_connected():
-            self.driver.disconnect()
-        if self.is_active() and self.driver.get_bpp() > 0:
-            self.fade(True)
+        if self.is_active():                
+            # Start fading keyboard
+            bl_control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
+            acquisition = None
+            if bl_control:
+                current_val = bl_control.value
+                """
+                First acquire, and turn all lights off, this is the state it will
+                return to before disconnecting (we never release it)
+                """
+                self.driver.acquire_control(bl_control, val = 0 if isinstance(bl_control, int) else (0, 0, 0))
+                
+                acquisition = self.driver.acquire_control(bl_control, val = current_val)
+                acquisition.fade(duration = 2.0, release = True)
+                
+            # Fade screen
+            if self.driver.get_bpp() > 0 and self.service.fade_screen_on_close:
+                self.fade(True)
+                
+            # Wait for keyboard fade to finish as well if it hasn't already
+            if acquisition:
+                acquisition.wait()
+                
         if self.plugins:
             self.plugins.deactivate()
             self.plugins.destroy()
+        if self.driver and self.driver.is_connected():
+            self.driver.disconnect()
         for h in self.notify_handles:
             self.conf_client.notify_remove(h)
         
@@ -629,8 +762,6 @@ class G15Screen():
         self.visible_page = None
         self.old_canvas = None
         self.transition_function = None
-        self.background_painter_function = None
-        self.foreground_painter_function = None
         self.painter_function = None
         self.mkey = 1
         self.reverting = { }
@@ -811,18 +942,6 @@ class G15Screen():
         self.painter_function = painter
         return o_painter
     
-    def set_background_painter(self, background_painter):
-        logger.info("Changing background painter to %s" % str(background_painter))
-        o_background_painter = self.background_painter_function
-        self.background_painter_function = background_painter
-        return o_background_painter
-    
-    def set_foreground_painter(self, foreground_painter):
-        logger.info("Changing foreground painter to %s" % str(foreground_painter))
-        o_foreground_painter = self.foreground_painter_function
-        self.foreground_painter_function = foreground_painter
-        return o_foreground_painter
-    
     def set_transition(self, transition):
         o_transition = self.transition_function
         self.transition_function = transition
@@ -869,7 +988,7 @@ class G15Screen():
         return min(sx, sy)
 
     def fade(self, stay_faded=False):
-        Fader(self, stay_faded=stay_faded).run()
+        self.fader = Fader(self, stay_faded=stay_faded).run()
         
     def attempt_connection(self, delay=0.0):
         logger.debug("Attempting connection" if delay == 0 else "Attempting connection in %f" % delay)
@@ -947,6 +1066,8 @@ class G15Screen():
             
             surface =  self.surface
             
+            painters = sorted(self.painters, key=lambda painter: painter.z_order)
+            
             # If the visible page is changing, creating a new surface. Both surfaces are
             # then passed to any transition functions registered
             if visible_page != self.visible_page: 
@@ -965,8 +1086,10 @@ class G15Screen():
             canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
             self.configure_canvas(canvas)
             
-            if self.background_painter_function != None:
-                self.background_painter_function(canvas)
+            # Background painters
+            for painter in painters:
+                if painter.place == BACKGROUND_PAINTER:
+                    painter.paint(canvas)
                     
             old_page = None
             if visible_page != self.visible_page:            
@@ -1018,17 +1141,17 @@ class G15Screen():
                 canvas.set_source_surface(self.content_surface)
                 canvas.paint()
                 canvas.restore()
-                
-            # Now paint the screen's foreground
-            if self.foreground_painter_function != None:
-                self.foreground_painter_function(canvas)
+
+            # Foreground painters                
+            for painter in painters:
+                if painter.place == FOREGROUND_PAINTER:
+                    painter.paint(canvas)
                     
             # Run any transitions
             if transitions and self.transition_function != None and self.old_canvas != None:
                 self.transition_function(self.old_surface, surface, old_page, self.visible_page, direction)
                 
             # Now apply any global transformations and paint
-            
             if self.painter_function != None:
                 self.painter_function(surface)
             else:
@@ -1157,36 +1280,35 @@ Fades the screen by inserting a foreground painter that paints a transparent
 black rectangle over the top of everything. The opacity is this gradually
 increased, creating a fading effect
 """    
-class Fader():
+class Fader(Painter):
     
-    def __init__(self, screen, stay_faded=False):
+    def __init__(self, screen, stay_faded=False, duration = 3.0):
+        Painter.__init__(self, FOREGROUND_PAINTER, 9999)
         self.screen = screen
-        self.opacity = 0.0
+        self.duration = duration
+        self.opacity = 0
         self.stay_faded = stay_faded
         
     def run(self):
-        self.chained_painter = self.screen.set_foreground_painter(self.paint)
+        self.screen.painters.append(self)
         try:
-            while self.opacity <= 1.0:
+            while self.opacity <= 64:
                 self.screen.redraw()
-                time.sleep(0.02)
+                time.sleep(self.duration / 64.0)
         finally:
             if not self.stay_faded:
-                self.screen.set_foreground_painter(self.chained_painter)
+                self.screen.painters.remove(self)
         
     def paint(self, canvas):
-        if self.chained_painter != None:
-            self.chained_painter(canvas)
-            
         # Fade to black on the G19, or white on everything else
         if self.screen.driver.get_bpp() == 1:
             col = 1.0
         else:
             col = 0.0
-        canvas.set_source_rgba(col, col, col, self.opacity)
+        canvas.set_source_rgba(col, col, col, float(self.opacity) / 255.0)
         canvas.rectangle(0, 0, self.screen.width, self.screen.height)
         canvas.fill()
-        self.opacity += 0.025
+        self.opacity += 4
 
 class G15Splash():
     

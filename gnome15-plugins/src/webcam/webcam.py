@@ -23,6 +23,7 @@
 import gnome15.g15util as g15util
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
+import gnome15.g15theme as g15theme
 import gtk
 import opencv
 import os
@@ -39,7 +40,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ] 
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ] 
 
 def create(gconf_key, gconf_client, screen):
     return G15Webcam(gconf_client, gconf_key, screen)
@@ -74,7 +75,7 @@ class G15Webcam():
     
     def activate(self):
         self._load_config()
-        self._page = self._screen.new_page(id, self._screen, painter = self.paint, priority = g15screen.PRI_NORMAL, title = name)
+        self._page = g15theme.G15Page(id, self._screen, painter = self.paint, priority = g15screen.PRI_NORMAL, title = name)
         self._screen.add_page(self._page)
         self._redraw()
         self._notify_handler = self._gconf_client.notify_add(self._gconf_key, self._config_changed)
@@ -90,8 +91,12 @@ class G15Webcam():
     
     def paint(self, canvas):
         if self._surface:
-            sc = self.get_scale(highgui.cvGetCaptureProperty(self._camera, highgui.CV_CAP_PROP_FRAME_WIDTH ), highgui.cvGetCaptureProperty(self._camera, highgui.CV_CAP_PROP_FRAME_HEIGHT ))
+            cam_width = highgui.cvGetCaptureProperty(self._camera, highgui.CV_CAP_PROP_FRAME_WIDTH )
+            sc = self.get_scale(cam_width, highgui.cvGetCaptureProperty(self._camera, highgui.CV_CAP_PROP_FRAME_HEIGHT ))
+            size = self._screen.driver.get_size()
             canvas.save()
+            tr_x = ( size[0] - ( cam_width * sc ) ) / 2  
+            canvas.translate(tr_x, 0)
             canvas.scale(sc, sc)
             canvas.set_source_surface(self._surface)
             canvas.paint()

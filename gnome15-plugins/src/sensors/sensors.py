@@ -23,6 +23,7 @@
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import gnome15.g15theme as g15theme
+import gnome15.g15util as g15util
 import os.path
 import commands
 import dbus
@@ -78,8 +79,7 @@ class UDisksSource():
         return self.udisks is not None
     
     def stop(self):
-        if self.system_bus:
-            self.system_bus.close()
+        pass
     
     def _check_dbus_connection(self):
         if self.udisks == None:
@@ -223,7 +223,8 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
     def populate_page(self):
         g15plugin.G15RefreshingPlugin.populate_page(self)
         self.menu = g15theme.Menu("menu")
-        self.page.add_child(self.menu)        
+        self.page.add_child(self.menu)
+        self.page.theme.svg_processor = self._process_svg        
         self.page.add_child(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
         i = 0
         for c in self.sensor_sources:
@@ -245,16 +246,23 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
     ''' Private
     '''
         
+    def _process_svg(self, document, properties, attributes):
+        root = document.getroot()
+        if self.menu.selected is not None:
+            for element in root.xpath('//svg:rect[@class=\'needle\']',namespaces=self.page.theme.nsmap):
+                g15util.rotate_element(element, self.menu.selected.sensor.value)
+        
     def _get_stats(self):
         for c in self.sensor_sources:
             for s in c.get_sensors(): 
                 self.sensor_dict[s.name].sensor = s
                 if s.critical is not None:
-                    logger.info("Sensor %s on %s is %f (critical %f)" % ( s.name, c.name, s.value, s.critical ))
+                    logger.debug("Sensor %s on %s is %f (critical %f)" % ( s.name, c.name, s.value, s.critical ))
                 else:
-                    logger.info("Sensor %s on %s is %f" % ( s.name, c.name, s.value ))
+                    logger.debug("Sensor %s on %s is %f" % ( s.name, c.name, s.value ))
                     
     def _build_properties(self): 
+        self.page.mark_dirty()
         properties = {}
         if self.menu.selected is not None:
             properties["sensor"] = self.menu.selected.sensor.name        

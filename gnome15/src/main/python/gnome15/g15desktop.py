@@ -39,6 +39,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import dbus
 import os.path
+import operator
 import xdg.DesktopEntry
 
 # Logging
@@ -824,8 +825,10 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                         self._append_item(gtk.MenuItem(screen.message))
                     
                     logger.debug("Adding items")
-                    for item_key in screen.items:
-                        text = screen.items[item_key]
+                    
+                    
+                    sorted_x = sorted(screen.items.iteritems(), key=operator.itemgetter(1))
+                    for item_key, text in sorted_x:
                         logger.debug("Adding item %s = %s " % (item_key, text ) )
                         item = gtk.MenuItem(text)
                         item.connect("activate", self._show_page, item_key)

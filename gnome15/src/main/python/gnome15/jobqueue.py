@@ -106,7 +106,8 @@ class JobScheduler():
             self.queues[queue_name].clear()
             
     def stop_queue(self, queue_name):
-        self.queues[queue_name].stop()
+        if queue_name in self.queues:
+            self.queues[queue_name].stop()
     
     def execute(self, queue_name, name, function, *args):
         logger.debug("Executing on queue %s" % ( queue_name ) )     
@@ -173,7 +174,8 @@ class JobQueue():
                 while True:
                     item = self.work_queue.get_nowait()
                     logger.info("Removed func = %s, args = %s, queued = %s, started = %s, finished = %s" % ( str(item.item), str(item.args), str(item.queued), str(item.started), str(item.finished) ) )
-                    self.queued_jobs.remove(item)
+                    if item in self.queued_jobs:
+                        self.queued_jobs.remove(item)
             except Queue.Empty:
                 pass
             logger.info("Cleared queue %s" % self.name)

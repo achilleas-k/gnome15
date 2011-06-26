@@ -107,7 +107,7 @@ class Driver(g15driver.AbstractDriver):
         if self.on_driver_options_change:
             self.on_driver_options_change()
         
-    def disconnect(self):
+    def on_disconnect(self):
         logger.info("Disconnecting GTK driver")
         if not self.is_connected():
             raise Exception("Not connected")

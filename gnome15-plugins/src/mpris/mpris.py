@@ -576,6 +576,7 @@ class G15MPRIS():
     def deactivate(self):
         for key in self.players.keys():
             self.players[key].stop()
+        g15util.stop_queue("mprisDataQueue-%s" % self.screen.device.uid)
         self.session_bus.remove_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
                                      signal_name='NameOwnerChanged')  

@@ -22,6 +22,7 @@
  
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
+import gnome15.g15screen as g15screen
 import cairo
 import gtk
 import os
@@ -111,6 +112,19 @@ class G15BackgroundPreferences():
     def file_set(self, widget):
         self.gconf_client.set_string(self.gconf_key + "/path", widget.get_filename())
         
+        
+class G15BackgroundPainter(g15screen.Painter):
+    
+    def __init__(self):
+        g15screen.Painter.__init__(self, g15screen.BACKGROUND_PAINTER, -9999)
+        self.background_image = None
+        
+    def paint(self, canvas):
+        if self.background_image != None:
+            canvas.set_source_surface(self.background_image, 0.0, 0.0)
+            canvas.paint()
+        
+        
 class G15Background():
     
     def __init__(self, gconf_key, gconf_client, screen):
@@ -125,13 +139,12 @@ class G15Background():
         self.bg_img = None
         self.this_image = None
         self.current_style = None
-        self.background_image = None
         self.notify_handlers = []
-        self.chained_painter = self.screen.set_background_painter(self.paint)
+        self.painter = G15BackgroundPainter()
+        self.screen.painters.append(self.painter)
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/path", self.config_changed))
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/type", self.config_changed))
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/style", self.config_changed))
-        
         
         # Monitor desktop specific configuration for wallpaper changes
         if "gnome" == g15util.get_desktop():
@@ -140,7 +153,7 @@ class G15Background():
         self._do_config_changed()
     
     def deactivate(self):
-        self.screen.set_background_painter(self.chained_painter)
+        self.screen.painters.remove(self.painter)
         for h in self.notify_handlers:
             self.gconf_client.notify_remove(h);
         self.screen.redraw()
@@ -150,15 +163,6 @@ class G15Background():
         
     def destroy(self):
         pass
-        
-    def paint(self, canvas):
-        screen_size = self.screen.size
-        if self.background_image != None:
-            canvas.set_source_surface(self.background_image, 0.0, 0.0)
-            canvas.paint()
-         
-        if self.chained_painter != None:
-            self.chained_painter(canvas)
             
     '''
     Private
@@ -239,9 +243,9 @@ class G15Background():
                         x += img_surface.get_width()
                     
                 context.restore()
-                self.background_image = surface
+                self.painter.background_image = surface
             else:
-                self.background_image = None
+                self.painter.background_image = None
                 
                 
         self.screen.redraw()

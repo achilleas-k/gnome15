@@ -820,7 +820,7 @@ class G15DBUSService(AbstractG15DBUSService):
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='')
     def Stop(self):
-        self._service.shutdown()
+        g15util.queue("serviceQueue", "dbusShutdown", 0, self._service.shutdown)
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='b')
     def IsStarting(self):

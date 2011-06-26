@@ -702,6 +702,7 @@ def rotate_element(element, degrees):
         
     t.rotate(degrees_to_radians(degrees))
     ts = "m" + str(t)[7:]
+    print "Setting transform to %s" % ts
     element.set("transform", ts)
 
 def get_transforms(element, position_only = False):    

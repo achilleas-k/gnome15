@@ -22,6 +22,7 @@
  
 import sys
 import pygtk
+from gnome15 import g15desktop
 pygtk.require('2.0')
 import os
 import gobject
@@ -30,6 +31,7 @@ import g15screen
 import g15profile
 import g15dbus
 import g15devices
+import g15desktop
 import traceback
 import gconf
 import g15util
@@ -49,6 +51,7 @@ logger = logging.getLogger("service")
     
 NAME = "Gnome15"
 VERSION = g15globals.version
+SERVICE_QUEUE = "serviceQueue"
 
 special_X_keysyms = {
     ' ' : "space",
@@ -104,6 +107,7 @@ class G15Service(Thread):
         self.starting_up = True
         self.conf_client = gconf.client_get_default()
         self.screens = []
+        self.logging_out = False        
         self.service_listeners = []
         self.use_x_test = None
         self.x_test_available = None
@@ -127,8 +131,11 @@ class G15Service(Thread):
         
     def start_loop(self):
         logger.info("Starting GLib loop")
-        self.loop.run()
-        logger.debug("Exited GLib loop")
+        try:
+            self.loop.run()
+        except:
+            traceback.print_stack()
+        logger.info("Exited GLib loop")
         
     def start_service(self):
         try:
@@ -154,7 +161,6 @@ class G15Service(Thread):
     def stop(self):
         for h in self.notify_handles:
             self.conf_client.notify_remove(h)
-        self.shutting_down = True
         try :
             logger.info("Stopping file change notification")
             g15profile.notifier.stop()
@@ -167,9 +173,11 @@ class G15Service(Thread):
         logger.info("Stopping screens")
         for screen in self.screens:
             screen.stop()
+        g15util.stop_queue(SERVICE_QUEUE)
         
     def shutdown(self):
         logger.info("Shutting down")
+        self.shutting_down = True
         self.stop()
         logger.info("Stopping all schedulers")
         g15util.stop_all_schedulers()
@@ -407,11 +415,38 @@ class G15Service(Thread):
     """
     Private
     """
-    
+    def _check_state_of_all_devices(self):
+        for d in g15devices.find_all_devices():
+            self._check_device_state(d)
             
     def _do_start_service(self):
         for listener in self.service_listeners:
             listener.service_starting_up()
+        
+        # If running on GNOME, look for the logout signal
+        if "gnome" == g15util.get_desktop():
+            try:
+                import gnome.ui
+                gnome.program_init(g15globals.name, g15globals.version)
+                client = gnome.ui.master_client()
+                service = self
+                def save_yourself(self, *args):
+                    service.logging_out = True
+                    g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service._check_state_of_all_devices)
+                    
+                def shutdown_cancelled(self, *args):
+                    logger.info("Shutdown cancelled")
+                    service.logging_out = False
+                    g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service._check_state_of_all_devices)
+                
+                def die(self, *args):
+                    g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service.shutdown)
+                    
+                client.connect('save-yourself', save_yourself)
+                client.connect('shutdown-cancelled', shutdown_cancelled)
+                client.connect('die', die)
+            except Exception as e:
+                logger.warning("Could not connect to GNOME desktop session. %s" % str(e))
         
         self.session_bus = dbus.SessionBus()
         
@@ -478,7 +513,18 @@ class G15Service(Thread):
             logger.info("Connecting to system bus") 
             system_bus = dbus.SystemBus()
             system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
-            self.session_active = True 
+            console_kit_object = system_bus.get_object("org.freedesktop.ConsoleKit", '/org/freedesktop/ConsoleKit/Manager')
+            console_kit_manager = dbus.Interface(console_kit_object, 'org.freedesktop.ConsoleKit.Manager')
+            logger.info("Seats %s " % str(console_kit_manager.GetSeats())) 
+            self.this_session_path = console_kit_manager.GetSessionForCookie (os.environ['XDG_SESSION_COOKIE'])
+            logger.info("This session %s " % self.this_session_path)
+            
+            # TODO GetCurrentSession doesn't seem to work as i would expect. Investigate. For now, assume we are the active session
+#            current_session = console_kit_manager.GetCurrentSession()
+#            logger.info("Current session %s " % current_session)            
+#            self.session_active = current_session == self.this_session_path
+            self.session_active = True
+             
             logger.info("Connected to system bus") 
         except Exception as e:
             logger.warning("ConsoleKit not available, will not track active desktop session. %s" % str(e))
@@ -505,9 +551,14 @@ class G15Service(Thread):
         self.key_hold_duration = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/key_hold_duration', 2000) / 1000.0
         self.text_boxes = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/text_boxes', True)
         self.use_x_test = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/use_x_test', True)
+        self.fade_screen_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_screen_on_close', True)
+        self.fade_keyboard_backlight_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_keyboard_backlight_on_close', True)
             
     def _device_enabled_configuration_changed(self, client, connection_id, entry, device):
-        enabled = g15devices.is_enabled(self.conf_client, device)
+        g15util.queue(SERVICE_QUEUE, "deviceStateChanged", 0, self._check_device_state, device)
+        
+    def _check_device_state(self, device):
+        enabled = g15devices.is_enabled(self.conf_client, device) and not self.logging_out and self.session_active
         screen = self._get_screen_for_device(device)
         logger.info("EN device %s = %s = %s" % (device.uid, str(enabled), str(screen)))
         if enabled and not screen:
@@ -542,9 +593,8 @@ class G15Service(Thread):
             logger.info("g15-desktop service is running on the active session")
         else:
             logger.info("g15-desktop service is NOT running on the active session")
+        g15util.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
         
-        for screen in self.screens:
-            screen.active_session_changed(screen, self.session_active)
         
     def __del__(self):
         for screen in self.screens:

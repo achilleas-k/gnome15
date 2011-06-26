@@ -189,7 +189,7 @@ class Driver(g15driver.AbstractDriver):
         for control in self.get_controls():
             self._do_update_control(control)
             
-    def disconnect(self):  
+    def on_disconnect(self):  
         if self.is_connected():  
             self.lg19.stop_event_handling()
             self.connected = False

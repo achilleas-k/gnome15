@@ -1383,7 +1383,7 @@ class G15Theme():
                     
                 # Pass the SVG document to the SVG processor if there is one
                 if self.svg_processor != None:
-                    self.svg_processor(self, properties, attributes)
+                    self.svg_processor(document, properties, attributes)
                 
                 # Pass the SVG document to the theme's python code to manipulate the document if required
                 if self.instance != None:

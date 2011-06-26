@@ -28,7 +28,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="3.9190253"
      inkscape:cx="103.12055"
-     inkscape:cy="147.5423"
+     inkscape:cy="108.53766"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -36,8 +36,8 @@
      inkscape:guide-bbox="true"
      inkscape:window-width="1127"
      inkscape:window-height="791"
-     inkscape:window-x="2212"
-     inkscape:window-y="139"
+     inkscape:window-x="385"
+     inkscape:window-y="156"
      inkscape:window-maximized="0" />
   <defs
      id="defs4">
@@ -583,7 +583,7 @@
        sodipodi:cy="102.45691"
        sodipodi:rx="127.50191"
        sodipodi:ry="128.868"
-       d="m -76.501144,102.45691 a 127.50191,128.868 0 1 1 -0.02449,-2.52573"
+       d="m -76.501144,102.45691 c 0,71.17183 -57.084546,128.868 -127.501906,128.868 -70.41736,0 -127.50191,-57.69617 -127.50191,-128.868 0,-71.17183 57.08455,-128.867997 127.50191,-128.867997 69.44336,0 126.116369,56.168351 127.477414,126.342267"
        transform="matrix(0.62945584,0,0,0.62278318,-816.20227,192.31234)"
        sodipodi:start="0"
        sodipodi:end="6.2635847"
@@ -964,13 +964,14 @@
        id="rect4246"
        width="7.4047184"
        height="69.049004"
-       x="-945.80402"
-       y="210.85223"
+       x="630.75134"
+       y="-805.99017"
        rx="2.9237456"
        ry="3.4079909"
-       inkscape:transform-center-y="-24.547042"
-       inkscape:transform-center-x="-0.32397527"
-       transform="matrix(0.99991293,0.01319555,-0.01319555,0.99991293,0,0)" />
+       inkscape:transform-center-y="20.250426"
+       inkscape:transform-center-x="13.877571"
+       transform="matrix(-0.82488964,-0.56529381,0.56529381,-0.82488964,0,0)"
+       class="needle" />
     <text
        xml:space="preserve"
        style="font-size:5.84749126px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:Sans"
@@ -1159,7 +1160,7 @@
        sodipodi:cy="111.89523"
        sodipodi:rx="6.4954529"
        sodipodi:ry="6.4954529"
-       d="m -61.34594,111.89523 a 6.4954529,6.4954529 0 1 1 -0.0012,-0.1273"
+       d="m -61.34594,111.89523 c 0,3.58734 -2.908113,6.49546 -6.495453,6.49546 -3.587339,0 -6.495452,-2.90812 -6.495452,-6.49546 0,-3.58734 2.908113,-6.49545 6.495452,-6.49545 3.537721,0 6.424869,2.83111 6.494206,6.36815"
        transform="matrix(0.54517635,0,0,0.54517635,-908.13814,196.62023)"
        sodipodi:start="0"
        sodipodi:end="6.2635847"

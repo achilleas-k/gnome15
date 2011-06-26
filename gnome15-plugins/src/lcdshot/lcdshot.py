@@ -31,7 +31,8 @@ logger = logging.getLogger("lcdshot")
 # Plugin details - All of these must be provided
 id="lcdshot"
 name="LCD Screenshot"
-description="Takes a screenshot of the LCD"
+description="Takes a screenshot of the LCD. Press and hold MR to take a screenshot, which " + \
+            "will be placed in configured directory."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"

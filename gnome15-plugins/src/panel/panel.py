@@ -20,7 +20,7 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15theme as g15theme
+import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import os
@@ -51,84 +51,14 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/color", "Color", ( 128, 128, 128 ), widget_tree, default_alpha = 128)
     dialog.run()
     dialog.hide()
-
-class G15Panel():    
-    def __init__(self, gconf_key, gconf_client, screen):
-        self.screen = screen
+    
+class G15PanelPainter(g15screen.Painter):
+    
+    def __init__(self, screen, gconf_client, gconf_key):
+        g15screen.Painter.__init__(self, g15screen.FOREGROUND_PAINTER, 1000)
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
-        self.active = False
-    
-    def activate(self):    
-        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self._config_changed);
-        self._set_available_screen_size()
-        self.active = True
-        self.chained_painter = self.screen.set_foreground_painter(self.paint)
-        self.screen.redraw()
-            
-    def is_active(self):
-        return self.active
-    
-    def deactivate(self):
-        self.gconf_client.notify_remove(self.notify_handle);
-        self.active = False
-        self.screen.set_foreground_painter(self.chained_painter)
-        self.screen.set_available_size((0, 0, self.screen.width, self.screen.height))
-        self.screen.redraw()
-        
-    def destroy(self):
-        pass
-    
-    def get_enabled(self, panel_applet):
-        # TODO - allow disabling of panel applets in panel preferences
-        return True
-    
-    def _config_changed(self, client, connection_id, entry, args):
-        self._set_available_screen_size()
-        self.screen.redraw()
-        
-    def _set_available_screen_size(self):
-        # Scaling of any sort on the 1 bit display is a bit pointless        
-        if self.screen.driver.get_bpp() == 1:
-            return
-        
-        x = 0
-        y = 0
-        pos = self._get_panel_position()
-        panel_height = self._get_panel_size()
-        stretch = self.gconf_client.get_bool(self.gconf_key + "/stretch")
-        
-        if pos == "bottom" or pos == "top":
-            scale = float( self.screen.height - panel_height ) / float(self.screen.height)
-            if not stretch:
-                x = ( float(self.screen.width) - float(self.screen.width * scale ) ) / 2.0
-            if pos == "top":
-                y = panel_height
-            self.screen.set_available_size((x, y, self.screen.width, self.screen.height - panel_height))
-        
-        if pos == "left" or pos == "right":
-            scale = float( self.screen.width - panel_height ) / float(self.screen.width)
-            if not stretch:
-                y = ( float(self.screen.height) - float(self.screen.height * scale ) ) / 2.0
-            if pos == "left":
-                x = panel_height
-            self.screen.set_available_size((x, y, self.screen.width - panel_height, self.screen.height))
-    
-    def _get_panel_size(self):
-        # Panel is fixed size on the 1 bit display        
-        if self.screen.driver.get_bpp() == 1:
-            return 8
-        
-        panel_size = self.gconf_client.get_int(self.gconf_key + "/size")
-        if panel_size == 0:
-            panel_size = 24
-        return panel_size
-    
-    def _get_panel_position(self):
-        panel_pos = self.gconf_client.get_string(self.gconf_key + "/position")
-        if panel_pos == None or panel_pos == "":
-            panel_pos = "bottom"
-        return panel_pos
+        self.screen = screen
         
     def paint(self, canvas):
         panel_height = self._get_panel_size()
@@ -211,7 +141,82 @@ class G15Panel():
         # Now actually paint the panel
         canvas.set_source_surface(panel_img)
         canvas.paint()
-        canvas.restore()        
+        canvas.restore()    
         
-        if self.chained_painter != None:
-            self.chained_painter(canvas)   
+    """
+    Private
+    """    
+        
+    def _get_panel_size(self):
+        # Panel is fixed size on the 1 bit display        
+        if self.screen.driver.get_bpp() == 1:
+            return 8
+        
+        panel_size = self.gconf_client.get_int(self.gconf_key + "/size")
+        if panel_size == 0:
+            panel_size = 24
+        return panel_size
+    
+    def _get_panel_position(self):
+        panel_pos = self.gconf_client.get_string(self.gconf_key + "/position")
+        if panel_pos == None or panel_pos == "":
+            panel_pos = "bottom"
+        return panel_pos   
+        
+
+class G15Panel():    
+    def __init__(self, gconf_key, gconf_client, screen):
+        self.screen = screen
+        self.gconf_client = gconf_client
+        self.gconf_key = gconf_key
+    
+    def activate(self):   
+        self.painter = G15PanelPainter(self.screen, self.gconf_client, self.gconf_key)
+        self.screen.painters.append(self.painter)
+        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self._config_changed);
+        self._set_available_screen_size()
+        self.screen.redraw()
+            
+    def deactivate(self):
+        self.screen.painters.remove(self.painter)
+        self.gconf_client.notify_remove(self.notify_handle);
+        self.screen.set_available_size((0, 0, self.screen.width, self.screen.height))
+        self.screen.redraw()
+        
+    def destroy(self):
+        pass
+    
+    """
+    Private
+    """
+    
+    def _config_changed(self, client, connection_id, entry, args):
+        self._set_available_screen_size()
+        self.screen.redraw()
+        
+    def _set_available_screen_size(self):
+        # Scaling of any sort on the 1 bit display is a bit pointless        
+        if self.screen.driver.get_bpp() == 1:
+            return
+        
+        x = 0
+        y = 0
+        pos = self.painter._get_panel_position()
+        panel_height = self.painter._get_panel_size()
+        stretch = self.gconf_client.get_bool(self.gconf_key + "/stretch")
+        
+        if pos == "bottom" or pos == "top":
+            scale = float( self.screen.height - panel_height ) / float(self.screen.height)
+            if not stretch:
+                x = ( float(self.screen.width) - float(self.screen.width * scale ) ) / 2.0
+            if pos == "top":
+                y = panel_height
+            self.screen.set_available_size((x, y, self.screen.width, self.screen.height - panel_height))
+        
+        if pos == "left" or pos == "right":
+            scale = float( self.screen.width - panel_height ) / float(self.screen.width)
+            if not stretch:
+                y = ( float(self.screen.height) - float(self.screen.height * scale ) ) / 2.0
+            if pos == "left":
+                x = panel_height
+            self.screen.set_available_size((x, y, self.screen.width - panel_height, self.screen.height))

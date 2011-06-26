@@ -312,7 +312,7 @@ class Driver(g15driver.AbstractDriver):
     def get_model_name(self):
         return self.device.model_id
     
-    def disconnect(self):
+    def on_disconnect(self):
         if not self.is_connected():
             raise Exception("Already disconnected")
         self.conf_client.notify_remove(self.notify_handle)

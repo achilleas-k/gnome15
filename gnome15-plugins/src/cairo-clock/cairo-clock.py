@@ -64,6 +64,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour" % gconf_key, "TwentyFourHourCheckbox", True, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_digital_time" % gconf_key, "DisplayDigitalTimeCheckbox", True, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_year" % gconf_key, "DisplayYearCheckbox", True, widget_tree)
+    g15util.configure_checkbox_from_gconf(gconf_client, "%s/second_sweep" % gconf_key, "SecondSweep", False, widget_tree)
 
     e = gconf_client.get(gconf_key + "/theme")
     theme_name = "default"
@@ -163,6 +164,7 @@ class G15CairoClock():
         self.display_date = g15util.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
         self.display_year = g15util.get_bool_or_default(self.gconf_client, "%s/display_year" % self.gconf_key, True)
         self.display_digital_time = g15util.get_bool_or_default(self.gconf_client, "%s/display_digital_time" % self.gconf_key, True)
+        self.second_sweep = g15util.get_bool_or_default(self.gconf_client, "%s/second_sweep" % self.gconf_key, False)
         
         self.svg_size = None
         self.width = self.screen.width
@@ -234,7 +236,9 @@ class G15CairoClock():
         now = datetime.datetime.now()
         display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")
         
-        if display_seconds:
+        if self.second_sweep:
+            next_tick = now + datetime.timedelta(0, 0.1)
+        elif display_seconds:
             next_tick = now + datetime.timedelta(0, 1.0)
             next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, int(next_tick.second))
         else:
@@ -406,7 +410,11 @@ class G15CairoClock():
             drawing_context.restore()
             
         # The hand
-        s_deg = now.second * 6
+        if self.second_sweep:
+            ms_deg = ( ( float(now.microsecond) / 10000.0 ) * ( 6.0 / 100.0 ) )
+            s_deg = ( now.second * 6 ) + ms_deg
+        else:
+            s_deg = now.second * 6
         m_deg = now.minute * 6 + ( now.second * ( 6.0 / 60.0 ) )
         
         if self.gconf_client.get_bool(self.gconf_key + "/twenty_four_hour"):

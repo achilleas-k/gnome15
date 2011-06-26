@@ -255,7 +255,7 @@ class Driver(g15driver.AbstractDriver):
         else:
             return cairo.ANTIALIAS_NONE
         
-    def disconnect(self):
+    def on_disconnect(self):
         if not self.is_connected():
             raise Exception("Not connected")
         self._stop_receiving_keys()
@@ -332,7 +332,9 @@ class Driver(g15driver.AbstractDriver):
     def get_controls(self):
         return self.device_info.controls if self.device_info != None else None
     
-    def paint(self, img):   
+    def paint(self, img):  
+        if not self.fb:
+            return 
         width = img.get_width()
         height = img.get_height()
         character_width = width / 8
@@ -475,9 +477,10 @@ class Driver(g15driver.AbstractDriver):
             
     def _do_write_to_led(self, name, value):
         if not self.system_service:
-            raise Exception("Attempt to write to LED when not connected")
-        logger.debug("Writing %d to LED %s" % (value, name ))
-        self.system_service.SetLight(self.device.uid, name, value)
+            logger.warning("Attempt to write to LED when not connected")
+        else:
+            logger.debug("Writing %d to LED %s" % (value, name ))
+            self.system_service.SetLight(self.device.uid, name, value)
     
     def _write_to_led(self, name, value):
         gobject.idle_add(self._do_write_to_led, name, value)
