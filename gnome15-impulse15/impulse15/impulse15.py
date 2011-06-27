@@ -61,6 +61,10 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col2", "Color2", ( 0, 0, 255 ), widget_tree, default_alpha = 255)
     g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/frame_rate", "FrameRateAdjustment", 25.0, widget_tree)
     
+    if driver.get_bpp() == 0:
+        widget_tree.get_object("LCDTable").set_visible(False)
+        
+    
     dialog.run()
     dialog.hide() 
 
@@ -73,30 +77,38 @@ class G15ImpulsePainter(g15screen.Painter):
         self.mkey_acquisition = None        
         self.mode = "default"
         self.plugin = plugin
-    
-    def paint(self, canvas):
-        if not self.theme_module: 
-            return
-
-        fft = False
-        if hasattr( self.theme_module, "fft" ) and self.theme_module.fft:
-            fft = True
-
-        audio_sample_array = impulse.getSnapshot( fft )
+        
+    def do_lights(self, audio_sample_array = None):     
+        if not audio_sample_array:
+            audio_sample_array = self._get_sample()
         
         if self.backlight_acquisition is not None:
             self.backlight_acquisition.set_value(self._col_avg(audio_sample_array))
-        
         if self.mkey_acquisition is not None:
             self._set_mkey_lights(self._tot_avg(audio_sample_array))
+            
+    def paint(self, canvas):
+        if not self.theme_module: 
+            return
+        print "Painting"
+        audio_sample_array = self._get_sample()
+        self.do_lights(audio_sample_array)
         
         canvas.save()
+        print "to theme"
         self.theme_module.on_draw( audio_sample_array, canvas, self.plugin )
         canvas.restore()
         
     """
     Private
     """
+    
+    def _get_sample(self):
+        fft = False
+        if hasattr( self.theme_module, "fft" ) and self.theme_module.fft:
+            fft = True
+
+        return impulse.getSnapshot( fft )
     
     def _col_avg(self, list):
         cols = []
@@ -222,12 +234,14 @@ class G15Impulse():
         canvas.restore()
     
     def redraw(self):        
-        if self.paint_mode == "screen" and self.visible:
-            self.screen.redraw(self.page)
-            self._schedule_redraw()
-        elif self.paint_mode != "screen": 
-            self.screen.redraw(redraw_content = False)
-            self._schedule_redraw()
+        if self.screen.driver.get_bpp() == 0:
+            self.painter.do_lights()
+        else:
+            if self.paint_mode == "screen" and self.visible:
+                self.screen.redraw(self.page)
+            elif self.paint_mode != "screen": 
+                self.screen.redraw(redraw_content = False)
+        self._schedule_redraw()
         
     """
     Private

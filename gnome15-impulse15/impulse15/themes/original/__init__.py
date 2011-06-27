@@ -1,3 +1,5 @@
+fft = True
+
 def load_theme( screenlet ):
 	pass
 

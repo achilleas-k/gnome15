@@ -1,5 +1,6 @@
 peak_heights = [ 0 for i in range( 256 ) ]
 peak_acceleration = [ 0.0 for i in range( 256 ) ]
+fft = True
 
 def load_theme ( screenlet):
 	pass
