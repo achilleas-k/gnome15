@@ -310,6 +310,12 @@ class G15Profile():
             if macro.key_list_key == key_list_key and macro in bank_macros:
                 bank_macros.remove(macro)
         
+    def get_profile_icon_path(self, height):
+        icon = self.icon
+        if icon == None or icon == "":
+            icon = "preferences-desktop-keyboard-shortcuts"
+        return g15util.get_icon_path(icon, height)
+        
     def create_macro(self, memory, keys, name, type, content):
         key_list_key = get_keys_key(keys)  
         section_name = "m%d" % memory

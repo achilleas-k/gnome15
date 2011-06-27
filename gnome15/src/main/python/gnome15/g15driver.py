@@ -349,8 +349,9 @@ class AbstractDriver(object):
         values = dict(self.initial_acquired_control_values)
         for k in values:
             c = self.get_control(k)
-            c.value = values[k]
-            self.update_control(c)
+            if c:
+                c.value = values[k]
+                self.update_control(c)
         self.set_mkey_lights(self.initial_mkey_lights_value)
         
     def acquire_control(self, control, release_after = None, val = None):

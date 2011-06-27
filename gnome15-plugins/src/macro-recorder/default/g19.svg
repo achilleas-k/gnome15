@@ -18,53 +18,16 @@
    sodipodi:docname="g19.svg">
   <defs
      id="defs4">
-    <filter
-       id="filter3967"
-       inkscape:label="Drop shadow"
-       width="1.5"
-       height="1.5"
-       x="-0.25"
-       y="-0.25"
-       color-interpolation-filters="sRGB">
-      <feGaussianBlur
-         id="feGaussianBlur3969"
-         in="SourceAlpha"
-         stdDeviation="4"
-         result="blur" />
-      <feColorMatrix
-         id="feColorMatrix3971"
-         result="bluralpha"
-         type="matrix"
-         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 " />
-      <feOffset
-         id="feOffset3973"
-         in="bluralpha"
-         dx="0.9"
-         dy="0.9"
-         result="offsetBlur" />
-      <feMerge
-         id="feMerge3975">
-        <feMergeNode
-           id="feMergeNode3977"
-           in="offsetBlur" />
-        <feMergeNode
-           id="feMergeNode3979"
-           in="SourceGraphic" />
-      </feMerge>
-    </filter>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3005">
+       id="clipPath3782">
       <rect
-         style="opacity:0.5;fill:#ff0000;fill-opacity:1"
-         id="rect3007"
+         style="opacity:0.5;fill-opacity:1"
+         id="rect3784"
          width="160"
          height="150"
-         x="145"
-         y="75"
-         transform="translate(-12,10)"
-         rx="2.9237456"
-         ry="3.4079909" />
+         x="154.54773"
+         y="861.11218" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -75,15 +38,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="17.014171"
-     inkscape:cy="119.7006"
+     inkscape:cx="141.78395"
+     inkscape:cy="157.55772"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="486"
+     inkscape:window-x="493"
      inkscape:window-y="49"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -127,11 +90,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/macro-recorder/default/${icon}"
        xlink:href="${icon}"
-       height="95"
-       width="99.562164"
-       id="image4256"
+       y="889.11218"
        x="30.985577"
-       y="889.11218" />
+       id="image4256"
+       width="99.562164"
+       height="95" />
     <rect
        style="fill:#808080;fill-opacity:0.50196081;stroke:none"
        id="rect3031-9"
@@ -145,10 +108,10 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/macro-recorder/default/${profile_icon}"
        xlink:href="${profile_icon}"
-       height="64"
-       width="64"
+       transform="matrix(0.4765625,0,0,0.4765625,28.547735,807.11217)"
        id="image3050"
-       transform="matrix(0.4765625,0,0,0.4765625,28.547735,807.11217)" />
+       width="64"
+       height="64" />
     <rect
        style="fill:#808080;fill-opacity:0.50196078000000000;stroke:none"
        id="rect3031"
@@ -193,29 +156,18 @@
        rx="12.35294"
        ry="11.999998"
        transform="matrix(0.97142857,0,0,1,18.404878,786.11217)" />
-    <rect
-       style="opacity:0;fill-opacity:0.50196078;stroke:none"
-       id="message"
-       width="145"
-       height="140"
-       x="150"
-       y="80"
-       transform="matrix(1.0344828,0,0,1,4.3753162,786.11217)"
-       rx="11.599998"
-       ry="11.999998"
-       class="textbox" />
     <text
        xml:space="preserve"
-       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
-       x="135.70113"
-       y="99.083717"
-       id="message_text"
+       style="font-size:20px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="155.40437"
+       y="876.84186"
+       id="text3776"
        sodipodi:linespacing="125%"
-       transform="translate(21.547735,776.11217)"
-       clip-path="url(#clipPath3005)"><tspan
+       title="vertical-wrap"
+       clip-path="url(#clipPath3782)"><tspan
          sodipodi:role="line"
-         id="tspan3798"
-         x="135.70113"
-         y="99.083717">${message}</tspan></text>
+         id="tspan3778"
+         x="155.40437"
+         y="876.84186">${message}</tspan></text>
   </g>
 </svg>

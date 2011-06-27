@@ -236,14 +236,24 @@ class G15Cal():
             for i in ecal.get_all_objects():
                 parsed_event = vobject.readOne(i.get_as_string())
                 event_date = parsed_event.dtstart.value
+                if parsed_event.dtend:
+                    end_event_date = parsed_event.dtend.value
+                else:
+                    end_event_date = datetime.datetime(event_date.year,event_date.month,event_date.day, 23, 59, 0)
+                
                 if event_date.month == now.month and event_date.year == now.year:
-                    key = str(event_date.day)
-                    list = []
-                    if key in self._event_days:
-                        list = self._event_days[key]
-                    else:
-                        self._event_days[key] = list
-                    list.append(parsed_event)
+                    print "Event %s to %s" % (str(event_date), str(end_event_date))
+                    
+                    day = event_date.day
+                    while day <= end_event_date.day:
+                        key = str(day)
+                        list = []
+                        if key in self._event_days:
+                            list = self._event_days[key]
+                        else:
+                            self._event_days[key] = list
+                        list.append(parsed_event)
+                        day += 1
                     
         # Set the events
         self._menu.remove_all_children()
@@ -261,7 +271,7 @@ class G15Cal():
         for day in cal.itermonthdates(now.year, now.month):
             event = None
             if str(day.day) in self._event_days:
-                event = self._event_days[str(day.day)]
+                event = self._event_days[str(day.day)]                
             self._calendar.add_child(Cell(day, now, event, "cell-%d" % i))
             i += 1
             

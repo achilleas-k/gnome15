@@ -102,13 +102,13 @@
      inkscape:cx="129.41244"
      inkscape:cy="82.480228"
      inkscape:document-units="px"
-     inkscape:current-layer="g3941"
+     inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2237"
-     inkscape:window-y="38"
+     inkscape:window-x="2037"
+     inkscape:window-y="75"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -153,11 +153,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/notify-lcd/default/${icon}"
        xlink:href="${icon}"
-       y="862.11218"
-       x="209.98557"
-       id="image4256"
+       height="95"
        width="99.562164"
-       height="95" />
+       id="image4256"
+       x="209.98557"
+       y="862.11218" />
     <rect
        style="fill:#696969;fill-opacity:0.48557691;stroke:#000000;stroke-width:0.90452361;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0"
        id="rect2985-2-0-5"
@@ -191,7 +191,7 @@
        ry="6" />
     <text
        xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="28.547737"
        y="872.11218"
        id="message_text"

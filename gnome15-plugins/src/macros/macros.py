@@ -105,10 +105,7 @@ class G15Macros(g15plugin.G15MenuPlugin):
     def _get_active_profile_icon_path(self):
         if self._active_profile == None:
             return None        
-        icon = self._active_profile.icon
-        if icon == None or icon == "":
-            icon = "preferences-desktop-keyboard-shortcuts"
-        return g15util.get_icon_path(icon, self.screen.height)
+        return self._active_profile.get_profile_icon_path(self.screen.height)
     
     """
     Screen change listener callbacks

@@ -284,7 +284,7 @@ class G15MacroRecorder():
             
         if active_profile != None:
             properties["profile"] = active_profile.name
-            properties["profile_icon"] = active_profile.icon
+            properties["profile_icon"] = active_profile.get_profile_icon_path(self._screen.height)
             
             if self._message == None:
                 properties["message"] = "Recording on M%s. Type in your macro then press the G-Key to assign it to, or MR to cancel." % self._screen.get_mkey()

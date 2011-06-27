@@ -717,8 +717,9 @@ class G15Config:
             controls.show_all()
             
     def _driver_options_changed(self):
-        self._load_plugins()
         self._add_controls()
+        self._load_plugins()
+        self._hide_warning()
             
     def _device_enabled_configuration_changed(self, client, connection_id, entry, args):
         self._set_enabled_value_from_configuration()
@@ -771,10 +772,13 @@ class G15Config:
             self.selected_profile = g15profile.get_active_profile(self.selected_device)  
             self._set_cycle_seconds_value_from_configuration()
             self._set_cycle_screens_value_from_configuration()
-        self._load_profile_list()
+            
         self._add_controls()
+        self.main_window.show_all()
+        self._load_profile_list()
         self._load_plugins()
-        self._load_drivers()
+        if self.selected_device:
+            self._load_drivers()
         self._do_status_change()
         
     def _get_device_conf_key(self):
@@ -1085,6 +1089,7 @@ class G15Config:
         return sorted(self.selected_profile.macros[self._get_memory_number() - 1], key=lambda key: key.key_list_key)
         
     def _load_configuration(self, profile):
+        print "**Load config"
         self.adjusting = True
         try : 
             current_selection = self._get_selected_macro()        
@@ -1128,6 +1133,7 @@ class G15Config:
                 self.activate_by_default.set_visible(True)
                 self.remove_button.set_sensitive(False)
             else:
+                self._load_windows()
                 self.window_combo.set_visible(True)
                 self.activate_on_focus.set_visible(True)
                 self.window_label.set_visible(True)
@@ -1145,7 +1151,6 @@ class G15Config:
                     self.color_button.set_color(g15util.to_color(rgb))
                     self.enable_color_for_m_key.set_active(True)
                 
-            self._load_windows()
             self._set_available_actions()
         finally:
             self.adjusting = False
@@ -1309,10 +1314,6 @@ class G15Config:
                     check_button.connect("toggled", self._control_changed, control)
                     self.notify_handles.append(self.conf_client.notify_add(self._get_full_key(control.id), self._control_configuration_changed, [ control, check_button ]));
                     row += 1
-        
-        # Show everything
-        self.main_window.show_all()
-        self._hide_warning()
         
         # Hide the cycle screens if the device has no screen
         if self.driver != None and self.driver.get_bpp() == 0:            
