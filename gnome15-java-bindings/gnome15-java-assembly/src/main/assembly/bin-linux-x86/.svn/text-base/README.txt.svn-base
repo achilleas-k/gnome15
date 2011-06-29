@@ -1,0 +1,42 @@
+SSHAPI
+======
+
+SSHAPI serves as a simple facade or abstraction for various SSH
+client implementations (or providers as they are known in this API) such
+as Maverick SSH or JSch.
+
+It allows the user to plug in the required provider at deployment
+time or even run time depending on their needs, for example because of specific
+performance, feature or licensing requirements.
+
+SSHAPI will search the CLASSPATH for providers, and choose the 
+best one for the requested configuration (or just a default). The 
+behavior of the discovery can be configured using system properties.
+
+Specific providers can also be chosen manually at connection time. This
+makes it possible to use different providers depending on configuration
+of the connection, yet still use a single API for your application.
+
+Usage
+=====
+
+You will need to include at least 3 libraries in order to use SSHAPI :-
+
+1. The core API library. This may be found in the lib directory named
+   sshapi-[[version].jar
+   
+2. At least one provider bridge library. This may be found in the lib
+   directory named sshapi-[provider]-[version].jar. You may include
+   more than provider if you wish.
+   
+3. The Jar(s) required for the provider itself. This distribution does
+   not include any providers, so you will have to obtain one yourself.
+   See the documentation for the provider for more information on what
+   you should include.
+   
+Getting Started
+===============
+
+Take a look at the examples directory. This contains simple examples
+for the most common uses of SSH.
+

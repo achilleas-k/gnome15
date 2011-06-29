@@ -1,0 +1,88 @@
+<assembly
+	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+	<id>src</id>
+	<formats>
+		<format>tar.gz</format>
+		<format>tar.bz2</format>
+		<format>zip</format>
+	</formats>
+	<includeBaseDirectory>false</includeBaseDirectory>
+
+	<moduleSets>
+		<moduleSet>
+			<sources>
+				<outputDirectoryMapping>
+          ${module.basedir.name}
+        </outputDirectoryMapping>
+				<excludeSubModuleDirectories>false</excludeSubModuleDirectories>
+				<fileSets>
+					<fileSet>
+						<directory>/</directory>
+						<excludes>
+							<exclude>**/target</exclude>
+						</excludes>
+					</fileSet>
+				</fileSets>
+			</sources>
+		</moduleSet>
+	</moduleSets>
+	<files>
+		<file>
+			<outputDirectory>sshapi-${project.version}</outputDirectory>
+			<source>src/main/assembly/src/pom.xml</source>
+		</file>
+		<file>
+			<outputDirectory>sshapi-${project.version}</outputDirectory>
+			<source>src/main/assembly/src/README.txt</source>
+		</file>
+		<file>
+			<outputDirectory>sshapi-${project.version}</outputDirectory>
+			<source>src/main/assembly/src/build.xml</source>
+		</file>
+	</files>
+	<fileSets>
+		<fileSet>
+			<outputDirectory>sshapi-${project.version}</outputDirectory>
+			<useStrictFiltering>true</useStrictFiltering>
+			<includes>
+				<include>LICENSE.txt</include>
+				<include>NOTICE.txt</include>
+			</includes>
+		</fileSet>
+		<fileSet>
+			<directory>..</directory>
+			<includes>
+				<include>sshapi-*/**/*</include>
+			</includes>
+			<excludes>
+				<exclude>*/target/**/*</exclude>
+				<exclude>*/.settings/**/*</exclude>
+				<exclude>*/.project</exclude>
+				<exclude>*/.classpath</exclude>
+				<exclude>sshapi-assembly/**/*</exclude>
+				<exclude>sshapi-project/**/*</exclude>
+				<exclude>sshapi-site/**/*</exclude>
+			</excludes>
+			<outputDirectory>sshapi-${project.version}</outputDirectory>
+		</fileSet>
+	</fileSets>
+	<dependencySets>
+
+
+		<!--
+			<dependencySet> <includes> <include>*:src</include> </includes>
+			<unpack>true</unpack> <useProjectArtifact>true</useProjectArtifact>
+			<useTransitiveDependencies>false</useTransitiveDependencies>
+			<outputDirectory>${project.artifactId}-${project.version}/apidocs/${artifact.artifactId}</outputDirectory>
+			</dependencySet> <dependencySet> <excludes>
+			<exclude>net.sf.sshapi:sshapi-assembly</exclude>
+			<exclude>*:javadoc</exclude> </excludes> <unpack>false</unpack>
+			<useProjectArtifact>true</useProjectArtifact>
+			<useTransitiveDependencies>false</useTransitiveDependencies>
+			<outputDirectory>${project.artifactId}-${project.version}</outputDirectory>
+			</dependencySet>
+		-->
+	</dependencySets>
+</assembly>

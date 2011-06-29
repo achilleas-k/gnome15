@@ -27,6 +27,8 @@ import gnome15.g15theme as g15theme
 import gtk
 import os
 import sys
+import time
+import datetime
 
 id="impulse15"
 name="Impulse15"
@@ -77,6 +79,7 @@ class G15ImpulsePainter(g15screen.Painter):
         self.mkey_acquisition = None        
         self.mode = "default"
         self.plugin = plugin
+        self.last_sound = datetime.datetime.now()
         
     def do_lights(self, audio_sample_array = None):     
         if not audio_sample_array:
@@ -84,18 +87,23 @@ class G15ImpulsePainter(g15screen.Painter):
         
         if self.backlight_acquisition is not None:
             self.backlight_acquisition.set_value(self._col_avg(audio_sample_array))
+        tot_avg = self._tot_avg(audio_sample_array)
         if self.mkey_acquisition is not None:
-            self._set_mkey_lights(self._tot_avg(audio_sample_array))
+            self._set_mkey_lights(tot_avg)
+        return tot_avg
+    
+    def is_idle(self):
+        return datetime.datetime.now() > ( self.last_sound + datetime.timedelta(0, 5.0) )
             
     def paint(self, canvas):
         if not self.theme_module: 
             return
-        print "Painting"
         audio_sample_array = self._get_sample()
-        self.do_lights(audio_sample_array)
+        tot_avg = self.do_lights(audio_sample_array)
+        if tot_avg > 0:
+            self.last_sound = datetime.datetime.now()
         
         canvas.save()
-        print "to theme"
         self.theme_module.on_draw( audio_sample_array, canvas, self.plugin )
         canvas.restore()
         
@@ -249,7 +257,11 @@ class G15Impulse():
         
     def _schedule_redraw(self):
         if self.active:
-            self.timer = g15util.schedule("ImpulseRedraw", self.refresh_interval, self.redraw)
+            next_tick = self.refresh_interval
+            if self.painter.is_idle():
+                print "Idle"
+                next_tick = 1.0
+            self.timer = g15util.schedule("ImpulseRedraw", next_tick, self.redraw)
         
     def _config_changed(self, client, connection_id, entry, args):
         self.stop_redraw()

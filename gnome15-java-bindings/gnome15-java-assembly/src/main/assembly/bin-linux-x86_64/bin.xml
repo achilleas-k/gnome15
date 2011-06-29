@@ -1,0 +1,49 @@
+<assembly
+	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+	<id>bin-linux-x86_64</id>
+	<formats>
+		<format>tar.gz</format>
+	</formats>
+	
+	<includeBaseDirectory>false</includeBaseDirectory>
+	<fileSets>
+		<fileSet>
+			<outputDirectory>gnome15-java-${project.version}</outputDirectory>
+			<useStrictFiltering>true</useStrictFiltering>
+			<includes>
+				<include>COPYING</include>
+			</includes>
+		</fileSet>
+		<fileSet>
+			<outputDirectory>gnome15-java-${project.version}/example</outputDirectory>
+			<useStrictFiltering>true</useStrictFiltering>
+			<directory>src/main/assembly/example</directory>
+			<includes>
+				<include>**/*</include>
+			</includes>
+		</fileSet>
+	</fileSets>
+
+	<files>
+		<file>
+			<source>src/main/assembly/README</source>
+			<outputDirectory>gnome15-java-${project.version}</outputDirectory>
+		</file>
+	</files>
+
+	<dependencySets>
+		<dependencySet>
+			<excludes>
+				<exclude>cx.ath.matthew.linux.x86:libunix-java</exclude>
+				<exclude>org.gnome15:gnome15-java-assembly</exclude>
+			</excludes>
+			<unpack>false</unpack>
+			<useProjectArtifact>true</useProjectArtifact>
+			<useTransitiveDependencies>true</useTransitiveDependencies>
+			<outputFileNameMapping>${artifact.artifactId}.${artifact.extension}</outputFileNameMapping>
+			<outputDirectory>gnome15-java-${project.version}</outputDirectory>
+		</dependencySet>
+	</dependencySets>
+</assembly>

@@ -1,0 +1,29 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<properties>
+		<sourceRelease>1.2</sourceRelease>
+		<targetRelease>1.2</targetRelease>
+		
+		<!-- To compile Maverick bridge -->
+		<maverickHome>${user.home}/maverick</maverickHome>
+	</properties>
+
+	<groupId>net.sf.sshapi</groupId>
+	<artifactId>sshapi</artifactId>
+	<packaging>pom</packaging>
+	<version>0.9.3-SNAPSHOT</version>
+	<name>SSHAPI</name>
+	<description>Root project for source distribution</description>
+	<url>http://www.sshtools.com/${project.artifactId}</url>
+
+	<modules>
+		<module>sshapi-commons-vfs</module>
+		<module>sshapi-core</module>
+		<module>sshapi-examples</module>
+		<module>sshapi-maverick</module>
+		<module>sshapi-ganymed</module>
+		<module>sshapi-jsch</module>
+		<module>sshapi-j2ssh</module>
+	</modules>
+</project>

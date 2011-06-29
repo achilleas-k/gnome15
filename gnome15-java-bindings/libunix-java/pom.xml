@@ -1,0 +1,54 @@
+<project>
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>cx.ath.matthew</groupId>
+		<artifactId>libmatthew</artifactId>
+		<version>0.7.2</version>
+		<relativePath>../libmatthew</relativePath>
+	</parent>
+
+	<artifactId>libunix-java</artifactId>
+
+	<packaging>pom</packaging>
+	
+	
+	<modules>
+		<module>linux-x86</module>
+		<module>linux-x86_64</module>
+	</modules>
+	
+	<!-- 
+	
+	<profiles>
+		<profile>
+			<id>linux-x86</id>
+			<activation>
+				<property>
+					<name>platform</name>
+					<value>linux</value>
+				</property>
+			</activation>
+			<modules>
+				<module>linux-x86</module>
+			</modules>
+		</profile>
+
+		<profile>
+			<id>linux-x86_64</id>
+			<activation>
+				<property>
+					<name>platform</name>
+					<value>linux</value>
+				</property>
+			</activation>
+			<modules>
+				<module>linux-x86_64</module>
+			</modules>
+		</profile>
+
+	</profiles>
+	 -->
+
+</project>

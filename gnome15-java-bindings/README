@@ -1,0 +1,34 @@
+This folder contains the Java bindings for Gnome15. It allows you to add
+support to your applications using the DBUS API.
+
+The source for the Java DBUS bindings (and it's associated libraries)
+are also kept here, as I could find no suitable mavenised libraries. See
+http://www.freedesktop.org/wiki/Software/DBusBindings for more information.
+
+Requirements
+------------
+
+Maven 
+JDK 1.5.0 or higher.
+GCC
+
+Building
+--------
+
+So, to build the bindings, first build and install libmatthew :-
+
+$ cd libmatthew
+$ mvn clean install
+
+Then build the bindings themselves :-
+
+$ cd ../gnome15-java-group
+$ mvn clean package
+
+You will end up with .tar files in gnome15-java-assembly/target
+
+Note
+----
+
+This is a flat Maven project, as I work in Eclipse most of the time.
+

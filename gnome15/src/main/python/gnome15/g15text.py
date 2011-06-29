@@ -98,6 +98,7 @@ class G15PangoText(G15Text):
         if font_pt_size:
             font_desc_name += " " + str(font_pt_size)
         font_desc = pango.FontDescription(font_desc_name)
+        print "Setting font to %s" % font_desc
         if font_absolute_size is not None:
             font_desc.set_absolute_size(font_absolute_size)
         self.layout.set_font_description(font_desc)        

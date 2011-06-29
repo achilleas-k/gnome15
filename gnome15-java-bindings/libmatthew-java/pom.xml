@@ -1,0 +1,30 @@
+<project>
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>cx.ath.matthew</groupId>
+		<artifactId>libmatthew</artifactId>
+		<version>0.7.2</version>
+		<relativePath>../libmatthew</relativePath>
+	</parent>
+
+	<artifactId>libmatthew-java</artifactId>
+	<name>libmatthew cross platform library</name>
+	<build>
+		<sourceDirectory>src/main/java</sourceDirectory>
+		<outputDirectory>target/classes</outputDirectory>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.0.2</version>
+				<configuration>
+					<source>1.5</source>
+					<target>1.5</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
