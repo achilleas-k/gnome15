@@ -292,33 +292,36 @@ class G15VideoPlayer():
         self._page = G15VideoPage(self._screen)
         self._screen.add_page(self._page)
         self._screen.redraw(self._page)
+        self._screen.action_listeners.append(self)
     
     def deactivate(self):
         if self._page._playing != None:
             self._page._stop()
         self._screen.del_page(self._page)
+        self._screen.action_listeners.remove(self)
         
     def destroy(self):
         pass
     
-    def handle_key(self, keys, state, post=False):
-        if self._page is not None and self._page.is_visible() and not post and state == g15driver.KEY_STATE_DOWN:
-            if g15driver.G_KEY_G1 in keys:
+    def action_performed(self, binding):
+        if self._page is not None and self._page.is_visible():
+            if binding.action == g15driver.SELECT:
                 gobject.idle_add(self._page._open)
-            if g15driver.G_KEY_G2 in keys:
+            elif binding.action == g15driver.NEXT_SELECTION:
                 if self._page._playing == None:
                     self._page._play()
-            if g15driver.G_KEY_G3 in keys:
+            elif binding.action == g15driver.PREVIOUS_SELECTION:
                 if self._page._playing != None:
                     self._page._stop()
-            if g15driver.G_KEY_G4 in keys:
+            elif binding.action == g15driver.VIEW:
                 if self._page._playing != None:
                     self._page._hide_sidebar(3.0)
                 self._change_aspect()
-            if g15driver.G_KEY_G5 in keys:
+            elif binding.action == g15driver.CLEAR:
                 self._page.muted = not self._page.muted
                 if self._page._playing != None:
                     self._page._hide_sidebar(3.0)
                     self._playing.mute(self._page.muted)
+            else:
+                return False
             return True
-        return False

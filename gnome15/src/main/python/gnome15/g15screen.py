@@ -835,7 +835,8 @@ class G15Screen():
                             if f == len(binding.keys): 
                                 logger.info("Invoking action '%s'" % binding.action)
                                 for l in self.action_listeners:                                    
-                                    l.action_performed(binding)
+                                    if l.action_performed(binding):
+                                        break
                 
                 
         except Exception as e:
