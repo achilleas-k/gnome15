@@ -25,7 +25,7 @@ import sys
 import g15globals as pglobals
 import g15driver as g15driver
 import gconf
-import gobject
+import g15util
 import traceback
 import threading
 
@@ -53,7 +53,8 @@ def get_extra_plugin_dirs():
             plugindirs += list_plugin_dirs(dir)
     return plugindirs
 
-for plugindir in get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + list_plugin_dirs(pglobals.plugin_dir): 
+for plugindir in get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) +  \
+            list_plugin_dirs(os.path.expanduser("~/.config/gnome15/plugins")) + list_plugin_dirs(pglobals.plugin_dir): 
     plugin_name = os.path.basename(plugindir)
     pluginfiles = [fname[:-3] for fname in os.listdir(plugindir) if fname == plugin_name + ".py"]
     if not plugindir in sys.path:
@@ -83,13 +84,20 @@ def get_supported_models(plugin):
     except:
         pass        
     return supported_models
+
+def is_default_enabled(plugin_module):
+    try :
+        return plugin_module.default_enabled
+    except AttributeError: 
+        pass 
+    return False
         
 def is_key_reserved(device, key, gconf_client):
     if key in [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3  ]:
         return True
     for mod in imported_plugins:  
         enabled_key = "/apps/gnome15/%s/plugins/%s/enabled" % ( device.uid, mod.id )
-        if gconf_client.get_bool(enabled_key):  
+        if g15util.get_bool_or_default(gconf_client, enabled_key, is_default_enabled(mod)):  
             try :
                 keys = getattr(mod, "reserved_keys")
                 if key in keys:
@@ -140,7 +148,7 @@ class G15Plugins():
                 key = "%s/enabled" % plugin_dir_key
                 self.conf_client.notify_add(key, self._plugin_changed);
                 if self.conf_client.get(key) == None:
-                    self.conf_client.set_bool(key, False)
+                    self.conf_client.set_bool(key, is_default_enabled(mod))
                 if self.conf_client.get_bool(key):
                     try :
                         instance = self._create_instance(mod, plugin_dir_key)

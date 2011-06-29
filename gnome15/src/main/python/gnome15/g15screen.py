@@ -644,7 +644,7 @@ class G15Screen():
         try:
             logger.debug("Rescheduling cycle")
             self._cancel_timer()
-            cycle_screens = self.conf_client.get_bool("/apps/gnome15/%s/cycle_screens" % self.device.uid)
+            cycle_screens = g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % self.device.uid, True)
             active = self.driver != None and self.driver.is_connected() and cycle_screens
             if active and self.cycle_timer == None:
                 val = self.conf_client.get("/apps/gnome15/%s/cycle_seconds" % self.device.uid)
@@ -1049,6 +1049,19 @@ class G15Screen():
             self.connection_lock.release()
             
         logger.info("Connection for %s is complete." % self.device.uid)
+        
+    def clear_canvas(self, canvas):
+        """
+        Clears a canvas, filling it with the current background color, and setting the canvas
+        paint color to the current foreground color
+        """
+        rgb = self.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
+        canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
+        canvas.rectangle(0, 0, self.width, self.height)
+        canvas.fill()
+        rgb = self.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+        canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
+        self.configure_canvas(canvas)
     
     '''
     Private functions
@@ -1078,13 +1091,7 @@ class G15Screen():
                 
             self.local_data.surface = surface
             canvas = cairo.Context (surface)
-            rgb = self.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
-            canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
-            canvas.rectangle(0, 0, self.width, self.height)
-            canvas.fill()
-            rgb = self.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
-            canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
-            self.configure_canvas(canvas)
+            self.clear_canvas(canvas)
             
             # Background painters
             for painter in painters:

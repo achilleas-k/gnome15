@@ -222,7 +222,7 @@ def get_device_info(model_id):
 
 def is_enabled(conf_client, device):    
     val = conf_client.get("/apps/gnome15/%s/enabled" % device.uid)
-    return val == None or val.get_bool()
+    return ( val == None and device.model_id != "virtual" ) or ( val is not None and val.get_bool() )
         
 def set_enabled(conf_client, device, enabled):
     conf_client.set_bool("/apps/gnome15/%s/enabled" % device.uid, enabled)

@@ -25,14 +25,13 @@ A top level GTK windows that draws on the LCD
 '''
 import gtk
 import gobject
-import cairo
 import g15driver as g15driver
 import g15util as g15util
-import traceback
 from threading import Lock
-
-import ctypes
+import g15theme
+import g15screen
 import cairo
+import ctypes
 
 
 _initialized = False
@@ -93,22 +92,78 @@ def create_cairo_font_face_for_file (filename, faceindex=0, loadoptions=0):
 
     return face
 
+
+class G15OffscreenWindow(g15theme.Component):
+    
+    def __init__(self, id):
+        g15theme.Component.__init__(self, id)
+        self.window = None
+        self.content = None
+        
+    def on_configure(self):
+        g15theme.Component.on_configure(self)        
+        gobject.idle_add(self._create_window)
+        self.get_screen().action_listeners.append(self)
+        
+    def notify_remove(self):
+        g15theme.Component.notify_remove(self)
+        self.get_screen().action_listeners.remove(self)
+        
+    def set_content(self, content):
+        self.content = content
+        if self.window is not None:
+            gobject.idle_add(self._do_set_content)
+            
+    def action_performed(self, binding):
+        if self.is_visible():
+            if binding.action == g15driver.NEXT_SELECTION:
+               gobject.idle_add(self.window.focus_next)
+            elif binding.action == g15driver.PREVIOUS_SELECTION:
+                gobject.idle_add(self.window.focus_previous)
+            if binding.action == g15driver.NEXT_PAGE:
+                gobject.idle_add(self.window.change_widget)
+            elif binding.action == g15driver.PREVIOUS_PAGE:
+                gobject.idle_add(self.window.change_widget, None, True)
+            elif binding.action == g15driver.SELECT:
+                pass
+            
+    def paint(self, canvas):
+        g15theme.Component.paint(self, canvas)
+        if self.window is not None:
+            self.window.paint(canvas)
+            
+        
+    """
+    Private
+    """
+            
+    def _do_set_content(self):
+        self.window.content.add(self.content)
+        self.window.show_all()
+        
+    def _create_window(self):     
+        screen = self.get_screen()   
+        window = G15Window(screen, self.get_root(), self.view_bounds[0], self.view_bounds[1], \
+                           self.view_bounds[2], self.view_bounds[3])
+        if self.content is not None:
+            window.content.add(self.content)
+            window.show_all()
+        self.window = window
+        screen.redraw(self.get_root())
+
 class G15Window(gtk.OffscreenWindow):
     
     def __init__(self, screen, page, area_x, area_y, area_width, area_height):
         gtk.OffscreenWindow.__init__(self)
         self.pixbuf = None
         self.screen = screen
-        self.page = page  
+        self.page = page
         self.lock = None      
         self.area_x = int(area_x)
         self.area_y = int(area_y)
         self.area_width = int(area_width)
         self.area_height = int(area_height)
         self.surface = None
-        self.redraw_surface()
-        
-        
         self.content = gtk.EventBox()
         self.set_app_paintable(True)
 #        self.set_double_buffered(False)
@@ -119,42 +174,54 @@ class G15Window(gtk.OffscreenWindow):
         self.content.set_size_request(self.area_width, self.area_height)
         self.add(self.content)
         self.connect("damage_event", self._damage)
+#        self.content.window.set_composited(True)
         self.connect("expose_event", self._expose)
         self.screen_changed(None, None)
-        self.set_opacity(0.5)
+#        self.set_opacity(0.5)
         
-    def handle_key(self, keys, state, post):
-        gobject.idle_add(self._do_handle_key, keys, state, post)
+    def paint(self, canvas):
+        print "Painting offscreen window"
+        self.start_for_capture()
+#        self._transparent_expose(self.content)
+#        self.content.queue_draw()
+#        while gtk.events_pending():
+#            gtk.main_iteration(False)        
+        gobject.idle_add(self._do_capture)
+        self.wait_for_capture()
+        canvas.save()
+        canvas.translate(self.area_x, self.area_y)
+        canvas.set_source_surface(self.surface)
+        canvas.paint()
+        canvas.restore()
+            
+    def focus_next(self):
+        self.content.get_toplevel().child_focus(gtk.DIR_TAB_FORWARD)
+        self.screen.redraw(self.page)
         
-    def _do_handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP:
-            if g15driver.G_KEY_DOWN in keys or g15driver.G_KEY_L3 in keys:
-                self.content.get_toplevel().child_focus(gtk.DIR_TAB_FORWARD)
-                pass
-            elif g15driver.G_KEY_UP in keys:
-                self.content.get_toplevel().child_focus(gtk.DIR_TAB_BACKWARD)
-            if g15driver.G_KEY_LEFT in keys or g15driver.G_KEY_RIGHT in keys or g15driver.G_KEY_L3 in keys:
-                self._change_widget(keys)
-                pass
-                
-    def _change_widget(self, keys):
+    def focus_previous(self):
+        self.content.get_toplevel().child_focus(gtk.DIR_TAB_BACKWARD)
+        self.screen.redraw(self.page)
+        
+    def change_widget(self, amount = None, reverse = False):
         focussed = self.get_focus()
         if focussed != None:
             if isinstance(focussed, gtk.HScale):
                 adj = focussed.get_adjustment()
-                ps = adj.get_page_size()
+                ps = adj.get_page_size() if amount is None else amount
                 if ps == 0:
                     ps = 10
-                if g15driver.G_KEY_LEFT in keys:
+                if reverse:
                     adj.set_value(adj.get_value() - ps)
                 else:
                     adj.set_value(adj.get_value() + ps)
+                self._do_capture()
+                self.screen.redraw(self.page)
         
     def show_all(self):
         gtk.OffscreenWindow.show_all(self)
 #        if self.content.window != None:
 #            self.content.window.set_composited(True)
-        self.content.window.set_composited(False)
+#        self.content.window.set_composited(True)
 #        self.set_opacity(0.5)
 
     def screen_changed(self, widget, old_screen=None):
@@ -174,67 +241,47 @@ class G15Window(gtk.OffscreenWindow):
     
         return False
         
-    def _transparent_expose(self, widget, event):
+    def _transparent_expose(self, widget, event = None):
+        """
+        To overcome inability to set a container component as transparent. I 
+        cannot get compositing working (perhaps it just doesn't because we are
+        going to an offscreen window). So, to get pseudo-transparency,
+        we repaint the background the screen would normally paint, offset by
+        the position of this component
+        """
         cr = widget.window.cairo_create()
-        cr.set_operator(cairo.OPERATOR_OVER)
-        cr.set_source_surface(self.surface)
-        cr.paint()
+        self.screen.clear_canvas(cr)
+        cr.save()
+        cr.translate(-self.area_x, -self.area_y)
+        for s in self.screen.painters:
+            if s.place == g15screen.BACKGROUND_PAINTER:
+                s.paint(cr)
+        cr.restore()
         return False
-    
-    def redraw_surface(self):
-        self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.screen.width, self.screen.height) 
-        ctx = cairo.Context(self.surface)
-#        ctx.rectangle(self.area_x, self.area_y, self.area_width, self.area_height)
-#        ctx.clip()
-        scale = 1.0 / self.screen.get_desktop_scale()
-        tx = ( ( float(self.screen.width) - ( float(self.screen.width) * scale) ) ) / 2.0        
-        ctx.translate(-self.area_x, -self.area_y)
-        ctx.scale(scale, scale)
-        ctx.translate(tx ,0)
-        ctx.set_source_surface(self.screen.surface)
-        ctx.paint()
         
     def _expose(self, widget, event):
-        
-#        cr = widget.window.cairo_create()
-#        cr.set_operator(cairo.OPERATOR_CLEAR)
-#        region = gtk.gdk.region_rectangle(event.area)
-#        cr.region(region)
-#        cr.fill()
-        self._do_capture
+        print "Expose"
+        self.screen.redraw(self.page)
         return False
-    
-    def get_as_surface(self):
-        self.redraw_surface()
-        lock = Lock()
-        self.lock = lock
-        lock.acquire()
-        self.queue_draw()
-        lock.acquire()
-        self.lock = None
-        lock.release()
-        return self.surface
-    
-    def get_as_pixbuf(self):
-        self.redraw_surface()
-        lock = Lock()
-        self.lock = lock
-        lock.acquire()
-        self.queue_draw()
-        lock.acquire()
-        self.lock = None
-        lock.release()
-        return self.pixbuf
         
     def _damage(self, widget, event):
-        self.redraw_surface()
-        self._do_capture()
+#        print "Damage"
+#        self.screen.redraw(self.page)
         return False
     
-    def wait_for_capture(self):
+    def start_for_capture(self):
         self.lock = Lock()
+        self.lock.acquire()
+    
+    def wait_for_capture(self):
+        self.lock.acquire()
+        self.lock.release()
+        self.lock = None
         
     def _do_capture(self):
+        print "Capturing %d x %d" % (self.area_width, self.area_height)
+        self.content.window.invalidate_rect((0,0,self.area_width,self.area_height), True)
+        self.content.window.process_updates(True)
         pixbuf = gtk.gdk.Pixbuf( gtk.gdk.COLORSPACE_RGB, False, 8, self.area_width, self.area_height)
         pixbuf.get_from_drawable(self.content.window, self.content.get_colormap(), 0, 0, 0, 0, self.area_width, self.area_height)
         self.surface = g15util.pixbuf_to_surface(pixbuf)

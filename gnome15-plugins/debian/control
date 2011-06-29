@@ -9,6 +9,7 @@ Homepage: http://www.gnome15.org/
 Package: gnome15-base-plugins
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends}, gnome15, python-gnome2
+Recommends: cairo-clock
 Provides: ${python:Provides}
 Description: Base collection of plugins for Gnome15.
  This package contains all Gnome15 plugins that work across all supported platforms.

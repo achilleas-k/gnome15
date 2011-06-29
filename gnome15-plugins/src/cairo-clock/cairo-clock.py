@@ -47,6 +47,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
+default_enabled=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 def create(gconf_key, gconf_client, screen):
@@ -234,17 +235,16 @@ class G15CairoClock():
             return
         
         now = datetime.datetime.now()
-        display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")
         
         if self.second_sweep:
             next_tick = now + datetime.timedelta(0, 0.1)
-        elif display_seconds:
+        elif self.display_seconds:
             next_tick = now + datetime.timedelta(0, 1.0)
             next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, int(next_tick.second))
         else:
             next_tick = now + datetime.timedelta(0, 60.0)
             next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, 0)
-        delay = g15util.total_seconds( next_tick - now )        
+        delay = g15util.total_seconds( next_tick - now )    
         self.timer = g15util.schedule("CairoRefresh", delay, self._refresh)
     
     def _refresh(self):

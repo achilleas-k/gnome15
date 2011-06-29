@@ -457,6 +457,7 @@ class G15Im(g15plugin.G15MenuPlugin):
         Activate the plugin
         """
         g15plugin.G15MenuPlugin.activate(self)
+        self.screen.action_listeners.append(self)
         self._signal_handle = self._session_bus.add_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
                                      signal_name='NameOwnerChanged')
@@ -466,6 +467,7 @@ class G15Im(g15plugin.G15MenuPlugin):
         return ContactMenu(mode)
     
     def deactivate(self):
+        self.screen.action_listeners.remove(self)
         g15plugin.G15MenuPlugin.deactivate(self)
         if self._signal_handle:
             self._session_bus.remove_signal_receiver(self._signal_handle)

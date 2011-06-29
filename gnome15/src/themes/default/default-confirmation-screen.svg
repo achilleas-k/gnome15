@@ -17,7 +17,19 @@
    inkscape:version="0.48.1 r9760"
    sodipodi:docname="default-confirmation-screen.svg">
   <defs
-     id="defs4" />
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3001">
+      <rect
+         y="1019.3622"
+         x="-51"
+         height="24"
+         width="126"
+         id="rect3003"
+         style="fill:#696969;fill-opacity:1;stroke:none" />
+    </clipPath>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -34,7 +46,7 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="620"
-     inkscape:window-x="469"
+     inkscape:window-x="483"
      inkscape:window-y="196"
      inkscape:window-maximized="0">
     <inkscape:grid
@@ -94,21 +106,15 @@
        y="1019.3622"
        width="29"
        height="29" />
-    <rect
-       style="fill:#696969;fill-opacity:1;stroke:none"
-       id="text"
-       width="126"
-       height="24"
-       x="-1.0217938e-07"
-       y="1019.3622"
-       class="textbox" />
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
        x="-0.49804688"
        y="1024.1141"
        id="text_text"
-       sodipodi:linespacing="125%"><tspan
+       sodipodi:linespacing="125%"
+       clip-path="url(#clipPath3001)"
+       transform="translate(52,0)"><tspan
          sodipodi:role="line"
          id="tspan3763"
          x="-0.49804688"
@@ -132,24 +138,24 @@
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="23.411133"
+       x="27.411133"
        y="1050.2772"
        id="text3032"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3034"
-         x="23.411133"
+         x="27.411133"
          y="1050.2772">L3 - No</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="100.6377"
+       x="104.6377"
        y="1050.2772"
        id="text3032-4-4"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3034-7-4"
-         x="100.6377"
+         x="104.6377"
          y="1050.2772">L4 - Yes</tspan></text>
   </g>
 </svg>

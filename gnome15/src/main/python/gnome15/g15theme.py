@@ -563,7 +563,9 @@ class G15Page(Component):
         sh = screen.driver.get_size()[1]
         self.back_buffer = cairo.ImageSurface (cairo.FORMAT_ARGB32,sw, sh)
         self.back_context = cairo.Context(self.back_buffer)
+        self.text_handler = g15text.new_text(screen)
         screen.configure_canvas(self.back_context)
+        self.text_handler.set_canvas(self.back_context)
         self.set_line_width(1.0)        
         rgb = screen.driver.get_color(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
         self.foreground(rgb[0],rgb[1],rgb[2], 255)
@@ -577,6 +579,9 @@ class G15Page(Component):
         
     def save(self):
         self.back_context.save()
+        
+    def delete(self):
+        self.screen.del_page(self)
         
     def restore(self):
         self.back_context.restore()
@@ -656,62 +661,18 @@ class G15Page(Component):
             self.font_weight = font_weight
             
     def text(self, text, x, y, width, height, text_align = "left"):
-        
-        raise Exception("THIS IS BROKEN!!!!!!!! BUG ME TO FIX IT")
-        driver = self.get_screen().driver
-        
-        pango_context = pangocairo.CairoContext(self.back_context)
-        pango_context.set_antialias(driver.get_antialias()) 
-        fo = cairo.FontOptions()
-        fo.set_antialias(driver.get_antialias())
-        if driver.get_antialias() == cairo.ANTIALIAS_NONE:
-            fo.set_hint_style(cairo.HINT_STYLE_NONE)
-            fo.set_hint_metrics(cairo.HINT_METRICS_OFF)
-        
-        buf = "<span"
-        if self.font_size != None:
-            buf += " size=\"%d\"" % ( int(self.font_size * 1000) ) 
-        if self.font_style != None:
-            buf += " style=\"%s\"" % self.font_style
-        if self.font_weight != None:
-            buf += " weight=\"%s\"" % self.font_weight
-        if self.font_family != None:
-            buf += " font_family=\"%s\"" % self.font_family                
-        if self.foreground_rgb != None:
-            buf += " foreground=\"%s\"" % g15util.rgb_to_hex(self.foreground_rgb[0:3])
-            
-        buf += ">%s</span>" % saxutils.escape(text)
-        attr_list = pango.parse_markup(buf)
-        
-        # Create the layout
-        layout = pango_context.create_layout()
-        
-        pangocairo.context_set_font_options(layout.get_context(), fo)      
-        layout.set_attributes(attr_list[0])
-        layout.set_width(int(pango.SCALE * width))
-        layout.set_wrap(pango.WRAP_WORD_CHAR)      
-        layout.set_text(text)
-        spacing = 0
-        layout.set_spacing(spacing)
-        
-        # Alignment
-        if text_align == "right":
-            layout.set_alignment(pango.ALIGN_RIGHT)
-        elif text_align == "center":
-            layout.set_alignment(pango.ALIGN_CENTER)
+        bounds = None
+        if width > 0 and height > 0:
+            bounds = (x, y, width, height)
+        if text_align == "center":
+            align = pango.ALIGN_CENTER
+        elif text_align == "right":
+            align = pango.ALIGN_RIGHT
         else:
-            layout.set_alignment(pango.ALIGN_LEFT)
-        
-        # Draw text to canvas
-        self.back_context.set_source_rgb(self.foreground_rgb[0], self.foreground_rgb[1], self.foreground_rgb[2])
-        pango_context.save()
-        pango_context.rectangle(x, y, width, height)
-        pango_context.clip()  
-                  
-        pango_context.move_to(x, y)    
-        pango_context.update_layout(layout)
-        pango_context.show_layout(layout)        
-        pango_context.restore()
+            align = pango.ALIGN_LEFT
+        self.text_handler.set_attributes(text, bounds = bounds, align = align, font_desc = self.font_family, font_pt_size = self.font_size, \
+                                 style = self.font_style, weight = self.font_weight)
+        self.text_handler.draw(x, y)
         
     """
     Private
@@ -1143,10 +1104,11 @@ class ConfirmationScreen(G15Page):
     def action_performed(self, binding):             
         if binding.action == g15driver.PREVIOUS_SELECTION:
             self.screen.del_page(self)
+            self.screen.action_listeners.remove(self)
         elif binding.action == g15driver.NEXT_SELECTION:
-            self.callback(self.arg)  
             self.screen.del_page(self)
             self.screen.action_listeners.remove(self)
+            self.callback(self.arg)  
                 
 class G15Theme():    
     def __init__(self, dir, variant = None, svg_text = None, prefix = None, auto_dirty = True):
@@ -1160,7 +1122,6 @@ class G15Theme():
         self.svg_processor = None
         self.svg_text = svg_text
         self.prefix = prefix
-        self.offscreen_windows = []
         self.render_lock = RLock()
         self.scroll_timer = None
         self.dirty = False
@@ -1321,16 +1282,6 @@ class G15Theme():
             buf += style + ":" + styles[style] + ";"
         return buf.rstrip(';')
 
-    def add_window(self, id, page):
-        # Get the bounds of the GTK element and remove it from the SVG
-        element = self.document.getroot().xpath('//svg:*[@id=\'%s\']' % id,namespaces=self.nsmap)[0]
-        offscreen_bounds = g15util.get_actual_bounds(element)
-        element.getparent().remove(element)
-        import g15gtk as g15gtk
-        window = g15gtk.G15Window(self.get_screen(), page, offscreen_bounds[0], offscreen_bounds[1], offscreen_bounds[2], offscreen_bounds[3])
-        self.offscreen_windows.append((window, offscreen_bounds))
-        return window
-    
     def get_element(self, id, root = None):
         if root == None:
             root = self.document.getroot()
@@ -1437,7 +1388,11 @@ class G15Theme():
             for component_id in self.component.child_map.keys():
                 component_elements = root.xpath('//svg:*[@id=\'%s\']' % component_id,namespaces=self.nsmap)
                 if len(component_elements) > 0:
-                    self.component.child_map[component_id].draw(self, component_elements[0])
+                    c = component_elements[0]
+                    c_class = c.get("class")
+                    if c_class and "hidden-root" in c_class:
+                        c.getparent().remove(c)
+                    self.component.child_map[component_id].draw(self, c)
                 else:
                     logger.warning("Cannot find SVG element for component %s" % component_id)
     
@@ -1708,17 +1663,6 @@ class G15Theme():
             bg_rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
             for text_box in render.text_boxes:
                 self._render_text_box(canvas, text_box, rgb, bg_rgb)
-                
-        # Paint all GTK components that may have been added
-        for offscreen_window, offscreen_bounds in self.offscreen_windows:
-            pixbuf = offscreen_window.get_as_pixbuf()
-            if pixbuf != None:
-                image = g15util.pixbuf_to_surface(pixbuf)
-                canvas.save()
-                canvas.translate(offscreen_bounds[0], offscreen_bounds[1])
-                canvas.set_source_surface(image)
-                canvas.paint()
-                canvas.restore()
         
         # Give the python portion of the theme chance to draw stuff over the SVG
         if self.instance != None:

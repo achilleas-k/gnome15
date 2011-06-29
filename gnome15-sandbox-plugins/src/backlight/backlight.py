@@ -25,7 +25,6 @@ import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15gtk  as g15gtk
-import os
 import gtk
 import gobject
 
@@ -51,13 +50,11 @@ class G15Backlight():
         self.gconf_key = gconf_key
     
     def activate(self):
-        if self.screen.driver.get_model_name() != g15driver.MODEL_G19:
-            raise Exception("Backlight plugin only works on G19")
-        self._reload_theme()
-        self.page = self.screen.new_page(self.paint, id=id, priority = g15screen.PRI_LOW)
-        self.page.set_title(name)
+        self.page = g15theme.G15Page(id, self.screen, theme_properties_callback = self._get_theme_properties, priority = g15screen.PRI_LOW, title = name, theme = g15theme.G15Theme(self))
+        self.window = g15gtk.G15OffscreenWindow("offscreenWindow")
+        self.page.add_child(self.window)
         gobject.idle_add(self._create_offscreen_window)
-    
+        
     def deactivate(self):
         if self.page != None:
             self.screen.del_page(self.page)
@@ -65,14 +62,12 @@ class G15Backlight():
         
     def destroy(self):
         pass
-        
-    def handle_key(self, keys, state, post):
-        if not post and state == g15driver.KEY_STATE_UP and g15driver.G_KEY_BACK in keys:
-            self.screen.set_priority(self.page, g15screen.PRI_LOW)
-        elif self.offscreen_window != None:
-            self.offscreen_window.handle_key(keys, state, post)
     
-    def paint(self, canvas):
+    '''
+    Private
+    '''
+    
+    def _get_theme_properties(self):
         backlight_control = self.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
         color = backlight_control.value
         properties = {
@@ -82,24 +77,9 @@ class G15Backlight():
                       "g" : color[1],
                       "b" : color[2]
                       }
-        self.theme.draw(canvas, properties)
-        
-    '''
-    Private
-    '''
+        return properties
     
-    def _reload_theme(self):
-        self.offscreen_window = None      
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-        
-    def _value_changed(self, widget, octet):
-        backlight_control = self.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
-        color = list(backlight_control.value)
-        color[octet] = int(widget.get_value())
-        self.gconf_client.set_string("/apps/gnome15/" + backlight_control.id, "%d,%d,%d" % ( color[0],color[1],color[2]))
-        
     def _create_offscreen_window(self):
-        
         backlight_control = self.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
         color = backlight_control.value
         
@@ -126,7 +106,13 @@ class G15Backlight():
         blue.set_increments(1, 10)
         vbox.add(blue)
         
-        self.offscreen_window = self.theme.add_window("offscreenWindow", self.page)
-        self.offscreen_window.content.add(vbox)
-        self.offscreen_window.show_all()
+        self.window.set_content(vbox)
+        self.screen.add_page(self.page)
         self.screen.redraw(self.page)
+    
+    def _value_changed(self, widget, octet):
+        backlight_control = self.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
+        color = list(backlight_control.value)
+        color[octet] = int(widget.get_value())
+        self.gconf_client.set_string("/apps/gnome15/" + backlight_control.id, "%d,%d,%d" % ( color[0],color[1],color[2]))
+        

@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="g19.svg">
   <defs
      id="defs4">
@@ -131,7 +131,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="121.64397"
+     inkscape:cx="63.072541"
      inkscape:cy="128.87257"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -139,7 +139,7 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2142"
+     inkscape:window-x="2156"
      inkscape:window-y="79"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -190,7 +190,7 @@
        rx="4"
        ry="4" />
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15-sandbox-plugins/src/backlight/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-sandbox-plugins/src/backlight/default/${icon}"
        xlink:href="${icon}"
        id="image4256"
        x="296.54773"
@@ -218,9 +218,10 @@
        x="79.758293"
        y="851.11218"
        rx="6"
-       ry="6.0000005" />
+       ry="6.0000005"
+       class="hidden-root" />
     <rect
-       style="fill:#ff0000;fill-opacity:0.9901962;stroke:none;filter:url(#filter3102)"
+       style="fill:#ff0100;fill-opacity:1;stroke:none;filter:url(#filter3102)"
        id="rect3017"
        width="40"
        height="25"

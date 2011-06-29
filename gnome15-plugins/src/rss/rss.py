@@ -183,12 +183,19 @@ class G15FeedPage(g15theme.G15Page):
         
     def _reload(self):
         self.feed = feedparser.parse(self.url)
+        icon = None
         if "icon" in self.feed["feed"]:
             icon = self.feed["feed"]["icon"]
         elif "image" in self.feed["feed"]:
-            icon = self.feed["feed"]["image"]["url"]
-        else:
+            img = self.feed["feed"]["image"]
+            if "url" in img:
+                icon = img["url"]
+            elif "link" in img:
+                icon = img["link"]
+        if icon is None:
             icon = g15util.get_icon_path("application-rss+xml", self._screen.height)
+            
+        print "Icon = %s" % icon
             
         if icon == None:
             self._icon_surface = None

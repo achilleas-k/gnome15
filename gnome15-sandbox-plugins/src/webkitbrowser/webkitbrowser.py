@@ -53,9 +53,9 @@ class G15WebkitBrowser():
     def activate(self):
         if self.screen.driver.get_model_name() != g15driver.MODEL_G19:
             raise Exception("Webkit plugin only works on G19")
-        self._reload_theme()
-        self.page = self.screen.new_page(self.paint, id=id, priority = g15screen.PRI_LOW)
-        self.page.set_title(name)
+        self.page = g15theme.G15Page(id, self.screen, theme_properties_callback = self._get_theme_properties, priority = g15screen.PRI_LOW, title = name, theme = g15theme.G15Theme(self))
+        self.window = g15gtk.G15OffscreenWindow("offscreenWindow")
+        self.page.add_child(self.window)
         gobject.idle_add(self._create_offscreen_window)
     
     def deactivate(self):
@@ -72,18 +72,17 @@ class G15WebkitBrowser():
                 gobject.idle_add(self._scroll_up) 
             elif g15driver.G_KEY_DOWN in keys:
                 gobject.idle_add(self._scroll_down)
-    
-    def paint(self, canvas):
-        print "Painting"
-        properties = {
-                      "url" : "www.somewhere.com",
-                      "icon" : g15util.get_icon_path("system-config-display")
-                      }
-        self.theme.draw(canvas, properties)
         
     '''
     Private
     '''
+    
+    def _get_theme_properties(self):
+        return {
+                      "url" : "www.somewhere.com",
+                      "icon" : g15util.get_icon_path("system-config-display")
+                      }
+        
     def _scroll_up(self):
         print "Scroll up"
         adj = self.scroller.get_vadjustment()
@@ -98,18 +97,11 @@ class G15WebkitBrowser():
         print "Val is now", adj.get_value(), "page increment", adj.get_page_increment(), "upper", adj.get_upper()
         self.screen.redraw(self.page)
     
-    def _reload_theme(self):
-        self.offscreen_window = None      
-        self.theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), self.screen)
-        
     def _create_offscreen_window(self):
-        vbox = gtk.VBox()
         view = webkit.WebView()
         view.open("http://www.youtube.com")
         self.scroller = gtk.ScrolledWindow()
-        self.scroller.add(view)
-        
-        self.offscreen_window = self.theme.add_window("offscreenWindow", self.page)
-        self.offscreen_window.content.add(self.scroller)
-        self.offscreen_window.show_all()
+        self.scroller.add(view)        
+        self.window.set_content(self.scroller)
+        self.screen.add_page(self.page)
         self.screen.redraw(self.page)

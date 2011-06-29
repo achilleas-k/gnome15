@@ -174,6 +174,7 @@ class AbstractControlAcquisition(object):
         self.driver = driver
         self.val = initial_value
         self.adjust(self.val)
+        self.on_released = None
         self.reset_timer = None
         self.reset_val = initial_value
         self.on = False
@@ -257,6 +258,8 @@ class AbstractControlAcquisition(object):
     def _notify_released(self):
         if self._released:
             raise Exception("Already released")
+        if self.on_released:
+            self.on_released()
         self._released = True
         self._condition.release()
     
@@ -272,7 +275,10 @@ class ControlAcquisition(AbstractControlAcquisition):
     
     def blink(self, off_val = None, delay = 0.5, duration = None, blink_started = None):
         AbstractControlAcquisition.blink(self, ( (0,0,0) if isinstance(self.control.value, tuple) else 0 ) if off_val is None else off_val , delay, duration, blink_started)
-    
+            
+    def release(self):
+        self.driver.release_control(self)
+        
     def adjust(self, val):
         if self.is_active():
             self.control.value = val
@@ -354,13 +360,14 @@ class AbstractDriver(object):
                 self.update_control(c)
         self.set_mkey_lights(self.initial_mkey_lights_value)
         
-    def acquire_control(self, control, release_after = None, val = None):
+    def acquire_control(self, control, release_after = None, val = None, on_release = None):
         control_acquisitions = self.acquired_controls[control.id] if control.id in self.acquired_controls else []
         self.acquired_controls[control.id] = control_acquisitions
         if len(control_acquisitions) == 0:
             self.initial_acquired_control_values[control.id] = control.value
             
         control_acquisition = ControlAcquisition(self, control, val)
+        control_acquisition.on_release = on_release
         control_acquisitions.append(control_acquisition)
         if release_after:
             g15util.schedule("ReleaseControl", release_after, self.release_control, control_acquisition)

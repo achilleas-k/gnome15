@@ -85,7 +85,7 @@ class G15PangoText(G15Text):
         self.pango_cairo_context = pangocairo.CairoContext(self.canvas)
         self.layout = pango.Layout(pango_context)
         
-    def set_attributes(self, text, bounds = None, wrap = None, align = None, width = None, spacing = None, \
+    def set_attributes(self, text, bounds = None, wrap = None, align = pango.ALIGN_LEFT, width = None, spacing = None, \
             font_desc = None, font_absolute_size = None, attributes = None,
             weight = None, style = None, font_pt_size = None):
         G15Text.set_attributes(self, text, bounds, wrap, align, width, spacing, font_desc, font_absolute_size)  
@@ -120,7 +120,7 @@ class G15PangoText(G15Text):
         text_extents = self.layout.get_extents()[1]
         return text_extents[0] / pango.SCALE, text_extents[1] / pango.SCALE, text_extents[2] / pango.SCALE, text_extents[3] / pango.SCALE
     
-    def draw(self, x, y, clip = None):
+    def draw(self, x, y):
         self.pango_cairo_context.save()
         if self.bounds:
             self.pango_cairo_context.rectangle(self.bounds[0] - 1, self.bounds[1] - 1, self.bounds[2] + 2, self.bounds[3] + 2)

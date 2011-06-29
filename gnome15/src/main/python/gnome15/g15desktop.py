@@ -541,11 +541,11 @@ class G15DesktopComponent():
         """    
         g15util.run_script("g15-desktop-service", ["-f"])   
         
-    def show_page(self, page_sequence_number):
+    def show_page(self, path):
         """
-        Show a page, given its sequence number
+        Show a page, given its path
         """
-        self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Page%s' % page_sequence_number).CycleTo()
+        self.session_bus.get_object('org.gnome15.Gnome15', path).CycleTo()
         
     def check_attention(self):
         """
@@ -619,42 +619,46 @@ class G15DesktopComponent():
                     self.connected = False
                     self._disconnect()
         
-    def _page_created(self, screen_path, page_sequence_number, page_title):
-        logger.debug("Page created (%s) %d = %s" % ( screen_path, page_sequence_number, page_title ) )
-        page = self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Page%d' % page_sequence_number)
+    def _page_created(self, page_path, page_title, path = None):
+        screen_path = path
+        logger.debug("Page created (%s) %s = %s" % ( screen_path, page_path, page_title ) )
+        page = self.session_bus.get_object('org.gnome15.Gnome15', page_path )
         self.lock.acquire()
         try :
             if page.GetPriority() >= g15screen.PRI_LOW:
-                self._add_page(screen_path, page)
+                self._add_page(screen_path, page_path, page)
         finally :
             self.lock.release()
         
-    def _page_title_changed(self, screen_path, page_sequence_number, title):
+    def _page_title_changed(self, page_path, title, path = None):
+        screen_path = path
         self.lock.acquire()
         try :
-            self.screens[screen_path].items[str(page_sequence_number)] = title
+            self.screens[screen_path].items[page_path] = title
             self.rebuild_desktop_component()
         finally :
             self.lock.release()
     
-    def _page_deleting(self, screen_path, page_sequence_number):
+    def _page_deleting(self, page_path, path = None):
+        screen_path = path
         self.lock.acquire()
-        logger.debug("Destroying page (%s) %d" % ( screen_path, page_sequence_number ) )
+        logger.debug("Destroying page (%s) %s" % ( screen_path, page_path ) )
         try :
-            page_item_key = str(page_sequence_number)
             items = self.screens[screen_path].items
-            if page_item_key in items:
-                del items[page_item_key]
+            if page_path in items:
+                del items[page_path]
                 self.rebuild_desktop_component()
         finally :
             self.lock.release()
         
-    def _attention_cleared(self, screen_path):
+    def _attention_cleared(self, path = None):
+        screen_path = path
         if screen_path in self.attention_messages:
             del self.attention_messages[screen_path]
             self.rebuild_desktop_component()
         
-    def _attention_requested(self, screen_path, message = None):
+    def _attention_requested(self, message = None, path = None):
+        screen_path = path
         if not screen_path in self.attention_messages:
             self.attention_messages[screen_path] = message
             self.rebuild_desktop_component()
@@ -701,21 +705,21 @@ class G15DesktopComponent():
             for screen_path in self.service.GetScreens():
                 self._add_screen(screen_path)
                 remote_screen = self.session_bus.get_object('org.gnome15.Gnome15', screen_path)
-                for page_sequence_number in remote_screen.GetPageSequenceNumbers(g15screen.PRI_LOW):
-                    page = self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Page%d' % page_sequence_number)
+                for page_path in remote_screen.GetPagesBelowPriority(g15screen.PRI_LOW):
+                    page = self.session_bus.get_object('org.gnome15.Gnome15', page_path)
                     if page.GetPriority() >= g15screen.PRI_LOW and page.GetPriority() < g15screen.PRI_HIGH:
-                        self._add_page(screen_path, page)
+                        self._add_page(screen_path, page_path, page)
         finally :
             self.lock.release()
         
         # Listen for events
         self.session_bus.add_signal_receiver(self._add_screen, dbus_interface = "org.gnome15.Service", signal_name = "ScreenAdded")
         self.session_bus.add_signal_receiver(self._remove_screen, dbus_interface = "org.gnome15.Service", signal_name = "ScreenRemoved")
-        self.session_bus.add_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Screen", signal_name = "PageCreated")
-        self.session_bus.add_signal_receiver(self._page_title_changed, dbus_interface = "org.gnome15.Screen", signal_name = "PageTitleChanged")
-        self.session_bus.add_signal_receiver(self._page_deleting, dbus_interface = "org.gnome15.Screen", signal_name = "PageDeleting")
-        self.session_bus.add_signal_receiver(self._attention_requested, dbus_interface = "org.gnome15.Screen", signal_name = "AttentionRequested")
-        self.session_bus.add_signal_receiver(self._attention_cleared, dbus_interface = "org.gnome15.Screen", signal_name = "AttentionCleared")
+        self.session_bus.add_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Screen", signal_name = "PageCreated",  path_keyword = 'path')
+        self.session_bus.add_signal_receiver(self._page_title_changed, dbus_interface = "org.gnome15.Screen", signal_name = "PageTitleChanged",  path_keyword = 'path')
+        self.session_bus.add_signal_receiver(self._page_deleting, dbus_interface = "org.gnome15.Screen", signal_name = "PageDeleting",  path_keyword = 'path')
+        self.session_bus.add_signal_receiver(self._attention_requested, dbus_interface = "org.gnome15.Screen", signal_name = "AttentionRequested",  path_keyword = 'path')
+        self.session_bus.add_signal_receiver(self._attention_cleared, dbus_interface = "org.gnome15.Screen", signal_name = "AttentionCleared",  path_keyword = 'path')
             
         # We are now connected, so remove the start service menu item and allow cycling
         self.rebuild_desktop_component()
@@ -745,12 +749,11 @@ class G15DesktopComponent():
         self.attention_messages = {}
         self.rebuild_desktop_component()
             
-    def _add_page(self, screen_path, page): 
-        seq_no = str(page.GetSequenceNumber())
-        logger.debug("Adding page %s to %s" % (seq_no, screen_path))
+    def _add_page(self, screen_path, page_path, page):
+        logger.debug("Adding page %s to %s" % (page_path, screen_path))
         items = self.screens[screen_path].items
-        if not seq_no in items:
-            items[seq_no] = page.GetTitle()
+        if not page_path in items:
+            items[page_path] = page.GetTitle()
             self.rebuild_desktop_component()
         
     def _indicator_options_changed(self, client, connection_id, entry, args):
@@ -815,7 +818,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                     
                     # Cycle screens
                     item = gtk.CheckMenuItem("Cycle screens automatically")
-                    item.set_active(self.conf_client.get_bool("/apps/gnome15/%s/cycle_screens" % screen.device_uid))
+                    item.set_active(g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % screen.device_uid, True))
                     self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/cycle_screens" % screen.device_uid, self._cycle_screens_option_changed))
                     item.connect("toggled", self._cycle_screens_changed, screen.device_uid)
                     self._append_item(item)
@@ -880,8 +883,8 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
         self.last_items.append(item)
         self.menu.append(item)
         
-    def _show_page(self,event, page_sequence_number):
-        self.show_page(page_sequence_number)            
+    def _show_page(self,event, page_path):
+        self.show_page(page_path)            
         
     def _cycle_screens_changed(self, widget, device_uid):
         self.conf_client.set_bool("/apps/gnome15/%s/cycle_screens" % device_uid, widget.get_active())

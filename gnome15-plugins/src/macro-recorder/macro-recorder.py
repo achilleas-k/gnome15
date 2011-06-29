@@ -51,6 +51,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
+default_enabled=True
 unsupported_models = [ g15driver.MODEL_Z10, g15driver.MODEL_MX5500 ]
 reserved_keys = [ g15driver.G_KEY_MR ]
 

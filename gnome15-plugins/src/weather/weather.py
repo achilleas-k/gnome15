@@ -48,6 +48,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
+default_enabled=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 DEFAULT_LOCATION="london,england"
@@ -248,25 +249,25 @@ class G15Weather():
         else :
             base_icon= self._get_base_icon(icon)
             
-            if base_icon in [ "chance_of_rain", "scatteredshowers" ]:
+            if base_icon in [ "chanceofrain", "scatteredshowers" ]:
                 return "weather-showers-scattered.gif"
             elif base_icon == "sunny" or icon == "haze": 
                 return "mono-sunny.gif"
-            elif base_icon == "mostly_sunny":
+            elif base_icon == "mostlysunny":
                 return "mono-few-clouds.gif"
-            elif base_icon == "partly_cloudy":
+            elif base_icon == "partlycloudy":
                 return "mono-clouds.gif"
-            elif base_icon == "mostly_cloudy" or icon == "cloudy":
+            elif base_icon == "mostlycloudy" or icon == "cloudy":
                 return "mono-more-clouds.gif"
             elif base_icon == "rain":
                 return "mono-rain.gif"
             elif base_icon == "mist" or icon == "fog":
                 return "mono-fog.gif"
-            elif base_icon == "chance_of_snow" or icon == "snow" or icon == "sleet" or icon == "flurries":
+            elif base_icon == "chanceofsnow" or icon == "snow" or icon == "sleet" or icon == "flurries":
                 return "mono-snow.gif"
-            elif base_icon == "storm" or icon == "chance_of_storm":
+            elif base_icon == "storm" or icon == "chanceofstorm":
                 return "mono-dark-clouds.gif"
-            elif base_icon == "thunderstorm" or icon == "chance_of_tstorm":
+            elif base_icon == "thunderstorm" or icon == "chanceoftstorm":
                 return "mono-thunder.gif"
         
     def _translate_icon(self, icon):
@@ -290,13 +291,13 @@ class G15Weather():
         else:
             base_icon= self._get_base_icon(icon)
             
-            if base_icon in [ "chance_of_rain", "scatteredshowers" ]:
+            if base_icon in [ "chanceofrain", "scatteredshowers" ]:
                 theme_icon = "weather-showers-scattered"
             elif base_icon == "sunny" or icon == "haze": 
                 theme_icon = "weather-clear"
             elif base_icon == "mostlysunny":
                 theme_icon = "weather-few-clouds"
-            elif base_icon == "partly_cloudy":
+            elif base_icon == "partlycloudy":
                 theme_icon = "weather-clouds"
             elif base_icon == "mostlycloudy" or icon == "cloudy":
                 theme_icon = "weather-overcast"
@@ -339,6 +340,7 @@ class G15Weather():
         base_icon = os.path.splitext(os.path.basename(icon))[0].rsplit("-")[0]
         if base_icon.startswith("weather_"):
             base_icon = base_icon[8:]
+        base_icon = base_icon.replace('_','')
         return base_icon
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
@@ -359,23 +361,21 @@ class G15Weather():
                 total_taken += width
                 self._text.draw(x, y)
         else:
+            rgb = self._screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+            canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
             if "icon" in self._page.theme_attributes:
                 size = g15util.paint_thumbnail_image(allocated_size, self._page.theme_attributes["icon"], canvas)
-                if horizontal:
-                    canvas.translate(size, 0)
-                else:
-                    canvas.translate(0, size)
                 total_taken += size
             if "temp" in self._page.theme_properties:
                 if horizontal:
                     self._text.set_attributes(self._page.theme_properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 2)
                     x, y, width, height = self._text.measure()
-                    self._text.draw(0, (allocated_size / 2) - height / 2)
+                    self._text.draw(total_taken, (allocated_size / 2) - height / 2)
                     total_taken += width + 4
                 else:  
                     self._text.set_attributes(self._page.theme_properties["temp"], font_desc = "Sans", font_absolute_size =  allocated_size * pango.SCALE / 4)
                     x, y, width, height = self._text.measure()
-                    self._text.draw((allocated_size / 2) - width / 2, 0)
+                    self._text.draw((allocated_size / 2) - width / 2, total_taken)
                     total_taken += height + 4     
         return total_taken
             

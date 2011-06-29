@@ -17,7 +17,19 @@
    inkscape:version="0.48.1 r9760"
    sodipodi:docname="mx5500-confirmation-screen.svg">
   <defs
-     id="defs4" />
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3001">
+      <rect
+         style="fill:#696969;fill-opacity:1;stroke:none"
+         id="rect3003"
+         width="104"
+         height="20"
+         x="-1.0217938e-07"
+         y="1027.3622" />
+    </clipPath>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -34,8 +46,8 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="620"
-     inkscape:window-x="1957"
-     inkscape:window-y="160"
+     inkscape:window-x="212"
+     inkscape:window-y="158"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -89,26 +101,20 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/themes/default/${icon}"
        xlink:href="${icon}"
-       id="image3051"
-       x="104"
-       y="1020.3622"
+       height="32"
        width="32"
-       height="32" />
-    <rect
-       style="fill:#696969;fill-opacity:1;stroke:none"
-       id="text"
-       width="104"
-       height="20"
-       x="-1.0217938e-07"
-       y="1027.3622"
-       class="textbox" />
+       y="1020.3622"
+       x="104"
+       id="image3051" />
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
        x="-0.49804688"
        y="1032.1141"
        id="text_text"
-       sodipodi:linespacing="125%"><tspan
+       sodipodi:linespacing="125%"
+       clip-path="url(#clipPath3001)"
+       transform="translate(40,0)"><tspan
          sodipodi:role="line"
          id="tspan3763"
          x="-0.49804688"

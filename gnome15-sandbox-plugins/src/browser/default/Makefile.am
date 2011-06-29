@@ -1,8 +1,5 @@
-themedir = $(datadir)/gnome15/plugins/clock/default
-theme_DATA = default.svg \
-	default-with-date.svg \
-	g19.svg \
-	g19-with-date.svg
+themedir = $(datadir)/gnome15/plugins/browser/default
+theme_DATA = g19.svg
 
 EXTRA_DIST =  			\
 	$(theme_DATA)

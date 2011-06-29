@@ -462,7 +462,7 @@ class G15Service(Thread):
                 val = self.conf_client.get("/apps/gnome15/%s/enabled" % device.uid)
                 h = self.conf_client.notify_add("/apps/gnome15/%s/enabled" % device.uid, self._device_enabled_configuration_changed, device)
                 self.notify_handles.append(h)
-                if val == None or val.get_bool():
+                if ( val == None and device.model_id != "virtual" ) or ( val is not None and val.get_bool() ):
                     self._add_screen(device)
             if len(self.screens) == 0:
                 logger.warning("No screens found yet. Will stay running waiting for one to be enabled.")
