@@ -32,7 +32,7 @@ import tempfile
 import subprocess
 from threading import Lock
 from threading import Thread
-
+ 
 # Plugin details - All of these must be provided
 id = "videoplayer"
 name = "Video Player"
@@ -45,6 +45,13 @@ copyright = "Copyright (C)2010 Brett Smith"
 site = "http://localhost"
 has_preferences = False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Stop", 
+         g15driver.NEXT_SELECTION : "Play",
+         g15driver.SELECT : "Open file",
+         g15driver.CLEAR : "Toggle Mute",
+         g15driver.VIEW : "Change aspect"
+         }
 
 ''' 
 This simple plugin displays system statistics

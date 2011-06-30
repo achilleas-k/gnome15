@@ -251,23 +251,23 @@ class G15Weather():
             
             if base_icon in [ "chanceofrain", "scatteredshowers" ]:
                 return "weather-showers-scattered.gif"
-            elif base_icon == "sunny" or icon == "haze": 
+            elif base_icon in [ "sunny", "haze" ]: 
                 return "mono-sunny.gif"
             elif base_icon == "mostlysunny":
                 return "mono-few-clouds.gif"
             elif base_icon == "partlycloudy":
                 return "mono-clouds.gif"
-            elif base_icon == "mostlycloudy" or icon == "cloudy":
+            elif base_icon in [ "mostlycloudy", "cloudy" ]:
                 return "mono-more-clouds.gif"
             elif base_icon == "rain":
                 return "mono-rain.gif"
-            elif base_icon == "mist" or icon == "fog":
+            elif base_icon in [ "mist", "fog" ]:
                 return "mono-fog.gif"
-            elif base_icon == "chanceofsnow" or icon == "snow" or icon == "sleet" or icon == "flurries":
+            elif base_icon in [ "chanceofsnow", "snow", "sleet", "flurries" ]:
                 return "mono-snow.gif"
-            elif base_icon == "storm" or icon == "chanceofstorm":
+            elif base_icon in [ "storm", "chanceofstorm" ]:
                 return "mono-dark-clouds.gif"
-            elif base_icon == "thunderstorm" or icon == "chanceoftstorm":
+            elif base_icon in [ "thunderstorm", "chanceoftstorm" ]:
                 return "mono-thunder.gif"
         
     def _translate_icon(self, icon):
@@ -293,17 +293,17 @@ class G15Weather():
             
             if base_icon in [ "chanceofrain", "scatteredshowers" ]:
                 theme_icon = "weather-showers-scattered"
-            elif base_icon == "sunny" or icon == "haze": 
+            elif base_icon in [ "sunny", "haze" ]: 
                 theme_icon = "weather-clear"
             elif base_icon == "mostlysunny":
                 theme_icon = "weather-few-clouds"
             elif base_icon == "partlycloudy":
                 theme_icon = "weather-clouds"
-            elif base_icon == "mostlycloudy" or icon == "cloudy":
+            elif base_icon in [ "mostlycloudy", "cloudy" ]:
                 theme_icon = "weather-overcast"
             elif base_icon == "rain":
                 theme_icon = "weather-showers"
-            elif base_icon == "mist" or icon == "fog":
+            elif base_icon in [ "mist", "fog" ]:
                 theme_icon = "weather-fog"
             elif base_icon in [ "chanceofsnow", "sleet", "flurries"]:
                 theme_icon = "weather-snow"
@@ -327,7 +327,7 @@ class G15Weather():
                 
             if icon_path != None:
                 return icon_path
-            
+             
         if icon.startswith("http"):
             logger.warning("Having to resort to using Google weather image %s. This may hang up the LCD for a bit" % icon)
             return icon

@@ -36,17 +36,22 @@ logger = logging.getLogger("menu")
 id="menu"
 name="Menu"
 description="Allows selections of any currently active screen " + \
-            "through a menu on the LCD. It is activated by the " + \
-            "<b>Menu</b> key on the G19, or L2 on other models. " + \
-            "Once activated, use the D-pad on the G19 " + \
-            "or L3-L5 on the the G15 to navigate and select."
+            "through a menu on the LCD."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
 default_enabled=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
-reserved_keys = [ g15driver.G_KEY_MENU, g15driver.G_KEY_L2 ]
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Previous item", 
+         g15driver.NEXT_SELECTION : "Next item",
+         g15driver.NEXT_PAGE : "Next page",
+         g15driver.PREVIOUS_PAGE : "Previous page",
+         g15driver.SELECT : "Show selected item",
+         g15driver.MENU : "Show menu"
+         }
+
 
 def create(gconf_key, gconf_client, screen):
     return G15Menu(gconf_client, gconf_key, screen)
@@ -107,7 +112,7 @@ class G15Menu(g15plugin.G15MenuPlugin):
     def show_menu(self):
         g15plugin.G15MenuPlugin.show_menu(self)
         self._reset_delete_timer()   
-        
+
     def load_menu_items(self):
         items = []
         i = 0

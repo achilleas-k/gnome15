@@ -92,20 +92,22 @@ g15_key_map = {
                }
 
 
+g19_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
 g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint=g15driver.HINT_SHADEABLE)
 g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint=g15driver.HINT_FOREGROUND)
 g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint=g15driver.HINT_BACKGROUND)
 g19_highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT)
-g19_controls = [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control, g19_highlight_control ]
+g19_controls = [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control, g19_highlight_control, g19_mkeys_control ]
 g110_controls = [ g19_keyboard_backlight_control ]
 
+g15_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
 g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint=g15driver.HINT_DIMMABLE)
 g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 0, 0, 2, g15driver.HINT_SHADEABLE)
 g15_lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 48, 0)
 g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint=g15driver.HINT_SWITCH)
-g15_controls = [ g15_backlight_control, g15_invert_control, g15_lcd_backlight_control, g15_lcd_contrast_control ]  
-g11_controls = [ g15_backlight_control ]
+g15_controls = [ g15_mkeys_control, g15_backlight_control, g15_invert_control, g15_lcd_backlight_control, g15_lcd_contrast_control ]  
+g11_controls = [ g15_mkeys_control, g15_backlight_control ]
 
 class DeviceInfo:
     def __init__(self, leds, controls, key_map, led_prefix, keydev_pattern):
@@ -227,7 +229,7 @@ class ForwardDevice(SimpleDevice):
             return
         else:
             logger.warning("Unhandled event: %s" % event)
-            
+
     def _event(self, event, state):
         key = str(event.ecode)
         if key in self.key_map:
@@ -437,26 +439,15 @@ class Driver(g15driver.AbstractDriver):
         elif control == g15_lcd_backlight_control:
             self._write_to_led("white:screen", control.value)          
         elif control == g15_lcd_contrast_control:
+            self._write_to_led("contrast:screen", control.value)          
+        elif control == g15_lcd_contrast_control:
             self._write_to_led("contrast:screen", control.value)
-        elif control == g15_invert_control:
-            pass
+        elif control == g15_mkeys_control or control == g19_mkeys_control:
+            self._set_mkey_lights(control.value)
         else:
             logger.warning("Setting the control " + control.id + " is not yet supported on this model. " + \
                            "Please report this as a bug, providing the contents of your /sys/class/led" + \
                            "directory and the keyboard model you use.")
-    
-    def set_mkey_lights(self, lights):
-        self.lights = lights
-        if self.device_info.leds:
-            leds = self.device_info.leds
-            self._write_to_led(leds[0], lights & g15driver.MKEY_LIGHT_1 != 0)        
-            self._write_to_led(leds[1], lights & g15driver.MKEY_LIGHT_2 != 0)        
-            self._write_to_led(leds[2], lights & g15driver.MKEY_LIGHT_3 != 0)        
-            self._write_to_led(leds[3], lights & g15driver.MKEY_LIGHT_MR != 0)
-        else:
-            logger.warning(" Setting MKey lights on " + self.device.model_id + " not yet supported. " + \
-            "Please report this as a bug, providing the contents of your /sys/class/led" + \
-            "directory and the keyboard model you use.")
     
     def grab_keyboard(self, callback):
         if self.key_thread != None:
@@ -469,6 +460,17 @@ class Driver(g15driver.AbstractDriver):
     '''
     Private
     '''
+    def _set_mkey_lights(self, lights):
+        if self.device_info.leds:
+            leds = self.device_info.leds
+            self._write_to_led(leds[0], lights & g15driver.MKEY_LIGHT_1 != 0)        
+            self._write_to_led(leds[1], lights & g15driver.MKEY_LIGHT_2 != 0)        
+            self._write_to_led(leds[2], lights & g15driver.MKEY_LIGHT_3 != 0)        
+            self._write_to_led(leds[3], lights & g15driver.MKEY_LIGHT_MR != 0)
+        else:
+            logger.warning(" Setting MKey lights on " + self.device.model_id + " not yet supported. " + \
+            "Please report this as a bug, providing the contents of your /sys/class/led" + \
+            "directory and the keyboard model you use.")
     
     def _stop_receiving_keys(self):
         if self.key_thread != None:

@@ -30,17 +30,21 @@ import evolution.ecal
 import vobject
 import gobject
 import calendar
-
+ 
 id="cal"
 name="Calendar"
-description="Calendar. Integrates with Evolution calendar. " \
-    + "You may move around the calendar using the D-Pad on the G19, " \
-    + "or using the right most 3 keys under the " \
-    + "display (L3-L5) on other models."
+description="Calendar. Integrates with Evolution calendar."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Previous day/Event", 
+         g15driver.NEXT_SELECTION : "Next day/Event", 
+         g15driver.VIEW : "Toggle between calendar and events",
+         g15driver.NEXT_PAGE : "Next week",
+         g15driver.PREVIOUS_PAGE : "Previous week"
+         }
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 
 # How often refresh from the evolution calendar. This can be a slow process, so not too often

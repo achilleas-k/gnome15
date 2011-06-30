@@ -39,24 +39,26 @@ has_preferences=True
 
 # Controls
 
+g19_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
 g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
 g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND)
 g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
 g19_highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT)
 
+g15_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
 g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
 controls = { 
-  g15driver.MODEL_G11 : [ g15_backlight_control ], 
-  g15driver.MODEL_G19 : [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control, g19_highlight_control ], 
-  g15driver.MODEL_G15_V1 : [ g15_backlight_control, g15_invert_control ], 
-  g15driver.MODEL_G15_V2 : [ g15_backlight_control, g15_invert_control ],
-  g15driver.MODEL_G13 : [ g15_backlight_control, g15_invert_control ],
-  g15driver.MODEL_G510 : [ g19_keyboard_backlight_control, g15_invert_control ],
+  g15driver.MODEL_G11 : [ g15_mkeys_control, g15_backlight_control ], 
+  g15driver.MODEL_G19 : [ g19_mkeys_control, g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control, g19_highlight_control ], 
+  g15driver.MODEL_G15_V1 : [ g15_mkeys_control, g15_backlight_control, g15_invert_control ], 
+  g15driver.MODEL_G15_V2 : [ g15_mkeys_control, g15_backlight_control, g15_invert_control ],
+  g15driver.MODEL_G13 : [ g15_mkeys_control, g15_backlight_control, g15_invert_control ],
+  g15driver.MODEL_G510 : [ g15_mkeys_control, g19_keyboard_backlight_control, g15_invert_control ],
   g15driver.MODEL_Z10 : [ g15_backlight_control, g15_invert_control ],
-  g15driver.MODEL_G110 : [ g19_keyboard_backlight_control ],
+  g15driver.MODEL_G110 : [ g19_mkeys_control, g19_keyboard_backlight_control ],
   g15driver.MODEL_MX5500 : [ g15_invert_control ],
             }  
 
@@ -224,16 +226,14 @@ class Driver(g15driver.AbstractDriver):
         
     def on_update_control(self, control):  
         if self.event_box != None: 
-            if control == self.get_control_for_hint(g15driver.HINT_DIMMABLE):
+            if control == self.get_control_for_hint(g15driver.HINT_MKEYS):
+                gobject.idle_add(self._do_set_mkey_lights)
+            elif control == self.get_control_for_hint(g15driver.HINT_DIMMABLE):
                 if isinstance(control.value, int):
                     v = ( 65535 / control.upper ) * control.value
                     self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(v, v, v))
                 else:
                     self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(control.value[0] << 8, control.value[1] << 8, control.value[2] << 8))
-    
-    def set_mkey_lights(self, lights):
-        self.lights = lights
-        gobject.idle_add(self._do_set_mkey_lights, lights)
     
     def grab_keyboard(self, callback):
         self.callback = callback;
@@ -241,16 +241,18 @@ class Driver(g15driver.AbstractDriver):
     '''
     Private
     '''
-        
-    def _do_set_mkey_lights(self, lights):
-        if g15driver.G_KEY_M1 in self.buttons:
-            self._modify_button(g15driver.G_KEY_M1, lights, g15driver.MKEY_LIGHT_1)
-        if g15driver.G_KEY_M2 in self.buttons:
-            self._modify_button(g15driver.G_KEY_M2, lights, g15driver.MKEY_LIGHT_2)
-        if g15driver.G_KEY_M3 in self.buttons:
-            self._modify_button(g15driver.G_KEY_M3, lights, g15driver.MKEY_LIGHT_3)
-        if g15driver.G_KEY_MR in self.buttons:
-            self._modify_button(g15driver.G_KEY_MR, lights, g15driver.MKEY_LIGHT_MR)
+
+    def _do_set_mkey_lights(self):
+        c = self.get_control_for_hint(g15driver.HINT_MKEYS)
+        if c:
+            if g15driver.G_KEY_M1 in self.buttons:
+                self._modify_button(g15driver.G_KEY_M1, c.value, g15driver.MKEY_LIGHT_1)
+            if g15driver.G_KEY_M2 in self.buttons:
+                self._modify_button(g15driver.G_KEY_M2, c.value, g15driver.MKEY_LIGHT_2)
+            if g15driver.G_KEY_M3 in self.buttons:
+                self._modify_button(g15driver.G_KEY_M3, c.value, g15driver.MKEY_LIGHT_3)
+            if g15driver.G_KEY_MR in self.buttons:
+                self._modify_button(g15driver.G_KEY_MR, c.value, g15driver.MKEY_LIGHT_MR)
         
     def _modify_button(self, id, lights, mask):
         on = lights & mask != 0

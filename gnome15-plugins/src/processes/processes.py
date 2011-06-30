@@ -40,15 +40,22 @@ logger = logging.getLogger("processes")
 id="processes"
 name="Process List"
 description="Lists all running processes and allows them to be " + \
-            "killed. through a menu on the LCD. On the G19 only, it " + \
-            "may be activated by the <b>Settings</b> key."
+            "killed. through a menu on the LCD."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
 reserved_keys = [ g15driver.G_KEY_SETTINGS ]
-
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Previous process", 
+         g15driver.NEXT_SELECTION : "Next process",
+         g15driver.NEXT_PAGE : "Next page",
+         g15driver.PREVIOUS_PAGE : "Previous page",
+         g15driver.SELECT : "Kill process",
+         g15driver.VIEW : "Toggle between applications, all and user"
+         }
+ 
 def create(gconf_key, gconf_client, screen):
     return G15Processes(gconf_client, gconf_key, screen)
 

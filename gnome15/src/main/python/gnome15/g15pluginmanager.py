@@ -91,19 +91,13 @@ def is_default_enabled(plugin_module):
     except AttributeError: 
         pass 
     return False
-        
-def is_key_reserved(device, key, gconf_client):
-    if key in [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3  ]:
-        return True
-    for mod in imported_plugins:  
-        enabled_key = "/apps/gnome15/%s/plugins/%s/enabled" % ( device.uid, mod.id )
-        if g15util.get_bool_or_default(gconf_client, enabled_key, is_default_enabled(mod)):  
-            try :
-                keys = getattr(mod, "reserved_keys")
-                if key in keys:
-                    return True
-            except AttributeError: 
-                pass
+ 
+def get_actions(plugin_module):
+    try :
+        return plugin_module.actions
+    except AttributeError: 
+        pass 
+    return {}
 
 class G15Plugins():
     def __init__(self, screen):

@@ -64,6 +64,11 @@ copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
 single_instance=True
+actions={ 
+         g15driver.CLEAR : "Clear all queued messages", 
+         g15driver.NEXT_SELECTION : "Next message",
+         g15driver.SELECT : "Perform action (if appropriate)"
+         }
 
 IF_NAME="org.freedesktop.Notifications"
 BUS_NAME="/org/freedesktop/Notifications"
@@ -203,19 +208,20 @@ class G15NotifyService(dbus.service.Object):
         return self._plugin.notify(app_name, id, icon, summary, body, actions, hints, timeout)
     
     @dbus.service.method(IF_NAME, in_signature='u', out_signature='')
-    def CloseNotification(self, id):        
+    def CloseNotification(self, id):     
+        logger.debug("Close notification %d" % ( id ) )   
         self._plugin.close_notification(id)
         
     @dbus.service.signal(dbus_interface=IF_NAME,
                          signature='us')
     
     def ActionInvoked(self, id, action_key):
-        pass
+        logger.debug("Sending ActionInvoked for %d, %s" % ( id, action_key ) )
     
     @dbus.service.signal(dbus_interface=IF_NAME,
                          signature='uu')
     def NotificationClosed(self, id, reason):
-        pass
+        logger.debug("Sending NotificationClosed for %d, %s" % ( id, reason ) )
     
 '''
 Gnome15 notification plugin
@@ -347,28 +353,29 @@ class G15NotifyLCD():
                 
                 # If a message with this ID is already queued, replace it's details
                 if id in self._message_map:
+                    logger.debug("Message %s is already in queue, replacing its details" % str(id))
                     message = self._message_map[id]
                     message.set_details(icon, summary, body, timeout, actions, hints) 
                     
                     # If this message is the visible one, then reset the timer
                     if message == self._message_queue[0]:
+                        logger.debug("It is the visible message")
                         self._start_timer(message)
                     else:            
                         if self._page != None:
                             self._screen.redraw(self._page)
                 else:
                     # Otherwise queue a new message
+                    logger.debug("Queuing new message")
                     message = G15Message(self.id, icon, summary, body, timeout, actions, hints)
                     self._message_queue.append(message)
                     self._message_map[self.id] = message                
                     self.id += 1
                     
                     if len(self._message_queue) == 1:
-                        try :                
-                            self._notify()                         
-                        except Exception as blah:
-                            traceback.print_exc()
-                    else:                               
+                        self._notify()
+                    else:    
+                        logger.debug("More than one message in queue, just redrawing")                           
                         if self._page != None:
                             self._screen.redraw(self._page)
                 return message.id                         
@@ -390,7 +397,7 @@ class G15NotifyLCD():
                         if m.id == id:
                             self._message_queue.remove(m)
                             if self._service:
-                                self._service.NotificationClosed(id, NOTIFICATION_CLOSED)
+                                gobject.idle_add(self._service.NotificationClosed, id, NOTIFICATION_CLOSED)
                             break
         finally :
             self._lock.release()
@@ -409,6 +416,7 @@ class G15NotifyLCD():
             self._lock.release()
     
     def next(self):
+        logger.debug("User is selected next")
         self._cancel_timer()
         self._move_to_next()
     
@@ -418,6 +426,7 @@ class G15NotifyLCD():
             message = self._message_queue[0]
             action = message.actions[0]
             if self._service:
+                logger.debug("Action invoked")
                 self._service.ActionInvoked(message.id, action[0])
             self._move_to_next()
       
@@ -458,9 +467,13 @@ class G15NotifyLCD():
         remaining_pc = ( remaining / self._current_message.timeout ) * 100.0
         properties["remaining"] = int(remaining_pc) 
         return properties
+    
+    def _page_deleted(self):
+        self._page = None
 
     def _notify(self):
-        if len(self._message_queue) != 0:   
+        if len(self._message_queue) != 0:            
+            logger.debug("Displaying first message in queue of %d" % len(self._message_queue))   
             message = self._message_queue[0] 
             
                 
@@ -473,18 +486,22 @@ class G15NotifyLCD():
     
             # Get the page
              
-            if self._page == None:
+            if self._page == None:            
+                logger.debug("Creating new notification message page")
                 self._control_values = []
                 for c in self._screen.driver.get_controls():
                     if c.hint & g15driver.HINT_DIMMABLE != 0:
                         self._control_values.append(c.value)
                         
                 if self._screen.driver.get_bpp() != 0:
+                    logger.debug("Creating notification message page")
                     self._page = g15theme.G15Page(id, self._screen, priority=g15screen.PRI_HIGH, title = name, \
                                                   theme_properties_callback = self._get_theme_properties, \
                                                   theme = g15theme.G15Theme(self, self._last_variant))
+                    self._page.on_deleted = self._page_deleted
                     self._screen.add_page(self._page)
             else:
+                logger.debug("Raising notification message page")
                 self._page.set_theme(g15theme.G15Theme(self, self._last_variant))
                 self._screen.raise_page(self._page)
                 
@@ -541,9 +558,11 @@ class G15NotifyLCD():
             self._lock.release()
                   
     def _hide_notification(self): 
+        logger.debug("Hiding notification")
         self._move_to_next(NOTIFICATION_EXPIRED)
         
     def _start_timer(self, message):
+        logger.debug("Starting hide timeout")
         self._cancel_timer() 
         self._displayed_notification = time.time()                       
         self._timer = g15util.schedule("Notification", message.timeout, self._hide_notification)

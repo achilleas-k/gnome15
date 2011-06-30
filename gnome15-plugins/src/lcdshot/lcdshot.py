@@ -21,6 +21,7 @@
 #        +-----------------------------------------------------------------------------+
 
 import gnome15.g15driver as g15driver
+import gnome15.g15devices as g15devices
 import gnome15.g15globals as g15globals
 import os.path 
 import logging
@@ -28,16 +29,26 @@ import gtk
 import gnome15.g15util as g15util
 logger = logging.getLogger("lcdshot")
 
+# Custom actions
+SCREENSHOT = "screenshot"
+
+# Register the action with all supported models
+g15devices.g15_action_keys[SCREENSHOT] = g15devices.ActionBinding(SCREENSHOT, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_HELD)
+g15devices.g19_action_keys[SCREENSHOT] = g15devices.ActionBinding(SCREENSHOT, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_HELD)
+ 
 # Plugin details - All of these must be provided
 id="lcdshot"
 name="LCD Screenshot"
-description="Takes a screenshot of the LCD. Press and hold MR to take a screenshot, which " + \
-            "will be placed in configured directory."
+description="Takes a screenshot of the LCD and places it in the configured directory."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
+actions={ 
+         SCREENSHOT : "Take LCD screenshot"
+         }
+
 
 ''' 
 This simple plugin takes a screenshot of the LCD

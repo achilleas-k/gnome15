@@ -103,6 +103,7 @@ KEY_MAP = {
         }
 
 
+mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
 color_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight Level", 0, 0, 2, hint = g15driver.HINT_SHADEABLE)
@@ -110,13 +111,13 @@ lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 7
 invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
 controls = {
-  g15driver.MODEL_G11 : [ backlight_control ],
-  g15driver.MODEL_G15_V1 : [ backlight_control, lcd_contrast_control, lcd_backlight_control, invert_control ], 
-  g15driver.MODEL_G15_V2 : [ backlight_control, lcd_backlight_control, invert_control ],
-  g15driver.MODEL_G13 : [ backlight_control, lcd_backlight_control, invert_control ],
-  g15driver.MODEL_G510 : [ color_backlight_control, invert_control ],
+  g15driver.MODEL_G11 : [ mkeys_control, backlight_control ],
+  g15driver.MODEL_G15_V1 : [ mkeys_control, backlight_control, lcd_contrast_control, lcd_backlight_control, invert_control ], 
+  g15driver.MODEL_G15_V2 : [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
+  g15driver.MODEL_G13 : [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
+  g15driver.MODEL_G510 : [ mkeys_control, color_backlight_control, invert_control ],
   g15driver.MODEL_Z10 : [ backlight_control, lcd_backlight_control, invert_control ],
-  g15driver.MODEL_G110 : [ color_backlight_control ],
+  g15driver.MODEL_G110 : [ mkeys_control, color_backlight_control ],
             }   
 
 def show_preferences(device, parent, gconf_client):
@@ -337,7 +338,9 @@ class Driver(g15driver.AbstractDriver):
                 self.send(chr(level[2]),socket.MSG_OOB)
             finally:
                 self.lock.release()
-                
+        elif control == mkeys_control:
+            self._set_mkey_lights(control.value)
+
     def check_control(self, control):
         if control.value > control.upper:
             control.value = control.upper
@@ -395,23 +398,7 @@ class Driver(g15driver.AbstractDriver):
         self.dispatcher.wait_for_handshake()  
         self.connected = True
         
-        self.notify_handle = self.conf_client.notify_add("/apps/gnome15/%s/g15daemon_port" % self.device.uid, self.config_changed, None)
-        
-    def config_changed(self, client, connection_id, entry, args):
-        if self.change_timer != None:
-            self.change_timer.cancel()
-        self.change_timer = g15util.schedule("ChangeG15DaemonConfiguration", 3.0, self.update_conf)
-        
-    def update_conf(self):
-        logger.info("Configuration changed")
-        if self.connected:
-            logger.info("Reconnecting")
-            self.disconnect()
-            self.connect()
-        
-    def set_mkey_lights(self, lights):
-        self.lights = lights
-        self.send(chr(CLIENT_CMD_MKEY_LIGHTS  + lights),socket.MSG_OOB)
+        self.notify_handle = self.conf_client.notify_add("/apps/gnome15/%s/g15daemon_port" % self.device.uid, self._config_changed, None)
         
     def grab_keyboard(self, callback):
         self.dispatcher.callback = callback
@@ -465,3 +452,22 @@ class Driver(g15driver.AbstractDriver):
                     self.disconnect()
         finally:
             self.lock.release()
+            
+    """
+    Private
+    """
+        
+    def _update_conf(self):
+        logger.info("Configuration changed")
+        if self.connected:
+            logger.info("Reconnecting")
+            self.disconnect()
+            self.connect()
+        
+    def _config_changed(self, client, connection_id, entry, args):
+        if self.change_timer != None:
+            self.change_timer.cancel()
+        self.change_timer = g15util.schedule("ChangeG15DaemonConfiguration", 3.0, self._update_conf)
+        
+    def _set_mkey_lights(self, lights):
+        self.send(chr(CLIENT_CMD_MKEY_LIGHTS  + lights),socket.MSG_OOB)

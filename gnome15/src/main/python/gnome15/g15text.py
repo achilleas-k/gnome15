@@ -98,7 +98,6 @@ class G15PangoText(G15Text):
         if font_pt_size:
             font_desc_name += " " + str(font_pt_size)
         font_desc = pango.FontDescription(font_desc_name)
-        print "Setting font to %s" % font_desc
         if font_absolute_size is not None:
             font_desc.set_absolute_size(font_absolute_size)
         self.layout.set_font_description(font_desc)        
@@ -127,7 +126,6 @@ class G15PangoText(G15Text):
             self.pango_cairo_context.rectangle(self.bounds[0] - 1, self.bounds[1] - 1, self.bounds[2] + 2, self.bounds[3] + 2)
             self.pango_cairo_context.clip()
             
-        
         # Can only align text when they are bounds within which to align it
         if self.bounds is not None:
             y = y - ( self.metrics.get_ascent()  / 1000.0 )

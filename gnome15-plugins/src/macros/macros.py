@@ -42,10 +42,15 @@ copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Previous macro", 
+         g15driver.NEXT_SELECTION : "Next macro",
+         g15driver.NEXT_PAGE : "Next page",
+         g15driver.PREVIOUS_PAGE : "Previous page"
+         }
 
 def create(gconf_key, gconf_client, screen):
     return G15Macros(gconf_client, gconf_key, screen)
-
 
 """
 Represents a mount as a single item in a menu
@@ -139,7 +144,7 @@ class G15Macros(g15plugin.G15MenuPlugin):
         return o1.compare(o2)
         
     def _get_configuration(self):
-        self._mkey = self.screen.get_mkey()
+        self._mkey = self.screen.get_memory_bank()
         self._active_profile = g15profile.get_active_profile(self.screen.device)
                  
     def _popup(self):

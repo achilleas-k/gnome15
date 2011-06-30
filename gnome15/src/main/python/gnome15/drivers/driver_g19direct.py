@@ -100,13 +100,14 @@ KEY_MAP = {
             
             
 # Controls
+mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
 keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 default_keyboard_backlight_control = g15driver.Control("default_backlight_colour", "Boot Keyboard Backlight Colour", (0, 0, 0))
 lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
 foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND)
 background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
 highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT)
-controls = [ keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control, highlight_control ]
+controls = [ mkeys_control, keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control, highlight_control ]
 
 def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
@@ -203,19 +204,6 @@ class Driver(g15driver.AbstractDriver):
             self.disconnect()
         self.connect()
         
-    def set_mkey_lights(self, lights):
-        self.lights = lights
-        val = 0
-        if lights & g15driver.MKEY_LIGHT_1 != 0:
-            val += 0x80
-        if lights & g15driver.MKEY_LIGHT_2 != 0:
-            val += 0x40
-        if lights & g15driver.MKEY_LIGHT_3 != 0:
-            val += 0x20
-        if lights & g15driver.MKEY_LIGHT_MR != 0:
-            val += 0x10
-        self.lg19.set_enabled_m_keys(val)
-        
     def on_receive_error(self, exception):
         if self.is_connected():
             self.disconnect()
@@ -295,6 +283,22 @@ class Driver(g15driver.AbstractDriver):
             for key in keys_down:
                 c.append(KEY_MAP[key])
             self.callback(c, g15driver.KEY_STATE_DOWN)
+  
+    """
+    Private
+    """
+        
+    def _set_mkey_lights(self, lights):
+        val = 0
+        if lights & g15driver.MKEY_LIGHT_1 != 0:
+            val += 0x80
+        if lights & g15driver.MKEY_LIGHT_2 != 0:
+            val += 0x40
+        if lights & g15driver.MKEY_LIGHT_3 != 0:
+            val += 0x20
+        if lights & g15driver.MKEY_LIGHT_MR != 0:
+            val += 0x10
+        self.lg19.set_enabled_m_keys(val)
             
     def _do_update_control(self, control):
         try:
@@ -304,6 +308,8 @@ class Driver(g15driver.AbstractDriver):
                 self.lg19.save_default_bg_color(control.value[0], control.value[1], control.value[2])
             elif control == lcd_brightness_control: 
                 self.lg19.set_display_brightness(control.value)
+            elif control == mkeys_control: 
+                self._set_mkey_lights(control.value)
         except usb.USBError as e:
             traceback.print_exc(file=sys.stderr)
             self.on_receive_error(e)

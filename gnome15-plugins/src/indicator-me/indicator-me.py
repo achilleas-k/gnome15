@@ -48,6 +48,11 @@ copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Previous status", 
+         g15driver.NEXT_SELECTION : "Next status", 
+         g15driver.SELECT : "Choose status",
+         }
 
 ''' This simple plugin displays user information and status
 '''

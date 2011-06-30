@@ -53,9 +53,16 @@ author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = "Copyright (C)2010 Brett Smith"
 site = "http://www.gnome15.org/"
 has_preferences = True
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Previous item", 
+         g15driver.NEXT_SELECTION : "Next item",
+         g15driver.NEXT_PAGE : "Next page",
+         g15driver.PREVIOUS_PAGE : "Previous page",
+         g15driver.SELECT : "Compose new mail"
+         }
 
 # Constants
-
+ 
 POP3 = "pop3"
 IMAP = "imap"
 TYPES = [ POP3, IMAP ]
@@ -681,14 +688,7 @@ class G15Biff(g15plugin.G15MenuPlugin):
             self.light_control.blink(off_val = self._get_mkey_value)
             
     def _get_mkey_value(self):
-        mkey = self.screen.get_mkey()
-        if mkey == 1:
-            return g15driver.MKEY_LIGHT_1
-        elif mkey == 2:
-            return g15driver.MKEY_LIGHT_2
-        elif mkey == 3:
-            return g15driver.MKEY_LIGHT_3
-        return 0
+        return g15driver.get_mask_for_memory_bank(self.screen.get_memory_bank())
             
     def _stop_blink(self):
         if self.light_control:

@@ -141,13 +141,14 @@ class EventReceive(Thread):
             
             
 # Controls
+mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
 keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 default_keyboard_backlight_control = g15driver.Control("default_backlight_colour", "Boot Keyboard Backlight Colour", (0, 0, 0))
 lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
 foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND)
 background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
 highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT)
-controls = [ keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control, highlight_control ]
+controls = [ mkeys_control, keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control, highlight_control ]
 
 
 class Driver(g15driver.AbstractDriver):
@@ -247,19 +248,6 @@ class Driver(g15driver.AbstractDriver):
             self.disconnect()
         self.connect()
         
-    def set_mkey_lights(self, lights):   
-        self.lights = lights    
-        val = 0
-        if lights & g15driver.MKEY_LIGHT_1 != 0:
-            val += 0x80
-        if lights & g15driver.MKEY_LIGHT_2 != 0:
-            val += 0x40
-        if lights & g15driver.MKEY_LIGHT_3 != 0:
-            val += 0x20
-        if lights & g15driver.MKEY_LIGHT_MR != 0:
-            val += 0x10
-        self.write_out("M" + chr(val))
-        
     def on_receive_error(self, exception):
         if self.is_connected():
             self.disconnect()
@@ -345,7 +333,6 @@ class Driver(g15driver.AbstractDriver):
 
         return chr(valueL & 0xff) + chr(valueH & 0xff)
     
-            
     def _do_update_control(self, control):
         if control == keyboard_backlight_control: 
             self.write_out("B" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
@@ -353,4 +340,18 @@ class Driver(g15driver.AbstractDriver):
             self.write_out("C" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
         elif control == lcd_brightness_control:
             self.write_out("L" + chr(control.value) );
+        elif control == mkeys_control:
+            self._set_mkey_lights(control.value)
+        
+    def _set_mkey_lights(self, lights):
+        val = 0
+        if lights & g15driver.MKEY_LIGHT_1 != 0:
+            val += 0x80
+        if lights & g15driver.MKEY_LIGHT_2 != 0:
+            val += 0x40
+        if lights & g15driver.MKEY_LIGHT_3 != 0:
+            val += 0x20
+        if lights & g15driver.MKEY_LIGHT_MR != 0:
+            val += 0x10
+        self.write_out("M" + chr(val))
             

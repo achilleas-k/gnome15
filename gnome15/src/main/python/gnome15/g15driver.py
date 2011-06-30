@@ -23,6 +23,9 @@ SELECT = "select"
 VIEW = "view"
 CLEAR = "clear"
 MENU = "menu"
+MEMORY_1 = "memory-1"
+MEMORY_2 = "memory-2"
+MEMORY_3 = "memory-3"
 
 """
 Bitmask values for setting the M key LED lights. See set_mkey_lights()
@@ -99,7 +102,7 @@ G_KEY_L2  = "l2"
 G_KEY_L3  = "l3"
 G_KEY_L4  = "l4"
 G_KEY_L5  = "l5"
-
+ 
 """
 Light key. On all models
 """
@@ -145,6 +148,7 @@ HINT_FOREGROUND = 1 << 2
 HINT_BACKGROUND = 1 << 3
 HINT_HIGHLIGHT = 1 << 4
 HINT_SWITCH = 1 << 5
+HINT_MKEYS = 1 << 6
 
 # 16bit 565
 CAIRO_IMAGE_FORMAT=4
@@ -152,10 +156,28 @@ CAIRO_IMAGE_FORMAT=4
 import g15util as g15util
 import time
 import colorsys
-import traceback
 from threading import Lock
+import logging
+logger = logging.getLogger("driver")
 
 seq_no = 0
+
+def get_mask_for_memory_bank(bank):
+    if bank == 1:
+        return MKEY_LIGHT_1
+    elif bank == 2:
+        return MKEY_LIGHT_2
+    elif bank == 3:
+        return MKEY_LIGHT_3
+
+def get_memory_bank_for_mask(val):
+    if val & MKEY_LIGHT_3 != 0:
+        return 3
+    elif val & MKEY_LIGHT_2 != 0:
+        return 2
+    elif val & MKEY_LIGHT_1 != 0:
+        return 1
+    return 0
 
 class Control():
     
@@ -328,16 +350,6 @@ class ControlAcquisition(AbstractControlAcquisition):
         r, g, b = colorsys.hsv_to_rgb(float(h) / 255.0, float(s) / 255.0, float(v) / 255.0)
         return ( int(r * 255.0), int(g * 255.0), int(b * 255.0 ))
         
-class LightControlAcquisition(AbstractControlAcquisition):
-    
-    def is_active(self):
-        ctrls = self.driver.acquired_mkey_lights
-        return len(ctrls) > 0 and self in ctrls and ctrls.index(self) == len(ctrls) - 1
-    
-    def adjust(self, val):
-        if self.is_active():
-            self.driver.set_mkey_lights(val)
-        
 class AbstractDriver(object):
     
     def __init__(self, id):
@@ -350,7 +362,6 @@ class AbstractDriver(object):
         self._reset_state()
         
     def release_all_acquisitions(self):
-        self.acquired_mkey_lights = []
         self.acquired_controls = {}
         values = dict(self.initial_acquired_control_values)
         for k in values:
@@ -358,7 +369,6 @@ class AbstractDriver(object):
             if c:
                 c.value = values[k]
                 self.update_control(c)
-        self.set_mkey_lights(self.initial_mkey_lights_value)
         
     def acquire_control(self, control, release_after = None, val = None, on_release = None):
         control_acquisitions = self.acquired_controls[control.id] if control.id in self.acquired_controls else []
@@ -374,15 +384,10 @@ class AbstractDriver(object):
         return control_acquisition
         
     def acquire_mkey_lights(self, release_after = None, val = None):
-        if len(self.acquired_mkey_lights) == 0:
-            self.initial_mkey_lights_value = self.get_mkey_lights()
-        control_acquisition = LightControlAcquisition(self)
-        self.acquired_mkey_lights.append(control_acquisition)
-        if val:
-            control_acquisition.set_value(val)
-        if release_after:
-            g15util.schedule("ReleaseMKeyLights", release_after, self.release_mkey_lights, control_acquisition)
-        return control_acquisition
+        logger.info("DEPRECATED call to acquire_mkey_lights, use acquire_control")
+        control = self.get_control_for_hint(HINT_MKEYS)
+        if control:
+            return self.acquire_control(control, release_after, val)
     
     def release_control(self, control_acquisition):
         control_acquisitions = self.acquired_controls[control_acquisition.control.id]
@@ -397,14 +402,9 @@ class AbstractDriver(object):
             control_acquisition.control.value = self.initial_acquired_control_values[control_acquisition.control.id]
             self.update_control(control_acquisition.control)
     
-    def release_mkey_lights(self, control):
-        control.cancel_reset()
-        self.acquired_mkey_lights.remove(control)
-        ctrls = len(self.acquired_mkey_lights)
-        if ctrls > 0:
-            self.set_mkey_lights(self.acquired_mkey_lights[ctrls - 1].val)
-        else:
-            self.set_mkey_lights(self.initial_mkey_lights_value)
+    def release_mkey_lights(self, control_acquisition):
+        logger.info("DEPRECATED call to release_mkey_lights, use release_control")
+        self.release_control(control_acquisition)
             
     def disconnect(self):
         """
@@ -503,13 +503,6 @@ class AbstractDriver(object):
                 
         
     """
-    Set the M key LCD lights. The value is a bitmask made up of MKEY_LIGHT1,
-    MKEY_LIGHT2, MKEY_LIGHT3 and MKEY_LIGHT_MR      
-    """    
-    def set_mkey_lights(self, lights):
-        raise NotImplementedError( "Not implemented" )
-    
-    """
     Start receiving events when the additional keys (G keys, L keys and M keys)
     are pressed and released. The provided callback will be invoked with two
     arguments, the first being the key code (see the constants G_KEY_xx)
@@ -582,7 +575,5 @@ class AbstractDriver(object):
     def _reset_state(self):
         self.lights = 0
         self.control_update_listeners = []
-        self.initial_mkey_lights_value = 0
-        self.acquired_mkey_lights = []
         self.acquired_controls = {}
         self.initial_acquired_control_values = {}

@@ -22,6 +22,7 @@
   
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
+import gnome15.g15devices as g15devices 
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15profile as g15profile
@@ -33,12 +34,19 @@ import sys
 import time
 import logging
 logger = logging.getLogger("macros")
-
+ 
 from Xlib import X, XK, display
 from Xlib.ext import record
 from Xlib.protocol import rq
 
 from threading import Thread
+
+# Custom actions
+RECORD = "record"
+
+# Register the action with all supported models
+g15devices.g15_action_keys[RECORD] = g15devices.ActionBinding(RECORD, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[RECORD] = g15devices.ActionBinding(RECORD, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_UP)
 
 # Plugin details - All of these must be provided
 id="macro-recorder"
@@ -53,7 +61,9 @@ site="http://www.gnome15.org/"
 has_preferences=False
 default_enabled=True
 unsupported_models = [ g15driver.MODEL_Z10, g15driver.MODEL_MX5500 ]
-reserved_keys = [ g15driver.G_KEY_MR ]
+actions={ 
+         RECORD : "Start recording macro"
+         }
 
 
 local_dpy = display.Display()
@@ -207,7 +217,7 @@ class G15MacroRecorder():
             if len(self._script_model) == 0:  
                 self.icon = "edit-delete"
                 self._message = key_name + " deleted"
-                active_profile.delete_macro(self._screen.get_mkey(), record_keys)  
+                active_profile.delete_macro(self._screen.get_memory_bank(), record_keys)  
                 self._screen.redraw(self._page)   
             else:
                 macro_script = ""
@@ -217,7 +227,7 @@ class G15MacroRecorder():
                     macro_script += row[0] + " " + row[1]       
                 self.icon = "tag-new"   
                 self._message = key_name + " created"
-                memory = self._screen.get_mkey()
+                memory = self._screen.get_memory_bank()
                 macro = active_profile.get_macro(memory, record_keys)
                 if macro:
                     macro.type = g15profile.MACRO_SCRIPT
@@ -271,7 +281,7 @@ class G15MacroRecorder():
         self._record_thread = RecordThread(self._record_callback)
         self._record_thread.start()
         self._lights_control = self._screen.driver.acquire_mkey_lights()
-        self._lights_control.set_value(self._screen.get_mkey() | g15driver.MKEY_LIGHT_MR)
+        self._lights_control.set_value(self._screen.get_memory_bank() | g15driver.MKEY_LIGHT_MR)
         self._lights_control.blink(0, 0.5)
         self._screen.request_defeat_profile_change()
         
@@ -281,14 +291,14 @@ class G15MacroRecorder():
         
         properties = {}
         properties["icon"] = g15util.get_icon_path(self.icon, self._screen.height)
-        properties["memory"] = "M%d" % self._screen.get_mkey()
+        properties["memory"] = "M%d" % self._screen.get_memory_bank()
             
         if active_profile != None:
             properties["profile"] = active_profile.name
             properties["profile_icon"] = active_profile.get_profile_icon_path(self._screen.height)
             
             if self._message == None:
-                properties["message"] = "Recording on M%s. Type in your macro then press the G-Key to assign it to, or MR to cancel." % self._screen.get_mkey()
+                properties["message"] = "Recording on M%s. Type in your macro then press the G-Key to assign it to, or MR to cancel." % self._screen.get_memory_bank()
             else:
                 properties["message"] = self._message
         else:

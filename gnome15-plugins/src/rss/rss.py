@@ -36,15 +36,20 @@ logger = logging.getLogger("rss")
 id = "rss"
 name = "RSS"
 description = "A simple RSS reader. Multiple feeds may be added, with a screen being " \
-        + "allocated to each one once it has loaded. You may move up and down " \
-        + "through the entries using the Up and Down keys on the G19, or L3 and L4 on " \
-        + "other models G15. The entry may then be viewed in the browser using OK (G19), or L5 (other models)."
+        + "allocated to each one once it has loaded."
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = "Copyright (C)2010 Brett Smith"
 site = "http://www.gnome15.org/"
 has_preferences = True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
-
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Previous news item", 
+         g15driver.NEXT_SELECTION : "Next news items",
+         g15driver.NEXT_PAGE : "Next page",
+         g15driver.PREVIOUS_PAGE : "Previous page",
+         g15driver.SELECT : "Open item in browser"
+         }
+ 
 def create(gconf_key, gconf_client, screen):
     return G15RSS(gconf_client, gconf_key, screen)
 

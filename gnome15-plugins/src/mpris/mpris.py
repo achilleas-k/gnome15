@@ -25,6 +25,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import dbus
+import gobject
 import os
 import time
 
@@ -71,6 +72,9 @@ class AbstractMPRISPlayer():
         self.screen = screen
         self.interface_name = interface_name
         self.players = players
+        self.playing_uri = None
+        self.playback_started = 0
+        self.start_elapsed = 0
         self.gconf_client = gconf_client     
         self.theme = g15theme.G15Theme(self)
         self.status = "Stopped"
@@ -94,6 +98,7 @@ class AbstractMPRISPlayer():
     def reset_elapsed(self):
         logger.debug("Reset track elapsed time")
         self.start_elapsed = self.get_progress()
+        self.start_elapsed = 0
         self.playback_started = time.time()
         
     def set_status(self, new_status):        
@@ -101,10 +106,7 @@ class AbstractMPRISPlayer():
             logger.info("Playback status changed to %s" % new_status)
             self.status = new_status
             if self.status == "Playing":
-                self.reset_elapsed()
-                logger.info("Now playing, showing page")
-                self.show_page()
-                self.schedule_redraw()
+                g15util.schedule("playbackStarted", 1.0, self._playback_started)
             elif self.status == "Paused":
                 self.cancel_redraw()
                 if self.page != None:
@@ -116,6 +118,12 @@ class AbstractMPRISPlayer():
             elif self.status == "Stopped":
                 self.cancel_redraw()
                 self.hide_page()
+                
+    def _playback_started(self):        
+        self.reset_elapsed()
+        logger.info("Now playing, showing page")
+        self.show_page()
+        self.schedule_redraw()
     
     def stop(self):
         logger.info("Stopping player %s" % self.interface_name)
@@ -476,7 +484,12 @@ class MPRIS2Player(AbstractMPRISPlayer):
             ( "xesam:title" in meta and meta["xesam:title"] != self.playing_track_id ) or \
             ( "xesam:artist" in meta and meta["xesam:artist"] != self.playing_track_id ) or \
             ( "xesam:album" in meta and meta["xesam:album"] != self.playing_track_id ):
-            self.reset_elapsed()
+            
+            """
+            This doesn't seem right, but it stops the hanging problem when notify-lcd is enabled and 
+            tracks change
+            """            
+            g15util.schedule("loadMeta", 1.0, self.reset_elapsed)
             
         if "Volume" in properties:
             self.volume = int(properties["Volume"] * 100)
@@ -488,8 +501,15 @@ class MPRIS2Player(AbstractMPRISPlayer):
                 self.last_properties[key] = properties[key]
                 
         if "Metadata" in self.last_properties:
-            self.load_meta()
-            self.schedule_redraw()
+            """
+            This doesn't seem right, but it stops the hanging problem when notify-lcd is enabled and 
+            tracks change
+            """            
+            g15util.schedule("loadMeta", 1.0, self.load_meta)
+            
+    def _load_and_redraw(self):
+        self.load_meta()
+        self.schedule_redraw()
         
     def load_song_details(self):
         if not self.stopped:

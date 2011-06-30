@@ -275,7 +275,7 @@ class Driver(g15driver.AbstractDriver):
         self.async = None
         self.change_timer = None
         self.conf_client = gconf.client_get_default()
-        
+
     def get_size(self):
         return self.device.lcd_size
         
@@ -367,10 +367,6 @@ class Driver(g15driver.AbstractDriver):
             logger.info("Reconnecting")
             self.disconnect()
             self.connect()
-        
-    def set_mkey_lights(self, lights):
-        self.lights = lights
-        self.send(chr(CLIENT_CMD_MKEY_LIGHTS  + lights),socket.MSG_OOB)
         
     def grab_keyboard(self, callback):
         self.dispatcher.callback = callback

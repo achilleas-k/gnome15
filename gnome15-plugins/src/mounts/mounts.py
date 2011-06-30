@@ -44,6 +44,14 @@ copyright="Copyright (C)2011 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Previous mount", 
+         g15driver.NEXT_SELECTION : "Next mount",
+         g15driver.NEXT_PAGE : "Next page",
+         g15driver.PREVIOUS_PAGE : "Previous page",
+         g15driver.SELECT : "Mount, unmount or eject",
+         g15driver.VIEW : "Toggle between free, availabled and used",
+         }
 
 def create(gconf_key, gconf_client, screen):
     return G15Places(gconf_client, gconf_key, screen)

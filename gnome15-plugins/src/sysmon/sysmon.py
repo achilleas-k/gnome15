@@ -30,15 +30,15 @@ import socket
 id = "sysmon"
 name = "System Monitor"
 description = "Display CPU, Memory, and Network statistics. Either a summary of each system's stats is displayed, or " + \
-            "you may cycle through the CPU and Network interfaces using Up and Down on the G19, or L3 and L4 on all " + \
-            "other supported models."        
+            "you may cycle through the CPU and Network interfaces."        
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = "Copyright (C)2010 Brett Smith"
 site = "http://www.gnome15.org"
 default_enabled = True
 has_preferences = False
+actions={ g15driver.PREVIOUS_SELECTION : "Toggle Monitored CPU", g15driver.NEXT_SELECTION : "Toggle Monitored Network Interface" }
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
-
+ 
 ''' 
 This plugin displays system statistics
 '''

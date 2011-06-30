@@ -239,12 +239,13 @@ class G15Profile():
         self.window_name = ""
         self.load()
         
-    def is_key_in_use(self, memory, key, exclude = None):
+    def are_keys_in_use(self, memory, keys, exclude = None):
         bank = self.macros[memory - 1]
         for macro in bank:
-            if ( exclude == None or ( exclude != None and not macro in exclude ) ) and key in macro.keys: 
-                return True 
-        
+            if ( exclude == None or ( exclude != None and not macro in exclude ) ) and sorted(keys) == sorted(macro.keys): 
+                return True
+        return False
+
     def get_default(self):
         return self.id == 0
         

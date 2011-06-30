@@ -35,13 +35,19 @@ import preferences as g15preferences
 id="stopwatch"
 name="Stopwatch"
 description="Stopwatch/Countdown timer plugin for gnome15.\
-Two timers are available. User can select the a mode (stopwatch/countdown) for each of them.\
-Use the D-pad or the L3-L5 keys to start/pause and reset the timers."
+Two timers are available. User can select the a mode (stopwatch/countdown) for each of them."
 author="Nuno Araujo <nuno.araujo@russo79.com>"
 copyright="Copyright (C)2011 Nuno Araujo"
 site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Toggle selected timer (or toggle timer 1)", 
+         g15driver.NEXT_SELECTION : "Reset selected timer (or reset timer 1)",
+         g15driver.NEXT_PAGE : "Toggle timer 2 (G19 only)",
+         g15driver.PREVIOUS_PAGE : "Reset timer 2 (G19 only)",
+         g15driver.VIEW : "Switch between timers"
+         }
 
 
 # 
@@ -165,7 +171,7 @@ class G15Stopwatch():
             font_name = g15globals.fixed_size_font_name
             gap = 1
         else:
-            factor = 1 if horizontal else 2
+            factor = 1 if horizontal else 1.2
             font_name = "Sans"
             if self._timer1.get_enabled() and self._timer2.get_enabled():
                 text = "%s\n%s" % (properties["timer1"], properties["timer2"])

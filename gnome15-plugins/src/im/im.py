@@ -67,6 +67,13 @@ copyright="Copyright (C)2011 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Previous contact", 
+         g15driver.NEXT_SELECTION : "Next contact", 
+         g15driver.VIEW : "Toggle between Available,Online and All",
+         g15driver.NEXT_PAGE : "Next page",
+         g15driver.PREVIOUS_PAGE : "Previous page"
+         }
 
 # Other constants
 POSSIBLE_ICON_NAMES = [ "im-user", "empathy", "pidgin", "emesene", "system-config-users", "im-message-new" ]

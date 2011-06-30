@@ -45,7 +45,14 @@ copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
-
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Previous item", 
+         g15driver.NEXT_SELECTION : "Next item",
+         g15driver.NEXT_PAGE : "Next page",
+         g15driver.PREVIOUS_PAGE : "Previous page",
+         g15driver.SELECT : "Activate item"
+         }
+ 
 def create(gconf_key, gconf_client, screen):
     return G15IndicatorMessages(gconf_client, gconf_key, screen)
 
@@ -180,14 +187,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
             self._light_control.blink(off_val = self._get_mkey_value)
             
     def _get_mkey_value(self):
-        mkey = self.screen.get_mkey()
-        if mkey == 1:
-            return g15driver.MKEY_LIGHT_1
-        elif mkey == 2:
-            return g15driver.MKEY_LIGHT_2
-        elif mkey == 3:
-            return g15driver.MKEY_LIGHT_3
-        return 0
+        return g15driver.get_mask_for_memory_bank(self.screen.get_memory_bank())
             
     def _stop_blink(self):
         if self._light_control:

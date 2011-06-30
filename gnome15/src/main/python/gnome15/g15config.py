@@ -186,7 +186,12 @@ class G15Config:
         self.start_desktop_service_on_login = self.widget_tree.get_object("StartDesktopServiceOnLogin")
         self.start_indicator_on_login = self.widget_tree.get_object("StartIndicatorOnLogin")
         self.start_system_tray_on_login = self.widget_tree.get_object("StartSystemTrayOnLogin")
-        
+        self.macro_warning_box = self.widget_tree.get_object("MacroWarningBox")
+        self.macro_edit_close_button = self.widget_tree.get_object("MacroEditCloseButton")
+        self.key_table = self.widget_tree.get_object("KeyTable")
+        self.key_frame = self.widget_tree.get_object("KeyFrame")
+        self.macros_tab = self.widget_tree.get_object("MacrosTab")
+        self.macros_tab_label = self.widget_tree.get_object("MacrosTabLabel")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -213,9 +218,11 @@ class G15Config:
         self.plugin_tree.connect("cursor-changed", self._select_plugin)
         self.plugin_enabled_renderer.connect("toggled", self._toggle_plugin)
         self.widget_tree.get_object("PreferencesButton").connect("clicked", self._show_preferences)
+        self.widget_tree.get_object("AboutPluginButton").connect("clicked", self._show_about_plugin)
         self.widget_tree.get_object("AddButton").connect("clicked", self._add_profile)
         self.widget_tree.get_object("ActivateButton").connect("clicked", self._activate)
         self.activate_on_focus.connect("toggled", self._activate_on_focus_changed)
+        self.allow_combination.connect("toggled", self._allow_combination_changed)
         self.activate_by_default.connect("toggled", self._activate_on_focus_changed)
         self.clear_icon_button.connect("clicked", self._clear_icon)
         self.delete_macro_button.connect("clicked", self._remove_macro)
@@ -291,6 +298,19 @@ class G15Config:
         self.main_vbox.pack_start(self.infobar, False, False)
         self.warning_box_shown = False
         self.infobar.hide_all()
+        
+        # Warning bar for macro editing
+        self.macro_infobar = gtk.InfoBar()    
+        self.macro_infobar.set_size_request(-1, -1)   
+        self.macro_warning_label = gtk.Label()
+#        self.macro_warning_label.set_size_request(200, -1)
+        self.macro_warning_label.set_line_wrap(True)
+#        self.macro_warning_label.set_alignment(0.0, 0.0)
+        self.macro_warning_label.set_width_chars(60)
+        content = self.macro_infobar.get_content_area()
+        content.pack_start(self.macro_warning_label, True, True)
+        self.macro_warning_box.pack_start(self.macro_infobar, True, True)
+        self.macro_infobar.set_visible(False)
         
         self.gnome15_service = None
 
@@ -516,6 +536,18 @@ class G15Config:
     def _show_preferences(self, widget):
         plugin = self._get_selected_plugin()
         plugin.show_preferences(self.main_window, self.driver, self.conf_client, self._get_full_key("plugins/%s" % plugin.id))
+    
+    def _show_about_plugin(self, widget):
+        plugin = self._get_selected_plugin()
+        dialog = self.widget_tree.get_object("AboutPluginDialog")
+        dialog.set_title("About %s" % plugin.name)
+        dialog.run()
+        dialog.hide()
+        
+    def _load_macro_state(self):
+        device_info = g15devices.get_device_info(self.driver.get_model_name()) if self.driver is not None else None
+        self.macros_tab.set_visible(device_info is not None and device_info.macros)
+        self.macros_tab_label.set_visible(device_info is not None and device_info.macros)
         
     def _load_plugins(self):
         """
@@ -576,6 +608,56 @@ class G15Config:
             self.widget_tree.get_object("PluginDetails").set_visible(True)
         else:
             self.widget_tree.get_object("PluginDetails").set_visible(False)
+            
+        # List the keys that are required for each action
+        for c in self.key_table.get_children():
+            self.key_table.remove(c)
+        actions = g15pluginmanager.get_actions(plugin)
+        rows = len(actions) 
+        if  rows > 0:
+            self.key_table.set_property("n-rows", rows)         
+        row = 0
+        for action in actions:
+            device_info = g15devices.get_device_info(self.driver.get_model_name())
+            if action in device_info.action_keys:
+                action_binding = device_info.action_keys[action]
+                
+                # If hold
+                label = gtk.Label("")
+                label.set_size_request(30, -1)
+                if action_binding.state == g15driver.KEY_STATE_HELD:
+                    label.set_text("<b>Hold</b>")
+                    label.set_use_markup(True)
+                label.set_alignment(0.0, 0.5)
+                self.key_table.attach(label, 0, 1, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2);
+                label.show()
+                
+                # Keys
+                keys = gtk.HBox(spacing = 4)
+                for k in action_binding.keys:
+                    fname = os.path.abspath("%s/key-%s.png" % (g15globals.image_dir, k))
+                    pixbuf = gtk.gdk.pixbuf_new_from_file(fname)
+                    pixbuf = pixbuf.scale_simple(22, 14, gtk.gdk.INTERP_BILINEAR)
+                    img = gtk.image_new_from_pixbuf(pixbuf)
+                    img.show()
+                    keys.add(img)
+                keys.show()
+                self.key_table.attach(keys, 1, 2, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
+                
+                # Text
+                label = gtk.Label(actions[action])
+                label.set_alignment(0.0, 0.5)
+                label.show()
+                self.key_table.attach(label, 2, 3, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
+                row += 1
+            else:
+                logger.warning("Plugin %s requires an action that is not available (%s)" % ( plugin.id, action))
+            
+        if row > 0:
+            self.key_frame.set_visible(True)
+        else:   
+            self.key_frame.set_visible(False)
+            
 
     def _set_cycle_seconds_value_from_configuration(self):
         val = self.conf_client.get(self._get_full_key("cycle_seconds"))
@@ -610,6 +692,7 @@ class G15Config:
         
     def _plugins_changed(self, client, connection_id, entry, args):
         self._load_plugins()
+        self._load_macro_state()
         self._load_drivers()
         
     def _cycle_screens_changed(self, widget=None):
@@ -719,6 +802,7 @@ class G15Config:
     def _driver_options_changed(self):
         self._add_controls()
         self._load_plugins()
+        self._load_macro_state()
         self._hide_warning()
             
     def _device_enabled_configuration_changed(self, client, connection_id, entry, args):
@@ -777,6 +861,7 @@ class G15Config:
         self.main_window.show_all()
         self._load_profile_list()
         self._load_plugins()
+        self._load_macro_state()
         if self.selected_device:
             self._load_drivers()
         self._do_status_change()
@@ -852,7 +937,7 @@ class G15Config:
         response = dialog.run()
         dialog.hide()
         if response == 1:
-            active_profile = g15profile.get_active_profile()
+            active_profile = g15profile.get_active_profile(self.selected_device)
             if self.selected_profile.id == active_profile.id:
                 self._make_active(g15profile.get_profile(0))
             self.selected_profile.delete()
@@ -861,6 +946,13 @@ class G15Config:
     def _macro_name_changed(self, widget):
         self.editing_macro.name = widget.get_text()
         self.editing_macro.save()
+        
+    def _allow_combination_changed(self, widget):
+        if not self.adjusting and not self.allow_combination.get_active():
+            for button in self.key_buttons:
+                if len(self.editing_macro.keys) > 1:
+                    button.set_active(False)
+            self._check_macro(self.editing_macro.keys)
             
     def _toggle_key(self, widget, key, macro):
         keys = list(macro.keys) 
@@ -868,17 +960,50 @@ class G15Config:
         if key in keys:
             keys.remove(key)
         else:            
-            if not self.allow_combination.get_active():
+            if not self.adjusting and not self.allow_combination.get_active():
                 for button in self.key_buttons:
                     if button != widget:
-                        button.set_active(False)
+                        self.adjusting = True
+                        try :
+                            button.set_active(False)
+                        finally:
+                            self.adjusting = False
                 for ikey in keys:
                     if ikey != key:
                         keys.remove(ikey)
             keys.append(key)
             
+        if not self.selected_profile.are_keys_in_use(self._get_memory_number(), keys, exclude = [self.editing_macro]):
+            macro.set_keys(keys)
+        
+        if not self.adjusting:
+            self._check_macro(keys)
+        
+    def _check_macro(self, keys):
+        if len(keys) > 0:
+            memory = self._get_memory_number()        
+            reserved = g15devices.are_keys_reserved(self.driver.get_model_name(), keys)
+            in_use = self.selected_profile.are_keys_in_use(memory, keys, exclude = [self.editing_macro])
+            if in_use:
+                self.macro_infobar.set_message_type(gtk.MESSAGE_ERROR)
+                self.macro_warning_label.set_text("This key combination is already in use with "+ \
+                                                  "another macro. Please choose a different key or combination of keys")
+                self.macro_infobar.set_visible(True)
+                self.macro_infobar.show_all()       
+                self.macro_edit_close_button.set_sensitive(False)      
+                return       
+            elif reserved:
+                self.macro_infobar.set_message_type(gtk.MESSAGE_WARNING)
+                self.macro_warning_label.set_text("This key combination is reserved for use with an action. You "+ \
+                                                  "may use it, but the results are undefined.")
+                self.macro_infobar.set_visible(True)
+                self.macro_infobar.show_all()
+                self.macro_edit_close_button.set_sensitive(True)      
+                return       
             
-        macro.set_keys(keys)
+        print "Hiding"
+        self.macro_infobar.set_visible(False)
+        self.macro_edit_close_button.set_sensitive(True)
         
     def _new_macro(self, widget):
         memory = self._get_memory_number()
@@ -888,8 +1013,8 @@ class G15Config:
         for row in self.driver.get_key_layout():
             if not use:
                 for key in row:                
-                    reserved = g15pluginmanager.is_key_reserved(self.selected_device, key, self.conf_client)
-                    in_use = self.selected_profile.is_key_in_use(memory, key)
+                    reserved = g15devices.are_keys_reserved(self.driver.get_model_name(), list(key))
+                    in_use = self.selected_profile.are_keys_in_use(memory, list(key))
                     if not in_use and not reserved:
                         use = key
                         break
@@ -929,9 +1054,7 @@ class G15Config:
             for key in row:
                 key_name = g15util.get_key_names([ key ])
                 g_button = gtk.ToggleButton(" ".join(key_name))
-                reserved = g15pluginmanager.is_key_reserved(self.selected_device, key, self.conf_client)
-                in_use = self.selected_profile.is_key_in_use(memory, key, exclude = [self.editing_macro])
-                g_button.set_sensitive(not reserved and not in_use)
+                g_button.key = key
                 g_button.set_active(key in self.editing_macro.keys)
                 g_button.connect("toggled", self._toggle_key, key, self.editing_macro)
                 self.key_buttons.append(g_button)
@@ -959,6 +1082,7 @@ class G15Config:
         text_buffer.set_text(self.editing_macro.macro)        
         text_buffer.connect("changed", self._macro_script_changed)
         self.macro_script.set_buffer(text_buffer)
+        self._check_macro(self.editing_macro.keys)
         
                         
         dialog.run()
@@ -1089,7 +1213,6 @@ class G15Config:
         return sorted(self.selected_profile.macros[self._get_memory_number() - 1], key=lambda key: key.key_list_key)
         
     def _load_configuration(self, profile):
-        print "**Load config"
         self.adjusting = True
         try : 
             current_selection = self._get_selected_macro()        
@@ -1251,7 +1374,7 @@ class G15Config:
         for control in driver_controls:
             val = control.value
             if isinstance(val, int):  
-                if control.hint & g15driver.HINT_SWITCH == 0:
+                if ( control.hint & g15driver.HINT_SWITCH ) == 0 and ( control.hint & g15driver.HINT_MKEYS ) == 0:
                     label = gtk.Label(control.name)
                     label.set_alignment(0.0, 0.5)
                     label.show()

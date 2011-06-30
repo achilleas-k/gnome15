@@ -44,7 +44,13 @@ copyright = "Copyright (C)2010 Brett Smith"
 site = "http://www.gnome15.org"
 has_preferences = False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
-
+actions={ 
+         g15driver.PREVIOUS_SELECTION : "Previous sensor", 
+         g15driver.NEXT_SELECTION : "Next sensor",
+         g15driver.NEXT_PAGE : "Next page",
+         g15driver.PREVIOUS_PAGE : "Previous page"
+         }
+ 
 UDISKS_DEVICE_NAME = "org.freedesktop.UDisks.Device"
 UDISKS_BUS_NAME= "org.freedesktop.UDisks"
 
