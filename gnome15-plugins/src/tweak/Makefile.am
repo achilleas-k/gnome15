@@ -1,8 +1,6 @@
-plugindir = $(datadir)/gnome15/plugins/indicator-messages
-plugin_DATA = indicator-messages.py \
-	indicator-messages.glade \
-	mono-mail-new.gif \
-	mono-mail-error.gif
+plugindir = $(datadir)/gnome15/plugins/tweak
+plugin_DATA = tweak.py \
+	tweak.glade
 
 EXTRA_DIST =  			\
 	$(plugin_DATA)

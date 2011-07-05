@@ -496,13 +496,13 @@ class G15Service(Thread):
         try :
             self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
             bamf_matcher_interface = dbus.Interface(self.bamf_matcher, 'org.ayatana.bamf.matcher')  
-            bamf_matcher_interface.add_signal_receiver(self._active_application_changed, signal_name="ActiveApplicationChanged")
+            self.session_bus.add_signal_receiver(self._active_application_changed, dbus_interface = 'org.ayatana.bamf.matcher', signal_name="ActiveApplicationChanged")
             active_application = bamf_matcher_interface.ActiveApplication() 
             logger.info("Will be using BAMF for window matching")
             if active_application:
                 self._active_application_changed("", active_application)
-        except:
-            logger.warning("BAMF not available, falling back to polling WNCK")
+        except Exception as e:
+            logger.warning("BAMF not available, falling back to polling WNCK. %s" % str(e))
             try :                
                 import wnck
                 wnck.__file__

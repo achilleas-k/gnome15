@@ -35,7 +35,7 @@ import traceback
 
 logger = logging.getLogger("config")
 
-# Determine if appindicator is available, this decides that nature
+# Determine if appindicator is available, this decides the nature
 # of the message displayed when the Gnome15 service is not running
 HAS_APPINDICATOR=False
 try :
@@ -46,7 +46,7 @@ except:
     pass
 
 # Store the temporary profile icons here (for when the icon comes from a window, the filename is not known
-icons_dir = os.path.join(os.path.expanduser("~"),".cache15", "gnome15", "macro_profiles")
+icons_dir = os.path.join(os.path.expanduser("~"),".cache", "gnome15", "macro_profiles")
 if not os.path.exists(icons_dir):
     os.makedirs(icons_dir)
 

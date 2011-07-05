@@ -20,21 +20,8 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15globals as g15globals
-import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
-import gnome15.g15theme as g15theme
-import gnome15.g15driver as g15driver
-import gnome15.g15plugin as g15plugin
-import gobject
-import time
-import dbus
-import os
 import gtk
-import Image
-import gnome15.dbusmenu as dbusmenu
-
-from lxml import etree
 
 # Plugin details - All of these must be provided
 id="tweak"
