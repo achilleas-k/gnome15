@@ -149,6 +149,7 @@ HINT_BACKGROUND = 1 << 3
 HINT_HIGHLIGHT = 1 << 4
 HINT_SWITCH = 1 << 5
 HINT_MKEYS = 1 << 6
+HINT_VIRTUAL = 1 << 7
 
 # 16bit 565
 CAIRO_IMAGE_FORMAT=4
@@ -540,7 +541,8 @@ class AbstractDriver(object):
         controls = self.get_controls()
         if controls:
             for control in controls:
-                self.set_control_from_configuration(control, conf_client)
+                if control.hint & HINT_VIRTUAL == 0:
+                    self.set_control_from_configuration(control, conf_client)
             
     def set_control_from_configuration(self, control, conf_client):
         entry = conf_client.get("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ))

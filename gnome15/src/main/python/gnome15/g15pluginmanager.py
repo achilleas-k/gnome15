@@ -34,6 +34,7 @@ import logging
 logger = logging.getLogger("plugins")
 
 imported_plugins = []
+extra_plugin_dirs = []
             
 def list_plugin_dirs(path):
     plugindirs = []
@@ -48,6 +49,7 @@ def list_plugin_dirs(path):
 
 def get_extra_plugin_dirs():
     plugindirs = []
+    plugindirs += extra_plugin_dirs
     if "G15_PLUGINS" in os.environ:
         for dir in os.environ["G15_PLUGINS"].split(":"):
             plugindirs += list_plugin_dirs(dir)

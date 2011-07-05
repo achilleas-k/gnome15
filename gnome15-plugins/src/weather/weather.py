@@ -345,8 +345,6 @@ class G15Weather():
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         total_taken = 0 
-        if not self._screen.service.text_boxes:
-            return
         self._text.set_canvas(canvas)
         if self._screen.driver.get_bpp() == 1:
             if "mono_thumb_icon" in self._page.theme_attributes:

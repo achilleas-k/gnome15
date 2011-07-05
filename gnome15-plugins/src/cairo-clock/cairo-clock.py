@@ -259,7 +259,7 @@ class G15CairoClock():
         return allocated_size 
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
-        if not self.screen.is_visible(self.page) and self.screen.service.text_boxes:
+        if not self.screen.is_visible(self.page):
             self.text.set_canvas(canvas)
             
             # Don't display the date or seconds on mono displays, not enough room as it is

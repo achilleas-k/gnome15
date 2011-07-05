@@ -915,6 +915,10 @@ class G15Screen():
     def profiles_changed(self, client, connection_id, entry, args):
         self.set_color_for_mkey()
         
+    def error_on_keyboard_display(self, text, title = "Error", icon = "dialog-error"):
+        page = g15theme.ErrorScreen(self, title, text, icon)
+        return page
+        
     def error(self, error_text=None): 
         self.attention(error_text)
 
@@ -1044,7 +1048,8 @@ class G15Screen():
                 self.driver.set_controls_from_configuration(self.conf_client)
                 self.driver.release_all_acquisitions()                
                 for control in self.driver.get_controls():
-                    self.driver.update_control(control)
+                    if control.hint & g15driver.HINT_VIRTUAL == 0: 
+                        self.driver.update_control(control)
                     self.acquired_controls[control.id] = self.driver.acquire_control(control, val = control.value)
                     logger.info("Acquired control of %s with value of %s" % (control.id, str(control.value)))
                     self.control_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/%s" %( self.device.uid, control.id), self.control_configuration_changed));

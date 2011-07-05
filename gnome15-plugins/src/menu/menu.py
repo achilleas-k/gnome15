@@ -24,6 +24,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
 import gnome15.g15plugin as g15plugin
+from gnome15.g15util import find
 import sys
 import cairo
 import traceback
@@ -64,6 +65,9 @@ class MenuItem(g15theme.MenuItem):
         self._item_page = item_page
         self.thumbnail = None
         self.plugin = plugin
+        
+    def get_page(self):
+        return self._item_page
         
     def activate(self):
         self.theme.screen.raise_page(self.plugin.menu.selected._item_page)
@@ -110,8 +114,13 @@ class G15Menu(g15plugin.G15MenuPlugin):
         g15plugin.G15MenuPlugin.hide_menu(self)   
                 
     def show_menu(self):
+        visible_page = self.screen.get_visible_page()
         g15plugin.G15MenuPlugin.show_menu(self)
-        self._reset_delete_timer()   
+        self._reset_delete_timer()
+        if visible_page:
+            item = find(lambda m: m._item_page == visible_page, self.menu.get_children())
+            if item:
+                self.menu.set_selected_item(item)
 
     def load_menu_items(self):
         items = []

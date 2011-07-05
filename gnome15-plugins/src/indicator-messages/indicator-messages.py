@@ -43,7 +43,7 @@ description="Indicator that shows waiting messages."
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
-has_preferences=False
+has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : "Previous item", 
@@ -70,6 +70,16 @@ Indicator Messages DBUSMenu types
 '''
 TYPE_APPLICATION_ITEM = "application-item"
 TYPE_INDICATOR_ITEM = "indicator-item"
+
+
+def show_preferences(parent, driver, gconf_client, gconf_key):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "indicator-messages.glade"))
+    dialog = widget_tree.get_object("IndicatorMessagesDialog")
+    dialog.set_transient_for(parent)
+    g15util.configure_checkbox_from_gconf(gconf_client, "%s/raise" % gconf_key, "RaisePageCheckbox", True, widget_tree)
+    dialog.run()
+    dialog.hide()
 
 class IndicatorMessagesMenuEntry(dbusmenu.DBUSMenuEntry):
     def __init__(self, id, properties, menu):
@@ -195,11 +205,12 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
             self._light_control = None
         
     def _popup(self):    
-        if not self.page.is_visible():
-            self._raise_timer = self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 4.0)
-            self.screen.redraw(self.page)
-        else:
-            self._reset_raise()
+        if g15util.get_bool_or_default(self.gconf_client,"%s/raise" % self.gconf_key, True):
+            if not self.page.is_visible():
+                self._raise_timer = self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 4.0)
+                self.screen.redraw(self.page)
+            else:
+                self._reset_raise()
     
     def _reset_raise(self):
         '''

@@ -78,7 +78,9 @@ class G15Stopwatch():
         self._text = g15text.new_text(self._screen)
         self._notify_timer = None
         self._timer1 = timer.G15Timer()
+        self._timer1.on_finish = self._on_finish
         self._timer2 = timer.G15Timer()
+        self._timer2.on_finish = self._on_finish
         self._load_configuration()
 
         self._reload_theme()
@@ -153,8 +155,6 @@ class G15Stopwatch():
     the amount of space you have (i.e. 6 pixels high maximum and limited width)
     ''' 
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if not self._screen.service.text_boxes:
-            return
         if not self._page or self._screen.is_visible(self._page):
             return
         if not (self._timer1.get_enabled() or self._timer2.get_enabled()):
@@ -304,5 +304,8 @@ class G15Stopwatch():
     def _is_any_timer_active(self):
         return ( self._timer1 is not None and self._timer1.is_running() ) or \
                 ( self._timer2 is not None and self._timer2.is_running() )
+                
+    def _on_finish(self):
+        self._check_page_priority()
 
 # vim:set ts=4 sw=4 et:

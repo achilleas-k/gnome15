@@ -736,6 +736,12 @@ class Menu(Component):
         self.layout_manager = GridLayoutManager(1)
         self.scroll_timer = None
         
+    def set_selected_item(self, item):
+        i = self.index_of_child(item)
+        if i >= 0:
+            self.i = i
+            self._do_selected()
+        
     def add_separator(self):
         self.add_child(MenuSeparator())
         
@@ -1085,6 +1091,25 @@ class DBusMenu(Menu):
                     self.add_child(DBusMenuItem("dbus-menu-item-%d" % i, item))
                 i += 1   
     
+class ErrorScreen(G15Page):
+    
+    def __init__(self, screen, title, text, icon = "dialog-error"):
+        self.page = G15Page.__init__(self, title, screen, priority = g15screen.PRI_HIGH, \
+                                     theme = G15Theme(os.path.join(g15globals.themes_dir, "default"), "error-screen"))
+        self.theme_properties = { 
+                           "title": title,
+                           "text": text,
+                           "icon": g15util.get_icon_path(icon)
+                      }               
+        self.screen.add_page(self)
+        self.redraw()
+        self.screen.action_listeners.append(self)
+        
+    def action_performed(self, binding):             
+        if binding.action == g15driver.SELECT:
+            self.screen.del_page(self)
+            self.screen.action_listeners.remove(self)  
+    
 class ConfirmationScreen(G15Page):
     
     def __init__(self, screen, title, text, icon, callback, arg):
@@ -1329,8 +1354,7 @@ class G15Theme():
                 self._set_highlight_color(root)
                 
                 text_boxes = []
-                if self.screen.service.text_boxes: 
-                    self._handle_text_boxes(root, text_boxes, properties, canvas)        
+                self._handle_text_boxes(root, text_boxes, properties, canvas)        
                     
                 # Pass the SVG document to the SVG processor if there is one
                 if self.svg_processor != None:

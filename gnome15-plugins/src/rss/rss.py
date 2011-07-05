@@ -200,8 +200,6 @@ class G15FeedPage(g15theme.G15Page):
         if icon is None:
             icon = g15util.get_icon_path("application-rss+xml", self._screen.height)
             
-        print "Icon = %s" % icon
-            
         if icon == None:
             self._icon_surface = None
             self._icon_embedded = None

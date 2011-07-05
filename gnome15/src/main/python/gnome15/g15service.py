@@ -549,7 +549,6 @@ class G15Service(Thread):
         self.scroll_amount = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_amount', 2)
         self.animation_delay = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/animation_delay', 100) / 1000.0
         self.key_hold_duration = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/key_hold_duration', 2000) / 1000.0
-        self.text_boxes = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/text_boxes', True)
         self.use_x_test = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/use_x_test', True)
         self.fade_screen_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_screen_on_close', True)
         self.fade_keyboard_backlight_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_keyboard_backlight_on_close', True)

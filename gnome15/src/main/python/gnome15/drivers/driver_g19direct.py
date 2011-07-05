@@ -104,9 +104,9 @@ mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g1
 keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 default_keyboard_backlight_control = g15driver.Control("default_backlight_colour", "Boot Keyboard Backlight Colour", (0, 0, 0))
 lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
-foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND)
-background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND)
-highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT)
+foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
+background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
+highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
 controls = [ mkeys_control, keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control, highlight_control ]
 
 def show_preferences(device, parent, gconf_client):

@@ -99,29 +99,34 @@ class G15LCDShot():
         self._gconf_key = gconf_key
 
     def activate(self):
-        pass 
+        self._screen.action_listeners.append(self) 
     
     def deactivate(self):
-        pass
+        self._screen.action_listeners.remove(self)
         
     def destroy(self):
         pass
     
-    def handle_key(self, keys, state, post):
+    def action_performed(self, binding):
         # TODO better key
-        if not post and state == g15driver.KEY_STATE_HELD and g15driver.G_KEY_MR in keys:
+        if binding.action == SCREENSHOT:
             if self._screen.old_surface:
                 self._screen.draw_lock.acquire()
+                dir = g15util.get_string_or_default(self._gconf_client, "%s/folder" % \
+                            self._gconf_key, os.path.expanduser("~/Desktop"))
                 try:
                     for i in range(1, 9999):
-                        path = "%s/%s-%s-%d.png" % ( g15util.get_string_or_default(self._gconf_client, "%s/folder" % \
-                                                                                   self._gconf_key, os.path.expanduser("~/Desktop")), \
+                        path = "%s/%s-%s-%d.png" % ( dir, \
                                                     g15globals.name, self._screen.get_visible_page().title, i )
                         if not os.path.exists(path):
                             self._screen.old_surface.write_to_png(path)
                             logger.info("Written to screenshot to %s" % path)
+                            g15util.notify("LCD Screenshot", "Screenshot saved to %s" % path, "dialog-info")
                             return True
                     logger.warning("Too many screenshots in destination directory")
+                except Exception as e:
+                    logger.error("Failed to save screenshot. %s" % str(e))
+                    self._screen.error_on_keyboard_display("Failed to save screenshot to %s. %s" % (dir, str(e)))
                 finally:
                     self._screen.draw_lock.release()
         

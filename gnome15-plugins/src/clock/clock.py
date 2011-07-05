@@ -201,7 +201,7 @@ class G15Clock():
     the amount of space you have (i.e. 6 pixels high maximum and limited width)
     ''' 
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if self.page and not self.screen.is_visible(self.page) and self.screen.service.text_boxes:
+        if self.page and not self.screen.is_visible(self.page):
             properties = self._get_properties()
             # Don't display the date or seconds on mono displays, not enough room as it is
             if self.screen.driver.get_bpp() == 1:

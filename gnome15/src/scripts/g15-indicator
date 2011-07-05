@@ -41,7 +41,6 @@ import traceback
 import logging
 logging.basicConfig()
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
 
 # Allow running from local path
 path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..", "gnome15", "src", "main", "python")

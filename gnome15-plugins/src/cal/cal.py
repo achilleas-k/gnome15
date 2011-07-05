@@ -246,8 +246,6 @@ class G15Cal():
                     end_event_date = datetime.datetime(event_date.year,event_date.month,event_date.day, 23, 59, 0)
                 
                 if event_date.month == now.month and event_date.year == now.year:
-                    print "Event %s to %s" % (str(event_date), str(end_event_date))
-                    
                     day = event_date.day
                     while day <= end_event_date.day:
                         key = str(day)

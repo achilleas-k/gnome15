@@ -73,7 +73,7 @@ def start_service(no_trap=False):
 
     # Start the loop    
     try :
-        import gnome15.g15service as g15service   
+        import gnome15.g15service as g15service
         service = g15service.G15Service(None, no_trap=no_trap)
         service.start_loop()
     except dbus.exceptions.NameExistsException:

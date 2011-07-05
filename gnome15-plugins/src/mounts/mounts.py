@@ -27,6 +27,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
 import gio
+import gtk
 import os.path
 
 # Logging
@@ -42,7 +43,7 @@ description="Shows mount points, allows mounting, unmounting " + \
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2011 Brett Smith"
 site="http://www.gnome15.org/"
-has_preferences=False
+has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : "Previous mount", 
@@ -52,6 +53,16 @@ actions={
          g15driver.SELECT : "Mount, unmount or eject",
          g15driver.VIEW : "Toggle between free, availabled and used",
          }
+
+
+def show_preferences(parent, driver, gconf_client, gconf_key):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "mounts.glade"))
+    dialog = widget_tree.get_object("MountsDialog")
+    dialog.set_transient_for(parent)
+    g15util.configure_checkbox_from_gconf(gconf_client, "%s/raise" % gconf_key, "RaisePageCheckbox", True, widget_tree)
+    dialog.run()
+    dialog.hide()
 
 def create(gconf_key, gconf_client, screen):
     return G15Places(gconf_client, gconf_key, screen)
@@ -263,8 +274,8 @@ class G15Places(g15plugin.G15MenuPlugin):
                 
         self._popup()
                  
-    def _popup(self):
-        if not self.page.is_visible():
+    def _popup(self): 
+        if not self.page.is_visible() and g15util.get_bool_or_default(self.gconf_client,"%s/raise" % self.gconf_key, True):
             self._raise_timer = self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 4.0)
             self.screen.redraw(self.page)
                 

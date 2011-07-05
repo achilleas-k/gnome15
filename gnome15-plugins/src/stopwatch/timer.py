@@ -19,7 +19,7 @@
 #        +-----------------------------------------------------------------------------+
 
 import datetime
-import subprocess
+import gnome15.g15util as g15util
 
 class G15Timer():
     TIMER_MODE_STOPWATCH = 0
@@ -29,6 +29,7 @@ class G15Timer():
         self.__enabled = False
         self.__running = False
         self.label = ""
+        self.on_finish = None
         self.mode = G15Timer.TIMER_MODE_STOPWATCH
         self.initial_value = datetime.timedelta()
         self.loop = False
@@ -53,6 +54,8 @@ class G15Timer():
                     self.pause()
                 self.reset()
                 rv = self.__value()
+                if self.on_finish:
+                    self.on_finish()
                 self.notify()
             rv = self.initial_value - rv
         return rv
@@ -87,6 +90,6 @@ class G15Timer():
         self._last_resume = datetime.datetime.now()
 
     def notify(self):
-        p = subprocess.Popen(['notify-send',"--icon=gtk-info","Gnome15", "Timer '" + self.label + "' is over."])
+        g15util.notify("Timer '" + self.label + "' is over.")
 
 # vim:set ts=4 sw=4 et:
