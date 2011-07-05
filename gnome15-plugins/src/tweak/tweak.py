@@ -22,6 +22,7 @@
  
 import gnome15.g15util as g15util
 import gtk
+import os.path
 
 # Plugin details - All of these must be provided
 id="tweak"

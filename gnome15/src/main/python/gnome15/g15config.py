@@ -1283,9 +1283,7 @@ class G15Config:
             self.adjusting = False
             
     def _load_windows(self):
-        logger.error("Clearing")   
         self.window_model.clear()   
-        logger.error("Cleared")
         if self.bamf_matcher != None:            
             for window in self.bamf_matcher.RunningApplications():
                 app = self.session_bus.get_object("org.ayatana.bamf", window)
@@ -1298,7 +1296,6 @@ class G15Config:
                     app = window.get_application()                
                     if app and not app.get_name() in apps:
                         apps[app.get_name()] = app
-            logger.error("Adding %d apps" % len(apps))
             for app in apps:
                 self.window_model.append([app, app])
                 

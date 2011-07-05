@@ -22,7 +22,6 @@
  
 import sys
 import pygtk
-from gnome15 import g15desktop
 pygtk.require('2.0')
 import os
 import gobject
@@ -31,11 +30,11 @@ import g15screen
 import g15profile
 import g15dbus
 import g15devices
-import g15desktop
 import traceback
 import gconf
 import g15util
 import Xlib.X 
+import Xlib.ext
 import Xlib.XK
 import Xlib.display
 import Xlib.protocol
