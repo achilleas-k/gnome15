@@ -243,15 +243,16 @@ class G15Screen():
         if not self._load_driver():
             raise Exception("Driver failed to load") 
         
-    def application_changed(self, view):
+    def set_active_profile(self):
         if self.defeat_profile_change < 1:
             choose_profile = None
-            title = view.Name()                                    
+            title = self.service.get_active_window_name()         
             # Active window has changed, see if we have a profile that matches it
-            for profile in g15profile.get_profiles(self.device):
-                if not profile.get_default() and profile.activate_on_focus and len(profile.window_name) > 0 and title.lower().find(profile.window_name.lower()) != -1:
-                    choose_profile = profile 
-                    break
+            if title is not None:
+                for profile in g15profile.get_profiles(self.device):
+                    if not profile.get_default() and profile.activate_on_focus and len(profile.window_name) > 0 and title.lower().find(profile.window_name.lower()) != -1:
+                        choose_profile = profile 
+                        break
                 
             # No applicable profile found. Look for a default profile, and see if it is set to activate by default
             active_profile = g15profile.get_active_profile(self.device)
@@ -285,9 +286,9 @@ class G15Screen():
             self.notify_handles.append(self.conf_client.notify_add("%s/%s" % ( screen_key, control.id ), self._control_changed))
         logger.info("Starting for %s is complete." % self.device.uid)
         
-    def stop(self):        
+    def stop(self, quickly = False):        
         self.stopping = True
-        if self.is_active():                
+        if self.is_active() and not quickly:                
             # Start fading keyboard
             bl_control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
             acquisition = None
@@ -604,6 +605,9 @@ class G15Screen():
                 page = self.get_page(self.first_page)
                 if page:
                     self.raise_page(page)
+                    
+            logger.info("Setting active profile")
+            self.set_active_profile()
                     
             logger.info("Grabbing keyboard")
             self.driver.grab_keyboard(self.key_received)

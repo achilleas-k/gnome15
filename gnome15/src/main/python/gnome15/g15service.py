@@ -104,6 +104,7 @@ class G15Service(Thread):
         self.service_host = service_host
         self.active_window = None
         self.shutting_down = False
+        self.active_application_name = None
         self.starting_up = True
         self.conf_client = gconf.client_get_default()
         self.screens = []
@@ -152,13 +153,13 @@ class G15Service(Thread):
     
     def sigint_handler(self, signum, frame):
         logger.info("Got SIGINT signal, shutting down")
-        self.shutdown()
+        self.shutdown(True)
     
     def sigterm_handler(self, signum, frame):
         logger.info("Got SIGTERM signal, shutting down")
-        self.shutdown()
+        self.shutdown(True)
         
-    def stop(self):
+    def stop(self, quickly = False):
         for h in self.notify_handles:
             self.conf_client.notify_remove(h)
         try :
@@ -172,13 +173,13 @@ class G15Service(Thread):
             
         logger.info("Stopping screens")
         for screen in self.screens:
-            screen.stop()
+            screen.stop(quickly)
         g15util.stop_queue(SERVICE_QUEUE)
         
-    def shutdown(self):
+    def shutdown(self, quickly = False):
         logger.info("Shutting down")
         self.shutting_down = True
-        self.stop()
+        self.stop(quickly)
         logger.info("Stopping all schedulers")
         g15util.stop_all_schedulers()
         for listener in self.service_listeners:
@@ -295,6 +296,9 @@ class G15Service(Thread):
         return self.local_dpy
     
     def init_xtest(self):
+        """
+        Initiali XTEST if it is available.
+        """
         if self.x_test_available == None:
             logger.info("Initialising macro output system")
     
@@ -311,7 +315,13 @@ class G15Service(Thread):
                 logger.warn("Found XTEST module, but the X extension could not be found")
                 self.x_test_available = False
                 
-    def char_to_keycode(self, ch) :        
+    def char_to_keycode(self, ch):
+        """
+        Convert a character from a string into an X11 keycode when possible.
+        
+        Keyword arguments:
+        ch        -- character to convert
+        """    
         self.init_xtest()
         if str(ch).startswith("["):
             keysym_code = int(ch[1:-1])
@@ -335,7 +345,15 @@ class G15Service(Thread):
         return keycode, shift_mask
 
             
-    def send_string(self, ch, press) :
+    def send_string(self, ch, press):
+        """
+        Sends a string (character) to the X server as if it was typed. Depending on the configuration
+        XTEST or raw events may be used
+        
+        Keyword arguments:
+        ch        --    character to send
+        press     --    boolean indicating if this is a PRESS or RELEASE
+        """
         keycode, shift_mask = self.char_to_keycode(ch)
         if logger.level == logging.DEBUG:
             logger.debug("Sending keychar %s keycode %d, press = %s" % (ch, int(keycode), str(press)))
@@ -372,49 +390,46 @@ class G15Service(Thread):
                     )
                 self.window.send_event(event, propagate=True)
                 
-        self.local_dpy.sync() 
+        self.local_dpy.sync()
+            
+    def get_active_window_name(self):
+        return self.active_application_name
         
-    def application_changed(self, old, object_name):
+    """
+    Private
+    """
+        
+    def _active_application_changed(self, old, object_name):
         if object_name != "":
             app = self.session_bus.get_object("org.ayatana.bamf", object_name)
             view = dbus.Interface(app, 'org.ayatana.bamf.view')
             try :
                 if view.IsActive() == 1:
+                    self.active_application_name = view.Name()
+                    logger.info("Active application is now %s" % self.active_application_name)
                     for screen in self.screens:
-                        screen.application_changed(view)
+                        screen.set_active_profile()
             except dbus.DBusException:
                 pass
         
-    def timeout_callback(self, event=None):
+    def _check_active_application_with_wnck(self, event=None):
         try:
-            if not self.defeat_profile_change:
-                import wnck
-                window = wnck.screen_get_default().get_active_window()
-                choose_profile = None
-                if window != None:
-                    title = window.get_name()                                    
-                    for profile in g15profile.get_profiles():
-                        if not profile.get_default() and profile.activate_on_focus and len(profile.window_name) > 0 and title.lower().find(profile.window_name.lower()) != -1:
-                            choose_profile = profile 
-                            break
-                            
-                active_profile = g15profile.get_active_profile()
-                if choose_profile == None:
-                    default_profile = g15profile.get_default_profile()
-                    if (active_profile == None or active_profile.id != default_profile.id) and default_profile.activate_on_focus:
-                        default_profile.make_active()
-                elif active_profile == None or choose_profile.id != active_profile.id:
-                    choose_profile.make_active()
-            
+            import wnck
+            window = wnck.screen_get_default().get_active_window()
+            if window is not None and not window.is_skip_pager():
+                app = window.get_application()
+                active_application_name = app.get_name() if app is not None else ""
+                if active_application_name != self.active_application_name:
+                    self.active_application_name = active_application_name
+                    logger.info("Active application is now %s" % self.active_application_name)
+                    for screen in self.screens:
+                        screen.set_active_profile()
         except Exception:
             logger.warning("Failed to activate profile for active window")
             traceback.print_exc(file=sys.stdout)
             
-        gobject.timeout_add(500, self.timeout_callback, self)
+        gobject.timeout_add(500, self._check_active_application_with_wnck)
         
-    """
-    Private
-    """
     def _check_state_of_all_devices(self):
         for d in g15devices.find_all_devices():
             self._check_device_state(d)
@@ -473,8 +488,27 @@ class G15Service(Thread):
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/scroll_amount", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/animation_delay", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/key_hold_delay", self._hidden_configuration_changed))
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/text_boxes", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/use_x_test", self._hidden_configuration_changed))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/disable_svg_glow", self._hidden_configuration_changed))
+            
+        # Monitor active application    
+        logger.info("Attempting to set up BAMF")
+        try :
+            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
+            bamf_matcher_interface = dbus.Interface(self.bamf_matcher, 'org.ayatana.bamf.matcher')  
+            bamf_matcher_interface.add_signal_receiver(self._active_application_changed, signal_name="ActiveApplicationChanged")
+            active_application = bamf_matcher_interface.ActiveApplication() 
+            logger.info("Will be using BAMF for window matching")
+            if active_application:
+                self._active_application_changed("", active_application)
+        except:
+            logger.warning("BAMF not available, falling back to polling WNCK")
+            try :                
+                import wnck
+                wnck.__file__
+                self._check_active_application_with_wnck()
+            except:
+                logger.warning("Python Wnck not available either, no automatic profile switching")
         
         # Start each screen's plugin manager
         for screen in self.screens:
@@ -485,21 +519,6 @@ class G15Service(Thread):
             self.session_bus.add_signal_receiver(self._session_over, dbus_interface="org.gnome.SessionManager", signal_name="SessionOver")
         except Exception as e:
             logger.warning("GNOME session manager not available, will not detect logout signal for clean shutdown. %s" % str(e))
-            
-        # Monitor active application    
-        logger.info("Attempting to set up BAMF")
-        try :
-            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')   
-            self.session_bus.add_signal_receiver(self.application_changed, dbus_interface="org.ayatana.bamf.matcher", signal_name="ActiveApplicationChanged")
-            logger.info("Will be using BAMF for window matching")
-        except:
-            logger.warning("BAMF not available, falling back to WNCK")
-            try :                
-                import wnck
-                wnck.__file__
-                gobject.timeout_add(500, self.timeout_callback, self)
-            except:
-                logger.warning("Python Wnck not available either, no automatic profile switching")
                 
         self.starting_up = False
         for listener in self.service_listeners:
@@ -545,13 +564,20 @@ class G15Service(Thread):
         self._load_hidden_configuration()
         
     def _load_hidden_configuration(self):
-        self.scroll_delay = float(g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_delay', 300)) / 1000.0
-        self.scroll_amount = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_amount', 2)
+        self.scroll_delay = float(g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_delay', 500)) / 1000.0
+        self.scroll_amount = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_amount', 5)
         self.animation_delay = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/animation_delay', 100) / 1000.0
         self.key_hold_duration = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/key_hold_duration', 2000) / 1000.0
         self.use_x_test = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/use_x_test', True)
+        self.disable_svg_glow = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/disable_svg_glow', False)
         self.fade_screen_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_screen_on_close', True)
         self.fade_keyboard_backlight_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_keyboard_backlight_on_close', True)
+        self._mark_all_pages_dirty()
+        
+    def _mark_all_pages_dirty(self):
+        for screen in self.screens:
+            for page in screen.pages:
+                page.mark_dirty()
             
     def _device_enabled_configuration_changed(self, client, connection_id, entry, device):
         g15util.queue(SERVICE_QUEUE, "deviceStateChanged", 0, self._check_device_state, device)

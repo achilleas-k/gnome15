@@ -115,6 +115,24 @@ X11 events will be used.</property>
               </packing>
             </child>
             <child>
+              <object class="GtkCheckButton" id="DisableSVGGlow">
+                <property name="label" translatable="yes">Disable SVG Glow</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="tooltip_text" translatable="yes">The SVG glow effect currently
+uses lots of CPU. Select this option
+to remove the effect.</property>
+                <property name="use_action_appearance">False</property>
+                <property name="draw_indicator">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkTable" id="table1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -237,9 +255,6 @@ X11 events will be used.</property>
                   </packing>
                 </child>
                 <child>
-                  <placeholder/>
-                </child>
-                <child>
                   <object class="GtkLabel" id="label5">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
@@ -276,12 +291,15 @@ X11 events will be used.</property>
                     <property name="bottom_attach">4</property>
                   </packing>
                 </child>
+                <child>
+                  <placeholder/>
+                </child>
               </object>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="padding">4</property>
-                <property name="position">3</property>
+                <property name="position">4</property>
               </packing>
             </child>
           </object>

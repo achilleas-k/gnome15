@@ -25,7 +25,6 @@ import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import dbus
-import gobject
 import os
 import time
 
@@ -98,7 +97,6 @@ class AbstractMPRISPlayer():
     def reset_elapsed(self):
         logger.debug("Reset track elapsed time")
         self.start_elapsed = self.get_progress()
-        self.start_elapsed = 0
         self.playback_started = time.time()
         
     def set_status(self, new_status):        
@@ -215,17 +213,15 @@ class AbstractMPRISPlayer():
                 cover_image = g15util.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
                 if cover_image:
                     self.cover_image = cover_image
-#                    if not self.cover_uri.startswith("file:"):
-#                        self.cover_uri = g15util.get_embedded_image_url(self.cover_image)
-                    self.cover_uri = g15util.get_embedded_image_url(self.cover_image)
+                    
+                    # If the cover URI was from HTTP, then we cached it. Use that as the URI
+                    if self.cover_uri.startswith("http:") or self.cover_uri.startswith("http:"):
+                        self.cover_uri = g15util.get_image_cache_file(self.cover_uri, self.screen.driver.get_size()[0])
                 else:
                     cover_image = self.get_default_cover()
                     logger.warning("Failed to loaded preferred cover art, falling back to default of %s" % cover_image)
                     if cover_image:
-                        self.cover_image = cover_image
-#                        if not self.cover_uri.startswith("file:"):
-#                            self.cover_uri = g15util.get_embedded_image_url(self.cover_image)
-                        self.cover_uri = g15util.get_embedded_image_url(self.cover_image)
+                        self.cover_uri = cover_image
                         self.cover_image = g15util.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
                   
         # Track status

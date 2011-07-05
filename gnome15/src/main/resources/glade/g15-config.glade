@@ -1796,7 +1796,6 @@ the following title has focus</property>
                                                     <child>
                                                       <object class="GtkCellRendererText" id="cellrenderertext2"/>
                                                       <attributes>
-                                                        <attribute name="editable">0</attribute>
                                                         <attribute name="text">0</attribute>
                                                       </attributes>
                                                     </child>

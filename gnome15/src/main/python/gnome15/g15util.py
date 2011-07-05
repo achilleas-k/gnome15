@@ -433,18 +433,23 @@ def flip_hv_centered_on(context, fx, fy, cx, cy):
     mtrx = cairo.Matrix(fx,0,0,fy,cx*(1-fx),cy*(fy-1))
     context.transform(mtrx)
     
+def get_image_cache_file(filename, size = None):
+    cache_file = base64.urlsafe_b64encode("%s-%s" % ( filename, str(size if size is not None else "0,0") ) )
+    cache_dir = os.path.expanduser("~/.cache/gnome15")
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    full_cache_path = "%s/%s.img" % ( cache_dir, cache_file )
+    if os.path.exists(full_cache_path):
+        return full_cache_path
+    
 def load_surface_from_file(filename, size = None):
     if filename == None:
         logger.warning("Empty filename requested")
         return None
         
-    if filename.startswith("http:"):
-        cache_file = base64.urlsafe_b64encode(filename)
-        cache_dir = os.path.expanduser("~/.cache/gnome15")
-        if not os.path.exists(cache_dir):
-            os.makedirs(cache_dir)
-        full_cache_path = "%s/%s.img" % ( cache_dir, cache_file )
-        if os.path.exists(full_cache_path):
+    if filename.startswith("http:") or filename.startswith("https:"):
+        full_cache_path = get_image_cache_file(filename, size)
+        if full_cache_path:
             meta_fileobj = open(full_cache_path + "m", "r")
             type = meta_fileobj.readline()
             meta_fileobj.close()
@@ -468,7 +473,7 @@ def load_surface_from_file(filename, size = None):
                     type = "image/jpeg"
                     
             
-            if filename.startswith("http:"):
+            if filename.startswith("http:") or filename.startswith("https:"):
                 cache_fileobj = open(full_cache_path, "w")
                 cache_fileobj.write(data)
                 cache_fileobj.close()

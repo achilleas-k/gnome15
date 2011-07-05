@@ -39,7 +39,9 @@ from lxml import etree
 # Plugin details - All of these must be provided
 id="tweak"
 name="Tweak Gnome15"
-description="Allows configuration of some hidden settings"
+description="Allows configuration of some hidden settings. These are mostly " + \
+            "performance tweaks. If Gnome15 is using too much CPU, " + \
+            "you will find adjusting some of these may reduce it. " 
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
@@ -53,11 +55,12 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "tweak.glade"))
     dialog = widget_tree.get_object("TweakDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/scroll_delay", "ScrollDelayAdjustment", 300, widget_tree)
-    g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/scroll_amount", "ScrollAmountAdjustment", 2, widget_tree)
+    g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/scroll_delay", "ScrollDelayAdjustment", 500, widget_tree)
+    g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/scroll_amount", "ScrollAmountAdjustment", 5, widget_tree)
     g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/animation_delay", "AnimationDelayAdjustment", 100, widget_tree)
     g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/key_hold_duration", "KeyHoldDurationAdjustment", 2000, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/use_xtest", "UseXTest", True, widget_tree)
+    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/disable_svg_glow", "DisableSVGGlow", False, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/fade_screen_on_close", "FadeScreenOnClose", True, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/fade_keyboard_backlight_on_close", "FadeKeyboardBacklightOnClose", True, widget_tree)
     dialog.run()

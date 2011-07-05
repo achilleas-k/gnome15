@@ -265,7 +265,11 @@ class G15Config:
             self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
         except:
             logger.warning("BAMF not available, falling back to WNCK")
-            self.bamf_matcher = None
+            self.bamf_matcher = None            
+            import wnck
+            self.screen = wnck.screen_get_default()
+            while gtk.events_pending():
+                gtk.main_iteration()
         
         # Show infobar component to start desktop service if it is not running
         self.infobar = gtk.InfoBar()    
@@ -1278,17 +1282,25 @@ class G15Config:
         finally:
             self.adjusting = False
             
-    def _load_windows(self):        
-        self.window_model.clear()
+    def _load_windows(self):
+        logger.error("Clearing")   
+        self.window_model.clear()   
+        logger.error("Cleared")
         if self.bamf_matcher != None:            
             for window in self.bamf_matcher.RunningApplications():
                 app = self.session_bus.get_object("org.ayatana.bamf", window)
                 view = dbus.Interface(app, 'org.ayatana.bamf.view')
                 self.window_model.append([view.Name(), window])
         else:
-            import wnck
-            for window in wnck.screen_get_default().get_windows():
-                self.window_model.append([window.get_name(), window.get_name()])
+            apps = {}
+            for window in self.screen.get_windows():
+                if not window.is_skip_pager():
+                    app = window.get_application()                
+                    if app and not app.get_name() in apps:
+                        apps[app.get_name()] = app
+            logger.error("Adding %d apps" % len(apps))
+            for app in apps:
+                self.window_model.append([app, app])
                 
     def _simple_macro_changed(self, widget):
         self.editing_macro.simple_macro = widget.get_text()

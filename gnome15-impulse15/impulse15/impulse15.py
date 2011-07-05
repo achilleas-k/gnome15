@@ -61,7 +61,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_height", "BarHeightSpinner", 2, widget_tree)
     g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col1", "Color1", ( 255, 0, 0 ), widget_tree, default_alpha = 255)
     g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col2", "Color2", ( 0, 0, 255 ), widget_tree, default_alpha = 255)
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/frame_rate", "FrameRateAdjustment", 25.0, widget_tree)
+    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/frame_rate", "FrameRateAdjustment", 10.0, widget_tree)
     
     if driver.get_bpp() == 0:
         widget_tree.get_object("LCDTable").set_visible(False)

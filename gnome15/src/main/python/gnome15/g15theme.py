@@ -1204,6 +1204,12 @@ class G15Theme():
         
     def process_svg(self):        
         self.driver.process_svg(self.document)
+        root = self.document.getroot()
+        
+        # Remove glow effects
+        if self.screen.service.disable_svg_glow:
+            for element in root.xpath('//svg:filter[@inkscape:label="Glow"]',namespaces=self.nsmap):
+                element.getparent().remove(element)
                 
         # Remove sodipodi attributes
         self.del_namespace("sodipodi", "http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd")
@@ -1566,57 +1572,11 @@ class G15Theme():
                 tx, ty, text_width, text_height = self.text.measure()
                 text_width, text_height = self._get_actual_size(element, text_width, text_height)
                 text_box.bounds = ( text_bounds[0], text_bounds[1], text_width, text_height )
-    
-                if vertical_wrap:
-                    text_box.wrap = True
-                    text_boxes.append(text_box)
-                    if text_height > clip_path_bounds[3]:
-                        if id in self.scroll_state:
-                            scroll_item = self.scroll_state[id]
-                            scroll_item.text_box = text_box
-                            text_box.base = scroll_item.val
-                        else:
-                            scroll_item = VerticalWrapScrollState(text_box)
-                            scroll_item.vertical = True
-                            scroll_item.step = self.screen.service.scroll_amount
-                            self.scroll_state[id] = scroll_item
-                            diff = text_height - clip_path_bounds[3]
-                            scroll_item.range = ( 0, diff)                                
-                        scroll_item.transform_elements()
-                    elif id in self.scroll_state:
-                        del self.scroll_state[id]
-                        
-                    element.getparent().remove(element)
-                else:
-#                    text_boxes.append(text_box)
-                    
-                    # Enable or disable scrolling            
-                    if text_width > clip_path_bounds[2]:
-                        if id in self.scroll_state:
-                            scroll_item = self.scroll_state[id]
-                            scroll_item.element = element
-                        else:
-                            scroll_item = HorizontalScrollState(element)
-                            scroll_item.step = self.screen.service.scroll_amount
-                            
-                            self.scroll_state[id] = scroll_item
-                            diff = text_width - clip_path_bounds[2] + ( clip_path_bounds[0] - text_box.bounds[0] )
-                            scroll_item.alignment = text_box.css["text-align"]
-                            scroll_item.original = float(element.get("x"))
-                            if scroll_item.alignment == "middle":
-                                scroll_item.range = ( -(diff / 2), (diff / 2))
-                            elif scroll_item.alignment == "start":
-                                scroll_item.range = ( -diff, 0)
-                            elif scroll_item.alignment == "end":
-                                scroll_item.range = ( 0, diff)
-                                
-                            scroll_item.reset()
-                            
-                        scroll_item.other_elements = [t_span_node]
-                        scroll_item.transform_elements()
-                    elif id in self.scroll_state:
-                        del self.scroll_state[id]      
-#                    element.getparent().remove(element)                  
+                
+                if self.screen.service.scroll_amount > 0:
+                    self._scroll_text_boxes(vertical_wrap, text_box, text_boxes, t_span_node, element)
+                elif id in self.scroll_state:
+                    del self.scroll_state[id]                  
 
         # Find all of the  text boxes. This is a hack to get around rsvg not supporting
         # flowText completely. The SVG must contain two elements. The first must have
@@ -1625,6 +1585,7 @@ class G15Theme():
         # and must have an id attribute of <propertyKey>_text. The text layer is
         # then rendered by after the SVG using Pango.
         for element in root.xpath('//svg:rect[@class=\'textbox\']',namespaces=self.nsmap):
+            logger.warning("DEPRECATED Text box with ID %s in %s" % (id, self.dir))
             id = element.get("id")
             text_node = root.xpath('//*[@id=\'' + id + '_text\']',namespaces=self.nsmap)[0]
             if text_node != None:            
@@ -1642,6 +1603,63 @@ class G15Theme():
                 # Remove the textnod SVG element
                 text_node.getparent().remove(text_node)
                 element.getparent().remove(element)
+                
+    def _scroll_text_boxes(self, vertical_wrap, text_box, text_boxes, t_span_node, element):        
+        id = element.get("id")
+        text_height = text_box.bounds[3]
+        text_width =  text_box.bounds[2]
+        clip_path_bounds = text_box.clip
+        
+        if vertical_wrap:
+            text_box.wrap = True
+            text_boxes.append(text_box)
+            if text_height > clip_path_bounds[3]:
+                if id in self.scroll_state:
+                    scroll_item = self.scroll_state[id]
+                    scroll_item.text_box = text_box
+                    text_box.base = scroll_item.val
+                else:
+                    scroll_item = VerticalWrapScrollState(text_box)
+                    scroll_item.vertical = True
+                    self.scroll_state[id] = scroll_item
+                    diff = text_height - clip_path_bounds[3]
+                    scroll_item.range = ( 0, diff) 
+                scroll_item.step = self.screen.service.scroll_amount                               
+                scroll_item.transform_elements()
+            elif id in self.scroll_state:
+                del self.scroll_state[id]
+                
+            element.getparent().remove(element)
+        else:
+#            text_boxes.append(text_box)
+            
+            # Enable or disable scrolling            
+            if text_width > clip_path_bounds[2]:
+                if id in self.scroll_state:
+                    scroll_item = self.scroll_state[id]
+                    scroll_item.element = element
+                else:
+                    scroll_item = HorizontalScrollState(element)
+                    
+                    self.scroll_state[id] = scroll_item
+                    diff = text_width - clip_path_bounds[2] + ( clip_path_bounds[0] - text_box.bounds[0] )
+                    scroll_item.alignment = text_box.css["text-align"]
+                    scroll_item.original = float(element.get("x"))
+                    if scroll_item.alignment == "middle":
+                        scroll_item.range = ( -(diff / 2), (diff / 2))
+                    elif scroll_item.alignment == "start":
+                        scroll_item.range = ( -diff, 0)
+                    elif scroll_item.alignment == "end":
+                        scroll_item.range = ( 0, diff)
+                        
+                    scroll_item.reset()
+                    
+                scroll_item.step = self.screen.service.scroll_amount
+                scroll_item.other_elements = [t_span_node]
+                scroll_item.transform_elements()
+            elif id in self.scroll_state:
+                del self.scroll_state[id]      
+#            element.getparent().remove(element)
     
     def _get_clip_path_element(self, element):
         clip_val = element.get("clip-path")

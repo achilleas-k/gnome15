@@ -385,7 +385,7 @@ class AbstractDriver(object):
         return control_acquisition
         
     def acquire_mkey_lights(self, release_after = None, val = None):
-        logger.info("DEPRECATED call to acquire_mkey_lights, use acquire_control")
+        logger.warning("DEPRECATED call to acquire_mkey_lights, use acquire_control")
         control = self.get_control_for_hint(HINT_MKEYS)
         if control:
             return self.acquire_control(control, release_after, val)
@@ -404,7 +404,7 @@ class AbstractDriver(object):
             self.update_control(control_acquisition.control)
     
     def release_mkey_lights(self, control_acquisition):
-        logger.info("DEPRECATED call to release_mkey_lights, use release_control")
+        logger.warning("DEPRECATED call to release_mkey_lights, use release_control")
         self.release_control(control_acquisition)
             
     def disconnect(self):
