@@ -14,10 +14,33 @@
    height="43"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.1 r9760"
    sodipodi:docname="default-nobody.svg">
   <defs
-     id="defs4" />
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3005">
+      <rect
+         style="fill:#696969;fill-opacity:1;stroke:none"
+         id="rect3007"
+         width="126"
+         height="22"
+         x="-1.0217938e-07"
+         y="1019.3623" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3002">
+      <rect
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3004"
+         width="46.07143"
+         height="6.6071429"
+         x="56.07143"
+         y="1042.005" />
+    </clipPath>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -34,8 +57,8 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="620"
-     inkscape:window-x="2030"
-     inkscape:window-y="1"
+     inkscape:window-x="1823"
+     inkscape:window-y="109"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -87,21 +110,13 @@
        sodipodi:linespacing="125%"
        text-rendering="optimizeLegibility" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/plugins/notify-lcd/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/notify-lcd/default/${icon}"
        xlink:href="${icon}"
        height="28"
        width="28"
        y="1019.3622"
        x="129"
        id="image3051" />
-    <rect
-       style="fill:#696969;fill-opacity:1;stroke:none"
-       id="title"
-       width="126"
-       height="22"
-       x="-1.0217938e-07"
-       y="1019.3623"
-       class="textbox" />
     <rect
        class="progress"
        style="fill-opacity:1;stroke:none"
@@ -112,38 +127,28 @@
        y="1048.3622" />
     <text
        xml:space="preserve"
-       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="0.41113281"
-       y="1047.2772"
-       id="text3032"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         id="tspan3034"
-         x="0.41113281"
-         y="1047.2772">L2 Clear</tspan></text>
-    <text
-       xml:space="preserve"
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="57.827148"
+       x="77.827148"
        y="1047.2777"
        id="text3032-4"
        sodipodi:linespacing="125%"
-       title="del !action"><tspan
+       title="del !action"
+       clip-path="url(#clipPath3002)"><tspan
          sodipodi:role="line"
          id="tspan3034-7"
-         x="57.827148"
+         x="77.827148"
          y="1047.2777">L3 ${action1}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="124.46191"
+       x="126.46191"
        y="1047.2772"
        id="text3032-4-4"
        sodipodi:linespacing="125%"
        title="del !next"><tspan
          sodipodi:role="line"
          id="tspan3034-7-4"
-         x="124.46191"
+         x="126.46191"
          y="1047.2772">L4 Next</tspan></text>
     <text
        xml:space="preserve"
@@ -151,7 +156,10 @@
        x="-0.49804688"
        y="1024.1141"
        id="title_text"
-       sodipodi:linespacing="125%"><tspan
+       sodipodi:linespacing="125%"
+       clip-path="url(#clipPath3005)"
+       title="vertical-wrap"
+       transform="translate(2,0)"><tspan
          sodipodi:role="line"
          id="tspan3763"
          x="-0.49804688"

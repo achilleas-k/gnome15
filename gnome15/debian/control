@@ -57,7 +57,7 @@ Description: GTK Logitech keyboard emulator driver
 
 Package: gnome15-kernel
 Architecture: all
-Depends: ${python:Depends}, gnome15, pyinputevent, lgsetled
+Depends: ${python:Depends}, gnome15, pyinputevent, lg4l-dkms, lg4l-linux
 Provides: ${python:Provides}
 Description: Gnome15 Kernel driver
  Requires ali1234's kernel drivers. No additional processes

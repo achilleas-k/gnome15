@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/rules/simple-patchsys.mk
+#include /usr/share/cdbs/1/rules/simple-patchsys.mk
 
 DEB_INSTALL_MANPAGES_lg4l-dkms="debian/lg4l.8"
 DEB_DH_INSTALL_ARGS=--exclude=debian/

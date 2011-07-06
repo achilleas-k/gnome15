@@ -1,5 +1,5 @@
 AC_INIT(gnome15-iconpack, 0.0.3)
-AC_CONFIG_SRCDIR([elementary/status/16/logitech-g-keyboard-error-panel.svg])
+AC_CONFIG_SRCDIR([AwOken/status/16/logitech-g-keyboard-error-panel.png])
 AM_INIT_AUTOMAKE([tar-ustar])
 
 dnl AM_CONFIG_HEADER(config.h)
@@ -23,11 +23,6 @@ AwOken/apps/24/Makefile
 AwOken/apps/48/Makefile
 AwOken/apps/64/Makefile
 AwOken/apps/128/Makefile
-elementary/Makefile
-elementary/status/Makefile
-elementary/status/16/Makefile
-elementary/status/22/Makefile
-elementary/status/24/Makefile
 HighContrastLargePrintInverse/Makefile
 HighContrastLargePrintInverse/apps/Makefile
 HighContrastLargePrintInverse/apps/48/Makefile

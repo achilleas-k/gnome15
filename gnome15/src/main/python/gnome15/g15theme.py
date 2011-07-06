@@ -102,10 +102,10 @@ class ScrollState():
         
     def next(self):
         self.adjust += -self.step if self.reversed else self.step
-        if self.adjust < self.range[0]:
+        if self.adjust < self.range[0] and self.reversed:
             self.reversed = False
             self.adjust = self.range[0]
-        elif self.adjust > self.range[1]:
+        elif self.adjust > self.range[1] and not self.reversed:
             self.adjust = self.range[1]
             self.reversed = True
         self.do_transform()
@@ -122,9 +122,12 @@ class HorizontalScrollState(ScrollState):
         self.other_elements = []
             
     def transform_elements(self):
-        self.element.set("x", str(self.val))
+        self.element.set("x", str(int(self.val)))
         for e in self.other_elements:
-            e.set("x", str(self.val))
+            e.set("x", str(int(self.val)))
+            
+    def next(self):
+        ScrollState.next(self)
                 
 class VerticalWrapScrollState(ScrollState):
     def __init__(self, text_box):
@@ -638,6 +641,7 @@ class G15Page(Component):
                 self.theme_scroll_timer = g15util.schedule("ScrollRedraw", self.screen.service.scroll_delay, self.scroll_and_reschedule)
             elif not scroll and self.theme_scroll_timer != None:
                 self.theme_scroll_timer.cancel()
+                self.theme_scroll_timer = None
         finally:
             self.scroll_lock.release()
     
@@ -916,11 +920,8 @@ class Menu(Component):
         self.selected = self.get_child(self.i)
         if self.on_selected:
             self.on_selected()
-        if old_selected:
-            old_selected.clear_scroll()
-        self.selected.mark_dirty()
-        if old_selected:
-            old_selected.mark_dirty()
+        self.clear_scroll()
+        self.mark_dirty()
         self.get_root().redraw()
         
     def _move_up(self, amount = 1):
@@ -1140,7 +1141,8 @@ class G15Theme():
         if isinstance(dir, str):
             self.dir = dir
         else:
-            self.dir = os.path.join(os.path.dirname(sys.modules[dir.__module__].__file__), "default")        
+            self.dir = os.path.join(os.path.dirname(sys.modules[dir.__module__].__file__), "default")
+        self.document = None       
         self.variant = variant
         self.page = None
         self.instance = None
@@ -1161,7 +1163,7 @@ class G15Theme():
             'dc': 'http://purl.org/dc/elements/1.1/',
             'xlink': 'http://www.w3.org/1999/xlink',
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'inkscape': 'http://www.inkscape.org/namespaces/inkscape'
+            'inkscape': 'http://www.inkscape.org/namespaces/inkscape',
             }
         
     def clear_scroll(self):
@@ -1169,38 +1171,42 @@ class G15Theme():
             self.scroll_state[s].reset()
         
     def _set_component(self, component):
-        self.component = component
-        page = component.get_root()
-        if self.page is not None:
-            self.page.on_shown_listeners.remove(self._page_visibility_changed)
-            self.page.on_hidden_listeners.remove(self._page_visibility_changed)
-        self.page = page
-        if self.page is not None:
-            self.page.on_shown_listeners.append(self._page_visibility_changed)
-            self.page.on_hidden_listeners.append(self._page_visibility_changed)
-            
-        self.screen = self.page.get_screen()
-        self.text = g15text.new_text(self.screen)       
-        self.driver = self.screen.driver
-        if self.dir != None:
-            self.theme_name = os.path.basename(self.dir)
-            prefix_path = self.prefix if self.prefix != None else os.path.basename(os.path.dirname(self.dir)).replace("-", "_")+ "_" + self.theme_name + "_"
-            module_name = self.get_path_for_variant(self.dir, self.variant, "py", fatal = False, prefix = prefix_path)
-            module = None
-            if module_name != None:
-                if not dir in sys.path:
-                    sys.path.insert(0, self.dir)
-                module = __import__(os.path.basename(module_name)[:-3])
-                self.instance = module.Theme(self.screen, self)
-            path = self.get_path_for_variant(self.dir, self.variant, "svg")
-            self.document = etree.parse(path)
-        elif self.svg_text != None:
-            self.document = etree.ElementTree(etree.fromstring(self.svg_text))
-        else:
-            raise Exception("Must either supply theme directory or SVG text")
-            
-        self.process_svg()
-        self.bounds = g15util.get_bounds(self.document.getroot())
+        self.render_lock.acquire()
+        try:
+            self.component = component
+            page = component.get_root()
+            if self.page is not None:
+                self.page.on_shown_listeners.remove(self._page_visibility_changed)
+                self.page.on_hidden_listeners.remove(self._page_visibility_changed)
+            self.page = page
+            if self.page is not None:
+                self.page.on_shown_listeners.append(self._page_visibility_changed)
+                self.page.on_hidden_listeners.append(self._page_visibility_changed)
+                
+            self.screen = self.page.get_screen()
+            self.text = g15text.new_text(self.screen)       
+            self.driver = self.screen.driver
+            if self.dir != None:
+                self.theme_name = os.path.basename(self.dir)
+                prefix_path = self.prefix if self.prefix != None else os.path.basename(os.path.dirname(self.dir)).replace("-", "_")+ "_" + self.theme_name + "_"
+                module_name = self.get_path_for_variant(self.dir, self.variant, "py", fatal = False, prefix = prefix_path)
+                module = None
+                if module_name != None:
+                    if not dir in sys.path:
+                        sys.path.insert(0, self.dir)
+                    module = __import__(os.path.basename(module_name)[:-3])
+                    self.instance = module.Theme(self.screen, self)
+                path = self.get_path_for_variant(self.dir, self.variant, "svg")
+                self.document = etree.parse(path)
+            elif self.svg_text != None:
+                self.document = etree.ElementTree(etree.fromstring(self.svg_text))
+            else:
+                raise Exception("Must either supply theme directory or SVG text")
+                
+            self.process_svg()
+            self.bounds = g15util.get_bounds(self.document.getroot())
+        finally:
+            self.render_lock.release()
         
     def process_svg(self):        
         self.driver.process_svg(self.document)
@@ -1332,6 +1338,10 @@ class G15Theme():
         
         if self.render == None or self.dirty:
             self.render_lock.acquire()
+            
+            if self.document is None:
+                raise Exception("No document available! Paint called before component finished initialising")
+            
             try:
                 document = deepcopy(self.document)
                 processing_result = None
@@ -1354,6 +1364,7 @@ class G15Theme():
                 self._process_deletes(root, properties)
                 self._process_components(root)
                 self._set_progress_bars(root, properties) 
+                self._set_relative_image_paths(root)
                 self._convert_image_urls(root, properties)
                 self._do_shadow("shadow", self.screen.driver.get_color_as_hexrgb(g15driver.HINT_BACKGROUND, (255, 255,255)), root)
                 self._do_shadow("reverseshadow", self.screen.driver.get_color_as_hexrgb(g15driver.HINT_FOREGROUND, (0, 0, 0)), root)
@@ -1486,6 +1497,15 @@ class G15Theme():
         if highlight_control:  
             for element in root.xpath('//svg:*[@style]',namespaces=self.nsmap):
                 element.set("style", element.get("style").replace(DEFAULT_HIGHLIGHT_COLOR, self.screen.driver.get_color_as_hexrgb(g15driver.HINT_HIGHLIGHT, (255, 0, 0 ))))
+                
+    def _set_relative_image_paths(self, root):
+        for element in root.xpath('//svg:image[@xlink:href]',namespaces=self.nsmap):
+            href = element.get("{http://www.w3.org/1999/xlink}href")
+            if href and not "${" in href and ( href.startswith("./") or ( not href.startswith("http:") and not \
+                                          href.startswith("https:") and not href.startswith("file:") \
+                                          and not href.startswith("/") ) ):
+                href = os.path.join(self.dir, href)
+                element.set("{http://www.w3.org/1999/xlink}href", href)
     
     def _convert_image_urls(self, root, properties):
         """
@@ -1554,6 +1574,8 @@ class G15Theme():
                     raise Exception("Text node had clip path, but no tspan->text could be found")
                 
                 clip_path_rect_node = clip_path_node.find("svg:rect", namespaces=self.nsmap)
+                if clip_path_rect_node is None:
+                    raise Exception("No svg:rect for clip %s" % str(clip_path_node))
                 clip_path_bounds = g15util.get_actual_bounds(clip_path_rect_node, element)
                 text_bounds = g15util.get_actual_bounds(element)
                 
@@ -1570,7 +1592,7 @@ class G15Theme():
                 
                 self._update_text(text_box, vertical_wrap)
                 tx, ty, text_width, text_height = self.text.measure()
-                text_width, text_height = self._get_actual_size(element, text_width, text_height)
+#                text_width, text_height = self._get_actual_size(element, text_width, text_height)
                 text_box.bounds = ( text_bounds[0], text_bounds[1], text_width, text_height )
                 
                 if self.screen.service.scroll_amount > 0:
@@ -1585,8 +1607,8 @@ class G15Theme():
         # and must have an id attribute of <propertyKey>_text. The text layer is
         # then rendered by after the SVG using Pango.
         for element in root.xpath('//svg:rect[@class=\'textbox\']',namespaces=self.nsmap):
-            logger.warning("DEPRECATED Text box with ID %s in %s" % (id, self.dir))
             id = element.get("id")
+            logger.warning("DEPRECATED Text box with ID %s in %s" % (id, self.dir))
             text_node = root.xpath('//*[@id=\'' + id + '_text\']',namespaces=self.nsmap)[0]
             if text_node != None:            
                 styles = self.parse_css(text_node.get("style"))                
@@ -1623,7 +1645,7 @@ class G15Theme():
                     scroll_item.vertical = True
                     self.scroll_state[id] = scroll_item
                     diff = text_height - clip_path_bounds[3]
-                    scroll_item.range = ( 0, diff) 
+                    scroll_item.range = ( 0, diff)
                 scroll_item.step = self.screen.service.scroll_amount                               
                 scroll_item.transform_elements()
             elif id in self.scroll_state:
@@ -1642,10 +1664,14 @@ class G15Theme():
                     scroll_item = HorizontalScrollState(element)
                     
                     self.scroll_state[id] = scroll_item
-                    diff = text_width - clip_path_bounds[2] + ( clip_path_bounds[0] - text_box.bounds[0] )
+                    diff = text_width - clip_path_bounds[2]
+                    
+                     #+ ( clip_path_bounds[0] - text_box.bounds[0] )
+                    if diff < 0:
+                        raise Exception("Negative diff!?")
                     scroll_item.alignment = text_box.css["text-align"]
                     scroll_item.original = float(element.get("x"))
-                    if scroll_item.alignment == "middle":
+                    if scroll_item.alignment == "center":
                         scroll_item.range = ( -(diff / 2), (diff / 2))
                     elif scroll_item.alignment == "start":
                         scroll_item.range = ( -diff, 0)

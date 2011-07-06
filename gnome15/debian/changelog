@@ -1,21 +1,57 @@
-gnome15 (0.7.0-1) natty; urgency=low
+gnome15 (0.7.2-2) natty; urgency=low
 
-  * Feature: New Instant Messenger plugin (integrates with Telepathy)
-  * Feature: New Mounts plugin. Shows mounted and mountable volumes, as well as disk space stats. 
-  * Feature: Indicator Me now displays and allows current presence to be changed
-  
+  * Feature: Plugins now in separate module. See gnome15-plugins for changelog.
+  * Feature: Now handles multiple devices
+  * Feature: Project layout changed, gnome15 and gnome15-plugins are now the
+    two main projects. Various components are now disabled or enabled using
+    ./configure options.
+  * Feature: Start of support for the old MX5500 (I am expecting to obtain one
+    soon to finish the driver work)
+  * Feature: Scrolling Text. Everywhere where text might overflow, it will now
+    scroll within it's bounds.
+  * Feature: Improvements to plugins that make change keyboard backlight colour.
+    Any operations that change the colour of any keyboard lights will only do
+    so temporarily. When that operation is finished, the lights will return to
+    their previous state. For example, increase your Volume, and the M-Key
+    lights will temporarily acts as a level meter, then return to whatever state
+    they were at when the volume stops changing.
+  * Feature: Improvements to keyboard handling. Plugins now use 'actions' rather
+    than hard coded key codes. Coupled with the ability to hold keys down for a
+    different action, this will allow the MX5500 to be operable using only the
+    two LCD navigation keys it has. Some key mappings for the G15 related models
+    have also altered as a result of this (for example, Page Up and Page Down is
+    now possible by holding L3 or L4). 
+  * Feature: G19 fades the LCD and keyboard backlight when Gnome15 shuts down
+  * Bug: Logout, Shutdown and Restart are all now detected and shutdown Gnome15
+    cleanly (with fading)
+  * Bug: Memory leak fixes. The main memory leak that Gnome15 suffered is now
+    fixed. It turned out to be caused by pango layouts, and so any plugin that
+    used this was contributing to the problem. This is include Cairo Clock,
+    Clock, Weather and anything that had wrapped vertical text (e.g. screensaver
+    message). The cause was finally discovered due to the new scrolling feature
+    made use of layouts and chewed up memory even faster! 
+  * Feature: Many API changes and improvements. Comments have been added to lots
+    of the core source (with more to follow). 
+  * Feature: Screens in the indicator applet / system tray applet are now sorted
+    alphabetically.
+  * Feature: The SETUID lgsetled is no longer required. It has been replaced by
+    g15-system-service which is part
+    of the core application. This is a system bus service that has the sole job
+    of writing setting backlights and other LED values for the kernel driver.
+
  -- Brett Smith <tanktarta@blueyonder.co.uk>  Fri,  27 May 2011 00:03:20 +0000 
  
-
 gnome15 (0.6.5-1) natty; urgency=low
 
   * Feature: Kernel driver now has G15 support (tested)
   * Feature: Kernel driver now has G13 support (untested)
   * Feature: Kernel driver now has G110 support (untested)
   * Bug: Fixes a number of problems with the G19 kernel driver.
-  * Feature: Kernel driver package now has service script that configures the modules for use
-  * Feature: Wallpaper now use current desktop background by default (may be reconfigured). Note,
-    this currently only works for GNOME. Support for other desktops to come in future version
+  * Feature: Kernel driver package now has service script that configures the
+    modules for use
+  * Feature: Wallpaper now use current desktop background by default (may be
+    reconfigured). Note, this currently only works for GNOME. Support for other
+    desktops to come in future version
   * Bug: #784070 Indicator Messages plugin doesn't clear after timeout
   
  -- Brett Smith <tanktarta@blueyonder.co.uk>  Mon,  23 May 2011 08:30:23 +0000 

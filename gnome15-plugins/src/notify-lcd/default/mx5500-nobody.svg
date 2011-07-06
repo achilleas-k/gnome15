@@ -17,7 +17,19 @@
    inkscape:version="0.48.1 r9760"
    sodipodi:docname="mx5500-nobody.svg">
   <defs
-     id="defs4" />
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2997">
+      <rect
+         style="fill:#696969;fill-opacity:1;stroke:none"
+         id="rect2999"
+         width="104.00102"
+         height="24.999756"
+         x="-1.0218038e-07"
+         y="1020.3522" />
+    </clipPath>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -34,7 +46,7 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="620"
-     inkscape:window-x="186"
+     inkscape:window-x="193"
      inkscape:window-y="137"
      inkscape:window-maximized="0">
     <inkscape:grid
@@ -94,14 +106,6 @@
        y="1020.3622"
        x="104"
        id="image3051" />
-    <rect
-       style="fill:#696969;fill-opacity:1;stroke:none"
-       id="title"
-       width="104"
-       height="25"
-       x="-1.0217938e-07"
-       y="1020.3622"
-       class="textbox" />
     <text
        xml:space="preserve"
        style="font-size:5.99994135px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
@@ -109,7 +113,9 @@
        y="1025.3737"
        id="title_text"
        sodipodi:linespacing="125%"
-       transform="scale(0.99999018,1.0000098)"><tspan
+       transform="scale(0.99999018,1.0000098)"
+       clip-path="url(#clipPath2997)"
+       title="vertical-wrap"><tspan
          sodipodi:role="line"
          id="tspan3763"
          x="-0.49804199"

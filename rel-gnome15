@@ -1,9 +1,8 @@
 #!/bin/bash
 
-#modules="../pyinputevent pylibg19 g19d lgsetled gnome15 gnome15-gnome-plugins gnome15-ubuntu-plugins gnome15-impulse15 gnome15-ubuntu gnome15-iconpack"
+modules="../pyinputevent lg4l pylibg19 g19d lgsetled gnome15 gnome15-plugins gnome15-impulse15 gnome15-iconpack gnome15-ubuntu "
 modules="gnome15 gnome15-plugins gnome15-impulse15 gnome15-iconpack gnome15-ubuntu"
-modules="gnome15 gnome15-plugins gnome15-impulse15"
-#modules="gnome15-plugins"
+modules="gnome15 gnome15-plugins"
 base_dist="natty"
 arch=$(dpkg --print-architecture)
 
@@ -52,7 +51,7 @@ pdebuild=n
 #Options
 sign=y
 install=n
-dist="natty"
+dist="${base_dist}"
 bump=n
 
 while [ $# -gt 0 ]
@@ -83,6 +82,7 @@ then echo "$0: if you are doing a configure and a build, you must do a copy (add
 fi
 
 workspace=$HOME/Documents/Gnome15/gnome15-build/${dist}
+ppa_loc=ppa:gnome15-team/${dist}
 
 for i in $modules
 do
@@ -149,6 +149,11 @@ do
                         exit 1
                    fi
               else version=$(get_version $i)
+                   if ! tar czf "${workspace}/${module_name}-package/${module_name}_${version}.orig.tar.gz" \
+                              --xform "s,^,${module_name}-${version}/," *
+                   then echo "$0: failed to tar source" >&2
+                        exit 1
+                   fi
               fi
          fi
 
@@ -163,6 +168,7 @@ do
               exit 1
          else mkdir ${module_name}-${version} 2>/dev/null
          fi
+
 
          cd ${module_name}-${version} 
          if ! cp -Rp "${root_dir}/${i}/debian" .
@@ -289,9 +295,7 @@ do
          changelog_version=$(get_changelog_version -s ${module_name} ${version})
          changes_file=${module_name}_${changelog_version}_source.changes
          if [ -f "${changes_file}" ]
-         then ppa_loc=ppa:gnome15-team/${dist}
-              ppa_loc=ppa:tanktarta/gnome15
-              if ! dput -f ${ppa_loc} ${changes_file}
+         then if ! dput -f ${ppa_loc} ${changes_file}
               then echo "$0: dput failed" >&2
                    exit 1
               fi

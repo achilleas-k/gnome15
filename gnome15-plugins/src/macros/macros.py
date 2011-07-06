@@ -66,7 +66,7 @@ class MacroMenuItem(g15theme.MenuItem):
         item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self.macro.name
         item_properties["item_type"] = ""        
-        item_properties["item_key"] = ", ".join(g15util.get_key_names(self.macro.keys))
+        item_properties["item_key"] = ",".join(g15util.get_key_names(self.macro.keys))
         for r in range(0, len(self.macro.keys)):
             item_properties["icon%d" % (r + 1)] = os.path.join(g15globals.image_dir, "key-%s.png" % self.macro.keys[r])
         return item_properties

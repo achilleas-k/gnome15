@@ -2,10 +2,8 @@
 
 ### BEGIN INIT INFO
 # Provides:          lg4l-linux
-# Required-Start:    $syslog $local_fs
-# Required-Stop:     $syslog $local_fs
-# Should-Start:      $remote_fs
-# Should-Stop:       $remote_fs
+# Required-Start:    $syslog $local_fs $remote_fs
+# Required-Stop:     $syslog $local_fs $remote_fs
 # X-Start-Before:    xdm kdm gdm ldm sdm
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6

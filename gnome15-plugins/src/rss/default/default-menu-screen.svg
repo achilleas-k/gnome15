@@ -14,10 +14,22 @@
    height="43"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
-   sodipodi:docname="default.svg">
+   inkscape:version="0.48.1 r9760"
+   sodipodi:docname="default-menu-screen.svg">
   <defs
-     id="defs4" />
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3002">
+      <rect
+         style="opacity:0.5;fill:#ff4500;fill-opacity:1"
+         id="rect3004"
+         width="99.99984"
+         height="9.0000143"
+         x="0"
+         y="1009.3638" />
+    </clipPath>
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -34,8 +46,8 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="2155"
-     inkscape:window-y="43"
+     inkscape:window-x="2137"
+     inkscape:window-y="249"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -85,7 +97,8 @@
        id="text3037"
        sodipodi:linespacing="125%"
        transform="scale(1.0000016,0.9999984)"
-       class="shadow"><tspan
+       class="shadow"
+       clip-path="url(#clipPath3002)"><tspan
          sodipodi:role="line"
          id="tspan3039"
          x="0.33593482"
@@ -96,13 +109,13 @@
        id="path3041"
        inkscape:connector-curvature="0" />
     <image
-       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15/src/plugins/rss/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/rss/default/${icon}"
        xlink:href="${icon}"
-       height="22.000017"
-       width="22.000017"
-       y="1025.3622"
+       id="image3051"
        x="128.99998"
-       id="image3051" />
+       y="1025.3622"
+       width="22.000017"
+       height="22.000017" />
     <g
        transform="translate(-2,0)"
        id="viewScrollbar">

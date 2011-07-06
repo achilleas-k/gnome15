@@ -33,7 +33,7 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="335"
+     inkscape:window-x="342"
      inkscape:window-y="107"
      inkscape:window-maximized="0"
      inkscape:snap-global="false">
@@ -62,6 +62,22 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,-1009.3622)">
+    <rect
+       style="fill:#501616;fill-opacity:0;stroke:#000000;stroke-width:0.99999994;stroke-opacity:1"
+       id="rect3019-0"
+       width="69"
+       height="24.5"
+       x="90.5"
+       y="1027.3622"
+       title="del !menu_focused" />
+    <rect
+       style="fill:#501616;fill-opacity:0;stroke:#000000;stroke-width:1;stroke-opacity:1"
+       id="rect3019"
+       width="90"
+       height="42"
+       x="0.5"
+       y="1009.8622"
+       title="del !calendar_focused" />
     <text
        xml:space="preserve"
        style="font-size:5.99997711px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
@@ -274,21 +290,5 @@
        x="0.17857143"
        y="6.0357141"
        transform="translate(0,1009.3622)" />
-    <rect
-       style="fill:#501616;fill-opacity:0;stroke:#000000;stroke-width:1;stroke-opacity:1"
-       id="rect3019"
-       width="90"
-       height="42"
-       x="0.5"
-       y="1009.8622"
-       title="del !calendar_focused" />
-    <rect
-       style="fill:#501616;fill-opacity:0;stroke:#000000;stroke-width:0.99999994;stroke-opacity:1"
-       id="rect3019-0"
-       width="69"
-       height="24.5"
-       x="90.5"
-       y="1027.3622"
-       title="del !menu_focused" />
   </g>
 </svg>

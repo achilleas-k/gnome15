@@ -13,12 +13,6 @@ Description: AwOken icons for Gnome15
  Provides AwOken style icons for Gnome15. A PPA is 
  available for this theme at ppa:alecive/antigone
 
-Package: gnome15-elementary-icons
-Architecture: all
-Depends: gnome15, elementary-icon-theme
-Description: Elementary icons for Gnome15
- Provides Elementary style icons for Gnome15.
-
 Package: gnome15-mono-icons
 Architecture: all
 Depends: gnome15, ubuntu-mono

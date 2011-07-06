@@ -269,7 +269,7 @@ class G15MacroRecorder():
         
     def _start_recording(self):      
         self._script_model = []      
-        if self._screen.device.bpp > 0:
+        if self._screen.driver.get_bpp() > 0:
             if self._page == None:
                 self._page = g15theme.G15Page(id, self._screen, priority=g15screen.PRI_EXCLUSIVE,\
                                               title = name, theme_properties_callback = self._get_theme_properties, \

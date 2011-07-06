@@ -4,6 +4,8 @@ theme_DATA = \
 	g19-one_timer.svg \
 	g19-two_timers.svg \
 	up.gif \
+	playpause.gif \
+	reset.gif \
 	mx5500.svg \
 	mx5500-one_timer.svg \
 	mx5500-two_timers.svg \

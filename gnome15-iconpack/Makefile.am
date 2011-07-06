@@ -1,2 +1,2 @@
-SUBDIRS = AwOken elementary HighContrastLargePrintInverse ubuntu-mono-dark ubuntu-mono-light
+SUBDIRS = AwOken HighContrastLargePrintInverse ubuntu-mono-dark ubuntu-mono-light
 

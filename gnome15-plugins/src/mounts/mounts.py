@@ -68,7 +68,6 @@ def create(gconf_key, gconf_client, screen):
     return G15Places(gconf_client, gconf_key, screen)
 
 POSSIBLE_ICON_NAMES = [ "folder" ]
-FS_ICONS = { "" }
 
 MODES = { "free" : "Free", "used" : "Used", "size" : "Size"}
 MODE_LIST = list(MODES.keys())

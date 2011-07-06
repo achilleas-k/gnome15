@@ -1,5 +1,71 @@
-gnome15-plugins (0.7.0-1) natty; urgency=low
+gnome15-plugins (0.7.2-1) natty; urgency=low
 
-  * First release of separated plugins. 
+  * Feature: First release of separated plugins.
+  * Feature: IM - New plugin to show current instant messenger contacts 
+    (telepathy based clients only)
+  * Feature: LDCShot - New plugin to take screenshot of LCD (location 
+    configurable)
+  * Feature: Mounts - New plugin to display current drive mounts (allows 
+    eject etc)
+  * Feature: Tweak - New plugin to allow access to some hidden settings 
+    (scroll speed etc)
+  * Feature: Cairo Clock - Now supports G15 and other monochrome models. 
+    However, you can't use any old Cairo Clock theme, special bitmap themes must
+    be crafted. A single simple theme is indcluded.
+  * Feature: Cairo Clock - "Sweeping seconds" option for smooth second hand
+    animation (uses more CPU, so is disabled by default)
+  * Feature: Cairo Clock - Gnome15 also now ships with default themes for the
+    G19, in case cairo clock is not installed.
+  * Feature: Cairo Clock - Can now show digital time on the face as well
+  * Feature: Calendar - Events are now shown in a scrollable area. You may
+    switch between this area using the "View" action (Cog key on G19, L2 on the
+    monochrome models). Events may be selected, but nothing happens yet.
+  * Feature: Calendar - Events that last longer than a day, all days will be
+    highlighted.
+  * Feature: Menu - Menu is now activated by holding L2 on the G15 (instead
+    of just pressing it).
+  * Feature: Menu - Menu is now sorted alphabetically.
+  * Feature: Impulse - New "Disco mode" that flashes the keyboard in time
+    with audio
+  * Feature: Impulse - Now has support for keyboards without screens, can use
+    M-Key lights as  a simple level meter 
+  * Feature: Impulse - Frame rate option added to decrease CPU usage         
+  * Feature: Impulse - Automatically decreases frame rate if when there is
+    no audio                           
+  * Feature: Indicator Me - Now allows changing of current status                           
+  * Feature: Indicator Messages - Will blink the M-Key lights when there is a
+    message waiting. This allows the plugin to be useful on plugins without
+    screens.                           
+  * Feature: Indicator Messages - Automatic popup on menu change may now be
+    disabled.                           
+  * Feature: Macro Recorder - Blinks the MR light (and the current bank key)
+    while recording is in progress. This allows the plugin to be useful on
+    plugins without screens.                           
+  * Feature: Macro Information - Rewritten to use the standard Gnome15 menu                             
+  * Feature: MPRIS - Fixed problem where track progress would exceed 100%
+    and keep growing.
+  * Feature: MPRIS - Fixed problem where MPRIS would cause Gnome15 and the
+    Media Player to hang for 10 seconds when the track changes and the
+    NotifyLCD plugins is enabled.                              
+  * Feature: MPRIS - Some artwork locations could cause sever lag and CPU
+    spikes. This should be improved.
+  * Feature: MPRIS - Panel artwork icon fixed.
+  * Feature: Notify - Can now operate in "Passive mode". This works by rather
+    than replacing the notification daemon, it simply watches for notify events
+    being send to the standard notification service. This allows the Notify
+    plugin to work on desktops where it is near impossible to kill the standard
+    notification service, or when you messages to appear on your desktop AND
+    the keyboard LCD.
+  * Feature: Notify - Can now blink M-Key lights when notifications are
+    received.
+  * Feature: Screensaver - Keyboard backlight now gently fades when screensaver
+    activated (when dimming is turned on).
+  * Feature: Screensaver - Added support for screenless models that have a
+    backlight (G110, G11)
+  * Feature: Video Player - Now uses "Action" keys instead of G1-G5.
+  * Feature: Stopwatch - Now has option to keep the stopwatch visible while
+    it is running (as a high priority screen).
+  * Feature: Stopwatch - Now has option to keep the stopwatch visible while it
+    is running (as a high priority screen).
   
  -- Brett Smith <tanktarta@blueyonder.co.uk>  Sun,  5 Jun 2011 23:59:21 +0100

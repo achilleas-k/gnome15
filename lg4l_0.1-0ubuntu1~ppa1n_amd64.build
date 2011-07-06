@@ -1,0 +1,31 @@
+dpkg-buildpackage: export CFLAGS from dpkg-buildflags (origin: vendor): -g -O2
+dpkg-buildpackage: export CPPFLAGS from dpkg-buildflags (origin: vendor): 
+dpkg-buildpackage: export CXXFLAGS from dpkg-buildflags (origin: vendor): -g -O2
+dpkg-buildpackage: export FFLAGS from dpkg-buildflags (origin: vendor): -g -O2
+dpkg-buildpackage: export LDFLAGS from dpkg-buildflags (origin: vendor): -Wl,-Bsymbolic-functions
+dpkg-buildpackage: source package lg4l
+dpkg-buildpackage: source version 0.1-0ubuntu1~ppa1n
+dpkg-buildpackage: source changed by Brett Smith <tanktarta@blueyonder.co.uk>
+ dpkg-source --before-build lg4l-dkms
+ fakeroot debian/rules clean
+/usr/share/cdbs/1/rules/simple-patchsys.mk:31: WARNING:  simple-patchsys.mk is deprecated - please use source format 3.0 (quilt) instead
+test -x debian/rules
+dh_testroot
+dh_clean 
+/usr/bin/make -f debian/rules reverse-config
+make[1]: Entering directory `/home/tanktarta/Workspaces/Gnome/gnome15/lg4l-dkms'
+/usr/share/cdbs/1/rules/simple-patchsys.mk:31: WARNING:  simple-patchsys.mk is deprecated - please use source format 3.0 (quilt) instead
+make[1]: Nothing to be done for `reverse-config'.
+make[1]: Leaving directory `/home/tanktarta/Workspaces/Gnome/gnome15/lg4l-dkms'
+if [ "reverse-patches" = "reverse-patches" ]; then rm -f debian/stamp-patched; fi
+patches: 
+if [ "reverse-patches" != "reverse-patches" ]; then touch debian/stamp-patched; fi
+if [ "reverse-patches" != "reverse-patches" ] ; then \
+		/usr/bin/make -f debian/rules update-config ; \
+	fi
+for dir in debian/patches ; do \
+	    rm -f $dir/*.log ; \
+	done
+ dpkg-source -b lg4l-dkms
+dpkg-source: error: can't build with source format '3.0 (quilt)': no orig.tar file found
+dpkg-buildpackage: error: dpkg-source -b lg4l-dkms gave error exit status 255
