@@ -8,8 +8,8 @@ Homepage: http://www.gnome15.org/
 
 Package: gnome15
 Architecture: all
-Depends: ${python:Depends}, python-gobject, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, python-xlib, libgtk2.0-bin, python-pyinotify, bamfdaemon, python-gtop, python-usb, python-gconf, python-appindicator  
-Recommends: gnome15-g19direct | gnome15-g15daemon , gnome15-base-plugins
+Depends: ${python:Depends}, python-gobject, python-gtk2, python-dbus, python-cairo, python-lxml, python-imaging, python-alsaaudio, python-feedparser, python-rsvg, python-xlib, libgtk2.0-bin, python-pyinotify, python-gtop, python-usb, python-gconf, python-appindicator  
+Recommends: gnome15-g19direct | gnome15-g15daemon , gnome15-base-plugins, bamfdaemon
 Suggests: python-setproctitle, gnome15-g19d, gnome15-gtk, gnome15-kernel
 Replaces: gnome15-indicator, gnome15-systemtray, gnome15-applet
 Conflicts: gnome15-indicator, gnome15-systemtray, gnome15-applet
