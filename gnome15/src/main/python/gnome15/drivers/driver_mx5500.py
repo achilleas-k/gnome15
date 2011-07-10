@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-from gnome15.drivers.driver_g15 import invert_control
  
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |

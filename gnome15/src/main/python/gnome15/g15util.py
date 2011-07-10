@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 ############################################################################
 ##
 ## Copyright (C), all rights reserved:
@@ -21,6 +20,7 @@ THIS HAS TURNED INTO A DUMPING GROUND AND NEEDS REFACTORING
 import g15globals as pglobals
 import gtk.gdk
 import os
+import re
 import cairo
 import math
 import dbus
@@ -734,6 +734,9 @@ def rotate_element(element, degrees):
     t.rotate(degrees_to_radians(degrees))
     ts = "m" + str(t)[7:]
     element.set("transform", ts)
+    
+def split_args(args):
+    return re.findall(r'\w+', args)
 
 def get_transforms(element, position_only = False):    
     transform_val = element.get("transform")
@@ -783,7 +786,7 @@ def get_location(element):
                 if end_args == -1:
                     logger.warning("Unexpected end of transform arguments")
                     break
-                args = transform_val[start_args + 1:end_args].split(",")
+                args = split_args(transform_val[start_args + 1:end_args])
                 if name == "translate":
                     list.append((float(args[0]), float(args[1])))
                 elif name == "matrix":
@@ -822,9 +825,9 @@ def get_actual_bounds(element, relative_to = None):
         t = transforms[0]
         for i in range(1, len(transforms)):
             t = t.multiply(transforms[i])
-    args = str(t)[13:-1].split(", ")
-    b = (float(args[4]),float(args[5]),bounds[2],bounds[3])
-    return b
+
+    xx, yx, xy, yy, x0, y0 = t
+    return x0, y0, bounds[2], bounds[3]
 
 def get_bounds(element):
     x = 0.0

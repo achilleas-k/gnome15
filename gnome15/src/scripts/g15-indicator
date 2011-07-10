@@ -111,5 +111,7 @@ if __name__ == "__main__":
     except:
         pass
     
-    G15Indicator().start()                       
+    g15desktop.logger.setLevel(logging.DEBUG)
+    G15Indicator().start()   
+                        
     gtk.main()

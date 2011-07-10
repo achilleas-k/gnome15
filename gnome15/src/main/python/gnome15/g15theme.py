@@ -1,5 +1,3 @@
-#!/usr/bin/env python
- 
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
@@ -47,11 +45,9 @@ for progress bars, scroll bars.
 import os
 import cairo
 import rsvg
-import math
 import sys
 import traceback
 import pango
-import pangocairo
 import g15driver
 import g15globals
 import g15screen
@@ -68,9 +64,6 @@ from copy import deepcopy
 from cStringIO import StringIO
 from lxml import etree
 from threading import RLock
-
-import objgraph
-import gc
 
 BASE_PX=18.0
 
@@ -916,7 +909,6 @@ class Menu(Component):
             
     
     def _do_selected(self):
-        old_selected = self.selected
         self.selected = self.get_child(self.i)
         if self.on_selected:
             self.on_selected()
@@ -1057,8 +1049,6 @@ class DBusMenu(Menu):
             current_ids.append(item.id)
             
         self.populate()
-        
-        was_selected = self.selected
         
         # Scroll to item if it is newly visible
         if menu != None:
@@ -1783,7 +1773,7 @@ class G15Theme():
         
         css = text_box.css         
         
-        font_size_css = css["font-size"]
+        font_size_css = css["font-size"] if "font-size" in css else None
         font_pt_size = None
         if font_size_css:
             nw = "".join(font_size_css.split()).lower()                 
@@ -1794,9 +1784,9 @@ class G15Theme():
                 font_pt_size = int(font_size_css[:-2])
                 
 
-        font_family = css["font-family"]
-        font_weight = css["font-weight"]
-        font_style = css["font-style"]
+        font_family = css["font-family"] if "font-family" in css else None
+        font_weight = css["font-weight"] if "font-weight" in css else None
+        font_style = css["font-style"] if "font-style" in css else None
         if "text-align" in css:
             text_align = css["text-align"]
         else:

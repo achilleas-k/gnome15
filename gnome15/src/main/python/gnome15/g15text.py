@@ -1,5 +1,3 @@
-#!/usr/bin/env python
- 
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
@@ -23,6 +21,8 @@
 import pango
 import pangocairo
 import cairo
+import logging
+logger = logging.getLogger("text")
 
 # Shared pango context
 pango_context = pangocairo.cairo_font_map_get_default().create_context()
@@ -88,6 +88,11 @@ class G15PangoText(G15Text):
     def set_attributes(self, text, bounds = None, wrap = None, align = pango.ALIGN_LEFT, width = None, spacing = None, \
             font_desc = None, font_absolute_size = None, attributes = None,
             weight = None, style = None, font_pt_size = None):
+        
+        logger.debug("Text: %s, bounds = %s, wrap = %s, align = %s, width = %s, attributes = %s, spacing = %s, font_desc = %s, weight = %s, style = %s, font_pt_size = %s" \
+                % ( str(text), str(bounds), str(wrap), str(align), str(width), str(attributes), str(spacing), str(font_desc), \
+                    str(weight), str(style), str(font_pt_size))) 
+        
         G15Text.set_attributes(self, text, bounds, wrap, align, width, spacing, font_desc, font_absolute_size)  
             
         font_desc_name = "Sans" if font_desc == None else font_desc

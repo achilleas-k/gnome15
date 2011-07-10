@@ -7,5 +7,5 @@ Icon=gnome15
 Terminal=false
 StartupNotify=true
 Type=Application
-Categories=GNOME;GTK;Settings;HardwareSettings;
+Categories=GTK;Settings;HardwareSettings;
 OnlyShowIn=GNOME;

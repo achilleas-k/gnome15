@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 ############################################################################
 ##
 ## Copyright (C), all rights reserved:
@@ -1148,7 +1147,7 @@ class G15Config:
         idx = 0
         for device in self.devices:
             if device.model_id == 'virtual':
-                icon_file = g15util.get_icon_path(["preferences-system-window", "gnome-window-manager", "window_fullscreen"])
+                icon_file = g15util.get_icon_path(["preferences-system-window", "preferences-system-windows", "gnome-window-manager", "window_fullscreen"])
             else:
                 icon_file = g15util.get_app_icon(self.conf_client,  device.model_id)
             pixb = gtk.gdk.pixbuf_new_from_file(icon_file)

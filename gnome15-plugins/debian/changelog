@@ -1,3 +1,10 @@
+gnome15-plugins (0.7.3-1) natty; urgency=low
+
+  * Bug: Fixes some problems with scrolling 
+  * Bug: Restarting desktop service with "restart" option fails
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Fri,   8 Jul 2011 03:13:20 +0100
+ 
 gnome15-plugins (0.7.2-1) natty; urgency=low
 
   * Feature: First release of separated plugins.

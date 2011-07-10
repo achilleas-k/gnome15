@@ -1,5 +1,3 @@
-#!/usr/bin/env python
- 
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
@@ -27,7 +25,6 @@ import gnome15.g15theme as g15theme
 import gtk
 import os
 import sys
-import time
 import datetime
 
 id="impulse15"

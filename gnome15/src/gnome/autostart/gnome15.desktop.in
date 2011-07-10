@@ -2,12 +2,16 @@
 Version=1.0
 Encoding=UTF-8
 Name=Logitech G Keyboard Desktop Service
+Name[fr]=Clavier Logitech G Desktop Service
+Name[it]=Tastiera Logitech G Desktop Servizio
 Icon=gnome15
 Comment=Logitech G series keyboard desktop service.
+Comment[fr]=Logitech série G clavier de bureau de service.
+Comment[it]=Serie G di Logitech tastiera servizio desktop.
 Exec=g15-desktop-service
 Terminal=false
 Type=Application
-Categories=
+Categories=System;GTK
 GenericName=
 #X-GNOME-Autostart-Delay=8
 X-GNOME-Autostart-Phase=Initialization

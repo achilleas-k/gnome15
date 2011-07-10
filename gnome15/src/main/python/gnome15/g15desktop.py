@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # coding: utf-8
  
 #        +-----------------------------------------------------------------------------+
@@ -492,7 +491,8 @@ class G15DesktopComponent():
         try :
             self._connect()        
         except dbus.exceptions.DBusException:
-            traceback.print_exc(file=sys.stdout)
+            if logger.level == logging.DEBUG:
+                traceback.print_exc(file=sys.stdout)
             self._disconnect()
         
         # Start watching various events
@@ -519,7 +519,9 @@ class G15DesktopComponent():
             # Because the icons aren't installed in this mode, they must be provided
             # using the full filename. Unfortunately this means scaling may be a bit
             # blurry in the indicator applet
-            return g15util.get_icon_path(icon_name, 128)
+            path = g15util.get_icon_path(icon_name, 128)
+            logger.debug("Dev mode icon %s is at %s" % ( icon_name, path ) )
+            return path
         else:
             return icon_name
              
@@ -698,11 +700,13 @@ class G15DesktopComponent():
         self._reset_attention()
         self.service = self.session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service')
         self.connected = True
+        logger.debug("Connected")
                 
         # Load the initial screens
         self.lock.acquire()
         try : 
             for screen_path in self.service.GetScreens():
+                logger.debug("Adding %s" % screen_path)
                 self._add_screen(screen_path)
                 remote_screen = self.session_bus.get_object('org.gnome15.Gnome15', screen_path)
                 for page_path in remote_screen.GetPagesBelowPriority(g15screen.PRI_LOW):
@@ -801,7 +805,8 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
             item.connect("activate", self.stop_desktop_service)
             self._append_item(item)
             self._append_item(gtk.MenuItem())
-            for device_path in self.service.GetDevices():
+            devices = self.service.GetDevices()
+            for device_path in devices:
                 remote_device = self.session_bus.get_object('org.gnome15.Gnome15', device_path)
                 screen_path = remote_device.GetScreen()
                 
@@ -812,9 +817,10 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                 
                 if screen:
                     # Disable
-                    item = gtk.MenuItem("Disable %s"  % screen.device_model_fullname)
-                    item.connect("activate", self._disable, remote_device)
-                    self._append_item(item)
+                    if len(devices) > 1:
+                        item = gtk.MenuItem("Disable %s"  % screen.device_model_fullname)
+                        item.connect("activate", self._disable, remote_device)
+                        self._append_item(item)
                     
                     # Cycle screens
                     item = gtk.CheckMenuItem("Cycle screens automatically")
@@ -838,9 +844,10 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                         self._append_item(item)
                 else:
                     # Enable
-                    item = gtk.MenuItem("Enable %s" % remote_device.GetModelFullName())
-                    item.connect("activate", self._enable, remote_device)
-                    self._append_item(item)
+                    if len(devices) > 1:
+                        item = gtk.MenuItem("Enable %s" % remote_device.GetModelFullName())
+                        item.connect("activate", self._enable, remote_device)
+                        self._append_item(item)
                 i += 1
         else:
             item = gtk.MenuItem("Start Desktop Service")

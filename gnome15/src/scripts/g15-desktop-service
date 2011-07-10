@@ -23,6 +23,7 @@
 import sys
 import os
 import glib
+import time
 
 # Logging
 import logging
@@ -94,13 +95,18 @@ if __name__ == "__main__":
         level = LEVELS.get(options.log_level.lower(), logging.NOTSET)
         logger.setLevel(level = level)
         
+    session_bus = None
+        
     if len(args) == 1 and ( args[0] == "stop" or args[0] == "restart" ):
         session_bus = dbus.SessionBus()
         if not check_service_status(session_bus):
             if args[0] == "stop":
                 print "Gnome15 desktop service is not running"
         else:            
-            session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service').Stop();
+            session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service').Stop()
+            while check_service_status(session_bus):
+                pass
+        session_bus.close()
             
     if len(args) == 0 or ( len(args) == 1 and ( args[0] == "start" or args[0] == "restart" ) ):
         session_bus = dbus.SessionBus()

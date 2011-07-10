@@ -10,13 +10,8 @@ public class Gnome15DBUSExample {
 		Screen screen = g15.getPrimaryScreen();
 		Page page = g15.createPage(screen, "MyPage", "This is my page", Gnome15.PRI_NORMAL);
 		page.Raise();
-		Control control = g15.acquireControl(screen, "backlight_colour", 0, "0,0,0");
 		for (int i = 0; i < 1000; i++) {
-			// control.SetValue(String.valueOf((int)(Math.random() * 255)) + ","
-			// + String.valueOf((int)(Math.random() * 255)) + "," +
-			// String.valueOf((int)(Math.random() * 255)), 0);
 			page.NewSurface();
-			// page.SetFont(20, "Sans", "", "");
 			page.Text("This is some text " + i, 0, 0, 0, 0, "center");
 			page.DrawSurface();
 			page.Redraw();

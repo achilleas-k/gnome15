@@ -1,5 +1,3 @@
-#!/usr/bin/env python
- 
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
@@ -23,12 +21,8 @@
 import gnome15.g15screen as g15screen 
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
-import datetime
-from threading import Timer
-import Image
 import gtk
 import os
-import sys
 import time
 import cairo
 import random

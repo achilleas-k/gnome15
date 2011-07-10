@@ -1,5 +1,3 @@
-#!/usr/bin/env python
- 
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
@@ -121,7 +119,9 @@ class Checker():
                                                                            'username':username,
                                                                            'port':port}, password, True)
         
-    def find_secret(self, name):  
+    def find_secret(self, account, name): 
+        username = self.get_username(account) 
+        secret = None
         try :
             keyring = "login"
             for id in gk.list_item_ids_sync(keyring):
@@ -130,6 +130,29 @@ class Checker():
                 if name == display_name:
                     self.password  = item.get_secret() 
                     return  
+                
+            # Ask for the password
+            widget_tree = gtk.Builder()
+            widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "password.glade"))
+            dialog = widget_tree.get_object("PasswordDialog")
+            text_widget = widget_tree.get_object("Text")
+            text_widget.set_text("The account <b>" + account.name + "</b> for the user <b>" + username + "</b>.\n" + \
+                          "requires a password, This will be stored in the Gnome Keyring and \n" + \
+                          "and will not be asked for again unless there is some later problem\n" + \
+                          "problem authentication (for example as the result of\n" + \
+                          "a password change).")       
+            text_widget.set_use_markup(True)     
+            password_widget = widget_tree.get_object("Password")
+            dialog.show_all()
+            
+            response = dialog.run()
+            try :    
+                if response == 1:
+                    self.password = password_widget.get_text()
+            finally :         
+                dialog.destroy()
+                
+            return
         finally:
             self.lock.release()
 
@@ -138,7 +161,6 @@ class Checker():
         username = self.get_username(account)
         hostname = self.get_hostname(account)
         port = self.get_port_or_default(account, default_port) 
-        secret = None
         name = account.type + "://" + username + "@" + hostname + ":" + str(port)
         
         '''
@@ -149,34 +171,11 @@ class Checker():
         '''
         self.lock.acquire()
         self.password = None
-        gobject.idle_add(self.find_secret, name)
+        gobject.idle_add(self.find_secret, account, name)
         self.lock.acquire()
         self.lock.release()
         if self.password != None:
             return self.password
-                
-        # Ask for the password
-        widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "password.glade"))
-        dialog = widget_tree.get_object("PasswordDialog")
-        text_widget = widget_tree.get_object("Text")
-        text_widget.set_text("The account <b>" + account.name + "</b> for the user <b>" + username + "</b>.\n" + \
-                      "requires a password, This will be stored in the Gnome Keyring and \n" + \
-                      "and will not be asked for again unless there is some later problem\n" + \
-                      "problem authentication (for example as the result of\n" + \
-                      "a password change).")       
-        text_widget.set_use_markup(True)     
-        password_widget = widget_tree.get_object("Password")
-        dialog.show_all()
-        
-        response = dialog.run()
-        try :    
-            if response == 1:
-                return password_widget.get_text()
-        finally :         
-            dialog.destroy()
-            
-        return None
 
 class POP3Checker(Checker):    
     '''
