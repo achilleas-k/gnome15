@@ -34,6 +34,11 @@ import traceback
 
 logger = logging.getLogger("config")
 
+# Upgrade
+import g15upgrade
+g15upgrade.upgrade()
+
+
 # Determine if appindicator is available, this decides the nature
 # of the message displayed when the Gnome15 service is not running
 HAS_APPINDICATOR=False

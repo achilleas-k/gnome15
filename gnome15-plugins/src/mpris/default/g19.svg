@@ -304,7 +304,7 @@
      borderlayer="false"
      inkscape:window-width="1327"
      inkscape:window-height="862"
-     inkscape:window-x="1985"
+     inkscape:window-x="1992"
      inkscape:window-y="94"
      inkscape:window-maximized="0">
     <inkscape:grid
@@ -349,11 +349,11 @@
       <image
          sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/mpris/default/${icon}"
          xlink:href="${icon}"
-         style="fill:#696969"
-         id="image3050"
-         transform="matrix(0.4765625,0,0,0.4765625,18,832.36218)"
+         height="256"
          width="256"
-         height="256" />
+         transform="matrix(0.4765625,0,0,0.4765625,18,832.36218)"
+         id="image3050"
+         style="fill:#696969" />
     </g>
     <g
        id="g3987"
@@ -372,11 +372,11 @@
       <image
          sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/mpris/default/${vol_icon}"
          xlink:href="${vol_icon}"
-         style="fill:#696969"
-         height="256"
-         width="256"
+         id="image3050-6"
          transform="matrix(0.15625,0,0,0.15625,260,832.36218)"
-         id="image3050-6" />
+         width="256"
+         height="256"
+         style="fill:#696969" />
     </g>
     <rect
        style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
@@ -404,7 +404,8 @@
        id="text3070"
        sodipodi:linespacing="125%"
        transform="translate(36.57143,838.36218)"
-       clip-path="url(#clipPath3049)"><tspan
+       clip-path="url(#clipPath3049)"
+       class="shadow"><tspan
          sodipodi:role="line"
          id="tspan3072"
          x="-15.954243"
@@ -417,7 +418,8 @@
        id="text3066"
        sodipodi:linespacing="125%"
        transform="translate(16.538921,800.79075)"
-       clip-path="url(#clipPath3055)"><tspan
+       clip-path="url(#clipPath3055)"
+       class="shadow"><tspan
          sodipodi:role="line"
          id="tspan3068"
          x="5.4610786"

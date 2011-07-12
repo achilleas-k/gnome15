@@ -540,8 +540,7 @@ class AbstractDriver(object):
         controls = self.get_controls()
         if controls:
             for control in controls:
-                if control.hint & HINT_VIRTUAL == 0:
-                    self.set_control_from_configuration(control, conf_client)
+                self.set_control_from_configuration(control, conf_client)
             
     def set_control_from_configuration(self, control, conf_client):
         entry = conf_client.get("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ))

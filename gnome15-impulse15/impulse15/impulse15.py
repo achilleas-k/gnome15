@@ -256,7 +256,6 @@ class G15Impulse():
         if self.active:
             next_tick = self.refresh_interval
             if self.painter.is_idle():
-                print "Idle"
                 next_tick = 1.0
             self.timer = g15util.schedule("ImpulseRedraw", next_tick, self.redraw)
         

@@ -38,7 +38,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="141.78395"
+     inkscape:cx="58.951442"
      inkscape:cy="157.55772"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -46,7 +46,7 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="493"
+     inkscape:window-x="500"
      inkscape:window-y="49"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -90,11 +90,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/macro-recorder/default/${icon}"
        xlink:href="${icon}"
-       y="889.11218"
-       x="30.985577"
-       id="image4256"
+       height="95"
        width="99.562164"
-       height="95" />
+       id="image4256"
+       x="30.985577"
+       y="889.11218" />
     <rect
        style="fill:#808080;fill-opacity:0.50196081;stroke:none"
        id="rect3031-9"
@@ -108,10 +108,10 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/macro-recorder/default/${profile_icon}"
        xlink:href="${profile_icon}"
-       transform="matrix(0.4765625,0,0,0.4765625,28.547735,807.11217)"
-       id="image3050"
+       height="64"
        width="64"
-       height="64" />
+       id="image3050"
+       transform="matrix(0.4765625,0,0,0.4765625,28.547735,807.11217)" />
     <rect
        style="fill:#808080;fill-opacity:0.50196078000000000;stroke:none"
        id="rect3031"
@@ -158,7 +158,7 @@
        transform="matrix(0.97142857,0,0,1,18.404878,786.11217)" />
     <text
        xml:space="preserve"
-       style="font-size:20px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       style="font-size:20px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:Sans"
        x="155.40437"
        y="876.84186"
        id="text3776"

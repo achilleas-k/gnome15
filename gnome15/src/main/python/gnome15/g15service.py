@@ -45,6 +45,11 @@ from threading import Thread
 # Logging
 import logging
 logger = logging.getLogger("service")
+
+# Upgrade
+import g15upgrade
+g15upgrade.upgrade()
+
     
 NAME = "Gnome15"
 VERSION = g15globals.version

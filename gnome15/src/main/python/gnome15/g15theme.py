@@ -1483,8 +1483,7 @@ class G15Theme():
         Keyword arguments:
         root        -- root of document
         """
-        highlight_control = self.screen.driver.get_control_for_hint(g15driver.HINT_HIGHLIGHT)
-        if highlight_control:  
+        if self.screen.driver.get_control_for_hint(g15driver.HINT_HIGHLIGHT):  
             for element in root.xpath('//svg:*[@style]',namespaces=self.nsmap):
                 element.set("style", element.get("style").replace(DEFAULT_HIGHLIGHT_COLOR, self.screen.driver.get_color_as_hexrgb(g15driver.HINT_HIGHLIGHT, (255, 0, 0 ))))
                 
@@ -1584,11 +1583,8 @@ class G15Theme():
                 tx, ty, text_width, text_height = self.text.measure()
 #                text_width, text_height = self._get_actual_size(element, text_width, text_height)
                 text_box.bounds = ( text_bounds[0], text_bounds[1], text_width, text_height )
-                
-                if self.screen.service.scroll_amount > 0:
-                    self._scroll_text_boxes(vertical_wrap, text_box, text_boxes, t_span_node, element)
-                elif id in self.scroll_state:
-                    del self.scroll_state[id]                  
+
+                self._scroll_text_boxes(vertical_wrap, text_box, text_boxes, t_span_node, element)
 
         # Find all of the  text boxes. This is a hack to get around rsvg not supporting
         # flowText completely. The SVG must contain two elements. The first must have
@@ -1625,7 +1621,7 @@ class G15Theme():
         if vertical_wrap:
             text_box.wrap = True
             text_boxes.append(text_box)
-            if text_height > clip_path_bounds[3]:
+            if self.screen.service.scroll_amount > 0 and text_height > clip_path_bounds[3]:
                 if id in self.scroll_state:
                     scroll_item = self.scroll_state[id]
                     scroll_item.text_box = text_box
@@ -1646,7 +1642,7 @@ class G15Theme():
 #            text_boxes.append(text_box)
             
             # Enable or disable scrolling            
-            if text_width > clip_path_bounds[2]:
+            if self.screen.service.scroll_amount > 0 and text_width > clip_path_bounds[2]:
                 if id in self.scroll_state:
                     scroll_item = self.scroll_state[id]
                     scroll_item.element = element
@@ -1656,7 +1652,7 @@ class G15Theme():
                     self.scroll_state[id] = scroll_item
                     diff = text_width - clip_path_bounds[2]
                     
-                     #+ ( clip_path_bounds[0] - text_box.bounds[0] )
+                    #+ ( clip_path_bounds[0] - text_box.bounds[0] )
                     if diff < 0:
                         raise Exception("Negative diff!?")
                     scroll_item.alignment = text_box.css["text-align"]

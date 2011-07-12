@@ -25,7 +25,7 @@ import gnome15.g15globals as g15globals
 import gnome15.g15theme as g15theme
 import gnome15.g15screen as g15screen
 import gnome15.g15plugin as g15plugin
-
+import gtk
 import os
 import logging
 logger = logging.getLogger("macros")
@@ -39,7 +39,7 @@ description="Displays the currently active macro profile and a summary of availa
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
-has_preferences=False
+has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : "Previous macro", 
@@ -50,6 +50,15 @@ actions={
 
 def create(gconf_key, gconf_client, screen):
     return G15Macros(gconf_client, gconf_key, screen)
+
+def show_preferences(parent, driver, gconf_client, gconf_key):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "macros.glade"))
+    dialog = widget_tree.get_object("MacrosDialog")
+    dialog.set_transient_for(parent)
+    g15util.configure_checkbox_from_gconf(gconf_client, "%s/raise" % gconf_key, "RaisePageCheckbox", True, widget_tree)
+    dialog.run()
+    dialog.hide()
 
 """
 Represents a mount as a single item in a menu
@@ -119,14 +128,16 @@ class G15Macros(g15plugin.G15MenuPlugin):
     """
     def memory_bank_changed(self):
         self._reload()
-        self._popup()
+        if g15util.get_bool_or_default(self.gconf_client, "%s/raise" % self.gconf_key, True):
+            self._popup()
             
     """
     Private functions
     """
     def _profiles_changed(self, arg0 = None, arg1 = None, arg2 = None, arg3 = None):
         self._reload()
-        self._popup()
+        if g15util.get_bool_or_default(self.gconf_client, "%s/raise" % self.gconf_key, True):
+            self._popup()
     
     def _reload(self):
         """
@@ -186,4 +197,5 @@ class MacrosScreenChangeAdapter(g15screen.ScreenChangeAdapter):
     def memory_bank_changed(self, new_bank_number):
         self.plugin._get_configuration()
         self.plugin._reload()
-        self.plugin._popup()
+        if g15util.get_bool_or_default(self.plugin.gconf_client, "%s/raise" % self.plugin.gconf_key, True):
+            self.plugin._popup()
