@@ -27,6 +27,7 @@ import g15desktop
 import g15drivermanager
 import g15devices
 import g15util
+import colorpicker
 import subprocess
 import shutil
 import logging
@@ -533,6 +534,10 @@ class G15Config:
         
     def _to_color(self, rgb):
         return gtk.gdk.Color(rgb[0] <<8, rgb[1] <<8,rgb[2] <<8)
+            
+    def _color_chosen(self, widget, control):
+        color = widget.color
+        self.conf_client.set_string(self._get_full_key(control.id), "%d,%d,%d" % ( color[0],color[1],color[2]))
         
     def _color_changed(self, widget, control, i):
         if i == None:
@@ -1414,7 +1419,7 @@ class G15Config:
         self.memory_bank_vbox.add(self.widget_tree.get_object("MemoryBanks"))
         
         # Slider and Color controls            
-        table = gtk.Table(rows = len(driver_controls), columns = 2)
+        table = gtk.Table(rows = len(driver_controls), columns = 3)
         table.set_row_spacings(4)
         row = 0
         for control in driver_controls:
@@ -1431,10 +1436,14 @@ class G15Config:
                     hscale.set_digits(0)
                     hscale.set_range(control.lower,control.upper)
                     hscale.set_value(control.value)
+                    hscale.set_size_request(240, -1)
                     hscale.connect("value-changed", self._control_changed, control)
                     hscale.show()
                     
-                    table.attach(hscale, 1, 2, row, row + 1, xoptions = gtk.EXPAND | gtk.FILL);                
+                    halign = gtk.Alignment(0, 0, 1.0, 1.00)
+                    halign.add(hscale)
+                    
+                    table.attach(halign, 1, 3, row, row + 1, xoptions = gtk.EXPAND)            
                     self.control_notify_handles.append(self.conf_client.notify_add(self._get_full_key(control.id), self._control_configuration_changed, [ control, hscale ]))
             else:  
                 label = gtk.Label(control.name)
@@ -1442,26 +1451,19 @@ class G15Config:
                 label.show()
                 table.attach(label, 0, 1, row, row + 1,  xoptions = gtk.FILL, xpadding = 8, ypadding = 4);
                 
-                hbox = gtk.Toolbar()
-                hbox.set_style(gtk.TOOLBAR_ICONS)
-                for i in [(0, 0, 0), (255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255) ]:
-                    button = gtk.Button()
-                    button.set_image(self._create_color_icon(i))
-#                    button.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(i[0] <<8,i[1]  <<8,i[2]  <<8))
-#                    button.modify_bg(gtk.STATE_PRELIGHT, gtk.gdk.Color(i[0] <<8,i[1]  <<8,i[2]  <<8))
-                    button.connect("clicked", self._color_changed, control, i)
-                    hbox.add(button)
-                    button.show()
-                color_button = gtk.ColorButton()
+                picker = colorpicker.ColorPicker()   
+                picker.set_size_request(160, 22)                 
+                picker.connect("color-chosen", self._color_chosen, control)
+                table.attach(picker, 1, 2, row, row + 1)
                 
+                color_button = gtk.ColorButton()  
+                color_button.set_size_request(32, 22)    
                 color_button.connect("color-set", self._color_changed, control, None)
                 color_button.show()
-                color_button.set_color(self._to_color(control.value))
-                hbox.add(color_button)
+                color_button.set_color(self._to_color(control.value))                
+                table.attach(color_button, 2, 3, row, row + 1)
+                    
                 self.control_notify_handles.append(self.conf_client.notify_add(self._get_full_key(control.id), self._control_configuration_changed, [ control, color_button]));
-                
-                hbox.show()
-                table.attach(hbox, 1, 2, row, row + 1);
                 
             row += 1
         controls.add(table)
@@ -1483,6 +1485,7 @@ class G15Config:
                     check_button.connect("toggled", self._control_changed, control)
                     self.notify_handles.append(self.conf_client.notify_add(self._get_full_key(control.id), self._control_configuration_changed, [ control, check_button ]));
                     row += 1
+        self.widget_tree.get_object("SwitchesFrame").set_child_visible(row > 0)
         
         # Hide the cycle screens if the device has no screen
         if self.driver != None and self.driver.get_bpp() == 0:            
@@ -1509,9 +1512,6 @@ class G15Config:
         else:
             self.color_button = None
             self.enable_color_for_m_key = None
-            
-        if row == 0:
-            self.widget_tree.get_object("SwitchesFrame").hide() 
             
     def _profile_color_changed(self, widget):
         if not self.adjusting:

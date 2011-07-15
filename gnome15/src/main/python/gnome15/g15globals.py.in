@@ -24,7 +24,6 @@ else:
 	icons_dir = "@prefix@/share/icons"
 	scripts_dir = "@prefix@/bin"
 
-# Font family has different name on Fedora and probably others. 
-fixed_size_font_name = "Fixed"
-if os.path.exists("/usr/share/fonts/ucs-miscfixed"):
-    fixed_size_font_name = "MiscFixed"
+# Differs from distro to distro, and so is a ./configure option. See
+# --enable-fixed-size-font=[name] 
+fixed_size_font_name = "@FIXED_SIZE_FONT@"

@@ -31,6 +31,14 @@ dnl 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-applet]) ;;
 dnl 			esac],[debug=false])
 dnl AM_CONDITIONAL([APPLET],	[test x$applet = xtrue])
 
+dnl Name of Fixed 
+AC_ARG_ENABLE([fixed-size-font],
+	[AS_HELP_STRING([--with-fixed-size-font=fixed size font name],
+		[Set the font size to use for fixed size fonts. Defaults to Misc])],
+	[fixed_size_font=${enableval}],
+	[fixed_size_font=Fixed])
+AC_SUBST(FIXED_SIZE_FONT, ${fixed_size_font})
+
 dnl Dependencies for core applet and tools
 
 dnl Determine if pyinputevent is available. If it is, kernel driver can be built
@@ -270,3 +278,8 @@ AS_ECHO_N("driver_kernel               - ")
 AS_IF([test "x$kernel_driver" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
+AS_ECHO("")
+AS_ECHO("Other Configuration")
+AS_ECHO("-------------------")
+AS_ECHO("Fixed size font name        - $fixed_size_font")
+AS_ECHO("")

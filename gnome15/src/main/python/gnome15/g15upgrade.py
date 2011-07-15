@@ -32,7 +32,6 @@ import shutil
 import subprocess
 
 logger = logging.getLogger("service")
-logger.setLevel(logging.DEBUG)
  
 def upgrade():
     version_0_x_0_to_0_7_0()

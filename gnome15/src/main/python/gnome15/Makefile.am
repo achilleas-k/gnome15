@@ -24,7 +24,8 @@ gnome15_PYTHON = 		\
 	g15upgrade.py \
 	jobqueue.py \
 	objgraph.py \
-	dbusmenu.py
+	dbusmenu.py \
+	colorpicker.py
 	
 EXTRA_DIST =  			\
 	$(gnome15_PYTHON)

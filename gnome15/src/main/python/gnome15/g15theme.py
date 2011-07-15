@@ -349,9 +349,13 @@ class Component():
         self.parent.remove(self)
         
     def configure(self, parent):
-        self.parent = parent        
-        self.view_element = self.get_theme().get_element(self.id)
-        self.view_bounds  = g15util.get_actual_bounds(self.view_element) if self.view_element is not None else None
+        self.parent = parent
+        theme = self.get_theme()
+        if theme == None:
+            logger.warning("No theme for component with ID of %s" % self.id)
+        else: 
+            self.view_element = self.get_theme().get_element(self.id)
+            self.view_bounds  = g15util.get_actual_bounds(self.view_element) if self.view_element is not None else None
         self.on_configure()
         
     def is_visible(self):
@@ -1072,15 +1076,19 @@ class DBusMenu(Menu):
                     break
         
     def populate(self):
-        self.remove_all_children()
-        i = 0
-        for item in self.dbus_menu.root_item.children:
-            if item.is_visible():
-                if item.type == dbusmenu.TYPE_SEPARATOR:
-                    self.add_child(MenuSeparator("dbus-menu-separator-%d" % i))
-                else:
-                    self.add_child(DBusMenuItem("dbus-menu-item-%d" % i, item))
-                i += 1   
+        self.get_tree_lock().acquire()
+        try:
+            self.remove_all_children()
+            i = 0
+            for item in self.dbus_menu.root_item.children:
+                if item.is_visible():
+                    if item.type == dbusmenu.TYPE_SEPARATOR:
+                        self.add_child(MenuSeparator("dbus-menu-separator-%d" % i))
+                    else:
+                        self.add_child(DBusMenuItem("dbus-menu-item-%d" % i, item))
+                    i += 1   
+        finally:
+            self.get_tree_lock().release()
     
 class ErrorScreen(G15Page):
     

@@ -148,7 +148,7 @@ class G15OffscreenWindow(g15theme.Component):
             window.show_all()
         self.window = window
         screen.redraw(self.get_root())
-
+        
 class G15Window(gtk.OffscreenWindow):
     
     def __init__(self, screen, page, area_x, area_y, area_width, area_height):

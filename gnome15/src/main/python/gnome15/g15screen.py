@@ -663,7 +663,7 @@ class G15Screen():
         logger.info("Controls changed %s", str(key))
         if self.driver != None:
             for control in self.driver.get_controls():
-                if key == control.id:
+                if key == control.id and control.hint & g15driver.HINT_VIRTUAL == 0:
                     if isinstance(control.value, int):
                         value = entry.value.get_int()
                     else:

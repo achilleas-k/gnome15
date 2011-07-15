@@ -73,6 +73,7 @@ def start_service(no_trap=False):
     try :
         import gnome15.g15service as g15service
         service = g15service.G15Service(None, no_trap=no_trap)
+        g15service.logger.setLevel(logger.level) 
         service.start_loop()
     except dbus.exceptions.NameExistsException:
         print "Gnome15 desktop service is already running"
