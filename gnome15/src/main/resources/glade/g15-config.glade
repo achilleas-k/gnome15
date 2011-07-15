@@ -1136,7 +1136,7 @@ Exec &lt;command&gt; - Executes a command
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <child>
-                          <object class="GtkVBox" id="vbox2">
+                          <object class="GtkVBox" id="KeyboardTab">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="border_width">4</property>
@@ -2046,7 +2046,7 @@ the following title has focus</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkHBox" id="hbox10">
+                          <object class="GtkHBox" id="PluginsTab">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
@@ -2391,13 +2391,13 @@ the following title has focus</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkAlignment" id="alignment9">
+                          <object class="GtkAlignment" id="DriverTab">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="top_padding">8</property>
                             <property name="left_padding">8</property>
                             <child>
-                              <object class="GtkVBox" id="vbox10">
+                              <object class="GtkVBox" id="DriverBox">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="spacing">4</property>

@@ -1,11 +1,4 @@
-gnome15 (0.7.3-1) natty; urgency=low
-
-  * Bug: Fixes some problems with scrolling 
-  * Bug: Restarting desktop service with "restart" option fails
-
- -- Brett Smith <tanktarta@blueyonder.co.uk>  Fri,   8 Jul 2011 03:13:20 +0100 
-
-gnome15 (0.7.2-2) natty; urgency=low
+gnome15 (0.7.0-1) natty; urgency=low
 
   * Feature: Plugins now in separate module. See gnome15-plugins for changelog.
   * Feature: Now handles multiple devices
@@ -31,6 +24,7 @@ gnome15 (0.7.2-2) natty; urgency=low
   * Feature: G19 fades the LCD and keyboard backlight when Gnome15 shuts down
   * Bug: Logout, Shutdown and Restart are all now detected and shutdown Gnome15
     cleanly (with fading)
+  * Bug: Restarting desktop service with "restart" option fails
   * Bug: Memory leak fixes. The main memory leak that Gnome15 suffered is now
     fixed. It turned out to be caused by pango layouts, and so any plugin that
     used this was contributing to the problem. This is include Cairo Clock,
@@ -46,7 +40,7 @@ gnome15 (0.7.2-2) natty; urgency=low
     of the core application. This is a system bus service that has the sole job
     of writing setting backlights and other LED values for the kernel driver.
 
- -- Brett Smith <tanktarta@blueyonder.co.uk>  Fri,  27 May 2011 00:03:20 +0000 
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Tue,  12 Jul 2011 22:34:20 +0100 
  
 gnome15 (0.6.5-1) natty; urgency=low
 

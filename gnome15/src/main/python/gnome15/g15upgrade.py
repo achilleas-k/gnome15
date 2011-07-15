@@ -79,7 +79,9 @@ def version_0_x_0_to_0_7_0():
             logger.info("Copying settings %s to %s " % ( gconf_file, device.uid ))
             shutil.copyfile(gconf_file, os.path.join(device_dir, "%gconf.xml"))
             logger.info("Copying plugin settings %s to %s " % ( gconf_plugins_dir, device.uid ))
-            shutil.copytree(gconf_plugins_dir, os.path.join(device_dir, "plugins") )
+            target_plugins_path = os.path.join(device_dir, "plugins")
+            if not os.path.exists(target_plugins_path):
+                shutil.copytree(gconf_plugins_dir, target_plugins_path )
         logger.info("Clearing current settings root")
         shutil.rmtree(gconf_plugins_dir)
         f = open(gconf_file, 'w')

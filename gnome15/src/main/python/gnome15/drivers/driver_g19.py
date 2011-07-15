@@ -23,6 +23,7 @@ Main implementation of a G19 Driver that uses g19d to control and query the
 keyboard
 """
 
+
 from cStringIO import StringIO
 from gnome15.g15exceptions import NotConnectedException
 from threading import RLock, Thread

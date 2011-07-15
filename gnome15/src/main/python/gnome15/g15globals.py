@@ -1,7 +1,7 @@
 import os
 
 name = "gnome15"
-version = "0.7.3"
+version = "0.7.0"
 
 package_dir = os.path.abspath(os.path.dirname(__file__))
 image_dir = os.path.join(package_dir, "..", "..", "resources", "images" )

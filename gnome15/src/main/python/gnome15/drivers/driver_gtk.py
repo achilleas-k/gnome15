@@ -119,10 +119,6 @@ class Driver(g15driver.AbstractDriver):
         
     def is_connected(self):
         return self.connected
-        
-    def window_closed(self, window, evt):
-        if self.main_window != None and  self.on_close != None:
-            self.on_close(self, retry=False)
     
     def get_model_names(self):
         return [ 'virtual' ]
@@ -240,6 +236,12 @@ class Driver(g15driver.AbstractDriver):
     '''
     Private
     '''
+        
+    def _window_closed(self, window, evt):
+        if self.main_window != None:
+            self.conf_client.set_bool("/apps/gnome15/%s/enabled" % self.device.uid, False)
+#            if self.on_close != None:
+#                self.on_close(self, retry=False)
 
     def _do_set_mkey_lights(self):
         c = self.get_control_for_hint(g15driver.HINT_MKEYS)
@@ -359,7 +361,7 @@ class Driver(g15driver.AbstractDriver):
         self.main_window.set_title("Gnome15") 
         self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
         self.main_window.add(self.vbox)
-        self.main_window.connect("delete-event", self.window_closed)
+        self.main_window.connect("delete-event", self._window_closed)
         
         self.main_window.show_all()
         

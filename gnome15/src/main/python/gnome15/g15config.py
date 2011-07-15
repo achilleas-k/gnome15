@@ -108,6 +108,7 @@ class G15Config:
         self.screen_services = {}
         self.state = STOPPED
         self.driver = None
+        self.selected_device = None
         
         # Load main Glade file
         g15Config = os.path.join(g15globals.glade_dir, 'g15-config.glade')        
@@ -196,6 +197,9 @@ class G15Config:
         self.key_frame = self.widget_tree.get_object("KeyFrame")
         self.macros_tab = self.widget_tree.get_object("MacrosTab")
         self.macros_tab_label = self.widget_tree.get_object("MacrosTabLabel")
+        self.keyboard_tab = self.widget_tree.get_object("KeyboardTab")
+        self.plugins_tab = self.widget_tree.get_object("PluginsTab")
+        self.driver_box = self.widget_tree.get_object("DriverBox")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -295,6 +299,10 @@ class G15Config:
         
         # Populate model and configure other components
         self._load_devices()
+        if len(self.device_model) == 0:
+            raise Exception("No supported devices could be found. Is the " + \
+                            "device correctly plugged in and powered and " + \
+                            "do you have all the required drivers installed?")
         
         # Build the infobar content
         content = self.infobar.get_content_area()
@@ -795,17 +803,38 @@ class G15Config:
         if len(self.driver_model) > 0 and not sel:            
             self.conf_client.set_string(self._get_full_key("driver"), self.driver_model[0][0])
         else:
-            controls = self.widget_tree.get_object("DriverOptionsBox")
-            for c in controls.get_children():
-                controls.remove(c)
             driver_mod = g15drivermanager.get_driver_mod(selected_driver)
-            widget = None
-            if driver_mod and driver_mod.has_preferences:
-                widget = driver_mod.show_preferences(self.selected_device, controls, self.conf_client)
-            if not widget:
-                widget = gtk.Label("This driver has no configuration options")
-            controls.pack_start(widget, False, False)
-            controls.show_all()
+            
+            # Show or hide the Keyboard / Plugins tab depending on if there is a driver that matches
+            if not driver_mod:
+                for c in self.driver_box.get_children():
+                    self.driver_box.remove(c)
+                widget = gtk.Label("")
+                widget.set_text("There is no appropriate driver for the device <b>" + \
+                                   "%s</b>.\nDo you have all the required packages installed?" % self.selected_device.model_fullname)
+                widget.set_use_markup(True)                
+                self.keyboard_tab.set_visible(False)
+                self.plugins_tab.set_visible(False)
+                self.driver_box.pack_start(widget, False, False)
+                self.driver_box.show_all()
+            else:
+                controls = self.widget_tree.get_object("DriverOptionsBox")
+                for c in controls.get_children():
+                    controls.remove(c)
+                widget = None
+                if driver_mod.has_preferences:
+                    widget = driver_mod.show_preferences(self.selected_device, controls, self.conf_client)
+                    
+                    self.keyboard_tab.set_visible(True)
+                    self.plugins_tab.set_visible(True)
+                    
+                    # Show message if driver has no options
+                    if not widget:
+                        widget = gtk.Label("This driver has no configuration options")
+                
+                # Build and show component
+                controls.pack_start(widget, False, False)
+                controls.show_all()
             
     def _driver_options_changed(self):
         self._add_controls()
@@ -817,7 +846,7 @@ class G15Config:
         self._set_enabled_value_from_configuration()
         
     def _set_enabled_value_from_configuration(self):
-        enabled = g15devices.is_enabled(self.conf_client, self.selected_device) if self.selected_device != None else False
+        enabled = ( len(self.device_model) == 1  or g15devices.is_enabled(self.conf_client, self.selected_device) ) if self.selected_device != None else False
         self.device_enabled.set_active(enabled)
         self.device_enabled.set_sensitive(self.selected_device != None)
         self.tabs.set_sensitive(enabled)
@@ -1148,7 +1177,8 @@ class G15Config:
     def _load_devices(self):
         self.device_model.clear()
         self.devices = g15devices.find_all_devices()
-        sel_device_name = self.conf_client.get_string("/apps/gnome15/config_device_name")
+        previous_sel_device_name = self.conf_client.get_string("/apps/gnome15/config_device_name")
+        sel_device_name = None
         idx = 0
         for device in self.devices:
             if device.model_id == 'virtual':
@@ -1157,10 +1187,13 @@ class G15Config:
                 icon_file = g15util.get_app_icon(self.conf_client,  device.model_id)
             pixb = gtk.gdk.pixbuf_new_from_file(icon_file)
             self.device_model.append([pixb.scale_simple(96, 96, gtk.gdk.INTERP_BILINEAR), device.model_fullname, 96, gtk.WRAP_WORD, pango.ALIGN_CENTER])
-            if not sel_device_name or device.uid == sel_device_name:
+            if previous_sel_device_name is not None and device.uid == previous_sel_device_name:
                 sel_device_name = device.uid
                 self.device_view.select_path((idx,))
             idx += 1
+        if sel_device_name is None and len(self.devices) > 0:
+            sel_device_name = self.devices[0].uid
+            self.device_view.select_path((0,))
             
         if idx == 1:
             main_parent = self.main_pane.get_parent() 

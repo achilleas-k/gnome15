@@ -1,4 +1,4 @@
-cairoclockthemedir = $(datadir)/gnome15/plugins/cairo-clock/g15/default
+cairoclockthemedir = $(datadir)/gnome15/plugins/cairo-clock/g19/default
 cairoclocktheme_DATA = clock-drop-shadow.svg \
 	clock-face.svg \
 	clock-face-shadow.svg \

@@ -42,6 +42,15 @@ import signal
 import g15pluginmanager
 from threading import Thread
 
+# Used for getting logout  / shutdown signals
+master_client = None
+if "gnome" == g15util.get_desktop():
+    try:
+        import gnome.ui
+        master_client = gnome.ui.master_client()
+    except:
+        pass
+
 # Logging
 import logging
 logger = logging.getLogger("service")
@@ -116,6 +125,7 @@ class G15Service(Thread):
         self.x_test_available = None
         self.notify_handles = []
         self.font_faces = {}
+        self.devices = g15devices.find_all_devices()
                 
         # Expose Gnome15 functions via DBus
         logger.debug("Starting the DBUS service")
@@ -433,54 +443,74 @@ class G15Service(Thread):
         gobject.timeout_add(500, self._check_active_application_with_wnck)
         
     def _check_state_of_all_devices(self):
-        for d in g15devices.find_all_devices():
+        for d in self.devices:
             self._check_device_state(d)
-            
+
+    def _configure_gnome_signals(self):
+        try:
+            logger.info("Connecting to GNOME master client")
+            logger.debug("Initialising GNOME master client")
+            gnome.program_init(g15globals.name, g15globals.version)
+            logger.debug("Creating client")
+            service = self
+            def save_yourself(self, *args):
+                service.logging_out = True
+                g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service._check_state_of_all_devices)
+                    
+            def shutdown_cancelled(self, *args):
+                logger.debug("Shutdown cancelled")
+                service.logging_out = False
+                g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service._check_state_of_all_devices)
+                
+            def die(self, *args):
+                g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service.shutdown)
+                    
+            logger.debug("Connecting")
+            master_client.connect('save-yourself', save_yourself)
+            master_client.connect('shutdown-cancelled', shutdown_cancelled)
+            master_client.connect('die', die)
+            logger.debug("Configured GNOME master client signals")
+        except Exception as e:
+            logger.warning("Could not connect to GNOME desktop session. %s" % str(e))
+        
     def _do_start_service(self):
         for listener in self.service_listeners:
             listener.service_starting_up()
         
         # If running on GNOME, look for the logout signal
-        if "gnome" == g15util.get_desktop():
-            try:
-                import gnome.ui
-                gnome.program_init(g15globals.name, g15globals.version)
-                client = gnome.ui.master_client()
-                service = self
-                def save_yourself(self, *args):
-                    service.logging_out = True
-                    g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service._check_state_of_all_devices)
-                    
-                def shutdown_cancelled(self, *args):
-                    logger.info("Shutdown cancelled")
-                    service.logging_out = False
-                    g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service._check_state_of_all_devices)
-                
-                def die(self, *args):
-                    g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service.shutdown)
-                    
-                client.connect('save-yourself', save_yourself)
-                client.connect('shutdown-cancelled', shutdown_cancelled)
-                client.connect('die', die)
-            except Exception as e:
-                logger.warning("Could not connect to GNOME desktop session. %s" % str(e))
-        
+        if master_client is not None:
+            self._configure_gnome_signals()
+
         self.session_bus = dbus.SessionBus()
         
         # Create a screen for each device        
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
+        logger.info("Looking for devices")
         devices = g15devices.find_all_devices()
         if len(devices) == 0:
             logger.error("No devices found. Gnome15 will now exit")
             self.shutdown()
             return
         else:
+            # If there is a single device, it is enabled by default
+            if len(devices) == 1:
+                self.conf_client.set_bool("/apps/gnome15/%s/enabled" % devices[0].uid, True)
+                
+            errors = 0
             for device in devices:
                 val = self.conf_client.get("/apps/gnome15/%s/enabled" % device.uid)
                 h = self.conf_client.notify_add("/apps/gnome15/%s/enabled" % device.uid, self._device_enabled_configuration_changed, device)
                 self.notify_handles.append(h)
                 if ( val == None and device.model_id != "virtual" ) or ( val is not None and val.get_bool() ):
-                    self._add_screen(device)
+                    screen = self._add_screen(device)
+                    if not screen:
+                        errors += 1
+                        
+            if len(self.devices) == errors:
+                logger.error("All screens failed to load. Shutting down")
+                self.shutdown()
+                return
+                
             if len(self.screens) == 0:
                 logger.warning("No screens found yet. Will stay running waiting for one to be enabled.")
                 
@@ -603,6 +633,10 @@ class G15Service(Thread):
             for listener in self.service_listeners:
                 listener.screen_removed(screen)
             logger.info("Disabled device %s" % device.uid)
+            
+            # If there is a single device, stop the service as well
+            if len(self.devices) == 1:
+                self.shutdown(False)
             
     def _get_screen_for_device(self, device):
         for screen in self.screens:

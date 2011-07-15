@@ -884,7 +884,7 @@ class G15Screen():
         self.last_error = exception
         self.request_attention(str(exception))
         self.resched_cycle()   
-        self.driver = None      
+        self.driver = None     
         if self.should_reconnect(exception):
             if logger.level == logging.DEBUG:
                 traceback.print_exc(file=sys.stderr)

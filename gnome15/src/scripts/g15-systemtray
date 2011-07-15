@@ -34,7 +34,6 @@ import gtk
 import gnome
 import gnome.ui
 import os
-import appindicator
 import gconf
 import traceback
 
