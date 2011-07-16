@@ -51,7 +51,7 @@ actions={
          g15driver.NEXT_PAGE : "Next page",
          g15driver.PREVIOUS_PAGE : "Previous page",
          g15driver.SELECT : "Kill process",
-         g15driver.VIEW : "Toggle between applications, all and user"
+         g15driver.VIEW : "Toggle between applications,\nall and user"
          }
  
 def create(gconf_key, gconf_client, screen):

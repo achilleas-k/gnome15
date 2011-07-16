@@ -346,6 +346,10 @@ class G15Config:
     def run(self):
         ''' Set up everything and display the window
         '''
+        if len(self.devices) > 1:
+            self.main_window.set_size_request(800, 540)
+        else:            
+            self.main_window.set_size_request(640, 540)
         self.id = None
         while True:
             opt = self.main_window.run()
@@ -795,6 +799,7 @@ class G15Config:
     def _driver_configuration_changed(self, *args):
         self._set_driver_from_configuration()
         self._load_plugins()
+        self._add_controls()
         
     def _set_driver_from_configuration(self):        
         selected_driver = self.conf_client.get_string(self._get_full_key("driver"))

@@ -287,7 +287,6 @@
       <action-widget response="0">button4</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkEntryBuffer" id="WindowNameBuffer"/>
   <object class="GtkMessageDialog" id="ConfirmRemoveMacroDialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -968,8 +967,6 @@ Exec &lt;command&gt; - Executes a command
     </data>
   </object>
   <object class="GtkDialog" id="MainWindow">
-    <property name="width_request">600</property>
-    <property name="height_request">540</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Logitech G Keyboard Configuration</property>
@@ -2212,22 +2209,33 @@ the following title has focus</property>
                                               <object class="GtkScrolledWindow" id="scrolledwindow7">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
-                                                <property name="hscrollbar_policy">never</property>
+                                                <property name="hscrollbar_policy">automatic</property>
                                                 <property name="vscrollbar_policy">automatic</property>
                                                 <child>
                                                   <object class="GtkViewport" id="viewport2">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">False</property>
                                                     <child>
-                                                      <object class="GtkLabel" id="DescriptionLabel">
+                                                      <object class="GtkAlignment" id="alignment9">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
-                                                        <property name="xalign">0</property>
-                                                        <property name="yalign">0</property>
-                                                        <property name="label" translatable="yes">Description of plugin. &lt;b&gt;bold&lt;/b&gt;</property>
-                                                        <property name="use_markup">True</property>
-                                                        <property name="wrap">True</property>
-                                                        <property name="wrap_mode">word-char</property>
+                                                        <property name="top_padding">8</property>
+                                                        <property name="bottom_padding">8</property>
+                                                        <property name="left_padding">8</property>
+                                                        <property name="right_padding">8</property>
+                                                        <child>
+                                                          <object class="GtkLabel" id="DescriptionLabel">
+                                                            <property name="visible">True</property>
+                                                            <property name="can_focus">False</property>
+                                                            <property name="xalign">0</property>
+                                                            <property name="yalign">0</property>
+                                                            <property name="label" translatable="yes">Description of plugin. &lt;b&gt;bold&lt;/b&gt;</property>
+                                                            <property name="use_markup">True</property>
+                                                            <property name="wrap">True</property>
+                                                            <property name="wrap_mode">word-char</property>
+                                                            <property name="width_chars">60</property>
+                                                          </object>
+                                                        </child>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -2631,4 +2639,5 @@ choose another name.</property>
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkEntryBuffer" id="WindowNameBuffer"/>
 </interface>

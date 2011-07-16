@@ -39,7 +39,7 @@ has_preferences=False
 actions={ 
          g15driver.PREVIOUS_SELECTION : "Previous day/Event", 
          g15driver.NEXT_SELECTION : "Next day/Event", 
-         g15driver.VIEW : "Toggle between calendar and events",
+         g15driver.VIEW : "Toggle between calendar\nand events",
          g15driver.NEXT_PAGE : "Next week",
          g15driver.PREVIOUS_PAGE : "Previous week"
          }

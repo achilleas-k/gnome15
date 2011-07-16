@@ -49,7 +49,7 @@ actions={
          g15driver.NEXT_PAGE : "Next page",
          g15driver.PREVIOUS_PAGE : "Previous page",
          g15driver.SELECT : "Mount, unmount or eject",
-         g15driver.VIEW : "Toggle between free, availabled and used",
+         g15driver.VIEW : "Toggle between free,\navailable and used",
          }
 
 

@@ -42,8 +42,8 @@ site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Toggle selected timer (or toggle timer 1)", 
-         g15driver.NEXT_SELECTION : "Reset selected timer (or reset timer 1)",
+         g15driver.PREVIOUS_SELECTION : "Toggle selected timer\n(or toggle timer 1)", 
+         g15driver.NEXT_SELECTION : "Reset selected timer\n(or reset timer 1)",
          g15driver.NEXT_PAGE : "Toggle timer 2 (G19 only)",
          g15driver.PREVIOUS_PAGE : "Reset timer 2 (G19 only)",
          g15driver.VIEW : "Switch between timers"

@@ -34,7 +34,7 @@ copyright = "Copyright (C)2010 Brett Smith"
 site = "http://www.gnome15.org"
 default_enabled = True
 has_preferences = False
-actions={ g15driver.PREVIOUS_SELECTION : "Toggle Monitored CPU", g15driver.NEXT_SELECTION : "Toggle Monitored Network Interface" }
+actions={ g15driver.PREVIOUS_SELECTION : "Toggle Monitored CPU", g15driver.NEXT_SELECTION : "Toggle Monitored Network\nInterface" }
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
  
 ''' 
