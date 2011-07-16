@@ -1,20 +1,27 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-# ZetCode PyGTK tutorial 
-#
-# This example creates a burning
-# custom widget
-#
-# author: Jan Bodnar
-# website: zetcode.com 
-# last edited: April 2011
-
+#        +-----------------------------------------------------------------------------+
+#        | GPL                                                                         |
+#        +-----------------------------------------------------------------------------+
+#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        |                                                                             |
+#        | This program is free software; you can redistribute it and/or               |
+#        | modify it under the terms of the GNU General Public License                 |
+#        | as published by the Free Software Foundation; either version 2              |
+#        | of the License, or (at your option) any later version.                      |
+#        |                                                                             |
+#        | This program is distributed in the hope that it will be useful,             |
+#        | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+#        | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+#        | GNU General Public License for more details.                                |
+#        |                                                                             |
+#        | You should have received a copy of the GNU General Public License           |
+#        | along with this program; if not, write to the Free Software                 |
+#        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+#        +-----------------------------------------------------------------------------+
+ 
 
 import gtk
 import cairo
 from gtk import gdk
-import g15util
 import gobject
 
 COLORS = [(0, 0, 0, 1), (0, 0, 0, 1), (255, 0, 0, 1), (0, 255, 0, 1), (0, 0, 255, 1), (255, 255, 0, 1), (0, 255, 255, 1), (255, 0, 255, 1), (255, 255, 255, 1), (255, 255, 255, 1)  ]
@@ -27,25 +34,34 @@ class ColorPicker(gtk.DrawingArea):
         self.__gobject_init__()
         super(ColorPicker, self).__init__()
         self.set_size_request(len(COLORS) * CELL_WIDTH, CELL_HEIGHT)
-        self.connect("expose-event", self.expose)
+        self.connect("expose-event", self._expose)
         self.connect("button-press-event", self._button_press)
         self.connect("button-release-event", self._button_release)
         self.connect("motion-notify-event", self._mouse_motion)
-        self.pixbuf = None
         self.down = False
         self.add_events(gdk.BUTTON1_MOTION_MASK | gdk.BUTTON_PRESS_MASK | gdk.BUTTON_RELEASE_MASK | gtk.gdk.POINTER_MOTION_MASK | gtk.gdk.POINTER_MOTION_HINT_MASK)
         self.color = (0, 0, 0)
+        self.buffer = None
     
     def _mouse_motion(self, widget, event):
-        if self.pixbuf is not None and self.down:
-            r,g,b,a = self.pixbuf.subpixbuf(int(event.x), int(event.y), 1, 1).get_pixels_array()[0][0]
-            self.color = (r, g, b)
+        if self.buffer is not None and self.down:
+            self.color = self._get_color_at(event.x, event.y)
             self.emit("color-chosen")
+            
+    def _get_color_at(self, x, y):
+        x = int(x)
+        y = int(y)
+        data = self.buffer.get_data()
+        w = self.buffer.get_width()
+        s = ( self.buffer.get_stride() / w ) * ( w  * y + x )
+        b = ord(data[s])
+        g = ord(data[s + 1])  
+        r = ord(data[s + 2])
+        return (r, g, b)
         
     def _button_press(self, widget, event):
-        if self.pixbuf is not None:
-            r,g,b,a = self.pixbuf.subpixbuf(int(event.x), int(event.y), 1, 1).get_pixels_array()[0][0]
-            self.color = (r, g, b)
+        if self.buffer is not None:
+            self.color = self._get_color_at(event.x, event.y)
             self.emit("color-chosen")
             self.down = True
     
@@ -53,7 +69,7 @@ class ColorPicker(gtk.DrawingArea):
         print "Release"
         self.down = False
 
-    def expose(self, widget, event):
+    def _expose(self, widget, event):
         cr = widget.window.cairo_create()
         cr.set_line_width(1.0)
         size = self.size_request()
@@ -78,29 +94,21 @@ class ColorPicker(gtk.DrawingArea):
             ctx.translate(cell_width, 0)
         ctx.restore()
         
-        self.rounded_rectangle(ctx, 0, 0, size[0] - 24, cell_height, 16)
+        self._rounded_rectangle(ctx, 0, 0, size[0] - 24, cell_height, 16)
         ctx.set_operator(cairo.OPERATOR_DEST_IN)
         ctx.fill()
         ctx.set_operator(cairo.OPERATOR_OVER)
         ctx.set_source_rgb(0.5, 0.5, 0.5)
-        self.rounded_rectangle(ctx, 0, 0, size[0] - 24, size[1], 16)
+        self._rounded_rectangle(ctx, 0, 0, size[0] - 24, size[1], 16)
         ctx.set_line_width(1.0)
         ctx.stroke()
             
-        # Paint and get the pixbuf
+        # Paint
         cr.set_source_surface(buffer)
         cr.paint()
-        self.pixbuf = g15util.surface_to_pixbuf(buffer)    
+        self.buffer = buffer    
         
-    def rounded_rectangle(self, cr, x, y, w, h, r=20):
-        # This is just one of the samples from 
-        # http://www.cairographics.org/cookbook/roundedrectangles/
-        #   A****BQ
-        #  H      C
-        #  *      *
-        #  G      D
-        #   F****E
-    
+    def _rounded_rectangle(self, cr, x, y, w, h, r=20):
         cr.move_to(x+r,y)                      # Move to A
         cr.line_to(x+w-r,y)                    # Straight line to B
         cr.curve_to(x+w,y,x+w,y,x+w,y+r)       # Curve to C, Control points are both at Q
