@@ -258,7 +258,6 @@ class G15Window(gtk.OffscreenWindow):
         return False
         
     def _expose(self, widget, event):
-        print "Expose"
         self.screen.redraw(self.page)
         return False
         
@@ -277,7 +276,6 @@ class G15Window(gtk.OffscreenWindow):
         self.lock = None
         
     def _do_capture(self):
-        print "Capturing %d x %d" % (self.area_width, self.area_height)
         self.content.window.invalidate_rect((0,0,self.area_width,self.area_height), True)
         self.content.window.process_updates(True)
         pixbuf = gtk.gdk.Pixbuf( gtk.gdk.COLORSPACE_RGB, False, 8, self.area_width, self.area_height)

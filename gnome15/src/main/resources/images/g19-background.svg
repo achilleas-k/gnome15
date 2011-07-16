@@ -439,7 +439,7 @@
      borderlayer="false"
      inkscape:window-width="1327"
      inkscape:window-height="862"
-     inkscape:window-x="81"
+     inkscape:window-x="88"
      inkscape:window-y="37"
      inkscape:window-maximized="0">
     <inkscape:grid
@@ -559,7 +559,8 @@
        x="163"
        y="985.36218"
        id="text3072"
-       sodipodi:linespacing="125%"><tspan
+       sodipodi:linespacing="125%"
+       class="shadow"><tspan
          sodipodi:role="line"
          id="tspan3074"
          x="163"

@@ -35,6 +35,7 @@ class NotifyMessage():
         self.id = 0
         
     def close(self):
+        logger.info("Closing notification %s" % str(self.id))
         _get_obj().CloseNotification(self.id)
 
     def handle_reply(self, e):

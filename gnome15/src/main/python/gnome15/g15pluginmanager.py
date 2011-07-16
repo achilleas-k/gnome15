@@ -33,6 +33,15 @@ logger = logging.getLogger("plugins")
 
 imported_plugins = []
 extra_plugin_dirs = []
+
+UNINITIALISED = 0
+STARTING = 1
+STARTED = 2
+ACTIVATING = 3
+ACTIVATED = 4
+DEACTIVATING = 5
+DEACTIVATED = 6
+DESTROYING = 7
             
 def list_plugin_dirs(path):
     plugindirs = []
@@ -111,6 +120,13 @@ class G15Plugins():
         self.conf_client.add_dir(self._get_plugin_key(), gconf.CLIENT_PRELOAD_NONE)
         self.module_map = {}
         self.plugin_map = {}
+        self.state = UNINITIALISED
+        
+    def is_activated(self):
+        return self.state == ACTIVATED
+        
+    def is_in_active_state(self):
+        return self.state in [ ACTIVATED, DEACTIVATING, ACTIVATING ] 
         
     def _get_plugin_key(self, subkey = None):
         if subkey:
@@ -134,6 +150,7 @@ class G15Plugins():
     def start(self):
         self.lock.acquire()
         try : 
+            self.state = STARTING
             self.mgr_started = False
             self.started = []
             for mod in imported_plugins:
@@ -151,7 +168,11 @@ class G15Plugins():
                     except Exception as e:
                         self.conf_client.set_bool(key, False)
                         logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
-                        traceback.print_exc(file=sys.stderr) 
+                        traceback.print_exc(file=sys.stderr)
+            self.state = STARTED
+        except Exception as a:
+            self.state = UNINITIALISED
+            raise a 
         finally:
             self.lock.release()
         logger.info("Started plugin manager")
@@ -198,13 +219,18 @@ class G15Plugins():
         logger.info("Activating plugins")
         self.lock.acquire()
         try :
+            self.state = ACTIVATING
             self.mgr_active = True
             self.activated = []
             idx = 0
             for plugin in self.started:
                 mod = self.plugin_map[plugin]
                 self._activate_instance(plugin, callback, idx)
-                idx += 1
+                idx += 1           
+            self.state = ACTIVATED
+        except Exception as e:           
+            self.state = STARTED
+            raise e     
         finally:
             self.lock.release()
         logger.debug("Activated plugins")
@@ -229,17 +255,24 @@ class G15Plugins():
         logger.info("De-activating plugins")
         self.lock.acquire()
         try :
+            self.state = DEACTIVATING
             self.mgr_active = False
             for plugin in list(self.activated):
                 self._deactivate_instance(plugin)
         finally:
+            self.state = DEACTIVATED
             self.lock.release()
         logger.info("De-activated plugins")
     
     def destroy(self):
-        for plugin in self.started:
-            self.started.remove(plugin)
-            plugin.destroy()
+        try :
+            self.state = DESTROYING
+            for plugin in self.started:
+                self.state = DESTROYING
+                self.started.remove(plugin)
+                plugin.destroy()
+        finally:
+            self.state = UNINITIALISED
         self.mgr_started = False
         
     '''

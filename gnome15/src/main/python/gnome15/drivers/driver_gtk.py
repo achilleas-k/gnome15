@@ -154,8 +154,7 @@ class Driver(g15driver.AbstractDriver):
     def connect(self):
         logger.info("Connecting GTK driver")
         if self.is_connected():
-            raise Exception("Already connected") 
-        self.connected = True     
+            raise Exception("Already connected")
         self._init_driver()
         logger.info("Starting GTK driver")
         gobject.idle_add(self._init_ui)
@@ -213,22 +212,15 @@ class Driver(g15driver.AbstractDriver):
                     element.set("style", style.replace("font-family:Sans","font-family:%s" % g15globals.fixed_size_font_name))
                     
     def redraw(self):
-        if self.image != None:
+        if self.image != None and self.main_window is not None:
             if isinstance(self.image, cairo.Surface):
                 self._draw_surface()
             else:
                 self._draw_pixbuf()
+            self.area.queue_draw()
         
-    def on_update_control(self, control):  
-        if self.event_box != None: 
-            if control == self.get_control_for_hint(g15driver.HINT_MKEYS):
-                gobject.idle_add(self._do_set_mkey_lights)
-            elif control == self.get_control_for_hint(g15driver.HINT_DIMMABLE):
-                if isinstance(control.value, int):
-                    v = ( 65535 / control.upper ) * control.value
-                    self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(v, v, v))
-                else:
-                    self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(control.value[0] << 8, control.value[1] << 8, control.value[2] << 8))
+    def on_update_control(self, control):
+        gobject.idle_add(self._do_update_control, control)
     
     def grab_keyboard(self, callback):
         self.callback = callback;
@@ -236,6 +228,17 @@ class Driver(g15driver.AbstractDriver):
     '''
     Private
     '''
+        
+    def _do_update_control(self, control):
+        if self.connected:   
+            if control == self.get_control_for_hint(g15driver.HINT_MKEYS):
+                self._do_set_mkey_lights()
+            elif control == self.get_control_for_hint(g15driver.HINT_DIMMABLE):
+                if isinstance(control.value, int):
+                    v = ( 65535 / control.upper ) * control.value
+                    self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(v, v, v))
+                else:
+                    self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(control.value[0] << 8, control.value[1] << 8, control.value[2] << 8))
         
     def _window_closed(self, window, evt):
         if self.main_window != None:
@@ -245,7 +248,7 @@ class Driver(g15driver.AbstractDriver):
 
     def _do_set_mkey_lights(self):
         c = self.get_control_for_hint(g15driver.HINT_MKEYS)
-        if c:
+        if c is not None and c.value is not None:
             if g15driver.G_KEY_M1 in self.buttons:
                 self._modify_button(g15driver.G_KEY_M1, c.value, g15driver.MKEY_LIGHT_1)
             if g15driver.G_KEY_M2 in self.buttons:
@@ -275,27 +278,19 @@ class Driver(g15driver.AbstractDriver):
         else:
             logger.warning("Mode change would cause disconnect when already connected. %s" % str(entry) )
             
-    def _expose(self, widget, event):
-        self.context = widget.window.cairo_create()
-#        self.context.rectangle(event.area.x, event.area.y,
-#                           event.area.width, event.area.height)
-#        self.context.clip()
-        self.redraw()
-        return False
-        
     def _draw_surface(self):
         # Finally paint the Cairo surface on the GTK widget
         zoom = self.get_zoom()
         width = self.lcd_size[0]
         height = self.lcd_size[1]
         if self.area != None and self.area.window != None:
-            self.area.window.begin_paint_rect((0, 0, zoom * width, zoom * height))
-            context = self.area.window.cairo_create()        
+            surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, zoom * width, zoom * height)
+            context = cairo.Context(surface)        
             context.set_antialias(self.get_antialias())
             context.scale(zoom, zoom)
             context.set_source_surface(self.image)
             context.paint()
-            self.area.window.end_paint()
+            self.area.set_surface(surface)
             
     def _draw_pixbuf(self):
         width = self.lcd_size[0]
@@ -304,7 +299,7 @@ class Driver(g15driver.AbstractDriver):
         pixbuf = g15util.image_to_pixbuf(self.image)
         pixbuf = pixbuf.scale_simple(zoom * width, zoom * height, 0)
         if self.area != None:
-            self.area.set_from_pixbuf(pixbuf)
+            self.area.set_pixbuf(pixbuf)
         
     def _init_driver(self):      
         logger.info("Initialising GTK driver")
@@ -326,20 +321,14 @@ class Driver(g15driver.AbstractDriver):
         
     def _init_ui(self):
         logger.info("Initialising GTK UI")
-        self.area = gtk.Image()
-        self.area.set_double_buffered(True)
+        self.area = VirtualLCD(self)
         #self.area.connect("expose_event", self._expose)
         self.hboxes = []
         self.buttons = {}
-        
         zoomed_size = self.get_zoomed_size()
-         
         self.area.set_size_request(zoomed_size[0], zoomed_size[1])        
-        self.area.show()
-
         self.vbox = gtk.VBox ()            
         self.vbox.add(self.area)
-        
         rows = gtk.VBox()
         for row in self.get_key_layout():
             hbox = gtk.HBox()
@@ -354,7 +343,6 @@ class Driver(g15driver.AbstractDriver):
             
         self.event_box = gtk.EventBox()
         self.event_box.add(rows)
-
         self.vbox.add(self.event_box)
         
         self.main_window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -363,8 +351,6 @@ class Driver(g15driver.AbstractDriver):
         self.main_window.add(self.vbox)
         self.main_window.connect("delete-event", self._window_closed)
         
-        self.main_window.show_all()
-        
         control = self.get_control_for_hint(g15driver.HINT_DIMMABLE) 
         if control:       
             if isinstance(control.value, int):
@@ -372,6 +358,42 @@ class Driver(g15driver.AbstractDriver):
                 self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(v, v, v))
             else:
                 self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(control.value[0] << 8, control.value[1] << 8, control.value[2] << 8))
-            
+        
+        self.main_window.show_all()
         logger.info("Initialised GTK UI")
+        self.connected = True
+        logger.info("Connected")
+        
+class VirtualLCD(gtk.DrawingArea):
+
+    def __init__(self, driver):        
+        self.__gobject_init__()
+        self.driver = driver
+        self.set_double_buffered(True)
+        super(VirtualLCD, self).__init__()
+        self.connect("expose-event", self._expose)
+        self.buffer = None
+
+    def _expose(self, widget, event):
+        if not self.driver.is_connected():
+            return
+        cr = widget.window.cairo_create()
+        cr.rectangle(event.area.x, event.area.y,
+                     event.area.width, event.area.height)
+        cr.clip()
+            
+        # Paint
+        if self.buffer:
+            cr.set_source_surface(self.buffer)
+        cr.paint()
+        
+    def set_surface(self, surface):
+        self.buffer = surface
+#        self.window.begin_paint_rect((0, 0, zoom * width, zoom * height))
+#        context = self.window.cairo_create()
+#        context.set_source_surface(surface)
+#        context.paint()
+#        self.window.end_paint()
+    
+gobject.type_register(VirtualLCD)
     

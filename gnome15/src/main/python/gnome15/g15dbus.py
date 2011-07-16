@@ -389,7 +389,6 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     
     @dbus.service.method(SCREEN_IF_NAME, in_signature='n')
     def CycleKeyboard(self, value):
-        self.CancelBlink()
         for c in self._get_dimmable_controls():
             if isinstance(c.value, int):
                 self._screen.cycle_level(value, c)
@@ -497,7 +496,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     
     def _get_dimmable_controls(self):
         controls = []
-        for c in self._service.driver.get_controls():
+        for c in self._screen.driver.get_controls():
             if c.hint & g15driver.HINT_DIMMABLE != 0:
                 controls.append(c)
         return controls

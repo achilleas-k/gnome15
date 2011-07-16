@@ -862,7 +862,7 @@ class G15Config:
         self.tabs.set_sensitive(enabled)
                 
     def _device_enabled_changed(self, widget = None):
-        gobject.idle_add(self._set_device)
+        gobject.timeout_add(1000, self._set_device)
                 
     def _driver_changed(self, widget = None):
         if len(self.driver_model) > 0:

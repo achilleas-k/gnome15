@@ -16,13 +16,13 @@ if os.path.exists(image_dir):
 	scripts_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "scripts"))
 	themes_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "themes"))
 else: 
-	image_dir = "/usr/local/share/gnome15/images"
-	glade_dir = "/usr/local/share/gnome15/glade"
-	font_dir = "/usr/local/share/gnome15"
-	plugin_dir = "/usr/local/share/gnome15/plugins"
-	themes_dir = "/usr/local/share/gnome15/themes"
-	icons_dir = "/usr/local/share/icons"
-	scripts_dir = "/usr/local/bin"
+	image_dir = "/usr/share/gnome15/images"
+	glade_dir = "/usr/share/gnome15/glade"
+	font_dir = "/usr/share/gnome15"
+	plugin_dir = "/usr/share/gnome15/plugins"
+	themes_dir = "/usr/share/gnome15/themes"
+	icons_dir = "/usr/share/icons"
+	scripts_dir = "/usr/bin"
 
 # Differs from distro to distro, and so is a ./configure option. See
 # --enable-fixed-size-font=[name] 

@@ -279,10 +279,11 @@ class AbstractControlAcquisition(object):
     """
     def _notify_released(self):
         if self._released:
-            raise Exception("Already released")
+            raise Exception("Already released")        
+        logger.info("Notifiy released")
         if self.on_released:
             self.on_released()
-        self._released = True
+        self._released = True        
         self._condition.release()
     
 class ControlAcquisition(AbstractControlAcquisition):
@@ -292,8 +293,9 @@ class ControlAcquisition(AbstractControlAcquisition):
         AbstractControlAcquisition.__init__(self, driver, ( (0,0,0) if isinstance(control.value, tuple) else 0) if val == None else val)
         
     def is_active(self):
-        ctrls = self.driver.acquired_controls[self.control.id]
-        return len(ctrls) > 0 and self in ctrls and ctrls.index(self) == len(ctrls) - 1
+        if self.control.id in self.driver.acquired_controls:
+            ctrls = self.driver.acquired_controls[self.control.id]
+            return len(ctrls) > 0 and self in ctrls and ctrls.index(self) == len(ctrls) - 1
     
     def blink(self, off_val = None, delay = 0.5, duration = None, blink_started = None):
         AbstractControlAcquisition.blink(self, ( (0,0,0) if isinstance(self.control.value, tuple) else 0 ) if off_val is None else off_val , delay, duration, blink_started)
@@ -390,17 +392,18 @@ class AbstractDriver(object):
             return self.acquire_control(control, release_after, val)
     
     def release_control(self, control_acquisition):
-        control_acquisitions = self.acquired_controls[control_acquisition.control.id]
-        control_acquisition._notify_released()
-        control_acquisition.cancel_reset()
-        control_acquisitions.remove(control_acquisition)
-        ctrls = len(control_acquisitions)
-        if ctrls > 0:
-            control_acquisition.control.value = control_acquisitions[ctrls - 1].val
-            self.update_control(control_acquisition.control)
-        else:
-            control_acquisition.control.value = self.initial_acquired_control_values[control_acquisition.control.id]
-            self.update_control(control_acquisition.control)
+        if control_acquisition.control.id in self.acquired_controls:
+            control_acquisitions = self.acquired_controls[control_acquisition.control.id]
+            control_acquisition._notify_released()
+            control_acquisition.cancel_reset()
+            control_acquisitions.remove(control_acquisition)
+            ctrls = len(control_acquisitions)
+            if ctrls > 0:
+                control_acquisition.control.value = control_acquisitions[ctrls - 1].val
+                self.update_control(control_acquisition.control)
+            else:
+                control_acquisition.control.value = self.initial_acquired_control_values[control_acquisition.control.id]
+                self.update_control(control_acquisition.control)
     
     def release_mkey_lights(self, control_acquisition):
         logger.warning("DEPRECATED call to release_mkey_lights, use release_control")
@@ -412,6 +415,7 @@ class AbstractDriver(object):
         subclasses should override on_disconnect.
         """
         try:
+            logger.info("Disconnecting driver")
             self.on_disconnect()
         finally:
             self.release_all_acquisitions()

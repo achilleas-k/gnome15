@@ -28,6 +28,7 @@ import g15screen
 import g15profile
 import g15dbus
 import g15devices
+import g15desktop
 import traceback
 import gconf
 import g15util
@@ -105,11 +106,9 @@ special_X_keysyms = {
     '~' : "asciitilde"
     }
 
-class G15Service(Thread):
+class G15Service(g15desktop.G15AbstractService):
     
     def __init__(self, service_host, no_trap=False):
-        Thread.__init__(self)
-        self.name = "Service"
         self.active_plugins = {}
         self.session_active = True
         self.service_host = service_host
@@ -135,33 +134,16 @@ class G15Service(Thread):
         if not no_trap:
             signal.signal(signal.SIGINT, self.sigint_handler)
             signal.signal(signal.SIGTERM, self.sigterm_handler)
-        
-        # Start this thread, which runs the gobject loop. This is 
-        # run first, and in a thread, as starting the Gnome15 will send
-        # DBUS events (which are sent on the loop). 
-        self.loop = gobject.MainLoop()
-        self.start()
-        
-    def start_loop(self):
-        logger.info("Starting GLib loop")
-        try:
-            self.loop.run()
-        except:
-            traceback.print_stack()
-        logger.info("Exited GLib loop")
+            
+        g15desktop.G15AbstractService.__init__(self)
+        self.name = "DesktopService"
         
     def start_service(self):
         try:
             self._do_start_service()
-#            self.start()
         except Exception as e:
             traceback.print_exc(file=sys.stdout)
             logger.error("Failed to start service. %s" % str(e))
-        
-    def run(self):        
-        # Now start the service, which will connect to all devices and
-        # start their plugins
-        self.start_service()
     
     def sigint_handler(self, signum, frame):
         logger.info("Got SIGINT signal, shutting down")

@@ -31,11 +31,13 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 import gconf
+import gobject
 import shutil
 import traceback
 import gnome15.g15globals as g15globals
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
+import gnome15.g15notify as g15notify
 import dbus
 import os.path
 import operator
@@ -46,6 +48,7 @@ import logging
 logger = logging.getLogger()
 
 from threading import RLock
+from threading import Thread
                 
 icon_theme = gtk.icon_theme_get_default()
 if g15globals.dev:
@@ -440,7 +443,33 @@ def set_autostart_application(application_name, enabled):
         desktop_entry.set("X-GNOME-Autostart-enabled", "false")
         desktop_entry.set("Hidden", "false")
         desktop_entry.write()
-            
+    
+class G15AbstractService(Thread):
+    
+    def __init__(self):
+        Thread.__init__(self)        
+        # Start this thread, which runs the gobject loop. This is 
+        # run first, and in a thread, as starting the Gnome15 will send
+        # DBUS events (which are sent on the loop). 
+        self.loop = gobject.MainLoop()
+        self.start()
+        
+    def start_loop(self):
+        logger.info("Starting GLib loop")
+        try:
+            self.loop.run()
+        except:
+            traceback.print_stack()
+        logger.info("Exited GLib loop")
+        
+    def start_service(self):
+        raise Exception("Not implemented")
+        
+    def run(self):        
+        # Now start the service, which will connect to all devices and
+        # start their plugins
+        self.start_service()
+                
     
 class G15Screen():
     """
@@ -480,7 +509,7 @@ class G15DesktopComponent():
         self.initialise_desktop_component()     
         self.icons_changed()
         
-    def start(self):
+    def start_service(self):
         """
         Start the desktop component. An attempt will be made to connect to Gnome15 over 
         DBus. If this fails, the component should stay active until the service becomes
@@ -679,6 +708,7 @@ class G15DesktopComponent():
         self.rebuild_desktop_component()
         
     def _remove_screen(self, screen_path):
+        print "*** removing %s from %s" % ( str(screen_path), str(self.screens))
         if screen_path in self.screens:
             try :
                 del self.screens[screen_path]
@@ -770,6 +800,9 @@ class G15DesktopComponent():
 class G15GtkMenuPanelComponent(G15DesktopComponent):
     
     def __init__(self):
+        self.screen_number = 0
+        self.devices = []
+        self.notify_message = None
         G15DesktopComponent.__init__(self)
         
     def about_info(self, widget):     
@@ -783,11 +816,44 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
         about.set_comments("Desktop integration for Logitech 'G' keyboards.")
         about.run()
         about.hide()
+        
+    def scroll_event(self, widget, event):
+        
+        direction = event.direction
+        if direction == gtk.gdk.SCROLL_UP:
+            screen = self._get_active_screen_object()
+            self._close_notify_message()
+            screen.ClearPopup() 
+            screen.Cycle(1)
+        elif direction == gtk.gdk.SCROLL_DOWN:
+            screen = self._get_active_screen_object()
+            self._close_notify_message()
+            screen.ClearPopup() 
+            screen.Cycle(-1)
+        else:
+            """
+            If there is only one device, right scroll cycles the backlight color,
+            otherwise toggle between the devices (used to select what to scroll with up
+            and down) 
+            """
+            print "Screens %s" % str(self.screens)
+            if direction == gtk.gdk.SCROLL_LEFT:
+                self._get_active_screen_object().CycleKeyboard(-1)
+            elif direction == gtk.gdk.SCROLL_RIGHT:
+                if len(self.screens) > 1:
+                    if self.screen_number >= len(self.screens) - 1:
+                        self.screen_number = 0
+                    else:
+                        self.screen_number += 1
+                        
+                    self._set_active_screen_number()
+                else:
+                    self._get_active_screen_object().CycleKeyboard(1)
             
     def rebuild_desktop_component(self):
         logger.debug("Removing old menu items")
         for item in self.last_items:
-            self.menu.remove(item)
+            item.get_parent().remove(item)
             item.destroy()
             
         self.last_items = []
@@ -801,26 +867,28 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
         
         logger.debug("Building new menu")
         if self.service and self.connected:
+            
             item = gtk.MenuItem("Stop Desktop Service")
             item.connect("activate", self.stop_desktop_service)
-            self._append_item(item)
-            self._append_item(gtk.MenuItem())
+            self.add_service_item(item)
+            self.add_service_item(gtk.MenuItem())
+        
             devices = self.service.GetDevices()
             for device_path in devices:
                 remote_device = self.session_bus.get_object('org.gnome15.Gnome15', device_path)
                 screen_path = remote_device.GetScreen()
                 
                 screen = self.screens[screen_path] if len(screen_path) > 0 and screen_path in self.screens else None
-                if i > 0:
-                    logger.debug("Adding separator")
-                    self._append_item(gtk.MenuItem())
                 
                 if screen:
+                    if i > 0:
+                        logger.debug("Adding separator")
+                        self._append_item(gtk.MenuItem())
                     # Disable
                     if len(devices) > 1:
                         item = gtk.MenuItem("Disable %s"  % screen.device_model_fullname)
                         item.connect("activate", self._disable, remote_device)
-                        self._append_item(item)
+                        self.add_service_item(item)
                     
                     # Cycle screens
                     item = gtk.CheckMenuItem("Cycle screens automatically")
@@ -847,16 +915,25 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                     if len(devices) > 1:
                         item = gtk.MenuItem("Enable %s" % remote_device.GetModelFullName())
                         item.connect("activate", self._enable, remote_device)
-                        self._append_item(item)
+                        self.add_service_item(item)
                 i += 1
+                
+            self.devices = devices
         else:
-            item = gtk.MenuItem("Start Desktop Service")
-            item.connect("activate", self.start_desktop_service)
-            self._append_item(item)
+            self.devices = []
+            self.add_start_desktop_service()
 
         self.menu.show_all()
         self.check_attention()
-    
+        
+    def add_start_desktop_service(self):
+        item = gtk.MenuItem("Start Desktop Service")
+        item.connect("activate", self.start_desktop_service)
+        self.add_service_item(item)
+        
+    def add_service_item(self, item):
+        self._append_item(item)
+        
     def initialise_desktop_component(self):
         
         self.last_items = []
@@ -885,10 +962,30 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
     """
     Private
     """
+        
+    def _get_active_screen_object(self):        
+        screen = list(self.screens.values())[self.screen_number]
+        return self.session_bus.get_object('org.gnome15.Gnome15', screen.path)
+                
+    def _set_active_screen_number(self):
+        self._close_notify_message()
+        screen = list(self.screens.values())[self.screen_number]
+        body = "%s is now the active keyboard. Use mouse wheel up and down to cycle screens on this device" % screen.device_model_fullname
+        self.notify_message = g15notify.notify(screen.device_model_fullname, body, "preferences-desktop-keyboard-shortcuts")
+        
+    def _close_notify_message(self):
+        if self.notify_message is not None:
+            try:
+                self.notify_message.close()
+            except Exception as e:
+                logger.debug("Failed to close message. %s" % str(e))
+            self.notify_message = None
        
-    def _append_item(self, item):
+    def _append_item(self, item, menu = None):
         self.last_items.append(item)
-        self.menu.append(item)
+        if menu is None:
+            menu = self.menu
+        menu.append(item)
         
     def _show_page(self,event, page_path):
         self.show_page(page_path)            

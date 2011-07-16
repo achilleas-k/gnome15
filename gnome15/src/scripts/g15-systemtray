@@ -36,6 +36,7 @@ import gnome.ui
 import os
 import gconf
 import traceback
+from threading import RLock
 
 # Logging
 import logging
@@ -47,46 +48,35 @@ logger.setLevel(logging.DEBUG)
 path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..", "gnome15", "src", "main", "python")
 if os.path.exists(path):
     sys.path.insert(0, path)
+    
+# This block MUST be before the imports of the gnome15 modules
+import dbus
+import gobject
+gobject.threads_init()
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+from dbus.mainloop.glib import threads_init
+threads_init()
+DBusGMainLoop(set_as_default=True)
 
 import gnome15.g15globals as g15globals
 import gnome15.g15service as g15service
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15desktop as g15desktop
-    
-import dbus
-import gobject
-
-from threading import RLock
-
-# Threading / DBUS setup
-from dbus.mainloop.glib import DBusGMainLoop
-from dbus.mainloop.glib import threads_init
-gobject.threads_init()
-dbus.mainloop.glib.threads_init()
-DBusGMainLoop(set_as_default=True)
-loop = gobject.MainLoop()
 
 class G15SystemTray(g15desktop.G15GtkMenuPanelComponent):
     
-    def __init__(self):
+    def __init__(self):      
+        self.prefs_menu = gtk.Menu()
         g15desktop.G15GtkMenuPanelComponent.__init__(self)
         
     def create_component(self):
         self.status_icon = gtk.StatusIcon()
         
-        self.prefs_menu = gtk.Menu()
-        item = gtk.MenuItem("Properties")
-        item.connect("activate", self.show_configuration)
-        self.prefs_menu.append(item)        
-        item = gtk.MenuItem("About")
-        item.connect("activate", self.about_info)
-        self.prefs_menu.append(item) 
-        self.status_icon.menu = self.prefs_menu
-        self.prefs_menu.show_all()
-        
         self.status_icon.connect('popup-menu', self._on_popup_menu)
         self.status_icon.connect('activate', self._on_activate)
+        self.status_icon.connect('scroll_event', self.scroll_event)
         
     def clear_attention(self):
         self.remove_attention_menu_item()
@@ -102,15 +92,36 @@ class G15SystemTray(g15desktop.G15GtkMenuPanelComponent):
     def _on_popup_menu(self, status, button, time):
         self.prefs_menu.popup(None, None, None, button, time)
         
-    def _on_activate(self, status):       
-        self.menu.popup(None, None, None, 1, gtk.get_current_event_time())
-        pass
+    def _on_activate(self, status):
+        if len(self.menu.get_children()) > 0:
+            self.menu.popup(None, None, None, 1, gtk.get_current_event_time())
         
     def _about_info(self, widget):         
         about = gnome.ui.About("Gnome15", g15globals.version, "GPL", \
                                "Desktop integration for Logitech 'G' keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
                                g15desktop.AUTHORS, "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
         about.show()
+        
+    def add_service_item(self, item):
+        self._append_item(item, self.prefs_menu)   
+             
+    def add_start_desktop_service(self):
+        g15desktop.G15GtkMenuPanelComponent.add_start_desktop_service(self)
+        self.add_service_item(gtk.MenuItem())
+        
+    def rebuild_desktop_component(self):
+        g15desktop.G15GtkMenuPanelComponent.rebuild_desktop_component(self)
+        if len(self.devices)> 1:
+            self.add_service_item(gtk.MenuItem())  
+        item = gtk.MenuItem("Properties")
+        item.connect("activate", self.show_configuration)
+        self.add_service_item(item)        
+        item = gtk.MenuItem("About")
+        item.connect("activate", self.about_info)
+        self.add_service_item(item)        
+        self.status_icon.menu = self.prefs_menu
+        
+        self.prefs_menu.show_all()
         
     def icons_changed(self):
         self.normal_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15util.get_icon_path("logitech-g-keyboard-panel"), self.status_icon.get_size(), self.status_icon.get_size())
@@ -124,5 +135,6 @@ if __name__ == "__main__":
     except:
         pass
     
-    G15SystemTray().start()                       
+    tray = G15SystemTray()
+    tray.start_service()
     gtk.main()

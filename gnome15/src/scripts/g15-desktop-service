@@ -27,7 +27,7 @@ import time
 
 # Logging
 import logging
-logging.basicConfig(format='%(levelname)s:%(threadName)s:%(name)s:%(message)s')
+logging.basicConfig(format='%(levelname)s:%(asctime)s:%(threadName)s:%(name)s:%(message)s', datefmt='%H:%M:%S')
 logger = logging.getLogger()
 
 LEVELS = {'debug': logging.DEBUG,

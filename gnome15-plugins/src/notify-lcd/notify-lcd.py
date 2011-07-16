@@ -90,7 +90,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     dialog.set_transient_for(parent)
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/respect_timeout", "RespectTimeout", False, widget_tree, True)
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_actions", "AllowActions", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_cancel", "AllowCancel", False, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_cancel", "AllowCancel", True, widget_tree, True)
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/on_keyboard_screen", "OnKeyboardScreen", True, widget_tree, True)
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/on_desktop", "OnDesktop", False, widget_tree, True)
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_keyboard_backlight", "BlinkKeyboardBacklight", True, widget_tree, True)
@@ -207,7 +207,7 @@ class G15NotifyService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='u', out_signature='')
     def CloseNotification(self, id):     
-        logger.debug("Close notification %d" % ( id ) )   
+        logger.info("Close notification %d" % ( id ) )   
         self._plugin.close_notification(id)
         
     @dbus.service.signal(dbus_interface=IF_NAME,
@@ -237,7 +237,7 @@ class G15NotifyLCD():
     def _load_configuration(self):
         self.respect_timeout = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/respect_timeout", False)
         self.allow_actions = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_actions", False)
-        self.allow_cancel = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_cancel", False)
+        self.allow_cancel = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_cancel", True)
         self.on_keyboard_screen = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_keyboard_screen", True)
         self.on_desktop = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_desktop", False)
         self.blink_keyboard_backlight = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/blink_keyboard_backlight", True)
@@ -376,12 +376,14 @@ class G15NotifyLCD():
                         logger.debug("More than one message in queue, just redrawing")                           
                         if self._page != None:
                             self._screen.redraw(self._page)
+                            
+                logger.info("Notify message has ID of %s" % str(message.id))
                 return message.id                         
         except Exception as blah:
             traceback.print_exc()
     
     def close_notification(self, id):        
-        logger.info("Closing notification " % id)
+        logger.info("Closing notification %d. Message queue has %d items, allow cancel is %s" % (id, len(self._message_queue), str(self.allow_cancel)))
         self._lock.acquire()
         try :
             if self.allow_cancel and len(self._message_queue) > 0:

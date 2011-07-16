@@ -284,38 +284,45 @@ class G15Screen():
             self.notify_handles.append(self.conf_client.notify_add("%s/%s" % ( screen_key, control.id ), self._control_changed))
         logger.info("Starting for %s is complete." % self.device.uid)
         
-    def stop(self, quickly = False):        
+    def stop(self, quickly = False):  
+        logger.info("Stopping screen for %s" % self.device.uid)      
         self.stopping = True
-        if self.is_active() and not quickly:                
+        for h in self.notify_handles:
+            self.conf_client.notify_remove(h)
+        self.notify_handles = []
+        if self.is_active() and not quickly and ( self.service.fade_screen_on_close \
+                                                  or self.service.fade_keyboard_backlight_on_close ):                
+            logger.info("Fading %s" % self.device.uid)
             # Start fading keyboard
-            bl_control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
             acquisition = None
-            if bl_control:
-                current_val = bl_control.value
-                """
-                First acquire, and turn all lights off, this is the state it will
-                return to before disconnecting (we never release it)
-                """
-                self.driver.acquire_control(bl_control, val = 0 if isinstance(bl_control, int) else (0, 0, 0))
-                
-                acquisition = self.driver.acquire_control(bl_control, val = current_val)
-                acquisition.fade(duration = 2.0, release = True)
+            if self.service.fade_keyboard_backlight_on_close:
+                bl_control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
+                if bl_control:
+                    current_val = bl_control.value
+                    """
+                    First acquire, and turn all lights off, this is the state it will
+                    return to before disconnecting (we never release it)
+                    """
+                    self.driver.acquire_control(bl_control, val = 0 if isinstance(bl_control, int) else (0, 0, 0))
+                    
+                    acquisition = self.driver.acquire_control(bl_control, val = current_val)
+                    acquisition.fade(duration = 2.0, release = True)
                 
             # Fade screen
             if self.driver.get_bpp() > 0 and self.service.fade_screen_on_close:
                 self.fade(True)
                 
             # Wait for keyboard fade to finish as well if it hasn't already
-            if acquisition:
+            if acquisition:  
+                logger.info("Waiting for fade to complete for %s" % self.device.uid)
                 acquisition.wait()
+            logger.info("Fade complete for %s" % self.device.uid)
                 
-        if self.plugins:
+        if self.plugins and self.plugins.is_activated():
             self.plugins.deactivate()
             self.plugins.destroy()
         if self.driver and self.driver.is_connected():
             self.driver.disconnect()
-        for h in self.notify_handles:
-            self.conf_client.notify_remove(h)
         
     def add_screen_change_listener(self, screen_change_listener):
         if not screen_change_listener in self.screen_change_listeners:
@@ -331,7 +338,7 @@ class G15Screen():
         
     def get_memory_bank(self):
         control = self.driver.get_control_for_hint(g15driver.HINT_MKEYS)
-        if control:
+        if control and control.id in self.acquired_controls:
             val = self.acquired_controls[control.id].val
             return g15driver.get_memory_bank_for_mask(val)
         return 0
@@ -650,13 +657,13 @@ class G15Screen():
             
     def cycle_level(self, val, control):
         logger.debug("Cycling of %s level by %d" % (control.id, val))
-        level = self.conf_client.get_int("/apps/gnome15/" + control.id)
+        level = self.conf_client.get_int("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ))
         level += val
         if level > control.upper - 1:
             level = control.lower
         if level < control.lower - 1:
             level = control.upper
-        self.conf_client.set_int("/apps/gnome15/" + control.id, level)
+        self.conf_client.set_int("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ), level)
         
     def control_configuration_changed(self, client, connection_id, entry, args):
         key = os.path.basename(entry.key)
@@ -689,7 +696,7 @@ class G15Screen():
         if self.color_no >= len(COLOURS):
             self.color_no = 0
         color = COLOURS[self.color_no]
-        self.conf_client.set_string("/apps/gnome15/" + control.id, "%d,%d,%d" % (color[0], color[1], color[2] ) )
+        self.conf_client.set_string("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ), "%d,%d,%d" % (color[0], color[1], color[2] ) )
         
     def driver_changed(self, client, connection_id, entry, args):
         if self.reconnect_timer:
@@ -888,7 +895,7 @@ class G15Screen():
         if self.should_reconnect(exception):
             if logger.level == logging.DEBUG:
                 traceback.print_exc(file=sys.stderr)
-            self.reconnect_timer = g15util.schedule("ReconnectTimer", 5.0, self.attempt_connection)
+            self.attempt_connection(5.0)
         else:
             traceback.print_exc(file=sys.stderr)
             return True
@@ -931,8 +938,9 @@ class G15Screen():
             self.conf_client.notify_remove(handle);
         self.control_handles = []
         self.acquired_controls = {}
-        self.memory_bank_color_control = None   
-        self.plugins.deactivate()
+        self.memory_bank_color_control = None
+        if self.plugins.is_activated():
+            self.plugins.deactivate()
         
         # Delete any remaining pages
         if self.pages:
@@ -947,7 +955,8 @@ class G15Screen():
                 logger.info("Testing if connection should be retried")
                 self._process_exception(NotConnectedException("Keyboard driver disconnected."))
         
-        self.stopping = False
+        self.stopping = False  
+        logger.info("Completed closing driver") 
             
     def is_active(self):
         """
@@ -1018,9 +1027,12 @@ class G15Screen():
         self.fader = Fader(self, stay_faded=stay_faded).run()
         
     def attempt_connection(self, delay=0.0):
-        logger.debug("Attempting connection" if delay == 0 else "Attempting connection in %f" % delay)
+        logger.info("Attempting connection" if delay == 0 else "Attempting connection in %f" % delay)
         self.connection_lock.acquire()
-        try :            
+        try :     
+            if self.reconnect_timer is not None:
+                self.reconnect_timer.cancel()
+                       
             if not self.service.session_active:
                 logger.debug("Desktop session not active, will not connect to driver")
                 return
