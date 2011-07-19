@@ -184,16 +184,15 @@ class G15SystemServiceController():
             for device in g15devices.find_all_devices():
                 if device.model_id in driver_names:
                     driver_name = driver_names[device.model_id]
-                    led_prefix = "%s_%d:" % ( driver_name, device.index )
-                    if os.path.exists(self._led_path):
-                        for dir in os.listdir(self._led_path):
-                            if dir.startswith(led_prefix):
-                                keyboard_device, color, control = dir.split(":")
-                                keyboard_device, index = keyboard_device.split("_")
-                                leds = self.leds[device.uid] if device.uid in self.leds else {}
-                                light_key = "%s:%s" % ( color, control )
-                                leds[light_key] = LED(light_key, device, os.path.join(self._led_path, dir))
-                                self.leds[device.uid] = leds
+                    led_prefix = "%s_" % driver_name
+                    for dir in os.listdir(self._led_path):
+                        if dir.startswith(led_prefix):
+                            keyboard_device, color, control = dir.split(":")
+                            keyboard_device, index = keyboard_device.split("_")
+                            leds = self.leds[device.uid] if device.uid in self.leds else {}
+                            light_key = "%s:%s" % ( color, control )
+                            leds[light_key] = LED(light_key, device, os.path.join(self._led_path, dir))
+                            self.leds[device.uid] = leds
                  
         else:
             logger.info("No LED files found at %s" % self._led_path)

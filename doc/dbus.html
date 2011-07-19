@@ -1,0 +1,1056 @@
+<p>
+	Gnome15 has an exensive <a href="http://dbus.freedesktop.org/"
+		title="Freedesktop DBUS">DBUS</a> API that allows you to control and
+	extend from any language or platform that has a DBUS <a
+		href="http://www.freedesktop.org/wiki/Software/DBusBindings">binding</a>.There
+	are currently 6 different interfaces that are exposed over DBUS, all
+	using the <em>Session</em> bus under the name <strong>org.gnome15.Gnome15</strong>.
+	There is also a <em>System Bus</em> service under <strong>org.gnome15.SystemService</strong>
+	as well, that is used by the kernel driver. This replaces lgsetled as
+	the means of setting the brightness and colour of the various
+	backlights.
+</p>
+<p>
+	The desktop service is provided by the <strong>g15-desktop-service</strong>
+	application, which manages the pages displayed and provides other
+	service to both DBUS clients and in-process plugins.
+</p>
+<p>
+	See <a
+		href="http://dbus.freedesktop.org/doc/dbus-python/doc/tutorial.html#basic-types">here</a>
+	for explanation of signature data types. <br>
+<h1>org.gnome15.Gnome15</h1>
+<h2>
+	Interface org.gnome15.Service
+</h2>
+<h3>/org/gnome15/Service</h3>
+<ul>
+	<li>Represents the desktop service and is the top level object.</li>
+	<li>May be used to query and set general information about the
+		service</li>
+	<li>The service manages multiple <i>Devices</i>, each of which may
+		or may not have a <i>Screen</i> associated with it.</li>
+</ul>
+<h4>Signals</h4>
+<table class="funkytable" border="0" width="100%">
+	<thead>
+		<tr>
+			<td width="25%"><strong>Name</strong></td>
+			<td width="25%"><strong>Signature</strong></td>
+			<td width="50%"><strong>Description</strong></td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>ScreenAdded</td>
+			<td>screen_name=s<br /></td>
+			<td>A new screen has been activated. <br /></td>
+		</tr>
+		<tr>
+			<td>ScreenRemoved</td>
+			<td>screen_name<br /></td>
+			<td>Get a list of all screens. A path for each device that is
+				enabled and working will be returned. Note a connected device may
+				have a <br /></td>
+		</tr>
+		<tr>
+			<td>Stopping</td>
+			<td><br /></td>
+			<td>The desktop service is stopping <br /></td>
+		</tr>
+		<tr>
+			<td>Stopped</td>
+			<td><br /></td>
+			<td>The desktop service is stopped. <em>Note, you will
+					probably never receive this signal</em></td>
+		</tr>
+		<tr>
+			<td>Started</td>
+			<td><br /></td>
+			<td>The desktop service has completed starting up. <br /></td>
+		</tr>
+		<tr>
+			<td>Starting</td>
+			<td><br /></td>
+			<td>The desktop service is starting up. <em>Note, you will
+					probably never receive this signal.</em></td>
+		</tr>
+	</tbody>
+</table>
+<h4>Methods</h4>
+<table class="funkytable" border="0" width="100%">
+	<thead>
+		<tr>
+			<td width="18%"><strong>Name</strong></td>
+			<td width="17%"><strong>In Signature</strong></td>
+			<td width="17%"><strong>Out Signature</strong></td>
+			<td width="50%"><strong>Description</strong></td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>GetDevices</td>
+			<td><br /></td>
+			<td><br /></td>
+			<td>Gets a list of paths of all the detected devices. Each
+				object path will be of the type org.gnome15.Device.</td>
+		</tr>
+		<tr>
+			<td>GetScreens</td>
+			<td><br /></td>
+			<td><br /></td>
+			<td>Get a list of all screens. A path for each device that is
+				enabled and working will be returned. Note a connected device may
+				have a</td>
+		</tr>
+		<tr>
+			<td>GetServerInformation</td>
+			<td><br /></td>
+			<td>app_name=s<br />app_vendor=s<br />app_version=s<br />protocol_version=s</td>
+			<td>Get information about the desktop service implementation.</td>
+		</tr>
+
+		<tr>
+			<td>IsStopping</td>
+			<td><br /></td>
+			<td>shutting_down=b</td>
+			<td>Get if the service is currently stopping.</td>
+		</tr>
+		<tr>
+			<td>IsStarting</td>
+			<td><br /></td>
+			<td>starting_up=b</td>
+			<td>Get if the service is currently starting up.</td>
+		</tr>
+		<tr>
+			<td>IsStarted</td>
+			<td><br /></td>
+			<td>started=b</td>
+			<td>Get if the service is completely started.</td>
+		</tr>
+
+		<tr>
+			<td>Stop</td>
+			<td><br /></td>
+			<td><br /></td>
+			<td>Stop the desktop service.</td>
+		</tr>
+
+	</tbody>
+	<tbody>
+	</tbody>
+</table>
+<h2>
+	Interface org.gnome15.Screen
+</h2>
+<h3>/org/gnome15/Screen/[deviceUID]</h3>
+<ul>
+	<li>Each supported device that is <b>enabled and connected</b>
+		will have a <i>Screen</i> (any devices disabled or not connected may
+		be enumerated using org.gnome15.Service.GetDevices instead).</li>
+	<li>The path will be <strong>/org/gnome15/Screen/[deviceUID]</strong>.</li>
+	<li>The list of current screens may be retrieved use <em>org.gnome15.Service.GetScreens</em>.</li>
+	<li>A screen consists of many <i>Pages</i>, the paths of which may
+		be retrieved using <em>org.gnome15.Screen.GetPages</em>.</li>
+</ul>
+<h4>Signals</h4>
+<table class="funkytable" border="0" width="100%">
+	<thead>
+		<tr>
+			<td width="25%"><strong>Name</strong></td>
+			<td width="25%"><strong>Signature</strong></td>
+			<td width="50%"><strong>Description</strong></td>
+		</tr>
+	</thead>
+	<tbody>
+
+		<tr>
+			<td>Action</td>
+			<td>binding=b</td>
+			<td>A bound action has been invoked. This will be as the result
+				of the user pressing a key or key combination.</td>
+		</tr>
+		<tr>
+			<td>AttentionCleared</td>
+			<td><br /></td>
+			<td>Clears the current attention state. See <em>AttenionRequestioned</em>
+				for more information<br /></td>
+		</tr>
+		<tr>
+			<td>AttentionRequested</td>
+			<td>message=s</td>
+			<td>The desktop service is now in 'Attention' state. This is
+				used by panel components to display some kind of indicator signaling
+				that Gnome15 needs attention, usually when something goes wrong with
+				the driver. The message parameter should contain text describing the
+				problem.<br /></td>
+		</tr>
+		<tr>
+			<td>KeysPressed</td>
+			<td>keys=as <br /></td>
+			<td>One or more of the extended keys (G, L, D-Pad etc) has been
+				pressed. Each array element will be the Gnome15 key ID. You will
+				only receive these signals if you have requested them using <em>ReserveKey</em>.<br />
+			</td>
+		</tr>
+		<tr>
+			<td>KeysReleased</td>
+			<td>keys=as</td>
+			<td>One of more of the extended keys (G, L, D-Pad etc) has been
+				released. Each array element will be the Gnome15 key ID. You will
+				only receive these signals if you have requested them using <em>ReserveKey</em>.<br />
+			</td>
+		</tr>
+		<tr>
+			<td>PageChanged</td>
+			<td>page_path=t <br /></td>
+			<td>A page has changed in some way (e.g. priority updated) <br />
+			</td>
+		</tr>
+		<tr>
+			<td>PageCreated<br /></td>
+			<td>page_path=s<br />title=s<br /></td>
+			<td>A new page has been created. <em>page_seq</em> is the new
+				sequence number that may be used to locate the page object via DBUS.
+				<br /></td>
+		</tr>
+		<tr>
+			<td>PageDeleting</td>
+			<td>page_path=s</td>
+			<td>A page is about to be deleted.</td>
+		</tr>
+		<tr>
+			<td>PageDeleted</td>
+			<td>page_path=s<br /></td>
+			<td>A page has been deleted and is no longer available. <br />
+			</td>
+		</tr>
+		<tr>
+			<td>PageTitleChanged</td>
+			<td>page_path=s<br />new_title=s<br /></td>
+			<td>The title of a page has changed.<br /></td>
+		</tr>
+		<tr>
+			<td>Disconnected</td>
+			<td>driver_name=s<br /></td>
+			<td>The desktop service is shutting down. <br /></td>
+		</tr>
+		<tr>
+			<td>Connected</td>
+			<td>driver_name=s<br /></td>
+			<td>A connection to the device has been made.<br /></td>
+		</tr>
+		<tr>
+			<td>MemoryBankChanged</td>
+			<td>new_memory_bank=t<br /></td>
+			<td>The active memory bank for this device had changed.</td>
+		</tr>
+	</tbody>
+</table>
+<h4>Methods</h4>
+<table class="funkytable" border="0" width="100%">
+	<thead>
+		<tr>
+			<td width="18%"><strong>Name</strong></td>
+			<td width="17%"><strong>In Signature</strong></td>
+			<td width="17%"><strong>Out Signature</strong></td>
+			<td width="50%"><strong>Description</strong></td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>AcquireControl</td>
+			<td>control_id=s<br>release_after=d<br>value=s</td>
+			<td>control_acquisition_path=s</td>
+			<td><p>Acquire a backlight or other control. Once acquired,
+					a new object will be available that may be used to change the value
+					of the control or enable effects such as blink or fade. The control
+					remains acquire until is is released, at which point, the original
+					value will be reset.</p>
+				<p>If release_after is non-zero, then the page will be release
+					after that amount of seconds.</p>
+				<p>An initial value may also be supplied, this should be a
+					string repreentation of the value depending on the type. For a
+					single value (level), use an integer value. For RGB colours, use
+					[R],[G],[B]. For switch controls, use True or False.</p>
+				<p>The returned path is the path of the org.gnome15.Control
+					object</p>
+			</td>
+		</tr>
+		<tr>
+			<td>ClearAttention</td>
+			<td><br /></td>
+			<td><br /></td>
+			<td>Clears the current attention state, i.e. whatever error
+				condition that caused it is now fixed.</td>
+		</tr>
+		<tr>
+			<td>ClearPopup</td>
+			<td><br /></td>
+			<td><br /></td>
+			<td>If the visible page is a popup, it will be removed.</td>
+		</tr>
+		<tr>
+			<td>CreatePage</td>
+			<td>id=s<br />title=s<br />priority=n</td>
+			<td>page_path=t</td>
+			<td>
+				<p>Creates a new page. The returned value is the path for an
+					object of type org.gnome15.Page that can be used to manipulate this
+					new page.The priority values are :-</p>
+				<ul>
+					<li>0 = Invisible</li>
+					<li>20 = Low (splash screen)</li>
+					<li>50 = Normal (part of cycle)</li>
+					<li>99 = High (temporarily high priority)</li>
+					<li>100 = Exclusive (only 1 at a time allowed)</li>
+					<li>999 = Popup (overrides everything)</li>
+				</ul>
+				<div>Only these priority numbers should be used. A page should
+					also provide its own ID string that may be used to lookup the page
+					sequence number using something other than the sequence number.</div>
+			</td>
+		</tr>
+		<tr>
+			<td>Cycle</td>
+			<td>times=n</td>
+			<td><br /></td>
+			<td>Cycle the screen a number of times. Negative values cycle
+				backwards which will be reflected by the special if supported.</td>
+		</tr>
+		<tr>
+			<td>CycleKeyboard</td>
+			<td>times=n</td>
+			<td></td>
+			<td>Cycle either the level or the colour of the keyboard
+				backlight.</td>
+		</tr>
+		<tr>
+			<td>GetControlIds</td>
+			<td></td>
+			<td>ds=as</td>
+			<td>Get a list of valid control IDs that may be acquired.</td>
+		</tr>
+		<tr>
+			<td>GetDeviceInformation</td>
+			<td></td>
+			<td>uid=s<br>model_id=s<br>usb_id=s<br>model_full_name=s</td>
+			<td>Get information about the device this screen is attached to.</td>
+		</tr>
+		<tr>
+			<td>GetDriverInformation</td>
+			<td></td>
+			<td>driver_name=s<br>model_id=s<br>width=s<br>height=s<br>bpp=s</td>
+			<td>Get information about the driver used for this screen.</td>
+		</tr>
+		<tr>
+			<td>GetDeviceUID</td>
+			<td></td>
+			<td>uid=s</td>
+			<td>Get the unique ID of the device this screen is attached to.</td>
+		</tr>
+		<tr>
+			<td>GetLastError</td>
+			<td><br /></td>
+			<td>message=s</td>
+			<td>Gets what the last error message was. Used when the service
+				goes into attention state. Used by panel components.</td>
+		</tr>
+		<tr>
+			<td>GetMessage</td>
+			<td><br /></td>
+			<td>message=s</td>
+			<td>Gets the current desktop service status message to display.
+				Used by panel components.</td>
+		</tr>
+
+		<tr>
+			<td>GetPageForID</td>
+			<td>id=s<br /></td>
+			<td>page_path=s</td>
+			<td>Gets the path of the object for the page with the given ID
+				(ID is the internal ID used by Gnome15).</td>
+		</tr>
+		<tr>
+			<td>GetPages</td>
+			<td><br /></td>
+			<td>page_paths=as</td>
+			<td>Returns an array of object paths for every page this screen
+				is managing.</td>
+		</tr>
+		<tr>
+			<td>GetPagesBelowPriority</td>
+			<td>priority=t<br /></td>
+			<td>page_paths=as</td>
+			<td>Returns an array of objects paths for all pages below the
+				provided priority.</td>
+		</tr>
+		<tr>
+			<td>GetVisiblePage</td>
+			<td></td>
+			<td>page_path=s</td>
+			<td>Returns the object path of the visible page</td>
+		</tr>
+		<tr>
+			<td>IsAttentionRequested</td>
+			<td><br /></td>
+			<td>requested=b</td>
+			<td>Get if the screen is currently in attention state, i.e. an
+				error occured with the driver.</td>
+		</tr>
+		<tr>
+			<td>IsConnected</td>
+			<td></td>
+			<td>connected=b</td>
+			<td>Get if the driver is connected.</td>
+		</tr>
+		<tr>
+			<td>IsReceiveActions</td>
+			<td><br /></td>
+			<td>receive_actions=b</td>
+			<td>Get if the action events will be received</td>
+		</tr>
+		<tr>
+			<td>SetReceiveActions</td>
+			<td>receive_actions=b</td>
+			<td></td>
+			<td>Set if action events will be received.</td>
+		</tr>
+		<tr>
+			<td>RequestAttention</td>
+			<td><br /></td>
+			<td>message=s</td>
+			<td>Request that the service go into attention state. The
+				practical effect of this is that panel components will indicate
+				there is a problem with the service.</td>
+		</tr>
+		<tr>
+			<td>ReserveKey</td>
+			<td><br /></td>
+			<td>key_name=s</td>
+			<td>Reserve a particular key. You will then be able to receive <em>KeysPressed</em>
+				and <em>KeysReleased </em>signals.</td>
+		</tr>
+
+		<tr>
+			<td>UnreserveKey</td>
+			<td><br /></td>
+			<td>key_name=s</td>
+			<td>Unreserve a previously reserved key. Events for that key
+				will no longer been sent.</td>
+		</tr>
+	</tbody>
+	<tbody>
+	</tbody>
+</table>
+<h2>
+	Interface: org.gnome15.Device
+</h2>
+<h3>/org/gnome15/Device/[deviceUID]</h3>
+<ul>
+	<li>Each supported device that is detected will have an instance
+		of this object, regardless of whether it is enabled or disabled,
+		connected or disconnected.</li>
+	<li>The path will be <strong>/org/gnome15/Device/[deviceUID]</strong>.</li>
+	<li>The list of current devices may be retrieved use <em>org.gnome15.Service.GetDevices</em>.</li>
+</ul>
+<h4>Methods</h4>
+<table class="funkytable" border="0" width="100%">
+	<thead>
+		<tr>
+			<td width="18%"><strong>Name</strong></td>
+			<td width="17%"><strong>In Signature</strong></td>
+			<td width="17%"><strong>Out Signature</strong></td>
+			<td width="50%"><strong>Description</strong></td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Enable</td>
+			<td></td>
+			<td><br /></td>
+			<td>Enable this device if it is disabled. If the drivers
+				connects OK, then a new org.gnome15.Screen object will be created.</td>
+		</tr>
+		<tr>
+			<td>Disable</td>
+			<td><br /></td>
+			<td><br /></td>
+			<td>Disable this device if it is enabled. When the driver
+				disconnects, the associated org.gnome15.Screen object and all of
+				it's pages will be removed.</td>
+		</tr>
+		<tr>
+			<td>GetBPP</td>
+			<td></td>
+			<td>bpp=t<br /></td>
+			<td>Get the number of bits per pixel (i.e. the colour depth) for
+				this device.</td>
+		</tr>
+		<tr>
+			<td>GetModelFullName</td>
+			<td></td>
+			<td>name=s</td>
+			<td>Get the full name of the model.</td>
+		</tr>
+		<tr>
+			<td>GetScreen</td>
+			<td><br /></td>
+			<td>screen_path=s</td>
+			<td>Get the object path of the screen this device is associated
+				with. If the device is disabled or disconnected, this will be empty.</td>
+		</tr>
+		<tr>
+			<td>GetSize</td>
+			<td></td>
+			<td>width=t<br>height=t</td>
+			<td>Gets size of the display</td>
+		</tr>
+		<tr>
+			<td>GetUID</td>
+			<td><br /></td>
+			<td>
+				<p>uid=s</p>
+			</td>
+			<td>Get the unique identifier of the device.</td>
+		</tr>
+		<tr>
+			<td>GetUsbId</td>
+			<td></td>
+			<td>usb_id=s</td>
+			<td>Get the USB identifier for this device.</td>
+		</tr>
+	</tbody>
+	<tbody>
+	</tbody>
+</table>
+<h2>
+	Interface: org.gnome15.Control
+</h2>
+<h3>/org/gnome15/Control/[acquisitionID]</h3>
+<ul>
+	<li>One object will exists for each acquired control.</li>
+	<li>Controls may be acquired using <em>org.gnome15.Screen.AcquireControl</em>.</li>
+	<li>The path returned when acquiring will be <strong>/org/gnome15/Control/[acquisitionID]</strong>.</li>
+	<li>Release controls when you have finished with them.</li>
+</ul>
+<p>Control values are handled as strings. Depending on the type of
+	control, the format of this string will be different. The type of
+	control may be determined by using GetHint.</p>
+<ul>
+	<li>Levels - Single value controls, such as brightness values are
+		strings containing an integer number.</li>
+	<li>Color - Such as backlight colours are strings in the format
+		[R],[G],[B].</li>
+	<li>Switch - Such as invert. A boolean string, i.e. True or False.</li>
+</ul>
+</p>
+<h4>Methods</h4>
+<table class="funkytable" border="0" width="100%">
+	<thead>
+		<tr>
+			<td width="18%"><strong>Name</strong></td>
+			<td width="17%"><strong>In Signature</strong></td>
+			<td width="17%"><strong>Out Signature</strong></td>
+			<td width="50%"><strong>Description</strong></td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>GetValue</td>
+			<td></td>
+			<td>value=s</td>
+			<td>Get the current value.</td>
+		</tr>
+		<tr>
+			<td>GetHint</td>
+			<td></td>
+			<td>hint=s</td>
+			<td>Gets the control's hint mask. This will be made up of : <code>
+					<pre>			
+HINT_DIMMABLE = 1 << 0
+HINT_SHADEABLE = 1 << 1
+HINT_FOREGROUND = 1 << 2
+HINT_BACKGROUND = 1 << 3
+HINT_HIGHLIGHT = 1 << 4
+HINT_SWITCH = 1 << 5
+HINT_MKEYS = 1 << 6
+HINT_VIRTUAL = 1 << 7
+</pre>
+				</code>
+			</td>
+		</tr>
+		<tr>
+			<td>SetValue</td>
+			<td></td>
+			<td>value=s<br />reset_after=d</td>
+			<td>Set the current value.</td>
+		</tr>
+		<tr>
+			<td>Fade</td>
+			<td></td>
+			<td>percentage=d<br />duration=d<br />release=b</td>
+			<td>Fade the control to the specified percentage (of the current
+				value). The duration specifies how long the fade should take. If
+				release is true, the control will be release automatically when the
+				fade is complete.</td>
+		</tr>
+		<tr>
+			<td>Blink</td>
+			<td></td>
+			<td>off_val=s<br />delay=d<br />duration=b</td>
+			<td>Blink the control, swapping between the current value and
+				the new specified value. The delay argument controls how the time
+				between each blink. The duration argument specifies how long the
+				effect should last, use 0 to blink forever.</td>
+		</tr>
+		<tr>
+			<td>Reset</td>
+			<td></td>
+			<td></td>
+			<td>Set the control back to the value it was when it was first
+				acquired.</td>
+		</tr>
+		<tr>
+			<td>CancelReset</td>
+			<td></td>
+			<td></td>
+			<td>Cancel any any automatic reset that may have been set during
+				SetValue.</td>
+		</tr>
+		<tr>
+			<td>Release</td>
+			<td></td>
+			<td></td>
+			<td>Release the control. This object will then be removed, and
+				the control will be returned to the value of the previously
+				acquisition.</td>
+		</tr>
+	</tbody>
+	<tbody>
+	</tbody>
+</table>
+<p></p>
+<h2>
+	Interface org.gnome15.Page
+</h2>
+<h3>/org/gnome15/PageX</h3>
+<ul>
+	<li>Represents an individual page on one Screen.</li>
+	<li>Create new pages using org.gnome15.Screen.CreatePage.</li>
+	<li>All pages created by a connection will be removed when the
+		client disconnects.</li>
+</ul>
+<h4>Drawing Using Functions</h4>
+<p>
+	Before using any drawing functions, you must call <strong>NewSurface()</strong>
+	once. This clears the surface and prepares the page for being to. Then
+	you should call the various drawing functions, such as <strong>Arc()</strong>,
+	<strong>Circle()</strong>, <strong>Text()</strong>. After all shapes
+	have been drawn, commit the surface to the page's buffer using <strong>DrawSurface()</strong>.
+	Finally call <strong>RedrawPage()</strong> to send the screen to the
+	LCD.
+</p>
+<h4>Drawing Using Themes</h4>
+<p>
+	First set the theme SVG using either <strong>LoadTheme()</strong> to
+	load a file resource, or <strong>SetThemeSVG()</strong> to set using a
+	string (you must strip the XML declaration if you use this method).
+	Once the theme is loaded, using either <strong>SetThemeProperty()</strong>
+	to set single properties, or <strong>SetThemeProperties() </strong>if
+	you want to update more than property at a time. Finally call <strong>RedrawPage()</strong>
+	to send the screen to the LCD.
+</p>
+<h4>Signals</h4>
+<table class="funkytable" border="0" width="100%">
+	<thead>
+		<tr>
+			<td width="25%">Name</td>
+			<td width="25%">Signature</td>
+			<td width="50%">Description</td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>KeysPressed</td>
+			<td>keys=as</td>
+			<td>One or more of the extended keys (G, L, D-Pad etc) has been
+				pressed while this page is visible. Each array element will be the
+				Gnome15 key ID. You will only receive these signals if you have
+				requested them using ReserveKey.</td>
+		</tr>
+		<tr>
+			<td>KeysReleased</td>
+			<td>keys=as</td>
+			<td>One of more of the extended keys (G, L, D-Pad etc) has been
+				released while this page is visible. Each array element will be the
+				Gnome15 key ID. You will only receive these signals if you have
+				requested them using ReserveKey.</td>
+		</tr>
+	</tbody>
+</table>
+<h4>Methods</h4>
+<table class="funkytable" border="0" width="100%">
+	<thead>
+		<tr>
+			<td width="18%">Name</td>
+			<td width="17%">In Signature</td>
+			<td width="17%">Out Signature</td>
+			<td width="50%">Description</td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Arc</td>
+			<td>
+				<p>
+					x=d<br />y=d<br />radius=d<br />startAngle=d<br />endAngle=d<br />fill=b
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Draw an arc or circle. Angle is in degrees.</td>
+		</tr>
+		<tr>
+			<td>CancelTimer</td>
+			<td>
+				<p></p>
+			</td>
+			<td><br /></td>
+			<td>Cancels any timers currently running on this page. For
+				example, timers are created when temporarily changing the priority
+				using SetPriority.<br /></td>
+		</tr>
+		<tr>
+			<td>Circle</td>
+			<td>
+				<p>
+					x=d<br />y=d<br />radius=d<br />fill=b
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Draw a circle. Same can be achieved by using Arc with a
+				start angle of 0 and end angle of 360.<br /></td>
+		</tr>
+		<tr>
+			<td>CycleTo</td>
+			<td></td>
+			<td><br /></td>
+			<td>Cycle to this page.<br /></td>
+		</tr>
+		<tr>
+			<td>Delete</td>
+			<td><br /></td>
+			<td><br /></td>
+			<td>Delete this page. It will be completely removed.<br /></td>
+		</tr>
+		<tr>
+			<td>DrawSurface</td>
+			<td><br /></td>
+			<td><br /></td>
+			<td>Draws the current canvas onto the page's buffer. This must
+				be used before the results of drawing functions are visible.</td>
+		</tr>
+		<tr>
+			<td>Foreground</td>
+			<td>
+				<p>
+					r=n<br />g=n<br />b=n<br />a=n
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Sets the foreground color for all drawing operations. Each
+				element is an integer between 0 and 255. The final value is the
+				alpha value, or opacity.<br /></td>
+		</tr>
+		<tr>
+			<td>GetId</td>
+			<td>
+				<p></p>
+			</td>
+			<td>id=s</td>
+			<td>Get the page ID (this is not the page sequence number).<br />
+			</td>
+		</tr>
+		<tr>
+			<td>GetPriority</td>
+			<td><br /></td>
+			<td>priority=n</td>
+			<td>Get the page's current priority. See
+				/org/gnome15/Service/CreatePage for an explanation of the priority
+				codes.</td>
+		</tr>
+		<tr>
+			<td>GetTitle</td>
+			<td>
+				<p></p>
+			</td>
+			<td>title=s</td>
+			<td>Get the page title. This is the text displayed in plugins
+				such as the Menu plugin.</td>
+		</tr>
+		<tr>
+			<td>Image</td>
+			<td>
+				<p>
+					path=s<br />x=d<br />y=d<br />width=d<br />height=d
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Draw an image from a file at the specified location. If
+				width or height is greater than zero, the image will be resized. No
+				attempt is made to maintain aspect ration on resizing.<br /></td>
+		</tr>
+		<tr>
+			<td>ImageData</td>
+			<td>
+				<p>
+					image_data=ab<br />x=d<br />y=d
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Draw an image from raw image data at the specified location.
+				<br /></td>
+		</tr>
+		<tr>
+			<td>IsVisible</td>
+			<td>
+			<td>visible=b</td>
+			<td>Get if this page is the one that is currently visible.</td>
+		</tr>
+		<tr>
+			<td>Line</td>
+			<td>
+				<p>
+					x1=d<br />y1=d<br />x2=d<br />y2=d
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Draw a line between two points.<br /></td>
+		</tr>
+		<tr>
+			<td>LoadTheme</td>
+			<td>
+				<p>
+					dir=s<br />variant=s
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Load SVG theme files from the specified directory. See the
+				Plugin Tutorial for more details on how theme files work. <br /></td>
+		</tr>
+		<tr>
+			<td>NewSurface</td>
+			<td>
+				<p></p>
+			</td>
+			<td><br /></td>
+			<td>Create a new surface for drawing operations. This method <strong>must</strong>
+				be called before using <strong>Arc,</strong> <strong>Circle</strong>,
+				<strong>Text</strong> or any other drawing functions.</td>
+		</tr>
+		<tr>
+			<td>Raise</td>
+			<td>
+				<p></p>
+			</td>
+			<td><br /></td>
+			<td>Raise the page amongst those that are of the same priority.
+				This will make this page visible only if no other pages of higher
+				priority are visible.</td>
+		</tr>
+		<tr>
+			<td>Rectangle</td>
+			<td>
+				<p>
+					x=d<br />y=d<br />width=d<br />height=d<br />fill=b
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Draw a rectangle.<br /></td>
+		</tr>
+		<tr>
+			<td>Redraw</td>
+			<td>
+				<p></p>
+			</td>
+			<td><br /></td>
+			<td>Send the contents of this page to the LCD. This is the final
+				stage after either drawing to the surface or changing theme
+				properties.<br /></td>
+		</tr>
+		<tr>
+			<td>ReserveKey</td>
+			<td>
+				<p>keyname=s</p>
+			</td>
+			<td><br /></td>
+			<td>Reserve a particular key. You will then be able to receive <em>KeysPressed</em>
+				and <em>KeysReleased </em>signals.</td>
+		</tr>
+		<tr>
+			<td>Restore</td>
+			<td>
+				<p></p>
+			</td>
+			<td><br /></td>
+			<td>Restores drawing attributes to that state they were in when
+				<strong>Save()</strong> was used.<br /></td>
+		</tr>
+		<tr>
+			<td>Save</td>
+			<td>
+				<p></p>
+			</td>
+			<td><br /></td>
+			<td>Save current drawing attributes for restoration using <strong>Restore()</strong>.
+				This currently includes font, foreground color and line width.</td>
+		</tr>
+		<tr>
+			<td>SetFont</td>
+			<td>
+				<p>
+					font_size=d<br />font_family=s<br />font_style=s<br />font_weight=s
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Set the currently active font, as used by <strong>Text()</strong>.<br />
+			</td>
+		</tr>
+		<tr>
+			<td>SetLineWidth</td>
+			<td>
+				<p>line_width=d</p>
+			</td>
+			<td><br /></td>
+			<td>Sets the current stroke line width, as used by <strong>Line()</strong>,
+				<strong>Rectangle()</strong> etc.<br /></td>
+		</tr>
+		<tr>
+			<td>SetPriority</td>
+			<td>
+				<p>
+					priority=n<br />revert_after=d<br />hide_after=d
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Change the priority of a page, optionally requesting that it
+				either be reset to it's previous priority after a set amount of
+				time, or hidden after a set amount of time. This is useful for popup
+				messages. The timer used for reverting may be cancelled using <strong>CancelTimers()</strong>.<br />
+			</td>
+		</tr>
+		<tr>
+			<td>SetThemeProperties</td>
+			<td>
+				<p>properties=a{s,s}</p>
+			</td>
+			<td><br /></td>
+			<td>Set a number of theme properties at one time. See the Plugin
+				tutorial for a description of how theme properties work.</td>
+		</tr>
+		<tr>
+			<td>SetThemeProperty</td>
+			<td>
+				<p>
+					name=s<br />value=s
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Set a single theme property. See the Plugin tutorial for a
+				description of how theme properties work.</td>
+		</tr>
+		<tr>
+			<td>SetThemeSVG</td>
+			<td>
+				<p>svg_text=s</p>
+			</td>
+			<td><br /></td>
+			<td>Load an SVG theme from a string. Note, this may not include
+				an XML declaration at the top of the content.<br /></td>
+		</tr>
+		<tr>
+			<td>Text</td>
+			<td>
+				<p>
+					text=s<br />x=d<br />y=d<br />width=d<br />height=d<br />text=align
+				</p>
+			</td>
+			<td><br /></td>
+			<td>Draw some text at the specified location width the bounds
+				defined by the height and width. The alignment may be <strong>left</strong>,
+				<strong>center</strong> or <strong>right</strong>.</td>
+		</tr>
+		<tr>
+			<td>UnreserveKey</td>
+			<td>
+				<p>key_name=s</p>
+			</td>
+			<td><br /></td>
+			<td>Unreserve a previously reserved key. Events for that key
+				will no longer been sent.</td>
+		</tr>
+	</tbody>
+	<tbody>
+	</tbody>
+</table>
+<h2>
+	Interface: org.gnome15.Debug
+</h2>
+<h3>/org/gnome15/Debug/[acquisitionID]</h3>
+<ul>
+	<li>Used for debugging Gnome15 (was added to track down memory
+		leaks).</li>
+	<li>Will be removed at some point.</li>
+</ul>
+<h4>Methods</h4>
+<table class="funkytable" border="0" width="100%">
+	<thead>
+		<tr>
+			<td width="18%">Name</td>
+			<td width="17%">In Signature</td>
+			<td width="17%">Out Signature</td>
+			<td width="50%">Description</td>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>GC</td>
+			<td></td>
+			<td></td>
+			<td>Force garbage collection.</td>
+		</tr>
+		<tr>
+			<td>MostCommonTypes</td>
+			<td></td>
+			<td></td>
+			<td>Dumps objects with most instances onto stdout.</td>
+		</tr>
+		<tr>
+			<td>Objects</td>
+			<td>type_name=s</td>
+			<td></td>
+			<td>Dumps of the specified type onto console.</td>
+		</tr>
+		<tr>
+			<td>Referents</td>
+			<td>type_name=s</td>
+			<td></td>
+			<td>Dumps referents of the specified type onto console.</td>
+		</tr>
+		<tr>
+			<td>Referrers</td>
+			<td>type_name=s</td>
+			<td></td>
+			<td>Dumps referrers of the specified type onto console.</td>
+		</tr>
+		<tr>
+			<td>ShowGraph</td>
+			<td></td>
+			<td></td>
+			<td>Dump an object graph into the current working directory of
+				the process.<br /></td>
+		</tr>
+	</tbody>
+	<tbody>
+	</tbody>
+</table>

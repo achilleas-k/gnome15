@@ -282,7 +282,8 @@ class G15Processes(g15plugin.G15MenuPlugin):
                 
         # Sort
         current_items = sorted(current_items, key=lambda item: item.process_name)
-        self.menu.set_children(current_items)
+        if self.page is not None:
+            self.menu.set_children(current_items)
         
         # Make sure selected still exists
         if self.menu.selected != None and not self.menu.selected in current_items:

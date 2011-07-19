@@ -4,4 +4,5 @@
 # See udev(7) for syntax.
 #
 
-ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="046d", ATTR{idProduct}=="c229", MODE="0777"
+# Logitech G19 Gaming Keyboard
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", MODE="0660", GROUP="plugdev", SYMLINK+="g19-extra-keys"

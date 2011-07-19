@@ -599,9 +599,12 @@ class G15Config:
         if self.selected_device:
             for driver_mod_key in g15drivermanager.imported_drivers:
                 driver_mod = g15drivermanager.imported_drivers[driver_mod_key]
-                driver = driver_mod.Driver(self.selected_device)
-                if self.selected_device.model_id in driver.get_model_names():
-                    self.driver_model.append((driver_mod.id, driver_mod.name))
+                try:
+                    driver = driver_mod.Driver(self.selected_device)
+                    if self.selected_device.model_id in driver.get_model_names():
+                        self.driver_model.append((driver_mod.id, driver_mod.name))
+                except Exception as e:
+                    logger.error("Failed to load driver. %s" % str(e))
             
         self.driver_combo.set_sensitive(len(self.driver_model) > 1)
         self._set_driver_from_configuration()

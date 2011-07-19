@@ -2,13 +2,37 @@
 # See udev(7) for syntax.
 #
 
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", GROUP="video", MODE="0664", RUN="/usr/bin/g15-system-service"
-SUBSYSTEM=="input", ACTION=="remove", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", RUN="/usr/bin/g15-system-service stop"
+# Logitech G19 Gaming Keyboard
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", MODE="0660", GROUP="plugdev", SYMLINK+="g19-extra-keys"
+SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", MODE="0660", GROUP="plugdev", SYMLINK+="g19-lcd"
 
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c222", GROUP="video", MODE="0664"
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c227", GROUP="video", MODE="0664"
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c21c", GROUP="video", MODE="0664"
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22d", GROUP="video", MODE="0664"
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="046d", GROUP="video", MODE="0664"
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0a07", GROUP="video", MODE="0664"
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c225", GROUP="video", MODE="0664"
+# Logitech G15 Gaming Keyboard (version 1)
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c222", MODE="0660", GROUP="plugdev", SYMLINK+="g15v1-extra-keys"
+SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c222", MODE="0660", GROUP="plugdev", SYMLINK+="g15v1-lcd"
+
+# Logitech G15 Gaming Keyboard (version 2)
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c227", MODE="0660", GROUP="plugdev", SYMLINK+="g15v2-extra-keys"
+SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c227", MODE="0660", GROUP="plugdev", SYMLINK+="g15v2-lcd"
+
+# Logitech G13 Advanced Gameboard
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c21c", MODE="0660", GROUP="plugdev", SYMLINK+="g13-extra-keys"
+SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c21c", MODE="0660", GROUP="plugdev", SYMLINK+="g13-lcd"
+
+# Logitech G510 Keyboard
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22d", MODE="0660", GROUP="plugdev", SYMLINK+="g510-extra-keys"
+SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22d", MODE="0660", GROUP="plugdev", SYMLINK+="g510-lcd"
+
+# Logitech Z10 Speakers 
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0a07", MODE="0660", GROUP="plugdev", SYMLINK+="z10-extra-keys"
+SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0a07", MODE="0660", GROUP="plugdev", SYMLINK+="z10-lcd"
+
+# Logitech G11 Keyboard (no LCD)
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c225", MODE="0660", GROUP="plugdev", SYMLINK+="g11-extra-keys"
+
+# Logitech G110 Keyboard (no LCD)
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c225", MODE="0660", GROUP="plugdev", SYMLINK+="g110-extra-keys"
+SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c225", MODE="0660", GROUP="plugdev", SYMLINK+="g15v2-lcd"
+
+# Logitech Game Panel (Dell XPS 1730?)
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c251", MODE="0660", GROUP="plugdev", SYMLINK+="gamepanel-extra-keys"
+SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c251", MODE="0660", GROUP="plugdev", SYMLINK+="gamepanel-lcd"

@@ -819,8 +819,6 @@ class G15Screen():
                 
                 # Special case for the light key
                 if state == g15driver.KEY_STATE_UP:
-                    if g15driver.G_KEY_LIGHT in keys and not self.driver.get_model_name() == g15driver.MODEL_G19:
-                        self.service.dbus_service._driver_service.CycleKeyboard(1)
         
                     profile = g15profile.get_active_profile(self.device)
                     if profile != None:
@@ -1059,7 +1057,7 @@ class G15Screen():
             try :
                 self.acquired_controls = {}
                 self.driver.connect()
-                self.driver.set_controls_from_configuration(self.conf_client)
+                self.driver.set_controls_from_configuration(self.conf_client, True)
                 self.driver.release_all_acquisitions()                
                 for control in self.driver.get_controls():
                     if control.hint & g15driver.HINT_VIRTUAL == 0: 

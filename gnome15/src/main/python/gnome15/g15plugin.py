@@ -200,8 +200,8 @@ class G15MenuPlugin():
         self.page.on_deleted = self.page_deleted
         self.page.add_child(self.menu)
         self.page.add_child(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
-        self.screen.add_page(self.page)     
         self.load_menu_items()
+        self.screen.add_page(self.page)     
         self.screen.redraw(self.page)
         
     def create_page(self):

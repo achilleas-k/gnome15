@@ -112,6 +112,7 @@ controls = {
   g15driver.MODEL_G11 : [ mkeys_control, backlight_control ],
   g15driver.MODEL_G15_V1 : [ mkeys_control, backlight_control, lcd_contrast_control, lcd_backlight_control, invert_control ], 
   g15driver.MODEL_G15_V2 : [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
+  g15driver.MODEL_GAMEPANEL : [ mkeys_control, backlight_control, lcd_contrast_control, lcd_backlight_control, invert_control ],
   g15driver.MODEL_G13 : [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
   g15driver.MODEL_G510 : [ mkeys_control, color_backlight_control, invert_control ],
   g15driver.MODEL_Z10 : [ backlight_control, lcd_backlight_control, invert_control ],
@@ -141,6 +142,7 @@ class G15Dispatcher(asyncore.dispatcher):
         for k in KEY_MAP.keys():
             self.reverse_map[KEY_MAP[k]] = k
         self.received_handshake = False
+        self.expect = None 
         asyncore.dispatcher.__init__(self, sock=conn, map = map)
         
     def wait_for_handshake(self):
@@ -154,14 +156,14 @@ class G15Dispatcher(asyncore.dispatcher):
         data = self.socket.recv(1, socket.MSG_OOB)
         if len(data) > 0:
             val = ord(data[0])
-            if val & CLIENT_CMD_BACKLIGHT:
-                level = val - CLIENT_CMD_BACKLIGHT
-            elif val & CLIENT_CMD_KB_BACKLIGHT:
-                level = val - CLIENT_CMD_KB_BACKLIGHT
-            elif val & CLIENT_CMD_CONTRAST:
-                logger.warning("Ignoring contrast command")
+            # I don't really get how this is useful
+            if CLIENT_CMD_CONTRAST == self.expect:
+                logger.info("Previous contrast was %d" % val)
+            elif CLIENT_CMD_BACKLIGHT == self.expect:
+                logger.info("Previous backlight was %d" % val)
             else:
-                logger.warning("Ignoring unknown OOB command")
+                logger.info("Got OOB %d" % val)
+            self.expect = None 
             
     def handle_key(self, data):
         if self.key_stage == 0:
@@ -316,15 +318,18 @@ class Driver(g15driver.AbstractDriver):
     def on_update_control(self, control):
         level = control.value
         if control == backlight_control:
-            self.check_control(control)
+            logger.info("Sending kb backlight level of %d" % level)
             self.send(chr(CLIENT_CMD_KB_BACKLIGHT  + level),socket.MSG_OOB)
         elif control == lcd_backlight_control:
-            self.check_control(control)
+            logger.info("Sending backlight level of %d" % level)
+            self.dispatcher.expect = CLIENT_CMD_BACKLIGHT
             self.send(chr(CLIENT_CMD_BACKLIGHT + level),socket.MSG_OOB)
         elif control == lcd_contrast_control:
-            self.check_control(control)
+            logger.info("Sending contrast level of %d" % level)
+            self.dispatcher.expect = CLIENT_CMD_CONTRAST
             self.send(chr(CLIENT_CMD_CONTRAST + level),socket.MSG_OOB)
         elif control == color_backlight_control:
+            logger.info("Sending color backlight level of %d" % level)
             self.lock.acquire()        
             try :           
                 self.send(chr(CLIENT_CMD_KB_BACKLIGHT_COLOR),socket.MSG_OOB)
@@ -338,12 +343,6 @@ class Driver(g15driver.AbstractDriver):
                 self.lock.release()
         elif control == mkeys_control:
             self._set_mkey_lights(control.value)
-
-    def check_control(self, control):
-        if control.value > control.upper:
-            control.value = control.upper
-        elif control.value < control.lower:
-            control.value = control.lower
             
     def get_name(self):
         return "g15daemon driver"

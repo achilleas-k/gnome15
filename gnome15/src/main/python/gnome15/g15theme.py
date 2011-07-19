@@ -993,7 +993,7 @@ class MenuItem(Component):
         Component.__init__(self, id)
         self.group = group
         
-    def on_configure(self):
+    def on_configure(self):        
         self.set_theme(G15Theme(self.parent.get_theme().dir, "menu-entry" if self.group else "menu-child-entry"))
         
     def get_theme_properties(self):     
@@ -1322,6 +1322,12 @@ class G15Theme():
             root = self.document.getroot()
         els = root.xpath('//svg:*[@id=\'%s\']' % str(id),namespaces=self.nsmap)
         return els[0] if len(els) > 0 else None
+
+    def get_element_by_tag(self, tag, root = None):
+        if root == None:
+            root = self.document.getroot()
+        els = root.xpath('svg:%s' % str(tag),namespaces=self.nsmap)
+        return els[0] if len(els) > 0 else None
     
     def mark_dirty(self):
         self.dirty = True
@@ -1565,12 +1571,13 @@ class G15Theme():
             clip_path_node = self._get_clip_path_element(element)
             vertical_wrap = "vertical-wrap" == element.get("title")
             if clip_path_node is not None:
-                t_span_node = element.find("svg:tspan", namespaces=self.nsmap)
-                t_span_text = element.findtext("svg:tspan", namespaces=self.nsmap)
+                
+                t_span_node = self.get_element_by_tag("tspan", root = element)
+                t_span_text = t_span_node.text
                 if not t_span_text:
                     raise Exception("Text node had clip path, but no tspan->text could be found")
                 
-                clip_path_rect_node = clip_path_node.find("svg:rect", namespaces=self.nsmap)
+                clip_path_rect_node = self.get_element_by_tag("rect", clip_path_node)
                 if clip_path_rect_node is None:
                     raise Exception("No svg:rect for clip %s" % str(clip_path_node))
                 clip_path_bounds = g15util.get_actual_bounds(clip_path_rect_node, element)

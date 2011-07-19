@@ -27,14 +27,26 @@ logger = logging.getLogger("driver")
 # Find all drivers
 drivers_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "drivers"))
 imported_drivers = {}
+
 driverfiles = [fname[:-3] for fname in os.listdir(drivers_dir) if fname.endswith(".py") and fname.startswith("driver_")]
-driver_mods = __import__("gnome15.drivers", fromlist=list(driverfiles))
 for d in driverfiles:
     try :
-        mod = getattr(driver_mods, d)
+        driver_mod = __import__("gnome15.drivers.%s" % d , fromlist=[])
+        mod = getattr(getattr(driver_mod, "drivers"), d)
         imported_drivers[d] = mod
     except Exception as e:
         logger.warning("Failed to load driver. %s" % str(e))
+    
+
+
+#driverfiles = [fname[:-3] for fname in os.listdir(drivers_dir) if fname.endswith(".py") and fname.startswith("driver_")]
+#driver_mods = __import__("gnome15.drivers", fromlist=list(driverfiles))
+#for d in driverfiles:
+#    try :
+#        mod = getattr(driver_mods, d)
+#        imported_drivers[d] = mod
+#    except Exception as e:
+#        logger.warning("Failed to load driver. %s" % str(e))
         
 def get_driver_mod(id):
     '''

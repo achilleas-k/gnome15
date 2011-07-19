@@ -28,6 +28,7 @@ lgsetled/lgsetled
 lgsetled/m4
 gnome15-impulse15/m4
 gnome15-impulse15/m4/*
+gnome15-java-bindings/*/target
 libtool
 depcomp
 config.sub

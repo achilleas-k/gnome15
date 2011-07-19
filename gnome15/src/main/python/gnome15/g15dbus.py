@@ -73,7 +73,7 @@ class AbstractG15DBUSService(dbus.service.Object):
                 return True
             
     @dbus.service.method(SCREEN_IF_NAME, in_signature='b')
-    def SetReceiveActions(self, enabled):
+    def set_receive_actions(self, enabled):
         if enabled and self in self._screen.action_listeners:
             raise Exception("Already receiving actions")
         elif not enabled and not self in self._screen.action_listeners:
@@ -140,7 +140,7 @@ class G15DBUSDebugService(dbus.service.Object):
                         print "   %s  (%d)" % ( name, count )
         
     @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
-    def Refererents(self, typename):
+    def Referents(self, typename):
         print "%d instances of  type %s. Referents :-" % ( objgraph.count(typename), typename)
         done = {}
         for r in objgraph.by_type(typename):
@@ -158,7 +158,11 @@ class G15DBUSDeviceService(AbstractG15DBUSService):
         AbstractG15DBUSService.__init__(self, dbus_service._bus_name, "%s/%s" % ( DEVICE_NAME, device.uid ) )
         self._dbus_service = dbus_service
         self._service = dbus_service._service
-        self._device = device
+        self._device = device    
+        
+    @dbus.service.method(DEVICE_IF_NAME, in_signature='b')
+    def SetReceiveActions(self, enabled):
+        self.set_receive_actions(enabled)
         
     @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='s')
     def GetScreen(self):
@@ -395,12 +399,12 @@ class G15DBUSScreenService(AbstractG15DBUSService):
             else:
                 self._screen.cycle_color(value, c)
     
-    @dbus.service.method(SCREEN_IF_NAME, in_signature='s', out_signature='u')
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='s', out_signature='s')
     def GetPageForID(self, id):
         return self._dbus_pages[id]._bus_name
     
-    @dbus.service.method(SCREEN_IF_NAME, in_signature='s', out_signature='u')
-    def GetVisiblePage(self, id):
+    @dbus.service.method(SCREEN_IF_NAME, out_signature='s')
+    def GetVisiblePage(self):
         return self.GetPageForID(self._screen.get_visible_page().id)
     
     @dbus.service.method(SCREEN_IF_NAME, out_signature='as')
@@ -433,6 +437,10 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='b')
     def IsAttentionRequested(self):
         return self._screen.attention
+        
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='b')
+    def SetReceiveActions(self, enabled):
+        self.set_receive_actions(enabled)
     
     """
     DBUS Signals
@@ -874,7 +882,7 @@ class G15DBUSService(AbstractG15DBUSService):
     ''' 
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
     def GetServerInformation(self):
-        return ( g15globals.name, "Gnome15 Project", g15globals.version, "1.1" )
+        return ( g15globals.name, "Gnome15 Project", g15globals.version, "2.0" )
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='')
     def Stop(self):

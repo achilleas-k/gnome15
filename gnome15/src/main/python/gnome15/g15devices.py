@@ -18,7 +18,6 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-
 import usb
 import g15driver
 import g15drivermanager
@@ -316,6 +315,7 @@ DeviceInfo(g15driver.MODEL_G510, (0x046d, 0xc22d),          g510_key_layout,  1,
 DeviceInfo(g15driver.MODEL_G510_AUDIO, (0x046d, 0xc22e),    g510_key_layout,  1,  ( 160,  43 ),   True, "Logitech G510 Keyboard (audio)", g19_action_keys)
 DeviceInfo(g15driver.MODEL_Z10, (0x046d, 0x0a07),           z10_key_layout,   1,  ( 160,  43 ),   False, "Logitech Z10 Speakers", g19_action_keys)
 DeviceInfo(g15driver.MODEL_G110, (0x046d, 0xc225),          g110_key_layout,  0,  ( 0,    0 ),    True, "Logitech G110 Keyboard", None)
+DeviceInfo(g15driver.MODEL_GAMEPANEL, (0x046d, 0xc251),        g15v1_key_layout, 1,  ( 160,  43 ),   True, "Logitech GamePanel", g15_action_keys)
 
 # When I get hold of an MX5500, I will add Bluetood detection as well
 DeviceInfo(g15driver.MODEL_MX5500, (0x0000, 0x0000), mx5500_key_layout,  1,  ( 136,    32 ),    False, "Logitech MX5500", mx5500_action_keys)

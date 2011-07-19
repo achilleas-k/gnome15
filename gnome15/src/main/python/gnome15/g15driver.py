@@ -138,8 +138,9 @@ MODEL_G510_AUDIO = "g510audio"
 MODEL_G110 = "g110"
 MODEL_Z10 = "z10"
 MODEL_MX5500 = "mx5500"
+MODEL_GAMEPANEL = "gamepanel"
 
-MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G11, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G510_AUDIO, MODEL_G110, MODEL_Z10, MODEL_MX5500 ]
+MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G11, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G510_AUDIO, MODEL_G110, MODEL_Z10, MODEL_MX5500, MODEL_GAMEPANEL ]
 
 HINT_DIMMABLE = 1 << 0
 HINT_SHADEABLE = 1 << 1
@@ -498,9 +499,18 @@ class AbstractDriver(object):
     on_update_control()
     """
     def update_control(self, control):
-        for l in self.control_update_listeners:
-            l.control_updated(control)
-        self.on_update_control(control)
+        if self.check_control(control):
+            for l in self.control_update_listeners:
+                l.control_updated(control)
+            self.on_update_control(control)
+
+    def check_control(self, control):
+        if isinstance(control.value, int):
+            if control.value > control.upper:
+                control.value = control.upper
+            elif control.value < control.lower:
+                control.value = control.lower
+        return True
     
     def on_update_control(self, control):
         raise NotImplementedError( "Not implemented" )
@@ -540,11 +550,13 @@ class AbstractDriver(object):
                 if ( hint & control.hint ) == hint:
                     return control
         
-    def set_controls_from_configuration(self, conf_client):
+    def set_controls_from_configuration(self, conf_client, update = False):
         controls = self.get_controls()
         if controls:
             for control in controls:
                 self.set_control_from_configuration(control, conf_client)
+                if update:
+                    self.update_control(control)
             
     def set_control_from_configuration(self, control, conf_client):
         entry = conf_client.get("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ))
