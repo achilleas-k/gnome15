@@ -23,7 +23,6 @@ import sys
 import g15globals as pglobals
 import g15driver as g15driver
 import gconf
-import g15util
 import traceback
 import threading
 
@@ -109,10 +108,11 @@ def get_actions(plugin_module):
     return {}
 
 class G15Plugins():
-    def __init__(self, screen):
+    def __init__(self, screen, service = None):
         self.lock = threading.RLock()
         self.screen = screen
-        self.conf_client = screen.conf_client
+        self.service = service if service is not None else screen.service
+        self.conf_client = self.service.conf_client
         self.mgr_started = False
         self.mgr_active = False
         self.started = []
@@ -129,10 +129,11 @@ class G15Plugins():
         return self.state in [ ACTIVATED, DEACTIVATING, ACTIVATING ] 
         
     def _get_plugin_key(self, subkey = None):
+        folder = self.screen.device.uid if self.screen is not None else "global"
         if subkey:
-            return "/apps/gnome15/%s/plugins/%s" % ( self.screen.device.uid, subkey )
+            return "/apps/gnome15/%s/plugins/%s" % ( folder, subkey )
         else:
-            return "/apps/gnome15/%s/plugins" % self.screen.device.uid
+            return "/apps/gnome15/%s/plugins" % folder
         
     def has_plugin(self, id):
         return id in self.module_map
@@ -160,15 +161,17 @@ class G15Plugins():
                 self.conf_client.notify_add(key, self._plugin_changed);
                 if self.conf_client.get(key) == None:
                     self.conf_client.set_bool(key, is_default_enabled(mod))
-                if self.conf_client.get_bool(key):
-                    try :
-                        instance = self._create_instance(mod, plugin_dir_key)
-                        if self.screen.driver.get_model_name() in get_supported_models(mod):
-                            self.started.append(instance)
-                    except Exception as e:
-                        self.conf_client.set_bool(key, False)
-                        logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
-                        traceback.print_exc(file=sys.stderr)
+                if ( self.screen is None and self._is_global_plugin(mod) ) or \
+                   ( self.screen is not None and not self._is_global_plugin(mod) ):
+                    if self.conf_client.get_bool(key):
+                        try :
+                            instance = self._create_instance(mod, plugin_dir_key)
+                            if self.screen is None or self.screen.driver.get_model_name() in get_supported_models(mod):
+                                self.started.append(instance)
+                        except Exception as e:
+                            self.conf_client.set_bool(key, False)
+                            logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
+                            traceback.print_exc(file=sys.stderr)
             self.state = STARTED
         except Exception as a:
             self.state = UNINITIALISED
@@ -247,8 +250,8 @@ class G15Plugins():
             traceback.print_exc(file=sys.stderr)
         finally:                    
             mod_id = self.plugin_map[plugin].id
-            if mod_id in self.screen.service.active_plugins:
-                del self.screen.service.active_plugins[mod_id]
+            if mod_id in self.service.active_plugins:
+                del self.service.active_plugins[mod_id]
         self.activated.remove(plugin)
     
     def deactivate(self):
@@ -285,10 +288,10 @@ class G15Plugins():
         try :             
             if self._is_single_instance(mod):
                 logger.info("%s may only be run once, checking if there is another instance" % mod.id)
-                if  mod.id in self.screen.service.active_plugins:
+                if  mod.id in self.service.active_plugins:
                     raise Exception("Plugin may %s only run on one device at a time." % mod.id)
             instance.activate()
-            self.screen.service.active_plugins[mod.id] = True
+            self.service.active_plugins[mod.id] = True
             self.activated.append(instance)
             if callback != None:
                 callback(idx, len(self.started), mod.name)
@@ -303,10 +306,20 @@ class G15Plugins():
         except AttributeError: 
             pass
         return False
+    
+    def _is_global_plugin(self, module):
+        try :
+            return module.global_plugin
+        except AttributeError: 
+            pass
+        return False
             
     def _create_instance(self, module, key):
         logger.info("Loading %s" % module.id)
-        instance = module.create(key, self.conf_client, screen=self.screen)
+        if self.screen is not None:
+            instance = module.create(key, self.conf_client, screen=self.screen)
+        else:
+            instance = module.create(key, self.conf_client, service=self.service)
         self.module_map[module.id] = instance
         self.plugin_map[instance] = module
         logger.info("Loaded %s" % module.id)

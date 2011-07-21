@@ -20,6 +20,13 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
 
+# This is a work around - No Gio is used in the lens plugin, it must be 
+# initialised before GTK. 
+try:
+    from gi.repository import Gio
+except Exception as a:
+    pass
+
 import pygtk
 pygtk.require('2.0')
 import gtk

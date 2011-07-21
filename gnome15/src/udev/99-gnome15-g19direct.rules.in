@@ -5,4 +5,4 @@
 #
 
 # Logitech G19 Gaming Keyboard
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", MODE="0660", GROUP="plugdev", SYMLINK+="g19-extra-keys"
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", MODE="@DEVICEMODE@", GROUP="@DEVICEGROUP@"

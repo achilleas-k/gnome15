@@ -1,0 +1,27 @@
+#
+# Core info on how to contact the place over DBus
+#
+[Place]
+DBusName=org.gnome15.Gnome15Lens
+DBusObjectPath=/org/gnome15/Gnome15Lens
+
+#
+# A place may define multiple place entries which each map
+# to a button in the launcher. We only register one for
+# the sample place
+#
+[Entry:Stuff]
+DBusObjectPath=/org/gnome15/Gnome15Lens/mainentry
+Icon=/usr/share/unity/gnome15.svg
+Name=Gnome15 Place
+Description=This place allows you to switch screens in Gnome15
+
+[Activation]
+URIPattern=gnome15://.+
+
+#
+# Make translation work with Ubuntu's special handling of keyfiles
+#
+[Desktop Entry]
+X-Ubuntu-Gettext-Domain=gnome15-lens
+

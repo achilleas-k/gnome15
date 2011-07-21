@@ -1,4 +1,4 @@
-AC_INIT(gnome15-plugins, 0.7.0)
+AC_INIT(gnome15-plugins, 0.8.0)
 AC_CONFIG_SRCDIR([src/cal/cal.py])
 AM_INIT_AUTOMAKE
 
@@ -246,6 +246,18 @@ AC_ARG_ENABLE([indicator-me],
 	[indicator_me_plugin=${have_indicator}])
 AM_CONDITIONAL([ENABLE_INDICATOR_ME_PLUGIN], [test x$indicator_me_plugin = xyes])
 
+dnl Unity Lens (enable by default when appindicator module is installed, suggesting Ubuntu)
+AC_ARG_ENABLE([lens],
+	[AS_HELP_STRING([--enable-lens],
+		[Enable Unity Lens.])],
+	[case "${enableval}" in
+ 				yes)	lens_plugin=yes ;;
+ 				no)		lens_plugin=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-lens]) ;;
+ 	esac],
+	[lens_plugin=${have_indicator}])
+AM_CONDITIONAL([ENABLE_LENS_PLUGIN], [test x$lens_plugin = xyes])
+
 dnl Indicator Messages Plugin (enable by default when appindicator module is installed, suggesting Ubuntu)
 AC_ARG_ENABLE([indicator-messages],
 	[AS_HELP_STRING([--enable-indicator-messages],
@@ -441,6 +453,7 @@ src/processes/Makefile
 src/processes/default/Makefile
 src/im/Makefile
 src/im/default/Makefile
+src/lens/Makefile
 src/indicator-me/Makefile
 src/indicator-me/default/Makefile
 src/indicator-messages/Makefile
@@ -526,6 +539,10 @@ AS_IF([test "x$im_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("indicator-me                - ")
 AS_IF([test "x$indicator_me_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("lens                        - ")
+AS_IF([test "x$lens_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("indicator-messages          - ")

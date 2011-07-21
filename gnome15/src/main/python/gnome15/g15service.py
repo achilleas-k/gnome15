@@ -154,6 +154,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.shutdown(True)
         
     def stop(self, quickly = False):
+        self.global_plugins.deactivate()
         for h in self.notify_handles:
             self.conf_client.notify_remove(h)
         try :
@@ -173,6 +174,7 @@ class G15Service(g15desktop.G15AbstractService):
     def shutdown(self, quickly = False):
         logger.info("Shutting down")
         self.shutting_down = True
+        self.global_plugins.destroy()
         self.stop(quickly)
         logger.info("Stopping all schedulers")
         g15util.stop_all_schedulers()
@@ -456,6 +458,10 @@ class G15Service(g15desktop.G15AbstractService):
             logger.warning("Could not connect to GNOME desktop session. %s" % str(e))
         
     def _do_start_service(self):
+        # Global plugings
+        self.global_plugins = g15pluginmanager.G15Plugins(None, self)
+        self.global_plugins.start()
+        
         for listener in self.service_listeners:
             listener.service_starting_up()
         
@@ -523,10 +529,19 @@ class G15Service(g15desktop.G15AbstractService):
                 self._check_active_application_with_wnck()
             except:
                 logger.warning("Python Wnck not available either, no automatic profile switching")
+                
+        # Activate global plugins
+        self.global_plugins.activate()
         
         # Start each screen's plugin manager
         for screen in self.screens:
-            screen.start()
+            try:
+                screen.start()
+            except Exception as a:
+                if len(self.screens) == 1:
+                    raise a
+                else:
+                    logger.error("Failed to start screen. %s" % str(a))
             
         # Watch for logout (should probably move this to a plugin)
         try :

@@ -357,7 +357,9 @@ class Driver(g15driver.AbstractDriver):
             if back_surface.get_format() == cairo.FORMAT_ARGB32:
                 """
                 If the creation of the type 4 image failed (i.e. earlier version of Cairo)
-                then we have to have ourselves. This is slow.
+                then we have to convert it ourselves. This is slow. 
+                
+                TODO Replace with C routine 
                 """
                 file_str = StringIO()
                 data = back_surface.get_data()
@@ -397,6 +399,8 @@ class Driver(g15driver.AbstractDriver):
             fixed = self.fb.get_fixed_info()
             v = 0
             b = 1
+            
+            # TODO Replace with C routine
             for row in range(0, height):
                 for col in range(0, width):
                     if data[( row * width ) + col]:
