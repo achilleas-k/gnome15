@@ -250,7 +250,7 @@ class G15Clock():
         '''
         Load the gconf configuration
         '''
-        self.load_configuration()
+        self._load_configuration()
         
         '''
         This is called when the gconf configuration changes. See add_notify and remove_notify in
@@ -272,7 +272,7 @@ class G15Clock():
         '''
         self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
         
-    def load_configuration(self):
+    def _load_configuration(self):
         self.display_date = self.gconf_client.get_bool(self.gconf_key + "/display_date")
         self.display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")
         

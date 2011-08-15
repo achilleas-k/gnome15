@@ -602,7 +602,7 @@ def get_desktop():
     # Environment variables that suggest the use of LXDE
     for i in [ "_LXSESSION_PID" ]:
         if i in vars:
-            return "kde"
+            return "lxde"
      
     
 '''

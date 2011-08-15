@@ -68,27 +68,116 @@ class SystemService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='ssn')
     def SetLight(self, device, light, value):
-        self._controller.leds[device][light].set_value(value)
+        self._controller.devices[device].leds[light].set_value(value)
+        
+    @dbus.service.method(IF_NAME, in_signature='sb')
+    def SetKeymapSwitching(self, device, enabled):        
+        self._controller.devices[device].set_keymap_switching(enabled)
+        
+    @dbus.service.method(IF_NAME, in_signature='s', out_signature='b')
+    def GetKeymapSwitching(self, device):        
+        self._controller.devices[device].get_keymap_switching()
+        
+    @dbus.service.method(IF_NAME, in_signature='sn')
+    def SetKeymapIndex(self, device, index):        
+        self._controller.devices[device].set_keymap_index(index)
+        
+    @dbus.service.method(IF_NAME, in_signature='s', out_signature='n')
+    def GetKeymapIndex(self, device):        
+        return self._controller.devices[device].get_keymap_index()
+        
+    @dbus.service.method(IF_NAME, in_signature='sa{tt}')
+    def SetKeymap(self, device, keymap):        
+        self._controller.devices[device].set_keymap(keymap)
+        
+    @dbus.service.method(IF_NAME, in_signature='s', out_signature='a{tt}')
+    def GetKeymap(self, device):        
+        return self._controller.devices[device].get_keymap()
         
     @dbus.service.method(IF_NAME, in_signature='ss', out_signature='n')
     def GetLight(self, device, light):        
-        return self._controller.leds[device][light].get_value()
+        return self._controller.devices[device].leds[light].get_value()
         
     @dbus.service.method(IF_NAME, out_signature='as')
     def GetDevices(self):        
         c = []
-        for l in self._controller.leds:
+        for l in self._controller.devices:
             c.append(l)
         return c
         
     @dbus.service.method(IF_NAME, in_signature='s', out_signature='as')
     def GetLights(self, device):        
-        return self._controller.leds[device].keys()
+        return self._controller.devices[device].leds.keys()
         
     @dbus.service.method(IF_NAME, in_signature='ss', out_signature='n')
     def GetMaxLight(self, device, light):
-        return self._controller.leds[device][light].get_max()
+        return self._controller.devices[device].leds[light].get_max()
     
+    
+def get_int_value(filename):
+    return int(get_value(filename))
+        
+def get_value(filename):
+    file = open(filename, "r")
+    try :
+        return file.read()
+    finally :
+        file.close()
+        
+def set_value(filename, value):
+    file = open(filename, "w")
+    try :
+        file.write("%s\n" % str(value))
+    finally :
+        file.close()            
+    
+class KeyboardDevice():
+    def __init__(self, device, device_path, index):
+        self.leds = {}
+        self.device = device
+        self.device_path = device_path
+        self.minor = get_int_value(os.path.join(device_path, "minor"))  
+        self.uid = "%s_%d" % ( device.model_id, index )      
+        leds_path = os.path.join(device_path, "leds")
+        for dir in os.listdir(leds_path):
+            f = os.path.join(leds_path, dir)
+            keyboard_device, color, control = dir.split(":")
+            keyboard_device, index = keyboard_device.split("_")
+            light_key = "%s:%s" % ( color, control )
+            self.leds[light_key] = LED(light_key, self, f)
+            
+    def set_keymap_switching(self, enabled):
+        logger.info("Setting keymap switching on %s to '%s'" % (self.device.uid, str(enabled)))
+        set_value(os.path.join(self.device_path, "keymap_switching"), 1 if enabled else 0)
+        
+    def get_keymap_switching(self):
+        return get_int_value(os.path.join(self.device_path, "keymap_switching")) == 1 
+            
+    def set_keymap_index(self, index):
+        logger.info("Setting keymap index on %s to '%d'" % (self.device.uid, index))
+        set_value(os.path.join(self.device_path, "keymap_index"), index)
+        
+    def get_keymap_index(self):
+        return get_int_value(os.path.join(self.device_path, "keymap_index")) 
+            
+    def set_keymap(self, keymap):
+        s = ""
+        for k in keymap:
+            s += "%04x %04x\n" % ( k, keymap[k])
+        logger.info("Setting keymap on %s to '%s'" % (self.device.uid, str(keymap)))
+        set_value(os.path.join(self.device_path, "keymap"), s)
+        
+    def get_keymap(self):
+        val = get_value(os.path.join(self.device_path, "keymap"))
+        while val.endswith(chr(0)):
+            val = val[:-1]
+        map = {}
+        for line in val.splitlines():
+            args = line.split(" ")
+            keycode = int(args[0], 16)
+            scancode = int(args[1], 16)
+            map[keycode] = scancode
+        return map
         
 class LED():
     """
@@ -116,32 +205,19 @@ class LED():
             file.close()            
         
     def get_value(self):
-        """
-        Get the current brightness of the LED    
-        """
-        file = open(os.path.join(self.filename, "brightness"), "r")
-        try :
-            return int(file.readline())
-        finally :
-            file.close()
+        return get_int_value(os.path.join(self.filename, "brightness"))
         
     def get_max(self):
-        """
-        Get the maximum brightness of the LED    
-        """
-        file = open(os.path.join(self.filename, "max_brightness"), "r")
-        try :
-            return int(file.readline())
-        finally :
-            file.close()
+        return get_int_value(os.path.join(self.filename, "max_brightness"))
+            
+DEVICES_PATH="/sys/bus/hid/devices"
             
 class G15SystemServiceController():
     
-    def __init__(self, bus, led_path = "/sys/class/leds", no_trap=False):
+    def __init__(self, bus, no_trap=False):
         self._page_sequence_number = 1
         self._bus = bus
-        self._led_path = led_path
-        self._leds = {}
+        self.devices = {}
         logger.debug("Exposing service")
         
         if not no_trap:
@@ -175,26 +251,36 @@ class G15SystemServiceController():
     Private
     """
     def _start_service(self):
-        self._scan_leds()
+        self._scan_devices()
         SystemService(self._bus, self)
         
-    def _scan_leds(self):
-        self.leds = {}
-        if os.path.exists(self._led_path):
-            for device in g15devices.find_all_devices():
-                if device.model_id in driver_names:
-                    driver_name = driver_names[device.model_id]
-                    led_prefix = "%s_" % driver_name
-                    for dir in os.listdir(self._led_path):
-                        if dir.startswith(led_prefix):
-                            keyboard_device, color, control = dir.split(":")
-                            keyboard_device, index = keyboard_device.split("_")
-                            leds = self.leds[device.uid] if device.uid in self.leds else {}
-                            light_key = "%s:%s" % ( color, control )
-                            leds[light_key] = LED(light_key, device, os.path.join(self._led_path, dir))
-                            self.leds[device.uid] = leds
+    def _scan_devices(self):
+        self.devices = {}
+        indices = {}
+        if os.path.exists(DEVICES_PATH):
+            for device in os.listdir(DEVICES_PATH):
+                # Only want devices with leds
+                device_path = os.path.join(DEVICES_PATH, device)
+                leds_path = os.path.join(device_path, "leds")
+                if os.path.exists(leds_path):
+                    # Extract the USB ID
+                    a = device.split(":")
+                    usb_id = ( int("0x%s" % a[1], 16), int("0x%s" % a[2].split(".")[0], 16) )
+                    logger.info("Testing if device %04x:%04x is supported by Gnome15" % (usb_id[0], usb_id[1]))
+                    
+                    # Look for a matching Gnome15 device
+                    for device in g15devices.find_all_devices():
+                        if device.controls_usb_id == usb_id:
+                            # Found a device we want
+                            logger.info("Found device %s " % str(device))
+                            
+                            # Work out UID
+                            # TODO this is not quite right - if there is more than one device of same type, indexs might not match                            
+                            index = 0 if not device.model_id in indices else indices[device.model_id] 
+                            keyboard_device = KeyboardDevice(device, device_path, index)
+                            self.devices[device.uid] = keyboard_device
+                            indices[device.model_id] = index + 1
                  
         else:
-            logger.info("No LED files found at %s" % self._led_path)
+            logger.info("No devices found at %s" % DEVICES_PATH)
             
-        logger.info(">>%s" % str(self.leds))

@@ -23,9 +23,11 @@ import os
 import gconf
 import logging
 logger = logging.getLogger("driver")
+logger.setLevel(logging.DEBUG)
 
 # Find all drivers
 drivers_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "drivers"))
+logger.info("Loading drivers from %s" % drivers_dir)
 imported_drivers = {}
 
 driverfiles = [fname[:-3] for fname in os.listdir(drivers_dir) if fname.endswith(".py") and fname.startswith("driver_")]

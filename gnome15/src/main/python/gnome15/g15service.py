@@ -512,23 +512,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/disable_svg_glow", self._hidden_configuration_changed))
             
         # Monitor active application    
-        logger.info("Attempting to set up BAMF")
-        try :
-            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
-            bamf_matcher_interface = dbus.Interface(self.bamf_matcher, 'org.ayatana.bamf.matcher')  
-            self.session_bus.add_signal_receiver(self._active_application_changed, dbus_interface = 'org.ayatana.bamf.matcher', signal_name="ActiveApplicationChanged")
-            active_application = bamf_matcher_interface.ActiveApplication() 
-            logger.info("Will be using BAMF for window matching")
-            if active_application:
-                self._active_application_changed("", active_application)
-        except Exception as e:
-            logger.warning("BAMF not available, falling back to polling WNCK. %s" % str(e))
-            try :                
-                import wnck
-                wnck.__file__
-                self._check_active_application_with_wnck()
-            except:
-                logger.warning("Python Wnck not available either, no automatic profile switching")
+        gobject.idle_add(self._configure_window_monitoring)
                 
         # Activate global plugins
         self.global_plugins.activate()
@@ -542,18 +526,12 @@ class G15Service(g15desktop.G15AbstractService):
                     raise a
                 else:
                     logger.error("Failed to start screen. %s" % str(a))
-            
-        # Watch for logout (should probably move this to a plugin)
-        try :
-            self.session_bus.add_signal_receiver(self._session_over, dbus_interface="org.gnome.SessionManager", signal_name="SessionOver")
-        except Exception as e:
-            logger.warning("GNOME session manager not available, will not detect logout signal for clean shutdown. %s" % str(e))
                 
         self.starting_up = False
         for listener in self.service_listeners:
             listener.service_started_up()
             
-        self._monitor_session()
+        gobject.idle_add(self._monitor_session)
             
     def _monitor_session(self):
         # Monitor active session (we shut down the driver when becoming inactive)
@@ -577,6 +555,32 @@ class G15Service(g15desktop.G15AbstractService):
         except Exception as e:
             logger.warning("ConsoleKit not available, will not track active desktop session. %s" % str(e))
             self.session_active = True
+            
+            
+        # Watch for logout (should probably move this to a plugin)
+        try :
+            self.session_bus.add_signal_receiver(self._session_over, dbus_interface="org.gnome.SessionManager", signal_name="SessionOver")
+        except Exception as e:
+            logger.warning("GNOME session manager not available, will not detect logout signal for clean shutdown. %s" % str(e))
+            
+    def _configure_window_monitoring(self):
+        logger.info("Attempting to set up BAMF")
+        try :
+            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
+            bamf_matcher_interface = dbus.Interface(self.bamf_matcher, 'org.ayatana.bamf.matcher')  
+            self.session_bus.add_signal_receiver(self._active_application_changed, dbus_interface = 'org.ayatana.bamf.matcher', signal_name="ActiveApplicationChanged")
+            active_application = bamf_matcher_interface.ActiveApplication() 
+            logger.info("Will be using BAMF for window matching")
+            if active_application:
+                self._active_application_changed("", active_application)
+        except Exception as e:
+            logger.warning("BAMF not available, falling back to polling WNCK. %s" % str(e))
+            try :                
+                import wnck
+                wnck.__file__
+                self._check_active_application_with_wnck()
+            except:
+                logger.warning("Python Wnck not available either, no automatic profile switching")
             
     def _add_screen(self, device):
         try:
