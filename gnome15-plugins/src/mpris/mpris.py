@@ -410,14 +410,17 @@ class MPRIS2Player(AbstractMPRISPlayer):
         self.player_properties = dbus.Interface(player_obj, 'org.freedesktop.DBus.Properties')
         props = self.player_properties.GetAll("org.mpris.MediaPlayer2")
         
-        # Connect to DBUS        
+        # Connect to DBUS     
+        self.track_list =  None   
+        self.track_list_properties = None
         try:  
             self.track_list = dbus.Interface(player_obj, 'org.mpris.MediaPlayer2.TrackList')                   
             self.track_list_properties = dbus.Interface(self.track_list, 'org.freedesktop.DBus.Properties')
             self.load_track_list()
-        except dbus.DBusException:
-            self.track_list = None
-            self.track_list_properties = None
+        except ( dbus.DBusException, KeyError ):
+            pass
+            
+        if self.track_list is None:
             logger.info("No TrackList interface")     
         
         # Configure the initial state 
@@ -456,7 +459,20 @@ class MPRIS2Player(AbstractMPRISPlayer):
         return status
                                 
     def seeked(self, seek_time):    
+        
+        """
+        This looks like some kind of timing problem with Banshee. It 
+        sometimes sends 0 as the seektime, and rreading it immediately
+        also sometimes returns 0. Introducing a short delay fixes
+        the problem
+        """
+        if seek_time == 0:
+            logger.warn("Received no progress in seeked event, working around problem")
+            time.sleep(0.5)
+            seek_time = self.get_progress() * 1000 * 1000
+            
         self.start_elapsed = seek_time / 1000 / 1000
+        
 #        self.start_elapsed = self.get_progress()    
         logger.info("Seek changed to %f (%d)" % ( self.start_elapsed, seek_time ) )
         self.playback_started = time.time()
