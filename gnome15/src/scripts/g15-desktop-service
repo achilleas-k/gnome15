@@ -81,7 +81,6 @@ def start_service(no_trap=False):
         print "Gnome15 desktop service is already running"
         sys.exit(1)
     
-# run it in a gtk window
 if __name__ == "__main__":
     import optparse
     parser = optparse.OptionParser()

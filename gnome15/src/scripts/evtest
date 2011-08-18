@@ -20,43 +20,63 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
 
-# This is a work around - Now Gio is used in the lens plugin, it must be 
-# initialised before GTK. 
-try:
-    from gi.repository import Gio
-except Exception as a:
-    pass
 
-import pygtk
-pygtk.require('2.0')
-import gtk
-import sys
-import os
-import gconf
-import gobject
-import logging
-logging.basicConfig()
-gobject.threads_init()
-       
-# DBUS - Use to check current desktop service status or stop it
-import dbus
-from dbus.mainloop.glib import DBusGMainLoop
-from dbus.mainloop.glib import threads_init
-dbus.mainloop.glib.threads_init()
-DBusGMainLoop(set_as_default=True)
+import optparse
+import select
+import fcntl
+import pyinputevent.scancodes as S
+from pyinputevent.uinput import UInputDevice
+from pyinputevent.pyinputevent import InputEvent, SimpleDevice
+from pyinputevent.keytrans import *
 
-# Allow running from local path
-path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..","main", "python")
-if os.path.exists(path):
-    sys.path.insert(0, path)
+EVIOCGRAB = 0x40044590
 
-import gnome15.g15config as g15config
-import gnome15.g15globals as pglobals
-import gnome15.g15drivermanager as g15drivermanager
+class ForwardDevice(SimpleDevice):
+    def __init__(self, *args, **kwargs):
+        SimpleDevice.__init__(self, *args, **kwargs)
+        self.ctrl = False
+        self.alt = False
+        self.shift = False
+            
+    def monitor(self):
+        poll = select.poll()
+        poll.register(self, select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLNVAL | select.POLLERR)
+        fno = self.fileno()
+        fcntl.ioctl(fno, EVIOCGRAB, 1)
+        while True:
+            for x, e in poll.poll():
+                self.read()
 
-try:
-    a = g15config.G15Config()
-    a.run()
-except Exception as e:
-    dialog = gtk.MessageDialog(None, 0, gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE, str(e))
-    dialog.run()
+    @property
+    def modcode(self):
+        code = 0
+        if self.shift:
+            code += 1
+        if self.ctrl:
+            code += 2
+        if self.alt:
+            code += 4
+        return code
+    
+    def receive(self, event):
+        print "Event: %s" % str(event)
+        if event.etype == S.EV_KEY:
+            key = str(event.ecode)
+            if event.evalue == 2:
+                print "Auto %s" % key
+            else:
+                if event.evalue == 1:
+                    print "Down %s" % key
+                else:
+                    print "Up %s" % key
+        elif event.etype == 0:
+            print "Etype 0"
+        else:
+            print "Unhandled event: %s" % str(event)
+    
+if __name__ == "__main__":
+    parser = optparse.OptionParser()
+    (options, args) = parser.parse_args()
+    device = ForwardDevice(args[0])
+    device.monitor()
+    

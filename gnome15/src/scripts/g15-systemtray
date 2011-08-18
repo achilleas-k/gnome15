@@ -123,8 +123,8 @@ class G15SystemTray(g15desktop.G15GtkMenuPanelComponent):
         self.prefs_menu.show_all()
         
     def icons_changed(self):
-        self.normal_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15util.get_icon_path("logitech-g-keyboard-panel"), self.status_icon.get_size(), self.status_icon.get_size())
-        self.attention_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15util.get_icon_path("logitech-g-keyboard-error-panel"), self.status_icon.get_size(), self.status_icon.get_size())
+        self.normal_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15util.get_icon_path([ "logitech-g-keyboard-applet", "logitech-g-keyboard-panel" ]), self.status_icon.get_size(), self.status_icon.get_size())
+        self.attention_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15util.get_icon_path([ "logitech-g-keyboard-error-panel", "logitech-g-keyboard-error-applet" ]), self.status_icon.get_size(), self.status_icon.get_size())
     
 # run it in a gtk window
 if __name__ == "__main__":

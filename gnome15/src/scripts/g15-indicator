@@ -98,8 +98,8 @@ class G15Indicator(g15desktop.G15GtkMenuPanelComponent):
         self.indicator.set_status (appindicator.STATUS_ATTENTION)
         
     def icons_changed(self):
-        self.indicator.set_icon(self.get_icon_path("logitech-g-keyboard-panel"))        
-        self.indicator.set_attention_icon(self.get_icon_path("logitech-g-keyboard-error-panel"))
+        self.indicator.set_icon(self.get_icon_path([ "logitech-g-keyboard-applet", "logitech-g-keyboard-panel" ]))        
+        self.indicator.set_attention_icon(self.get_icon_path([ "logitech-g-keyboard-error-applet", "logitech-g-keyboard-error-panel" ]))
     
 # run it in a gtk window
 if __name__ == "__main__":
