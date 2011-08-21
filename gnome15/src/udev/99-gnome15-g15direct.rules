@@ -1,0 +1,23 @@
+# This file maintains permissions for Gnome15's "G15 Direct" driver. These are the
+# defaults, you might want to tighten them up a bit.
+#
+# See udev(7) for syntax.
+#
+
+# Logitech G15 Gaming Keyboard
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c222", MODE="0660", GROUP="plugdev"
+
+# Logitech G15 Gaming Keyboard (version 2)
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c227", MODE="0660", GROUP="plugdev"
+
+# Logitech G13 Advanced Gameboard
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c21c", MODE="0660", GROUP="plugdev"
+
+# Logitech Z10 Speakers 
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0a07", MODE="0660", GROUP="plugdev"
+
+# Logitech G110 Keyboard (no LCD)
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c225", MODE="0660", GROUP="plugdev"
+
+# Logitech Game Panel (Dell XPS 1730?)
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c251", MODE="0660", GROUP="plugdev"

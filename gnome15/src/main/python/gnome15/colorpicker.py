@@ -54,6 +54,7 @@ class ColorPicker(gtk.DrawingArea):
         data = self.buffer.get_data()
         w = self.buffer.get_width()
         s = ( self.buffer.get_stride() / w ) * ( w  * y + x )
+        s = max(0, min(s, len(data) - 3))
         b = ord(data[s])
         g = ord(data[s + 1])  
         r = ord(data[s + 2])

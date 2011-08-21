@@ -660,8 +660,8 @@ class G15Service(g15desktop.G15AbstractService):
         
     def __del__(self):
         for screen in self.screens:
-            if screen.plugins.get_active():
+            if screen.plugins.is_active():
                 screen.plugins.deactivate()
-            if screen.plugins.get_started():
+            if screen.plugins.is_started():
                 screen.plugins.destroy()
         del self.screens

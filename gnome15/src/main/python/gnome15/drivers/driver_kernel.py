@@ -93,12 +93,16 @@ g15_key_map = {
 
 g19_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
 g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint=g15driver.HINT_SHADEABLE)
+
 g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint=g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
 g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint=g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
 g19_highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
-g19_controls = [ g19_keyboard_backlight_control, g19_lcd_brightness_control, g19_foreground_control, g19_background_control, g19_highlight_control, g19_mkeys_control ]
+g19_controls = [ g19_keyboard_backlight_control, g19_foreground_control, g19_background_control, g19_highlight_control, g19_mkeys_control ]
 g110_controls = [ g19_keyboard_backlight_control ]
+
+# TODO doesn't work yet
+#g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint=g15driver.HINT_SHADEABLE)
+
 
 g15_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
 g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint=g15driver.HINT_DIMMABLE)
@@ -311,7 +315,7 @@ class ForwardDevice(SimpleDevice):
         elif event.etype == 0:
             return
         else:
-            logger.warning("Unhandled event: %s" % event)
+            logger.warning("Unhandled event: %s" % str(event))
 
     def _event(self, event, state):
         key = str(event.ecode)
@@ -527,7 +531,6 @@ class Driver(g15driver.AbstractDriver):
                     
     def on_update_control(self, control):
         if control == g19_keyboard_backlight_control:
-            print "Col: %s" % str(control.value)
             self._write_to_led("red:bl", control.value[0])
             self._write_to_led("green:bl", control.value[1])
             self._write_to_led("blue:bl", control.value[2])            
@@ -559,7 +562,6 @@ class Driver(g15driver.AbstractDriver):
         logger.info("Resetting keymap index")        
         self.system_service.SetKeymapIndex(self.device.uid, 0)
         kernel_keymap_replacement = K_KEYMAPS[self.device.model_id]
-        print "RP: %s" % str(kernel_keymap_replacement)
         self.system_service.SetKeymap(self.device.uid, kernel_keymap_replacement)
               
         self.key_thread = KeyboardReceiveThread(self.device)

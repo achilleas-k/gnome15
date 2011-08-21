@@ -21,7 +21,12 @@
 #        +-----------------------------------------------------------------------------+
 
 
-from gi.repository import GLib, GObject, Gio
+# This must be done first for the Lens plugin to work
+try:
+    from gi.repository import GLib, GObject, Gio
+except:
+    pass
+
 import sys
 import os
 import glib

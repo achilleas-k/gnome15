@@ -214,17 +214,17 @@ class AbstractControlAcquisition(object):
         self._condition.release()
         self._waiting = False
         
-    def fade(self, percentage = 100.0, duration = 1.0, release = False):
+    def fade(self, percentage = 100.0, duration = 1.0, release = False, step = 1):
         target_val = self.get_target_value(self.val, percentage)
         if self.val != target_val:
-            self._reduce(duration / float( self.val - target_val ), target_val, release)
+            self._reduce( ( duration / float( self.val - target_val ) ) * step, target_val, release, step)
         elif release:
             self.driver.release_control(self)
         
-    def _reduce(self, interval, target_val, release):
+    def _reduce(self, interval, target_val, release, step):
         if self.val > target_val:
-            self.set_value(self.val - 1)
-            g15util.schedule("Fade", interval, self._reduce, interval, target_val, release)
+            self.set_value(self.val - step)
+            g15util.schedule("Fade", interval, self._reduce, interval, target_val, release, step)
         else:
             if release:
                 self.driver.release_control(self)
@@ -255,6 +255,7 @@ class AbstractControlAcquisition(object):
     def set_value(self, val, reset_after = None):
         old_val = val
         if val != self.val or reset_after is not None:
+            logger.info("Set value of control value to %s" % str(val))
             self.val = val
             self.on = True
             self.adjust(val)
@@ -309,7 +310,7 @@ class ControlAcquisition(AbstractControlAcquisition):
             self.control.value = val
             self.driver.update_control(self.control)
         
-    def fade(self, percentage = 100.0, duration = 1.0, release = False):
+    def fade(self, percentage = 100.0, duration = 1.0, release = False, step = 1):
         if isinstance(self.val, int):
             AbstractControlAcquisition.fade(self, percentage, duration, release)
         else:
@@ -318,20 +319,20 @@ class ControlAcquisition(AbstractControlAcquisition):
             t_h, t_s, t_v = self.rgb_to_hsv(target_val)
             diff = float( v - t_v )
             if diff > 0:
-                self._reduce(duration / diff, target_val, release)
+                self._reduce( ( duration / diff ) * step, target_val, release, step)
             elif release:
                 self.driver.release_control(self)
         
-    def _reduce(self, interval, target_val, release):
+    def _reduce(self, interval, target_val, release, step):
         if isinstance(self.val, int):
-            AbstractControlAcquisition._reduce(self, interval, target_val, release)
+            AbstractControlAcquisition._reduce(self, interval, target_val, release, step)
         else:
             h, s, v = self.rgb_to_hsv(self.val)
-            v -= 1
+            v -= step
             if v > self.rgb_to_hsv(target_val)[2]:
                 new_rgb = self.hsv_to_rgb((h, s, v))
                 self.set_value(new_rgb)
-                g15util.schedule("Fade", interval, self._reduce, interval, target_val, release)
+                g15util.schedule("Fade", interval, self._reduce, interval, target_val, release, step)
             else:
                 if release and not self._released:
                     self.driver.release_control(self)

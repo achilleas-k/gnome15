@@ -248,12 +248,15 @@ class G15Lens():
     def _update_results_model (self, search, model):
         model.clear ()
         search = search.lower()
+        print "Search> %s" % search
         for listener in self.listeners:
+            print "   L[%s]" % str(listener)
             for page in listener.screen.pages:
                 if len(search) == 0 or search in page.title.lower(): 
                     group = GROUP_SCREENS
                     icon_hint = listener._get_page_filename(page)
                     uri = "gnome15://%s" % base64.encodestring(page.id)
+                    print "      URI %s" % uri
                     model.append (uri,    # uri
                                   icon_hint,                                   # string formatted GIcon
                                   group,                                       # numeric group id
@@ -261,6 +264,7 @@ class G15Lens():
                                   page.title,                                      # display name
                                   page.title) # comment
             
+        print str(model)
     
     def deactivate(self):
         pass
@@ -276,6 +280,7 @@ class MenuScreenChangeListener(g15screen.ScreenChangeAdapter):
             self._add_page(page)
         
     def new_page(self, page):
+        print "Adding page %s for screen %s" % (page.id, self.screen.device.uid)
         self._add_page(page)
         
     def title_changed(self, page, title):        

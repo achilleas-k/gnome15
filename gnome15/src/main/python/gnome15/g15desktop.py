@@ -552,7 +552,12 @@ class G15DesktopComponent():
             logger.debug("Dev mode icon %s is at %s" % ( icon_name, path ) )
             return path
         else:
-            return icon_name
+            if not isinstance(icon_name, list):
+                icon_name = [ icon_name ]
+            for i in icon_name:
+                p = g15util.get_icon_path(i, -1)
+                if p is not None:
+                    return i
              
     def show_configuration(self, arg = None):
         """

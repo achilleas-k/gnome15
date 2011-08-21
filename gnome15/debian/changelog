@@ -1,3 +1,11 @@
+gnome15 (0.7.1-1) natty; urgency=low
+
+  * Bug: LCD fade works better
+  * Feature: "Global Plugins" concept introduced. Tweak plugin is now of this
+    type, along with the new Unity Lens plugin (requires Ubuntu 11.04 or above)
+
+ -- Brett Smith <tanktarta@blueyonder.co.uk>  Fri,  19 Aug 2011 01:37:20 +0100 
+ 
 gnome15 (0.7.0-1) natty; urgency=low
 
   * Feature: Plugins now in separate module. See gnome15-plugins for changelog.

@@ -1111,8 +1111,8 @@ class ErrorScreen(G15Page):
     
 class ConfirmationScreen(G15Page):
     
-    def __init__(self, screen, title, text, icon, callback, arg):
-        self.page = G15Page.__init__(self, title, screen, priority = g15screen.PRI_HIGH, \
+    def __init__(self, screen, title, text, icon, callback, arg, cancel_callback = None):
+        G15Page.__init__(self, title, screen, priority = g15screen.PRI_HIGH, \
                                      theme = G15Theme(os.path.join(g15globals.themes_dir, "default"), "confirmation-screen"))
         self.theme_properties = { 
                            "title": title,
@@ -1121,6 +1121,7 @@ class ConfirmationScreen(G15Page):
                       }
         self.arg = arg
         self.callback = callback               
+        self.cancel_callback = cancel_callback
         self.screen.add_page(self)
         self.redraw()
         self.screen.action_listeners.append(self)
@@ -1129,6 +1130,8 @@ class ConfirmationScreen(G15Page):
         if binding.action == g15driver.PREVIOUS_SELECTION:
             self.screen.del_page(self)
             self.screen.action_listeners.remove(self)
+            if self.cancel_callback is not None:
+                self.cancel_callback(self.arg)
         elif binding.action == g15driver.NEXT_SELECTION:
             self.screen.del_page(self)
             self.screen.action_listeners.remove(self)

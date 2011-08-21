@@ -387,6 +387,9 @@ class VirtualLCD(gtk.DrawingArea):
             cr.set_source_surface(self.buffer)
         cr.paint()
         
+    def set_pixbuf(self, pixbuf):
+        self.buffer = g15util.pixbuf_to_surface(pixbuf)
+        
     def set_surface(self, surface):
         self.buffer = surface
 #        self.window.begin_paint_rect((0, 0, zoom * width, zoom * height))

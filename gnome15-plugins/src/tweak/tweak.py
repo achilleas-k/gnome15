@@ -32,8 +32,9 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
+global_plugin=True
  
-def create(gconf_key, gconf_client, screen):
+def create(gconf_key, gconf_client, service):
     return G15Tweak()
 
 def show_preferences(parent, driver, gconf_client, gconf_key):

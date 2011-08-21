@@ -43,12 +43,14 @@ logger = logging.getLogger("g15daemon")
 id="g15daemon-server"
 name="G15Daemon Compatibility"
 description="Starts a network server compatible with the g15daemon network protocol. " + \
-            "This allows you to use g15daemon compatible scripts and applications on the G19."
+            "This allows you to use g15daemon compatible scripts and applications on all " + \
+            "models supported by Gnome15, including the  G19. Note, if you are using " + \
+            "a real g15daemon server, you will configure this plugin to use a different " + \
+            "port." 
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
-supported_models = [ g15driver.MODEL_G19 ]
 
 # Client commands
 CLIENT_CMD_GET_KEYSTATE=ord('k')

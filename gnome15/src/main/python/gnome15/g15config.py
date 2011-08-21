@@ -82,6 +82,110 @@ class G15ConfigService(dbus.service.Object):
     @dbus.service.method(IF_NAME, in_signature='', out_signature='')
     def Present(self):
         self.window.present()
+        
+class G15GlobalConfig:
+    
+    def __init__(self, parent, widget_tree, conf_client):
+        self.widget_tree = widget_tree
+        self.conf_client = conf_client
+        self.selected_id = None
+        
+        start_desktop_service_on_login = self.widget_tree.get_object("StartDesktopServiceOnLogin")
+        start_indicator_on_login = self.widget_tree.get_object("StartIndicatorOnLogin")
+        start_system_tray_on_login = self.widget_tree.get_object("StartSystemTrayOnLogin")
+        global_plugin_enabled_renderer = self.widget_tree.get_object("GlobalPluginEnabledRenderer")
+        
+        notify_h = self.conf_client.notify_add("/apps/gnome15/global/plugins", self._plugins_changed)
+               
+        self.dialog = self.widget_tree.get_object("GlobalOptionsDialog")
+        self.global_plugin_model = self.widget_tree.get_object("GlobalPluginModel")
+        self.global_plugin_tree = self.widget_tree.get_object("GlobalPluginTree")        
+        self.global_plugin_tree.connect("cursor-changed", self._select_plugin)
+        
+        self.widget_tree.get_object("OnlyShowIndicatorOnError").set_visible(g15desktop.is_desktop_application_installed("g15-indicator"))
+        
+        # Plugins
+        self._load_plugins()
+        if len(self.global_plugin_model) > 0 and self._get_selected_plugin() == None:            
+            self.global_plugin_tree.get_selection().select_path(self.global_plugin_model.get_path(self.global_plugin_model.get_iter(0)))
+            self._select_plugin()
+        else:
+            self.widget_tree.get_object("GlobalPluginsFrame").set_visible(False)
+            self.dialog.set_size_request(-1, -1)
+
+        self.widget_tree.get_object("GlobalPreferencesButton").connect("clicked", self._show_preferences)
+        self.widget_tree.get_object("GlobalAboutPluginButton").connect("clicked", self._show_about_plugin)            
+        start_desktop_service_on_login.connect("toggled", self._change_desktop_service, "gnome15")
+        start_indicator_on_login.connect("toggled", self._change_desktop_service, "g15-indicator")
+        start_system_tray_on_login.connect("toggled", self._change_desktop_service, "g15-systemtray")
+        global_plugin_enabled_renderer.connect("toggled", self._toggle_plugin)
+        
+        # Service options
+        start_indicator_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-indicator"))
+        start_system_tray_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-systemtray"))
+        start_desktop_service_on_login.set_active(g15desktop.is_autostart_application("gnome15"))
+        start_indicator_on_login.set_active(g15desktop.is_autostart_application("g15-indicator"))
+        start_system_tray_on_login.set_active(g15desktop.is_autostart_application("g15-systemtray"))
+        self.dialog.set_transient_for(parent)
+        self.dialog.run()
+        self.dialog.hide()
+        self.conf_client.notify_remove(notify_h)
+        
+    def _show_about_plugin(self, widget):
+        plugin = self._get_selected_plugin()
+        dialog = self.widget_tree.get_object("AboutPluginDialog")
+        dialog.set_title("About %s" % plugin.name)
+        dialog.run()
+        dialog.hide()
+        
+    def _show_preferences(self, widget):
+        plugin = self._get_selected_plugin()
+        plugin.show_preferences(self.dialog, None, self.conf_client, "/apps/gnome15/global/plugins/%s" % plugin.id)
+        
+    def _get_selected_plugin(self):
+        (model, path) = self.global_plugin_tree.get_selection().get_selected()
+        if path != None:
+            return g15pluginmanager.get_module_for_id(model[path][2])
+        
+    def _select_plugin(self, widget = None):       
+        plugin = self._get_selected_plugin()
+        if plugin != None:
+            self.selected_id = plugin.id
+            self.widget_tree.get_object("GlobalPluginNameLabel").set_text(plugin.name)
+            self.widget_tree.get_object("GlobalDescriptionLabel").set_text(plugin.description)
+            self.widget_tree.get_object("GlobalDescriptionLabel").set_use_markup(True)
+            self.widget_tree.get_object("AuthorLabel").set_text(plugin.author)
+            self.widget_tree.get_object("SupportedLabel").set_text(", ".join(g15pluginmanager.get_supported_models(plugin)).upper())
+            self.widget_tree.get_object("CopyrightLabel").set_text(plugin.copyright)
+            self.widget_tree.get_object("SiteLabel").set_uri(plugin.site)
+            self.widget_tree.get_object("SiteLabel").set_label(plugin.site)
+            self.widget_tree.get_object("GlobalPreferencesButton").set_sensitive(plugin.has_preferences)
+            self.widget_tree.get_object("GlobalPluginDetails").set_visible(True)
+        else:
+            self.widget_tree.get_object("GlobalPluginDetails").set_visible(False)
+        
+    def _load_plugins(self):        
+        self.global_plugin_model.clear()
+        for mod in sorted(g15pluginmanager.imported_plugins, key=lambda key: key.name):
+            if g15pluginmanager.is_global_plugin(mod):
+                enabled = self.conf_client.get_bool("/apps/gnome15/global/plugins/%s/enabled" % mod.id )
+                self.global_plugin_model.append([enabled, mod.name, mod.id])
+                if mod.id == self.selected_id:
+                    self.global_plugin_tree.get_selection().select_path(self.global_plugin_model.get_path(self.global_plugin_model.get_iter(len(self.global_plugin_model) - 1)))
+        
+    def _plugins_changed(self, client, connection_id, entry, args):
+        self._load_plugins()
+        
+    def _change_desktop_service(self, widget, application_name):
+        g15desktop.set_autostart_application(application_name, widget.get_active())
+            
+    def _toggle_plugin(self, widget, path):
+        print str(path)
+        plugin = g15pluginmanager.get_module_for_id(self.global_plugin_model[path][2])
+        if plugin != None:
+            key = "/apps/gnome15/global/plugins/%s/enabled" % plugin.id
+            self.conf_client.set_bool(key, not self.conf_client.get_bool(key))
+        
 
 class G15Config:
     
@@ -189,9 +293,6 @@ class G15Config:
         self.driver_model = self.widget_tree.get_object("DriverModel")
         self.driver_combo = self.widget_tree.get_object("DriverCombo")
         self.global_options_button = self.widget_tree.get_object("GlobalOptionsButton")
-        self.start_desktop_service_on_login = self.widget_tree.get_object("StartDesktopServiceOnLogin")
-        self.start_indicator_on_login = self.widget_tree.get_object("StartIndicatorOnLogin")
-        self.start_system_tray_on_login = self.widget_tree.get_object("StartSystemTrayOnLogin")
         self.macro_warning_box = self.widget_tree.get_object("MacroWarningBox")
         self.macro_edit_close_button = self.widget_tree.get_object("MacroEditCloseButton")
         self.key_table = self.widget_tree.get_object("KeyTable")
@@ -265,9 +366,6 @@ class G15Config:
         self.device_enabled.connect("toggled", self._device_enabled_changed)
         self.driver_combo.connect("changed", self._driver_changed)
         self.global_options_button.connect("clicked", self._show_global_options)        
-        self.start_desktop_service_on_login.connect("toggled", self._change_desktop_service, "gnome15")
-        self.start_indicator_on_login.connect("toggled", self._change_desktop_service, "g15-indicator")
-        self.start_system_tray_on_login.connect("toggled", self._change_desktop_service, "g15-systemtray")
         
         # Connection to BAMF for running applications list
         try :
@@ -584,7 +682,7 @@ class G15Config:
             # Plugins appropriate
             for mod in sorted(g15pluginmanager.imported_plugins, key=lambda key: key.name):
                 key = self._get_full_key("plugins/%s/enabled" % mod.id )
-                if self.driver and self.driver.get_model_name() in g15pluginmanager.get_supported_models(mod):
+                if self.driver and self.driver.get_model_name() in g15pluginmanager.get_supported_models(mod) and not g15pluginmanager.is_global_plugin(mod):
                     enabled = self.conf_client.get_bool(key)
                     self.plugin_model.append([enabled, mod.name, mod.id])
                     if mod.id == self.selected_id:
@@ -756,9 +854,6 @@ class G15Config:
         self.fixed_delays.set_sensitive(self.selected_profile.send_delays)
         self.press_delay.set_sensitive(self.selected_profile.fixed_delays and self.selected_profile.send_delays)
         self.release_delay.set_sensitive(self.selected_profile.fixed_delays and self.selected_profile.send_delays)
-            
-    def _change_desktop_service(self, widget, application_name):
-        g15desktop.set_autostart_application(application_name, widget.get_active())
         
     def _activate_on_focus_changed(self, widget=None):
         if not self.adjusting:
@@ -1153,18 +1248,8 @@ class G15Config:
             self.selected_profile.delete_macro(memory, keys)
             self._load_profile_list()
             
-    def _show_global_options(self, widget):        
-        dialog = self.widget_tree.get_object("GlobalOptionsDialog")
-        
-        self.widget_tree.get_object("OnlyShowIndicatorOnError").set_visible(g15desktop.is_desktop_application_installed("g15-indicator"))
-        self.start_indicator_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-indicator"))
-        self.start_system_tray_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-systemtray"))
-        self.start_desktop_service_on_login.set_active(g15desktop.is_autostart_application("gnome15"))
-        self.start_indicator_on_login.set_active(g15desktop.is_autostart_application("g15-indicator"))
-        self.start_system_tray_on_login.set_active(g15desktop.is_autostart_application("g15-systemtray"))
-        dialog.set_transient_for(self.main_window)
-        dialog.run()
-        dialog.hide()
+    def _show_global_options(self, widget): 
+        G15GlobalConfig(self.main_window, self.widget_tree, self.conf_client)
         
     def _add_profile(self, widget):
         dialog = self.widget_tree.get_object("AddProfileDialog") 

@@ -23,7 +23,6 @@ import os
 import gconf
 import logging
 logger = logging.getLogger("driver")
-logger.setLevel(logging.DEBUG)
 
 # Find all drivers
 drivers_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "drivers"))

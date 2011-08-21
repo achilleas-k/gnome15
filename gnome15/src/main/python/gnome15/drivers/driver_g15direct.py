@@ -28,6 +28,7 @@ import cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
+import gnome15.g15exceptions as g15exceptions
 import sys
 import os
 import gconf
@@ -92,7 +93,11 @@ KEY_MAP = {
         g15driver.G_KEY_L4  : 1<<25,
         g15driver.G_KEY_L5  : 1<<26,
         
-        g15driver.G_KEY_LIGHT : 1<<27
+        g15driver.G_KEY_LIGHT : 1<<27,
+        g15driver.G_KEY_G19 : 1<<28,
+        g15driver.G_KEY_G20 : 1<<29,
+        g15driver.G_KEY_G21 : 1<<30,
+        g15driver.G_KEY_G22 : 1<<31,
         }
 REVERSE_KEY_MAP = {}
 for k in KEY_MAP.keys():
@@ -102,14 +107,14 @@ mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g1
 color_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight Level", 0, 0, 2, hint = g15driver.HINT_SHADEABLE)
-lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 7)
+lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 2)
 invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
 controls = {
   g15driver.MODEL_G11 : [ mkeys_control, backlight_control ],
   g15driver.MODEL_G15_V1 : [ mkeys_control, backlight_control, lcd_contrast_control, lcd_backlight_control, invert_control ], 
   g15driver.MODEL_G15_V2 : [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
-  g15driver.MODEL_G13 : [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
+  g15driver.MODEL_G13 : [ mkeys_control, color_backlight_control, invert_control ],
   g15driver.MODEL_G510 : [ mkeys_control, color_backlight_control, invert_control ],
   g15driver.MODEL_Z10 : [ backlight_control, lcd_backlight_control, invert_control ],
   g15driver.MODEL_G110 : [ mkeys_control, color_backlight_control ],
@@ -162,7 +167,7 @@ class Driver(g15driver.AbstractDriver):
         self.lock = RLock()
         self.connected = False
         self.conf_client = gconf.client_get_default()
-        self.last_keys = []
+        self.last_keys = None
     
     def get_antialias(self):
         return cairo.ANTIALIAS_NONE
@@ -219,11 +224,11 @@ class Driver(g15driver.AbstractDriver):
         if e:
             self.timeout = e.get_int()
         
-        logger.info("Initialising pylibg15")
+        logger.info("Initialising pylibg15, looking for %s:%s" % ( hex(self.device.controls_usb_id[0]), hex(self.device.controls_usb_id[1]) ))
         pylibg15.set_debug(pylibg15.G15_LOG_INFO)
-        err = pylibg15.init(False)
+        err = pylibg15.init(False, self.device.controls_usb_id[0], self.device.controls_usb_id[1])
         if err != G15_NO_ERROR:
-            raise Exception("libg15 returned error %d " % err)
+            raise g15exceptions.NotConnectedException("libg15 returned error %d " % err)
         logger.info("Initialised pylibg15")
         self.connected = True
 
@@ -253,6 +258,7 @@ class Driver(g15driver.AbstractDriver):
         
     def grab_keyboard(self, callback):
         self.callback = callback
+        self.last_keys = None
         self.thread = pylibg15.grab_keyboard(self._handle_key_event)
         
     def is_connected(self):
@@ -335,18 +341,24 @@ class Driver(g15driver.AbstractDriver):
         return keys   
         
     def _handle_key_event(self, code):
+#        if self.last_keys is None and code == KEY_MAP[g15driver.G_KEY_LIGHT]:
+#            logger.warning("DROPPING first key event due to bug in libg15")
+#            self.last_keys = []
+#            return
+        
         logger.info("Key code %d" % code)
         this_keys = [] if code == 0 else self._convert_from_g15daemon_code(code)
         up = []
         down = []
         
         for k in this_keys:
-            if not k in self.last_keys:
+            if self.last_keys is None or not k in self.last_keys:
                 down.append(k)
                 
-        for k in self.last_keys:
-            if not k in this_keys and not k in down:
-                up.append(k)
+        if self.last_keys is not None:
+            for k in self.last_keys:
+                if not k in this_keys and not k in down:
+                    up.append(k)
                 
         if len(down) > 0:            
             self.callback(down, g15driver.KEY_STATE_DOWN)

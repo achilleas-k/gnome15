@@ -105,7 +105,7 @@ class G15Clock():
         '''
         
         self.timer = None
-        self.load_configuration()
+        self._load_configuration()
         
         '''
         We will be drawing text manually in the thumbnail, so it is recommended you use the

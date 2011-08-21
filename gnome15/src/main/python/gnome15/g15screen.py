@@ -295,6 +295,7 @@ class G15Screen():
             logger.info("Fading %s" % self.device.uid)
             # Start fading keyboard
             acquisition = None
+            slow_shutdown_duration = 4.0
             if self.service.fade_keyboard_backlight_on_close:
                 bl_control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
                 if bl_control:
@@ -306,11 +307,11 @@ class G15Screen():
                     self.driver.acquire_control(bl_control, val = 0 if isinstance(bl_control, int) else (0, 0, 0))
                     
                     acquisition = self.driver.acquire_control(bl_control, val = current_val)
-                    acquisition.fade(duration = 2.0, release = True)
+                    acquisition.fade(duration = slow_shutdown_duration, release = True, step = 1 if isinstance(bl_control, int) else 5)
                 
             # Fade screen
             if self.driver.get_bpp() > 0 and self.service.fade_screen_on_close:
-                self.fade(True)
+                self.fade(True, duration = slow_shutdown_duration, step = 6)
                 
             # Wait for keyboard fade to finish as well if it hasn't already
             if acquisition:  
@@ -855,8 +856,8 @@ class G15Screen():
                 
         except Exception as e:
             logger.error("Error in key handling. %s" % str(e))
-#            if logger.level == logging.DEBUG:
-            traceback.print_exc(file=sys.stderr)
+            if logger.level == logging.DEBUG:
+                traceback.print_exc(file=sys.stderr)
             
     def _action_performed(self, binding):
         if binding.action == g15driver.MEMORY_1:
@@ -1021,8 +1022,8 @@ class G15Screen():
         sy = float(self.available_size[3]) / float(self.height)
         return min(sx, sy)
 
-    def fade(self, stay_faded=False):
-        self.fader = Fader(self, stay_faded=stay_faded).run()
+    def fade(self, stay_faded=False, duration = 4.0, step = 1):
+        self.fader = Fader(self, stay_faded=stay_faded, duration = duration, step = step).run()
         
     def attempt_connection(self, delay=0.0):
         logger.info("Attempting connection" if delay == 0 else "Attempting connection in %f" % delay)
@@ -1326,19 +1327,21 @@ increased, creating a fading effect
 """    
 class Fader(Painter):
     
-    def __init__(self, screen, stay_faded=False, duration = 3.0):
+    def __init__(self, screen, stay_faded=False, duration = 3.0, step = 1):
         Painter.__init__(self, FOREGROUND_PAINTER, 9999)
         self.screen = screen
         self.duration = duration
         self.opacity = 0
+        self.step = step
         self.stay_faded = stay_faded
+        self.interval = ( duration / 255 ) * step  
         
     def run(self):
         self.screen.painters.append(self)
         try:
-            while self.opacity <= 64:
+            while self.opacity <= 255:
                 self.screen.redraw()
-                time.sleep(self.duration / 64.0)
+                time.sleep(self.interval)
         finally:
             if not self.stay_faded:
                 self.screen.painters.remove(self)
@@ -1352,7 +1355,7 @@ class Fader(Painter):
         canvas.set_source_rgba(col, col, col, float(self.opacity) / 255.0)
         canvas.rectangle(0, 0, self.screen.width, self.screen.height)
         canvas.fill()
-        self.opacity += 4
+        self.opacity += self.step
 
 class G15Splash():
     

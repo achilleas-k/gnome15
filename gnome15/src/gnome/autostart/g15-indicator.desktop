@@ -1,0 +1,20 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Logitech G Keyboard Indicator
+Name[fr]=Indicateur Logitech Clavier G
+Name[it]=Tastiera Logitech G Indicatore
+Icon=gnome15
+Comment=Panel indicator allowing control and monitor of the Gnome15 desktop service for Logitech G keyboards.
+Comment[fr]=Voyant panneau permettant le contrôle et le suivi du service Gnome15 bureau pour les claviers Logitech G.
+Comment[it]=Pannello indicatore che consente il controllo e il monitoraggio del servizio Gnome15 desktop per tastiere Logitech G
+Exec=g15-indicator
+Terminal=false
+Type=Application
+Categories=TrayIcon;GTK
+GenericName=
+#X-GNOME-Autostart-Delay=0
+#AutostartCondition=GNOME /desktop/gnome/gnome15/enabled
+#X-GNOME-Autostart-Phase=Applications
+#X-GNOME-AutoRestart=true
+#X-Ubuntu-Gettext-Domain=gnome15

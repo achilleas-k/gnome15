@@ -71,6 +71,9 @@ actions={
 IF_NAME="org.freedesktop.Notifications"
 BUS_NAME="/org/freedesktop/Notifications"
 
+# Match string to use for passive mode
+PASSIVE_MATCH_STRING="type='method_call',path='/org/freedesktop/Notifications',interface='org.freedesktop.Notifications',member='Notify'"
+
 # List of processes to try and kill so the notification DBUS server can be replaced
 OTHER_NOTIFY_DAEMON_PROCESS_NAMES = [ 'notify-osd', 'notification-daemon', 'knotify4' ]
 
@@ -259,10 +262,12 @@ class G15NotifyLCD():
         self._message_map = {}
         self._current_message = None
         self._service = None
-        self._bus = dbus.SessionBus()
         self._load_configuration()
         self._notify_handle = None
         self._page = None
+        
+        # DBUS session instance must be private or monitoring will not work properly
+        self._bus = dbus.SessionBus(private=True)
         
         if not self.on_desktop:        
             # Already running
@@ -282,10 +287,10 @@ class G15NotifyLCD():
             	self._service = G15NotifyService(self._gconf_client, self._gconf_key, self._screen, self._bus_name, self)
             except KeyError:
                 logger.error("DBUS notify service failed to start. May already be started.")
-            
+#            
         if not self._service:
             # Just monitor raw DBUS events
-            self._bus.add_match_string_non_blocking("interface='org.freedesktop.Notifications'")
+            self._bus.add_match_string_non_blocking(PASSIVE_MATCH_STRING)
             self._bus.add_message_filter(self.msg_cb)
             
         self._screen.action_listeners.append(self)
@@ -293,14 +298,17 @@ class G15NotifyLCD():
             
     def msg_cb(self, bus, msg):
         # Only interested in method calls
-        if msg.get_type() == 1 and isinstance(msg, dbus.lowlevel.MethodCallMessage):
+        print "DBUS: %s, %s" % (str(bus), str(msg))
+        if isinstance(msg, dbus.lowlevel.MethodCallMessage):
+            print "   imc"
             if msg.get_member() == "Notify":
-                self.notify(*msg.get_args_list())  
+                self.notify(*msg.get_args_list())
             
     def deactivate(self):
         # TODO How do we properly 'unexport' a service? This seems to kind of work, in
         # that notify-osd can take over again, but trying to re-activate the plugin
         # doesn't reclaim the bus name (I think because it is cached)
+        self.clear()
         if self._notify_handle:
             self._gconf_client.notify_remove(self._notify_handle)
         self._screen.action_listeners.remove(self)
@@ -313,7 +321,7 @@ class G15NotifyLCD():
             del self._bus_name
         else:
             # Stop monitoring DBUS
-            self._bus.remove_match_string("interface='org.freedesktop.Notifications'")
+            self._bus.remove_match_string(PASSIVE_MATCH_STRING)
             self._bus.remove_message_filter(self.msg_cb)
         
     def destroy(self):

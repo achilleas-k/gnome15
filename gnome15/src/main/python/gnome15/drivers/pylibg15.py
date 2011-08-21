@@ -63,13 +63,9 @@ class KeyboardReceiveThread(Thread):
             while self._run:
                 err = libg15.getPressedKeys(byref(pressed_keys), 50)
                 if err == G15_NO_ERROR:
-                    print "Pressed %d" % pressed_keys.value
                     self.callback(pressed_keys.value)
-#                elif err != G15_ERROR_TRY_AGAIN:
-#                    raise Exception("Failed waiting for key. Error code %d" % err)
         finally:
             self._run = True
-        print "Thread left"
 
 class libg15_devices_t(Structure):
     _fields_ = [ ("name", c_char_p),
@@ -86,15 +82,12 @@ def grab_keyboard(callback):
     t.start()
     return t
     
-def init(init_usb = True):
+def init(init_usb = True, vendor_id = 0, product_id = 0):
     """
     This one return G15_NO_ERROR on success, something
     else otherwise (for instance G15_ERROR_OPENING_USB_DEVICE
     """
-    if init_usb:
-        return libg15.initLibG15()
-    else:
-        return libg15.initLibG15NoUSBInit()
+    return libg15.setupLibG15(vendor_id, product_id, 1 if init_usb else 0)
 
 def reinit():
     """ re-initialise a previously unplugged keyboard ie ENODEV was returned at some point """
@@ -115,7 +108,6 @@ def write_pixmap(data):
     libg15.writePixmapToLCD(data)
     
 def set_contrast(level):
-    print "Setting contrast to %d" % level
     return libg15.setLCDContrast(level)
     
 def set_leds(leds):
@@ -129,8 +121,6 @@ def set_keyboard_brightness(level):
     
 def set_keyboard_color(color):
     return libg15.setG510LEDColor(color[0], color[1], color[2])
-
-
 
 def __handle_key(code):
     print "Got %d" %code

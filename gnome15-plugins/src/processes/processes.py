@@ -82,8 +82,9 @@ class ProcessMenuItem(g15theme.MenuItem):
     
     def activate(self):
         kill_name = str(self.process_id) if isinstance(self.process_id, int) else self.process_name 
-        g15theme.ConfirmationScreen(self.get_screen(), "Kill Process", "Are you sure you want to kill %s" % kill_name,  
-                                    g15util.get_icon_path("utilities-system-monitor"), self.plugin._kill_process, self.process_id)
+        self.plugin.confirm_screen = g15theme.ConfirmationScreen(self.get_screen(), "Kill Process", "Are you sure you want to kill %s" % kill_name,  
+                                    g15util.get_icon_path("utilities-system-monitor"), self.plugin._kill_process, self.process_id,
+                                    cancel_callback = self.plugin._cancel_kill)
         
                     
      
@@ -92,6 +93,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
     def __init__(self, gconf_client, gconf_key, screen):
         g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, ["utilities-system-monitor"], id, name)
         self.i = 0
+        self.confirm_screen = None 
         
         # Can't work out how to kill an application/window given its XID, so only wnck is used for killing
         self.session_bus = dbus.SessionBus()
@@ -111,6 +113,9 @@ class G15Processes(g15plugin.G15MenuPlugin):
     def deactivate(self):
         g15plugin.G15MenuPlugin.deactivate(self)
         self.screen.action_listeners.remove(self)
+        if self.confirm_screen is not None:
+            self.confirm_screen.delete()
+            self.confirm_screen = None
         
     def load_menu_items(self):
         pass
@@ -173,6 +178,9 @@ class G15Processes(g15plugin.G15MenuPlugin):
 
         root.send_event(ev, event_mask=mask)
         display.flush()
+    
+    def _cancel_kill(self, process_id):
+        self.confirmation_screen = None
             
     def _kill_process(self, process_id):
         if isinstance(process_id, int):
@@ -185,6 +193,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
         else:
             # TODO kill using XID if possible
             pass
+        self.confirmation_screen = None
         self._reload_menu()
 
     def _get_process_name(self, args, cmd):
