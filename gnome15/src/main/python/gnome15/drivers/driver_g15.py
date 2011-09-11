@@ -218,7 +218,7 @@ class G15Dispatcher(asyncore.dispatcher):
                 data = self.get_data(16)
                 if data:
                     if data != "G15 daemon HELLO":
-                        raise Exception("Excepted G15 daemon handshake.")
+                        raise Exception("Expected G15 daemon handshake.")
                     self.out_buffer = "GBUF"
                     self.received_handshake = True
         except Exception as e:

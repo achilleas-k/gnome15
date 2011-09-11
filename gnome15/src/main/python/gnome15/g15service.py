@@ -402,7 +402,7 @@ class G15Service(g15desktop.G15AbstractService):
             try :
                 if view.IsActive() == 1:
                     self.active_application_name = view.Name()
-                    logger.info("Active application is now %s" % self.active_application_name)
+                    logger.debug("Active application is now %s" % self.active_application_name)
                     for screen in self.screens:
                         screen.set_active_profile()
             except dbus.DBusException:

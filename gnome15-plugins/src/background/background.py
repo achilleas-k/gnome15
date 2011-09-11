@@ -28,6 +28,13 @@ import logging
 import gconf
 logger = logging.getLogger("background")
 
+gnome_dconf_settings = None 
+try:
+    from gi.repository import Gio
+    gnome_dconf_settings = Gio.Settings.new("org.gnome.desktop.background")
+except:
+    logger.info("No GNOME3 background settings available, ignoring")
+
 
 # Plugin details - All of these must be provided
 id="background"
@@ -147,6 +154,8 @@ class G15Background():
         # Monitor desktop specific configuration for wallpaper changes
         if "gnome" == g15util.get_desktop():
             self.notify_handlers.append(self.gconf_client.notify_add("/desktop/gnome/background/picture_filename", self.config_changed))
+            if gnome_dconf_settings is not None:
+                gnome_dconf_settings.connect("changed::picture_uri", self._do_config_changed)
         
         self._do_config_changed()
     
@@ -180,7 +189,10 @@ class G15Background():
             # Get the current background the desktop is using if possible
             desktop_env = g15util.get_desktop()
             if "gnome" == desktop_env:
-                self.bg_img = self.gconf_client.get_string("/desktop/gnome/background/picture_filename")
+                if gnome_dconf_settings is not None:
+                    self.bg_img = gnome_dconf_settings.get_string("picture-uri")
+                else:
+                    self.bg_img = self.gconf_client.get_string("/desktop/gnome/background/picture_filename")
             else:
                 logger.warning("User request wallpaper from the desktop, but the desktop environment is unknown. Please report this bug to the Gnome15 project")
         
@@ -196,52 +208,55 @@ class G15Background():
         if self.bg_img != self.this_image or bg_style != self.current_style:
             self.this_image = self.bg_img
             self.current_style = bg_style
-            if os.path.exists(self.bg_img):
+            if g15util.is_url(self.bg_img) or os.path.exists(self.bg_img):
                 img_surface = g15util.load_surface_from_file(self.bg_img)
-                sx = float(screen_size[0]) / img_surface.get_width()
-                sy = float(screen_size[1]) / img_surface.get_height()  
-                surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, screen_size[0], screen_size[1])
-                context = cairo.Context(surface)
-                context.save()
-                if bg_style == "zoom":
-                    scale = max(sx, sy)
-                    context.scale(scale, scale)
-                    context.set_source_surface(img_surface)
-                    context.paint()
-                elif bg_style == "stretch":              
-                    context.scale(sx, sy)
-                    context.set_source_surface(img_surface)
-                    context.paint()
-                elif bg_style == "scale":  
-                    x = ( screen_size[0] - img_surface.get_width() * sy ) / 2   
-                    context.translate(x, 0)         
-                    context.scale(sy, sy)
-                    context.set_source_surface(img_surface)
-                    context.paint()
-                elif bg_style == "center":        
-                    x = ( screen_size[0] - img_surface.get_width() ) / 2
-                    y = ( screen_size[1] - img_surface.get_height() ) / 2
-                    context.translate(x, y)
-                    context.set_source_surface(img_surface)
-                    context.paint()
-                elif bg_style == "tile":
-                    context.set_source_surface(img_surface)
-                    context.paint()
-                    y = 0
-                    x = img_surface.get_width()
-                    while y < screen_size[1] + img_surface.get_height():
-                        if x >= screen_size[1] + img_surface.get_width():
-                            x = 0
-                            y += img_surface.get_height()
-                        context.restore()
-                        context.save()
+                if img_surface is not None:
+                    sx = float(screen_size[0]) / img_surface.get_width()
+                    sy = float(screen_size[1]) / img_surface.get_height()  
+                    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, screen_size[0], screen_size[1])
+                    context = cairo.Context(surface)
+                    context.save()
+                    if bg_style == "zoom":
+                        scale = max(sx, sy)
+                        context.scale(scale, scale)
+                        context.set_source_surface(img_surface)
+                        context.paint()
+                    elif bg_style == "stretch":              
+                        context.scale(sx, sy)
+                        context.set_source_surface(img_surface)
+                        context.paint()
+                    elif bg_style == "scale":  
+                        x = ( screen_size[0] - img_surface.get_width() * sy ) / 2   
+                        context.translate(x, 0)         
+                        context.scale(sy, sy)
+                        context.set_source_surface(img_surface)
+                        context.paint()
+                    elif bg_style == "center":        
+                        x = ( screen_size[0] - img_surface.get_width() ) / 2
+                        y = ( screen_size[1] - img_surface.get_height() ) / 2
                         context.translate(x, y)
                         context.set_source_surface(img_surface)
                         context.paint()
-                        x += img_surface.get_width()
-                    
-                context.restore()
-                self.painter.background_image = surface
+                    elif bg_style == "tile":
+                        context.set_source_surface(img_surface)
+                        context.paint()
+                        y = 0
+                        x = img_surface.get_width()
+                        while y < screen_size[1] + img_surface.get_height():
+                            if x >= screen_size[1] + img_surface.get_width():
+                                x = 0
+                                y += img_surface.get_height()
+                            context.restore()
+                            context.save()
+                            context.translate(x, y)
+                            context.set_source_surface(img_surface)
+                            context.paint()
+                            x += img_surface.get_width()
+                        
+                    context.restore()
+                    self.painter.background_image = surface
+                else:
+                    self.painter.background_image = None
             else:
                 self.painter.background_image = None
                 

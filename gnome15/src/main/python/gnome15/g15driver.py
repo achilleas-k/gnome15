@@ -72,6 +72,14 @@ G_KEY_G20 = "g20"
 G_KEY_G21 = "g21"
 G_KEY_G22 = "g22"
 
+"""
+Joystick (G13)
+""" 
+G_KEY_JOY_LEFT = "jl"
+G_KEY_JOY_DOWN = "jd"
+G_KEY_JOY_CENTER = "jc"
+G_KEY_JOY = "js"
+
 
 """
 Display keys
@@ -255,7 +263,7 @@ class AbstractControlAcquisition(object):
     def set_value(self, val, reset_after = None):
         old_val = val
         if val != self.val or reset_after is not None:
-            logger.info("Set value of control value to %s" % str(val))
+            logger.debug("Set value of control to %s" % str(val))
             self.val = val
             self.on = True
             self.adjust(val)
@@ -282,7 +290,6 @@ class AbstractControlAcquisition(object):
     def _notify_released(self):
         if self._released:
             raise Exception("Already released")        
-        logger.info("Notifiy released")
         if self.on_released:
             self.on_released()
         self._released = True        
@@ -362,6 +369,7 @@ class AbstractDriver(object):
         self.on_driver_options_change = None
         seq_no += 1
         self.seq = seq_no
+        self.disconnecting = False
         
         self._reset_state()
         
@@ -384,7 +392,7 @@ class AbstractDriver(object):
         control_acquisition.on_release = on_release
         control_acquisitions.append(control_acquisition)
         if release_after:
-            g15util.schedule("ReleaseControl", release_after, self.release_control, control_acquisition)
+            g15util.schedule("ReleaseControl", release_after, self._release_control, control_acquisition)
         return control_acquisition
         
     def acquire_mkey_lights(self, release_after = None, val = None):
@@ -417,9 +425,11 @@ class AbstractDriver(object):
         subclasses should override on_disconnect.
         """
         try:
+            self.disconnecting = True
             logger.info("Disconnecting driver")
             self.on_disconnect()
         finally:
+            self.disconnecting = False
             self.release_all_acquisitions()
             self._reset_state()
     
@@ -588,6 +598,14 @@ class AbstractDriver(object):
         if fg_control != None:
             fg_rgb = fg_control.value
         return fg_rgb
+    
+    """
+    Private
+    """
+    
+    def _release_control(self, control_acquisition):
+        if control_acquisition.is_active():
+            self.release_control(control_acquisition)
     
     def _reset_state(self):
         self.lights = 0

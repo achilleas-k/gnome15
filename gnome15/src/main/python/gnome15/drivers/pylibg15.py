@@ -61,7 +61,7 @@ class KeyboardReceiveThread(Thread):
         pressed_keys = c_int(0)
         try:
             while self._run:
-                err = libg15.getPressedKeys(byref(pressed_keys), 50)
+                err = libg15.getPressedKeys(byref(pressed_keys), 10)
                 if err == G15_NO_ERROR:
                     self.callback(pressed_keys.value)
         finally:
@@ -121,6 +121,9 @@ def set_keyboard_brightness(level):
     
 def set_keyboard_color(color):
     return libg15.setG510LEDColor(color[0], color[1], color[2])
+
+def get_joystick_position():
+    return ( libg15.getJoystickX(), libg15.getJoystickY() )
 
 def __handle_key(code):
     print "Got %d" %code

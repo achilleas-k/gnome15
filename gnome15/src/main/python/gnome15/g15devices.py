@@ -141,7 +141,7 @@ g19_action_keys = { g15driver.NEXT_SELECTION: ActionBinding(g15driver.NEXT_SELEC
 """
 MX5500
 
-Only two keys near the LCD, so various combinrations of keys and holding keys is used to
+Only two keys near the LCD, so various combinations of keys and holding keys is used to
 provide the 6 most basic actions
 """
 

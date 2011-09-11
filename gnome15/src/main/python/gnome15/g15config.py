@@ -27,11 +27,13 @@ import g15desktop
 import g15drivermanager
 import g15devices
 import g15util
+import g15uinput
 import colorpicker
 import subprocess
 import shutil
 import logging
 import traceback
+import uinput
 
 logger = logging.getLogger("config")
 
@@ -199,6 +201,8 @@ class G15Config:
     def __init__(self, parent_window=None, service=None):
         self.parent_window = parent_window
         
+        self.profile_save_timer = None
+        self.macro_save_timer = None
         self._signal_handles = []
         self.notify_handles = []
         self.control_notify_handles = []
@@ -252,6 +256,7 @@ class G15Config:
         self.m3 = self.widget_tree.get_object("M3")
         self.window_model = self.widget_tree.get_object("WindowModel")
         self.window_combo = self.widget_tree.get_object("WindowCombo")
+        self.window_entry = self.widget_tree.get_object("WindowEntry")
         self.remove_button = self.widget_tree.get_object("RemoveButton")
         self.activate_on_focus = self.widget_tree.get_object("ActivateProfileOnFocusCheckbox")
         self.macro_name_renderer = self.widget_tree.get_object("MacroNameRenderer")
@@ -274,9 +279,14 @@ class G15Config:
         self.macro_name_field = self.widget_tree.get_object("MacroNameField")
         self.macro_script = self.widget_tree.get_object("MacroScript")
         self.memory_bank_vbox = self.widget_tree.get_object("MemoryBankVBox")      
-        self.macros_model = self.widget_tree.get_object("MacroModel")
+        self.macros_model = self.widget_tree.get_object("MacroModel")     
+        self.mapped_key_model = self.widget_tree.get_object("MappedKeyModel")
         self.profiles_model = self.widget_tree.get_object("ProfileModel")
         self.run_command = self.widget_tree.get_object("RunCommand")
+        self.mapped_key_type_combo = self.widget_tree.get_object("MappedKeyTypeCombo")
+        self.mapped_key_combo = self.widget_tree.get_object("MappedKeyCombo")
+        self.mapped_to_key = self.widget_tree.get_object("MappedToKey")
+        self.map_type_model = self.widget_tree.get_object("MapTypeModel")
         self.run_simple_macro = self.widget_tree.get_object("RunSimpleMacro")
         self.run_macro_script = self.widget_tree.get_object("RunMacroScript")
         self.simple_macro = self.widget_tree.get_object("SimpleMacro")
@@ -351,8 +361,11 @@ class G15Config:
         self.fixed_delays.connect("toggled", self._send_delays_changed)
         self.press_delay_adjustment.connect("value-changed", self._send_delays_changed)
         self.release_delay_adjustment.connect("value-changed", self._send_delays_changed)
-        self.window_combo.child.connect("changed", self._window_name_changed)
+#        self.window_entry.connect("changed", self._window_name_changed)
         self.window_combo.connect("changed", self._window_name_changed)
+        self.mapped_to_key.connect("toggled", self._macro_type_changed)
+        self.mapped_key_combo.connect("changed", self._mapped_key_changed)
+        self.mapped_key_type_combo.connect("changed", self._mapped_key_type_changed)
         self.run_command.connect("toggled", self._macro_type_changed)
         self.run_simple_macro.connect("toggled", self._macro_type_changed)
         self.run_macro_script.connect("toggled", self._macro_type_changed)
@@ -397,11 +410,15 @@ class G15Config:
         button_vbox.pack_start(self.start_button, False, False)
         
         # Populate model and configure other components
+        self._load_keys()
         self._load_devices()
         if len(self.device_model) == 0:
             raise Exception("No supported devices could be found. Is the " + \
                             "device correctly plugged in and powered and " + \
                             "do you have all the required drivers installed?")
+        else:
+            if len(self.device_model) == 1 and not g15devices.is_enabled(self.conf_client, self.selected_device):
+                self.device_enabled.set_active(True)
         
         # Build the infobar content
         content = self.infobar.get_content_area()
@@ -847,7 +864,7 @@ class G15Config:
             self.selected_profile.fixed_delays = self.fixed_delays.get_active()
             self.selected_profile.press_delay = int(self.press_delay_adjustment.get_value() * 1000)
             self.selected_profile.release_delay = int(self.release_delay_adjustment.get_value() * 1000)
-            self.selected_profile.save()
+            self._save_profile(self.selected_profile)
             self._set_delay_state()
             
     def _set_delay_state(self):
@@ -859,10 +876,10 @@ class G15Config:
         if not self.adjusting:
             self.selected_profile.activate_on_focus = widget.get_active()        
             self.window_combo.set_sensitive(self.selected_profile.activate_on_focus)
-            self.selected_profile.save()
+            self._save_profile(self.selected_profile)
         
     def _window_name_changed(self, widget):
-        if isinstance(widget, gtk.ComboBoxEntry):
+        if isinstance(widget, gtk.ComboBox):
             active = widget.get_active()
             if active >= 0:
                 self.window_combo.child.set_text(self.window_model[active][0])
@@ -892,7 +909,7 @@ class G15Config:
                                 icon.save(filename, "png")
                                 self.selected_profile.icon = filename    
                             
-                self.selected_profile.save()
+                self._save_profile(self.selected_profile)
                 
     def _driver_configuration_changed(self, *args):
         self._set_driver_from_configuration()
@@ -953,14 +970,14 @@ class G15Config:
     def _device_enabled_configuration_changed(self, client, connection_id, entry, args):
         self._set_enabled_value_from_configuration()
         
-    def _set_enabled_value_from_configuration(self):
-        enabled = ( len(self.device_model) == 1  or g15devices.is_enabled(self.conf_client, self.selected_device) ) if self.selected_device != None else False
+    def _set_enabled_value_from_configuration(self):        
+        enabled = g15devices.is_enabled(self.conf_client, self.selected_device) if self.selected_device != None else False        
         self.device_enabled.set_active(enabled)
         self.device_enabled.set_sensitive(self.selected_device != None)
         self.tabs.set_sensitive(enabled)
                 
     def _device_enabled_changed(self, widget = None):
-        gobject.timeout_add(1000, self._set_device)
+        gobject.idle_add(self._set_device)
                 
     def _driver_changed(self, widget = None):
         if len(self.driver_model) > 0:
@@ -1039,8 +1056,8 @@ class G15Config:
         self._load_profile_list()
         
     def _clear_icon(self, widget):
-        self.selected_profile.icon = ""            
-        self.selected_profile.save()
+        self.selected_profile.icon = ""     
+        self._save_profile(self.selected_profile)
         
     def _browse_for_icon(self, widget):
         dialog = gtk.FileChooserDialog("Open..",
@@ -1071,8 +1088,8 @@ class G15Config:
         response = dialog.run()
         
         if response == gtk.RESPONSE_OK:
-            self.selected_profile.icon = dialog.get_filename()            
-            self.selected_profile.save()
+            self.selected_profile.icon = dialog.get_filename() 
+            self._save_profile(self.selected_profile)
             
         dialog.destroy()
         
@@ -1090,7 +1107,7 @@ class G15Config:
             
     def _macro_name_changed(self, widget):
         self.editing_macro.name = widget.get_text()
-        self.editing_macro.save()
+        self._save_macro(self.editing_macro)
         
     def _allow_combination_changed(self, widget):
         if not self.adjusting and not self.allow_combination.get_active():
@@ -1117,6 +1134,11 @@ class G15Config:
                     if ikey != key:
                         keys.remove(ikey)
             keys.append(key)
+            
+            if self.macro_name_field.get_text() == "" or self.macro_name_field.get_text().startswith("Macro "):
+                new_name = " ".join(g15util.get_key_names(keys))
+                self.editing_macro.name = "Macro %s" % new_name
+                self.macro_name_field.set_text(self.editing_macro.name)
             
         if not self.selected_profile.are_keys_in_use(self._get_memory_number(), keys, exclude = [self.editing_macro]):
             macro.set_keys(keys)
@@ -1146,7 +1168,6 @@ class G15Config:
                 self.macro_edit_close_button.set_sensitive(True)      
                 return       
             
-        print "Hiding"
         self.macro_infobar.set_visible(False)
         self.macro_edit_close_button.set_sensitive(True)
         
@@ -1180,56 +1201,76 @@ class G15Config:
             return self.selected_profile.get_macro(self._get_memory_number(), g15profile.get_keys_from_key(key_list_key))
         
     def _edit_macro(self, macro):
-        self.editing_macro = macro
-        memory = self._get_memory_number()
-        dialog = self.widget_tree.get_object("EditMacroDialog")  
-        dialog.set_transient_for(self.main_window)
-        keys_frame = self.widget_tree.get_object("KeysFrame")
-        self.allow_combination.set_active(len(self.editing_macro.keys) > 1)
-        
-        # Build the G-Key selection widget
-        if self.rows:
-            keys_frame.remove(self.rows)
-        self.rows = gtk.VBox()
-        self.rows.set_spacing(4)
-        self.key_buttons = []
-        for row in self.driver.get_key_layout():
-            hbox = gtk.HBox()
-            hbox.set_spacing(4)
-            for key in row:
-                key_name = g15util.get_key_names([ key ])
-                g_button = gtk.ToggleButton(" ".join(key_name))
-                g_button.key = key
-                g_button.set_active(key in self.editing_macro.keys)
-                g_button.connect("toggled", self._toggle_key, key, self.editing_macro)
-                self.key_buttons.append(g_button)
-                hbox.pack_start(g_button, True, True)
-            self.rows.pack_start(hbox, False, False)
-        keys_frame.add(self.rows)     
-        keys_frame.show_all()
-        
-        
-        # Set the type of macro
-        if self.editing_macro.type == g15profile.MACRO_COMMAND:
-            self.run_command.set_active(True)
-        elif self.editing_macro.type == g15profile.MACRO_SIMPLE:
-            self.run_simple_macro.set_active(True)
-        elif self.editing_macro.type == g15profile.MACRO_SCRIPT:
-            self.run_macro_script.set_active(True)            
-        self._set_available_options()
+        self.adjusting = True
+        try:
+            self.editing_macro = macro
+            memory = self._get_memory_number()
+            dialog = self.widget_tree.get_object("EditMacroDialog")  
+            dialog.set_transient_for(self.main_window)
+            keys_frame = self.widget_tree.get_object("KeysFrame")
+            self.allow_combination.set_active(len(self.editing_macro.keys) > 1)
             
-        # Set the other details 
-        self.memory_bank_label.set_text("M%d" % memory)
-        self.macro_name_field.set_text(self.editing_macro.name)
-        self.simple_macro.set_text(self.editing_macro.simple_macro)
-        self.macro_name_field.grab_focus()
-        text_buffer = gtk.TextBuffer()
-        text_buffer.set_text(self.editing_macro.macro)        
-        text_buffer.connect("changed", self._macro_script_changed)
-        self.macro_script.set_buffer(text_buffer)
-        self._check_macro(self.editing_macro.keys)
-        
-                        
+            # Build the G-Key selection widget
+            if self.rows:
+                keys_frame.remove(self.rows)
+            self.rows = gtk.VBox()
+            self.rows.set_spacing(4)
+            self.key_buttons = []
+            for row in self.driver.get_key_layout():
+                hbox = gtk.HBox()
+                hbox.set_spacing(4)
+                for key in row:
+                    key_name = g15util.get_key_names([ key ])
+                    g_button = gtk.ToggleButton(" ".join(key_name))
+                    g_button.key = key
+                    g_button.set_active(key in self.editing_macro.keys)
+                    g_button.connect("toggled", self._toggle_key, key, self.editing_macro)
+                    self.key_buttons.append(g_button)
+                    hbox.pack_start(g_button, True, True)
+                self.rows.pack_start(hbox, False, False)
+            keys_frame.add(self.rows)     
+            keys_frame.show_all()
+            
+            
+            # Set the type of macro
+            if self.editing_macro.type == g15profile.MACRO_COMMAND:
+                self.run_command.set_active(True)
+            elif self.editing_macro.type == g15profile.MACRO_MAPPED_TO_KEY:
+                self.mapped_to_key.set_active(True)
+            elif self.editing_macro.type == g15profile.MACRO_SIMPLE:
+                self.run_simple_macro.set_active(True)
+            elif self.editing_macro.type == g15profile.MACRO_SCRIPT:
+                self.run_macro_script.set_active(True)            
+            self._set_available_options()
+                
+            # Set the other details 
+            i  = 0
+            for row in self.map_type_model:
+                if row[0] == self.editing_macro.map_type:                
+                    self.mapped_key_type_combo.set_active(i)
+                    break
+                i += 1
+            i  = 0
+            self._load_keys()
+            for row in self.mapped_key_model:
+                if row[0] == self.editing_macro.mapped_key:                
+                    self.mapped_key_combo.set_active(i)
+                    break
+                i += 1
+            self.memory_bank_label.set_text("M%d" % memory)
+            self.macro_name_field.set_text(self.editing_macro.name)
+            self.simple_macro.set_text(self.editing_macro.simple_macro)
+            self.macro_name_field.grab_focus()
+            text_buffer = gtk.TextBuffer()
+            text_buffer.set_text(self.editing_macro.macro)        
+            text_buffer.connect("changed", self._macro_script_changed)
+            self.macro_script.set_buffer(text_buffer)
+            self._check_macro(self.editing_macro.keys)
+            
+        finally:
+            self.adjusting = False
+            
+                            
         dialog.run()
         dialog.hide()
         self.editing_macro.name = self.macro_name_field.get_text()
@@ -1247,6 +1288,28 @@ class G15Config:
             keys = g15profile.get_keys_from_key(key_list_key)
             self.selected_profile.delete_macro(memory, keys)
             self._load_profile_list()
+            
+    def _save_macro(self, macro):
+        if self.macro_save_timer is not None:
+            self.macro_save_timer.cancel()
+        self.macro_save_timer = g15util.schedule("SaveMacro", 2, self._do_save_macro, macro)            
+            
+    def _save_profile(self, profile):
+        if self.profile_save_timer is not None:
+            self.profile_save_timer.cancel()
+        self.profile_save_timer = g15util.schedule("SaveProfile", 2, self._do_save_profile, profile)
+            
+    def _do_save_macro(self, macro):
+        if not self.adjusting:
+            logger.info("Saving macro %s" % macro.name )
+            print "Saving macro %s" % macro.name
+            macro.save()
+            
+    def _do_save_profile(self, profile):
+        if not self.adjusting:
+            logger.info("Saving profile %s" % profile.name)
+            print "Saving profile %s" % profile.name
+            profile.save()
             
     def _show_global_options(self, widget): 
         G15GlobalConfig(self.main_window, self.widget_tree, self.conf_client)
@@ -1271,6 +1334,20 @@ class G15Config:
             return 2
         elif self.m3.get_active():
             return 3
+        
+    def _load_keys(self):
+        self.mapped_key_model.clear()        
+        key = self.map_type_model[self.mapped_key_type_combo.get_active()][0]
+        if key == g15uinput.MOUSE or key == g15uinput.JOYSTICK:
+            self._load_keys_for_type("BTN")
+        else:
+            self._load_keys_for_type("KEY")
+        
+    def _load_keys_for_type(self, type):
+        caps = uinput.capabilities.CAPABILITIES
+        for k in sorted(caps.iterkeys()):
+            if k.startswith(type):
+                self.mapped_key_model.append([k, caps[k]])
         
     def _load_devices(self):
         self.device_model.clear()
@@ -1339,13 +1416,13 @@ class G15Config:
         profile = self.profiles[int(row)]
         if value != profile.name:
             profile.name = value
-            profile.save()
+            self._save_profile(profile)
         
     def _macro_name_edited(self, widget, row, value):
         macro = self._get_sorted_list()[int(row)] 
         if value != macro.name:
             macro.name = value
-            macro.save()
+            self._save_macro(macro)
             self._load_configuration(self.selected_profile)
         
     def _get_sorted_list(self):
@@ -1373,9 +1450,9 @@ class G15Config:
             self.activate_on_focus.set_active(profile.activate_on_focus)
             self.activate_by_default.set_active(profile.activate_on_focus)
             if profile.window_name != None:
-                self.window_combo.child.set_text(profile.window_name)
+                self.window_entry.set_text(profile.window_name)
             else:
-                self.window_combo.child.set_text("")
+                self.window_entry.set_text("")
             self.send_delays.set_active(profile.send_delays)
             self.fixed_delays.set_active(profile.fixed_delays)
             self._set_delay_state()
@@ -1436,17 +1513,18 @@ class G15Config:
                 
     def _simple_macro_changed(self, widget):
         self.editing_macro.simple_macro = widget.get_text()
-        self.editing_macro.save()
+        self._save_macro(self.editing_macro)
         
     def _macro_script_changed(self, buffer):
         self.editing_macro.macro = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter())
-        self.editing_macro.save()
+        self._save_macro(self.editing_macro)
                 
     def _command_changed(self, widget):
         self.editing_macro.command = widget.get_text()
-        self.editing_macro.save()
+        self._save_macro(self.editing_macro)
         
     def _set_available_options(self):
+        self.mapped_key_combo.set_sensitive(self.mapped_to_key.get_active())
         self.command.set_sensitive(self.run_command.get_active())
         self.browse_for_command.set_sensitive(self.run_command.get_active())
         self.simple_macro.set_sensitive(self.run_simple_macro.get_active())
@@ -1470,15 +1548,33 @@ class G15Config:
             self.command.set_text(dialog.get_filename())
         dialog.destroy() 
         return False
+    
+    def _mapped_key_type_changed(self, widget):
+        key = self.map_type_model[widget.get_active()][0]
+        self.editing_macro.map_type = key
+        self.adjusting = True
+        try:
+            self._load_keys()
+        finally:
+            self.adjusting = False
+        self.mapped_key_combo.set_active(0)
+    
+    def _mapped_key_changed(self, widget):
+        if not self.adjusting:
+            key = self.mapped_key_model[widget.get_active()][0]
+            self.editing_macro.mapped_key = key
+            self._save_macro(self.editing_macro)
                 
     def _macro_type_changed(self, widget):
         if self.run_command.get_active():
             self.editing_macro.type = g15profile.MACRO_COMMAND
+        elif self.mapped_to_key.get_active():
+            self.editing_macro.type = g15profile.MACRO_MAPPED_TO_KEY
         elif self.run_simple_macro.get_active():
             self.editing_macro.type = g15profile.MACRO_SIMPLE
         else:
             self.editing_macro.type = g15profile.MACRO_SCRIPT
-        self.editing_macro.save()
+        self._save_macro(self.editing_macro)
         self._set_available_options()
         
     def _add_controls(self):
@@ -1610,7 +1706,7 @@ class G15Config:
         if not self.adjusting:
             self.selected_profile.set_mkey_color(self._get_memory_number(), 
                                                  g15util.color_to_rgb(widget.get_color()) if self.enable_color_for_m_key.get_active() else None)
-            self.selected_profile.save()
+            self._save_profile(self.selected_profile)
     
     def _color_for_mkey_enabled(self, widget):
         self.color_button.set_sensitive(widget.get_active())        

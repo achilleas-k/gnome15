@@ -91,7 +91,7 @@ class IndicatorMessagesMenuEntry(dbusmenu.DBUSMenuEntry):
             self.icon = self.properties[INDICATOR_ICON] if INDICATOR_ICON in self.properties else None
         
     def get_alt_label(self):
-        return self.properties[RIGHT_SIDE_TEXT] if RIGHT_SIDE_TEXT in self.properties else None
+        return self.properties[RIGHT_SIDE_TEXT] if RIGHT_SIDE_TEXT in self.properties else ""
         
     def is_app_running(self):
         return APP_RUNNING in self.properties and self.properties[APP_RUNNING]
@@ -99,9 +99,9 @@ class IndicatorMessagesMenuEntry(dbusmenu.DBUSMenuEntry):
 class IndicatorMessagesMenu(dbusmenu.DBUSMenu):
     def __init__(self, session_bus, on_change = None):
         try:
-            dbusmenu.DBUSMenu.__init__(self, session_bus, "org.ayatana.indicator.messages", "/org/ayatana/indicator/messages/menu", "org.ayatana.dbusmenu", on_change, False)
-        except dbus.DBusException as dbe:
             dbusmenu.DBUSMenu.__init__(self, session_bus, "com.canonical.indicator.messages", "/com/canonical/indicator/messages/menu", "com.canonical.dbusmenu", on_change, True)
+        except dbus.DBusException as dbe:
+            dbusmenu.DBUSMenu.__init__(self, session_bus, "org.ayatana.indicator.messages", "/org/ayatana/indicator/messages/menu", "org.ayatana.dbusmenu", on_change, False)
 
     def create_entry(self, id, properties):
         return IndicatorMessagesMenuEntry(id, properties, self)
@@ -117,6 +117,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
         self._session_bus = dbus.SessionBus()
 
     def activate(self):
+        self._status_icon = None
         self._raise_timer = None
         self._attention = False
         self._light_control = None
@@ -134,6 +135,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
     def create_menu(self):    
         self._messages_menu = IndicatorMessagesMenu(self._session_bus)
         self._messages_menu.on_change = self._menu_changed
+        self._check_status()
         return g15theme.DBusMenu(self._messages_menu)
     
     def deactivate(self):
@@ -182,8 +184,25 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
             self.screen.redraw()
             
     def _menu_changed(self, menu = None, property = None, value = None):
+        
         self.menu.menu_changed(menu, property, value)
         self._popup()
+        
+    def _check_status(self):
+        """
+        indicator-messages replaces indicator-me from Oneiric, so we get the current status icon if available
+        to show that on the panel too
+        """
+        self._status_icon = None
+        for c in self._messages_menu.menu_map:
+            menu_entry = self._messages_menu.menu_map[c]
+            if menu_entry.toggle_type == dbusmenu.TOGGLE_TYPE_RADIO and menu_entry.toggle_state == 1:
+                icon_name = menu_entry.get_icon_name()
+                if icon_name is not None and \
+                    icon_name in [ "user-available", "user-away", 
+                                    "user-busy", "user-offline", 
+                                    "user-invisible", "user-indeterminate" ]:
+                    self._status_icon = g15util.load_surface_from_file(g15util.get_icon_path(icon_name))
         
     '''
     Private
@@ -202,7 +221,8 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
             self.screen.driver.release_mkey_lights(self._light_control)
             self._light_control = None
         
-    def _popup(self):    
+    def _popup(self):
+        self._check_status()    
         if g15util.get_bool_or_default(self.gconf_client,"%s/raise" % self.gconf_key, True):
             if not self.page.is_visible():
                 self._raise_timer = self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 4.0)
@@ -220,5 +240,9 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
         if self.page != None:
+            t = 0
             if self.thumb_icon != None and self._attention == 1:
-                return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+                t += g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+            if self._status_icon != None:
+                t += g15util.paint_thumbnail_image(allocated_size, self._status_icon, canvas)
+            return t

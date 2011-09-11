@@ -183,6 +183,7 @@ class Component():
         self.child_map = {}
         self.parent = None
         self.screen = None
+        self.enabled = True
         self.theme_properties = {}    
         self.theme_attributes = {}
         self.theme_properties_callback = None    
@@ -195,6 +196,9 @@ class Component():
         self._tree_lock = RLock()
         self.do_clip = False
         self.allow_scrolling = None
+        
+    def is_enabled(self):
+        return self.enabled
         
     def get_tree_lock(self):
 #        if self.parent == None:
@@ -767,10 +771,12 @@ class Menu(Component):
     def add_child(self, child, index = -1):
         Component.add_child(self, child, index)
         self.select_first()
+        self.centre_on_selected()
     
     def remove_child(self, child):
         Component.remove_child(self, child)
         self.select_first()
+        self.centre_on_selected()
     
     def set_children(self, children):
         was_selected = self.selected
@@ -779,6 +785,14 @@ class Menu(Component):
             self.selected = was_selected
         else:
             self.select_first()
+        self.centre_on_selected()
+            
+    def centre_on_selected(self):
+        y = 0
+        for r in range(0, self._get_selected_index()):
+            y += self.get_item_height(self.children[r], True)
+        self.base = max(0, y - ( self.view_bounds[3] / 2 ))
+        self.get_root().redraw()
         
     def get_scroll_values(self):
         max_val = 0
@@ -890,8 +904,13 @@ class Menu(Component):
             if not self.selected == None and not self.contains_child(self.selected):
                 self.selected = None
             if self.selected == None:
-                if self.get_child_count() > 0:
-                    self.selected  = self.get_child(0)
+                cc = self.get_child_count()
+                if cc > 0:
+                    for i in range(0, cc):
+                        s = self.get_child(i)
+                        if s.is_enabled() and not isinstance(s, MenuSeparator) :
+                            self.selected  = s
+                            break
                 else:
                     self.selected = None
         finally:
@@ -920,6 +939,13 @@ class Menu(Component):
         self.mark_dirty()
         self.get_root().redraw()
         
+    def _get_selected_index(self):
+        c = self.get_children()
+        if not self.selected in c:
+            return 0 if len(c) > 0 else -1
+        else:
+            return self.index_of_child(self.selected)
+        
     def _move_up(self, amount = 1):
         self.get_tree_lock().acquire()
         try:
@@ -928,11 +954,7 @@ class Menu(Component):
             if self.on_move:
                 self.on_move()
             self._check_selected()
-            if not self.selected in self.get_children():
-                self.i = 0
-            else:
-                self.i = self.index_of_child(self.selected)
-                
+            self.i = self._get_selected_index()
             items = self.get_child_count()
             try:
                 if self.i == 0:
@@ -946,8 +968,8 @@ class Menu(Component):
                                 self.i = items - 1
                             else:
                                 self.i = 0
-                                return
-                        if not isinstance(self.get_child(self.i), MenuSeparator):
+                        c = self.get_child(self.i)
+                        if not isinstance(c, MenuSeparator) and c.is_enabled():
                             break
             finally:
                 self._do_selected()
@@ -962,10 +984,7 @@ class Menu(Component):
             if self.on_move:
                 self.on_move()
             self._check_selected()
-            if not self.selected in self.get_children():
-                self.i = 0
-            else:
-                self.i = self.index_of_child(self.selected)
+            self.i = self._get_selected_index()
                 
             items = self.get_child_count()
             try:
@@ -981,7 +1000,8 @@ class Menu(Component):
                             else:
                                 self.i = items - 1
                                 return
-                        if not isinstance(self.get_child(self.i), MenuSeparator):
+                        c = self.get_child(self.i)
+                        if not isinstance(c, MenuSeparator) and c.is_enabled():
                             break
             finally:
                 self._do_selected()
@@ -1026,10 +1046,16 @@ class DBusMenuItem(MenuItem):
     def activate(self):
         self.dbus_menu_entry.activate()
         
+    def is_enabled(self):
+        return self.dbus_menu_entry.enabled
+        
     def get_theme_properties(self):
         properties = MenuItem.get_theme_properties(self)
         properties["item_name"] = self.dbus_menu_entry.get_label() 
-        properties["item_type"] = self.dbus_menu_entry.type
+        properties["item_type"] = self.dbus_menu_entry.type 
+        properties["item_enabled"] = self.dbus_menu_entry.enabled
+        properties["item_radio"] = self.dbus_menu_entry.toggle_type == dbusmenu.TOGGLE_TYPE_RADIO
+        properties["item_radio_selected"] = self.dbus_menu_entry.toggle_state == 1
         properties["item_alt"] = self.dbus_menu_entry.get_alt_label()
         icon_name = self.dbus_menu_entry.get_icon_name()
         if icon_name != None:
@@ -1056,7 +1082,7 @@ class DBusMenu(Menu):
         
         # Scroll to item if it is newly visible
         if menu != None:
-            if property != None and property == dbusmenu.VISIBLE and value and menu.get_type() != "separator":
+            if property != None and property == dbusmenu.VISIBLE and value and menu.type != "separator":
                 self.selected = menu
         else:
             # Layout change
@@ -1074,6 +1100,8 @@ class DBusMenu(Menu):
                 if not item.id in current_ids:
                     self.selected = item
                     break
+        
+        self.select_first()
         
     def populate(self):
         self.get_tree_lock().acquire()

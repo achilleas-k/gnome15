@@ -33,9 +33,15 @@ VISIBLE = "visible"
 ICON_NAME = "icon-name"
 TYPE = "type"
 LABEL = "label"
+TOGGLE_TYPE = "toggle-type"
+TOGGLE_STATE = "toggle-state"
+ENABLED = "enabled"
 
 TYPE_SEPARATOR = "separator"
 TYPE_ROOT = "root"
+
+TOGGLE_TYPE_NONE = "none"
+TOGGLE_TYPE_RADIO = "radio"
 
 class DBUSMenuEntry():
     def __init__(self, id, properties, menu):
@@ -51,6 +57,9 @@ class DBUSMenuEntry():
         self.label = self.properties[LABEL] if LABEL in self.properties else None
         self.icon = None
         self.type = self.properties[TYPE] if TYPE in self.properties else TYPE_ROOT
+        self.toggle_type = self.properties[TOGGLE_TYPE] if TOGGLE_TYPE in self.properties else TOGGLE_TYPE_NONE
+        self.toggle_state = self.properties[TOGGLE_STATE] if TOGGLE_STATE in self.properties else 0
+        self.enabled = not ENABLED in self.properties or self.properties[ENABLED]
         
     def flatten(self, include_self = False):
         flat_list = []
@@ -73,7 +82,7 @@ class DBUSMenuEntry():
     def _flatten(self, element, flat_list):
         flat_list.append(element)
         for c in element.children:
-            _flatten(c, flat_list)
+            self._flatten(c, flat_list)
         
     def is_visible(self):
         return VISIBLE in self.properties and self.properties[VISIBLE]
@@ -105,7 +114,8 @@ class DBUSMenu():
         self.dbus_menu.connect_to_signal("ItemActivationRequested", self._item_activation_requested)
         
         # From Natty onwards
-        self.dbus_menu.connect_to_signal("ItemPropertiesUpdated", self._item_properties_updated)  
+        if self.natty:
+            self.dbus_menu.connect_to_signal("ItemsPropertiesUpdated", self._item_properties_updated)  
         
         self._get_layout()
         

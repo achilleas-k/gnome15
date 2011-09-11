@@ -451,6 +451,10 @@ def get_image_cache_file(filename, size = None):
     if os.path.exists(full_cache_path):
         return full_cache_path
     
+def is_url(path):
+    # TODO try harder
+    return "://" in path
+    
 def load_surface_from_file(filename, size = None):
     if filename == None:
         logger.warning("Empty filename requested")
@@ -467,7 +471,7 @@ def load_surface_from_file(filename, size = None):
             else:
                 return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(full_cache_path), size)
                 
-    if "://" in filename:
+    if is_url(filename):
         
         try:
             file = urllib.urlopen(filename)

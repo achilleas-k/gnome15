@@ -45,6 +45,7 @@ import g15profile
 import g15globals
 import g15drivermanager
 import g15theme
+import g15uinput
 import time
 import threading
 import cairo
@@ -52,6 +53,7 @@ import gconf
 import os.path
 import traceback
 import sys
+import uinput
 import logging
 from threading import RLock
 from g15exceptions import NotConnectedException
@@ -237,6 +239,7 @@ class G15Screen():
         self.fader = None
         self.keys_up = []
         self.keys_down = []
+        self.temp_acquired_controls = {}
         
         if not self._load_driver():
             raise Exception("Driver failed to load") 
@@ -265,6 +268,8 @@ class G15Screen():
     def start(self):
         logger.info("Starting %s." % self.device.uid)
         
+        g15profile.profile_listeners.append(self._profile_changed)
+        
         # Remove previous fader is it exists
         if self.fader:
             self.painters.remove(self.fader)
@@ -285,8 +290,11 @@ class G15Screen():
         logger.info("Starting for %s is complete." % self.device.uid)
         
     def stop(self, quickly = False):  
-        logger.info("Stopping screen for %s" % self.device.uid)      
+        logger.info("Stopping screen for %s" % self.device.uid)
+        g15uinput.deregister_codes(self.device.uid)      
         self.stopping = True
+        g15uinput.deregister_codes(self.device.uid)
+        g15profile.profile_listeners.remove(self._profile_changed)
         for h in self.notify_handles:
             self.conf_client.notify_remove(h)
         self.notify_handles = []
@@ -338,14 +346,11 @@ class G15Screen():
         self.redraw()
         
     def get_memory_bank(self):
-        control = self.driver.get_control_for_hint(g15driver.HINT_MKEYS)
-        if control and control.id in self.acquired_controls:
-            val = self.acquired_controls[control.id].val
-            return g15driver.get_memory_bank_for_mask(val)
-        return 0
+        return self.mkey
         
     def set_memory_bank(self, bank):
         logger.info("Setting memory bank to %d" % bank)
+        self.mkey = bank
         val = g15driver.get_mask_for_memory_bank(bank)
         control = self.driver.get_control_for_hint(g15driver.HINT_MKEYS)
         if control:
@@ -668,7 +673,7 @@ class G15Screen():
         
     def control_configuration_changed(self, client, connection_id, entry, args):
         key = os.path.basename(entry.key)
-        logger.info("Controls changed %s", str(key))
+        logger.debug("Controls changed %s", str(key))
         if self.driver != None:
             for control in self.driver.get_controls():
                 if key == control.id and control.hint & g15driver.HINT_VIRTUAL == 0:
@@ -677,7 +682,25 @@ class G15Screen():
                     else:
                         rgb = entry.value.get_string().split(",")
                         value = (int(rgb[0]), int(rgb[1]), int(rgb[2]))
-                    self.acquired_controls[control.id].set_value(value)                    
+                        
+                    """
+                    This sets the "root" acquisition so the colour/level is
+                    whatever it is when nothing else has acquired
+                    """
+                    self.acquired_controls[control.id].set_value(value)
+                    
+                    """
+                    Also create a temporary acquisition to override any 
+                    other acquisitions, such as profile/bank levels
+                    """                    
+                    if control.id in self.temp_acquired_controls:
+                        acq = self.temp_acquired_controls[control.id]
+                        if acq.is_active():
+                            self.driver.release_control(acq)                    
+                    acq = self.driver.acquire_control(control, release_after = 3.0)
+                    self.temp_acquired_controls[control.id] = acq
+                    acq.set_value(value)
+                    
                     break
             self.redraw()
         
@@ -715,13 +738,36 @@ class G15Screen():
             logger.info("Active profile changed to %s" % new_profile.name)
             self.activate_profile()
         self.set_color_for_mkey()
+        self._check_uinput()
                 
         return 1
 
     def activate_profile(self):
         logger.debug("Activating profile")
+        
         if self.driver and self.driver.is_connected():
             self.set_memory_bank(1)
+                
+    def _profile_changed(self, profile_id, device_uid):
+        self.set_color_for_mkey()
+        self._check_uinput()
+        
+    def _check_uinput(self):         
+        active_profile = g15profile.get_active_profile(self.device)
+        keys = { g15uinput.MOUSE: [], g15uinput.JOYSTICK: [], g15uinput.KEYBOARD: [] }
+        if self.driver and self.driver.is_connected() and active_profile is not None:
+            for bank in active_profile.macros:
+                for macro in bank:
+                    if macro.type == g15profile.MACRO_MAPPED_TO_KEY:
+                        uinput_code = macro.get_uinput_code()
+                        if uinput_code > 0:
+                            keys[macro.map_type].append(uinput_code)        
+        for k in keys:
+            if len(keys[k]) == 0:
+                g15uinput.deregister_codes(self.device.uid)
+            else:
+                g15uinput.register_codes(self.device.uid, k, keys[k])
+                 
     
     def deactivate_profile(self):
         logger.debug("De-activating profile")
@@ -774,19 +820,19 @@ class G15Screen():
             # Watch for keys that are being held down
             if state == g15driver.KEY_STATE_DOWN:
                 self.keys_down += keys
-                logger.info("Keys %s pressed" % str(keys))
+                logger.debug("Keys %s pressed" % str(keys))
                 for k in keys:
-                    logger.info("Keys %s held" % str(k))
+                    logger.debug("Keys %s held" % str(k))
                     self.keys_held[k] = g15util.schedule("HoldKey%s" % str(k), self.service.key_hold_duration, self.key_received, keys, g15driver.KEY_STATE_HELD)
             elif state == g15driver.KEY_STATE_UP:
-                logger.info("Keys %s released" % str(keys))
+                logger.debug("Keys %s released" % str(keys))
                 self.keys_up += keys
                 for k in self.keys_held.keys():
-                    logger.info("Keys %s unheld" % str(k))
+                    logger.debug("Keys %s unheld" % str(k))
                     timer = self.keys_held[k]
                     if timer.is_complete():
                         # Key "hold" completed
-                        logger.info("Consuming key %s" %k)
+                        logger.debug("Consuming key %s" %k)
                         if k in self.active_key_state:
                             del self.active_key_state[k]
                         if k in keys:
@@ -796,16 +842,16 @@ class G15Screen():
                 if len(self.keys_held) == 0:
                     self.active_key_state = {}
             elif state == g15driver.KEY_STATE_HELD:
-                logger.info("Keys %s HELD" % str(keys))
+                logger.debug("Keys %s HELD" % str(keys))
                 
-            logger.info("Keys up %d (%s), keys down %d (%s)" % ( len(self.keys_up), str(self.keys_up), len(self.keys_down), str(self.keys_down) ))
+            logger.debug("Keys up %d (%s), keys down %d (%s)" % ( len(self.keys_up), str(self.keys_up), len(self.keys_down), str(self.keys_down) ))
             if state == g15driver.KEY_STATE_UP:
                 if len(self.keys_down) > len(self.keys_up):
                     # Not all keys have yet been released
-                    logger.info("All keys not yet released")
+                    logger.debug("All keys not yet released")
                     return
                 else:
-                    logger.info("All keys now released")
+                    logger.debug("All keys now released")
                     # All keys now released
                     keys = self.keys_down
                     self.keys_down = []
@@ -817,15 +863,24 @@ class G15Screen():
                 # See if the screen itself, or the plugins,  want to handle the key 
                 if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
                     return        
-                
-                # Special case for the light key
-                if state == g15driver.KEY_STATE_UP:
         
-                    profile = g15profile.get_active_profile(self.device)
-                    if profile != None:
-                        macro = profile.get_macro(self.get_memory_bank(), keys)
-                        if macro != None:
+                macro = None
+                profile = g15profile.get_active_profile(self.device)
+                if profile != None:
+                    macro = profile.get_macro(self.get_memory_bank(), keys)
+                                        
+                if macro != None:
+                    if state == g15driver.KEY_STATE_UP:
+                        if macro.type == g15profile.MACRO_MAPPED_TO_KEY:
+                            uc = macro.get_uinput_code()
+                            g15uinput.emit(macro.map_type, uc, 0)
+                        else:
+                            # Send it to the service for handling
                             self.service.handle_macro(macro)                
+                    else:
+                        if macro.type == g15profile.MACRO_MAPPED_TO_KEY:
+                            uc = macro.get_uinput_code()
+                            g15uinput.emit(macro.map_type, uc, 1)
                                     
                 # See if there is any 'post' handling by the screen itself or by the plugins
                 if not self.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True):
@@ -919,9 +974,6 @@ class G15Screen():
             self._process_exception(e)
             self.driver = None
             return False
-        
-    def profiles_changed(self, client, connection_id, entry, args):
-        self.set_color_for_mkey()
         
     def error_on_keyboard_display(self, text, title = "Error", icon = "dialog-error"):
         page = g15theme.ErrorScreen(self, title, text, icon)
@@ -1074,6 +1126,7 @@ class G15Screen():
                     self.splash.update_splash(0, 100, "Starting up ..")
                 self.set_memory_bank(1)
                 self.activate_profile()
+                self._check_uinput()
                 self.last_error = None
                 for listener in self.screen_change_listeners:
                     listener.driver_connected(self.driver)
@@ -1123,7 +1176,7 @@ class G15Screen():
             # then passed to any transition functions registered
             if visible_page != self.visible_page: 
                 logger.debug("Page has changed, recreating surface")
-                if visible_page.priority == PRI_NORMAL:   
+                if visible_page.priority == PRI_NORMAL and not self.stopping:   
                     self.service.conf_client.set_string("/apps/gnome15/%s/last_page" % self.device.uid, visible_page.id)  
                 surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
                 

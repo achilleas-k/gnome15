@@ -29,6 +29,7 @@ import cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
+import gnome15.g15exceptions as g15exceptions
 import sys
 import os
 import gconf
@@ -179,8 +180,12 @@ class Driver(g15driver.AbstractDriver):
         if e:
             reset_wait = e.get_int()
         
-        self.lg19 = G19(reset, False, timeout, reset_wait)
-        self.connected = True
+        try:
+            self.lg19 = G19(reset, False, timeout, reset_wait)
+            self.connected = True
+        except usb.USBError as e:
+            logger.error("Failed to connect. %s" % str(e))
+            raise g15exceptions.NotConnectedException()
         
         # Start listening for keys
         self.lg19.add_input_processor(self)  

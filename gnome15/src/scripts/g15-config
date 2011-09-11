@@ -54,9 +54,5 @@ import gnome15.g15config as g15config
 import gnome15.g15globals as pglobals
 import gnome15.g15drivermanager as g15drivermanager
 
-try:
-    a = g15config.G15Config()
-    a.run()
-except Exception as e:
-    dialog = gtk.MessageDialog(None, 0, gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE, str(e))
-    dialog.run()
+a = g15config.G15Config()
+a.run()

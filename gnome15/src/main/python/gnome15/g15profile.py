@@ -22,11 +22,13 @@ import gconf
 import time
 import g15util
 import g15devices
+import g15uinput
 import ConfigParser
 import os.path
 import errno
 import pyinotify
 import logging
+import uinput
 
 logger = logging.getLogger("macros")
 active_profile = None
@@ -147,6 +149,7 @@ Macro types
 MACRO_COMMAND="command"
 MACRO_SIMPLE="simple"
 MACRO_SCRIPT="script"
+MACRO_MAPPED_TO_KEY="mapped-to-key"
             
 class G15Macro:
     
@@ -157,6 +160,8 @@ class G15Macro:
         self.profile = profile
         self.name = ""
         self.macro = ""
+        self.mapped_key = ""
+        self.map_type = g15uinput.MOUSE
         self.type = MACRO_SCRIPT
         self.command = ""
         self.simple_macro = ""
@@ -183,6 +188,8 @@ class G15Macro:
         else:
             return 200 + self.profile.device.get_key_index(key)
         
+    def get_uinput_code(self):
+        return uinput.capabilities.CAPABILITIES[self.mapped_key] if self.mapped_key in uinput.capabilities.CAPABILITIES else 0
         
     def set_keys(self, keys):
         section_name = "m%d" % self.memory     
@@ -199,6 +206,8 @@ class G15Macro:
         section_name = "m%d" % self.memory
         self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_name", self.name)
         self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_macro", self.macro)
+        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_mappedkey", self.mapped_key)
+        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_maptype", self.map_type)
         self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_type", self.type)
         self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_command", self.command)
         self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_simplemacro", self.simple_macro)
@@ -207,6 +216,8 @@ class G15Macro:
         self.type = self._get("type", MACRO_SCRIPT)
         self.command = self._get("command", "")
         self.simple_macro = self._get("simplemacro", "")
+        self.mapped_key = self._get("mappedkey", "")
+        self.map_type = self._get("maptype", "")
         self.name = self._get("name", "")
         self.macro = self._get("macro", "")
         

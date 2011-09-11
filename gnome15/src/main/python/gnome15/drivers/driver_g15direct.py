@@ -28,6 +28,7 @@ import cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
+import gnome15.g15uinput as g15uinput
 import gnome15.g15exceptions as g15exceptions
 import sys
 import os
@@ -37,9 +38,8 @@ import traceback
 import logging
 import ImageMath
 import Image
-import time
+import uinput
 import array
-from threading import Thread
 load_error = None
 try :
     import pylibg15
@@ -93,15 +93,27 @@ KEY_MAP = {
         g15driver.G_KEY_L4  : 1<<25,
         g15driver.G_KEY_L5  : 1<<26,
         
-        g15driver.G_KEY_LIGHT : 1<<27,
-        g15driver.G_KEY_G19 : 1<<28,
-        g15driver.G_KEY_G20 : 1<<29,
-        g15driver.G_KEY_G21 : 1<<30,
-        g15driver.G_KEY_G22 : 1<<31,
+        g15driver.G_KEY_LIGHT : 1<<27
+}
+
+EXT_KEY_MAP = {        
+        g15driver.G_KEY_G19 : 1<<1,
+        g15driver.G_KEY_G20 : 1<<2,
+        g15driver.G_KEY_G21 : 1<<3,
+        g15driver.G_KEY_G22 : 1<<4,
+        
+        g15driver.G_KEY_JOY_LEFT  : 1<<5,
+        g15driver.G_KEY_JOY_DOWN  : 1<<6,
+        g15driver.G_KEY_JOY_CENTER  : 1<<7,
+        g15driver.G_KEY_JOY : 1<<8
         }
+
 REVERSE_KEY_MAP = {}
 for k in KEY_MAP.keys():
     REVERSE_KEY_MAP[KEY_MAP[k]] = k
+EXT_REVERSE_KEY_MAP = {}
+for k in EXT_KEY_MAP.keys():
+    EXT_REVERSE_KEY_MAP[EXT_KEY_MAP[k]] = k
 
 mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
 color_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
@@ -145,8 +157,9 @@ G15_LOG_WARN = 0
 
 def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.glade"))    
-    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
+    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15direct.glade"))  
+    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)  
+    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
     return widget_tree.get_object("DriverComponent")
 
 def fix_sans_style(root):
@@ -164,7 +177,12 @@ class Driver(g15driver.AbstractDriver):
         g15driver.AbstractDriver.__init__(self, "g15direct")
         self.on_close = on_close
         self.device = device
+        self.timer = None
+        self.joy_mode = None
         self.lock = RLock()
+        self.down = []
+        self.move_x = 0
+        self.move_y = 0
         self.connected = False
         self.conf_client = gconf.client_get_default()
         self.last_keys = None
@@ -182,7 +200,17 @@ class Driver(g15driver.AbstractDriver):
         return controls[self.device.model_id]
     
     def get_key_layout(self):
-        return self.device.key_layout
+        if self.get_model_name() == g15driver.MODEL_G13 and "macro" == self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid):
+            """
+            This driver with the G13 supports some additional keys
+            """
+            l = list(self.device.key_layout)
+            l.append([ g15driver.G_KEY_UP ])
+            l.append([ g15driver.G_KEY_JOY_LEFT, g15driver.G_KEY_LEFT, g15driver.G_KEY_JOY_CENTER, g15driver.G_KEY_RIGHT ])
+            l.append([ g15driver.G_KEY_JOY_DOWN, g15driver.G_KEY_DOWN ])
+            return l
+        else:
+            return self.device.key_layout
     
     def get_action_keys(self):
         return self.device.action_keys
@@ -206,12 +234,13 @@ class Driver(g15driver.AbstractDriver):
     def get_model_name(self):
         return self.device.model_id
         
-    def connect(self):      
+    def connect(self):  
         if self.is_connected():
             raise Exception("Already connected")
           
         self.thread = None  
         self.callback = None
+        self.notify_handles = []
                 
         # Create an empty string buffer for use with monochrome LCD
         self.empty_buf = ""
@@ -234,9 +263,35 @@ class Driver(g15driver.AbstractDriver):
 
         for control in self.get_controls():
             self._do_update_control(control)
+        
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/joymode" % self.device.uid, self._config_changed, None))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/timeout" % self.device.uid, self._config_changed, None))
+            
+        # Setup joystick configuration on G13
+        self.calibration = 18   
+        self._load_configuration()
+        
+    def _load_configuration(self):
+        self.joy_mode = self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
+        g15uinput.deregister_codes("g15_direct/%s" % self.device.uid)
+        if self.joy_mode == "mouse":
+            logger.info("Enabling relative mouse emulation")            
+            g15uinput.register_codes("g15_direct/%s" % self.device.uid, g15uinput.MOUSE, [uinput.BTN_MOUSE, uinput.BTN_RIGHT, uinput.BTN_MIDDLE ])
+        elif self.joy_mode == "joystick":
+            logger.info("Enabling Joystick emulation")            
+            g15uinput.register_codes("g15_direct/%s" % self.device.uid, g15uinput.JOYSTICK, [uinput.BTN_1, uinput.BTN_2, uinput.BTN_3 ], {
+                                        uinput.ABS_X: (0, 255, 0, 0),
+                                        uinput.ABS_Y: (0, 255, 0, 0),
+                                                 })
+            
+    def _config_changed(self, client, connection_id, entry, args):
+        self._load_configuration()
             
     def on_disconnect(self):  
         if self.is_connected():
+            g15uinput.deregister_codes("g15_direct/%s" % self.device.uid)
+            for h in self.notify_handles:
+                self.conf_client.notify_remove(h)
             logger.info("Exiting pylibg15")
             pylibg15.exit()
             self.connected = False
@@ -335,19 +390,46 @@ class Driver(g15driver.AbstractDriver):
             
     def _convert_from_g15daemon_code(self, code):
         keys = []
-        for key in REVERSE_KEY_MAP:
-            if code & key != 0:
-                keys.append(REVERSE_KEY_MAP[key])
+        if code & (1<<28) != 0:
+            for key in EXT_REVERSE_KEY_MAP:
+                if code & key != 0:
+                    keys.append(EXT_REVERSE_KEY_MAP[key])
+        else:
+            for key in REVERSE_KEY_MAP:
+                if code & key != 0:
+                    keys.append(REVERSE_KEY_MAP[key])
         return keys   
         
     def _handle_key_event(self, code):
-#        if self.last_keys is None and code == KEY_MAP[g15driver.G_KEY_LIGHT]:
-#            logger.warning("DROPPING first key event due to bug in libg15")
-#            self.last_keys = []
-#            return
         
-        logger.info("Key code %d" % code)
+        if not self.is_connected() or self.disconnecting:
+            return
+        
+        if logger.level == logging.DEBUG:
+            logger.debug("Key code %d" % code)
         this_keys = [] if code == 0 else self._convert_from_g15daemon_code(code)
+        
+                    
+        # For now, emulate a digital joystick
+        if self.get_model_name() == g15driver.MODEL_G13:
+            low_val = 128 - self.calibration
+            high_val = 128 + self.calibration
+            max_step = 5
+                
+            if g15driver.G_KEY_JOY in this_keys:
+                this_keys.remove(g15driver.G_KEY_JOY)
+            pos = pylibg15.get_joystick_position()
+            
+            if logger.level == logging.DEBUG:
+                logger.debug("Joystick at %s" % str(pos))
+            
+            if self.joy_mode == "joystick":
+                self._abs_joystick(this_keys, pos)
+            elif self.joy_mode == "mouse":
+                self._rel_mouse(this_keys, pos, low_val, high_val, max_step)                 
+            else:
+                self._emit_macro_keys(this_keys, pos, low_val, high_val)            
+        
         up = []
         down = []
         
@@ -367,9 +449,78 @@ class Driver(g15driver.AbstractDriver):
         
         self.last_keys = this_keys
         
+    def _emit_macro_keys(self, this_keys, pos, low_val, high_val):
+        if pos[0] < low_val:
+            this_keys.append(g15driver.G_KEY_LEFT)                    
+        elif pos[0] > high_val:
+            this_keys.append(g15driver.G_KEY_RIGHT)                    
+        elif pos[1] < low_val:
+            this_keys.append(g15driver.G_KEY_UP)
+        elif pos[1] > high_val:
+            this_keys.append(g15driver.G_KEY_DOWN)
+            
+    def _check_js_buttons(self, this_keys):        
+        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_LEFT, uinput.BTN_1)
+        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_DOWN, uinput.BTN_2)
+        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_CENTER, uinput.BTN_3)
+            
+    def _check_mouse_buttons(self, this_keys):        
+        self._check_buttons(g15uinput.MOUSE, this_keys, g15driver.G_KEY_JOY_LEFT, uinput.BTN_MOUSE)
+        self._check_buttons(g15uinput.MOUSE, this_keys, g15driver.G_KEY_JOY_DOWN, uinput.BTN_RIGHT)
+        self._check_buttons(g15uinput.MOUSE, this_keys, g15driver.G_KEY_JOY_CENTER, uinput.BTN_MIDDLE)
+        
+    def _rel_mouse(self, this_keys, pos, low_val, high_val, max_step):
+        self._check_mouse_buttons(this_keys)
+        
+        relx = 0    
+        rely = 0
+        
+        if pos[0] < low_val:
+            relx = ( low_val - pos[0] ) * -1                    
+        elif pos[0] > high_val:
+            relx = pos[0] - high_val                    
+        if pos[1] < low_val:
+            rely = ( low_val - pos[1] ) * -1
+        elif pos[1] > high_val:
+            rely = pos[1] - high_val
+            
+        relx = -max_step if relx < -max_step else ( max_step if relx > max_step else relx)
+        rely = -max_step if rely < -max_step else ( max_step if rely > max_step else rely)
+            
+        self.move_x = relx
+        self.move_y = rely
+        if relx != 0 or rely != 0:
+            self._mouse_move() 
+        else:
+            if self.timer is not None:                    
+                self.timer.cancel()
+        
+    def _abs_joystick(self, this_keys, pos):
+        self._check_js_buttons(this_keys) 
+        g15uinput.emit(g15uinput.JOYSTICK, uinput.ABS_X, pos[0], syn=False)
+        g15uinput.emit(g15uinput.JOYSTICK, uinput.ABS_Y, pos[1])
+        
+    def _check_buttons(self, target, this_keys, key, button):        
+        if key in this_keys:
+            this_keys.remove(key)
+            if not key in self.down:
+                g15uinput.emit(target, button, 1)
+                self.down.append(key)
+        elif key in self.down:
+            g15uinput.emit(target, button, 0)
+            self.down.remove(key)
+        
+    def _mouse_move(self):
+        if self.move_x != 0 or self.move_y != 0:        
+            if self.move_x != 0:
+                g15uinput.emit(g15uinput.MOUSE, uinput.REL_X, self.move_x)        
+            if self.move_y != 0:
+                g15uinput.emit(g15uinput.MOUSE, uinput.REL_Y, self.move_y)
+            self.timer = g15util.schedule("MouseMove", 0.05, self._mouse_move)
+        
     def _do_update_control(self, control):
         level = control.value
-        logger.info("Updating control %s to %s" % (str(control.id), str(control.value)))
+        logger.debug("Updating control %s to %s" % (str(control.id), str(control.value)))
         if control.id == backlight_control.id:
             self.check_control(control)
             pylibg15.set_keyboard_brightness(level)

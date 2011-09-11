@@ -40,7 +40,9 @@ logger = logging.getLogger("indicator-me")
 # Plugin details - All of these must be provided
 id="indicator-me"
 name="Indicator Me"
-description="Indicator that shows user information and status."
+description="Indicator that shows user information and status.\n\n" + \
+    "NOTE, this plugin is not required on Ubuntu 11.10 and onwards, as the " + \
+    "functionality is now provided by Indicator Messages"
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"

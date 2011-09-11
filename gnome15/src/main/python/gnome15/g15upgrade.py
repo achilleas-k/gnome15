@@ -29,6 +29,7 @@ import g15devices
 import g15util
 import logging
 import shutil
+import sys
 import subprocess
 
 logger = logging.getLogger("service")
@@ -96,7 +97,11 @@ def version_0_x_0_to_0_7_0():
         Tell GConf to reload it caches by finding it's process ID and sending it
         SIGHUP
         """
-        process_info = subprocess.check_output(["sh", "-c", "ps -U %d|grep gconfd|head -1" % os.getuid()])
+        if sys.version_info > (2, 6):
+            process_info = subprocess.check_output(["sh", "-c", "ps -U %d|grep gconfd|head -1" % os.getuid()])
+        else:
+            import commands
+            process_info = commands.getstatusoutput("sh -c \"ps -U %d|grep gconfd|head -1\"" % os.getuid()) 
         if process_info:
             pid = g15util.split_args(process_info)[0]
             logger.info("Sending process %s SIGHUP" % pid)
