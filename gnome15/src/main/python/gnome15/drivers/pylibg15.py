@@ -52,6 +52,7 @@ class KeyboardReceiveThread(Thread):
         self._run = True
         self.name = "KeyboardReceiveThread"
         self.callback = callback
+        self.on_exit = None
         
     def deactivate(self):
         if self._run:
@@ -65,6 +66,8 @@ class KeyboardReceiveThread(Thread):
                 if err == G15_NO_ERROR:
                     self.callback(pressed_keys.value)
         finally:
+            if self.on_exit is not None:
+                self.on_exit()
             self._run = True
 
 class libg15_devices_t(Structure):
@@ -127,18 +130,3 @@ def get_joystick_position():
 
 def __handle_key(code):
     print "Got %d" %code
-
-# run it in a gtk window
-if __name__ == "__main__":
-    set_debug(G15_LOG_INFO)
-    if init() != G15_NO_ERROR:
-        raise Exception("Failed to initialise libg15")
-    import time
-    grab_keyboard(__handle_key).run()
-    while True:
-        for x in range(0, 16):
-            set_leds(x)
-            time.sleep(1.0)
-        for j in range(0, 3):
-            set_keyboard_brightness(j)
-            time.sleep(1.0)

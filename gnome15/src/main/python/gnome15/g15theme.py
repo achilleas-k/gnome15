@@ -959,22 +959,41 @@ class Menu(Component):
             try:
                 if self.i == 0:
                     self.i = items - 1
-                    return    
-                for a in range(0, abs(amount), 1):
-                    while True:
-                        self.i -= 1 
-                        if self.i < 0:
-                            if a == 0:
-                                self.i = items - 1
-                            else:
-                                self.i = 0
-                        c = self.get_child(self.i)
-                        if not isinstance(c, MenuSeparator) and c.is_enabled():
-                            break
+                    return
+                
+                first_enabled = self._get_first_enabled()
+                if first_enabled > -1:
+                    for a in range(0, abs(amount), 1):
+                        while True:
+                            self.i -= 1 
+                            if self.i < first_enabled:
+                                if a == 0:
+                                    self.i = self._get_last_enabled()
+                                    return
+                                else:
+                                    self.i = first_enabled
+                            c = self.get_child(self.i)
+                            if not isinstance(c, MenuSeparator) and c.is_enabled():
+                                break
             finally:
                 self._do_selected()
         finally:
             self.get_tree_lock().release()
+            
+    def _get_first_enabled(self):
+        for ci in range(0, self.get_child_count()):
+            c = self.get_child(ci)
+            if not isinstance(c, MenuSeparator) and c.is_enabled():
+                return ci
+        return -1
+            
+    def _get_last_enabled(self):
+        for ci in range(self.get_child_count() - 1, 0, -1):
+            c = self.get_child(ci)
+            if not isinstance(c, MenuSeparator) and c.is_enabled():
+                return ci
+        return -1
+                
             
     def _move_down(self, amount = 1):
         self.get_tree_lock().acquire()
@@ -990,19 +1009,23 @@ class Menu(Component):
             try:
                 if self.i == items - 1:
                     self.i = 0
-                    return            
-                for a in range(0, abs(amount), 1):
-                    while True:
-                        self.i += 1
-                        if self.i == items:
-                            if a == 0:
-                                self.i = 0
-                            else:
-                                self.i = items - 1
-                                return
-                        c = self.get_child(self.i)
-                        if not isinstance(c, MenuSeparator) and c.is_enabled():
-                            break
+                    return
+                    
+                first_enabled = self._get_first_enabled()
+                         
+                if first_enabled > -1:
+                    for a in range(0, abs(amount), 1):       
+                        while True:
+                            self.i += 1
+                            if self.i == items:
+                                if a == 0:
+                                    self.i = first_enabled
+                                    return
+                                else:
+                                    self.i = self._get_last_enabled()
+                            c = self.get_child(self.i)
+                            if not isinstance(c, MenuSeparator) and c.is_enabled():
+                                break
             finally:
                 self._do_selected()
         finally:
