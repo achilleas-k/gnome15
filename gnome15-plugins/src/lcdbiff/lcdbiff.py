@@ -24,6 +24,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import gobject
 import os
+import pwd
 import gtk
 import traceback
 import gnomekeyring as gk
@@ -60,7 +61,7 @@ actions={
          }
 
 # Constants
- 
+CURRENT_USERNAME=pwd.getpwuid(os.getuid())[0] 
 POP3 = "pop3"
 IMAP = "imap"
 TYPES = [ POP3, IMAP ]
@@ -92,7 +93,7 @@ class Checker():
     
     def get_username(self, account):
         username = account.get_property("username", "")
-        return username if username != "" else os.environ["LOGNAME"]
+        return username if username != "" else CURRENT_USERNAME
     
     def get_hostname(self, account):
         hostname = account.get_property("server", "")
@@ -647,7 +648,8 @@ class G15Biff(g15plugin.G15MenuPlugin):
                 item.error = e
                 item.count = 0
                 item.icon_path =  g15util.get_icon_path("new-messages-red")
-                traceback.print_exc()
+                if logger.level < logging.WARN and logger.level != logging.NOTSET:
+                    traceback.print_exc()
         
         if self.total_errors > 0:
             self._stop_blink()

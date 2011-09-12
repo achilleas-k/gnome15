@@ -40,9 +40,9 @@ import base64
 #
 BUS_NAME = "org.gnome15.Gnome15Lens"
 
-# Group ids. Must match the offset into the group models
-GROUP_SCREENS = 0
-GROUP_TOOLS = 0
+# These category ids must match the order in which we add them to the lens
+CATEGORY_PAGES = 0
+CATEGORY_TOOLS = 1
  
 # Plugin details - All of these must be provided
 id="lens"
@@ -87,61 +87,30 @@ class G15Lens():
         if result != 1 :
             print >> sys.stderr, "Failed to own name %s. Bailing out." % BUS_NAME
             raise Exception("Failed to own name %s. Bailing out." % BUS_NAME)
-    
-        self._entry = Unity.PlaceEntryInfo.new ("/org/gnome15/Gnome15Lens/mainentry")
+        
+        self._lens = Unity.Lens.new("/org/gnome15/Gnome15Lens", "Gnome15Lens")
+        self._scope = Unity.PlaceEntryInfo.new ("/org/gnome15/Gnome15Lens/scope/main")
     #
-        sections_model = Dee.SharedModel.new (BUS_NAME + ".SectionsModel");
-        sections_model.set_schema ("s", "s");
-        self._entry.props.sections_model = sections_model
-
-        groups_model = Dee.SharedModel.new (BUS_NAME + ".GroupsModel");
-        groups_model.set_schema ("s", "s", "s");
-        self._entry.props.entry_renderer_info.props.groups_model = groups_model
-
-        global_groups_model = Dee.SharedModel.new (BUS_NAME + ".GlobalGroupsModel");
-        global_groups_model.set_schema ("s", "s", "s");
-        self._entry.props.global_renderer_info.props.groups_model = global_groups_model
-
-        results_model = Dee.SharedModel.new (BUS_NAME + ".ResultsModel");
-        results_model.set_schema ("s", "s", "u", "s", "s", "s");
-        self._entry.props.entry_renderer_info.props.results_model = results_model
-
-        global_results_model = Dee.SharedModel.new (BUS_NAME + ".GlobalResultsModel");
-        global_results_model.set_schema ("s", "s", "u", "s", "s", "s");
-        self._entry.props.global_renderer_info.props.results_model = global_results_model
-
-        #
-        # Populate the sections and groups once we are in sync with Unity
-        #
-        sections_model.connect ("notify::synchronized", self._on_sections_synchronized)
-        groups_model.connect ("notify::synchronized", self._on_groups_synchronized)
-        global_groups_model.connect ("notify::synchronized", self._on_global_groups_synchronized)
-
-        #
-        # Set up the signals we'll receive when Unity starts to talk to us
-        #
+        self._lens.props.search_hint = "LCD Page name ..."
+        self._lens.props.visible = True
+        self._lens.props.search_in_global = True
         
-        # The 'active-search' property is changed when the users searches
-        # within this particular place
-        self._entry.connect ("notify::active-search", self._on_search_changed)
+        # Populate categories
+        cats = []
+        cats.append (Unity.Category.new ("Pages",
+                                         Gio.ThemedIcon.new("display"),
+                                         Unity.CategoryRenderer.VERTICAL_TILE))
+        cats.append (Unity.Category.new ("Tools",
+                                         Gio.ThemedIcon.new("configuration-section"),
+                                         Unity.CategoryRenderer.VERTICAL_TILE))
+        self._lens.props.categories = cats
         
-        # The 'active-global-search' property is changed when the users searches
-        # from the Dash aka Home Screen
-        self._entry.connect ("notify::active-global-search", self._on_global_search_changed)
+        # Listen for changes and requests
+        self._scope.connect ("notify::active-search", self._on_search_changed)
+        self._scope.connect ("notify::active-global-search", self._on_global_search_changed)
         
-        #
-        # PlaceEntries are housed by PlaceControllers.
-        # You may have mutiple entries per controller if you like.
-        # The controller *must* have the DBus Object path you specify
-        # in your .place file
-        #
-        self._ctrl = Unity.PlaceController.new ("/org/gnome15/Gnome15Lens")        
-        self._ctrl.add_entry (self._entry)
-        self._ctrl.export ()
-        self._ctrl.activation = self
-        for screen in self._service.screens:
-            self._add_screen(screen)
-        self._service.service_listeners.append(self)
+        self._lens.add_local_scope (self._scope);
+        self._lens.export ();
     
     def do_activate(self, *args):
         print "activate:", args
@@ -173,22 +142,22 @@ class G15Lens():
         pass
     
     def get_search_string (self):
-        search = self._entry.props.active_search
+        search = self._scope.props.active_search
         return search.get_search_string() if search else None
     
     def get_global_search_string (self):
-        search = self._entry.props.active_global_search
+        search = self._scope.props.active_global_search
         return search.get_search_string() if search else None
     
     def search_finished (self):
-        search = self._entry.props.active_search
+        search = self._scope.props.active_search
         if search:
-            search.finished ()
+            search.emit ("finished")
     
     def global_search_finished (self):
-        search = self._entry.props.active_global_search
+        search = self._scope.props.active_global_search
         if search:
-            search.finished()
+            search.emit("finished")
             
     """
     Private
@@ -229,7 +198,7 @@ class G15Lens():
     
     def _on_search_changed (self, *args):        
         search = self.get_search_string()
-        results = self._entry.props.entry_renderer_info.props.results_model
+        results = self._entry.props.results_model
         
         print "Search changed to: '%s'" % search
         
@@ -253,16 +222,16 @@ class G15Lens():
             print "   L[%s]" % str(listener)
             for page in listener.screen.pages:
                 if len(search) == 0 or search in page.title.lower(): 
-                    group = GROUP_SCREENS
                     icon_hint = listener._get_page_filename(page)
                     uri = "gnome15://%s" % base64.encodestring(page.id)
                     print "      URI %s" % uri
                     model.append (uri,    # uri
-                                  icon_hint,                                   # string formatted GIcon
-                                  group,                                       # numeric group id
-                                  "text/html",                                 # mimetype
-                                  page.title,                                      # display name
-                                  page.title) # comment
+                                  icon_hint,        # string formatted GIcon
+                                  CATEGORY_PAGES,   # numeric group id
+                                  "text/html",      # mimetype
+                                  page.title,       # display name
+                                  page.title,       # comment,
+                                  uri)              # FIXME WHATSTHIS?
             
         print str(model)
     

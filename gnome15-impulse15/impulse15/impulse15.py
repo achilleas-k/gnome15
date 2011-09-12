@@ -27,6 +27,10 @@ import os
 import sys
 import datetime
 
+# Logging
+import logging
+logger = logging.getLogger("impulse15")
+
 id="impulse15"
 name="Impulse15"
 description="Spectrum analyser. Based on the Impulse screenlet and desktop widget"
@@ -167,6 +171,7 @@ class G15Impulse():
         self.active = False
         self.last_paint = None
         self.audio_source_index = 0
+        self.config_change_timer = None
 
         import impulse
         sys.modules[ __name__ ].impulse = impulse
@@ -214,6 +219,7 @@ class G15Impulse():
         if self.timer != None:
             self.timer.cancel()
             self.timer = None
+        g15util.clear_jobs("impulseQueue")
         
     def destroy(self):
         pass
@@ -243,9 +249,9 @@ class G15Impulse():
             self.painter.do_lights()
         else:
             if self.paint_mode == "screen" and self.visible:
-                self.screen.redraw(self.page)
+                self.screen.redraw(self.page, queue = False)
             elif self.paint_mode != "screen": 
-                self.screen.redraw(redraw_content = False)
+                self.screen.redraw(redraw_content = False, queue = False)
         self._schedule_redraw()
         
     """
@@ -257,12 +263,18 @@ class G15Impulse():
             next_tick = self.refresh_interval
             if self.painter.is_idle():
                 next_tick = 1.0
-            self.timer = g15util.schedule("ImpulseRedraw", next_tick, self.redraw)
+            self.timer = g15util.queue("impulseQueue", "ImpulseRedraw", next_tick, self.redraw)
         
     def _config_changed(self, client, connection_id, entry, args):
+        if self.config_change_timer is not None:
+            self.config_change_timer.cancel()
+        self.config_change_timer = g15util.schedule("ConfigReload", 1, self._do_config_changed)
+        
+    def _do_config_changed(self):
         self.stop_redraw()
         self._load_config()        
         self.redraw()
+        self.config_change_timer = None
             
     def _on_load_theme (self):
         if not self.painter.theme_module or self.mode != self.painter.theme_module.__name__:
@@ -278,11 +290,13 @@ class G15Impulse():
             self.screen.painters.remove(self.painter)
     
     def _load_config(self):
+        logger.info("Reloading configuration")
         self.audio_source_index = self.gconf_client.get_int(self.gconf_key + "/audio_source")
         self.set_audio_source()
         self.mode = self.gconf_client.get_string(self.gconf_key + "/mode")
         self.disco = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/disco", False)
         self.refresh_interval = 1.0 / g15util.get_float_or_default(self.gconf_client, self.gconf_key + "/frame_rate", 25.0)
+        logger.info("Refresh interval is %f" % self.refresh_interval)
         self.animate_mkeys = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/animate_mkeys", False)
         if self.mode == None or self.mode == "" or self.mode == "spectrum" or self.mode == "scope":
             self.mode = "default"
@@ -310,10 +324,10 @@ class G15Impulse():
         self.peak_heights = [ 0 for i in range( self.bars ) ]
 
         paint = self.gconf_client.get_string(self.gconf_key + "/paint")
-        if paint != self.last_paint and self.screen.driver.get_bpp() != 0:
+        if paint != self.last_paint and self.screen.driver.get_bpp() != 0: 
             self.last_paint = paint
+            self._clear_painter()
             if paint == "screen":
-                self._clear_painter()
                 if self.page == None:
                     self.page = g15theme.G15Page(id, self.screen, title = name, painter = self.painter.paint, on_shown = self.on_shown, on_hidden = self.on_hidden)
                     self.screen.add_page(self.page)

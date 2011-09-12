@@ -11,6 +11,6 @@ if ENABLE_DRIVER_G15DIRECT
 endif
 
 udevdir = @UDEV_RULES_PATH@
-udev_DATA = $(MAYBE_KERNEL) $(MAYBE_G19DIRECT) $(MAYBE_G15DIRECT)
+udev_DATA = 98-gnome15.rules $(MAYBE_KERNEL) $(MAYBE_G19DIRECT) $(MAYBE_G15DIRECT)
 
-EXTRA_DIST = 99-gnome15-g19direct.rules 99-gnome15-kernel.rules 99-gnome15-g15direct.rules
+EXTRA_DIST = 98-gnome15.rules 99-gnome15-g19direct.rules 99-gnome15-kernel.rules 99-gnome15-g15direct.rules

@@ -1546,7 +1546,7 @@ class G15Config:
             gtk.main_iteration(False) 
         if response == gtk.RESPONSE_OK:
             self.command.set_text(dialog.get_filename())
-        dialog.destroy() 
+        dialog.destroy()
         return False
     
     def _mapped_key_type_changed(self, widget):
@@ -1561,9 +1561,11 @@ class G15Config:
     
     def _mapped_key_changed(self, widget):
         if not self.adjusting:
-            key = self.mapped_key_model[widget.get_active()][0]
-            self.editing_macro.mapped_key = key
-            self._save_macro(self.editing_macro)
+            sel = widget.get_active()
+            if sel > -1:
+                key = self.mapped_key_model[sel][0]
+                self.editing_macro.mapped_key = key
+                self._save_macro(self.editing_macro)
                 
     def _macro_type_changed(self, widget):
         if self.run_command.get_active():

@@ -21,3 +21,7 @@ SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22
 
 # Logitech Game Panel (Dell XPS 1730?)
 SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c251", MODE="0660", GROUP="plugdev"
+
+# Logitech G510 
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22d", MODE="0660", GROUP="plugdev" 
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22e", MODE="0660", GROUP="plugdev"

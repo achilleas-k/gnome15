@@ -42,6 +42,7 @@ import dbus
 import signal
 import g15pluginmanager
 from threading import Thread
+import gtk.gdk
 
 # Used for getting logout  / shutdown signals
 master_client = None
@@ -118,6 +119,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.starting_up = True
         self.conf_client = gconf.client_get_default()
         self.screens = []
+        self.started = False
         self.logging_out = False        
         self.service_listeners = []
         self.use_x_test = None
@@ -169,7 +171,8 @@ class G15Service(g15desktop.G15AbstractService):
         logger.info("Stopping screens")
         for screen in self.screens:
             screen.stop(quickly)
-        g15util.stop_queue(SERVICE_QUEUE)
+        g15util.stop_queue(SERVICE_QUEUE)        
+        self.started = False
         
     def shutdown(self, quickly = False):
         logger.info("Shutting down")
@@ -293,7 +296,7 @@ class G15Service(g15desktop.G15AbstractService):
     
     def init_xtest(self):
         """
-        Initiali XTEST if it is available.
+        Initialise XTEST if it is available.
         """
         if self.x_test_available == None:
             logger.info("Initialising macro output system")
@@ -319,6 +322,7 @@ class G15Service(g15desktop.G15AbstractService):
         ch        -- character to convert
         """    
         self.init_xtest()
+        shift_mask = 0
         if str(ch).startswith("["):
             keysym_code = int(ch[1:-1])
             # AltGr
@@ -329,14 +333,12 @@ class G15Service(g15desktop.G15AbstractService):
                 keycode = 0
         else:
             keysym = self.get_keysym(ch)
-            keycode = 0 if keysym == 0 else self.local_dpy.keysym_to_keycode(keysym)        
+            keycode = 0 if keysym == 0 else self.local_dpy.keysym_to_keycode(keysym)
+            if keysym < 256 and self.is_shifted(chr(keysym)):
+                shift_mask = Xlib.X.ShiftMask
+                        
         if keycode == 0 :
             logger.warning("Sorry, can't map (character %d)", ord(ch))
-    
-        if self.is_shifted(ch):
-            shift_mask = Xlib.X.ShiftMask
-        else :
-            shift_mask = 0
     
         return keycode, shift_mask
 
@@ -530,6 +532,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.starting_up = False
         for listener in self.service_listeners:
             listener.service_started_up()
+        self.started = True
             
         gobject.idle_add(self._monitor_session)
             
@@ -557,12 +560,54 @@ class G15Service(g15desktop.G15AbstractService):
             self.session_active = True
             
             
-        # Watch for logout (should probably move this to a plugin)
+        # GNOME session manager stuff (watch for logout etc)
         try :
-            self.session_bus.add_signal_receiver(self._session_over, dbus_interface="org.gnome.SessionManager", signal_name="SessionOver")
+            session_manager_object = self.session_bus.get_object("org.gnome.SessionManager", "/org/gnome/SessionManager", "org.gnome.SessionManager")
+            client_path = session_manager_object.RegisterClient('Gnome15', '', dbus_interface="org.gnome.SessionManager")
+            
+            self.session_manager_client_object = self.session_bus.get_object("org.gnome.SessionManager", client_path, "org.gnome.SessionManager.ClientPrivate")
+            self.session_manager_client_object.connect_to_signal("QueryEndSession", self._sm_query_end_session)
+            self.session_manager_client_object.connect_to_signal("EndSession", self._sm_end_session)
+            self.session_manager_client_object.connect_to_signal("CancelEndSession", self._sm_cancel_end_session)
+            self.session_manager_client_object.connect_to_signal("Stop", self._sm_stop)
+    
+            session_manager_client_public_object = self.session_bus.get_object("org.gnome.SessionManager", client_path, "org.gnome.SessionManager.Client")
+            sm_client_id = session_manager_client_public_object.GetStartupId()
+            gtk.gdk.set_sm_client_id(sm_client_id)
         except Exception as e:
             logger.warning("GNOME session manager not available, will not detect logout signal for clean shutdown. %s" % str(e))
             
+    def _sm_query_end_session(self, flags):
+        logger.info("Querying for end session")
+        self._sm_client_dbus_will_quit(False, "Gnome15 Shutting Down")
+        
+    def _sm_cancel_end_session(self):
+        logger.info("Session end cancelled")
+        if not self.started and not self.starting_up:
+            logger.info("Cancelled session end, starting up again")
+            self.start()
+        
+    def _sm_end_session(self, flags):
+        self._sm_client_dbus_will_quit(False, "Gnome15 Shutting Down")
+        logger.info("Ending session")
+        self.stop()
+    
+    def _sm_client_dbus_will_quit(self, can_quit=True, reason=""):
+        self.session_manager_client_object.EndSessionResponse(can_quit,reason)
+            
+    def _sm_stop(self):        
+        logger.info("Shutdown quickly")
+        self.shutdown(True)
+            
+    def _active_session_changed(self, object_path):        
+        logger.debug("Adding seat %s" % object_path)
+        self.session_active = object_path == self.this_session_path
+        if self.session_active:
+            logger.info("g15-desktop service is running on the active session")
+        else:
+            logger.info("g15-desktop service is NOT running on the active session")
+        g15util.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
+        
     def _configure_window_monitoring(self):
         logger.info("Attempting to set up BAMF")
         try :
@@ -643,19 +688,6 @@ class G15Service(g15desktop.G15AbstractService):
         for screen in self.screens:
             if screen.device.uid == device.uid:
                 return screen
-            
-    def _session_over(self, object_path):        
-        logger.info("Logout")
-        self.shutdown()
-            
-    def _active_session_changed(self, object_path):        
-        logger.debug("Adding seat %s" % object_path)
-        self.session_active = object_path == self.this_session_path
-        if self.session_active:
-            logger.info("g15-desktop service is running on the active session")
-        else:
-            logger.info("g15-desktop service is NOT running on the active session")
-        g15util.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
         
         
     def __del__(self):

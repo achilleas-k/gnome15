@@ -806,6 +806,7 @@ class G15Screen():
         self.available_size = (0, 0, self.size[0], self.size[1])
         
         self.page_model_lock = threading.RLock()
+        self.draw_lock = threading.Lock()
         self.visible_page = None
         self.old_canvas = None
         self.transition_function = None
@@ -1008,7 +1009,7 @@ class G15Screen():
         
         self.stopping = False  
         logger.info("Completed closing driver") 
-            
+
     def is_active(self):
         """
         Get if the driver is active.
@@ -1042,13 +1043,17 @@ class G15Screen():
         g15util.clear_jobs("redrawQueue")
         g15util.execute("redrawQueue", "doCycle", self._do_cycle, number, transitions)
             
-    def redraw(self, page = None, direction="up", transitions = True, redraw_content = True):
+    def redraw(self, page = None, direction="up", transitions = True, redraw_content = True, queue = True):
         if page:
             logger.debug("Redrawing %s" % page.id)
         else:
             logger.debug("Redrawing current page")
 #        traceback.print_stack()
-        g15util.execute("redrawQueue", "redraw", self._do_redraw, page, direction, transitions, redraw_content)
+        if queue:
+            g15util.execute("redrawQueue", "redraw", self._do_redraw, page, direction, transitions, redraw_content)
+        else:
+            self._do_redraw(page, direction, transitions, redraw_content)
+            
         
     def set_color_for_mkey(self):
         control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
@@ -1335,14 +1340,14 @@ class G15Screen():
             self._cycle_pages(number,  self._get_pages_of_priority(PRI_NORMAL))
                 
     def _do_redraw(self, page = None, direction="up", transitions = True, redraw_content = True):
-        self.page_model_lock.acquire()   
+        self.page_model_lock.acquire()
         try :           
             current_page = self._get_next_page_to_display()
             if page == None or page == current_page:
                 self._draw_page(current_page, direction, transitions, redraw_content)
             elif page != None and page.panel_painter != None:
                 self._draw_page(current_page, direction, transitions, False)
-        finally:
+        finally:    
             self.page_model_lock.release()
             
     def _flush_reverts_and_deletes(self):        

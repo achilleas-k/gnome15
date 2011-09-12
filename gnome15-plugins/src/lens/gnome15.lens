@@ -1,0 +1,15 @@
+#
+# Core info on how to contact the place over DBus
+#
+[Lens]
+DBusName=org.gnome15.Gnome15Lens
+DBusPath=/org/gnome15/Gnome15Lens/lens
+Name=Gnome15 Lens
+Icon=/usr/share/unity/lenses/gnome15/gnome15.svg
+Description=Lens that allows selection of the information on the LCD of your Logitech devices.
+SearchHint=LCD Page name ...
+Shortcut=g
+
+[Desktop Entry]
+X-Ubuntu-Gettext-Domain=gnome15-lens
+

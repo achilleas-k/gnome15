@@ -22,6 +22,7 @@ gnome15_PYTHON = 		\
 	g15text.py \
 	g15util.py \
 	g15upgrade.py \
+	g15uinput.py \
 	jobqueue.py \
 	objgraph.py \
 	dbusmenu.py \

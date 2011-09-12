@@ -15,6 +15,6 @@ Categories=TrayIcon;GTK
 GenericName=
 #X-GNOME-Autostart-Delay=0
 #AutostartCondition=GNOME /desktop/gnome/gnome15/enabled
-#X-GNOME-Autostart-Phase=Applications
+X-GNOME-Autostart-Phase=Applications
 #X-GNOME-AutoRestart=true
 #X-Ubuntu-Gettext-Domain=gnome15

@@ -317,7 +317,7 @@ DeviceInfo(g15driver.MODEL_G13, (0x046d, 0xc21c),(0x046d, 0xc21c),           g13
 DeviceInfo(g15driver.MODEL_G510, (0x046d, 0xc22d), (0x046d, 0xc22d),         g510_key_layout,  1,  ( 160,  43 ),   True, "Logitech G510 Keyboard", g15_action_keys)
 DeviceInfo(g15driver.MODEL_G510_AUDIO, (0x046d, 0xc22e), (0x046d, 0xc22e),   g510_key_layout,  1,  ( 160,  43 ),   True, "Logitech G510 Keyboard (audio)", g19_action_keys)
 DeviceInfo(g15driver.MODEL_Z10, (0x046d, 0x0a07), (0x046d, 0x0a07),           z10_key_layout,   1,  ( 160,  43 ),   False, "Logitech Z10 Speakers", g19_action_keys)
-DeviceInfo(g15driver.MODEL_G110, (0x046d, 0xc225), (0x046d, 0xc225),         g110_key_layout,  0,  ( 0,    0 ),    True, "Logitech G110 Keyboard", None)
+DeviceInfo(g15driver.MODEL_G110, (0x046d, 0xc22b), (0x046d, 0xc22b),         g110_key_layout,  0,  ( 0,    0 ),    True, "Logitech G110 Keyboard", None)
 DeviceInfo(g15driver.MODEL_GAMEPANEL, (0x046d, 0xc251), (0x046d, 0xc251),       g15v1_key_layout, 1,  ( 160,  43 ),   True, "Logitech GamePanel", g15_action_keys)
 
 # When I get hold of an MX5500, I will add Bluetood detection as well
