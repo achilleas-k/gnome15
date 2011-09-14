@@ -26,7 +26,7 @@ import cairo
 import Image
 import ImageMath
 import logging
-logger = logging.getLogger("driver")
+logger = logging.getLogger("driver") 
 
 # Driver information (used by driver selection UI)
 id="gtk"
@@ -39,15 +39,17 @@ has_preferences=True
 # Controls
 
 g19_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
-g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
 g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
 g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
 g19_highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
 
-g15_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
-g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+g15_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 1, 0, 15, hint=g15driver.HINT_MKEYS)
+g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 2, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
+
+g110_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (255, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
 
 controls = { 
   g15driver.MODEL_G11 : [ g15_mkeys_control, g15_backlight_control ], 
@@ -57,7 +59,7 @@ controls = {
   g15driver.MODEL_G13 : [ g15_mkeys_control, g15_backlight_control, g15_invert_control ],
   g15driver.MODEL_G510 : [ g15_mkeys_control, g19_keyboard_backlight_control, g15_invert_control ],
   g15driver.MODEL_Z10 : [ g15_backlight_control, g15_invert_control ],
-  g15driver.MODEL_G110 : [ g19_mkeys_control, g19_keyboard_backlight_control ],
+  g15driver.MODEL_G110 : [ g19_mkeys_control, g110_keyboard_backlight_control ],
   g15driver.MODEL_MX5500 : [ g15_invert_control ],
             }  
 

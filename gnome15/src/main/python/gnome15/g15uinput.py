@@ -30,7 +30,6 @@ Because we must register what keys we are going to send when opening the
 device, we must close and re-open when the keys change. This is primarily to
 support profile switching where different profiles may use different key
 mappings.
-
 """
 
 MOUSE = "mouse"
@@ -41,7 +40,19 @@ DEVICE_TYPES = [ MOUSE, KEYBOARD, JOYSTICK ]
 registered_keys = { MOUSE: {}, 
                    JOYSTICK: {}, 
                    KEYBOARD: {} }
+registered_parameters = { MOUSE: {}, 
+                   JOYSTICK: {}, 
+                   KEYBOARD: {} }
 uinput_devices = {}
+
+"""
+These are the very unofficial vendor / produce codes used for the virtual
+devices 
+"""
+GNOME15_USB_VENDOR_ID = 0xdd55
+GNOME15_MOUSE_PRODUCT_ID = 0x0001
+GNOME15_JOYSTICK_PRODUCT_ID = 0x0002
+GNOME15_KEYBOARD_PRODUCT_ID = 0x0003
     
 class OpenDevice():
     def __init__(self, codes, uinput_device):
@@ -67,7 +78,7 @@ def deregister_codes(registration_id, device_types = None):
     for device_type in device_types:    
         if registration_id in registered_keys[device_type]:
             logger.info("De-registering UINPUT keys for %s under %s" % ( registration_id, device_type ) )
-            del registered_keys[device_type][registration_id] 
+            del registered_keys[device_type][registration_id]  
             __check_devices()
             
 def register_codes(registration_id, device_type, codes, parameters = None):
@@ -85,6 +96,7 @@ def register_codes(registration_id, device_type, codes, parameters = None):
         raise Exception("UINPUT keys already registered for %s under %s" % ( registration_id, device_type ) )
     logger.info("Registering UINPUT keys for %s under %s" % ( registration_id, device_type ) )
     registered_keys[device_type][registration_id] = codes
+    registered_parameters[device_type] = parameters
     __check_devices()
     
 def emit(target, code, value, syn=True):
@@ -132,32 +144,34 @@ def __check_devices():
             logger.debug("Opening UINPUT device for %s as there are now keys (%s) that use it. old codes (%s)" % ( device_type, str(codes[device_type]), str(uinput_devices[device_type].codes) if device_type in uinput_devices else "NONE" ))
             
             # Mouse            
-            abs_parms = { }                    
+            abs_parms = { }       
             if device_type == MOUSE:
+                virtual_product_id = GNOME15_MOUSE_PRODUCT_ID
                 caps = {
                     uinput.EV_REL: [uinput.REL_X, uinput.REL_Y],
                     uinput.EV_KEY: codes[device_type],
                 }
             # Mouse
             elif device_type == JOYSTICK:
+                virtual_product_id = GNOME15_JOYSTICK_PRODUCT_ID
                 caps = {
                     uinput.EV_ABS: [uinput.ABS_X, uinput.ABS_Y],
                     uinput.EV_KEY: codes[device_type],
                 }
                 # TODO get these from those registered
-                abs_parms = {                                  
-                    uinput.ABS_X: (0, 255, 0, 0), # min, max, fuzz, flat
-                    uinput.ABS_Y: (0, 255, 0, 0)
-                }
+                abs_parms = registered_parameters[device_type]
             else:
+                virtual_product_id = GNOME15_KEYBOARD_PRODUCT_ID
                 caps = {
-                    uinput.EV_ABS: [uinput.ABS_X, uinput.ABS_Y],
                     uinput.EV_KEY: codes[device_type],
                 }
  
             uinput_device = uinput.Device(name="gnome15-%s" % device_type,
                                           capabilities = caps,
-                                          abs_parameters = abs_parms)                
+                                          abs_parameters = abs_parms,
+                                          vendor = GNOME15_USB_VENDOR_ID,
+                                          product = virtual_product_id)                
             dev = OpenDevice(list(codes[device_type]), uinput_device)        
-            uinput_devices[device_type] = dev    
+            uinput_devices[device_type] = dev
+            uinput_device.emit(0, 0, 0, True)    
         

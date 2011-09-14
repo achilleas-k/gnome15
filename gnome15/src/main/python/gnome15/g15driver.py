@@ -25,7 +25,7 @@ MENU = "menu"
 MEMORY_1 = "memory-1"
 MEMORY_2 = "memory-2"
 MEMORY_3 = "memory-3"
-
+ 
 """
 Bitmask values for setting the M key LED lights. See set_mkey_lights()
 """
@@ -158,6 +158,7 @@ HINT_HIGHLIGHT = 1 << 4
 HINT_SWITCH = 1 << 5
 HINT_MKEYS = 1 << 6
 HINT_VIRTUAL = 1 << 7
+HINT_RED_BLUE_LED = 1 << 8
 
 # 16bit 565
 CAIRO_IMAGE_FORMAT=4

@@ -348,7 +348,10 @@ class G15NotifyLCD():
                 
                 # Check if this notification should be ignored, currently we ignore
                 # volume change notifications
-                if "x-canonical-private-synchronous" in hints and hints["x-canonical-private-synchronous"] == "volume":
+                # TODO should implement volume style notifications properly and deprecate alsa monitor
+                if "x-canonical-private-synchronous" in hints \
+                    and ( hints["x-canonical-private-synchronous"] == "volume" or \
+                          hints["x-canonical-private-synchronous"] == "indicator-sound" ):
                     return
                     
                 # Strip markup

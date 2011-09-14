@@ -21,7 +21,7 @@
 """
 Alternative implementation of a G19 Driver that uses pylibg19 to communicate directly
 with the keyboard 
-"""
+""" 
 
 from threading import RLock
 import cairo
@@ -115,11 +115,12 @@ EXT_REVERSE_KEY_MAP = {}
 for k in EXT_KEY_MAP.keys():
     EXT_REVERSE_KEY_MAP[EXT_KEY_MAP[k]] = k
 
-mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
-color_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight Level", 0, 0, 2, hint = g15driver.HINT_SHADEABLE)
-lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 2)
+mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 1, 0, 15, hint=g15driver.HINT_MKEYS)
+color_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+red_blue_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (255, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
+backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 2, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight Level", 2, 0, 2, hint = g15driver.HINT_SHADEABLE)
+lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 22, 0, 2)
 invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
 controls = {
@@ -129,7 +130,7 @@ controls = {
   g15driver.MODEL_G13 : [ mkeys_control, color_backlight_control, invert_control ],
   g15driver.MODEL_G510 : [ mkeys_control, color_backlight_control, invert_control ],
   g15driver.MODEL_Z10 : [ backlight_control, lcd_backlight_control, invert_control ],
-  g15driver.MODEL_G110 : [ mkeys_control, color_backlight_control ],
+  g15driver.MODEL_G110 : [ mkeys_control, red_blue_backlight_control ],
             }   
 
 G15_LCD = 1
@@ -254,9 +255,8 @@ class Driver(g15driver.AbstractDriver):
             self.timeout = e.get_int()
         
         logger.info("Initialising pylibg15, looking for %s:%s" % ( hex(self.device.controls_usb_id[0]), hex(self.device.controls_usb_id[1]) ))
-#        if logger.level < logging.WARN and logger.level != logging.NOTSET:
-#            pylibg15.set_debug(pylibg15.G15_LOG_INFO)
-        pylibg15.set_debug(pylibg15.G15_LOG_INFO)
+        if logger.level < logging.WARN and logger.level != logging.NOTSET:
+            pylibg15.set_debug(pylibg15.G15_LOG_INFO)
         err = pylibg15.init(False, self.device.controls_usb_id[0], self.device.controls_usb_id[1])
         if err != G15_NO_ERROR:
             raise g15exceptions.NotConnectedException("libg15 returned error %d " % err)
@@ -534,7 +534,7 @@ class Driver(g15driver.AbstractDriver):
         elif control.id == lcd_contrast_control.id:
             self.check_control(control)
             pylibg15.set_contrast(level)
-        elif control.id == color_backlight_control.id:
+        elif control.id == color_backlight_control.id or control.id == red_blue_backlight_control.id:
             pylibg15.set_keyboard_color(level)
         elif control.id == mkeys_control.id:
             pylibg15.set_leds(level)

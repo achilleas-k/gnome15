@@ -33,7 +33,7 @@ import subprocess
 import shutil
 import logging
 import traceback
-import uinput
+import uinput 
 
 logger = logging.getLogger("config")
 
@@ -361,7 +361,7 @@ class G15Config:
         self.fixed_delays.connect("toggled", self._send_delays_changed)
         self.press_delay_adjustment.connect("value-changed", self._send_delays_changed)
         self.release_delay_adjustment.connect("value-changed", self._send_delays_changed)
-#        self.window_entry.connect("changed", self._window_name_changed)
+        self.window_entry.connect("changed", self._window_name_changed)
         self.window_combo.connect("changed", self._window_name_changed)
         self.mapped_to_key.connect("toggled", self._macro_type_changed)
         self.mapped_key_combo.connect("changed", self._mapped_key_changed)
@@ -1116,6 +1116,23 @@ class G15Config:
                     button.set_active(False)
             self._check_macro(self.editing_macro.keys)
             
+    def _set_button_style(self, button):
+        font = pango.FontDescription("Sans 10")
+        if button.get_use_stock():
+            label = button.child.get_children()[1]
+        elif isinstance(button.child, gtk.Label):
+            label = button.child
+        else:
+            raise ValueError("button does not have a label")
+        if button.get_active():
+            font.set_weight(pango.WEIGHT_HEAVY)
+        else:
+            font.set_weight(pango.WEIGHT_MEDIUM)
+        label.modify_font(font)
+#        style = button.get_style().copy()
+#        style.fg[blah]...
+#        button.set_style(style)
+            
     def _toggle_key(self, widget, key, macro):
         keys = list(macro.keys) 
                 
@@ -1135,13 +1152,15 @@ class G15Config:
                         keys.remove(ikey)
             keys.append(key)
             
+        if not self.selected_profile.are_keys_in_use(self._get_memory_number(), keys, exclude = [self.editing_macro]):
+            
             if self.macro_name_field.get_text() == "" or self.macro_name_field.get_text().startswith("Macro "):
                 new_name = " ".join(g15util.get_key_names(keys))
                 self.editing_macro.name = "Macro %s" % new_name
                 self.macro_name_field.set_text(self.editing_macro.name)
-            
-        if not self.selected_profile.are_keys_in_use(self._get_memory_number(), keys, exclude = [self.editing_macro]):
             macro.set_keys(keys)
+            
+        self._set_button_style(widget)
         
         if not self.adjusting:
             self._check_macro(keys)
@@ -1166,7 +1185,15 @@ class G15Config:
                 self.macro_infobar.set_visible(True)
                 self.macro_infobar.show_all()
                 self.macro_edit_close_button.set_sensitive(True)      
-                return       
+                return
+        else:     
+            self.macro_infobar.set_message_type(gtk.MESSAGE_WARNING)
+            self.macro_warning_label.set_text("You have not chosen a macro key to assign the action to.")
+            self.macro_infobar.set_visible(True)
+            self.macro_infobar.show_all()
+            self.macro_edit_close_button.set_sensitive(False)      
+            return
+            
             
         self.macro_infobar.set_visible(False)
         self.macro_edit_close_button.set_sensitive(True)
@@ -1180,7 +1207,7 @@ class G15Config:
             if not use:
                 for key in row:                
                     reserved = g15devices.are_keys_reserved(self.driver.get_model_name(), list(key))
-                    in_use = self.selected_profile.are_keys_in_use(memory, list(key))
+                    in_use = self.selected_profile.are_keys_in_use(memory, [ key ])
                     if not in_use and not reserved:
                         use = key
                         break
@@ -1223,7 +1250,9 @@ class G15Config:
                     key_name = g15util.get_key_names([ key ])
                     g_button = gtk.ToggleButton(" ".join(key_name))
                     g_button.key = key
-                    g_button.set_active(key in self.editing_macro.keys)
+                    key_active = key in self.editing_macro.keys
+                    g_button.set_active(key_active)
+                    self._set_button_style(g_button)
                     g_button.connect("toggled", self._toggle_key, key, self.editing_macro)
                     self.key_buttons.append(g_button)
                     hbox.pack_start(g_button, True, True)
@@ -1270,7 +1299,6 @@ class G15Config:
         finally:
             self.adjusting = False
             
-                            
         dialog.run()
         dialog.hide()
         self.editing_macro.name = self.macro_name_field.get_text()
@@ -1302,13 +1330,11 @@ class G15Config:
     def _do_save_macro(self, macro):
         if not self.adjusting:
             logger.info("Saving macro %s" % macro.name )
-            print "Saving macro %s" % macro.name
             macro.save()
             
     def _do_save_profile(self, profile):
         if not self.adjusting:
             logger.info("Saving profile %s" % profile.name)
-            print "Saving profile %s" % profile.name
             profile.save()
             
     def _show_global_options(self, widget): 
@@ -1425,8 +1451,13 @@ class G15Config:
             self._save_macro(macro)
             self._load_configuration(self.selected_profile)
         
+    def _comparator(self, o1, o2):
+        return o1.compare(o2)
+        
     def _get_sorted_list(self):
-        return sorted(self.selected_profile.macros[self._get_memory_number() - 1], key=lambda key: key.key_list_key)
+        sm = list(self.selected_profile.macros[self._get_memory_number() - 1])
+        sm.sort(self._comparator)
+        return sm
         
     def _load_configuration(self, profile):
         self.adjusting = True
@@ -1642,7 +1673,7 @@ class G15Config:
                 label.show()
                 table.attach(label, 0, 1, row, row + 1,  xoptions = gtk.FILL, xpadding = 8, ypadding = 4);
                 
-                picker = colorpicker.ColorPicker()   
+                picker = colorpicker.ColorPicker(colorpicker.COLORS_REDBLUE if ( control.hint & g15driver.HINT_RED_BLUE_LED ) != 0 else None )    
                 picker.set_size_request(160, 22)                 
                 picker.connect("color-chosen", self._color_chosen, control)
                 table.attach(picker, 1, 2, row, row + 1)
@@ -1658,11 +1689,12 @@ class G15Config:
                 
             row += 1
         controls.add(table)
+        controls.show_all()
           
         # Switch controls  
         controls = self.widget_tree.get_object("SwitchesBox")
         for c in controls.get_children():
-            controls.remove(c)
+            controls.remove(c)            
         table.set_row_spacings(4)
         row = 0
         for control in driver_controls:
@@ -1676,6 +1708,8 @@ class G15Config:
                     check_button.connect("toggled", self._control_changed, control)
                     self.notify_handles.append(self.conf_client.notify_add(self._get_full_key(control.id), self._control_configuration_changed, [ control, check_button ]));
                     row += 1
+            
+        controls.show_all()
         self.widget_tree.get_object("SwitchesFrame").set_child_visible(row > 0)
         
         # Hide the cycle screens if the device has no screen

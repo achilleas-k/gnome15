@@ -1,0 +1,206 @@
+#!/usr/bin/env python
+ 
+#        +-----------------------------------------------------------------------------+
+#        | GPL                                                                         |
+#        +-----------------------------------------------------------------------------+
+#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        |                                                                             |
+#        | This program is free software; you can redistribute it and/or               |
+#        | modify it under the terms of the GNU General Public License                 |
+#        | as published by the Free Software Foundation; either version 2              |
+#        | of the License, or (at your option) any later version.                      |
+#        |                                                                             |
+#        | This program is distributed in the hope that it will be useful,             |
+#        | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+#        | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+#        | GNU General Public License for more details.                                |
+#        |                                                                             |
+#        | You should have received a copy of the GNU General Public License           |
+#        | along with this program; if not, write to the Free Software                 |
+#        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+#        +-----------------------------------------------------------------------------+
+
+"""
+Simple tool to draw an image on the framebuffer 
+"""
+
+
+import sys
+import os
+import glib
+import cairo
+import array
+import Image
+import ImageMath
+from cStringIO import StringIO
+
+# Allow running from local path
+path = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..","main", "python"))
+if os.path.exists(path):
+    sys.path.insert(0, path)
+    
+import gnome15.g15util as g15util
+import gnome15.drivers.fb as fb 
+    
+if __name__ == "__main__":
+    import optparse
+    parser = optparse.OptionParser()
+    parser.add_option("-s", "--scale", dest="scale", metavar="stretch,zoom,tile,center,scale",
+        default="zoom" , help="Scale type")
+    parser.add_option("-d", "--device", dest="device", 
+        default="/dev/fb0" , help="Framebuffer device")
+    (options, args) = parser.parse_args()
+    bg_style = options.scale
+    
+    # Check arguments
+    if len(args) != 1:
+        sys.stderr.write("You must provide a single image filenanme")
+        sys.exit(1)
+    
+    # Locate and configure the framebuffer    
+    fb_dev = fb.fb_device(options.device)
+    var_info = fb_dev.get_var_info()
+    fixed_info = fb_dev.get_fixed_info()
+    screen_size = ( var_info.xres, var_info.yres )
+    width, height = screen_size
+            
+    # Create an empty string buffer for use with monochrome LCD
+    empty_buf = ""
+    for i in range(0, fixed_info.smem_len):
+        empty_buf += chr(0)
+    
+    # Load the image
+    bg_img = args[0]
+    if g15util.is_url(bg_img) or os.path.exists(bg_img):
+        img_surface = g15util.load_surface_from_file(bg_img)
+        if img_surface is not None:
+            sx = float(width) / img_surface.get_width()
+            sy = float(height) / img_surface.get_height()  
+            surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+            context = cairo.Context(surface)
+            context.save()
+            if bg_style == "zoom":
+                scale = max(sx, sy)
+                context.scale(scale, scale)
+                context.set_source_surface(img_surface)
+                context.paint()
+            elif bg_style == "stretch":              
+                context.scale(sx, sy)
+                context.set_source_surface(img_surface)
+                context.paint()
+            elif bg_style == "scale":  
+                x = ( width - img_surface.get_width() * sy ) / 2   
+                context.translate(x, 0)         
+                context.scale(sy, sy)
+                context.set_source_surface(img_surface)
+                context.paint()
+            elif bg_style == "center":        
+                x = ( width - img_surface.get_width() ) / 2
+                y = ( height - img_surface.get_height() ) / 2
+                context.translate(x, y)
+                context.set_source_surface(img_surface)
+                context.paint()
+            elif bg_style == "tile":
+                context.set_source_surface(img_surface)
+                context.paint()
+                y = 0
+                x = img_surface.get_width()
+                while y < height + img_surface.get_height():
+                    if x >= height + img_surface.get_width():
+                        x = 0
+                        y += img_surface.get_height()
+                    context.restore()
+                    context.save()
+                    context.translate(x, y)
+                    context.set_source_surface(img_surface)
+                    context.paint()
+                    x += img_surface.get_width()
+                
+            context.restore()
+        else:
+            sys.stderr.write("Failed to load image file %s." % bg_img)
+            sys.exit(1)
+    else:
+        sys.stderr.write("Image path %s is not a URL or an existing file." % bg_img)
+        sys.exit(1)   
+        
+    # Convert the image to the required format for this device 
+    if var_info.bits_per_pixel == 16:
+        try:
+            back_surface = cairo.ImageSurface (4, width, height)
+        except:
+            # Earlier version of Cairo
+            back_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
+        back_context = cairo.Context (back_surface)
+        back_context.set_source_surface(surface, 0, 0)
+        back_context.set_operator (cairo.OPERATOR_SOURCE);
+        back_context.paint()
+            
+        if back_surface.get_format() == cairo.FORMAT_ARGB32:
+            """
+            If the creation of the type 4 image failed (i.e. earlier version of Cairo)
+            then we have to convert it ourselves. This is slow. 
+            
+            TODO Replace with C routine 
+            """
+            file_str = StringIO()
+            data = back_surface.get_data()
+            for i in range(0, len(data), 4):
+                r = ord(data[i + 2])
+                g = ord(data[i + 1])
+                b = ord(data[i + 0])
+                file_str.write(g15util.rgb_to_uint16(r, g, b))             
+            buf = file_str.getvalue()
+        else:   
+            buf = str(back_surface.get_data())
+    else:
+        arrbuf = array.array('B', empty_buf)
+        
+        argb_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        argb_context = cairo.Context(argb_surface)
+        argb_context.set_source_surface(surface)
+        argb_context.paint()
+        
+        '''
+        Now convert the ARGB to a PIL image so it can be converted to a 1 bit monochrome image, with all
+        colours dithered. It would be nice if Cairo could do this :( Any suggestions?
+        ''' 
+        pil_img = Image.frombuffer("RGBA", (width, height), argb_surface.get_data(), "raw", "RGBA", 0, 1)
+        pil_img = ImageMath.eval("convert(pil_img,'1')",pil_img=pil_img)
+        pil_img = ImageMath.eval("convert(pil_img,'P')",pil_img=pil_img)
+        pil_img = pil_img.point(lambda i: i >= 250,'1')
+        
+        # Invert the screen if required
+        if options.invert:            
+            pil_img = pil_img.point(lambda i: 1^i)
+        
+        # Data is 160x43, 1 byte per pixel. Will have value of 0 or 1.
+        data = list(pil_img.getdata())
+        v = 0
+        b = 1
+        
+        # TODO Replace with C routine
+        for row in range(0, height):
+            for col in range(0, width):
+                if data[( row * width ) + col]:
+                    v += b
+                b = b << 1
+                if b == 256:
+                    # Full byte
+                    b = 1          
+                    i = row * fixed_info.line_length + col / 8
+                    
+                    if row > 7 and col < 96:
+                        '''
+                        ????? This was discovered more by trial and error rather than any 
+                        understanding of what is going on
+                        '''
+                        i -= 12 + ( 7 * fixed_info.line_length )
+                        
+                    arrbuf[i] = v   
+                    v = 0 
+        buf = arrbuf.tostring()
+          
+    # Write to buffer  
+    fb_dev.buffer[0:len(buf)] = buf
+

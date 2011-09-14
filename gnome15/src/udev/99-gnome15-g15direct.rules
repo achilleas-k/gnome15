@@ -17,7 +17,7 @@ SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c21
 SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0a07", MODE="0660", GROUP="plugdev"
 
 # Logitech G110 Keyboard (no LCD)
-SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22b", MODE="0660", GROUP="plugdev"
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c225", MODE="0660", GROUP="plugdev"
 
 # Logitech Game Panel (Dell XPS 1730?)
 SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c251", MODE="0660", GROUP="plugdev"

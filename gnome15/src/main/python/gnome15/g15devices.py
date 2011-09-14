@@ -27,7 +27,7 @@ class ActionBinding():
         self.action = action
         self.state = state
         self.keys = keys
-
+ 
 '''
 Keyboard layouts 
 '''
@@ -219,7 +219,8 @@ class Device():
         self.action_keys = device_info.action_keys
         
     def get_key_index(self, key):
-        self.all_keys.index(key)
+        if key in self.all_keys:
+            self.all_keys.index(key)
         
     def __repr__(self):
         return "Device [%s] %s model: %s (%s) on device %s:%s. Has a %d BPP screen of %dx%d. " %  \

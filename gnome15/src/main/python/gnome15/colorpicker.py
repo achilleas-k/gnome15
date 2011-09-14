@@ -24,16 +24,20 @@ import cairo
 from gtk import gdk
 import gobject
 
-COLORS = [(0, 0, 0, 1), (0, 0, 0, 1), (255, 0, 0, 1), (0, 255, 0, 1), (0, 0, 255, 1), (255, 255, 0, 1), (0, 255, 255, 1), (255, 0, 255, 1), (255, 255, 255, 1), (255, 255, 255, 1)  ]
+
+COLORS_REDBLUE = [(0, 0, 0, 1), (0, 0, 0, 1), (255, 0, 0, 1),  (255, 0, 0, 1), (255, 0, 255, 1), (255, 0, 255, 1), (0, 0, 255, 1),  (0, 0, 255, 1)  ]
+COLORS_FULL = [(0, 0, 0, 1), (0, 0, 0, 1), (255, 0, 0, 1), (0, 255, 0, 1), (0, 0, 255, 1), (255, 255, 0, 1), (0, 255, 255, 1), (255, 0, 255, 1), (255, 255, 255, 1), (255, 255, 255, 1)  ]
+
 CELL_HEIGHT = 16
-CELL_WIDTH = 24
+CELL_WIDTH = 24 
 
 class ColorPicker(gtk.DrawingArea):
 
-    def __init__(self):        
+    def __init__(self, colors = None):        
         self.__gobject_init__()
+        self.colors = colors if colors is not None else COLORS_FULL
         super(ColorPicker, self).__init__()
-        self.set_size_request(len(COLORS) * CELL_WIDTH, CELL_HEIGHT)
+        self.set_size_request(len(self.colors) * CELL_WIDTH, CELL_HEIGHT)
         self.connect("expose-event", self._expose)
         self.connect("button-press-event", self._button_press)
         self.connect("button-release-event", self._button_release)
@@ -75,16 +79,16 @@ class ColorPicker(gtk.DrawingArea):
         cr.set_line_width(1.0)
         size = self.size_request()
         cell_height = size[1]
-        cell_width = size[0] / len(COLORS)
+        cell_width = size[0] / len(self.colors)
         
         # Draw to a back buffer so we can get the color at the point
         buffer = cairo.ImageSurface(cairo.FORMAT_ARGB32, size[0], size[1])
         ctx = cairo.Context(buffer)
         ctx.save()
         ctx.translate(1, 1)
-        for i in range(1, len(COLORS)):
-            c = COLORS[i]
-            p = COLORS[i - 1] if i > 0 else c
+        for i in range(1, len(self.colors)):
+            c = self.colors[i]
+            p = self.colors[i - 1] if i > 0 else c
             ctx.set_source_rgb(float(c[0]) / 255.0, float(c[1]) / 255.0, float(c[2]) / 255.0)
             lg1 = cairo.LinearGradient(0.0, 0.0, cell_width, 0)
             lg1.add_color_stop_rgba(0.0, float(p[0]) / 255.0, float(p[1]) / 255.0, float(p[2]) / 255.0, float(p[3]))

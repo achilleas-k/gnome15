@@ -42,7 +42,6 @@ from HTMLParser import HTMLParser
 '''
 Lookup tables
 '''
-
 pt_to_px = { 
             6.0: 8.0, 
             7.0: 9, 
@@ -413,6 +412,20 @@ def total_seconds(time_delta):
 '''
 Various conversions
 '''
+def rgb_to_uint16(r, g, b):
+    rBits = r * 32 / 255
+    gBits = g * 64 / 255
+    bBits = b * 32 / 255
+
+    rBits = rBits if rBits <= 31 else 31
+    gBits = gBits if gBits <= 63 else 63
+    bBits = bBits if bBits <= 31 else 31        
+
+    valueH = (rBits << 3) | (gBits >> 3)
+    valueL = (gBits << 5) | bBits
+
+    return chr(valueL & 0xff) + chr(valueH & 0xff)
+    
 def rgb_to_hex(rgb):
     return '#%02x%02x%02x' % rgb
 

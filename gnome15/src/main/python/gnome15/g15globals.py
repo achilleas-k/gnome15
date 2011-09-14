@@ -23,7 +23,7 @@ else:
 	themes_dir = "/usr/local/share/gnome15/themes"
 	icons_dir = "/usr/local/share/icons"
 	scripts_dir = "/usr/local/bin"
- 
+
 # Differs from distro to distro, and so is a ./configure option. See
 # --enable-fixed-size-font=[name] 
 fixed_size_font_name = "Fixed"

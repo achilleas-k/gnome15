@@ -18,7 +18,7 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
 
-"""
+""" 
 Main implementation of a G15Driver that uses g15daemon to control and query the
 keyboard
 """
@@ -101,11 +101,12 @@ KEY_MAP = {
         }
 
 
-mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
-color_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight Level", 0, 0, 2, hint = g15driver.HINT_SHADEABLE)
-lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 7)
+mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 1, 0, 15, hint=g15driver.HINT_MKEYS)
+color_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+red_blue_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (255, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
+backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 2, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight Level", 2, 0, 2, hint = g15driver.HINT_SHADEABLE)
+lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 3, 0, 7)
 invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
 controls = {
@@ -116,7 +117,7 @@ controls = {
   g15driver.MODEL_G13 : [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
   g15driver.MODEL_G510 : [ mkeys_control, color_backlight_control, invert_control ],
   g15driver.MODEL_Z10 : [ backlight_control, lcd_backlight_control, invert_control ],
-  g15driver.MODEL_G110 : [ mkeys_control, color_backlight_control ],
+  g15driver.MODEL_G110 : [ mkeys_control, red_blue_backlight_control ],
             }   
 
 def show_preferences(device, parent, gconf_client):
@@ -328,7 +329,7 @@ class Driver(g15driver.AbstractDriver):
             logger.info("Sending contrast level of %d" % level)
             self.dispatcher.expect = CLIENT_CMD_CONTRAST
             self.send(chr(CLIENT_CMD_CONTRAST + level),socket.MSG_OOB)
-        elif control == color_backlight_control:
+        elif control == color_backlight_control or control == red_blue_backlight_control:
             logger.info("Sending color backlight level of %d" % level)
             self.lock.acquire()        
             try :           

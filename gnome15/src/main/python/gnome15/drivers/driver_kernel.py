@@ -18,11 +18,13 @@ from pyinputevent.pyinputevent import InputEvent, SimpleDevice
 from pyinputevent.keytrans import *
 from threading import Thread
 
-import select
+import select 
 import pyinputevent.scancodes as S
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15globals as g15globals
+import gnome15.g15uinput as g15uinput
+import uinput
 import gconf
 import fcntl
 import os
@@ -49,167 +51,306 @@ description = "Requires ali123's Logitech Kernel drivers. This method requires n
             "daemons to be running, and works with the G13, G15, G19 and G110 keyboards. " 
 has_preferences = True
 
+
+"""
+This dictionaries map the default codes emitted by the input system to the
+Gnome15 codes.
+"""  
 g19_key_map = {
-               "191" : g15driver.G_KEY_M1,
-               "192" : g15driver.G_KEY_M2,
-               "193" : g15driver.G_KEY_M3,
-               "194" : g15driver.G_KEY_MR,
-               "139" : g15driver.G_KEY_MENU,
-               "103" : g15driver.G_KEY_UP,
-               "108" : g15driver.G_KEY_DOWN,
-               "105" : g15driver.G_KEY_LEFT,
-               "106" : g15driver.G_KEY_RIGHT,
-               "352" : g15driver.G_KEY_OK,
-               "158" : g15driver.G_KEY_BACK,
-               "159" : g15driver.G_KEY_SETTINGS,
-               "228" : g15driver.G_KEY_LIGHT,
-               "59" : g15driver.G_KEY_G1,
-               "60" : g15driver.G_KEY_G2,
-               "61" : g15driver.G_KEY_G3,
-               "62" : g15driver.G_KEY_G4,
-               "63" : g15driver.G_KEY_G5,
-               "64" : g15driver.G_KEY_G6,
-               "65" : g15driver.G_KEY_G7,
-               "66" : g15driver.G_KEY_G8,
-               "67" : g15driver.G_KEY_G9,
-               "68" : g15driver.G_KEY_G10,
-               "87" : g15driver.G_KEY_G11,
-               "88" : g15driver.G_KEY_G12
+               S.KEY_PROG1 : g15driver.G_KEY_M1,
+               S.KEY_PROG2 : g15driver.G_KEY_M2,
+               S.KEY_PROG3 : g15driver.G_KEY_M3,
+               S.KEY_RECORD : g15driver.G_KEY_MR,
+               S.KEY_MENU : g15driver.G_KEY_MENU,
+               S.KEY_UP : g15driver.G_KEY_UP,
+               S.KEY_DOWN : g15driver.G_KEY_DOWN,
+               S.KEY_LEFT : g15driver.G_KEY_LEFT,
+               S.KEY_RIGHT : g15driver.G_KEY_RIGHT,
+               S.KEY_OK : g15driver.G_KEY_OK,
+               S.KEY_BACK : g15driver.G_KEY_BACK,
+               S.KEY_FORWARD : g15driver.G_KEY_SETTINGS,
+               228 : g15driver.G_KEY_LIGHT,
+               S.KEY_F1 : g15driver.G_KEY_G1,
+               S.KEY_F2 : g15driver.G_KEY_G2,
+               S.KEY_F3 : g15driver.G_KEY_G3,
+               S.KEY_F4 : g15driver.G_KEY_G4,
+               S.KEY_F5 : g15driver.G_KEY_G5,
+               S.KEY_F6 : g15driver.G_KEY_G6,
+               S.KEY_F7 : g15driver.G_KEY_G7,
+               S.KEY_F8 : g15driver.G_KEY_G8,
+               S.KEY_F9 : g15driver.G_KEY_G9,
+               S.KEY_F10 : g15driver.G_KEY_G10,
+               S.KEY_F11 : g15driver.G_KEY_G11,
+               S.KEY_F12 : g15driver.G_KEY_G12
                }
-
 g15_key_map = {
-               "191" : g15driver.G_KEY_M1,
-               "192" : g15driver.G_KEY_M2,
-               "193" : g15driver.G_KEY_M3,
-               "194" : g15driver.G_KEY_MR,
-               "30" : g15driver.G_KEY_L1,
-               "48" : g15driver.G_KEY_L2,
-               "46" : g15driver.G_KEY_L3,
-               "32" : g15driver.G_KEY_L4,
-               "18" : g15driver.G_KEY_L5,
-               "33" : g15driver.G_KEY_LIGHT,
+               S.KEY_PROG1 : g15driver.G_KEY_M1,
+               S.KEY_PROG2 : g15driver.G_KEY_M2,
+               S.KEY_PROG3 : g15driver.G_KEY_M3,
+               S.KEY_RECORD : g15driver.G_KEY_MR,
+               S.KEY_OK : g15driver.G_KEY_L1,
+               S.KEY_LEFT : g15driver.G_KEY_L2,
+               S.KEY_UP : g15driver.G_KEY_L3,
+               S.KEY_DOWN : g15driver.G_KEY_L4,
+               S.KEY_RIGHT : g15driver.G_KEY_L5,
+               228 : g15driver.G_KEY_LIGHT,
+               S.KEY_F1 : g15driver.G_KEY_G1,
+               S.KEY_F2 : g15driver.G_KEY_G2,
+               S.KEY_F3 : g15driver.G_KEY_G3,
+               S.KEY_F4 : g15driver.G_KEY_G4,
+               S.KEY_F5 : g15driver.G_KEY_G5,
+               S.KEY_F6 : g15driver.G_KEY_G6,
+               S.KEY_F7 : g15driver.G_KEY_G7,
+               S.KEY_F8 : g15driver.G_KEY_G8,
+               S.KEY_F9 : g15driver.G_KEY_G9,
+               S.KEY_F10 : g15driver.G_KEY_G10,
+               S.KEY_F11 : g15driver.G_KEY_G11,
+               S.KEY_F12 : g15driver.G_KEY_G12,
+               S.KEY_F13 : g15driver.G_KEY_G13,
+               S.KEY_F14 : g15driver.G_KEY_G14,
+               S.KEY_F15 : g15driver.G_KEY_G15,
+               S.KEY_F16 : g15driver.G_KEY_G16,
+               S.KEY_F17 : g15driver.G_KEY_G17,
+               S.KEY_F18 : g15driver.G_KEY_G18
                }
-
+g13_key_map = {
+               S.KEY_PROG1 : g15driver.G_KEY_M1,
+               S.KEY_PROG2 : g15driver.G_KEY_M2,
+               S.KEY_PROG3 : g15driver.G_KEY_M3,
+               S.KEY_RECORD : g15driver.G_KEY_MR,
+               S.KEY_OK : g15driver.G_KEY_L1,
+               S.KEY_LEFT : g15driver.G_KEY_L2,
+               S.KEY_UP : g15driver.G_KEY_L3,
+               S.KEY_DOWN : g15driver.G_KEY_L4,
+               S.KEY_RIGHT : g15driver.G_KEY_L5,
+               228 : g15driver.G_KEY_LIGHT,
+               S.KEY_F1 : g15driver.G_KEY_G1,
+               S.KEY_F2 : g15driver.G_KEY_G2,
+               S.KEY_F3 : g15driver.G_KEY_G3,
+               S.KEY_F4 : g15driver.G_KEY_G4,
+               S.KEY_F5 : g15driver.G_KEY_G5,
+               S.KEY_F6 : g15driver.G_KEY_G6,
+               S.KEY_F7 : g15driver.G_KEY_G7,
+               S.KEY_F8 : g15driver.G_KEY_G8,
+               S.KEY_F9 : g15driver.G_KEY_G9,
+               S.KEY_F10 : g15driver.G_KEY_G10,
+               S.KEY_F11 : g15driver.G_KEY_G11,
+               S.KEY_F12 : g15driver.G_KEY_G12,
+               S.KEY_F13 : g15driver.G_KEY_G13,
+               S.KEY_F14 : g15driver.G_KEY_G14,
+               S.KEY_F15 : g15driver.G_KEY_G15,
+               S.KEY_F16 : g15driver.G_KEY_G16,
+               S.KEY_F17 : g15driver.G_KEY_G17,
+               S.KEY_F18 : g15driver.G_KEY_G18,
+               S.KEY_F19 : g15driver.G_KEY_G19,
+               S.KEY_F20 : g15driver.G_KEY_G20,
+               S.KEY_F21 : g15driver.G_KEY_G21,
+               S.KEY_F22 : g15driver.G_KEY_G22,
+               S.BTN_LEFT: g15driver.G_KEY_JOY_LEFT,                     
+               S.BTN_MIDDLE: g15driver.G_KEY_JOY_CENTER,                  
+               S.BTN_RIGHT: g15driver.G_KEY_JOY_DOWN,
+               }
+g110_key_map = {
+               S.KEY_PROG1 : g15driver.G_KEY_M1,
+               S.KEY_PROG2 : g15driver.G_KEY_M2,
+               S.KEY_PROG3 : g15driver.G_KEY_M3,
+               S.KEY_RECORD : g15driver.G_KEY_MR,
+               228 : g15driver.G_KEY_LIGHT,
+               S.KEY_F1 : g15driver.G_KEY_G1,
+               S.KEY_F2 : g15driver.G_KEY_G2,
+               S.KEY_F3 : g15driver.G_KEY_G3,
+               S.KEY_F4 : g15driver.G_KEY_G4,
+               S.KEY_F5 : g15driver.G_KEY_G5,
+               S.KEY_F6 : g15driver.G_KEY_G6,
+               S.KEY_F7 : g15driver.G_KEY_G7,
+               S.KEY_F8 : g15driver.G_KEY_G8,
+               S.KEY_F9 : g15driver.G_KEY_G9,
+               S.KEY_F10 : g15driver.G_KEY_G10,
+               S.KEY_F11 : g15driver.G_KEY_G11,
+               S.KEY_F12 : g15driver.G_KEY_G12
+               }
 
 g19_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
-g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 0, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 255, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 
 g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint=g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
 g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint=g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
 g19_highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
 g19_controls = [ g19_keyboard_backlight_control, g19_foreground_control, g19_background_control, g19_highlight_control, g19_mkeys_control ]
-g110_controls = [ g19_keyboard_backlight_control ]
+
+g110_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (255, 0, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
+g110_controls = [ g110_keyboard_backlight_control ]
 
 # TODO doesn't work yet
 #g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint=g15driver.HINT_SHADEABLE)
 
 
-g15_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
-g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 0, 0, 2, hint=g15driver.HINT_DIMMABLE)
-g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 0, 0, 2, g15driver.HINT_SHADEABLE)
-g15_lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 0, 0, 48, 0)
+g15_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 1, 0, 15, hint=g15driver.HINT_MKEYS)
+g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 2, 0, 2, hint=g15driver.HINT_DIMMABLE)
+g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 2, 0, 2, g15driver.HINT_SHADEABLE)
+g15_lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 22, 0, 48, 0)
 g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint=g15driver.HINT_SWITCH)
 g15_controls = [ g15_mkeys_control, g15_backlight_control, g15_invert_control, g15_lcd_backlight_control, g15_lcd_contrast_control ]  
 g11_controls = [ g15_mkeys_control, g15_backlight_control ]
 g13_controls = [ g19_keyboard_backlight_control, g15_mkeys_control, g15_invert_control, g15_mkeys_control ]
 
-# Keymaps that are sent to the kernel driver
+"""
+Keymaps that are sent to the kernel driver. These are the codes the driver
+will emit.
+ 
+"""
 K_KEYMAPS = {
              g15driver.MODEL_G19: {
-                                   0x0000 : 0x0000,
-                                   0x0001 : 0x0000,
-                                   0x0002 : 0x0000,
-                                   0x0003 : 0x0000,
-                                   0x0004 : 0x0000,
-                                   0x0005 : 0x0000,
-                                   0x0006 : 0x0000,
-                                   0x0007 : 0x0000,
-                                   0x0008 : 0x0000,
-                                   0x0009 : 0x0000,
-                                   0x000A : 0x0000,
-                                   0x000B : 0x0000
+                                   0x0000 : S.KEY_F1,
+                                   0x0001 : S.KEY_F2,
+                                   0x0002 : S.KEY_F3,
+                                   0x0003 : S.KEY_F4,
+                                   0x0004 : S.KEY_F5,
+                                   0x0005 : S.KEY_F6,
+                                   0x0006 : S.KEY_F7,
+                                   0x0007 : S.KEY_F8,
+                                   0x0008 : S.KEY_F9,
+                                   0x0009 : S.KEY_F10,
+                                   0x000A : S.KEY_F11,
+                                   0x000B : S.KEY_F12,
+                                   0x000C : S.KEY_PROG1,
+                                   0x000D : S.KEY_PROG2,
+                                   0x000E : S.KEY_PROG3,
+                                   0x000F : S.KEY_RECORD,
+                                   0x0013 : 229,
+                                   0x0018 : S.KEY_FORWARD,
+                                   0x0019 : S.KEY_BACK,
+                                   0x0020 : S.KEY_MENU,
+                                   0x0021 : S.KEY_OK,
+                                   0x0022 : S.KEY_RIGHT,
+                                   0x0023 : S.KEY_LEFT,
+                                   0x0024 : S.KEY_DOWN,
+                                   0x0025 : S.KEY_UP                                   
                                    },
              g15driver.MODEL_G15_V1: {
-                                   0 : 0x0000,
-                                   2 : 0x0000,
-                                   8 : 0x0000,
-                                   9 : 0x0000,
-                                   11 : 0x0000,
-                                   17 : 0x0000,
-                                   18 : 0x0000,
-                                   20 : 0x0000,
-                                   26 : 0x0000,
-                                   27 : 0x0000,
-                                   29 : 0x0000,
-                                   35 : 0x0000,
-                                   36 : 0x0000,
-                                   38 : 0x0000,
-                                   44 : 0x0000,
-                                   45 : 0x0000,
-                                   53 : 0x0000,
-                                   62 : 0x0000
+                                   0x00 : S.KEY_F1,
+                                   0x02 : S.KEY_F13,
+                                   0x07 : 228,
+                                   0x08 : S.KEY_F7,
+                                   0x09 : S.KEY_F2,
+                                   0x0b : S.KEY_F14,
+                                   0x0f : S.KEY_LEFT,
+                                   0x11 : S.KEY_F8,
+                                   0x12 : S.KEY_F3,
+                                   0x14 : S.KEY_F15,
+                                   0x17 : S.KEY_UP,
+                                   0x1a : S.KEY_F9,
+                                   0x1b : S.KEY_F4,
+                                   0x1d : S.KEY_F16,
+                                   0x1f : S.KEY_DOWN,
+                                   0x23 : S.KEY_F10,
+                                   0x24 : S.KEY_F5,
+                                   0x26 : S.KEY_F17,
+                                   0x27 : S.KEY_RIGHT,
+                                   0x28 : S.KEY_PROG1,
+                                   0x2c : S.KEY_F11,
+                                   0x2d : S.KEY_F6,
+                                   0x31 : S.KEY_PROG2,
+                                   0x35 : S.KEY_F12,
+                                   0x36 : S.KEY_RECORD,
+                                   0x3a : S.KEY_PROG3,
+                                   0x3e : S.KEY_F18,
+                                   0x3f : S.KEY_OK
                                    },
              g15driver.MODEL_G15_V2: {
-                                   0 : 0x0000,
-                                   2 : 0x0000,
-                                   8 : 0x0000,
-                                   9 : 0x0000,
-                                   11 : 0x0000,
-                                   17 : 0x0000,
-                                   18 : 0x0000,
-                                   20 : 0x0000,
-                                   26 : 0x0000,
-                                   27 : 0x0000,
-                                   29 : 0x0000,
-                                   35 : 0x0000,
-                                   36 : 0x0000,
-                                   38 : 0x0000,
-                                   44 : 0x0000,
-                                   45 : 0x0000,
-                                   53 : 0x0000,
-                                   62 : 0x0000
+                                   0 : S.KEY_F1,
+                                   2 : S.KEY_F2,
+                                   8 : S.KEY_F3,
+                                   9 : S.KEY_F4,
+                                   11 : S.KEY_F5,
+                                   17 : S.KEY_F6,
+                                   18 : S.KEY_F7,
+                                   20 : S.KEY_F8,
+                                   26 : S.KEY_F9,
+                                   27 : S.KEY_F10,
+                                   29 : S.KEY_F11,
+                                   35 : S.KEY_F12,
+                                   36 : S.KEY_F13,
+                                   38 : S.KEY_F14,
+                                   44 : S.KEY_F15,
+                                   45 : S.KEY_F16,
+                                   53 : S.KEY_F17,
+                                   62 : S.KEY_F18
                                    },
              g15driver.MODEL_G13: {
-                                   0x0000 : 0x0000,
-                                   0x0001 : 0x0000,
-                                   0x0002 : 0x0000,
-                                   0x0003 : 0x0000,
-                                   0x0004 : 0x0000,
-                                   0x0005 : 0x0000,
-                                   0x0006 : 0x0000,
-                                   0x0007 : 0x0000,
-                                   0x0008 : 0x0000,
-                                   0x0009 : 0x0000,
-                                   0x000A : 0x0000,
-                                   0x000B : 0x0000,
-                                   0x000C : 0x0000,
-                                   0x000D : 0x0000,
-                                   0x000E : 0x0000,
-                                   0x000F : 0x0000,
-                                   0x0010 : 0x0000,
-                                   0x0011 : 0x0000,
-                                   0x0012 : 0x0000,
-                                   0x0013 : 0x0000,
-                                   0x0014 : 0x0000,
-                                   0x0015 : 0x0000,
+                                   0x0000 : S.KEY_F1,
+                                   0x0001 : S.KEY_F2,
+                                   0x0002 : S.KEY_F3,
+                                   0x0003 : S.KEY_F4,
+                                   0x0004 : S.KEY_F5,
+                                   0x0005 : S.KEY_F6,
+                                   0x0006 : S.KEY_F7,
+                                   0x0007 : S.KEY_F8,
+                                   0x0008 : S.KEY_F9,
+                                   0x0009 : S.KEY_F10,
+                                   0x000A : S.KEY_F11,
+                                   0x000B : S.KEY_F12,
+                                   0x000C : S.KEY_F13,
+                                   0x000D : S.KEY_F14,
+                                   0x000E : S.KEY_F15,
+                                   0x000F : S.KEY_F16,
+                                   0x0010 : S.KEY_F17,
+                                   0x0011 : S.KEY_F18,
+                                   0x0012 : S.KEY_F19,
+                                   0x0013 : S.KEY_F20,
+                                   0x0014 : S.KEY_F21,
+                                   0x0015 : S.KEY_F22,
+                                   0x0016 : S.KEY_OK,
+                                   0x0017 : S.KEY_LEFT,
+                                   0x0018 : S.KEY_UP,
+                                   0x0019 : S.KEY_DOWN,
+                                   0x0020 : S.KEY_RIGHT,
+                                   0x0021 : S.KEY_PROG1,
+                                   0x0022 : S.KEY_PROG2,
+                                   0x0023 : S.KEY_PROG3,
+                                   0x0024 : S.KEY_RECORD,
+                                   0x0025 : S.BTN_LEFT,
+                                   0x0026 : S.BTN_RIGHT,
+                                   0x0027 : S.BTN_MIDDLE,
+                                   0x0028 : 228,
+                                   },
+             g15driver.MODEL_G110: {
+                                   0x0000 : S.KEY_F1,
+                                   0x0001 : S.KEY_F2,
+                                   0x0002 : S.KEY_F3,
+                                   0x0003 : S.KEY_F4,
+                                   0x0004 : S.KEY_F5,
+                                   0x0005 : S.KEY_F6,
+                                   0x0006 : S.KEY_F7,
+                                   0x0007 : S.KEY_F8,
+                                   0x0008 : S.KEY_F9,
+                                   0x0009 : S.KEY_F10,
+                                   0x000A : S.KEY_F11,
+                                   0x000B : S.KEY_F12,
+                                   0x000C : S.KEY_PROG1,
+                                   0x000D : S.KEY_PROG2,
+                                   0x000E : S.KEY_PROG3,
+                                   0x000F : S.KEY_RECORD,
+                                   0x0013 : 229,
                                    },
              }
 
 class DeviceInfo:
-    def __init__(self, leds, controls, key_map, led_prefix, keydev_pattern):
+    def __init__(self, leds, controls, key_map, led_prefix, keydev_pattern, sink_pattern = None):
         self.leds = leds
         self.controls = controls
         self.key_map = key_map
         self.led_prefix = led_prefix 
+        self.sink_pattern = sink_pattern
         self.keydev_pattern = keydev_pattern
         
 device_info = {
-               g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", r"Logitech_G19_Gaming_Keyboard.*if"), 
+               g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", r"usb-Logitech_G19_Gaming_Keyboard-event-if.*", r"usb-Logitech_G19_Gaming_Keyboard-event-kbd.*",), 
                g15driver.MODEL_G11: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g11_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if"), 
                g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if"), 
                g15driver.MODEL_G15_V2: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if"),
-               g15driver.MODEL_G13: DeviceInfo(["red:m1", "red:m2", "red:m3", "red:mr" ], g13_controls, g15_key_map, "g13", r"_G13.*if"),
-               g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g110_controls, g19_key_map, "g110", r"G110_Keyboard_G15.*if")
+               g15driver.MODEL_G13: DeviceInfo(["red:m1", "red:m2", "red:m3", "red:mr" ], g13_controls, g13_key_map, "g13", r"_G13-event-mouse"),
+               g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g110_controls, g110_key_map, "g110", r"Gaming_Keyboard_G110")
                }
         
 
@@ -225,7 +366,8 @@ def show_preferences(device, parent, gconf_client):
     for dir in os.listdir("/dev"):
         if dir.startswith("fb"):
             device_model.append(["/dev/" + dir])    
-    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/fb_device" % device.uid, "DeviceCombo", "auto", widget_tree)
+    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/fb_device" % device.uid, "DeviceCombo", "auto", widget_tree)  
+    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
     return widget_tree.get_object("DriverComponent")
     
 class KeyboardReceiveThread(Thread):
@@ -243,12 +385,12 @@ class KeyboardReceiveThread(Thread):
             try :
                 fcntl.ioctl(dev.fileno(), EVIOCGRAB, 0)
             except Exception as e:
-                print "Failed ungrab.",e
+                logger.info("Failed ungrab. %s" % str(e))
             logger.info("Closing %d" % dev.fileno())
             try :
                 self.fds[dev.fileno()].close()
             except Exception as e:
-                print "Failed close.",e
+                logger.info("Failed close. %s" % str(e))
             logger.info("Stopped %d" % dev.fileno())
         logger.info("Stopped all input devices")
         
@@ -269,6 +411,17 @@ class KeyboardReceiveThread(Thread):
                     if self._run:
                         raise e
         logger.info("Thread left")
+        
+'''
+SimpleDevice implementation that does nothng with events. This is used to
+work-around a problem where X ends up getting the G19 F-key events
+'''
+class SinkDevice(SimpleDevice):
+    def __init__(self, *args, **kwargs):
+        SimpleDevice.__init__(self, *args, **kwargs)
+        
+    def receive(self, event):
+        pass
 
 '''
 SimpleDevice implementation that translates kernel input events
@@ -276,13 +429,20 @@ into Gnome15 key events and forwards them to the registered
 Gnome15 keyboard callback.
 '''
 class ForwardDevice(SimpleDevice):
-    def __init__(self, callback, key_map, *args, **kwargs):
+    def __init__(self, driver, callback, key_map, *args, **kwargs):
         SimpleDevice.__init__(self, *args, **kwargs)
         self.callback = callback
+        self.driver = driver
         self.key_map = key_map
         self.ctrl = False
+        self.held_keys = []
         self.alt = False
         self.shift = False
+        self.current_x = 0
+        self.current_y = 0
+        self.last_x = 0
+        self.last_y = 0
+        self.move_timer = None
         self.state = None
         self.doq = False # queue keystrokes for processing?
         self.mouseev = []
@@ -305,24 +465,135 @@ class ForwardDevice(SimpleDevice):
         return code
     
     def receive(self, event):
-        print "Event: %s" % str(event)
-        if event.etype == S.EV_KEY:
+        
+        # For now, emulate a digital joystick
+        if event.etype == S.EV_ABS:
+            if self.driver.joy_mode == "joystick":
+                self._abs_joystick(event)
+            elif self.driver.joy_mode == "mouse":
+                low_val = 128 - self.driver.calibration
+                high_val = 128 + self.driver.calibration
+                
+                if event.ecode == S.REL_X:
+                    self.current_x = event.evalue
+                if event.ecode == S.REL_Y:
+                    self.current_y = event.evalue
+                
+                # Get the amount between the current value and the centre to move
+                move_x = 0    
+                move_y = 0
+                if self.current_x >= high_val:
+                    move_x = self.current_x - high_val
+                elif self.current_x <= low_val:
+                    move_x = self.current_x - low_val
+                if self.current_y >= high_val:
+                    move_y = self.current_y - high_val
+                elif self.current_y <= low_val:
+                    move_y = self.current_y - low_val
+                    
+                if self.current_x != self.last_x or self.current_y != self.last_y:
+                    self.last_x = self.current_x
+                    self.last_y = self.current_y
+                    self.move_x = move_x / 8
+                    
+                    
+                    self.move_y = self._clamp(-3, move_y / 8, 3) 
+                    self.move_x = self._clamp(-3, move_x / 8, 3) 
+                    self._mouse_move()
+                else:
+                    if self.move_timer is not None:                    
+                        self.move_timer.cancel()
+            else:
+                self._emit_macro(event)                        
+        elif event.etype == S.EV_KEY:
+            state = g15driver.KEY_STATE_DOWN if event.evalue == 1 else g15driver.KEY_STATE_UP
             if event.evalue == 2:
                 # Drop auto repeat for now
                 return
             else:
-                self._event(event, g15driver.KEY_STATE_DOWN if event.evalue == 1 else g15driver.KEY_STATE_UP)
+                if event.ecode in [ S.BTN_LEFT, S.BTN_RIGHT, S.BTN_MIDDLE ]:
+                    """
+                    Handle joystick buttons separately
+                    """
+                    if self.driver.joy_mode == "mouse":                    
+                        g15uinput.emit(g15uinput.JOYSTICK, event.ecode, event.evalue, syn=True)                
+                    elif self.driver.joy_mode == "joystick":
+                        g15uinput.emit(g15uinput.JOYSTICK, self._translate_joystick_buttons(event.ecode), event.evalue, syn=True)                
+                    else:
+                        self._event(self._translate_joystick_buttons(event.ecode), state)
+                else:
+                    self._event(event.ecode, state)
         elif event.etype == 0:
             return
         else:
             logger.warning("Unhandled event: %s" % str(event))
+            
+    def _emit_macro(self, event):
+        low_val = 128 - ( self.driver.calibration * 2 )
+        high_val = 128 + ( self.driver.calibration * 2 )
+        if event.ecode == S.REL_X:
+            if event.evalue < low_val:
+                self._release_keys([g15driver.G_KEY_RIGHT])
+                if not g15driver.G_KEY_LEFT in self.held_keys:
+                    self.callback([g15driver.G_KEY_LEFT], g15driver.KEY_STATE_DOWN)
+                    self.held_keys.append(g15driver.G_KEY_LEFT)
+            elif event.evalue > high_val:
+                self._release_keys([g15driver.G_KEY_LEFT])
+                if not g15driver.G_KEY_RIGHT in self.held_keys:
+                    self.callback([g15driver.G_KEY_RIGHT], g15driver.KEY_STATE_DOWN)
+                    self.held_keys.append(g15driver.G_KEY_RIGHT)
+            else:                                         
+                self._release_keys([g15driver.G_KEY_LEFT,g15driver.G_KEY_RIGHT])    
+        if event.ecode == S.REL_Y:
+            if event.evalue < low_val:
+                self._release_keys([g15driver.G_KEY_DOWN])
+                if not g15driver.G_KEY_UP in self.held_keys:
+                    self.callback([g15driver.G_KEY_UP], g15driver.KEY_STATE_DOWN)
+                    self.held_keys.append(g15driver.G_KEY_UP)                        
+            if event.evalue > high_val:
+                self._release_keys([g15driver.G_KEY_UP])
+                if  not g15driver.G_KEY_DOWN in self.held_keys:
+                    self.callback([g15driver.G_KEY_DOWN], g15driver.KEY_STATE_DOWN)
+                    self.held_keys.append(g15driver.G_KEY_DOWN)
+            else:                                         
+                self._release_keys([g15driver.G_KEY_UP,g15driver.G_KEY_DOWN])
+                
+    def _release_keys(self, keys):
+        for k in keys:
+            if k in self.held_keys:
+                self.callback([k], g15driver.KEY_STATE_UP)
+                self.held_keys.remove(k)
+                
+    
+    def _clamp(self, minimum, x, maximum):
+        return max(minimum, min(x, maximum))
 
-    def _event(self, event, state):
-        key = str(event.ecode)
-        if key in self.key_map:
-            self.callback([self.key_map[key]], state)
+    def _mouse_move(self):
+        if self.move_x != 0 or self.move_y != 0:
+            if self.move_x != 0:
+                g15uinput.emit(g15uinput.MOUSE, uinput.REL_X, self.move_x)        
+            if self.move_y != 0:
+                g15uinput.emit(g15uinput.MOUSE, uinput.REL_Y, self.move_y)
+            self.move_timer = g15util.schedule("MouseMove", 0.1, self._mouse_move)
+            
+    def _translate_joystick_buttons(self, ecode):
+        if ecode == S.BTN_LEFT:
+            return uinput.BTN_0
+        elif ecode == S.BTN_RIGHT:
+            return uinput.BTN_1
+        elif ecode == S.BTN_MIDDLE:
+            return uinput.BTN_2
+        
+    def _abs_joystick(self, event):
+#        self._check_js_buttons(this_keys) 
+        g15uinput.emit(g15uinput.JOYSTICK, uinput.ABS_X if event.ecode == S.REL_X else uinput.ABS_Y, event.evalue, syn=True)
+
+    def _event(self, event_code, state):
+        if event_code in self.key_map:
+            key = self.key_map[event_code]
+            self.callback([key], state)
         else:
-            logger.warning("Unmapped key for event: %s" % event)
+            logger.warning("Unmapped key for event: %s" % event_code)
 
 class Driver(g15driver.AbstractDriver):
 
@@ -356,6 +627,10 @@ class Driver(g15driver.AbstractDriver):
     def on_disconnect(self):
         if not self.is_connected():
             raise Exception("Not connected")
+        
+        g15uinput.deregister_codes("g15_kernel/%s" % self.device.uid)
+        for h in self.notify_handles:
+            self.conf_client.notify_remove(h)
         self._stop_receiving_keys()
         self.fb.__del__()
         self.fb = None
@@ -385,12 +660,23 @@ class Driver(g15driver.AbstractDriver):
         return self.device.action_keys
         
     def get_key_layout(self):
-        return self.device.key_layout
+        if self.get_model_name() == g15driver.MODEL_G13 and "macro" == self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid):
+            """
+            This driver with the G13 supports some additional keys
+            """
+            l = list(self.device.key_layout)
+            l.append([ g15driver.G_KEY_UP ])
+            l.append([ g15driver.G_KEY_JOY_LEFT, g15driver.G_KEY_LEFT, g15driver.G_KEY_JOY_CENTER, g15driver.G_KEY_RIGHT ])
+            l.append([ g15driver.G_KEY_JOY_DOWN, g15driver.G_KEY_DOWN ])
+            return l
+        else:
+            return self.device.key_layout
         
     def connect(self):
         if self.is_connected():
             raise Exception("Already connected")
         
+        self.notify_handles = []
         # Check hardware again
         self._init_driver()
 
@@ -419,7 +705,35 @@ class Driver(g15driver.AbstractDriver):
         # Connect to DBUS        
         system_bus = dbus.SystemBus()
         system_service_object = system_bus.get_object('org.gnome15.SystemService', '/org/gnome15/SystemService')     
-        self.system_service = dbus.Interface(system_service_object, 'org.gnome15.SystemService')      
+        self.system_service = dbus.Interface(system_service_object, 'org.gnome15.SystemService')    
+        # Setup joystick configuration on G13
+        self.calibration = 18   
+        self._load_configuration()
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/joymode" % self.device.uid, self._config_changed, None))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/fb_device" % self.device.uid, self._framebuffer_device_changed, None))
+             
+                   
+    def _load_configuration(self):
+        self.joy_mode = self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
+        g15uinput.deregister_codes("g15_kernel/%s" % self.device.uid)
+        if self.joy_mode == "mouse":
+            logger.info("Enabling mouse emulation")            
+            g15uinput.register_codes("g15_kernel/%s" % self.device.uid, g15uinput.MOUSE, [uinput.BTN_MOUSE, uinput.BTN_RIGHT, uinput.BTN_MIDDLE ])
+        elif self.joy_mode == "joystick":
+            logger.info("Enabling joystick emulation")            
+            g15uinput.register_codes("g15_kernel/%s" % self.device.uid, g15uinput.JOYSTICK, [uinput.BTN_0, uinput.BTN_1, uinput.BTN_2 ], {
+                                        uinput.ABS_X: (0, 255, 0, 0),
+                                        uinput.ABS_Y: (0, 255, 0, 0),
+                                                 })
+        else:
+            logger.info("Enabling macro keys for joystick")
+            
+    def _config_changed(self, client, connection_id, entry, args):
+        self._load_configuration()
+        
+    def _framebuffer_device_changed(self, client, connection_id, entry, args):
+        if self.is_connected():
+            self.disconnect()
         
     def get_size(self):
         return self.device.lcd_size
@@ -530,7 +844,7 @@ class Driver(g15driver.AbstractDriver):
                     element.set("style", style.replace("font-family:Sans", "font-family:%s" % g15globals.fixed_size_font_name))
                     
     def on_update_control(self, control):
-        if control == g19_keyboard_backlight_control:
+        if control == g19_keyboard_backlight_control or control == g110_keyboard_backlight_control:
             self._write_to_led("red:bl", control.value[0])
             self._write_to_led("green:bl", control.value[1])
             self._write_to_led("blue:bl", control.value[2])            
@@ -567,7 +881,10 @@ class Driver(g15driver.AbstractDriver):
         self.key_thread = KeyboardReceiveThread(self.device)
         for devpath in self.keyboard_devices:
             logger.info("Adding input device %s" % devpath)
-            self.key_thread.devices.append(ForwardDevice(callback, self.device_info.key_map, devpath, devpath))
+            self.key_thread.devices.append(ForwardDevice(self, callback, self.device_info.key_map, devpath, devpath))
+        for devpath in self.sink_devices:
+            logger.info("Adding input sink device %s" % devpath)
+            self.key_thread.devices.append(SinkDevice(devpath, devpath))
         self.key_thread.start()
         
     '''
@@ -664,8 +981,12 @@ class Driver(g15driver.AbstractDriver):
             
         # Try and find the paths for the keyboard devices
         self.keyboard_devices = []
+        self.sink_devices = []
         dir = "/dev/input/by-id"
         for p in os.listdir(dir):
             if re.search(self.device_info.keydev_pattern, p):
                 logger.info("Input device %s matches %s" % (p, self.device_info.keydev_pattern))
                 self.keyboard_devices.append(dir + "/" + p)
+            if self.device_info.sink_pattern is not None and re.search(self.device_info.sink_pattern, p):
+                logger.info("Input sink device %s matches %s" % (p, self.device_info.sink_pattern))
+                self.sink_devices.append(dir + "/" + p)

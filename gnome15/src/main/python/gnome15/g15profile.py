@@ -29,7 +29,8 @@ import errno
 import pyinotify
 import logging
 import uinput
-
+import re
+ 
 logger = logging.getLogger("macros")
 active_profile = None
 conf_client = gconf.client_get_default()
@@ -168,6 +169,12 @@ class G15Macro:
         section_name = "m%d" % self.memory
         if not self.profile.parser.has_section(section_name):
             self.profile.parser.add_section(section_name)
+    
+    def __ne__(self, macro):
+        return not self.__eq__(macro)
+    
+    def __eq__(self, macro):
+        return macro is not None and self.profile.id == macro.profile.id and self.key_list_key == macro.key_list_key
             
     def compare(self, o):
         return self._get_total(self.keys) - self._get_total(o.keys)
@@ -175,22 +182,30 @@ class G15Macro:
     def _get_total(self, keys):
         t = 0
         for i in range(0, len(keys)):
-            t += self._get_key_val(keys[i])
+            if keys[i] != "":
+                t += self._get_key_val(keys[i])
         return t
             
-    def _get_key_val(self, key):        
-        if key.startswith("g"):
+    def _get_key_val(self, key):
+        if(key == ""):
+            return 0        
+        elif re.match("g[0-9]+.*", key):
             return int(key[1:])
-        elif key.startswith("m"):
+        elif re.match("m[1-3]", key):
             return 50 + int(key[1:])
-        elif key.startswith("l"):
+        elif key == "mr":
+            return 55        
+        elif re.match("l[0-9]+.*", key):
             return 100 + int(key[1:])
         else:
-            return 200 + self.profile.device.get_key_index(key)
+            ki = self.profile.device.get_key_index(key)
+            if ki is None:
+                ki = 200
+            return 200 + ki
         
     def get_uinput_code(self):
         return uinput.capabilities.CAPABILITIES[self.mapped_key] if self.mapped_key in uinput.capabilities.CAPABILITIES else 0
-        
+    
     def set_keys(self, keys):
         section_name = "m%d" % self.memory     
         self.profile._delete_key(section_name, self.key_list_key)
@@ -251,9 +266,14 @@ class G15Profile():
     def are_keys_in_use(self, memory, keys, exclude = None):
         bank = self.macros[memory - 1]
         for macro in bank:
-            if ( exclude == None or ( exclude != None and not macro in exclude ) ) and sorted(keys) == sorted(macro.keys): 
+            if ( exclude == None or ( exclude != None and not self.is_excluded(exclude, macro) ) ) and sorted(keys) == sorted(macro.keys):
                 return True
         return False
+    
+    def is_excluded(self, excluded, macro):
+        for e in excluded:
+            if e == macro:
+                return True
 
     def get_default(self):
         return self.id == 0
@@ -394,6 +414,11 @@ class G15Profile():
     '''
     Private
     '''
+    def __ne__(self, profile):
+        return not self.__eq__(profile)
+    
+    def __eq__(self, profile):
+        return profile is not None and self.id == profile.id
         
     def _write(self):
         dir_name = os.path.dirname(self._get_filename())

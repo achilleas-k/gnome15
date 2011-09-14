@@ -43,7 +43,7 @@ import signal
 import g15pluginmanager
 from threading import Thread
 import gtk.gdk
-
+ 
 # Used for getting logout  / shutdown signals
 master_client = None
 if "gnome" == g15util.get_desktop():
@@ -579,7 +579,7 @@ class G15Service(g15desktop.G15AbstractService):
             
     def _sm_query_end_session(self, flags):
         logger.info("Querying for end session")
-        self._sm_client_dbus_will_quit(False, "Gnome15 Shutting Down")
+        self._sm_client_dbus_will_quit(True, "Gnome15 Shutting Down")
         
     def _sm_cancel_end_session(self):
         logger.info("Session end cancelled")
@@ -588,7 +588,7 @@ class G15Service(g15desktop.G15AbstractService):
             self.start()
         
     def _sm_end_session(self, flags):
-        self._sm_client_dbus_will_quit(False, "Gnome15 Shutting Down")
+        self._sm_client_dbus_will_quit(True, "Gnome15 Shutting Down")
         logger.info("Ending session")
         self.stop()
     
