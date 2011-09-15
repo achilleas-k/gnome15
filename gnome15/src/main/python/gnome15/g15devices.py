@@ -310,7 +310,7 @@ Register all supported models
 """
 if g15drivermanager.get_driver_mod("gtk"): 
     DeviceInfo('virtual', (0x0000, 0x0000), (0x0000, 0x0000), [], 0, ( 0,    0 ), False, "Virtual LCD Window", None)
-DeviceInfo(g15driver.MODEL_G11, (0x046d, 0xc225),(0x046d, 0xc225),           g11_key_layout,   0,  ( 0,    0 ),    True, "Logitech G11 Keyboard", None)
+DeviceInfo(g15driver.MODEL_G11, (0x046d, 0xc225),(0x046d, 0xc225),           g11_key_layout,   0,  ( 0,    0 ),    True, "Logitech G11 Keyboard", {})
 DeviceInfo(g15driver.MODEL_G19, (0x046d, 0xc229),(0x046d, 0xc229),           g19_key_layout,   16, ( 320,  240 ),  True, "Logitech G19 Gaming Keyboard", g19_action_keys)
 DeviceInfo(g15driver.MODEL_G15_V1, (0x046d, 0xc221),(0x046d, 0xc222),        g15v1_key_layout, 1,  ( 160,  43 ),   True, "Logitech G15 Gaming Keyboard (version 1)", g15_action_keys) 
 DeviceInfo(g15driver.MODEL_G15_V2, (0x046d, 0xc227),(0x046d, 0xc227),        g15v2_key_layout, 1,  ( 160,  43 ),   True, "Logitech G15 Gaming Keyboard (version 2)", g15_action_keys)
@@ -318,7 +318,7 @@ DeviceInfo(g15driver.MODEL_G13, (0x046d, 0xc21c),(0x046d, 0xc21c),           g13
 DeviceInfo(g15driver.MODEL_G510, (0x046d, 0xc22d), (0x046d, 0xc22d),         g510_key_layout,  1,  ( 160,  43 ),   True, "Logitech G510 Keyboard", g15_action_keys)
 DeviceInfo(g15driver.MODEL_G510_AUDIO, (0x046d, 0xc22e), (0x046d, 0xc22e),   g510_key_layout,  1,  ( 160,  43 ),   True, "Logitech G510 Keyboard (audio)", g19_action_keys)
 DeviceInfo(g15driver.MODEL_Z10, (0x046d, 0x0a07), (0x046d, 0x0a07),           z10_key_layout,   1,  ( 160,  43 ),   False, "Logitech Z10 Speakers", g19_action_keys)
-DeviceInfo(g15driver.MODEL_G110, (0x046d, 0xc22b), (0x046d, 0xc22b),         g110_key_layout,  0,  ( 0,    0 ),    True, "Logitech G110 Keyboard", None)
+DeviceInfo(g15driver.MODEL_G110, (0x046d, 0xc22b), (0x046d, 0xc22b),         g110_key_layout,  0,  ( 0,    0 ),    True, "Logitech G110 Keyboard", {})
 DeviceInfo(g15driver.MODEL_GAMEPANEL, (0x046d, 0xc251), (0x046d, 0xc251),       g15v1_key_layout, 1,  ( 160,  43 ),   True, "Logitech GamePanel", g15_action_keys)
 
 # When I get hold of an MX5500, I will add Bluetood detection as well
