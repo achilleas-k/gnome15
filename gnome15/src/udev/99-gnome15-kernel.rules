@@ -30,8 +30,7 @@ SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", A
 SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c225", MODE="0660", GROUP="plugdev", SYMLINK+="g11-extra-keys"
 
 # Logitech G110 Keyboard (no LCD)
-SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c225", MODE="0660", GROUP="plugdev", SYMLINK+="g110-extra-keys"
-SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c225", MODE="0660", GROUP="plugdev", SYMLINK+="g15v2-lcd"
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22b", MODE="0660", GROUP="plugdev", SYMLINK+="g110-extra-keys"
 
 # Logitech Game Panel (Dell XPS 1730?)
 SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c251", MODE="0660", GROUP="plugdev", SYMLINK+="gamepanel-extra-keys"

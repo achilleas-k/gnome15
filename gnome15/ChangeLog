@@ -1,3 +1,8 @@
+0.7.4
+	Bug: Corrected USB ID in udev rules for G110 and the kernel driver.
+	Bug: Fixed problem on Maverick where all Gnome15 components just crash on
+	     start up.
+	     
 0.7.3
 	New: Multi-device setup. All devices now start and stop simultaneously
 	     instead of sequentially.
@@ -5,7 +10,7 @@
 	     doesn't contain a key, the parent will then be checked, and so on.
 	Bug: Some GTK 2.20+ components crept into the glade files, breaking 
 	     g15-config on Ubuntu 10.04.
-	Bug: Various fixed for the G110 kernel driver
+	Bug: Various fixes for the G110 kernel driver
 	Bug: Processes plugin was using lots of CPU
 	Bug: IM plugin would thrown exceptions (harmless) under certain 
 	     circumstances.
