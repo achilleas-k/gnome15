@@ -79,7 +79,7 @@ def get_best_driver(conf_client, device, on_close = None):
         driver_mod = imported_drivers[driver_mod_key]
         driver = driver_mod.Driver(device, on_close = on_close)
         if device.model_id in driver.get_model_names():
-            driver.set_controls_from_configuration(conf_client)
+#            driver.set_controls_from_configuration(conf_client)
             return driver
     
 def get_driver(conf_client, device, on_close = None):
@@ -112,5 +112,5 @@ def get_driver(conf_client, device, on_close = None):
         return driver
     else:
         # Configured driver is OK to use    
-        driver.set_controls_from_configuration(conf_client)
+#        driver.set_controls_from_configuration(conf_client)
         return driver

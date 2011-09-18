@@ -26,6 +26,7 @@ import os.path
 import commands
 import dbus
 import libsensors
+import pylibatasmart
 
 from ctypes import *
 
@@ -87,9 +88,6 @@ class UDisksSource():
     
     def _check_dbus_connection(self):
         if self.udisks == None:
-            self.atasmart_dll = cdll.LoadLibrary("libatasmart.so.4")
-            
-            
             self.system_bus = dbus.SystemBus()
             udisks_object = self.system_bus.get_object(UDISKS_BUS_NAME, '/org/freedesktop/UDisks')     
             self.udisks = dbus.Interface(udisks_object, UDISKS_BUS_NAME)
@@ -113,27 +111,16 @@ class UDisksSource():
                     if int(udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartTimeCollected")) > 0:
                         # Only get the temperature if SMART data is collected to avoide spinning up disk
                         smart_blob = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartBlob")
+                        smart_blob_str = ""
+                        for c in smart_blob:
+                            smart_blob_str += str(c)
+                        sk_disk = pylibatasmart.sk_disk_open(None)
+#                        pylibatasmart.sk_disk_set_blob(sk_disk, smart_blob_str)
+#                        kelvin = pylibatasmart.sk_disk_smart_get_temperature(sk_disk) 
+#                        kelvin /= 1000;
+#                        temp_c = kelvin - 273.15
+#                        sensor.value = temp_c
                         
-                        
-                        
-#                        smart_blob = g_value_get_boxed(&smart_blob_val);
-#
-#                  sk_disk_open(NULL, &sk_disk);
-#                  sk_disk_set_blob (sk_disk, smart_blob->data, smart_blob->len);
-#                  /* Note: A gdouble cannot be passed in through a cast as it is likely that the
-#                   * temperature is placed in it purely through memory functions, hence a guint64
-#                   * is passed and the number is then placed in a gdouble manually 
-#                   */
-#                  sk_disk_smart_get_temperature (sk_disk, &temperature_placer);
-#                  temperature = temperature_placer;
-#
-#                  /* Temperature is in mK, so convert it to K first */
-#                  temperature /= 1000;
-#                  info->temp = temperature - 273.15;
-#                  info->changed = FALSE;
-#
-#                  g_free (sk_disk);
-#                  g_array_free(smart_blob, TRUE);
                     self.sensors[sensor.name] = sensor
                 
                 

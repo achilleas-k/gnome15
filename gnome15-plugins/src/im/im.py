@@ -30,7 +30,6 @@ import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
-import gnome15.g15screen as g15screen
 import dbus
 import telepathy
 from telepathy.interfaces import (
@@ -79,7 +78,7 @@ CONNECTION_PRESENCE_TYPE_OFFLINE = 1
 
 IMAGE_DIR = 'images'
 STATUS_MAP = {
-        ( CONNECTION_PRESENCE_TYPE_OFFLINE, None ): [ "offline" , "Offline"],
+        ( CONNECTION_PRESENCE_TYPE_OFFLINE, None ): [ [ "offline", "user-offline-panel" ] , "Offline"],
         ( CONNECTION_PRESENCE_TYPE_AVAILABLE, None ): [ "user-available", "Available" ],
         ( CONNECTION_PRESENCE_TYPE_AVAILABLE, "chat" ): [ "im-message-new", "Chatty" ],
         ( CONNECTION_PRESENCE_TYPE_AWAY, None ): [ "user-idle", "Idle" ],
@@ -360,18 +359,19 @@ class ContactMenu(g15theme.Menu):
         contacts that are appropriate for the current mode will be added
         """
         logger.debug("Reloading contacts")
-        self.remove_all_children()
+        c = []
         for item in self._contacts:
             if self._is_presence_included(item.presence):
-                self.add_child(item)
-        self.sort_items()
+                c.append(item)
+        self.sort_items(c)
         self.select_first()
+        self.mark_dirty()
         
-    def sort_items(self):
+    def sort_items(self, children):
         """
         Sort items based on their alias and presence
         """
-        self.set_children(sorted(self.get_children(), cmp=compare_contacts))
+        self.set_children(sorted(children, cmp=compare_contacts))
 
     def add_contact(self, conn, handle, contact, presence, alias):
         """
@@ -485,7 +485,7 @@ class G15Im(g15plugin.G15MenuPlugin):
         Keyword arguments:
         binding -- binding
         """
-        if binding.action == g15driver.VIEW:
+        if binding.action == g15driver.VIEW and self.page != None and self.page.is_visible(): 
             mode_index = MODE_LIST.index(self.menu.mode) + 1
             if mode_index >= len(MODE_LIST):
                 mode_index = 0

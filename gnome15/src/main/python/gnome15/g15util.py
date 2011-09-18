@@ -678,13 +678,19 @@ def get_icon_path(icon = None, size = 128, warning = True):
         if icon != None:
             if icon.get_filename() == None and warning:
                 logger.warning("Found icon %s (%d), but no filename was available" % ( o_icon, size ))
-            return icon.get_filename()
+            fn = icon.get_filename()
+            if os.path.isfile(fn):
+                return fn
+            elif not icon in [ "image-missing", "gtk-missing-image" ]:
+                return get_icon_path(["image-missing", "gtk-missing-image"], size, warning)
         else:
             if os.path.isfile(o_icon):
                 return o_icon
             else:
                 if warning:
                     logger.warning("Icon %s (%d) not found" % ( o_icon, size ))
+                if not icon in [ "image-missing", "gtk-missing-image" ]:
+                    return get_icon_path(["image-missing", "gtk-missing-image"], size, warning)
     
 def get_app_icon(gconf_client, icon, size = 128):
     icon_path = get_icon_path(icon, size)

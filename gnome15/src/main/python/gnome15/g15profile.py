@@ -261,6 +261,7 @@ class G15Profile():
         self.mkey_color = {}
         self.activate_on_focus = False
         self.window_name = ""
+        self.base_profile = -1
         self.load()
         
     def are_keys_in_use(self, memory, keys, exclude = None):
@@ -290,6 +291,7 @@ class G15Profile():
         self.parser.set("DEFAULT", "name", self.name)
         self.parser.set("DEFAULT", "icon", self.icon)
         self.parser.set("DEFAULT", "window_name", self.window_name)    
+        self.parser.set("DEFAULT", "base_profile", str(self.base_profile))
         self.parser.set("DEFAULT", "icon", self.icon)
         self.parser.set("DEFAULT", "activate_on_focus", str(self.activate_on_focus))
         self.parser.set("DEFAULT", "send_delays", str(self.send_delays))
@@ -387,14 +389,17 @@ class G15Profile():
             self.parser.read(self._get_filename())
         
         # Info section
-        self.name = self.parser.get("DEFAULT", "name") if self.parser.has_option("DEFAULT", "name") else ""
-        self.icon = self.parser.get("DEFAULT", "icon") if self.parser.has_option("DEFAULT", "icon") else ""
-        self.window_name = self.parser.get("DEFAULT", "window_name") if self.parser.has_option("DEFAULT", "window_name") else ""
+        self.name = self.parser.get("DEFAULT", "name").strip() if self.parser.has_option("DEFAULT", "name") else ""
+        self.icon = self.parser.get("DEFAULT", "icon").strip() if self.parser.has_option("DEFAULT", "icon") else ""
+        self.window_name = self.parser.get("DEFAULT", "window_name").strip() if self.parser.has_option("DEFAULT", "window_name") else ""
+        
         self.activate_on_focus = self.parser.getboolean("DEFAULT", "activate_on_focus") if self.parser.has_option("DEFAULT", "activate_on_focus") else False
         self.send_delays = self.parser.getboolean("DEFAULT", "send_delays") if self.parser.has_option("DEFAULT", "send_delays") else False
         self.fixed_delays = self.parser.getboolean("DEFAULT", "fixed_delays") if self.parser.has_option("DEFAULT", "fixed_delays") else False
-        self.press_delay = self.parser.getint("DEFAULT", "press_delay") if self.parser.has_option("DEFAULT", "press_delay") else 50
-        self.release_delay = self.parser.getint("DEFAULT", "release_delay") if self.parser.has_option("DEFAULT", "release_delay") else 50
+        
+        self.base_profile = self._get_int("base_profile", -1, "DEFAULT")
+        self.press_delay = self._get_int("press_delay", 50)
+        self.release_delay = self._get_int("release_delay", 50)
         
         # Bank sections
         for i in range(1, 4):
@@ -414,6 +419,12 @@ class G15Profile():
     '''
     Private
     '''
+    def _get_int(self, name, default_value, section = "DEFAULT"):
+        try:
+            return self.parser.getint(section, name) if self.parser.has_option(section, name) else default_value
+        except ValueError as v:
+            return default_value
+                    
     def __ne__(self, profile):
         return not self.__eq__(profile)
     

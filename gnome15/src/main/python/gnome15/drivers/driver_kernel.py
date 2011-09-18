@@ -350,7 +350,7 @@ device_info = {
                g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if"), 
                g15driver.MODEL_G15_V2: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if"),
                g15driver.MODEL_G13: DeviceInfo(["red:m1", "red:m2", "red:m3", "red:mr" ], g13_controls, g13_key_map, "g13", r"_G13-event-mouse"),
-               g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g110_controls, g110_key_map, "g110", r"Gaming_Keyboard_G110")
+               g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g110_controls, g110_key_map, "g110", r"usb-LOGITECH_G110_G-keys-event-if.*")
                }
         
 
@@ -516,7 +516,7 @@ class ForwardDevice(SimpleDevice):
                     Handle joystick buttons separately
                     """
                     if self.driver.joy_mode == "mouse":                    
-                        g15uinput.emit(g15uinput.JOYSTICK, event.ecode, event.evalue, syn=True)                
+                        g15uinput.emit(g15uinput.MOUSE, event.ecode, event.evalue, syn=True)                
                     elif self.driver.joy_mode == "joystick":
                         g15uinput.emit(g15uinput.JOYSTICK, self._translate_joystick_buttons(event.ecode), event.evalue, syn=True)                
                     else:
@@ -685,22 +685,25 @@ class Driver(g15driver.AbstractDriver):
             raise usb.USBError("No supported logitech keyboards found on USB bus")
         if self.device == None:
             raise usb.USBError("WARNING: Found no " + self.model + " Logitech keyboard, Giving up")
-        if self.fb_mode == None or self.device_name == None:
-            raise usb.USBError("No matching framebuffer device found")
-        if self.fb_mode != self.framebuffer_mode:
-            raise usb.USBError("Unexpected framebuffer mode %s, expected %s for device %s" % (self.fb_mode, self.framebuffer_mode, self.device_name))
         
-        # Open framebuffer
-        logger.info("Using framebuffer %s"  % self.device_name)
-        self.fb = fb.fb_device(self.device_name)
-        if logger.isEnabledFor(logging.DEBUG):
-            self.fb.dump()
-        self.var_info = self.fb.get_var_info()
-                
-        # Create an empty string buffer for use with monochrome LCD
-        self.empty_buf = ""
-        for i in range(0, self.fb.get_fixed_info().smem_len):
-            self.empty_buf += chr(0)
+        # If there is no LCD for this device, don't open the framebuffer
+        if self.device.bpp != 0:
+            if self.fb_mode == None or self.device_name == None:
+                raise usb.USBError("No matching framebuffer device found")
+            if self.fb_mode != self.framebuffer_mode:
+                raise usb.USBError("Unexpected framebuffer mode %s, expected %s for device %s" % (self.fb_mode, self.framebuffer_mode, self.device_name))
+            
+            # Open framebuffer
+            logger.info("Using framebuffer %s"  % self.device_name)
+            self.fb = fb.fb_device(self.device_name)
+            if logger.isEnabledFor(logging.DEBUG):
+                self.fb.dump()
+            self.var_info = self.fb.get_var_info()
+                    
+            # Create an empty string buffer for use with monochrome LCD
+            self.empty_buf = ""
+            for i in range(0, self.fb.get_fixed_info().smem_len):
+                self.empty_buf += chr(0)
             
         # Connect to DBUS        
         system_bus = dbus.SystemBus()
@@ -846,7 +849,8 @@ class Driver(g15driver.AbstractDriver):
     def on_update_control(self, control):
         if control == g19_keyboard_backlight_control or control == g110_keyboard_backlight_control:
             self._write_to_led("red:bl", control.value[0])
-            self._write_to_led("green:bl", control.value[1])
+            if control.hint & g15driver.HINT_RED_BLUE_LED == 0:
+                self._write_to_led("green:bl", control.value[1])
             self._write_to_led("blue:bl", control.value[2])            
         elif control == g15_backlight_control:
             self._write_to_led("blue:keys", control.value)          

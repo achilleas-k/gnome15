@@ -217,9 +217,15 @@ class JobQueue():
                         if item in self.queued_jobs: 
                             self.queued_jobs.remove(item)
             except:
-                traceback.print_exc(file=sys.stderr)
+                try:
+                    traceback.print_exc(file=sys.stderr)
+                except Exception as e:
+                    pass
             self.work_queue.task_done()
             
         if logger:
-            logger.info("Exited queue %s" % self.name)
+            try:
+                logger.info("Exited queue %s" % self.name)
+            except Exception as e:
+                pass
  

@@ -107,6 +107,34 @@ special_X_keysyms = {
     '~' : "asciitilde"
     }
 
+        
+class StopThread(Thread):
+    def __init__(self, screen, quickly):
+        Thread.__init__(self)
+        self.name = "StopScreen%s" % screen.device.uid
+        self.screen = screen
+        self.setDaemon(True)
+        self.quickly = quickly
+        self.start()
+    
+    def run(self):
+        self.screen.stop(self.quickly)
+        
+class StartThread(Thread):
+    def __init__(self, screen):
+        Thread.__init__(self)
+        self.name = "StartScreen%s" % screen.device.uid
+        self.screen = screen
+        self.error = None
+        self.start()
+    
+    def run(self):
+        try:
+            self.screen.start()
+        except Exception as e:
+            logger.error("Failed to start screen. %s" % str(e))
+            self.error = e
+
 class G15Service(g15desktop.G15AbstractService):
     
     def __init__(self, service_host, no_trap=False):
@@ -169,10 +197,13 @@ class G15Service(g15desktop.G15AbstractService):
             listener.service_stopping()
             
         logger.info("Stopping screens")
+        threads = []
         for screen in self.screens:
-            screen.stop(quickly)
+            threads.append(StopThread(screen, quickly))
+        self._join_alL(threads)
         g15util.stop_queue(SERVICE_QUEUE)        
         self.started = False
+            
         
     def shutdown(self, quickly = False):
         logger.info("Shutting down")
@@ -198,6 +229,8 @@ class G15Service(g15desktop.G15AbstractService):
             logger.warning("Running external command '%s'" % macro.command)
             os.system(macro.command)
         elif macro.type == g15profile.MACRO_SIMPLE:
+            self.send_simple_macro(macro)
+        elif macro.type == g15profile.MACRO_ACTION:
             self.send_simple_macro(macro)
         else:
             self.send_macro(macro)
@@ -390,25 +423,36 @@ class G15Service(g15desktop.G15AbstractService):
                 
         self.local_dpy.sync()
             
-    def get_active_window_name(self):
+    def get_active_application_name(self):
         return self.active_application_name
         
     """
     Private
     """
         
-    def _active_application_changed(self, old, object_name):
+    def _active_window_changed(self, old, object_name):
         if object_name != "":
             app = self.session_bus.get_object("org.ayatana.bamf", object_name)
             view = dbus.Interface(app, 'org.ayatana.bamf.view')
-            try :
-                if view.IsActive() == 1:
-                    self.active_application_name = view.Name()
-                    logger.debug("Active application is now %s" % self.active_application_name)
-                    for screen in self.screens:
-                        screen.set_active_profile()
-            except dbus.DBusException:
-                pass
+            for s in self.screens:
+                self._check_active_application(s, app, view)
+            
+    def _check_active_application(self, screen, app, view):
+        try :
+            if view.IsActive() == 1:
+                vn = view.Name()
+                logger.debug("Active application is now %s" % self.active_application_name)
+                if screen.set_active_application_name(vn):
+                    return True
+                else:                            
+                    parents = view.Parents()
+                    for parent in parents:
+                        app = self.session_bus.get_object("org.ayatana.bamf", parent)
+                        view = dbus.Interface(app, 'org.ayatana.bamf.view')
+                        if self._check_active_application(screen, app, view):
+                            return True                            
+        except dbus.DBusException:
+            pass
         
     def _check_active_application_with_wnck(self, event=None):
         try:
@@ -421,7 +465,7 @@ class G15Service(g15desktop.G15AbstractService):
                     self.active_application_name = active_application_name
                     logger.info("Active application is now %s" % self.active_application_name)
                     for screen in self.screens:
-                        screen.set_active_profile()
+                        screen.set_active_application_name(active_application_name)
         except Exception:
             logger.warning("Failed to activate profile for active window")
             traceback.print_exc(file=sys.stdout)
@@ -520,14 +564,12 @@ class G15Service(g15desktop.G15AbstractService):
         self.global_plugins.activate()
         
         # Start each screen's plugin manager
+        th = []
         for screen in self.screens:
-            try:
-                screen.start()
-            except Exception as a:
-                if len(self.screens) == 1:
-                    raise a
-                else:
-                    logger.error("Failed to start screen. %s" % str(a))
+            th.append(StartThread(screen))        
+        if len(self.screens) == 1:
+            if th[0].error is not None:
+                raise th[0].error
                 
         self.starting_up = False
         for listener in self.service_listeners:
@@ -535,6 +577,10 @@ class G15Service(g15desktop.G15AbstractService):
         self.started = True
             
         gobject.idle_add(self._monitor_session)
+        
+    def _join_alL(self, threads, timeout = 30):
+        for t in threads:
+            t.join(timeout)
             
     def _monitor_session(self):
         # Monitor active session (we shut down the driver when becoming inactive)
@@ -613,11 +659,11 @@ class G15Service(g15desktop.G15AbstractService):
         try :
             self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
             bamf_matcher_interface = dbus.Interface(self.bamf_matcher, 'org.ayatana.bamf.matcher')  
-            self.session_bus.add_signal_receiver(self._active_application_changed, dbus_interface = 'org.ayatana.bamf.matcher', signal_name="ActiveApplicationChanged")
-            active_application = bamf_matcher_interface.ActiveApplication() 
+            self.session_bus.add_signal_receiver(self._active_window_changed, dbus_interface = 'org.ayatana.bamf.matcher', signal_name="ActiveWindowChanged")
+            active_window = bamf_matcher_interface.ActiveWindow() 
             logger.info("Will be using BAMF for window matching")
-            if active_application:
-                self._active_application_changed("", active_application)
+            if active_window:
+                self._active_window_changed("", active_window)
         except Exception as e:
             logger.warning("BAMF not available, falling back to polling WNCK. %s" % str(e))
             try :                
@@ -649,6 +695,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.use_x_test = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/use_x_test', True)
         self.disable_svg_glow = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/disable_svg_glow', False)
         self.fade_screen_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_screen_on_close', True)
+        self.all_off_on_disconnect = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/all_off_on_disconnect', True)
         self.fade_keyboard_backlight_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_keyboard_backlight_on_close', True)
         self._mark_all_pages_dirty()
         

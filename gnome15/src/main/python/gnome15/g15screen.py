@@ -244,14 +244,22 @@ class G15Screen():
         if not self._load_driver():
             raise Exception("Driver failed to load") 
         
-    def set_active_profile(self):
+    def set_active_application_name(self, application_name):
+        """
+        Set the currently active application (may be a window name or a high
+        level application name). Returns a boolean indicating whether or not
+        a profile that matches was found
+        
+        Keyword arguments:
+        application_name        -- application name
+        """
+        found  = False
         if self.defeat_profile_change < 1:
-            choose_profile = None
-            title = self.service.get_active_window_name()         
+            choose_profile = None         
             # Active window has changed, see if we have a profile that matches it
-            if title is not None:
+            if application_name is not None:
                 for profile in g15profile.get_profiles(self.device):
-                    if not profile.get_default() and profile.activate_on_focus and len(profile.window_name) > 0 and title.lower().find(profile.window_name.lower()) != -1:
+                    if not profile.get_default() and profile.activate_on_focus and len(profile.window_name) > 0 and application_name.lower().find(profile.window_name.lower()) != -1:
                         choose_profile = profile 
                         break
                 
@@ -262,8 +270,12 @@ class G15Screen():
                 
                 if (active_profile == None or active_profile.id != default_profile.id) and default_profile.activate_on_focus:
                     default_profile.make_active()
+                    found = True
             elif active_profile == None or choose_profile.id != active_profile.id:
                 choose_profile.make_active()
+                found = True
+                
+        return found
         
     def start(self):
         logger.info("Starting %s." % self.device.uid)
@@ -291,19 +303,21 @@ class G15Screen():
         
     def stop(self, quickly = False):  
         logger.info("Stopping screen for %s" % self.device.uid)
-        g15uinput.deregister_codes(self.device.uid)      
+        g15uinput.deregister_codes(self.device.uid)
+        self.driver.all_off_on_disconnect = self.service.all_off_on_disconnect      
         self.stopping = True
         g15uinput.deregister_codes(self.device.uid)
-        g15profile.profile_listeners.remove(self._profile_changed)
+        if self._profile_changed in g15profile.profile_listeners:
+            g15profile.profile_listeners.remove(self._profile_changed)
         for h in self.notify_handles:
             self.conf_client.notify_remove(h)
-        self.notify_handles = []
+        self.notify_handles = [] 
         if self.is_active() and not quickly and ( self.service.fade_screen_on_close \
                                                   or self.service.fade_keyboard_backlight_on_close ):                
             logger.info("Fading %s" % self.device.uid)
             # Start fading keyboard
             acquisition = None
-            slow_shutdown_duration = 4.0
+            slow_shutdown_duration = 3.0
             if self.service.fade_keyboard_backlight_on_close:
                 bl_control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
                 if bl_control:
@@ -315,11 +329,11 @@ class G15Screen():
                     self.driver.acquire_control(bl_control, val = 0 if isinstance(bl_control, int) else (0, 0, 0))
                     
                     acquisition = self.driver.acquire_control(bl_control, val = current_val)
-                    acquisition.fade(duration = slow_shutdown_duration, release = True, step = 1 if isinstance(bl_control, int) else 5)
+                    acquisition.fade(duration = slow_shutdown_duration, release = True, step = 1 if isinstance(bl_control, int) else 10)
                 
             # Fade screen
             if self.driver.get_bpp() > 0 and self.service.fade_screen_on_close:
-                self.fade(True, duration = slow_shutdown_duration, step = 6)
+                self.fade(True, duration = slow_shutdown_duration, step = 10)
                 
             # Wait for keyboard fade to finish as well if it hasn't already
             if acquisition:  
@@ -329,7 +343,7 @@ class G15Screen():
                 
         if self.plugins and self.plugins.is_activated():
             self.plugins.deactivate()
-            self.plugins.destroy()
+            self.plugins.destroy()                
         if self.driver and self.driver.is_connected():
             self.driver.disconnect()
         
@@ -618,7 +632,7 @@ class G15Screen():
                     self.raise_page(page)
                     
             logger.info("Setting active profile")
-            self.set_active_profile()
+            self.set_active_application_name(self.service.get_active_application_name())
                     
             logger.info("Grabbing keyboard")
             self.driver.grab_keyboard(self.key_received)
@@ -760,7 +774,7 @@ class G15Screen():
                 for macro in bank:
                     if macro.type == g15profile.MACRO_MAPPED_TO_KEY:
                         uinput_code = macro.get_uinput_code()
-                        if uinput_code > 0:
+                        if uinput_code > 0 and macro.map_type in keys:
                             keys[macro.map_type].append(uinput_code)        
         for k in keys:
             if len(keys[k]) == 0:
@@ -865,10 +879,19 @@ class G15Screen():
                 if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
                     return        
         
+                # Search up the tree of profiles for the macro
                 macro = None
                 profile = g15profile.get_active_profile(self.device)
-                if profile != None:
+                while profile is not None:
                     macro = profile.get_macro(self.get_memory_bank(), keys)
+                    if macro is None:
+                        base_profile = profile.base_profile
+                        if base_profile != -1:
+                            profile = g15profile.get_profile(self.device, base_profile)
+                        else:
+                            profile = None
+                    else:
+                        profile = None
                                         
                 if macro != None:
                     if state == g15driver.KEY_STATE_UP:
@@ -924,12 +947,14 @@ class G15Screen():
             self.set_memory_bank(3)
         else:
             logger.info("Invoking action '%s'" % binding.action)
-            for l in self.action_listeners:                                    
+            for l in self.action_listeners:  
                 if l.action_performed(binding):
                     break
              
     def _control_changed(self, client, connection_id, entry, args):
-        self.driver.set_controls_from_configuration(client)
+        control_id = entry.get_key().split("/")[-1]
+        control = self.driver.get_control(control_id)
+        control.set_from_configuration(self.driver.device, self.conf_client)
         if self.visible_page:
             self.visible_page.mark_dirty()
         
@@ -1048,7 +1073,6 @@ class G15Screen():
             logger.debug("Redrawing %s" % page.id)
         else:
             logger.debug("Redrawing current page")
-#        traceback.print_stack()
         if queue:
             g15util.execute("redrawQueue", "redraw", self._do_redraw, page, direction, transitions, redraw_content)
         else:
@@ -1114,15 +1138,15 @@ class G15Screen():
                             
             try :
                 self.acquired_controls = {}
+                self.driver.zeroize_all_controls()
                 self.driver.connect()
-                self.driver.set_controls_from_configuration(self.conf_client, True)
-                self.driver.release_all_acquisitions()                
+                self.driver.release_all_acquisitions()
                 for control in self.driver.get_controls():
-                    if control.hint & g15driver.HINT_VIRTUAL == 0: 
-                        self.driver.update_control(control)
+                    control.set_from_configuration(self.driver.device, self.conf_client)
                     self.acquired_controls[control.id] = self.driver.acquire_control(control, val = control.value)
                     logger.info("Acquired control of %s with value of %s" % (control.id, str(control.value)))
                     self.control_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/%s" %( self.device.uid, control.id), self.control_configuration_changed));
+                self.driver.update_controls()       
                 self._init_screen()
                 if self.splash == None:
                     if self.driver.get_bpp() > 0:

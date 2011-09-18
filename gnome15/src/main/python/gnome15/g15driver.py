@@ -150,6 +150,9 @@ MODEL_GAMEPANEL = "gamepanel"
 
 MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G11, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G510_AUDIO, MODEL_G110, MODEL_Z10, MODEL_MX5500, MODEL_GAMEPANEL ]
 
+"""
+Control hints
+"""
 HINT_DIMMABLE = 1 << 0
 HINT_SHADEABLE = 1 << 1
 HINT_FOREGROUND = 1 << 2
@@ -171,8 +174,29 @@ import logging
 logger = logging.getLogger("driver")
 
 seq_no = 0
+                        
+def zeroize(val):
+    """
+    Zero-ize a control value (will be used for the fully off value). The type
+    returned will be the same as the type provided
+    
+    Keyword arguments:
+    val        --    current value
+    """
+    if isinstance(val, int):
+        return 0
+    elif isinstance(val, tuple):
+        return (0, 0, 0)
+    else:
+        return False
 
 def get_mask_for_memory_bank(bank):
+    """
+    Get the M_KEY_LIGHT_* mask given the memory bank number (1,2 or 3)
+    
+    Keyword arguments:
+    bank        --    memory bank
+    """
     if bank == 1:
         return MKEY_LIGHT_1
     elif bank == 2:
@@ -181,6 +205,12 @@ def get_mask_for_memory_bank(bank):
         return MKEY_LIGHT_3
 
 def get_memory_bank_for_mask(val):
+    """
+    Get the memory bank that is activated given the M_KEY_LIGHT_* mask
+    
+    Keyword arguments:
+    val        --    light key mask value
+    """
     if val & MKEY_LIGHT_3 != 0:
         return 3
     elif val & MKEY_LIGHT_2 != 0:
@@ -190,15 +220,65 @@ def get_memory_bank_for_mask(val):
     return 0
 
 class Control():
+    """
+    Represents a single "Control". Each control represents a feature of the
+    device that may be adjusted. For example, the red, green and blue LEDs of
+    the keyboard backlight on a G19.
+    
+    A control's value will be of different classes depending on the type of 
+    control this instance represents.
+    
+    A On/Off or single value controls (such as brightness of a single LED is
+    represented as as int).
+    
+    A colour control is a tuple consisting of R,G and B intensity values.
+    
+    Other controls are boolean (currently not used)    
+    """
     
     def __init__(self, id, name, value = 0.0, lower = 0.0, upper = 255.0, hint = 0):
+        """
+        Constructor
+        
+        Keyword arguments:
+        id            --    unique control ID
+        name          --    an english name for the control
+        value         --    the initial value (int,tuple or bool)
+        lower         --    minimum value the control may be
+        upper         --    maximum value the control may be
+        hint          --    bitmask of HINT_ consants describing the control
+        """
         self.id = id
         self.hint = hint
         self.name = name
         self.lower = lower
         self.upper = upper
         self.value = value
+        self.default_value = value
         
+    def set_from_configuration(self, device, conf_client):
+        """
+        Configure this control's value from it's gconf entry for the provided device 
+        
+        device         device the control is associated with
+        conf_client    configuration client instance
+        """
+        entry = conf_client.get("/apps/gnome15/%s/%s" % ( device.uid, self.id ))
+        if entry != None:
+            if isinstance(self.default_value, int):
+                self.value = entry.get_int()
+            elif isinstance(self.default_value, tuple):
+                rgb = entry.get_string().split(",")
+                self.value = (int(rgb[0]),int(rgb[1]),int(rgb[2]))
+            else:
+                self.value = entry.get_bool()
+        
+    def zeroize(self):
+        """
+        Set the control to it's OFF value e.g no power to any LED (R, G or B) 
+        for an RGB control
+        """
+        self.value = zeroize(self.default_value)
         
 class AbstractControlAcquisition(object):
     
@@ -208,6 +288,7 @@ class AbstractControlAcquisition(object):
         self.adjust(self.val)
         self.on_released = None
         self.reset_timer = None
+        self.fade_timer = None
         self.reset_val = initial_value
         self.on = False
         self._released = False
@@ -226,17 +307,10 @@ class AbstractControlAcquisition(object):
     def fade(self, percentage = 100.0, duration = 1.0, release = False, step = 1):
         target_val = self.get_target_value(self.val, percentage)
         if self.val != target_val:
+            self.fade_cancelled = False
             self._reduce( ( duration / float( self.val - target_val ) ) * step, target_val, release, step)
         elif release:
             self.driver.release_control(self)
-        
-    def _reduce(self, interval, target_val, release, step):
-        if self.val > target_val:
-            self.set_value(self.val - step)
-            g15util.schedule("Fade", interval, self._reduce, interval, target_val, release, step)
-        else:
-            if release:
-                self.driver.release_control(self)
         
     def get_target_value(self, val, percentage):
         return val - int ( ( float(val) / 100.0 ) * percentage )
@@ -245,6 +319,7 @@ class AbstractControlAcquisition(object):
     def blink(self, off_val = 0, delay = 0.5, duration = None, blink_started = None):
         if blink_started == None:
             blink_started = time.time()
+        self.cancel_fade()
         self.cancel_reset()
         if self.on:
             self.adjust(self.val)
@@ -267,6 +342,7 @@ class AbstractControlAcquisition(object):
             logger.debug("Set value of control to %s" % str(val))
             self.val = val
             self.on = True
+            self.cancel_fade()
             self.adjust(val)
             self.cancel_reset()        
             if reset_after:
@@ -285,9 +361,26 @@ class AbstractControlAcquisition(object):
     def get_value(self):
         return self.val
     
+    def cancel_fade(self):
+        if self.fade_timer is not None:
+            self.fade_cancelled = True
+    
+    def _cleanup(self):
+        self.cancel_reset()
+        self.cancel_fade()
+    
     """
     Private
     """
+    def _reduce(self, interval, target_val, release, step):
+        if not self.fade_cancelled:
+            if self.val > target_val:
+                self.set_value(self.val - step)
+                self.fade_timer = g15util.schedule("Fade", interval, self._reduce, interval, target_val, release, step)
+            else:
+                if release:
+                    self.driver.release_control(self)
+                
     def _notify_released(self):
         if self._released:
             raise Exception("Already released")        
@@ -322,6 +415,7 @@ class ControlAcquisition(AbstractControlAcquisition):
         if isinstance(self.val, int):
             AbstractControlAcquisition.fade(self, percentage, duration, release)
         else:
+            self.fade_cancelled = False
             target_val = self.get_target_value(self.val, percentage)
             h, s, v = self.rgb_to_hsv(self.val)
             t_h, t_s, t_v = self.rgb_to_hsv(target_val)
@@ -330,20 +424,6 @@ class ControlAcquisition(AbstractControlAcquisition):
                 self._reduce( ( duration / diff ) * step, target_val, release, step)
             elif release:
                 self.driver.release_control(self)
-        
-    def _reduce(self, interval, target_val, release, step):
-        if isinstance(self.val, int):
-            AbstractControlAcquisition._reduce(self, interval, target_val, release, step)
-        else:
-            h, s, v = self.rgb_to_hsv(self.val)
-            v -= step
-            if v > self.rgb_to_hsv(target_val)[2]:
-                new_rgb = self.hsv_to_rgb((h, s, v))
-                self.set_value(new_rgb)
-                g15util.schedule("Fade", interval, self._reduce, interval, target_val, release, step)
-            else:
-                if release and not self._released:
-                    self.driver.release_control(self)
         
     def get_target_value(self, val, percentage):
         if isinstance(self.val, int):
@@ -361,6 +441,24 @@ class ControlAcquisition(AbstractControlAcquisition):
         h, s, v = val
         r, g, b = colorsys.hsv_to_rgb(float(h) / 255.0, float(s) / 255.0, float(v) / 255.0)
         return ( int(r * 255.0), int(g * 255.0), int(b * 255.0 ))
+    
+    """
+    Private
+    """
+    def _reduce(self, interval, target_val, release, step):
+        if not self.fade_cancelled:
+            if isinstance(self.val, int):
+                AbstractControlAcquisition._reduce(self, interval, target_val, release, step)
+            else:
+                h, s, v = self.rgb_to_hsv(self.val)
+                v -= step
+                if v > self.rgb_to_hsv(target_val)[2]:
+                    new_rgb = self.hsv_to_rgb((h, s, v))
+                    self.set_value(new_rgb)
+                    g15util.schedule("Fade", interval, self._reduce, interval, target_val, release, step)
+                else:
+                    if release and not self._released:
+                        self.driver.release_control(self)
         
 class AbstractDriver(object):
     
@@ -371,7 +469,7 @@ class AbstractDriver(object):
         seq_no += 1
         self.seq = seq_no
         self.disconnecting = False
-        
+        self.all_off_on_disconnect = True
         self._reset_state()
         
     def release_all_acquisitions(self):
@@ -380,8 +478,14 @@ class AbstractDriver(object):
         for k in values:
             c = self.get_control(k)
             if c:
+                if k in self.acquired_controls:
+                    self.acquired_controls[k]._cleanup()
                 c.value = values[k]
                 self.update_control(c)
+                    
+    def zeroize_all_controls(self):
+        for c in self.get_controls():
+            c.zeroize()
         
     def acquire_control(self, control, release_after = None, val = None, on_release = None):
         control_acquisitions = self.acquired_controls[control.id] if control.id in self.acquired_controls else []
@@ -407,6 +511,7 @@ class AbstractDriver(object):
             control_acquisitions = self.acquired_controls[control_acquisition.control.id]
             control_acquisition._notify_released()
             control_acquisition.cancel_reset()
+            control_acquisition.cancel_fade()
             control_acquisitions.remove(control_acquisition)
             ctrls = len(control_acquisitions)
             if ctrls > 0:
@@ -428,10 +533,20 @@ class AbstractDriver(object):
         try:
             self.disconnecting = True
             logger.info("Disconnecting driver")
+            if self.all_off_on_disconnect:
+                for c in self.initial_acquired_control_values:
+                    self.initial_acquired_control_values[c] = zeroize(self.initial_acquired_control_values[c])
+            self.release_all_acquisitions()
+            if self.all_off_on_disconnect:
+                for c in self.get_controls():
+                    if isinstance(c.value, int):
+                        c.value = 0
+                    elif isinstance(c.value, tuple):
+                        c.value = (0, 0, 0)
+                    self.update_control(c)
             self.on_disconnect()
         finally:
             self.disconnecting = False
-            self.release_all_acquisitions()
             self._reset_state()
     
     
@@ -548,11 +663,11 @@ class AbstractDriver(object):
     def get_mkey_lights(self):
         return self.lights 
         
-    def get_control(self, id):
+    def get_control(self, control_id):
         controls = self.get_controls()
         if controls:
             for control in self.get_controls():
-                if id == control.id:
+                if control_id == control.id:
                     return control
             
     def get_control_for_hint(self, hint):
@@ -561,23 +676,28 @@ class AbstractDriver(object):
             for control in self.get_controls():
                 if ( hint & control.hint ) == hint:
                     return control
+                
+    def update_controls(self):
+        for control in self.get_controls():
+            if control.hint & HINT_VIRTUAL == 0:
+                self.update_control(control)
         
-    def set_controls_from_configuration(self, conf_client, update = False):
-        controls = self.get_controls()
-        if controls:
-            for control in controls:
-                self.set_control_from_configuration(control, conf_client)
-                if update:
-                    self.update_control(control)
-            
-    def set_control_from_configuration(self, control, conf_client):
-        entry = conf_client.get("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ))
-        if entry != None:
-            if isinstance(control.value, int):
-                control.value = entry.get_int()
-            else:
-                rgb = entry.get_string().split(",")
-                control.value = (int(rgb[0]),int(rgb[1]),int(rgb[2]))
+#    def set_controls_from_configuration(self, conf_client, update = False):
+#        controls = self.get_controls()
+#        if controls:
+#            for control in controls:
+#                self.set_control_from_configuration(control, conf_client)
+#                if update:
+#                    self.update_control(control)
+#            
+#    def set_control_from_configuration(self, control, conf_client):
+#        entry = conf_client.get("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ))
+#        if entry != None:
+#            if isinstance(control.value, int):
+#                control.value = entry.get_int()
+#            else:
+#                rgb = entry.get_string().split(",")
+#                control.value = (int(rgb[0]),int(rgb[1]),int(rgb[2]))
     
     def get_color_as_ratios(self, hint, default):
         fg_control = self.get_control_for_hint(hint)

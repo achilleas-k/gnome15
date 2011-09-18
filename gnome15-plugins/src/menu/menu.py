@@ -68,9 +68,9 @@ class MenuItem(g15theme.MenuItem):
         return self._item_page
         
     def activate(self):
-        self.theme.screen.raise_page(self.plugin.menu.selected._item_page)
-        self.theme.screen.resched_cycle()
         self.plugin.hide_menu()
+        self.theme.screen.raise_page(self._item_page)
+        self.theme.screen.resched_cycle()
         
     def get_theme_properties(self):        
         item_properties = g15theme.MenuItem.get_theme_properties(self)
@@ -104,9 +104,11 @@ class G15Menu(g15plugin.G15MenuPlugin):
         if binding.action == g15driver.MENU:
             if self.page is not None:
                 self.hide_menu()
+                return True
             else:
                 self.show_menu()
                 self.page.set_priority(g15screen.PRI_HIGH)
+                return True
                 
     def hide_menu(self):
         g15plugin.G15MenuPlugin.hide_menu(self)   
@@ -122,35 +124,35 @@ class G15Menu(g15plugin.G15MenuPlugin):
 
     def load_menu_items(self):
         items = []
-        i = 0
         for page in self.screen.pages:
             if page != self.page and page.priority > g15screen.PRI_INVISIBLE:
-                items.append(MenuItem(page, self, "menuitem-%d" % i))
-                i += 1
+                items.append(MenuItem(page, self, "menuitem-%s" % page.id ))
         items = sorted(items, key=lambda item: item._item_page.title)
         self.menu.set_children(items)
         if len(items) > 0:
             self.menu.selected = items[0]
         else:
-            self.menu.selected = None
-               
+            self.menu.selected = None               
         for item in items:
-            if item._item_page.thumbnail_painter != None:
-                img = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.screen.height, self.screen.height)
-                thumb_canvas = cairo.Context(img)
-                try :
-                    if item._item_page.thumbnail_painter(thumb_canvas, self.screen.height, True):
-                        img_data = StringIO()
-                        img.write_to_png(img_data)
-                        item.thumbnail = base64.b64encode(img_data.getvalue())                    
-                        
-                except :
-                    logger.warning("Problem with painting thumbnail in %s" % item._item_page.id)                   
-                    traceback.print_exc(file=sys.stderr)
+            self._load_item_icon(item)
         
     '''
     Private
     '''
+    def _load_item_icon(self, item):
+        if item._item_page.thumbnail_painter != None:
+            img = cairo.ImageSurface(cairo.FORMAT_ARGB32, self.screen.height, self.screen.height)
+            thumb_canvas = cairo.Context(img)
+            try :
+                if item._item_page.thumbnail_painter(thumb_canvas, self.screen.height, True):
+                    img_data = StringIO()
+                    img.write_to_png(img_data)
+                    item.thumbnail = base64.b64encode(img_data.getvalue())                    
+                    
+            except :
+                logger.warning("Problem with painting thumbnail in %s" % item._item_page.id)                   
+                traceback.print_exc(file=sys.stderr)
+                    
     def _reset_delete_timer(self):
         if self.delete_timer:
             self.delete_timer.cancel()        
@@ -165,13 +167,20 @@ class MenuScreenChangeListener(g15screen.ScreenChangeAdapter):
         self.plugin = plugin
         
     def new_page(self, page):
-        if self.plugin.page != None:
-            self.plugin._reload_menu()
+        if self.plugin.page != None and page != self.plugin.page and page.priority > g15screen.PRI_INVISIBLE:
+            items = self.plugin.menu.get_children()
+            item = MenuItem(page, self, "menuitem-%s" % page.id )
+            self.plugin._load_item_icon(item)
+            items.append(item)
+            items = sorted(items, key=lambda item: item._item_page.title)            
+            self.plugin.menu.set_children(items)
+            self.plugin.page.redraw()
         
     def title_changed(self, page, title):
-        if self.plugin.page != None:
-            self.plugin._reload_menu()
+        if self.plugin.page != None and page != self.plugin.page:
+            self.plugin.page.redraw()
     
-    def del_page(self, page):
-        if self.plugin.page != None:
-            self.plugin._reload_menu()
+    def deleted_page(self, page):
+        if self.plugin.page != None and page != self.plugin.page:
+            self.plugin.menu.remove_child(self.plugin.menu.get_child_by_id("menuitem-%s" % page.id))
+            self.plugin.page.redraw()

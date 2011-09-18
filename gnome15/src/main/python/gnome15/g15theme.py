@@ -37,7 +37,7 @@ at painting time. A Page's theme will take up all available space and be rendere
 parent's theme file (by using an svg:rect with an ID that links the two), or at a
 place calculated by the component itself (for example, MenuItem children).
 
-The Theme is also response for handling automatic text scrolling, as well as processing
+The Theme is also responsible for handling automatic text scrolling, as well as processing
 the SVG by doing string replacements and other manipulations such as those required
 for progress bars, scroll bars.
 """
@@ -179,7 +179,7 @@ class Component():
     def __init__(self, id):
         self.id = id
         self.theme = None
-        self.children = []
+        self._children = []
         self.child_map = {}
         self.parent = None
         self.screen = None
@@ -239,14 +239,14 @@ class Component():
         return True
     
     def do_scroll(self):
-        for c in self.children:
+        for c in self._children:
             c.do_scroll()
         if self.theme and self.get_allow_scrolling():
             self.theme.do_scroll()
     
     def check_for_scroll(self):
         scroll = False
-        for c in self.children:
+        for c in self._children:
             if c.check_for_scroll():
                 scroll = True
         if self.theme and self.get_allow_scrolling() and self.theme.is_scroll_required():
@@ -276,35 +276,58 @@ class Component():
         return r
     
     def index_of_child(self, child):
-        return self.children.index(child)
+        return self._children.index(child)
         
     def get_child(self, index):
-        return self.children[index]
+        return self._children[index]
+        
+    def get_child_by_id(self, id):
+        return self.child_map[id] if id in self.child_map else None
         
     def contains_child(self, child):
-        return child in self.children
+        return child in self._children
         
     def get_child_count(self):
-        return len(self.children)
+        return len(self._children)
         
+        
+#    def set_children(self, children):
+#        self.get_tree_lock().acquire()
+#        try:
+#            to_remove = list(set(self._children) - set(children))
+#            to_add = list(set(children) - set(self._children))
+#            for c in to_add:
+#                c.configure(self)
+#                self.notify_add(c)
+#            for c in to_remove:
+#                c.notify_remove()
+#                if c.theme:
+#                    c.theme._component_removed()
+#            self._children = children
+#            self.child_map = {}
+#            for c in self._children:
+#                self.child_map[c.id] = c
+#        finally:
+#            self.get_tree_lock().release()
+            
     def set_children(self, children):
         self.get_tree_lock().acquire()
         try:
             # Remove any children that we currently have, but are not in the new list
-            for c in list(set(self.children) - set(children)):
+            for c in list(set(self._children) - set(children)):
                 self.remove_child(c)
                 
             # Add any new children
-            for c in list(set(children) - set(self.children)):
+            for c in list(set(children) - set(self._children)):
                 self.add_child(c)
                 
             # Now just change out child list to the new one so the order is correct
-            self.children = children
+            self._children = children
         finally:
             self.get_tree_lock().release()
         
     def get_children(self):
-        return list(self.children)
+        return list(self._children)
         
     def add_child(self, child, index = -1):
         self.get_tree_lock().acquire()
@@ -312,15 +335,14 @@ class Component():
             if child.parent:
                 raise Exception("Child %s already has a parent. Remove it from it's last parent first before adding to %s." % (child.id, self.id))
             if child.id in self.child_map:
-                raise Exception("Child with ID of %s already exists in component %s." % (child.id, self.id))
-                
+                raise Exception("Child with ID of %s already exists in component %s. Trying to add %s, but %s exists" % (child.id, self.id, str(child), str(self.child_map[child.id])))
             self._check_has_parent()
             child.configure(self)
             self.child_map[child.id] = child
             if index == -1:
-                self.children.append(child)
+                self._children.append(child)
             else:
-                self.children.insert(index, child)
+                self._children.insert(index, child)
             self.notify_add(child)
         finally:
             self.get_tree_lock().release()
@@ -328,7 +350,7 @@ class Component():
     def remove_all_children(self):
         self.get_tree_lock().acquire()
         try:
-            for c in list(self.children):
+            for c in list(self._children):
                 self.remove_child(c)
         finally:
             self.get_tree_lock().release()
@@ -336,14 +358,14 @@ class Component():
     def remove_child(self, child):
         self.get_tree_lock().acquire()
         try:
-            if not child in self.children:
+            if not child in self._children:
                 raise Exception("Not a child of this component.")
             child.notify_remove()
             if child.theme:
                 child.theme._component_removed()
             child.parent = None
             del self.child_map[child.id]
-            self.children.remove(child)
+            self._children.remove(child)
         finally:
             self.get_tree_lock().release()
         
@@ -363,7 +385,7 @@ class Component():
         self.on_configure()
         
     def is_visible(self):
-        return self.parent == None or self.parent.is_visible()
+        return self.parent != None and self.parent.is_visible()
                 
     def on_configure(self):
         pass
@@ -411,7 +433,7 @@ class Component():
                 self.layout_manager.layout(self)
                 
             # Paint children
-            for c in self.children:
+            for c in self._children:
                 canvas.save()
                 if not self.do_clip or c.view_bounds is None or self.overlaps(self.view_bounds, c.view_bounds):
                     c.paint(canvas)
@@ -759,6 +781,7 @@ class Menu(Component):
         menu_theme = self.load_theme()
         if menu_theme:
             self.set_theme(menu_theme)
+        self._recalc_scroll_values()
         self.get_screen().action_listeners.append(self)
         
     def notify_remove(self):
@@ -771,17 +794,19 @@ class Menu(Component):
     def add_child(self, child, index = -1):
         Component.add_child(self, child, index)
         self.select_first()
+        self._recalc_scroll_values()
         self.centre_on_selected()
     
     def remove_child(self, child):
         Component.remove_child(self, child)
         self.select_first()
+        self._recalc_scroll_values()
         self.centre_on_selected()
     
     def set_children(self, children):
         was_selected = self.selected
         Component.set_children(self, children)
-        if was_selected in self.children:
+        if was_selected in self.get_children():
             self.selected = was_selected
         else:
             self.select_first()
@@ -789,19 +814,22 @@ class Menu(Component):
             
     def centre_on_selected(self):
         y = 0
+        c = self.get_children()
         for r in range(0, self._get_selected_index()):
-            y += self.get_item_height(self.children[r], True)
+            y += self.get_item_height(c[r], True)
         self.base = max(0, y - ( self.view_bounds[3] / 2 ))
+        self._recalc_scroll_values()
         self.get_root().redraw()
         
     def get_scroll_values(self):
-        max_val = 0
-        for item in self.get_children():
-            max_val += self.get_item_height(item, True)
-        return max(max_val, self.view_bounds[3]), self.view_bounds[3], self.base
+        return self.scroll_values
         
     def get_item_height(self, item, group = False):
-        return item.theme.bounds[3]
+        if item.theme is None:
+            logger.warn("Component %s has no theme and so no height" % item.id)
+            return 10
+        else:            
+            return item.theme.bounds[3]
     
     def paint(self, canvas):   
         self.get_tree_lock().acquire()
@@ -838,6 +866,7 @@ class Menu(Component):
                 else:
                     self.base += max(1, int(( new_base - self.base ) / 3))
                 self.get_root().mark_dirty()
+                self._recalc_scroll_values()
                 if self.scroll_timer is not None:
                     self.scroll_timer.cancel()
                 self.scroll_timer = g15util.schedule("ScrollTo", self.get_screen().service.animation_delay, self.get_root().redraw)
@@ -862,19 +891,24 @@ class Menu(Component):
             if binding.action == g15driver.NEXT_SELECTION:
                 self.get_screen().resched_cycle()
                 self._move_down(1)
+                return True
             elif binding.action == g15driver.PREVIOUS_SELECTION:
                 self.get_screen().resched_cycle()
                 self._move_up(1)
+                return True
             if binding.action == g15driver.NEXT_PAGE:
                 self.get_screen().resched_cycle()
                 self._move_down(10)
+                return True
             elif binding.action == g15driver.PREVIOUS_PAGE:
                 self.get_screen().resched_cycle()
                 self._move_up(10)
+                return True
             elif binding.action == g15driver.SELECT:
                 self.get_screen().resched_cycle()
                 if self.selected:
                     self.selected.activate()
+                return True
         
     def handle_key(self, keys, state, post):   
         self.select_first()   
@@ -920,21 +954,23 @@ class Menu(Component):
     Private
     '''
     
+    def _recalc_scroll_values(self):
+        max_val = 0
+        for item in self.get_children():
+            max_val += self.get_item_height(item, True)
+        self.scroll_values = max(max_val, self.view_bounds[3]), self.view_bounds[3], self.base
+    
     def _check_selected(self):
-        self.get_tree_lock().acquire()
-        try:
-            if not self.selected in self.get_children():
-                if self.i >= self.get_child_count():
-                    return
-                self.selected = self.get_child(self.i)
-        finally:
-            self.get_tree_lock().release()
-            
+        if not self.selected in self.get_children():
+            if self.i >= self.get_child_count():
+                return
+            self.selected = self.get_child(self.i)
     
     def _do_selected(self):
         self.selected = self.get_child(self.i)
         if self.on_selected:
             self.on_selected()
+        self._recalc_scroll_values()
         self.clear_scroll()
         self.mark_dirty()
         self.get_root().redraw()
@@ -1769,10 +1805,6 @@ class G15Theme():
         t = Template(xml)
         xml = t.safe_substitute(encoded_properties)       
         svg = rsvg.Handle()
-#        print "------------------------------"
-#        print xml
-#        print "------------------------------"
-#        print "XML size %d" % len(xml)
         try :
             svg.write(xml)
         except:

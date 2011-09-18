@@ -58,6 +58,9 @@ def create(gconf_key, gconf_client, screen):
     return G15Processes(gconf_client, gconf_key, screen)
 
 class ProcessMenuItem(g15theme.MenuItem):
+    """
+    MenuItem for individual processes
+    """
     
     def __init__(self,  item_id, plugin, process_id, process_name):
         g15theme.MenuItem.__init__(self, item_id)
@@ -71,7 +74,7 @@ class ProcessMenuItem(g15theme.MenuItem):
         
     def get_theme_properties(self):        
         item_properties = g15theme.MenuItem.get_theme_properties(self)
-        item_properties["item_name"] = self.process_name if len(self.process_name) > 0 else "Unamed" 
+        item_properties["item_name"] = self.process_name if self.process_name is not None and len(self.process_name) > 0 else "Unamed" 
         if isinstance(self.process_id, int):
             item_properties["item_alt"] = self.process_id
         else:
@@ -85,33 +88,38 @@ class ProcessMenuItem(g15theme.MenuItem):
         self.plugin.confirm_screen = g15theme.ConfirmationScreen(self.get_screen(), "Kill Process", "Are you sure you want to kill %s" % kill_name,  
                                     g15util.get_icon_path("utilities-system-monitor"), self.plugin._kill_process, self.process_id,
                                     cancel_callback = self.plugin._cancel_kill)
-        
                     
      
 class G15Processes(g15plugin.G15MenuPlugin):
 
     def __init__(self, gconf_client, gconf_key, screen):
         g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, ["utilities-system-monitor"], id, name)
-        self.i = 0
+        self.item_id = 0
         self.confirm_screen = None 
         
         # Can't work out how to kill an application/window given its XID, so only wnck is used for killing
         self.session_bus = dbus.SessionBus()
         self.bamf_matcher = None
-#        try :
-#            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
-#        except:
-#            logger.warning("BAMF not available, falling back to WNCK")
+        try :
+            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
+        except:
+            logger.warning("BAMF not available, falling back to WNCK")
 
     def activate(self):
         self._modes = [ "applications", "all", "user" ]
         self._mode = "applications"
         self._timer = None
+        self._matches = []
         g15plugin.G15MenuPlugin.activate(self)
         self.screen.action_listeners.append(self)
+        if self.bamf_matcher is not None:        
+            self._matches.append(self.bamf_matcher.connect_to_signal("ViewOpened", self._view_opened))
+            self._matches.append(self.bamf_matcher.connect_to_signal("ViewClosed", self._view_closed))
             
     def deactivate(self):
         g15plugin.G15MenuPlugin.deactivate(self)
+        for m in self._matches:
+            m.remove()
         self.screen.action_listeners.remove(self)
         if self.confirm_screen is not None:
             self.confirm_screen.delete()
@@ -120,11 +128,13 @@ class G15Processes(g15plugin.G15MenuPlugin):
     def load_menu_items(self):
         pass
     
+    def _get_next_id(self):
+        self.item_id += 1
+        return self.item_id
                     
-    def action_performed(self, binding):            
-        if self.page != None and self.page.is_visible():            
+    def action_performed(self, binding):        
+        if self.page != None and self.page.is_visible(): 
             if binding.action == g15driver.VIEW:
-                self.menu.remove_all_children()
                 if self._mode == "applications":
                     self._mode = "all"
                 elif self._mode == "all":
@@ -163,6 +173,13 @@ class G15Processes(g15plugin.G15MenuPlugin):
     '''
     Private
     '''
+    def _view_opened(self, window_path, path_type):
+        if path_type == "application":
+            self._get_item_for_bamf_application(window_path)
+        
+    def _view_closed(self, window_path, path_type):
+        if path_type == "application":
+            self._remove_item_for_bamf_application(window_path)
 
     def _send_event(self, win, ctype, data, mask=None):
         """ Send a ClientMessage event to the root """
@@ -181,20 +198,45 @@ class G15Processes(g15plugin.G15MenuPlugin):
     
     def _cancel_kill(self, process_id):
         self.confirmation_screen = None
+        
+    def _do_kill(self, process_id):
+        os.system("kill %d" % process_id)
+        time.sleep(0.5)
+        if process_id in gtop.proclist():
+            time.sleep(5.0)
+            if process_id in gtop.proclist():
+                os.system("kill -9 %d" % process_id)
             
     def _kill_process(self, process_id):
         if isinstance(process_id, int):
-            os.system("kill %d" % process_id)
-            time.sleep(0.5)
-            if process_id in gtop.proclist():
-                time.sleep(5.0)
-                if process_id in gtop.proclist():
-                    os.system("kill -9 %d" % process_id)
-        else:
-            # TODO kill using XID if possible
-            pass
+            self._do_kill(process_id)
+        else:            
+            gobject.idle_add(self._kill_window, process_id)
         self.confirmation_screen = None
         self._reload_menu()
+        
+    def _kill_window(self, window_path):
+        import wnck
+        import gtk
+        window_names = self._get_window_names(window_path)
+        screen = wnck.screen_get_default()
+        while gtk.events_pending():
+            gtk.main_iteration()
+        windows = screen.get_windows()
+        for window_name in window_names:
+            for w in windows:
+                if w.get_name() == window_name:
+                    self._do_kill(w.get_pid())
+                    return
+        
+    def _get_window_names(self, path, window_names = []):
+        app = self.session_bus.get_object("org.ayatana.bamf", path)
+        view = dbus.Interface(app, 'org.ayatana.bamf.view')
+        window_names.append(view.Name())
+        children = view.Children()
+        for c in children:
+            self._get_window_names(c, window_names)
+        return window_names
 
     def _get_process_name(self, args, cmd):
         result = cmd
@@ -206,42 +248,54 @@ class G15Processes(g15plugin.G15MenuPlugin):
         return result
 
     def _reload_menu(self):
-        gobject.idle_add(self._do_reload_menu)
+        g15util.schedule("ReloadProcesses", 0, self._do_reload_menu)
+        
+    def _get_menu_item(self, pid):
+        item = self.menu.get_child_by_id("process-%s" % pid)
+        if item == None:
+            item = ProcessMenuItem("process-%s" % pid, self, pid, None)
+            self.menu.add_child(item)
+        return item
+    
+    def _get_bamf_application_object(self, window):
+        app = self.session_bus.get_object("org.ayatana.bamf", window)
+        view = dbus.Interface(app, 'org.ayatana.bamf.view')
+        return view
+    
+    def _remove_item_for_bamf_application(self, window):        
+        item = self.menu.get_child_by_id("process-%s" % window)
+        if item is not None:
+            self.menu.remove_child(item)
+    
+    def _get_item_for_bamf_application(self, window):
+        view = self._get_bamf_application_object(window)
+        item = self._get_menu_item(window)
+        item.process_name = view.Name()
+        icon_name = view.Icon()
+        if icon_name and len(icon_name) > 0:
+            icon_path = g15util.get_icon_path(icon_name, warning = False)
+            if icon_path:
+                item.icon = g15util.load_surface_from_file(icon_path, 32) 
+                
+            
+        return item
         
     def _do_reload_menu(self):
-        
-        # Get the new list of active applications / processes
-        current_items = list(self.menu.get_children())
-        current_item_map = {}
-        for item in current_items:
-            current_item_map[item.process_id] = item
-        items = []
-        item_map = {}
-        
+        this_items = {}        
         if self._mode == "applications":
             if self.bamf_matcher != None:            
                 for window in self.bamf_matcher.RunningApplications():
-                    app = self.session_bus.get_object("org.ayatana.bamf", window)
-                    view = dbus.Interface(app, 'org.ayatana.bamf.view')
-                    application = dbus.Interface(app, 'org.ayatana.bamf.application')
-                    xids = []
-                    for i in application.Xids():
-                        xids.append(int(i))
-                    item = ProcessMenuItem(xids, view.Name())
-                    icon_name = view.Icon()
-                    if icon_name and len(icon_name) > 0:
-                        icon_path = g15util.get_icon_path(icon_name, warning = False)
-                        if icon_path:
-                            item.icon = "file:" + icon_path
-                    items.append(item)
-                    item_map[str(item.process_id)] = item
+                    item = self._get_item_for_bamf_application(window)                    
+                    this_items[item.id] = item
             else:
                 import wnck
                 screen = wnck.screen_get_default()
                 for window in screen.get_windows():
                     pid = window.get_pid()
-                    if pid > 0 and not pid in item_map:
-                        item = ProcessMenuItem("process-%d" % len(items), self, pid, window.get_name())
+                    if pid > 0:                        
+                        item = self._get_menu_item(pid)
+                        item.process_name = window.get_name()
+                        this_items[item.id] = item
                         if window.has_icon_name():
                             icon_path = g15util.get_icon_path(window.get_icon_name(), warning = False)
                             if icon_path:
@@ -251,8 +305,6 @@ class G15Processes(g15plugin.G15MenuPlugin):
                             if pixbuf:               
                                 item.icon = g15util.pixbuf_to_surface(pixbuf)
                                 
-                        items.append(item)
-                        item_map[item.process_id] = item
         else:
             for process_id in gtop.proclist():
                 process_id = "%d" %  process_id
@@ -260,47 +312,28 @@ class G15Processes(g15plugin.G15MenuPlugin):
                     pid = int(process_id)
                     proc_state = gtop.proc_state(pid)
                     proc_args = gtop.proc_args(pid)
-
-                    if self._mode == "all":
-                        item = ProcessMenuItem("process-%d" % len(items), self, pid, self._get_process_name(proc_args, proc_state.cmd))
-                        items.append(item)
-                        item_map[pid] = item
-                    else:
-                        if proc_state.uid == os.getuid():
-                            item = ProcessMenuItem("process-%d" % len(items), self, pid, self._get_process_name(proc_args, proc_state.cmd))
-                            item_map[pid] = item
-                            items.append(item)
+                    if self._mode == "all" or ( self._mode != "all" and proc_state.uid == os.getuid()):                      
+                        item = self._get_menu_item(pid)
+                        item.icon = None
+                        item.process_name = self._get_process_name(proc_args, proc_state.cmd)
+                        this_items[item.id] = item
                 except :
                     # In case the process disappears
                     pass
  
         # Remove any missing items
-        for item in current_items:
-            if not item.process_id in item_map:
-                current_items.remove(item)
-                
-        # Insert new items
-        for item in items:
-            if not item.process_id in current_item_map:
-                current_items.append(item)
-            else:
-                # Update existing items
-                current_item = current_item_map[item.process_id]
-                current_item.process_name = item.process_name
-                current_item.icon = item.icon 
-                
-        # Sort
-        current_items = sorted(current_items, key=lambda item: item.process_name)
-        if self.page is not None:
-            self.menu.set_children(current_items)
+        for item in self.menu.get_children():
+            if not item.id in this_items:
+                self.menu.remove_child(item)
         
         # Make sure selected still exists
-        if self.menu.selected != None and not self.menu.selected in current_items:
-            if len(current_items) > 0:
-                self.menu.selected  = current_items[0]
+        if self.menu.selected != None and self.menu.get_child_by_id(self.menu.selected.id) is None:
+            if len(self.menu.get_child_count()) > 0:
+                self.menu.selected  = self.menu.get_children()[0]
             else:
                 self.menu.selected = None
 
+        self.page.mark_dirty()
         self.screen.redraw(self.page)
         
     def _on_move(self):
@@ -331,4 +364,9 @@ class G15Processes(g15plugin.G15MenuPlugin):
         self._schedule_refresh()
         
     def _schedule_refresh(self):
-        self._timer = g15util.schedule("ProcessesRefresh", 5.0, self._refresh)
+        """
+        When viewing applications, we don't refresh, just rely on BAMF 
+        events when BAMF is available
+        """
+        if not self._mode == "applications" or self.bamf_matcher is None:
+            self._timer = g15util.schedule("ProcessesRefresh", 5.0, self._refresh)

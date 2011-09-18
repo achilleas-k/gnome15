@@ -257,6 +257,8 @@ class G15Config:
         self.window_model = self.widget_tree.get_object("WindowModel")
         self.window_combo = self.widget_tree.get_object("WindowCombo")
         self.window_entry = self.widget_tree.get_object("WindowEntry")
+        self.window_name = self.widget_tree.get_object("WindowName")
+        self.window_select = self.widget_tree.get_object("WindowSelect")
         self.remove_button = self.widget_tree.get_object("RemoveButton")
         self.activate_on_focus = self.widget_tree.get_object("ActivateProfileOnFocusCheckbox")
         self.macro_name_renderer = self.widget_tree.get_object("MacroNameRenderer")
@@ -312,6 +314,10 @@ class G15Config:
         self.keyboard_tab = self.widget_tree.get_object("KeyboardTab")
         self.plugins_tab = self.widget_tree.get_object("PluginsTab")
         self.driver_box = self.widget_tree.get_object("DriverBox")
+        self.parent_profile_box = self.widget_tree.get_object("ParentProfileBox")
+        self.parent_profile_label = self.widget_tree.get_object("ParentProfileLabel")
+        self.parent_profile_model = self.widget_tree.get_object("ParentProfileModel")
+        self.parent_profile_combo = self.widget_tree.get_object("ParentProfileCombo")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -361,8 +367,10 @@ class G15Config:
         self.fixed_delays.connect("toggled", self._send_delays_changed)
         self.press_delay_adjustment.connect("value-changed", self._send_delays_changed)
         self.release_delay_adjustment.connect("value-changed", self._send_delays_changed)
-        self.window_entry.connect("changed", self._window_name_changed)
+        self.window_select.connect("clicked", self._select_window)
+        self.window_name.connect("changed", self._window_name_changed)
         self.window_combo.connect("changed", self._window_name_changed)
+        self.parent_profile_combo.connect("changed", self._parent_profile_changed)
         self.mapped_to_key.connect("toggled", self._macro_type_changed)
         self.mapped_key_combo.connect("changed", self._mapped_key_changed)
         self.mapped_key_type_combo.connect("changed", self._mapped_key_type_changed)
@@ -462,9 +470,9 @@ class G15Config:
         ''' Set up everything and display the window
         '''
         if len(self.devices) > 1:
-            self.main_window.set_size_request(800, 540)
+            self.main_window.set_size_request(800, -1)
         else:            
-            self.main_window.set_size_request(640, 540)
+            self.main_window.set_size_request(640, -1)
         self.id = None
         while True:
             opt = self.main_window.run()
@@ -875,14 +883,21 @@ class G15Config:
     def _activate_on_focus_changed(self, widget=None):
         if not self.adjusting:
             self.selected_profile.activate_on_focus = widget.get_active()        
-            self.window_combo.set_sensitive(self.selected_profile.activate_on_focus)
+            self.window_name.set_sensitive(self.selected_profile.activate_on_focus)        
+            self.window_select.set_sensitive(self.selected_profile.activate_on_focus)
+            self._save_profile(self.selected_profile)
+            
+    def _parent_profile_changed(self, widget):
+        if not self.adjusting:
+            sel = self.parent_profile_combo.get_active()
+            self.selected_profile.base_profile = self.parent_profile_model[sel][0] if sel > 0 else -1 
             self._save_profile(self.selected_profile)
         
     def _window_name_changed(self, widget):
         if isinstance(widget, gtk.ComboBox):
             active = widget.get_active()
             if active >= 0:
-                self.window_combo.child.set_text(self.window_model[active][0])
+                self.window_name.set_text(self.window_model[active][0])
         else:
             if widget.get_text() != self.selected_profile.window_name: 
                 self.selected_profile.window_name = widget.get_text()
@@ -1227,6 +1242,12 @@ class G15Config:
             key_list_key = model[path][2]
             return self.selected_profile.get_macro(self._get_memory_number(), g15profile.get_keys_from_key(key_list_key))
         
+    def _select_window(self, widget):
+        dialog = self.widget_tree.get_object("SelectWindowDialog")  
+        dialog.set_transient_for(self.main_window)
+        dialog.run()
+        dialog.hide()
+        
     def _edit_macro(self, macro):
         self.adjusting = True
         try:
@@ -1408,7 +1429,7 @@ class G15Config:
         
     def _load_profile_list(self):
         current_selection = self.selected_profile
-        self.profiles_model.clear()        
+        self.profiles_model.clear()
         if self.selected_device != None:
             tree_selection = self.profiles_tree.get_selection()
             active = g15profile.get_active_profile(self.selected_device)
@@ -1433,7 +1454,14 @@ class G15Config:
                 default_profile = g15profile.G15Profile(self.selected_device, "Default")
                 g15profile.create_profile(default_profile)
                 self._load_profile_list()
-            
+                
+    def _load_parent_profiles(self):
+        self.parent_profile_model.clear()
+        self.parent_profile_model.append([-1, "" ])
+        if self.selected_device != None:
+            for profile in self.profiles: 
+                if profile.id != self.selected_profile.id:
+                    self.parent_profile_model.append([profile.id, profile.name ])
         
     def _profiles_changed(self, device_uid, macro_profile_id):        
         gobject.idle_add(self._load_profile_list)
@@ -1481,9 +1509,9 @@ class G15Config:
             self.activate_on_focus.set_active(profile.activate_on_focus)
             self.activate_by_default.set_active(profile.activate_on_focus)
             if profile.window_name != None:
-                self.window_entry.set_text(profile.window_name)
+                self.window_name.set_text(profile.window_name)
             else:
-                self.window_entry.set_text("")
+                self.window_name.set_text("")
             self.send_delays.set_active(profile.send_delays)
             self.fixed_delays.set_active(profile.fixed_delays)
             self._set_delay_state()
@@ -1497,14 +1525,20 @@ class G15Config:
                 self.profile_icon.set_from_pixbuf(gtk.gdk.pixbuf_new_from_file_at_size(profile.icon, 48, 48))
             
             if profile.get_default():
-                self.window_combo.set_visible(False)
                 self.activate_on_focus.set_visible(False)
                 self.window_label.set_visible(False)
+                self.window_select.set_visible(False)
+                self.parent_profile_label.set_visible(False)
+                self.parent_profile_box.set_visible(False)
+                self.window_name.set_visible(False)
                 self.activate_by_default.set_visible(True)
                 self.remove_button.set_sensitive(False)
             else:
                 self._load_windows()
-                self.window_combo.set_visible(True)
+                self.window_name.set_visible(True)
+                self.parent_profile_label.set_visible(True)
+                self.parent_profile_box.set_visible(True)
+                self.window_select.set_visible(True)
                 self.activate_on_focus.set_visible(True)
                 self.window_label.set_visible(True)
                 self.activate_by_default.set_visible(False)
@@ -1520,18 +1554,31 @@ class G15Config:
                     self.color_button.set_sensitive(True)
                     self.color_button.set_color(g15util.to_color(rgb))
                     self.enable_color_for_m_key.set_active(True)
+                    
+            self._load_parent_profiles()
+            self.parent_profile_combo.set_active(0)
+            for i in range(0, len(self.parent_profile_model)): 
+                if ( profile.base_profile == -1 and i == 0 ) or \
+                   ( i > 0 and profile.base_profile == self.parent_profile_model[i][0] ):
+                    self.parent_profile_combo.set_active(i)
                 
             self._set_available_actions()
         finally:
             self.adjusting = False
             
     def _load_windows(self):
-        self.window_model.clear()   
+        self.window_model.clear()  
+        window_name = self.window_name.get_text()
+        i = 0
         if self.bamf_matcher != None:            
             for window in self.bamf_matcher.RunningApplications():
                 app = self.session_bus.get_object("org.ayatana.bamf", window)
                 view = dbus.Interface(app, 'org.ayatana.bamf.view')
-                self.window_model.append([view.Name(), window])
+                vn = view.Name()
+                self.window_model.append([vn, window])                
+                if window_name != None and vn == window_name:
+                    self.window_combo.set_active(i)
+                i += 1
         else:
             apps = {}
             for window in self.screen.get_windows():
@@ -1540,7 +1587,10 @@ class G15Config:
                     if app and not app.get_name() in apps:
                         apps[app.get_name()] = app
             for app in apps:
-                self.window_model.append([app, app])
+                self.window_model.append([app, app])                
+                if window_name != None and app == window_name:
+                    self.window_combo.set_active(i)
+                i += 1
                 
     def _simple_macro_changed(self, widget):
         self.editing_macro.simple_macro = widget.get_text()
