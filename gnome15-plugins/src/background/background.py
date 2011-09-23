@@ -28,14 +28,6 @@ import logging
 import gconf
 logger = logging.getLogger("background")
 
-gnome_dconf_settings = None 
-try:
-    from gi.repository import Gio
-    gnome_dconf_settings = Gio.Settings.new("org.gnome.desktop.background")
-except:
-    logger.info("No GNOME3 background settings available, ignoring")
-
-
 # Plugin details - All of these must be provided
 id="background"
 name="Wallpaper"
@@ -53,7 +45,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     G15BackgroundPreferences(parent, driver, gconf_client, gconf_key)
     
 class G15BackgroundPreferences():
-    
+
     def __init__(self, parent, driver, gconf_client, gconf_key):
         
         widget_tree = gtk.Builder()
@@ -150,12 +142,20 @@ class G15Background():
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/path", self.config_changed))
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/type", self.config_changed))
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/style", self.config_changed))
+        self.gnome_dconf_settings = None 
         
         # Monitor desktop specific configuration for wallpaper changes
         if "gnome" == g15util.get_desktop():
             self.notify_handlers.append(self.gconf_client.notify_add("/desktop/gnome/background/picture_filename", self.config_changed))
-            if gnome_dconf_settings is not None:
-                gnome_dconf_settings.connect("changed::picture_uri", self._do_config_changed)
+            try:
+                from gi.repository import Gio
+                if os.path.exists("/usr/share/glib-2.0/schemas/org.gnome.desktop.background.gschema.xml"):
+                    self.gnome_dconf_settings = Gio.Settings.new("org.gnome.desktop.background")
+            except:
+                logger.info("No GNOME3 background settings available, ignoring")
+
+            if self.gnome_dconf_settings is not None:
+                self.gnome_dconf_settings.connect("changed::picture_uri", self._do_config_changed)
         
         self._do_config_changed()
     
@@ -189,8 +189,8 @@ class G15Background():
             # Get the current background the desktop is using if possible
             desktop_env = g15util.get_desktop()
             if "gnome" == desktop_env:
-                if gnome_dconf_settings is not None:
-                    self.bg_img = gnome_dconf_settings.get_string("picture-uri")
+                if self.gnome_dconf_settings is not None:
+                    self.bg_img = self.gnome_dconf_settings.get_string("picture-uri")
                 else:
                     self.bg_img = self.gconf_client.get_string("/desktop/gnome/background/picture_filename")
             else:

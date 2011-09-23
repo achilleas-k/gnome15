@@ -210,7 +210,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
         
     def _start_blink(self):
         if not self._light_control:
-            self._light_control = self.screen.driver.acquire_mkey_lights(val = g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)
+            self._light_control = self.screen.driver.acquire_control_with_hint(g15driver.HINT_MKEYS, val = g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)
             self._light_control.blink(off_val = self._get_mkey_value)
             
     def _get_mkey_value(self):
@@ -218,7 +218,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
             
     def _stop_blink(self):
         if self._light_control:
-            self.screen.driver.release_mkey_lights(self._light_control)
+            self.screen.driver.release_control(self._light_control)
             self._light_control = None
         
     def _popup(self):
@@ -229,7 +229,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
                 self.screen.redraw(self.page)
             else:
                 self._reset_raise()
-    
+
     def _reset_raise(self):
         '''
         Reset the timer if the page is already visible because of a timer

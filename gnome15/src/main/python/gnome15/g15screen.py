@@ -304,7 +304,6 @@ class G15Screen():
     def stop(self, quickly = False):  
         logger.info("Stopping screen for %s" % self.device.uid)
         g15uinput.deregister_codes(self.device.uid)
-        self.driver.all_off_on_disconnect = self.service.all_off_on_disconnect      
         self.stopping = True
         g15uinput.deregister_codes(self.device.uid)
         if self._profile_changed in g15profile.profile_listeners:
@@ -345,6 +344,7 @@ class G15Screen():
             self.plugins.deactivate()
             self.plugins.destroy()                
         if self.driver and self.driver.is_connected():
+            self.driver.all_off_on_disconnect = self.service.all_off_on_disconnect      
             self.driver.disconnect()
         
     def add_screen_change_listener(self, screen_change_listener):
@@ -830,81 +830,122 @@ class G15Screen():
         self.deleting = { }
         self._do_redraw()
         
+        
+        
     def _do_key_received(self, keys, state):
+        """
+        Most of the processing of any keys handled is done. It will keep
+        track of which keys are held, invoke actions and trigger macros.  
+        
+        Keyword arguments:
+        keys            -- list of keys to process. You will only get a list of
+                           more than one if the keys were pressed or released 
+                           at exactly the same time
+        state           -- indicates whether the keys are down or up 
+                           (g15driver.KEY_STATE_UP / g15driver.KEY_STATE_DOWN)
+        """
+        
         try :            
             # Watch for keys that are being held down
             if state == g15driver.KEY_STATE_DOWN:
                 self.keys_down += keys
-                logger.debug("Keys %s pressed" % str(keys))
+                if logger.level == logging.DEBUG:
+                    logger.debug("Keys %s pressed" % str(keys))
                 for k in keys:
-                    logger.debug("Keys %s held" % str(k))
+                    if logger.level == logging.DEBUG:
+                        logger.debug("Keys %s held" % str(k))
                     self.keys_held[k] = g15util.schedule("HoldKey%s" % str(k), self.service.key_hold_duration, self.key_received, keys, g15driver.KEY_STATE_HELD)
             elif state == g15driver.KEY_STATE_UP:
                 logger.debug("Keys %s released" % str(keys))
+                
+                """
+                If the key was never down, it has been removed since (i.e.
+                if an action was triggered). In this case, cancel any further
+                key presses
+                """                
+                for k in keys:
+                    if not k in self.keys_down:
+                        keys.remove(k)
+                
                 self.keys_up += keys
+                        
                 for k in self.keys_held.keys():
-                    logger.debug("Keys %s unheld" % str(k))
+                    if logger.level == logging.DEBUG:
+                        logger.debug("Keys %s unheld" % str(k))
                     timer = self.keys_held[k]
                     if timer.is_complete():
                         # Key "hold" completed
-                        logger.debug("Consuming key %s" %k)
+                        if logger.level == logging.DEBUG:
+                            logger.debug("Consuming key %s" %k)
                         if k in self.active_key_state:
                             del self.active_key_state[k]
-                        if k in keys:
-                            keys.remove(k)
                     self.keys_held[k].cancel()
                     del self.keys_held[k]
                 if len(self.keys_held) == 0:
                     self.active_key_state = {}
             elif state == g15driver.KEY_STATE_HELD:
-                logger.debug("Keys %s HELD" % str(keys))
+                if logger.level == logging.DEBUG:
+                    logger.debug("Keys %s HELD" % str(keys))
+                    
+            self.keys_up = sorted(self.keys_up)
+            self.keys_down = sorted(self.keys_down)
                 
-            logger.debug("Keys up %d (%s), keys down %d (%s)" % ( len(self.keys_up), str(self.keys_up), len(self.keys_down), str(self.keys_down) ))
-            if state == g15driver.KEY_STATE_UP:
-                if len(self.keys_down) > len(self.keys_up):
-                    # Not all keys have yet been released
-                    logger.debug("All keys not yet released")
-                    return
-                else:
-                    logger.debug("All keys now released")
-                    # All keys now released
-                    keys = self.keys_down
-                    self.keys_down = []
-                    self.keys_up = []
+            if logger.level == logging.DEBUG:
+                logger.debug("This keys %d (%s), Keys up %d (%s), keys down %d (%s)" % ( len(keys), str(keys), len(self.keys_up), str(self.keys_up), len(self.keys_down), str(self.keys_down) ))
+           
                         
             if len(keys) > 0:
                 # Only process the keys up event when all keys have been release
                 
                 # See if the screen itself, or the plugins,  want to handle the key 
                 if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
-                    return        
-        
-                # Search up the tree of profiles for the macro
-                macro = None
-                profile = g15profile.get_active_profile(self.device)
-                while profile is not None:
-                    macro = profile.get_macro(self.get_memory_bank(), keys)
-                    if macro is None:
-                        base_profile = profile.base_profile
-                        if base_profile != -1:
-                            profile = g15profile.get_profile(self.device, base_profile)
-                        else:
-                            profile = None
-                    else:
-                        profile = None
-                                        
-                if macro != None:
-                    if state == g15driver.KEY_STATE_UP:
+                    return  
+                        
+                """
+                uinput macros are handled differently. These are mapped directly
+                to the received keypresses.
+                """
+                uinput_macros = []                  
+                for k in keys:
+                    macro = self._find_macro([k])
+                    if macro is not None:
                         if macro.type == g15profile.MACRO_MAPPED_TO_KEY:
-                            uc = macro.get_uinput_code()
-                            g15uinput.emit(macro.map_type, uc, 0)
-                        else:
-                            # Send it to the service for handling
-                            self.service.handle_macro(macro)                
+                            self._handle_macro(macro, state, False)
+                            if logger.level == logging.DEBUG:
+                                logger.debug("Handling macro %s" % macro.name)
+                            uinput_macros.append(macro)
+                        
+                """
+                If there were any macros mapped to uinput events,
+                now send the SYN. We also break out here, there is no point
+                in check for actions as well
+                """
+                if len(uinput_macros) > 0:
+                    if logger.level == logging.DEBUG:
+                        logger.debug("Sending SYN to %s" % macro.map_type)
+                    g15uinput.syn(macro.map_type)
+                
+                """
+                Now process ordinary macros (single key and multiple key)
+                """ 
+                if self.keys_up == self.keys_down:           
+                    macro = self._find_macro(self.keys_down)
+                    if macro is not None and macro.type != g15profile.MACRO_MAPPED_TO_KEY:
+                        self._handle_macro(macro, state)
+                    
+                if state == g15driver.KEY_STATE_UP:
+                    if len(self.keys_down) > len(self.keys_up):
+                        # Not all keys have yet been released
+                        if logger.level == logging.DEBUG:
+                            logger.debug("All keys not yet released")
+                        return
                     else:
-                        if macro.type == g15profile.MACRO_MAPPED_TO_KEY:
-                            uc = macro.get_uinput_code()
-                            g15uinput.emit(macro.map_type, uc, 1)
+                        if logger.level == logging.DEBUG:
+                            logger.debug("All keys now released")
+                        # All keys now released
+                        keys = self.keys_down
+                        self.keys_down = []
+                        self.keys_up = []
                                     
                 # See if there is any 'post' handling by the screen itself or by the plugins
                 if not self.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True):
@@ -931,12 +972,52 @@ class G15Screen():
                                         self.keys_down.remove(k)
                             if f == len(binding.keys):
                                 self._action_performed(binding)
+                                self.keys_down = []
                 
                 
         except Exception as e:
             logger.error("Error in key handling. %s" % str(e))
-            if logger.level == logging.DEBUG:
-                traceback.print_exc(file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+                
+    def _handle_macro(self, macro, state, syn = True):
+        if state == g15driver.KEY_STATE_UP:
+            if macro.type == g15profile.MACRO_MAPPED_TO_KEY:
+                uc = macro.get_uinput_code()
+                if logger.level == logging.DEBUG:
+                    logger.debug("Emit key up for %d on %s" % ( uc, macro.map_type ) ) 
+                g15uinput.emit(macro.map_type, uc, 0, syn)
+            else:
+                # Send it to the service for handling
+                self.service.handle_macro(macro)                
+        else:
+            if macro.type == g15profile.MACRO_MAPPED_TO_KEY:
+                uc = macro.get_uinput_code()
+                if logger.level == logging.DEBUG:
+                    logger.debug("Emit key down for %d on %s" % ( uc, macro.map_type ) )
+                g15uinput.emit(macro.map_type, uc, 1, syn)
+                
+    def _find_macro(self, keys):
+        """
+        Search for a macro matching the supplied keys in the currently 
+        active profile, and any parent profiles it is linked to.
+        
+        Keyword arguments:
+        keys        --        list of keys
+        """
+        profile = g15profile.get_active_profile(self.device)
+        macro = None
+        while profile is not None:
+            macro = profile.get_macro(self.get_memory_bank(), keys)
+            if macro is None:
+                base_profile = profile.base_profile
+                if base_profile != -1:
+                    profile = g15profile.get_profile(self.device, base_profile)
+                else:
+                    profile = None
+            else:
+                profile = None
+        return macro
+                
             
     def _action_performed(self, binding):
         if binding.action == g15driver.MEMORY_1:

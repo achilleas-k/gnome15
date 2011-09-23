@@ -1,4 +1,4 @@
-AC_INIT(gnome15, 0.7.4)
+AC_INIT(gnome15, 0.7.6)
 AC_CONFIG_SRCDIR([src/main/python/gnome15/g15service.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 
@@ -111,6 +111,10 @@ AC_ARG_ENABLE([udevmode],
 AC_SUBST(DEVICEMODE, $devicemode)
 
 dnl Required modules
+AX_PYTHON_MODULE(virtkey, [])
+AS_IF([test "x${HAVE_PYMOD_VIRTKEY}" = "xno"],
+     [AC_MSG_ERROR([Requires Python Virtkey Library])])
+     
 AX_PYTHON_MODULE(Image, [])
 AS_IF([test "x${HAVE_PYMOD_IMAGE}" = "xno"],
      [AC_MSG_ERROR([Requires Python Image Library])])

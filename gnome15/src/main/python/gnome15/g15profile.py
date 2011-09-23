@@ -24,6 +24,7 @@ import g15util
 import g15devices
 import g15uinput
 import ConfigParser
+import codecs
 import os.path
 import errno
 import pyinotify
@@ -44,6 +45,7 @@ except OSError as exc: # Python >2.5
         pass
     else: 
         raise
+    
     
 '''
 Watch for changes in macro configuration directory.
@@ -219,22 +221,29 @@ class G15Macro:
         
     def _store(self): 
         section_name = "m%d" % self.memory
-        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_name", self.name)
-        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_macro", self.macro)
+        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_name", self._encode_val(self.name))
+        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_macro", self._encode_val(self.macro))
         self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_mappedkey", self.mapped_key)
         self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_maptype", self.map_type)
         self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_type", self.type)
-        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_command", self.command)
-        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_simplemacro", self.simple_macro)
+        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_command", self._encode_val(self.command))
+        self.profile.parser.set(section_name, "keys_" + self.key_list_key + "_simplemacro", self._encode_val(self.simple_macro))
+        
+    def _encode_val(self, val):
+        val = val.encode('utf8')
+        return val
+    
+    def _decode_val(self, val):
+        return val
         
     def _load(self):
         self.type = self._get("type", MACRO_SCRIPT)
-        self.command = self._get("command", "")
-        self.simple_macro = self._get("simplemacro", "")
+        self.command = self._decode_val(self._get("command", ""))
+        self.simple_macro = self._decode_val(self._get("simplemacro", ""))
         self.mapped_key = self._get("mappedkey", "")
         self.map_type = self._get("maptype", "")
-        self.name = self._get("name", "")
-        self.macro = self._get("macro", "")
+        self.name = self._decode_val(self._get("name", ""))
+        self.macro = self._decode_val(self._get("macro", ""))
         
     def _get(self, key, default_value):
         section_name = "m%d" % self.memory
@@ -253,7 +262,7 @@ class G15Profile():
     def __init__(self, device, id=-1):
         self.id = id
         self.device = device
-        self.parser = ConfigParser.SafeConfigParser({
+        self.parser = ConfigParser.ConfigParser({
                                                      })        
         self.name = None
         self.icon = None
@@ -372,7 +381,7 @@ class G15Profile():
             for k in macro.keys:
                 if k in keys:
                     key_count += 1
-            if key_count == len(keys):
+            if key_count == len(macro.keys) and key_count == len(keys):
                 return macro
         
     def make_active(self):
@@ -386,7 +395,8 @@ class G15Profile():
         
         # Load macro file        
         if self.id != -1:
-            self.parser.read(self._get_filename())
+            if os.path.exists(self._get_filename()):
+                self.parser.readfp(codecs.open(self._get_filename(), "r", "utf8"))
         
         # Info section
         self.name = self.parser.get("DEFAULT", "name").strip() if self.parser.has_option("DEFAULT", "name") else ""
@@ -435,8 +445,10 @@ class G15Profile():
         dir_name = os.path.dirname(self._get_filename())
         if not os.path.exists(dir_name):
             os.mkdir(dir_name)
-        with open(self._get_filename(), 'wb') as configfile:
+        tmp_file = "%s.tmp" % self._get_filename()
+        with open(tmp_file, 'wb') as configfile:
             self.parser.write(configfile)
+        os.rename(tmp_file, self._get_filename())
         
     def _get_filename(self):
         return "%s/%s/%d.macros" % ( conf_dir, self.device.uid, self.id )

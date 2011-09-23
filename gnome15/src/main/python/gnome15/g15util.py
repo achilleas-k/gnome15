@@ -485,7 +485,7 @@ def load_surface_from_file(filename, size = None):
                 return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(full_cache_path), size)
                 
     if is_url(filename):
-        
+        type = None
         try:
             file = urllib.urlopen(filename)
             data = file.read()
@@ -493,11 +493,6 @@ def load_surface_from_file(filename, size = None):
             
             if filename.startswith("file://"):
                 type = str(mime.get_type(filename))
-                
-                # Workaround for xnoise, seems to report JPEG images as text/plain
-                if "xnoise" in filename and type == "text/plain":
-                    type = "image/jpeg"
-                    
             
             if filename.startswith("http:") or filename.startswith("https:"):
                 cache_fileobj = open(full_cache_path, "w")
@@ -525,15 +520,21 @@ def load_surface_from_file(filename, size = None):
                     return surface
                 finally:
                     svg.close()
-            else:
-                pbl = gtk.gdk.pixbuf_loader_new_with_mime_type(type)
-                pbl.write(data)
-                pixbuf = pbl.get_pixbuf()
-                pbl.close()
-                return pixbuf_to_surface(pixbuf, size)
+            else:                
+                if type == "text/plain":
+                    if filename.startswith("file://"):
+                        pixbuf = gtk.gdk.pixbuf_new_from_file(filename[7:])
+                        return pixbuf_to_surface(pixbuf, size)
+                    raise Exception("Could not determine type")
+                else:
+                    pbl = gtk.gdk.pixbuf_loader_new_with_mime_type(type)
+                    pbl.write(data)
+                    pixbuf = pbl.get_pixbuf()
+                    pbl.close()
+                    return pixbuf_to_surface(pixbuf, size)
             return None
         except Exception as e:
-            logger.warning("Failed to get image. {}".format(e))
+            logger.warning("Failed to get image %s (%s). %s" % (filename, type, e))
             return None
     else:
         if os.path.exists(filename):
@@ -665,14 +666,16 @@ def get_embedded_image_url(path):
     finally:
         file_str.close()
 
-def get_icon_path(icon = None, size = 128, warning = True):
+def get_icon_path(icon = None, size = 128, warning = True, include_missing = True):
     o_icon = icon
     if isinstance(icon, list):
         for i in icon:
-            p = get_icon_path(i, size, warning = False)
+            p = get_icon_path(i, size, warning = False, include_missing = False)
             if p != None:
                 return p
-        logger.warning("Icon %s (%d) not found" % ( str(icon), size ))            
+        logger.warning("Icon %s (%d) not found" % ( str(icon), size ))
+        if include_missing and not icon in [ "image-missing", "gtk-missing-image" ]:
+            return get_icon_path(["image-missing", "gtk-missing-image"], size, warning)
     else:
         icon = gtk_icon_theme.lookup_icon(icon, size, 0)
         if icon != None:
@@ -681,7 +684,9 @@ def get_icon_path(icon = None, size = 128, warning = True):
             fn = icon.get_filename()
             if os.path.isfile(fn):
                 return fn
-            elif not icon in [ "image-missing", "gtk-missing-image" ]:
+            elif include_missing and not icon in [ "image-missing", "gtk-missing-image" ]:
+                if warning:
+                    logger.warning("Icon %s (%d) not found, using missing image" % ( o_icon, size ))
                 return get_icon_path(["image-missing", "gtk-missing-image"], size, warning)
         else:
             if os.path.isfile(o_icon):
@@ -689,7 +694,7 @@ def get_icon_path(icon = None, size = 128, warning = True):
             else:
                 if warning:
                     logger.warning("Icon %s (%d) not found" % ( o_icon, size ))
-                if not icon in [ "image-missing", "gtk-missing-image" ]:
+                if include_missing and not icon in [ "image-missing", "gtk-missing-image" ]:
                     return get_icon_path(["image-missing", "gtk-missing-image"], size, warning)
     
 def get_app_icon(gconf_client, icon, size = 128):
@@ -794,7 +799,7 @@ def get_transforms(element, position_only = False):
             elif name == "scale":
                 list.append(cairo.Matrix(float(args[0]), 0.0, 0.0, float(args[1]), 0.0, 0.0))
             else:
-                logger.warning("Unspported transform %s" % name)
+                logger.warning("Unsupported transform %s" % name)
             start = end_args + 1
                 
     return list

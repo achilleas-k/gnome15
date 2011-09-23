@@ -123,7 +123,8 @@ def set_keyboard_brightness(level):
     return libg15.setKBBrightness(level)
     
 def set_keyboard_color(color):
-    return libg15.setG510LEDColor(color[0], color[1], color[2])
+    val =  libg15.setG510LEDColor(color[0], color[1], color[2])
+    return val
 
 def get_joystick_position():
     return ( libg15.getJoystickX(), libg15.getJoystickY() )

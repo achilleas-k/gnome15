@@ -114,7 +114,7 @@ controls = {
   g15driver.MODEL_G15_V1 : [ mkeys_control, backlight_control, lcd_contrast_control, lcd_backlight_control, invert_control ], 
   g15driver.MODEL_G15_V2 : [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
   g15driver.MODEL_GAMEPANEL : [ mkeys_control, backlight_control, lcd_contrast_control, lcd_backlight_control, invert_control ],
-  g15driver.MODEL_G13 : [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
+  g15driver.MODEL_G13 : [ mkeys_control, color_backlight_control, invert_control ],
   g15driver.MODEL_G510 : [ mkeys_control, color_backlight_control, invert_control ],
   g15driver.MODEL_Z10 : [ backlight_control, lcd_backlight_control, invert_control ],
   g15driver.MODEL_G110 : [ mkeys_control, red_blue_backlight_control ],
@@ -330,7 +330,7 @@ class Driver(g15driver.AbstractDriver):
             self.dispatcher.expect = CLIENT_CMD_CONTRAST
             self.send(chr(CLIENT_CMD_CONTRAST + level),socket.MSG_OOB)
         elif control == color_backlight_control or control == red_blue_backlight_control:
-            logger.info("Sending color backlight level of %d" % level)
+            logger.info("Sending color backlight level of %s" % str(level))
             self.lock.acquire()        
             try :           
                 self.send(chr(CLIENT_CMD_KB_BACKLIGHT_COLOR),socket.MSG_OOB)
@@ -353,7 +353,7 @@ class Driver(g15driver.AbstractDriver):
     
     def get_model_name(self):
         return self.device.model_id
-    
+
     def on_disconnect(self):
         if not self.is_connected():
             raise Exception("Already disconnected")

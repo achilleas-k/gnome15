@@ -775,7 +775,7 @@ class G15Config:
                 
                 # If hold
                 label = gtk.Label("")
-                label.set_size_request(30, -1)
+                label.set_size_request(40, -1)
                 if action_binding.state == g15driver.KEY_STATE_HELD:
                     label.set_text("<b>Hold</b>")
                     label.set_use_markup(True)
@@ -1118,6 +1118,9 @@ class G15Config:
             if self.selected_profile.id == active_profile.id:
                 self._make_active(g15profile.get_profile(0))
             self.selected_profile.delete()
+            self.profiles.remove(self.selected_profile)
+            if len(self.profiles) > 0:
+                self.selected_profile = self.profiles[0]
             self._load_profile_list()
             
     def _macro_name_changed(self, widget):
@@ -1371,7 +1374,7 @@ class G15Config:
             new_profile = g15profile.G15Profile(self.selected_device, -1)
             new_profile.name = new_profile_name
             g15profile.create_profile(new_profile)
-            self.selected_profile = new_profile
+            self.selected_profile = g15profile.get_profile(self.selected_device, new_profile.id)
             self._load_profile_list()
         
     def _get_memory_number(self):

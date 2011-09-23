@@ -241,7 +241,7 @@ class G15MacroRecorder():
     def _hide_recorder(self, after = 0.0):
         if self._lights_control:
             self._screen.release_defeat_profile_change()
-            self._screen.driver.release_mkey_lights(self._lights_control)
+            self._screen.driver.release_control(self._lights_control)
             self._lights_control = None
         if self._page:
             if after == 0.0:   
@@ -278,7 +278,7 @@ class G15MacroRecorder():
         self._redraw()
         self._record_thread = RecordThread(self._record_callback)
         self._record_thread.start()
-        self._lights_control = self._screen.driver.acquire_mkey_lights()
+        self._lights_control = self._screen.driver.acquire_control_with_hint(g15driver.HINT_MKEYS)
         self._lights_control.set_value(self._screen.get_memory_bank() | g15driver.MKEY_LIGHT_MR)
         self._lights_control.blink(0, 0.5)
         self._screen.request_defeat_profile_change()
@@ -286,7 +286,7 @@ class G15MacroRecorder():
     def _get_theme_properties(self):
         
         active_profile = g15profile.get_active_profile(self._screen.device)
-        
+
         properties = {}
         properties["icon"] = g15util.get_icon_path(self.icon, self._screen.height)
         properties["memory"] = "M%d" % self._screen.get_memory_bank()

@@ -315,7 +315,7 @@ class G15Weather():
         now = datetime.datetime.now()
         # TODO dusk / dawn based on locale / time of year - probably hard? 
         if theme_icon != None and ( now.hour > 18 or now.hour < 4):
-            theme_icon += "-night"
+            theme_icon = [ "%s-night" % theme_icon, theme_icon ]
             
         if theme_icon != None:
             icon_path = g15util.get_icon_path(theme_icon, warning = False)

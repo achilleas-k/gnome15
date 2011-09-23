@@ -99,6 +99,15 @@ def register_codes(registration_id, device_type, codes, parameters = None):
     registered_parameters[device_type] = parameters
     __check_devices()
     
+def syn(target):
+    """
+    Emit the syn.
+    
+    Keyword arguments:
+    target         --    target device type (MOUSE, KEYBOARD or JOYSTICK).
+    """
+    uinput_devices[target].uinput_device.syn()
+    
 def emit(target, code, value, syn=True):
     """
     Emit an input event, optionally emit a SYN as well

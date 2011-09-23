@@ -51,11 +51,31 @@ class SkDisk(Structure):
 libatasmart.sk_disk_open.argtypes = [ c_char_p, POINTER(POINTER(SkDisk)) ]
     
 def sk_disk_open(name):
-    d = SkDisk()
-    ret = libatasmart.sk_disk_open(POINTER(c_char)(), byref(POINTER(d)))
+    d = POINTER(SkDisk)
+    e = POINTER(SkDisk)
+    ret = libatasmart.sk_disk_open(name, e)
     if ret != 0:
         raise Exception("Error %d" % ret)
+    print d
     return d
+
+def sk_disk_free(disk):
+    libatasmart.sk_disk_free(byref(disk))
+
+def sk_disk_dump(disk):
+    return libatasmart.sk_disk_dump(byref(disk))
+
+if __name__ == "__main__":
+    d = sk_disk_open("/dev/sdc")
+    try:
+        print "Dumping"
+        sk_disk_dump(d)
+    finally:
+        print "Freeing"
+        sk_disk_free(d)
+        print "Freed"
+    
+
 
 #def sk_disk_set_blob(sk_disk, blob):    
 #    pi = c_char_p(blob)

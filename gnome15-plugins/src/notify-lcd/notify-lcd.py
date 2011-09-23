@@ -532,9 +532,8 @@ class G15NotifyLCD():
                 acquired_control = self._screen.driver.acquire_control(control, release_after = 3.0, val = self.keyboard_backlight_color)
                 
             if self.blink_memory_bank:
-                acquired_control = self._screen.driver.acquire_mkey_lights(release_after = 3.0, val = g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3 | g15driver.MKEY_LIGHT_MR)
+                acquired_control = self._screen.driver.acquire_control_with_hint(g15driver.HINT_MKEYS, release_after = 3.0, val = g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3 | g15driver.MKEY_LIGHT_MR)
                 acquired_control.blink(delay = self.blink_delay / 1000.0)
-                
                 
     def _do_redraw(self):
         if self._page != None:

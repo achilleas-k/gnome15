@@ -272,6 +272,9 @@ class Control():
                 self.value = (int(rgb[0]),int(rgb[1]),int(rgb[2]))
             else:
                 self.value = entry.get_bool()
+        else:
+            # Use the default value
+            self.value = self.default_value
         
     def zeroize(self):
         """
@@ -383,7 +386,7 @@ class AbstractControlAcquisition(object):
                 
     def _notify_released(self):
         if self._released:
-            raise Exception("Already released")        
+            raise Exception("Already released")  
         if self.on_released:
             self.on_released()
         self._released = True        
@@ -452,6 +455,7 @@ class ControlAcquisition(AbstractControlAcquisition):
             else:
                 h, s, v = self.rgb_to_hsv(self.val)
                 v -= step
+                
                 if v > self.rgb_to_hsv(target_val)[2]:
                     new_rgb = self.hsv_to_rgb((h, s, v))
                     self.set_value(new_rgb)
@@ -500,9 +504,8 @@ class AbstractDriver(object):
             g15util.schedule("ReleaseControl", release_after, self._release_control, control_acquisition)
         return control_acquisition
         
-    def acquire_mkey_lights(self, release_after = None, val = None):
-        logger.warning("DEPRECATED call to acquire_mkey_lights, use acquire_control")
-        control = self.get_control_for_hint(HINT_MKEYS)
+    def acquire_control_with_hint(self, hint, release_after = None, val = None):
+        control = self.get_control_for_hint(hint)
         if control:
             return self.acquire_control(control, release_after, val)
     

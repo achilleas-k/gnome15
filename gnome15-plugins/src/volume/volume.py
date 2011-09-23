@@ -76,7 +76,8 @@ class G15Volume():
         self._volume = 0.0
         self._volthread = None
         self._mute = False
-        self.light_controls = None
+        self._light_controls = None
+        self._lights_timer = None
 
     def activate(self):
         self._activated = True
@@ -127,19 +128,21 @@ class G15Volume():
         return properties
             
     def _release_lights(self):
-        self._screen.driver.release_mkey_lights(self.light_controls)
-        self.light_controls = None
+        if self._light_controls is not None:
+            self._screen.driver.release_control(self._light_controls)
+            self._light_controls = None
     
     def _popup(self):
         if not self._activated:
             logger.warning("Cannot popup volume when it is deactivated. This suggests the volume thread has not died.")
             return
         
-        if not self.light_controls:
-            self.light_controls = self._screen.driver.acquire_mkey_lights()
-        else:
-            self.lights_timer.cancel()
-        self.lights_timer = g15util.schedule("ReleaseMKeyLights", 3.0, self._release_lights)
+        if not self._light_controls:
+            self._light_controls = self._screen.driver.acquire_control_with_hint(g15driver.HINT_MKEYS)
+        if self._lights_timer is not None:
+            self._lights_timer.cancel()
+        if self._light_controls is not None:
+            self._lights_timer = g15util.schedule("ReleaseMKeyLights", 3.0, self._release_lights)
         
         page = self._screen.get_page(id)
         if page == None:
@@ -196,16 +199,17 @@ class G15Volume():
         
         self._volume = volume              
         
-        if self._volume > 90:
-            self.light_controls.set_value(g15driver.MKEY_LIGHT_MR | g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)        
-        elif self._volume > 75:
-            self.light_controls.set_value(g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)        
-        elif self._volume > 50:
-            self.light_controls.set_value(g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2)        
-        elif self._volume > 25:
-            self.light_controls.set_value(g15driver.MKEY_LIGHT_1)        
-        else:
-            self.light_controls.set_value(0)
+        if self._light_controls is not None:
+            if self._volume > 90:
+                self._light_controls.set_value(g15driver.MKEY_LIGHT_MR | g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)        
+            elif self._volume > 75:
+                self._light_controls.set_value(g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2 | g15driver.MKEY_LIGHT_3)        
+            elif self._volume > 50:
+                self._light_controls.set_value(g15driver.MKEY_LIGHT_1 | g15driver.MKEY_LIGHT_2)        
+            elif self._volume > 25:
+                self._light_controls.set_value(g15driver.MKEY_LIGHT_1)        
+            else:
+                self._light_controls.set_value(0)
           
         self._mute = mute
         

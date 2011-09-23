@@ -133,6 +133,36 @@ to remove the effect.</property>
               </packing>
             </child>
             <child>
+              <object class="GtkCheckButton" id="StartScreensInThreads">
+                <property name="label" translatable="yes">Start each screen in it's own thread</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="use_action_appearance">False</property>
+                <property name="draw_indicator">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="AllOffOnDisconnect">
+                <property name="label" translatable="yes">Power off all lights on close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="use_action_appearance">False</property>
+                <property name="draw_indicator">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">5</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkTable" id="table1">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -299,7 +329,7 @@ to remove the effect.</property>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="padding">4</property>
-                <property name="position">4</property>
+                <property name="position">6</property>
               </packing>
             </child>
           </object>

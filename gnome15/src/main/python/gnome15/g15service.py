@@ -107,18 +107,17 @@ special_X_keysyms = {
     '~' : "asciitilde"
     }
 
-        
-class StopThread(Thread):
-    def __init__(self, screen, quickly):
+class CheckThread(Thread):
+    def __init__(self, device, check_function, quickly):
         Thread.__init__(self)
-        self.name = "StopScreen%s" % screen.device.uid
-        self.screen = screen
-        self.setDaemon(True)
+        self.name = "CheckDeviceState%s" % device.uid
+        self.device = device
         self.quickly = quickly
+        self.check_function = check_function
         self.start()
-    
+        
     def run(self):
-        self.screen.stop(self.quickly)
+        self.check_function(self.device, self.quickly)
         
 class StartThread(Thread):
     def __init__(self, screen):
@@ -126,7 +125,6 @@ class StartThread(Thread):
         self.name = "StartScreen%s" % screen.device.uid
         self.screen = screen
         self.error = None
-        self.start()
     
     def run(self):
         try:
@@ -148,13 +146,13 @@ class G15Service(g15desktop.G15AbstractService):
         self.conf_client = gconf.client_get_default()
         self.screens = []
         self.started = False
-        self.logging_out = False        
         self.service_listeners = []
         self.use_x_test = None
         self.x_test_available = None
         self.notify_handles = []
         self.font_faces = {}
         self.devices = g15devices.find_all_devices()
+        self.stopping = False
                 
         # Expose Gnome15 functions via DBus
         logger.debug("Starting the DBUS service")
@@ -184,25 +182,29 @@ class G15Service(g15desktop.G15AbstractService):
         self.shutdown(True)
         
     def stop(self, quickly = False):
-        self.global_plugins.deactivate()
-        for h in self.notify_handles:
-            self.conf_client.notify_remove(h)
-        try :
-            logger.info("Stopping file change notification")
-            g15profile.notifier.stop()
-        except Exception:
-            pass
-        logger.info("Informing listeners we are stopping")
-        for listener in self.service_listeners:
-            listener.service_stopping()
-            
-        logger.info("Stopping screens")
-        threads = []
-        for screen in self.screens:
-            threads.append(StopThread(screen, quickly))
-        self._join_alL(threads)
-        g15util.stop_queue(SERVICE_QUEUE)        
-        self.started = False
+        if self.started:
+            self.global_plugins.deactivate()
+            self.stopping = True
+            self.session_active = False
+            try :
+                for h in self.notify_handles:
+                    self.conf_client.notify_remove(h)
+                try :
+                    logger.info("Stopping file change notification")
+                    g15profile.notifier.stop()
+                except Exception:
+                    pass
+                logger.info("Informing listeners we are stopping")
+                for listener in self.service_listeners:
+                    listener.service_stopping()                    
+                logger.info("Stopping screens")
+                self._check_state_of_all_devices_async(quickly)     
+                logger.info("Screens stopped")
+                self.started = False
+            finally :
+                self.stopping = False
+        else:
+            logger.warn("Ignoring stop request, already stopped.")
             
         
     def shutdown(self, quickly = False):
@@ -210,6 +212,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.shutting_down = True
         self.global_plugins.destroy()
         self.stop(quickly)
+        g15util.stop_queue(SERVICE_QUEUE)   
         logger.info("Stopping all schedulers")
         g15util.stop_all_schedulers()
         for listener in self.service_listeners:
@@ -221,8 +224,8 @@ class G15Service(g15desktop.G15AbstractService):
         
     def handle_macro(self, macro):
         # Get the latest focused window if not using XTest
-        if not self.use_x_test or not self.x_test_available:
-            self.init_xtest()
+        self.init_xtest()
+        if self.virtual_keyboard is None and ( not self.use_x_test or not self.x_test_available ):
             self.window = self.local_dpy.get_input_focus()._data["focus"]; 
         
         if macro.type == g15profile.MACRO_COMMAND:
@@ -230,11 +233,8 @@ class G15Service(g15desktop.G15AbstractService):
             os.system(macro.command)
         elif macro.type == g15profile.MACRO_SIMPLE:
             self.send_simple_macro(macro)
-        elif macro.type == g15profile.MACRO_ACTION:
-            self.send_simple_macro(macro)
         else:
             self.send_macro(macro)
-        
         
     def send_simple_macro(self, macro):
         logger.debug("Simple macro '%s'" % macro.simple_macro)
@@ -266,6 +266,8 @@ class G15Service(g15desktop.G15AbstractService):
                         c = '\b' 
                     elif esc and c == 'e':
                         c = '\e'
+                    elif esc and c == '\\':
+                        c = '\\'
                         
                     if c in special_X_keysyms:
                         c = special_X_keysyms[c]
@@ -312,8 +314,9 @@ class G15Service(g15desktop.G15AbstractService):
             # Unfortunately, although this works to get the correct keysym
             # i.e. keysym for '#' is returned as "numbersign"
             # the subsequent display.keysym_to_keycode("numbersign") is 0.
-            keysym_name = special_X_keysyms[ch]
-            keysym = Xlib.XK.string_to_keysym(keysym_name)
+            if ch in special_X_keysyms:
+                keysym_name = special_X_keysyms[ch]
+                keysym = Xlib.XK.string_to_keysym(keysym_name)
         return keysym
     
     def is_shifted(self, ch) :
@@ -333,21 +336,34 @@ class G15Service(g15desktop.G15AbstractService):
         """
         if self.x_test_available == None:
             logger.info("Initialising macro output system")
-    
-            # Determine whether to use XTest for sending key events to X
-            self.x_test_available  = True
-            try :
-                import Xlib.ext.xtest
-            except ImportError:
-                self.x_test_available = False
-                 
-            self.local_dpy = Xlib.display.Display()
             
-            if self.x_test_available  and not self.local_dpy.query_extension("XTEST") :
-                logger.warn("Found XTEST module, but the X extension could not be found")
+            # Load Python Virtkey if it is available
+
+            # Use python-virtkey for preference
+            
+            self.virtual_keyboard = None
+            try:
+                import virtkey
+                self.virtual_keyboard = virtkey.virtkey()
                 self.x_test_available = False
+            except:
+                logger.warn("No python-virtkey, macros may be weird. Trying XTest")
+    
+                # Determine whether to use XTest for sending key events to X
+                self.x_test_available  = True
+                try :
+                    import Xlib.ext.xtest
+                except ImportError:
+                    logger.warn("No XTest, falling back to raw X11 events")
+                    self.x_test_available = False
+                     
+                self.local_dpy = Xlib.display.Display()
                 
-    def char_to_keycode(self, ch):
+                if self.x_test_available  and not self.local_dpy.query_extension("XTEST") :
+                    logger.warn("Found XTEST module, but the X extension could not be found")
+                    self.x_test_available = False
+                
+    def char_to_keycodes(self, ch):
         """
         Convert a character from a string into an X11 keycode when possible.
         
@@ -356,6 +372,7 @@ class G15Service(g15desktop.G15AbstractService):
         """    
         self.init_xtest()
         shift_mask = 0
+        
         if str(ch).startswith("["):
             keysym_code = int(ch[1:-1])
             # AltGr
@@ -365,10 +382,18 @@ class G15Service(g15desktop.G15AbstractService):
                 logger.warn("Unknown keysym %d",keysym_code)
                 keycode = 0
         else:
+            
             keysym = self.get_keysym(ch)
+                        
+            x_keycodes = self.local_dpy.keysym_to_keycodes(keysym)
             keycode = 0 if keysym == 0 else self.local_dpy.keysym_to_keycode(keysym)
-            if keysym < 256 and self.is_shifted(chr(keysym)):
-                shift_mask = Xlib.X.ShiftMask
+            
+            # I have no idea how accurate this is, but it seems more so that
+            # the is_shifted() function
+            if keysym < 256:
+                for x in x_keycodes:
+                    if x[1] == 1:
+                        shift_mask = Xlib.X.ShiftMask
                         
         if keycode == 0 :
             logger.warning("Sorry, can't map (character %d)", ord(ch))
@@ -378,50 +403,61 @@ class G15Service(g15desktop.G15AbstractService):
             
     def send_string(self, ch, press):
         """
-        Sends a string (character) to the X server as if it was typed. Depending on the configuration
-        XTEST or raw events may be used
+        Sends a string (character) to the X server as if it was typed. 
+        Depending on the configuration virtkey, XTEST or raw events may be used
         
         Keyword arguments:
         ch        --    character to send
         press     --    boolean indicating if this is a PRESS or RELEASE
         """
-        keycode, shift_mask = self.char_to_keycode(ch)
         if logger.level == logging.DEBUG:
-            logger.debug("Sending keychar %s keycode %d, press = %s" % (ch, int(keycode), str(press)))
-        if (self.x_test_available and self.use_x_test) :
+            logger.debug("Sending string %s" % ch)
+            
+        if self.virtual_keyboard is not None:
+            keysym = self.get_keysym(ch)
             if press:
-                if shift_mask != 0 :
-                    Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyPress, 50)
-                Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyPress, keycode)
+                if logger.level == logging.DEBUG:
+                    logger.debug("Sending keychar %s press = %s, keysym = %d (%x)" % (ch, press, keysym, keysym))
+                self.virtual_keyboard.press_keysym(keysym)
             else:
-                Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyRelease, keycode)
-                if shift_mask != 0 :
-                    Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyRelease, 50)
-        else :
-            if press:
-                event = Xlib.protocol.event.KeyPress(
-                                                         time=int(time.time()),
-                                                         root=self.local_dpy.screen().root,
-                                                         window=self.window,
-                                                         same_screen=0, child=Xlib.X.NONE,
-                                                         root_x=0, root_y=0, event_x=0, event_y=0,
-                                                         state=shift_mask,
-                                                         detail=keycode
-                                                         )
-                self.window.send_event(event, propagate=True)
-            else:
-                event = Xlib.protocol.event.KeyRelease(
-                                                           time=int(time.time()),
-                                                           root=self.local_dpy.screen().root,
-                                                           window=self.window,
-                                                           same_screen=0, child=Xlib.X.NONE,
-                                                           root_x=0, root_y=0, event_x=0, event_y=0,
-                                                           state=shift_mask,
-                                                           detail=keycode
-                    )
-                self.window.send_event(event, propagate=True)
-                
-        self.local_dpy.sync()
+                self.virtual_keyboard.release_keysym(self.get_keysym(ch))
+        else:
+            keycode, shift_mask = self.char_to_keycodes(ch)
+            if logger.level == logging.DEBUG:
+                logger.debug("Sending keychar %s keycode %d, press = %s, shift = %d" % (ch, int(keycode), str(press), shift_mask))
+            if (self.x_test_available and self.use_x_test) :
+                if press:
+                    if shift_mask != 0 :
+                        Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyPress, 62)
+                    Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyPress, keycode)
+                else:
+                    Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyRelease, keycode)
+                    if shift_mask != 0 :
+                        Xlib.ext.xtest.fake_input(self.local_dpy, Xlib.X.KeyRelease, 62)
+            else :
+                if press:
+                    event = Xlib.protocol.event.KeyPress(
+                                                             time=int(time.time()),
+                                                             root=self.local_dpy.screen().root,
+                                                             window=self.window,
+                                                             same_screen=0, child=Xlib.X.NONE,
+                                                             root_x=0, root_y=0, event_x=0, event_y=0,
+                                                             state=shift_mask,
+                                                             detail=keycode
+                                                             )
+                    self.window.send_event(event, propagate=True)
+                else:
+                    event = Xlib.protocol.event.KeyRelease(
+                                                               time=int(time.time()),
+                                                               root=self.local_dpy.screen().root,
+                                                               window=self.window,
+                                                               same_screen=0, child=Xlib.X.NONE,
+                                                               root_x=0, root_y=0, event_x=0, event_y=0,
+                                                               state=shift_mask,
+                                                               detail=keycode
+                        )
+                    self.window.send_event(event, propagate=True)                    
+                self.local_dpy.sync()
             
     def get_active_application_name(self):
         return self.active_application_name
@@ -472,49 +508,27 @@ class G15Service(g15desktop.G15AbstractService):
             
         gobject.timeout_add(500, self._check_active_application_with_wnck)
         
-    def _check_state_of_all_devices(self):
+    def _check_state_of_all_devices(self, quickly = False):
+        logger.info("Checking state of %d devices" % len(self.devices))
         for d in self.devices:
-            self._check_device_state(d)
-
-    def _configure_gnome_signals(self):
-        try:
-            logger.info("Connecting to GNOME master client")
-            logger.debug("Initialising GNOME master client")
-            gnome.program_init(g15globals.name, g15globals.version)
-            logger.debug("Creating client")
-            service = self
-            def save_yourself(self, *args):
-                service.logging_out = True
-                g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service._check_state_of_all_devices)
-                    
-            def shutdown_cancelled(self, *args):
-                logger.debug("Shutdown cancelled")
-                service.logging_out = False
-                g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service._check_state_of_all_devices)
-                
-            def die(self, *args):
-                g15util.queue(SERVICE_QUEUE, "saveYourself", 0.0, service.shutdown)
-                    
-            logger.debug("Connecting")
-            master_client.connect('save-yourself', save_yourself)
-            master_client.connect('shutdown-cancelled', shutdown_cancelled)
-            master_client.connect('die', die)
-            logger.debug("Configured GNOME master client signals")
-        except Exception as e:
-            logger.warning("Could not connect to GNOME desktop session. %s" % str(e))
+            self._check_device_state(d, quickly)
+            
+    def _check_state_of_all_devices_async(self, quickly = False):
+        logger.info("Checking state of %d devices" % len(self.devices))
+        t = []
+        for d in self.devices:
+            t.append(CheckThread(d, self._check_device_state, quickly))
+        self._join_all(t)
         
     def _do_start_service(self):
-        # Global plugings
+        # Global plugings        
+        self.session_active = True
         self.global_plugins = g15pluginmanager.G15Plugins(None, self)
         self.global_plugins.start()
         
         for listener in self.service_listeners:
             listener.service_starting_up()
         
-        # If running on GNOME, look for the logout signal
-        if master_client is not None:
-            self._configure_gnome_signals()
-
         self.session_bus = dbus.SessionBus()
         
         # Create a screen for each device        
@@ -566,7 +580,12 @@ class G15Service(g15desktop.G15AbstractService):
         # Start each screen's plugin manager
         th = []
         for screen in self.screens:
-            th.append(StartThread(screen))        
+            t = StartThread(screen)
+            if self.start_in_threads:
+                t.start()
+            else:
+                t.run()
+            th.append(t)        
         if len(self.screens) == 1:
             if th[0].error is not None:
                 raise th[0].error
@@ -578,7 +597,7 @@ class G15Service(g15desktop.G15AbstractService):
             
         gobject.idle_add(self._monitor_session)
         
-    def _join_alL(self, threads, timeout = 30):
+    def _join_all(self, threads, timeout = 30):
         for t in threads:
             t.join(timeout)
             
@@ -626,17 +645,17 @@ class G15Service(g15desktop.G15AbstractService):
     def _sm_query_end_session(self, flags):
         logger.info("Querying for end session")
         self._sm_client_dbus_will_quit(True, "Gnome15 Shutting Down")
+        g15util.execute(SERVICE_QUEUE, "SessionEnd", self.stop)
         
     def _sm_cancel_end_session(self):
-        logger.info("Session end cancelled")
-        if not self.started and not self.starting_up:
-            logger.info("Cancelled session end, starting up again")
-            self.start()
+        logger.info("Cancelled session end, starting up again")
+        self.session_active = True
+        g15util.execute(SERVICE_QUEUE, "CancelSessionEnd", self.start_service)
         
     def _sm_end_session(self, flags):
         self._sm_client_dbus_will_quit(True, "Gnome15 Shutting Down")
         logger.info("Ending session")
-        self.stop()
+        g15util.execute(SERVICE_QUEUE, "SessionEnd", self.stop)
     
     def _sm_client_dbus_will_quit(self, can_quit=True, reason=""):
         self.session_manager_client_object.EndSessionResponse(can_quit,reason)
@@ -697,6 +716,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.fade_screen_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_screen_on_close', True)
         self.all_off_on_disconnect = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/all_off_on_disconnect', True)
         self.fade_keyboard_backlight_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_keyboard_backlight_on_close', True)
+        self.start_in_threads = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/start_in_threads', False)
         self._mark_all_pages_dirty()
         
     def _mark_all_pages_dirty(self):
@@ -707,8 +727,8 @@ class G15Service(g15desktop.G15AbstractService):
     def _device_enabled_configuration_changed(self, client, connection_id, entry, device):
         g15util.queue(SERVICE_QUEUE, "deviceStateChanged", 0, self._check_device_state, device)
         
-    def _check_device_state(self, device):
-        enabled = g15devices.is_enabled(self.conf_client, device) and not self.logging_out and self.session_active
+    def _check_device_state(self, device, quickly = False):
+        enabled = g15devices.is_enabled(self.conf_client, device) and self.session_active
         screen = self._get_screen_for_device(device)
         logger.info("EN device %s = %s = %s" % (device.uid, str(enabled), str(screen)))
         if enabled and not screen:
@@ -721,7 +741,7 @@ class G15Service(g15desktop.G15AbstractService):
         elif not enabled and screen:
             # Disable screen
             logger.info("Disabling device %s" % device.uid)
-            screen.stop()
+            screen.stop(quickly)
             self.screens.remove(screen)
             for listener in self.service_listeners:
                 listener.screen_removed(screen)

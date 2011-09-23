@@ -50,6 +50,8 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/disable_svg_glow", "DisableSVGGlow", False, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/fade_screen_on_close", "FadeScreenOnClose", True, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/fade_keyboard_backlight_on_close", "FadeKeyboardBacklightOnClose", True, widget_tree)
+    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/all_off_on_disconnect", "AllOffOnDisconnect", True, widget_tree)
+    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/start_in_threads", "StartScreensInThreads", False, widget_tree)
     dialog.run()
     dialog.hide()
         

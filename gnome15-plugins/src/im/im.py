@@ -116,6 +116,9 @@ class ContactList:
         self.screen = screen
         self._contact_list = {}
         self._conn.call_when_ready(self._connection_ready_cb)
+        
+    def deactivate(self):
+        pass
 
     def _connection_ready_cb(self, conn):
         if CONNECTION_INTERFACE_SIMPLE_PRESENCE not in conn:
@@ -307,6 +310,17 @@ class ContactMenu(g15theme.Menu):
         self._connections = []
         for connection in telepathy.client.Connection.get_connections():
             self._connect(connection)
+
+    def deactivate(self):
+        for c in self._connections:
+            if c in self._contact_lists:
+                self._contact_lists[c].deactivate()
+            if c._status_changed_connection:
+                c._status_changed_connection.remove()
+                c._status_changed_connection = None
+        self._connections = []
+        self._contact_lists = {}
+        self._contacts = []
             
     def new_connection(self, bus_name, bus):
         """

@@ -154,7 +154,7 @@ class G15ImpulsePainter(g15screen.Painter):
             
     def _release_mkey_acquisition(self):      
         if self.mkey_acquisition:          
-            self.plugin.screen.driver.release_mkey_lights(self.mkey_acquisition)
+            self.plugin.screen.driver.release_control(self.mkey_acquisition)
             self.mkey_acquisition = None
         
     def _release_backlight_acquisition(self):          
@@ -352,6 +352,6 @@ class G15Impulse():
                 
         # Acquire the M-Key lights control if appropriate
         if self.animate_mkeys and self.painter.mkey_acquisition is None:
-            self.painter.mkey_acquisition = self.screen.driver.acquire_mkey_lights()
+            self.painter.mkey_acquisition = self.screen.driver.acquire_control_with_hint(g15driver.HINT_MKEYS)
         elif not self.animate_mkeys and self.painter.mkey_acquisition is not None:
             self.painter._release_mkey_acquisition()
