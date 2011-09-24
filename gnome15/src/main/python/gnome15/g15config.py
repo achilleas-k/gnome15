@@ -1313,6 +1313,7 @@ class G15Config:
             self.memory_bank_label.set_text("M%d" % memory)
             self.macro_name_field.set_text(self.editing_macro.name)
             self.simple_macro.set_text(self.editing_macro.simple_macro)
+            self.command.set_text(self.editing_macro.command)
             self.macro_name_field.grab_focus()
             text_buffer = gtk.TextBuffer()
             text_buffer.set_text(self.editing_macro.macro)        
@@ -1634,14 +1635,15 @@ class G15Config:
         return False
     
     def _mapped_key_type_changed(self, widget):
-        key = self.map_type_model[widget.get_active()][0]
-        self.editing_macro.map_type = key
-        self.adjusting = True
-        try:
-            self._load_keys()
-        finally:
-            self.adjusting = False
-        self.mapped_key_combo.set_active(0)
+        if not self.adjusting:
+            key = self.map_type_model[widget.get_active()][0]
+            self.editing_macro.map_type = key
+            self.adjusting = True
+            try:
+                self._load_keys()
+            finally:
+                self.adjusting = False
+            self.mapped_key_combo.set_active(0)
     
     def _mapped_key_changed(self, widget):
         if not self.adjusting:

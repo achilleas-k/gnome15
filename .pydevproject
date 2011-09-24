@@ -10,4 +10,7 @@
 <path>/gnome15/gnome15-sandbox-plugins/src</path>
 <path>/gnome15/gnome15-plugins/src</path>
 </pydev_pathproperty>
+<pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
+<path>/home/tanktarta/Workspaces/Gnome/things</path>
+</pydev_pathproperty>
 </pydev_project>

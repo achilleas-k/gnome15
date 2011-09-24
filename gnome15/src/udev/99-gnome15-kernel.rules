@@ -1,7 +1,7 @@
 # This file maintains permissions for Logitech G keyboard devices
 # See udev(7) for syntax.
 #
-
+ 
 # Logitech G19 Gaming Keyboard
 SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", MODE="0660", GROUP="plugdev", SYMLINK+="g19-extra-keys"
 SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", MODE="0660", GROUP="plugdev", SYMLINK+="g19-lcd"

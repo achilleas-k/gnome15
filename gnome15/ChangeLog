@@ -11,6 +11,10 @@
 	Bug: Macros now work properly with shifted KEYS. The python-virtkey
 	     library was used to fix this, and will soon become the default method.
 	     This of course introduces a new dependency.
+	Bug: In g15-config, macros with commands would not displayed the saved
+	     command on next edit.
+	Bug: In g15-config, macros with mapped keys would sometimes not select
+	     the saved key on next edit.
 
 0.7.5
 	Bug: Corrected USB ID in udev rules for G110 and the kernel driver.
