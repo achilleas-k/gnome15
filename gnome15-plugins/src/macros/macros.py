@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("macros", modfile = __file__).ugettext
+
 import gnome15.g15profile as g15profile
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
@@ -32,20 +35,20 @@ logger = logging.getLogger("macros")
 
 # Plugin details - All of these must be provided
 id="macros"
-name="Macro Information"
-description="Displays the currently active macro profile and a summary of available keys." \
-    + "Also, the screen will be cycled to when a macro is activated and the key will be " \
-    + "highlighted."
+name=_("Macro Information")
+description=_("Displays the currently active macro profile and a summary of available keys.\
+Also, the screen will be cycled to when a macro is activated and the key will be \
+highlighted.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Previous macro", 
-         g15driver.NEXT_SELECTION : "Next macro",
-         g15driver.NEXT_PAGE : "Next page",
-         g15driver.PREVIOUS_PAGE : "Previous page"
+         g15driver.PREVIOUS_SELECTION : _("Previous macro"), 
+         g15driver.NEXT_SELECTION : _("Next macro"),
+         g15driver.NEXT_PAGE : _("Next page"),
+         g15driver.PREVIOUS_PAGE : _("Previous page")
          }
 
 def create(gconf_key, gconf_client, screen):
@@ -145,7 +148,7 @@ class G15Macros(g15plugin.G15MenuPlugin):
         """
         self._get_configuration()
         self.menu.remove_all_children()
-        self.page.set_title("Macros - %s" % self._active_profile.name)
+        self.page.set_title(_("Macros - %s") % self._active_profile.name)
         macros = list(self._active_profile.macros[self._mkey - 1])
         macros.sort(self._comparator)
         for macro in macros:

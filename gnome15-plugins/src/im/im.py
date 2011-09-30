@@ -26,6 +26,9 @@
 # LGPL. See http://telepathy.freedesktop.org/wiki/Contact%20selector
 
 
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("im", modfile = __file__).ugettext
+
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -55,21 +58,21 @@ logger = logging.getLogger("im")
 
 # Plugin details - All of these must be provided
 id="im"
-name="Instant Messenger"
-description="Integrates with a number of instant messengers, showing " + \
-            "buddy lists and messages on your LCD. Currently supports all " + \
-            "clients that use the Telepathy framework."
+name=_("Instant Messenger")
+description=_("Integrates with a number of instant messengers, showing \
+            buddy lists and messages on your LCD. Currently supports all \
+            clients that use the Telepathy framework.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2011 Brett Smith"
+copyright=_("Copyright (C)2011 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Previous contact", 
-         g15driver.NEXT_SELECTION : "Next contact", 
-         g15driver.VIEW : "Toggle mode",
-         g15driver.NEXT_PAGE : "Next page",
-         g15driver.PREVIOUS_PAGE : "Previous page"
+         g15driver.PREVIOUS_SELECTION : _("Previous contact"), 
+         g15driver.NEXT_SELECTION : _("Next contact"), 
+         g15driver.VIEW : _("Toggle mode"),
+         g15driver.NEXT_PAGE : _("Next page"),
+         g15driver.PREVIOUS_PAGE : _("Previous page")
          }
 
 # Other constants
@@ -78,12 +81,12 @@ CONNECTION_PRESENCE_TYPE_OFFLINE = 1
 
 IMAGE_DIR = 'images'
 STATUS_MAP = {
-        ( CONNECTION_PRESENCE_TYPE_OFFLINE, None ): [ [ "offline", "user-offline-panel" ] , "Offline"],
-        ( CONNECTION_PRESENCE_TYPE_AVAILABLE, None ): [ "user-available", "Available" ],
-        ( CONNECTION_PRESENCE_TYPE_AVAILABLE, "chat" ): [ "im-message-new", "Chatty" ],
-        ( CONNECTION_PRESENCE_TYPE_AWAY, None ): [ "user-idle", "Idle" ],
-        ( CONNECTION_PRESENCE_TYPE_BUSY, None ): [ "user-busy", "Busy" ],
-        ( CONNECTION_PRESENCE_TYPE_EXTENDED_AWAY, None ): [ "user-away", "Away" ]
+        ( CONNECTION_PRESENCE_TYPE_OFFLINE, None ): [ [ "offline", "user-offline-panel" ] , _("Offline")],
+        ( CONNECTION_PRESENCE_TYPE_AVAILABLE, None ): [ "user-available", _("Available") ],
+        ( CONNECTION_PRESENCE_TYPE_AVAILABLE, "chat" ): [ "im-message-new", _("Chatty") ],
+        ( CONNECTION_PRESENCE_TYPE_AWAY, None ): [ "user-idle", _("Idle") ],
+        ( CONNECTION_PRESENCE_TYPE_BUSY, None ): [ "user-busy", _("Busy") ],
+        ( CONNECTION_PRESENCE_TYPE_EXTENDED_AWAY, None ): [ "user-away", _("Away") ]
                                                  }
 
 MODE_ALL = "all"
@@ -91,9 +94,9 @@ MODE_ONLINE = "online"
 MODE_AVAILABLE = "available"
 MODE_LIST= [ MODE_ONLINE, MODE_AVAILABLE, MODE_ALL ]
 MODES = {
-         MODE_ALL : [ "All", "All Contacts" ],
-         MODE_ONLINE : [ "Online", "Online Contacts" ],
-         MODE_AVAILABLE : [ "Available", "Available Contacts" ]
+         MODE_ALL : [ "All", _("All Contacts") ],
+         MODE_ONLINE : [ "Online", _("Online Contacts") ],
+         MODE_AVAILABLE : [ "Available", _("Available Contacts") ]
          }
 
 def create(gconf_key, gconf_client, screen):

@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("cal", modfile = __file__).ugettext
+
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
@@ -30,18 +33,18 @@ import gobject
 import calendar
  
 id="cal"
-name="Calendar"
-description="Calendar. Integrates with Evolution calendar."
+name=_("Calendar")
+description=_("Calendar. Integrates with Evolution calendar.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Previous day/Event", 
-         g15driver.NEXT_SELECTION : "Next day/Event", 
-         g15driver.VIEW : "Toggle between calendar\nand events",
-         g15driver.NEXT_PAGE : "Next week",
-         g15driver.PREVIOUS_PAGE : "Previous week"
+         g15driver.PREVIOUS_SELECTION : _("Previous day/Event"), 
+         g15driver.NEXT_SELECTION : _("Next day/Event"), 
+         g15driver.VIEW : _("Toggle between calendar\nand events"),
+         g15driver.NEXT_PAGE : _("Next week"),
+         g15driver.PREVIOUS_PAGE : _("Previous week")
          }
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 
@@ -50,6 +53,13 @@ REFRESH_INTERVAL = 15 * 60.0
 
 def create(gconf_key, gconf_client, screen):
     return G15Cal(gconf_key, gconf_client, screen)
+
+
+
+class Event():
+    
+    def __init__(self):
+        pass
 
 class EventMenuItem(g15theme.MenuItem):
     

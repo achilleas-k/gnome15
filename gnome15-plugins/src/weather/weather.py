@@ -19,6 +19,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("weather", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen
 import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
@@ -37,13 +40,13 @@ logger = logging.getLogger("weather")
 
 # Plugin details - All of these must be provided
 id="weather"
-name="Weather"
-description="Displays the current weather at a location. It currently uses the unofficial Google Weather API as a source " \
-    + " of weather information. A word of warning. The plugin tries to use images from your current theme. If the theme does " \
-    + "not have icons, it will fall back to using images hosted on Google. This may be slow, and cause Gnome15 to temporarily hang." \
-    + "when displaying this plugin."  
+name=_("Weather")
+description=_("Displays the current weather at a location. It currently uses the unofficial Google Weather API as a source \
+of weather information. A word of warning. The plugin tries to use images from your current theme. If the theme does \
+not have icons, it will fall back to using images hosted on Google. This may be slow, and cause Gnome15 to temporarily hang.\
+when displaying this plugin.")  
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 default_enabled=True
@@ -180,13 +183,16 @@ class G15Weather():
             current = self._weather['current_conditions']
             
             if len(current) == 0:
-                properties["message"] = "No weather data for location:-\n%s" % loc
+                properties["message"] = _("No weather data for location:-\n%s") % loc
             else:                                            
                 properties["message"] = ""
+                print "Current %s" % str(current)
                 t_icon = self._translate_icon(current['icon'])
                 if t_icon != None:
                     attributes["icon"] = g15util.load_surface_from_file(t_icon)
                     properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])
+                else:
+                    logger.warning("No translated weather icon for %s" % current['icon'])
                 mono_thumb = self._get_mono_thumb_icon(current['icon'])        
                 if mono_thumb != None:
                     attributes["mono_thumb_icon"] = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))

@@ -17,7 +17,10 @@
 #        | along with this program; if not, write to the Free Software                 |
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
- 
+  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("volume", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
@@ -29,19 +32,18 @@ import os
 import gtk
 import time
 import logging
-import gobject
 logger = logging.getLogger("volume")
 
 from threading import Thread
 
 # Plugin details - All of these must be provided
 id="volume"
-name="Volume Monitor"
-description="Uses the M-Key lights as a volume meter. If your model has " + \
-        " a screen, a page will also popup showing the current volume. " + \
-        "You may choose the mixer that is monitored in the preferences for this plugin."
+name=_("Volume Monitor")
+description=_("Uses the M-Key lights as a volume meter. If your model has \
+a screen, a page will also popup showing the current volume. \
+You may choose the mixer that is monitored in the preferences for this plugin.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 default_enabled=True

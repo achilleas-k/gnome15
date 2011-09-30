@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("g15daemon-server", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
 import gnome15.g15util as g15util
@@ -41,14 +44,14 @@ logger = logging.getLogger("g15daemon")
 
 # Plugin details - All of these must be provided
 id="g15daemon-server"
-name="G15Daemon Compatibility"
-description="Starts a network server compatible with the g15daemon network protocol. " + \
-            "This allows you to use g15daemon compatible scripts and applications on all " + \
-            "models supported by Gnome15, including the  G19. Note, if you are using " + \
-            "a real g15daemon server, you will configure this plugin to use a different " + \
-            "port." 
+name=_("G15Daemon Compatibility")
+description=_("Starts a network server compatible with the g15daemon network protocol. \
+This allows you to use g15daemon compatible scripts and applications on all \
+models supported by Gnome15, including the  G19. Note, if you are using \
+a real g15daemon server, you will configure this plugin to use a different \
+port.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 
@@ -125,7 +128,7 @@ class G15DaemonClient(asyncore.dispatcher):
         self.handshake = False
                 
         self.page = g15theme.G15Page("G15Daemon%d" % self.plugin.screen_index, plugin.screen, painter = self._paint, on_shown = self._on_shown, on_hidden = self._on_hidden)
-        self.page.set_title("G15Daemon Screen %d" % self.plugin.screen_index)
+        self.page.set_title(_("G15Daemon Screen %d") % self.plugin.screen_index)
         self.plugin.screen.add_page(self.page)
         self.plugin.screen_index += 1
         self.plugin.screen.redraw(self.page)

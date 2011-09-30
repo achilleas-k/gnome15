@@ -319,13 +319,6 @@ class G15Service(g15desktop.G15AbstractService):
                 keysym = Xlib.XK.string_to_keysym(keysym_name)
         return keysym
     
-    def is_shifted(self, ch) :
-        if ch.isupper() :
-            return True
-        if "~!@#$%^&*()_+{}|:\"<>?".find(ch) >= 0 :
-            return True
-        return False
-    
     def get_x_display(self):
         self.init_xtest()
         return self.local_dpy

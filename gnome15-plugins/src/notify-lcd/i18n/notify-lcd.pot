@@ -1,0 +1,74 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-09-30 03:07+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: i18n/notify-lcd.glade.h:1
+msgid "<b>Notification</b>"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:2
+msgid "<b>Options</b>"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:3
+msgid "Allow actions"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:4
+msgid "Allow application to cancel notification"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:5
+msgid "Blink keyboard backlight"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:6
+msgid "Blink memory bank lights"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:7
+msgid "Change keyboard backlight colour"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:8
+msgid "Color"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:9
+msgid "Delay"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:10
+msgid "Enable sounds"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:11
+msgid "Message on desktop (as normal)"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:12
+msgid "Message on keyboard's screen"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:13
+msgid "Notify Preferences"
+msgstr ""
+
+#: i18n/notify-lcd.glade.h:14
+msgid "Respect requested timeout"
+msgstr ""

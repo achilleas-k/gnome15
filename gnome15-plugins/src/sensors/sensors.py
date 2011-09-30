@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("sensors", modfile = __file__).ugettext
+
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import gnome15.g15theme as g15theme
@@ -35,19 +38,19 @@ import logging
 logger = logging.getLogger()
 
 id = "sensors"
-name = "Sensors"
-description = "Display information from various sensors, such as temperature " + \
-                "and fan speeds."        
+name = _("Sensors")
+description = _("Display information from various sensors, such as temperature \
+and fan speeds.")        
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright = "Copyright (C)2010 Brett Smith"
+copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://www.gnome15.org"
 has_preferences = False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Previous sensor", 
-         g15driver.NEXT_SELECTION : "Next sensor",
-         g15driver.NEXT_PAGE : "Next page",
-         g15driver.PREVIOUS_PAGE : "Previous page"
+         g15driver.PREVIOUS_SELECTION : _("Previous sensor"), 
+         g15driver.NEXT_SELECTION : _("Next sensor"),
+         g15driver.NEXT_PAGE : _("Next page"),
+         g15driver.PREVIOUS_PAGE : _("Previous page")
          }
  
 UDISKS_DEVICE_NAME = "org.freedesktop.UDisks.Device"

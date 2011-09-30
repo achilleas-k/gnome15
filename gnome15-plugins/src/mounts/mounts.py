@@ -19,6 +19,9 @@
 #        +-----------------------------------------------------------------------------+
 #
 
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("mounts", modfile = __file__).ugettext
+
 import gnome15.g15plugin as g15plugin
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
@@ -34,22 +37,22 @@ logger = logging.getLogger("mounts")
 
 # Plugin details - All of these must be provided
 id="mounts"
-name="Mounts"
-description="Shows mount points, allows mounting, unmounting " + \
-            "and ejecting of removable media. Also displays " + \
-            "free, used or total disk space on mounted media."
+name=_("Mounts")
+description=_("Shows mount points, allows mounting, unmounting \
+and ejecting of removable media. Also displays \
+free, used or total disk space on mounted media.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2011 Brett Smith"
+copyright=_("Copyright (C)2011 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Previous mount", 
-         g15driver.NEXT_SELECTION : "Next mount",
-         g15driver.NEXT_PAGE : "Next page",
-         g15driver.PREVIOUS_PAGE : "Previous page",
-         g15driver.SELECT : "Mount, unmount or eject",
-         g15driver.VIEW : "Toggle between free,\navailable and used",
+         g15driver.PREVIOUS_SELECTION : _("Previous mount"), 
+         g15driver.NEXT_SELECTION : _("Next mount"),
+         g15driver.NEXT_PAGE : _("Next page"),
+         g15driver.PREVIOUS_PAGE : _("Previous page"),
+         g15driver.SELECT : _("Mount, unmount or eject"),
+         g15driver.VIEW : _("Toggle between free,\navailable and used"),
          }
 
 
@@ -67,7 +70,7 @@ def create(gconf_key, gconf_client, screen):
 
 POSSIBLE_ICON_NAMES = [ "folder" ]
 
-MODES = { "free" : "Free", "used" : "Used", "size" : "Size"}
+MODES = { "free" : _("Free"), "used" : _("Used"), "size" : _("Size") }
 MODE_LIST = list(MODES.keys())
 
 """
@@ -217,9 +220,9 @@ class G15Places(g15plugin.G15MenuPlugin):
         idx = MODE_LIST.index(self._mode) + 1
         properties["list"] = MODES[MODE_LIST[0] if idx == len(MODE_LIST) else MODE_LIST[idx]]        
         if isinstance(self.menu.selected, VolumeMenuItem):
-            properties["sel"] = "Mount"
+            properties["sel"] = _("Mount")
         elif isinstance(self.menu.selected, MountMenuItem):
-            properties["sel"] = "Eject" if self.menu.selected.mount.can_eject() else "Unmo."
+            properties["sel"] = _("Eject") if self.menu.selected.mount.can_eject() else _("Unmo.")
         else:
             properties["sel"] = ""
         return properties

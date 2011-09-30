@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("stopwatch", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
 import gnome15.g15util as g15util
@@ -33,20 +36,20 @@ import preferences as g15preferences
 
 # Plugin details - All of these must be provided
 id="stopwatch"
-name="Stopwatch"
-description="Stopwatch/Countdown timer plugin for gnome15.\
-Two timers are available. User can select the a mode (stopwatch/countdown) for each of them."
+name=_("Stopwatch")
+description=_("Stopwatch/Countdown timer plugin for gnome15.\
+Two timers are available. User can select the a mode (stopwatch/countdown) for each of them.")
 author="Nuno Araujo <nuno.araujo@russo79.com>"
-copyright="Copyright (C)2011 Nuno Araujo"
+copyright=_("Copyright (C)2011 Nuno Araujo")
 site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Toggle selected timer\n(or toggle timer 1)", 
-         g15driver.NEXT_SELECTION : "Reset selected timer\n(or reset timer 1)",
-         g15driver.NEXT_PAGE : "Toggle timer 2 (G19 only)",
-         g15driver.PREVIOUS_PAGE : "Reset timer 2 (G19 only)",
-         g15driver.VIEW : "Switch between timers"
+         g15driver.PREVIOUS_SELECTION : _("Toggle selected timer\n(or toggle timer 1)"), 
+         g15driver.NEXT_SELECTION : _("Reset selected timer\n(or reset timer 1)"),
+         g15driver.NEXT_PAGE : _("Toggle timer 2 (G19 only)"),
+         g15driver.PREVIOUS_PAGE : _("Reset timer 2 (G19 only)"),
+         g15driver.VIEW : _("Switch between timers")
          }
 
 

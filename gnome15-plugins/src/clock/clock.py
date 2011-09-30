@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("clock", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
 import gnome15.g15util as g15util
@@ -28,15 +31,15 @@ import datetime
 import gtk
 import pango
 import os
-import sys
+import locale
 
 # Plugin details - All of these must be provided
 id="clock"
-name="Clock"
-description="Just displays a simple clock. This is the plugin used in " \
-    + " the tutorial at the Gnome15 site."
+name=_("Clock")
+description=_("Just displays a simple clock. This is the plugin used in \
+the tutorial at the Gnome15 site.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
@@ -325,6 +328,6 @@ class G15Clock():
             time_format = "%H:%M:%S"
         properties["time"] = datetime.datetime.now().strftime(time_format)            
         if self.display_date:
-            properties["date"] = datetime.datetime.now().strftime("%d/%m/%Y")
+            properties["date"] = datetime.datetime.now().strftime(locale.nl_langinfo(locale.D_FMT))
             
         return properties

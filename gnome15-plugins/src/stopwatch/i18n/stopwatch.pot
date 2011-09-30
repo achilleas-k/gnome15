@@ -1,0 +1,62 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-09-30 03:07+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: i18n/stopwatch.glade.h:1
+msgid "<b>Mode</b>"
+msgstr ""
+
+#: i18n/stopwatch.glade.h:2
+msgid "<b>Time (hours:minutes:seconds)</b>"
+msgstr ""
+
+#: i18n/stopwatch.glade.h:3
+msgid "Countdown"
+msgstr ""
+
+#: i18n/stopwatch.glade.h:4
+msgid "Enabled"
+msgstr ""
+
+#: i18n/stopwatch.glade.h:5
+msgid "Keep stopwatch visible while actve"
+msgstr ""
+
+#: i18n/stopwatch.glade.h:6
+msgid "Label"
+msgstr ""
+
+#: i18n/stopwatch.glade.h:7
+msgid "Loop"
+msgstr ""
+
+#: i18n/stopwatch.glade.h:8
+msgid "Stopwatch"
+msgstr ""
+
+#: i18n/stopwatch.glade.h:9
+msgid "Stopwatch Preferences"
+msgstr ""
+
+#: i18n/stopwatch.glade.h:10
+msgid "Timer 1"
+msgstr ""
+
+#: i18n/stopwatch.glade.h:11
+msgid "Timer 2"
+msgstr ""

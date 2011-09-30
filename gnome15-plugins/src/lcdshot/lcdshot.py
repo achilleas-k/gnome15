@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
 
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("lcdshot", modfile = __file__).ugettext
+
 import gnome15.g15driver as g15driver
 import gnome15.g15devices as g15devices
 import gnome15.g15globals as g15globals
@@ -36,10 +39,10 @@ g15devices.g19_action_keys[SCREENSHOT] = g15devices.ActionBinding(SCREENSHOT, [ 
  
 # Plugin details - All of these must be provided
 id="lcdshot"
-name="LCD Screenshot"
-description="Takes a screenshot of the LCD and places it in the configured directory."
+name=_("LCD Screenshot")
+description=_("Takes a screenshot of the LCD and places it in the configured directory.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
@@ -119,12 +122,12 @@ class G15LCDShot():
                         if not os.path.exists(path):
                             self._screen.old_surface.write_to_png(path)
                             logger.info("Written to screenshot to %s" % path)
-                            g15util.notify("LCD Screenshot", "Screenshot saved to %s" % path, "dialog-info")
+                            g15util.notify(_("LCD Screenshot"), _("Screenshot saved to %s") % path, "dialog-info")
                             return True
                     logger.warning("Too many screenshots in destination directory")
                 except Exception as e:
                     logger.error("Failed to save screenshot. %s" % str(e))
-                    self._screen.error_on_keyboard_display("Failed to save screenshot to %s. %s" % (dir, str(e)))
+                    self._screen.error_on_keyboard_display(_("Failed to save screenshot to %s. %s") % (dir, str(e)))
                 finally:
                     self._screen.draw_lock.release()
         

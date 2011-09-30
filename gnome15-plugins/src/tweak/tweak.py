@@ -17,19 +17,22 @@
 #        | along with this program; if not, write to the Free Software                 |
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
- 
+  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("tweak", modfile = __file__).ugettext
+
 import gnome15.g15util as g15util
 import gtk
 import os.path
 
 # Plugin details - All of these must be provided
 id="tweak"
-name="Tweak Gnome15"
-description="Allows configuration of some hidden settings. These are mostly " + \
-            "performance tweaks. If Gnome15 is using too much CPU, " + \
-            "you will find adjusting some of these may reduce it. " 
+name=_("Tweak Gnome15")
+description=_("Allows configuration of some hidden settings. These are mostly \
+performance tweaks. If Gnome15 is using too much CPU, \
+you will find adjusting some of these may reduce it. ") 
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 global_plugin=True

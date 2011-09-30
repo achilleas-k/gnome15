@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("sysmon", modfile = __file__).ugettext
+
 import gnome15.g15theme as g15theme 
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
@@ -26,15 +29,17 @@ import gtop
 import socket
 
 id = "sysmon"
-name = "System Monitor"
-description = "Display CPU, Memory, and Network statistics. Either a summary of each system's stats is displayed, or " + \
-            "you may cycle through the CPU and Network interfaces."        
+name = _("System Monitor")
+description = _("Display CPU, Memory, and Network statistics. Either a summary of each system's stats is displayed, or \
+you may cycle through the CPU and Network interfaces.")        
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright = "Copyright (C)2010 Brett Smith"
+copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://www.gnome15.org"
 default_enabled = True
 has_preferences = False
-actions={ g15driver.PREVIOUS_SELECTION : "Toggle Monitored CPU", g15driver.NEXT_SELECTION : "Toggle Monitored Network\nInterface" }
+actions={ 
+         g15driver.PREVIOUS_SELECTION : _("Toggle Monitored CPU"), 
+         g15driver.NEXT_SELECTION : _("Toggle Monitored Network\nInterface") }
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
  
 ''' 

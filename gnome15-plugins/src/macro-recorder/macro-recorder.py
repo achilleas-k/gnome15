@@ -18,6 +18,10 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
   
+
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("macro-recorder", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
 import gnome15.g15devices as g15devices 
@@ -48,19 +52,19 @@ g15devices.g19_action_keys[RECORD] = g15devices.ActionBinding(RECORD, [ g15drive
 
 # Plugin details - All of these must be provided
 id="macro-recorder"
-name="Macro Recorder"
-description="Allows recording of macros. All feedback is provided via the LCD (when available), " \
-    + "as well as blinking of memory bank lights when recording. " + \
-    "You may also delete macros by assigning an empty macro to a key." \
-    + "The macro will be recorded on the currently selected profile and memory bank."
+name=_("Macro Recorder")
+description=_("Allows recording of macros. All feedback is provided via the LCD (when available), \
+as well as blinking of memory bank lights when recording. \
+You may also delete macros by assigning an empty macro to a key. \
+The macro will be recorded on the currently selected profile and memory bank.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 default_enabled=True
 unsupported_models = [ g15driver.MODEL_Z10, g15driver.MODEL_MX5500 ]
 actions={ 
-         RECORD : "Start recording macro"
+         RECORD : _("Start recording macro")
          }
 
 
@@ -296,12 +300,12 @@ class G15MacroRecorder():
             properties["profile_icon"] = active_profile.get_profile_icon_path(self._screen.height)
             
             if self._message == None:
-                properties["message"] = "Recording on M%s. Type in your macro then press the G-Key to assign it to, or MR to cancel." % self._screen.get_memory_bank()
+                properties["message"] = _("Recording on M%s. Type in your macro then press the G-Key to assign it to, or MR to cancel." % self._screen.get_memory_bank())
             else:
                 properties["message"] = self._message
         else:
-            properties["profile"] = "No Profile"
+            properties["profile"] = _("No Profile")
             properties["profile_icon"] = ""
-            properties["message"] = "You have no profiles configured. Configure one now using the Macro tool"
+            properties["message"] = _("You have no profiles configured. Configure one now using the Macro tool")
             
         return properties

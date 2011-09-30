@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("fx", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen 
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
@@ -30,14 +33,13 @@ import random
 
 # Plugin details - All of these must be provided
 id="fx"
-name="Special Effect"
-description="This plugin introduces special effects when switching between screens. " \
-  + "Currently 3 main types of effect are provided, a sliding effect (in both directions) " \
-  + "a fading effect and a zoom effect . On a monochrome LCD such as the G15's, the fade appears as more " \
-  + "of a 'disolve' effect." \
-  
+name=_("Special Effect")
+description=_("This plugin introduces special effects when switching between screens. \
+Currently 3 main types of effect are provided, a sliding effect (in both directions) \
+a fading effect and a zoom effect . On a monochrome LCD such as the G15's, the fade appears as more \
+of a 'disolve' effect.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]

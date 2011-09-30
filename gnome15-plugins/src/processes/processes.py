@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("processes", modfile = __file__).ugettext
+
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -36,22 +39,22 @@ logger = logging.getLogger("processes")
 
 # Plugin details - All of these must be provided
 id="processes"
-name="Process List"
-description="Lists all running processes and allows them to be " + \
-            "killed. through a menu on the LCD."
+name=_("Process List")
+description=_("Lists all running processes and allows them to be \
+killed. through a menu on the LCD.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
 reserved_keys = [ g15driver.G_KEY_SETTINGS ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Previous process", 
-         g15driver.NEXT_SELECTION : "Next process",
-         g15driver.NEXT_PAGE : "Next page",
-         g15driver.PREVIOUS_PAGE : "Previous page",
-         g15driver.SELECT : "Kill process",
-         g15driver.VIEW : "Toggle between applications,\nall and user"
+         g15driver.PREVIOUS_SELECTION : _("Previous process"), 
+         g15driver.NEXT_SELECTION : _("Next process"),
+         g15driver.NEXT_PAGE : _("Next page"),
+         g15driver.PREVIOUS_PAGE : _("Previous page"),
+         g15driver.SELECT : _("Kill process"),
+         g15driver.VIEW : _("Toggle between applications,\nall and user")
          }
  
 def create(gconf_key, gconf_client, screen):
@@ -85,7 +88,7 @@ class ProcessMenuItem(g15theme.MenuItem):
     
     def activate(self):
         kill_name = str(self.process_id) if isinstance(self.process_id, int) else self.process_name 
-        self.plugin.confirm_screen = g15theme.ConfirmationScreen(self.get_screen(), "Kill Process", "Are you sure you want to kill %s" % kill_name,  
+        self.plugin.confirm_screen = g15theme.ConfirmationScreen(self.get_screen(), _("Kill Process"), _("Are you sure you want to kill %s") % kill_name,  
                                     g15util.get_icon_path("utilities-system-monitor"), self.plugin._kill_process, self.process_id,
                                     cancel_callback = self.plugin._cancel_kill)
                     
@@ -160,14 +163,14 @@ class G15Processes(g15plugin.G15MenuPlugin):
         
         props["mode"] = self._mode
         if self._mode == "applications":
-            props["title"] = "Applications"
-            props["list"] = "All"
+            props["title"] = _("Applications")
+            props["list"] = _("All")
         elif self._mode == "all":
-            props["title"] = "All Processes"
-            props["list"] = "Usr"
+            props["title"] = _("All Processes")
+            props["list"] = _("Usr")
         elif self._mode == "user":
-            props["title"] = "User Processes"
-            props["list"] = "App"
+            props["title"] = _("User Processes")
+            props["list"] = _("App")
         return props
         
     '''

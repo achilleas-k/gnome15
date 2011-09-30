@@ -18,9 +18,13 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("background", modfile = __file__).ugettext
+
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
+import gnome15.g15profile as g15profile
 import cairo
 import gtk
 import os
@@ -30,9 +34,9 @@ logger = logging.getLogger("background")
 
 # Plugin details - All of these must be provided
 id="background"
-name="Wallpaper"
-description="Use an image for the LCD background"
-author="Brett Smith <tanktarta@blueyonder.co.uk>"
+name=_("Wallpaper")
+description=_("Use an image for the LCD background")
+author=_("Brett Smith <tanktarta@blueyonder.co.uk>")
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=True
@@ -61,6 +65,7 @@ class G15BackgroundPreferences():
         g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/style", "StyleCombo", "zoom", widget_tree)
         widget_tree.get_object("UseDesktop").connect("toggled", self.set_available, widget_tree)
         widget_tree.get_object("UseFile").connect("toggled", self.set_available, widget_tree)
+        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_profile_override", "AllowProfileOverride", True, widget_tree)
         
         # Currently, only GNOME is supported for getting the desktop background
         if not "gnome" == g15util.get_desktop():
@@ -142,6 +147,7 @@ class G15Background():
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/path", self.config_changed))
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/type", self.config_changed))
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/style", self.config_changed))
+        self.notify_handlers.append(self.gconf_client.notify_add("/apps/gnome15/%s/active_profile" % self.screen.device.uid, self._active_profile_changed))
         self.gnome_dconf_settings = None 
         
         # Monitor desktop specific configuration for wallpaper changes
@@ -156,10 +162,14 @@ class G15Background():
 
             if self.gnome_dconf_settings is not None:
                 self.gnome_dconf_settings.connect("changed::picture_uri", self._do_config_changed)
+                
+        # Listen for profile changes        
+        g15profile.profile_listeners.append(self._profiles_changed)
         
         self._do_config_changed()
     
     def deactivate(self):
+        g15profile.profile_listeners.remove(self._profiles_changed)
         self.screen.painters.remove(self.painter)
         for h in self.notify_handlers:
             self.gconf_client.notify_remove(h);
@@ -174,6 +184,12 @@ class G15Background():
     '''
     Private
     ''' 
+    def _active_profile_changed(self, client, connection_id, entry, args):
+        self._do_config_changed()
+        
+    def _profiles_changed(self, profile_id, device_uid):
+        self._do_config_changed()
+        
     def _do_config_changed(self):
         # Get the configuration
         screen_size = self.screen.size
@@ -184,8 +200,15 @@ class G15Background():
         bg_style = self.gconf_client.get_string(self.gconf_key + "/style")
         if bg_style == None:
             bg_style = "zoom"
+        allow_profile_override = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/allow_profile_override", True)
         
-        if bg_type == "desktop":
+        # See if the current profile has a background
+        if allow_profile_override:
+            active_profile = g15profile.get_active_profile(self.screen.device)
+            if active_profile is not None and active_profile.background is not None and active_profile.background != "":
+                self.bg_img = active_profile.background
+        
+        if self.bg_img == None and  bg_type == "desktop":
             # Get the current background the desktop is using if possible
             desktop_env = g15util.get_desktop()
             if "gnome" == desktop_env:

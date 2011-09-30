@@ -905,37 +905,41 @@ class G15Screen():
                 if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
                     return  
                         
-                """
-                uinput macros are handled differently. These are mapped directly
-                to the received keypresses.
-                """
-                uinput_macros = []                  
-                for k in keys:
-                    macro = self._find_macro([k])
-                    if macro is not None:
-                        if macro.type == g15profile.MACRO_MAPPED_TO_KEY:
-                            self._handle_macro(macro, state, False)
-                            if logger.level == logging.DEBUG:
-                                logger.debug("Handling macro %s" % macro.name)
-                            uinput_macros.append(macro)
-                        
-                """
-                If there were any macros mapped to uinput events,
-                now send the SYN. We also break out here, there is no point
-                in check for actions as well
-                """
-                if len(uinput_macros) > 0:
-                    if logger.level == logging.DEBUG:
-                        logger.debug("Sending SYN to %s" % macro.map_type)
-                    g15uinput.syn(macro.map_type)
+                handled = False
+                if state != g15driver.KEY_STATE_HELD:
+                    """
+                    uinput macros are handled differently. These are mapped directly
+                    to the received keypresses.
+                    """
+                    uinput_macros = []                  
+                    for k in keys:
+                        macro = self._find_macro([k])
+                        if macro is not None:
+                            if macro.type == g15profile.MACRO_MAPPED_TO_KEY:
+                                self._handle_macro(macro, state, False)
+                                if logger.level == logging.DEBUG:
+                                    logger.debug("Handling macro %s" % macro.name)
+                                uinput_macros.append(macro)
+                                handled = True
+                            
+                    """
+                    If there were any macros mapped to uinput events,
+                    now send the SYN. We also break out here, there is no point
+                    in check for actions as well
+                    """
+                    if len(uinput_macros) > 0:
+                        if logger.level == logging.DEBUG:
+                            logger.debug("Sending SYN to %s" % macro.map_type)
+                        g15uinput.syn(macro.map_type)
                 
                 """
                 Now process ordinary macros (single key and multiple key)
                 """ 
-                if self.keys_up == self.keys_down:           
+                if not handled and self.keys_up == self.keys_down:           
                     macro = self._find_macro(self.keys_down)
                     if macro is not None and macro.type != g15profile.MACRO_MAPPED_TO_KEY:
                         self._handle_macro(macro, state)
+                        handled = True
                     
                 if state == g15driver.KEY_STATE_UP:
                     if len(self.keys_down) > len(self.keys_up):
@@ -1014,7 +1018,7 @@ class G15Screen():
             macro = profile.get_macro(self.get_memory_bank(), keys)
             if macro is None:
                 base_profile = profile.base_profile
-                if base_profile != -1:
+                if base_profile != -1:                    
                     profile = g15profile.get_profile(self.device, base_profile)
                 else:
                     profile = None

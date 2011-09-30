@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("lcdbiff", modfile = __file__).ugettext
+
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -43,21 +46,21 @@ logger = logging.getLogger("lcdbiff")
 
 # Plugin details - All of these must be provided
 id = "lcdbiff"
-name = "POP3 / IMAP Email Notification"
-description = "Periodically checks your email accounts for any waiting messages. Currently supports POP3 and IMAP " + \
-        "protocols. For models without a screen, the M-Key lights will be flashed when there is an email " + \
-        "waiting. For models with a screen, a page showing all unread mail counts will be displayed, and an " + \
-        "icon added to the panel indicating overall status."
+name = _("POP3 / IMAP Email Notification")
+description = _("Periodically checks your email accounts for any waiting messages. Currently supports POP3 and IMAP \
+protocols. For models without a screen, the M-Key lights will be flashed when there is an email \
+waiting. For models with a screen, a page showing all unread mail counts will be displayed, and an \
+icon added to the panel indicating overall status.")
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright = "Copyright (C)2010 Brett Smith"
+copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://www.gnome15.org/"
 has_preferences = True
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Previous item", 
-         g15driver.NEXT_SELECTION : "Next item",
-         g15driver.NEXT_PAGE : "Next page",
-         g15driver.PREVIOUS_PAGE : "Previous page",
-         g15driver.SELECT : "Compose new mail"
+         g15driver.PREVIOUS_SELECTION : _("Previous item"), 
+         g15driver.NEXT_SELECTION : _("Next item"),
+         g15driver.NEXT_PAGE : _("Next page"),
+         g15driver.PREVIOUS_PAGE : _("Previous page"),
+         g15driver.SELECT : _("Compose new mail")
          }
 
 # Constants
@@ -137,14 +140,15 @@ class Checker():
             widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "password.glade"))
             dialog = widget_tree.get_object("PasswordDialog")
             text_widget = widget_tree.get_object("Text")
-            text_widget.set_text("The account <b>" + account.name + "</b> for the user <b>" + username + "</b>.\n" + \
-                          "requires a password, This will be stored in the Gnome Keyring and \n" + \
-                          "and will not be asked for again unless there is some later problem\n" + \
-                          "problem authentication (for example as the result of\n" + \
-                          "a password change).")       
+            text_widget.set_text(_("The account <b>%s</b> for the user <b>%s</b>.\n\
+requires a password, This will be stored in the Gnome Keyring and \n\
+and will not be asked for again unless there is some later problem\n\
+problem authentication (for example as the result of\n\
+a password change).") % (account.name, username))       
             text_widget.set_use_markup(True)     
             password_widget = widget_tree.get_object("Password")
             dialog.show_all()
+
             
             response = dialog.run()
             try :    
@@ -200,7 +204,7 @@ class POP3Checker(Checker):
             for i in range(0, 3):
                 password = self.get_password(account, default_port, i > 0)
                 if password == None or password == "":
-                    raise Exception("Authentication cancelled")
+                    raise Exception(_("Authentication cancelled"))
                 try :
                     pop.user(username)
                     pop.pass_(password)            
@@ -245,7 +249,7 @@ class IMAPChecker(Checker):
                 try :
                     password = self.get_password(account, default_port, i > 0)
                     if password == None or password == "":
-                        raise Exception("Authentication cancelled")
+                        raise Exception(_("Authentication cancelled"))
                     
                     try :
                         if j == 0:
@@ -554,12 +558,12 @@ class MailItem(g15theme.MenuItem):
         item_properties = g15theme.MenuItem.get_theme_properties(self)       
         item_properties["item_name"] = self.account.name
         if self.error != None:
-            item_properties["item_alt"] = "Error"
+            item_properties["item_alt"] = _("Error")
         else: 
             if self.count > 0:
                 item_properties["item_alt"] = "%d" % ( self.count )
             else:
-                item_properties["item_alt"] = "None"
+                item_properties["item_alt"] = _("None")
         item_properties["item_type"] = ""
         item_properties["item_icon"] =  g15util.load_surface_from_file(self.icon_path)
         return item_properties

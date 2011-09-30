@@ -1,0 +1,9 @@
+char *s = N_("24hr Mode");
+char *s = N_("<b>Display Options</b>");
+char *s = N_("<b>Theme</b>");
+char *s = N_("Clock Preferences");
+char *s = N_("Display Digital Time");
+char *s = N_("Show Date");
+char *s = N_("Show Seconds");
+char *s = N_("Show Year");
+char *s = N_("Sweeping second hand");

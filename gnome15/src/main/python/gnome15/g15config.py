@@ -277,8 +277,11 @@ class G15Config:
         self.press_delay_adjustment = self.widget_tree.get_object("PressDelayAdjustment")
         self.release_delay_adjustment = self.widget_tree.get_object("ReleaseDelayAdjustment")
         self.profile_icon = self.widget_tree.get_object("ProfileIcon")
+        self.background = self.widget_tree.get_object("Background")
         self.icon_browse_button = self.widget_tree.get_object("BrowseForIcon")
+        self.background_browse_button = self.widget_tree.get_object("BrowseForBackground")
         self.clear_icon_button = self.widget_tree.get_object("ClearIcon")
+        self.clear_background_button = self.widget_tree.get_object("ClearBackground")
         self.macro_properties_button = self.widget_tree.get_object("MacroPropertiesButton")
         self.new_macro_button = self.widget_tree.get_object("NewMacroButton")
         self.delete_macro_button = self.widget_tree.get_object("DeleteMacroButton")
@@ -323,6 +326,7 @@ class G15Config:
         self.parent_profile_label = self.widget_tree.get_object("ParentProfileLabel")
         self.parent_profile_model = self.widget_tree.get_object("ParentProfileModel")
         self.parent_profile_combo = self.widget_tree.get_object("ParentProfileCombo")
+        self.profile_author = self.widget_tree.get_object("ProfileAuthor")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -356,8 +360,10 @@ class G15Config:
         self.allow_combination.connect("toggled", self._allow_combination_changed)
         self.activate_by_default.connect("toggled", self._activate_on_focus_changed)
         self.clear_icon_button.connect("clicked", self._clear_icon)
+        self.clear_background_button.connect("clicked", self._clear_icon)
         self.delete_macro_button.connect("clicked", self._remove_macro)
         self.icon_browse_button.connect("clicked", self._browse_for_icon)
+        self.background_browse_button.connect("clicked", self._browse_for_icon)
         self.macro_properties_button.connect("clicked", self._macro_properties)
         self.new_macro_button.connect("clicked", self._new_macro)
         self.macro_list.connect("cursor-changed", self._select_macro)
@@ -384,6 +390,7 @@ class G15Config:
         self.run_macro_script.connect("toggled", self._macro_type_changed)
         self.m1.connect("toggled", self._memory_changed)
         self.macro_name_field.connect("changed", self._macro_name_changed)
+        self.profile_author.connect("changed", self._profile_author_changed)
         self.command.connect("changed", self._command_changed)
         self.simple_macro.connect("changed", self._simple_macro_changed)
         self.browse_for_command.connect("clicked", self._browse_for_command)
@@ -919,6 +926,7 @@ class G15Config:
                                     copy_path = os.path.join(icons_dir, os.path.basename(icon_path))
                                     shutil.copy(icon_path, copy_path)
                                     self.selected_profile.icon = copy_path
+                                    self._set_image(self.profile_icon, copy_path)
                 else:                    
                     import wnck           
                     for window in wnck.screen_get_default().get_windows():
@@ -928,6 +936,7 @@ class G15Config:
                                 filename = os.path.join(icons_dir,"%d.png" % self.selected_profile.id)
                                 icon.save(filename, "png")
                                 self.selected_profile.icon = filename    
+                                self._set_image(self.profile_icon, filename)
                             
                 self._save_profile(self.selected_profile)
                 
@@ -1044,6 +1053,7 @@ class G15Config:
         self._load_profile_list()
         self._load_plugins()
         self._load_macro_state()
+        self._load_windows()
         if self.selected_device:
             self._load_drivers()
         self._do_status_change()
@@ -1076,7 +1086,12 @@ class G15Config:
         self._load_profile_list()
         
     def _clear_icon(self, widget):
-        self.selected_profile.icon = ""     
+        if widget == self.clear_icon_button:
+            self.selected_profile.icon = ""
+            self._set_image(self.profile_icon, "")
+        else:    
+            self.selected_profile.background = ""
+            self._set_image(self.background, "") 
         self._save_profile(self.selected_profile)
         
     def _browse_for_icon(self, widget):
@@ -1087,7 +1102,10 @@ class G15Config:
                                 gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         dialog.set_default_response(gtk.RESPONSE_OK)
         dialog.set_transient_for(self.main_window)
-        dialog.set_filename(self.selected_profile.icon)
+        if widget == self.icon_browse_button:
+            dialog.set_filename(self.selected_profile.icon)
+        else:
+            dialog.set_filename(self.selected_profile.background)
         filter = gtk.FileFilter()
         filter.set_name("All files")
         filter.add_pattern("*")
@@ -1108,7 +1126,12 @@ class G15Config:
         response = dialog.run()
         
         if response == gtk.RESPONSE_OK:
-            self.selected_profile.icon = dialog.get_filename() 
+            if widget == self.icon_browse_button:
+                self.selected_profile.icon = dialog.get_filename()                
+                self._set_image(self.profile_icon, self.selected_profile.icon) 
+            else: 
+                self.selected_profile.background = dialog.get_filename()          
+                self._set_image(self.background, self.selected_profile.background)
             self._save_profile(self.selected_profile)
             
         dialog.destroy()
@@ -1131,6 +1154,10 @@ class G15Config:
     def _macro_name_changed(self, widget):
         self.editing_macro.name = widget.get_text()
         self._save_macro(self.editing_macro)
+            
+    def _profile_author_changed(self, widget):
+        self.selected_profile.author = widget.get_text()
+        self._save_profile(self.selected_profile)
         
     def _allow_combination_changed(self, widget):
         if not self.adjusting and not self.allow_combination.get_active():
@@ -1516,6 +1543,7 @@ class G15Config:
                 tree_selection.select_path(self.macros_model.get_path(self.macros_model.get_iter(0)))
                     
             self.activate_on_focus.set_active(profile.activate_on_focus)
+            self.profile_author.set_text(profile.author)
             self.activate_by_default.set_active(profile.activate_on_focus)
             if profile.window_name != None:
                 self.window_name.set_text(profile.window_name)
@@ -1527,11 +1555,9 @@ class G15Config:
             self.press_delay_adjustment.set_value(float(profile.press_delay) / 1000.0)
             self.release_delay_adjustment.set_value(float(profile.release_delay) / 1000.0)
             self.window_combo.set_sensitive(self.activate_on_focus.get_active())
-            
-            if profile.icon == None or profile.icon == "":
-                self.profile_icon.set_from_stock(gtk.STOCK_MISSING_IMAGE, gtk.ICON_SIZE_DIALOG)
-            else:
-                self.profile_icon.set_from_pixbuf(gtk.gdk.pixbuf_new_from_file_at_size(profile.icon, 48, 48))
+
+            self._set_image(self.profile_icon, profile.icon)            
+            self._set_image(self.background, profile.background)
             
             if profile.get_default():
                 self.activate_on_focus.set_visible(False)
@@ -1574,6 +1600,12 @@ class G15Config:
             self._set_available_actions()
         finally:
             self.adjusting = False
+            
+    def _set_image(self, widget, path):
+        if path == None or path == "":
+            widget.set_from_stock(gtk.STOCK_MISSING_IMAGE, gtk.ICON_SIZE_DIALOG)
+        else:
+            widget.set_from_pixbuf(gtk.gdk.pixbuf_new_from_file_at_size(path, 48, 48))
             
     def _load_windows(self):
         self.window_model.clear()  

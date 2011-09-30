@@ -266,6 +266,8 @@ class G15Profile():
                                                      })        
         self.name = None
         self.icon = None
+        self.background = None
+        self.author = ""
         self.macros = []        
         self.mkey_color = {}
         self.activate_on_focus = False
@@ -302,6 +304,8 @@ class G15Profile():
         self.parser.set("DEFAULT", "window_name", self.window_name)    
         self.parser.set("DEFAULT", "base_profile", str(self.base_profile))
         self.parser.set("DEFAULT", "icon", self.icon)
+        self.parser.set("DEFAULT", "background", self.background)
+        self.parser.set("DEFAULT", "author", self.author)
         self.parser.set("DEFAULT", "activate_on_focus", str(self.activate_on_focus))
         self.parser.set("DEFAULT", "send_delays", str(self.send_delays))
         self.parser.set("DEFAULT", "fixed_delays", str(self.fixed_delays))
@@ -401,6 +405,8 @@ class G15Profile():
         # Info section
         self.name = self.parser.get("DEFAULT", "name").strip() if self.parser.has_option("DEFAULT", "name") else ""
         self.icon = self.parser.get("DEFAULT", "icon").strip() if self.parser.has_option("DEFAULT", "icon") else ""
+        self.background = self.parser.get("DEFAULT", "background").strip() if self.parser.has_option("DEFAULT", "background") else ""
+        self.author = self.parser.get("DEFAULT", "author").strip() if self.parser.has_option("DEFAULT", "author") else ""
         self.window_name = self.parser.get("DEFAULT", "window_name").strip() if self.parser.has_option("DEFAULT", "window_name") else ""
         
         self.activate_on_focus = self.parser.getboolean("DEFAULT", "activate_on_focus") if self.parser.has_option("DEFAULT", "activate_on_focus") else False

@@ -17,7 +17,10 @@
 #        | along with this program; if not, write to the Free Software                 |
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
- 
+  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("webcam", modfile = __file__).ugettext
+
 import gnome15.g15util as g15util
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
@@ -32,10 +35,10 @@ import logging
 logger = logging.getLogger("webcam")
 
 id="webcam"
-name="Webcam"
-description="Watch webcam video on your keyboard's LCD"
+name=_("Webcam")
+description=_("Watch webcam video on your keyboard's LCD")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ] 
@@ -145,7 +148,7 @@ class G15Webcam():
             self._surface = None
             self._camera = highgui.cvCreateCameraCapture(device_no)
             if not self._camera:
-                raise Exception("No camera")
+                raise Exception(_("No camera"))
             
         self._fps = highgui.cvGetCaptureProperty(self._camera, highgui.CV_CAP_PROP_FPS )
         device_no = self._gconf_client.get_int(self._gconf_key + "/device")

@@ -1,0 +1,11 @@
+char *s = N_("<b>Account Options</b>");
+char *s = N_("<b>Accounts</b>");
+char *s = N_("<b>Options</b>");
+char *s = N_("Check every");
+char *s = N_("Mail Notification Preferences");
+char *s = N_("Type:");
+char *s = N_("imap");
+char *s = N_("minutes");
+char *s = N_("pop3");
+char *s = N_("toolbutton1");
+char *s = N_("toolbutton2");

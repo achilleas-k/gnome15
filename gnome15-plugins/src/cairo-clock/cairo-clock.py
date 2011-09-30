@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("cairo-clock", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
 import gnome15.g15util as g15util 
@@ -33,16 +36,17 @@ import sys
 import cairo
 import rsvg
 import pango
+import locale
 
 # Plugin details - All of these must be provided
 id="cairo-clock"
-name="Cairo Clock"
-description="Port of MacSlow's SVG clock to Gnome15. Standard cairo-clock " \
-    + "themes may be used on a G19, however, for all other models " \
-    + "you must use specially crafted themes (using GIF files instead of SVG). " \
-    + "One default theme for low resolution screens is provided."
+name=_("Cairo Clock")
+description=_("Port of MacSlow's SVG clock to Gnome15. Standard cairo-clock \
+themes may be used on a G19, however, for all other models \
+you must use specially crafted themes (using GIF files instead of SVG). \
+One default theme for low resolution screens is provided.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 default_enabled=True
@@ -313,9 +317,9 @@ class G15CairoClock():
     
     def _get_date_text(self):
         if self.display_year:
-            return datetime.datetime.now().strftime("%d/%m/%y")
+            return datetime.datetime.now().strftime(locale.nl_langinfo(locale.D_FMT))
         else:
-            return datetime.datetime.now().strftime("%d/%m")    
+            return datetime.datetime.now().strftime(locale.nl_langinfo(locale.D_FMT).replace("/%y", ""))    
         
     def _do_paint(self, canvas, width, height, draw_date = True, draw_time = True): 
         canvas.save()   

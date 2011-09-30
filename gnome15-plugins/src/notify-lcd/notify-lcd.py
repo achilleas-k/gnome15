@@ -18,6 +18,10 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("notify-lcd", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15globals as pglobals
@@ -51,21 +55,21 @@ logger = logging.getLogger("notify")
 
 # Plugin details - All of these must be provided
 id="notify-lcd"
-name="Notify"
-description="Displays desktop notification messages on the keyboard's screen (when available), and provides " + \
-            "various other methods of notification, such as blinking the keyboard backlight, " + \
-            "blinking the M-Key lights, or changing the backlight colour. On some desktops, " + \
-            "Gnome15 can completely take over the notification service and display messages " + \
-            "on the keyboard only."
+name=_("Notify")
+description=_("Displays desktop notification messages on the keyboard's screen (when available), and provides \
+various other methods of notification, such as blinking the keyboard backlight, \
+blinking the M-Key lights, or changing the backlight colour. On some desktops, \
+Gnome15 can completely take over the notification service and display messages \
+on the keyboard only.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 single_instance=True
 actions={ 
-         g15driver.CLEAR : "Clear all queued messages", 
-         g15driver.NEXT_SELECTION : "Next message",
-         g15driver.SELECT : "Perform action (if appropriate)"
+         g15driver.CLEAR : _("Clear all queued messages"), 
+         g15driver.NEXT_SELECTION : _("Next message"),
+         g15driver.SELECT : _("Perform action (if appropriate)")
          }
 
 IF_NAME="org.freedesktop.Notifications"

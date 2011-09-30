@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("indicator-me", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
@@ -39,19 +42,19 @@ logger = logging.getLogger("indicator-me")
 
 # Plugin details - All of these must be provided
 id="indicator-me"
-name="Indicator Me"
-description="Indicator that shows user information and status.\n\n" + \
-    "NOTE, this plugin is not required on Ubuntu 11.10 and onwards, as the " + \
-    "functionality is now provided by Indicator Messages"
+name=_("Indicator Me")
+description=_("Indicator that shows user information and status.\n\n\
+NOTE, this plugin is not required on Ubuntu 11.10 and onwards, as the \
+functionality is now provided by Indicator Messages")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Previous status", 
-         g15driver.NEXT_SELECTION : "Next status", 
-         g15driver.SELECT : "Choose status",
+         g15driver.PREVIOUS_SELECTION : _("Previous status"), 
+         g15driver.NEXT_SELECTION : _("Next status"), 
+         g15driver.SELECT : _("Choose status"),
          }
 
 ''' This simple plugin displays user information and status
@@ -61,12 +64,12 @@ def create(gconf_key, gconf_client, screen):
     return G15IndicatorMe(gconf_client, screen)
         
             
-STATUS_ICONS = { "user-available-panel" : "Available", 
-                 "user-away-panel" : "Away", 
-                 "user-busy-panel" : "Busy", 
-                 "user-offline-panel" : "Offline", 
-                 "user-invisible-panel" : "Invisible",
-                 "user-indeterminate" : "Invisible" }
+STATUS_ICONS = { "user-available-panel" : _("Available"), 
+                 "user-away-panel" : _("Away"), 
+                 "user-busy-panel" : _("Busy"), 
+                 "user-offline-panel" : _("Offline"), 
+                 "user-invisible-panel" : _("Invisible"),
+                 "user-indeterminate" : _("Invisible") }
 '''
 Indicator Messages  DBUSMenu property names
 '''
@@ -159,11 +162,11 @@ class G15IndicatorMe():
     Private
     '''     
     def _create_pages(self):  
-        self._menu_page = g15theme.G15Page("Indicator Me Status", self._screen, priority = g15screen.PRI_NORMAL, \
+        self._menu_page = g15theme.G15Page(_("Indicator Me Status"), self._screen, priority = g15screen.PRI_NORMAL, \
                                            on_shown = self._on_menu_page_show, title = self._get_status_text(), theme = self._menu_theme,
                                            theme_properties_callback = self._get_menu_properties,
                                            thumbnail_painter = self._paint_popup_thumbnail)
-        self._popup_page = g15theme.G15Page("Indicator Me Popup", self._screen, priority = g15screen.PRI_INVISIBLE, \
+        self._popup_page = g15theme.G15Page(_("Indicator Me Popup"), self._screen, priority = g15screen.PRI_INVISIBLE, \
                                             panel_painter = self._paint_popup_thumbnail, theme = self._popup_theme,
                                             theme_properties_callback = self._get_popup_properties)
         self._screen.add_page(self._menu_page)
@@ -204,7 +207,7 @@ class G15IndicatorMe():
             self._menu_page.set_title(self._get_status_text())
             
     def _get_status_text(self):
-        return "Status - %s" % STATUS_ICONS[self._icon]
+        return _("Status - %s") % STATUS_ICONS[self._icon]
         
     def _paint_popup_thumbnail(self, canvas, allocated_size, horizontal):
         if self._popup_page != None:
@@ -213,13 +216,13 @@ class G15IndicatorMe():
             
     def _get_menu_properties(self):
         props = { "icon" :  g15util.get_icon_path(self._icon),
-                 "title" : "Status",
+                 "title" : _("Status"),
                  "alt_title": STATUS_ICONS[self._icon] }
         return props
 
     def _get_popup_properties(self):     
         properties = { "icon" : g15util.get_icon_path(self._icon, self._screen.width) }
-        properties["text"] = "Unknown"
+        properties["text"] = _("Unknown")
         if self._icon in STATUS_ICONS:
             properties["text"] = STATUS_ICONS[self._icon]
         else:

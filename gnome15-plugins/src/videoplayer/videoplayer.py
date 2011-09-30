@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("videoplayer", modfile = __file__).ugettext
+
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
@@ -33,22 +36,22 @@ from threading import Thread
  
 # Plugin details - All of these must be provided
 id = "videoplayer"
-name = "Video Player"
-description = "Plays videos! Very much experimental, this plugin uses " \
-            + "mplayer to generate JPEG images which are then loaded " \
-            + "and displayed on the LCD. This means it is very CPU AND " \
-            + "disk intensive and should only be used as a toy. "
+name = _("Video Player")
+description = _("Plays videos! Very much experimental, this plugin uses \
+mplayer to generate JPEG images which are then loaded \
+and displayed on the LCD. This means it is very CPU AND \
+disk intensive and should only be used as a toy. ")
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright = "Copyright (C)2010 Brett Smith"
+copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://localhost"
 has_preferences = False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Stop", 
-         g15driver.NEXT_SELECTION : "Play",
-         g15driver.SELECT : "Open file",
-         g15driver.CLEAR : "Toggle Mute",
-         g15driver.VIEW : "Change aspect"
+         g15driver.PREVIOUS_SELECTION : _("Stop"), 
+         g15driver.NEXT_SELECTION : _("Play"),
+         g15driver.SELECT : _("Open file"),
+         g15driver.CLEAR : _("Toggle Mute"),
+         g15driver.VIEW : _("Change aspect")
          }
 
 ''' 
@@ -205,12 +208,12 @@ class G15VideoPage(g15theme.G15Page):
         dialog.set_default_response(gtk.RESPONSE_OK)
         
         filter = gtk.FileFilter()
-        filter.set_name("All files")
+        filter.set_name(_("All files"))
         filter.add_pattern("*")
         dialog.add_filter(filter)
         
         filter = gtk.FileFilter()
-        filter.set_name("Movies")
+        filter.set_name(_("Movies"))
         filter.add_mime_type("video/mpeg")
         filter.add_mime_type("video/quicktime")
         filter.add_mime_type("video/x-la-asf")

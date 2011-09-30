@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("indicator-messages", modfile = __file__).ugettext
+
 import gnome15.g15globals as g15globals
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
@@ -36,19 +39,19 @@ from lxml import etree
 
 # Plugin details - All of these must be provided
 id="indicator-messages"
-name="Indicator Messages"
-description="Indicator that shows waiting messages."
+name=_("Indicator Messages")
+description=_("Indicator that shows waiting messages.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Previous item", 
-         g15driver.NEXT_SELECTION : "Next item",
-         g15driver.NEXT_PAGE : "Next page",
-         g15driver.PREVIOUS_PAGE : "Previous page",
-         g15driver.SELECT : "Activate item"
+         g15driver.PREVIOUS_SELECTION : _("Previous item"), 
+         g15driver.NEXT_SELECTION : _("Next item"),
+         g15driver.NEXT_PAGE : _("Next page"),
+         g15driver.PREVIOUS_PAGE : _("Previous page"),
+         g15driver.SELECT : _("Activate item")
          }
  
 def create(gconf_key, gconf_client, screen):
@@ -155,7 +158,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
     
     def get_theme_properties(self):  
         return  {
-                  "title" : "Messages",
+                  "title" : _("Messages"),
                   "alt_title" : "",
                   "icon" : g15util.get_icon_path("indicator-messages-new" if self._attention else "indicator-messages"),
                   "attention": self._attention

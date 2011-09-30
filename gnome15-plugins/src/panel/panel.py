@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("panel", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
@@ -27,10 +30,10 @@ import cairo
 
 # Plugin details - All of these must be provided
 id="panel"
-name="Panel"
-description="Adds a small area at the bottom of the screen for other plugins to add permanent components to."
+name=_("Panel")
+description=_("Adds a small area at the bottom of the screen for other plugins to add permanent components to.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]

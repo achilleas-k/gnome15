@@ -13,7 +13,7 @@
    height="32"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.2 r9819"
    sodipodi:docname="mx5500.svg">
   <defs
      id="defs4" />
@@ -52,7 +52,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -72,10 +72,10 @@
          sodipodi:role="line"
          id="tspan3037"
          x="73.073219"
-         y="1032.6654">No timer</tspan><tspan
+         y="1032.6654">_(No timer</tspan><tspan
          sodipodi:role="line"
          x="73.073219"
          y="1050.1654"
-         id="tspan3039">enabled</tspan></text>
+         id="tspan3039">enabled)</tspan></text>
   </g>
 </svg>

@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("menu", modfile = __file__).ugettext
+
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
@@ -33,22 +36,21 @@ logger = logging.getLogger("menu")
 
 # Plugin details - All of these must be provided
 id="menu"
-name="Menu"
-description="Allows selections of any currently active screen " + \
-            "through a menu on the LCD."
+name=_("Menu")
+description=_("Allows selections of any currently active screen through a menu on the LCD.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 default_enabled=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Previous item", 
-         g15driver.NEXT_SELECTION : "Next item",
-         g15driver.NEXT_PAGE : "Next page",
-         g15driver.PREVIOUS_PAGE : "Previous page",
-         g15driver.SELECT : "Show selected item",
-         g15driver.MENU : "Show menu"
+         g15driver.PREVIOUS_SELECTION : _("Previous item"), 
+         g15driver.NEXT_SELECTION : _("Next item"),
+         g15driver.NEXT_PAGE : _("Next page"),
+         g15driver.PREVIOUS_PAGE : _("Previous page"),
+         g15driver.SELECT : _("Show selected item"),
+         g15driver.MENU : _("Show menu")
          }
 
 

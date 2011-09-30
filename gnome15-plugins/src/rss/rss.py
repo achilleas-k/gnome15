@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
 
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("rss", modfile = __file__).ugettext
+
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -32,20 +35,20 @@ logger = logging.getLogger("rss")
 
 # Plugin details - All of these must be provided
 id = "rss"
-name = "RSS"
-description = "A simple RSS reader. Multiple feeds may be added, with a screen being " \
-        + "allocated to each one once it has loaded."
+name = _("RSS")
+description = _("A simple RSS reader. Multiple feeds may be added, with a screen being \
+allocated to each one once it has loaded.")
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright = "Copyright (C)2010 Brett Smith"
+copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://www.gnome15.org/"
 has_preferences = True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : "Previous news item", 
-         g15driver.NEXT_SELECTION : "Next news items",
-         g15driver.NEXT_PAGE : "Next page",
-         g15driver.PREVIOUS_PAGE : "Previous page",
-         g15driver.SELECT : "Open item in browser"
+         g15driver.PREVIOUS_SELECTION : _("Previous news item"), 
+         g15driver.NEXT_SELECTION : _("Next news items"),
+         g15driver.NEXT_PAGE : _("Next page"),
+         g15driver.PREVIOUS_PAGE : _("Previous page"),
+         g15driver.SELECT : _("Open item in browser")
          }
  
 def create(gconf_key, gconf_client, screen):

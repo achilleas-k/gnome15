@@ -18,6 +18,9 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("screensaver", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
@@ -31,10 +34,10 @@ logger = logging.getLogger("screensaver")
 
 # Plugin details - All of these must be provided
 id="screensaver"
-name="Screensaver"
-description="Dim the keyboard and display a message (on models with an LCD screen) when the desktop screen saver activates."
+name=_("Screensaver")
+description=_("Dim the keyboard and display a message (on models with an LCD screen) when the desktop screen saver activates.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 
@@ -190,7 +193,7 @@ class G15ScreenSaver():
     def _get_theme_properties(self):
         
         properties = {}
-        properties["title"] = "Workstation Locked"
+        properties["title"] = _("Workstation Locked")
         properties["body"] = self._gconf_client.get_string(self._gconf_key + "/message_text")
         properties["icon"] = g15util.get_icon_path("sleep", self._screen.height)
         

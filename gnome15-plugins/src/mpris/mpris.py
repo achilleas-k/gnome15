@@ -18,6 +18,10 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("mpris", modfile = __file__).ugettext
+
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
@@ -36,14 +40,14 @@ logger = logging.getLogger("mpris")
 
 # Plugin details - All of these must be provided
 id="mpris"
-name="Media Player"
-description="Displays information about currently playing media. Requires " + \
-    "a player that supports the MPRIS (version 1 or 2) specification. This " + \
-    "includes Rhythmbox, Banshee (with a plugin), Audacious, VLC and others." + \
-    "Supports multiple media players running at the same time, each gets " + \
-    "their own screen."
+name=_("Media Player")
+description=_("Displays information about currently playing media. Requires \
+a player that supports the MPRIS (version 1 or 2) specification. This \
+includes Rhythmbox, Banshee (with a plugin), Audacious, VLC and others. \
+Supports multiple media players running at the same time, each gets \
+their own screen.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
-copyright="Copyright (C)2010 Brett Smith"
+copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
@@ -74,7 +78,6 @@ class AbstractMPRISPlayer():
         self.start_elapsed = 0
         self.gconf_client = gconf_client     
         self.theme = g15theme.G15Theme(self)
-        self.status = "Stopped"
         self.cover_image = None
         self.thumb_image = None
         self.cover_uri = None
@@ -226,7 +229,7 @@ class AbstractMPRISPlayer():
         if self.status == "Stopped":
             self.song_properties["stopped"] = True
             self.song_properties["icon"] = g15util.get_icon_path(["media-stop", "media-playback-stop", "gtk-media-stop", "player_stop" ], self.screen.height)
-            self.song_properties["title"] = "No track playing"
+            self.song_properties["title"] = _("No track playing")
             self.song_properties["time_text"] = ""
         else:            
             if self.status == "Playing":

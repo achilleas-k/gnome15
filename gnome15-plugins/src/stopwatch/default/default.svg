@@ -13,7 +13,7 @@
    height="43"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.2 r9819"
    sodipodi:docname="default.svg">
   <defs
      id="defs4" />
@@ -31,10 +31,10 @@
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
-     inkscape:window-width="1680"
-     inkscape:window-height="1026"
-     inkscape:window-x="1680"
-     inkscape:window-y="0"
+     inkscape:window-width="1920"
+     inkscape:window-height="1056"
+     inkscape:window-x="0"
+     inkscape:window-y="24"
      inkscape:window-maximized="1">
     <inkscape:grid
        type="xygrid"
@@ -73,6 +73,6 @@
          id="tspan4016"
          x="85.932549"
          y="965.66919"
-         style="font-size:18px">No timer enabled</tspan></text>
+         style="font-size:18px">_(No timer enabled)</tspan></text>
   </g>
 </svg>

@@ -53,6 +53,7 @@ import g15globals
 import g15screen
 import g15util
 import g15text
+import g15locale
 import xml.sax.saxutils as saxutils
 import base64
 import dbusmenu
@@ -1225,7 +1226,7 @@ class ConfirmationScreen(G15Page):
             self.callback(self.arg)  
                 
 class G15Theme():    
-    def __init__(self, dir, variant = None, svg_text = None, prefix = None, auto_dirty = True):
+    def __init__(self, dir, variant = None, svg_text = None, prefix = None, auto_dirty = True, translation = None):
         if isinstance(dir, str):
             self.dir = dir
         else:
@@ -1244,6 +1245,7 @@ class G15Theme():
         self.auto_dirty = auto_dirty
         self.render = None
         self.scroll_state = {}
+        self.translation = translation
         self.nsmap = {
             'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd',
             'cc': 'http://web.resource.org/cc/',
@@ -1308,6 +1310,14 @@ class G15Theme():
         # Remove sodipodi attributes
         self.del_namespace("sodipodi", "http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd")
         self.del_namespace("inkscape", "http://www.inkscape.org/namespaces/inkscape")
+        
+        # Translate text
+        if self.translation is not None:
+            for text in root.xpath('//text()',namespaces=self.nsmap):
+                text = str(text).strip()
+                if len(text) > 0 and text.startswith("_("):
+                    translated = self.translation.ugettext(text[2:-1])
+                
         
     def del_namespace(self, prefix, uri):
         for e in self.document.getroot().xpath("//*[namespace-uri()='%s' or @*[namespace-uri()='%s']]" % ( uri, uri ) ,namespaces=self.nsmap):
