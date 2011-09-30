@@ -22,6 +22,8 @@
 Main implementation of a G15Driver that uses g15daemon to control and query the
 keyboard
 """
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("gnome15-drivers").ugettext
 
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
@@ -44,12 +46,12 @@ import sys
 logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
-name="G15Daemon"
+name=_("G15Daemon")
 id="g15"
-description="For use with the Logitech G15v1, G15v2, G13, G510 and G110. This driver uses g15daemon, available from " + \
+description=_("For use with the Logitech G15v1, G15v2, G13, G510 and G110. This driver uses g15daemon, available from " + \
             "<a href=\"http://www.g15tools.com/\">g15tools</a>. The g15deaemon service " + \
             "must be installed and running when starting Gnome15. Note, you may have to patch " + \
-            "g15daemon and tools for support for newer models."
+            "g15daemon and tools for support for newer models.")
 has_preferences=True
 
 DEFAULT_PORT=15550
@@ -101,13 +103,13 @@ KEY_MAP = {
         }
 
 
-mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 1, 0, 15, hint=g15driver.HINT_MKEYS)
-color_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-red_blue_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (255, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
-backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 2, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight Level", 2, 0, 2, hint = g15driver.HINT_SHADEABLE)
-lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 3, 0, 7)
-invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
+mkeys_control = g15driver.Control("mkeys", _("Memory Bank Keys"), 1, 0, 15, hint=g15driver.HINT_MKEYS)
+color_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+red_blue_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (255, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
+backlight_control = g15driver.Control("keyboard_backlight", _("Keyboard Backlight Level"), 2, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+lcd_backlight_control = g15driver.Control("lcd_backlight", _("LCD Backlight Level"), 2, 0, 2, hint = g15driver.HINT_SHADEABLE)
+lcd_contrast_control = g15driver.Control("lcd_contrast", _("LCD Contrast"), 3, 0, 7)
+invert_control = g15driver.Control("invert_lcd", _("Invert LCD"), 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
 controls = {
   g15driver.MODEL_G11 : [ mkeys_control, backlight_control ],
@@ -120,8 +122,10 @@ controls = {
   g15driver.MODEL_G110 : [ mkeys_control, red_blue_backlight_control ],
             }   
 
-def show_preferences(device, parent, gconf_client):
+def show_preferences(device, parent, gconf_client):  
+    g15locale.get_translation("driver_g15")
     widget_tree = gtk.Builder()
+    widget_tree.set_translation_domain("driver_g15")
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15.glade"))
     g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/g15daemon_port" % device.uid, "Port", DEFAULT_PORT, widget_tree, False)
     return widget_tree.get_object("DriverComponent")
@@ -343,10 +347,11 @@ class Driver(g15driver.AbstractDriver):
             finally:
                 self.lock.release()
         elif control == mkeys_control:
-            self._set_mkey_lights(control.value)
+            self._set_mkey_lights(
+                                  control.value)
             
     def get_name(self):
-        return "g15daemon driver"
+        return _("g15daemon driver")
     
     def get_model_names(self):
         return [ g15driver.MODEL_G11, g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G110, g15driver.MODEL_G510, g15driver.MODEL_G13 ]

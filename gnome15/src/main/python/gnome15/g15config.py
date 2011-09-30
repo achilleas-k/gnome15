@@ -10,6 +10,9 @@
 ##
 ############################################################################
 
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("gnome15").ugettext
+
 import pygtk
 pygtk.require('2.0')
 import gtk
@@ -220,8 +223,10 @@ class G15Config:
         self.selected_device = None
         
         # Load main Glade file
-        g15Config = os.path.join(g15globals.glade_dir, 'g15-config.glade')        
+        g15locale.get_translation("g15-config")
+        g15Config = os.path.join(g15globals.glade_dir, 'g15-config.glade')
         self.widget_tree = gtk.Builder()
+        self.widget_tree.set_translation_domain("g15-config")
         self.widget_tree.add_from_file(g15Config)
         self.main_window = self.widget_tree.get_object("MainWindow")
         
@@ -412,7 +417,7 @@ class G15Config:
         self.stop_service_button.set_sensitive(False)
         button_vbox = gtk.VBox()
         self.start_button = None
-        self.start_button = gtk.Button("Start Service")
+        self.start_button = gtk.Button(_("Start Service"))
         self.start_button.connect("clicked", self._start_service)
         self.start_button.show()
         button_vbox.pack_start(self.start_button, False, False)
@@ -421,9 +426,9 @@ class G15Config:
         self._load_keys()
         self._load_devices()
         if len(self.device_model) == 0:
-            raise Exception("No supported devices could be found. Is the " + \
+            raise Exception(_("No supported devices could be found. Is the " + \
                             "device correctly plugged in and powered and " + \
-                            "do you have all the required drivers installed?")
+                            "do you have all the required drivers installed?"))
         else:
             if len(self.device_model) == 1 and not g15devices.is_enabled(self.conf_client, self.selected_device):
                 self.device_enabled.set_active(True)
@@ -589,16 +594,16 @@ class G15Config:
         if not self.gnome15_service or self.state == STOPPED:         
             self.stop_service_button.set_sensitive(False)
             logger.debug("Stopped")
-            self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is not running. It is recommended " + \
-                                      "you add <b>g15-desktop-service</b> as a <i>Startup Application</i>.")
+            self._show_message(gtk.MESSAGE_WARNING, _("The Gnome15 desktop service is not running. It is recommended " + \
+                                      "you add <b>g15-desktop-service</b> as a <i>Startup Application</i>."))
         elif self.state == STARTING:        
             logger.debug("Starting up")
             self.stop_service_button.set_sensitive(False)   
-            self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is starting up. Please wait", False)
+            self._show_message(gtk.MESSAGE_WARNING, _("The Gnome15 desktop service is starting up. Please wait"), False)
         elif self.state == STOPPING:        
             logger.debug("Stopping")                
             self.stop_service_button.set_sensitive(False)
-            self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is stopping.", False)
+            self._show_message(gtk.MESSAGE_WARNING, _("The Gnome15 desktop service is stopping."), False)
         else:        
             logger.debug("Started - Checking status")          
             connected = 0
@@ -616,10 +621,10 @@ class G15Config:
             screen_count = len(self.screen_services)
             if connected != screen_count:
                 if len(self.screen_services) == 1:
-                    self._show_message(gtk.MESSAGE_WARNING, "The Gnome15 desktop service is running, but failed to connect " + \
-                                      "to the keyboard driver. The error message given was <b>%s</b>" % first_error, False)
+                    self._show_message(gtk.MESSAGE_WARNING, _("The Gnome15 desktop service is running, but failed to connect " + \
+                                      "to the keyboard driver. The error message given was <b>%s</b>") % first_error, False)
                 else:
-                    mesg = "The Gnome15 desktop service is running, but only %d out of %d keyboards are connected. The first error message given was %s" % ( connected, screen_count, first_error )
+                    mesg = ("The Gnome15 desktop service is running, but only %d out of %d keyboards are connected. The first error message given was %s") % ( connected, screen_count, first_error )
                     self._show_message(gtk.MESSAGE_WARNING, mesg, False)
             else:
                 self._hide_warning()
@@ -777,7 +782,7 @@ class G15Config:
                 label = gtk.Label("")
                 label.set_size_request(40, -1)
                 if action_binding.state == g15driver.KEY_STATE_HELD:
-                    label.set_text("<b>Hold</b>")
+                    label.set_text(_("<b>Hold</b>"))
                     label.set_use_markup(True)
                 label.set_alignment(0.0, 0.5)
                 self.key_table.attach(label, 0, 1, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2);
@@ -950,8 +955,8 @@ class G15Config:
                 for c in self.driver_box.get_children():
                     self.driver_box.remove(c)
                 widget = gtk.Label("")
-                widget.set_text("There is no appropriate driver for the device <b>" + \
-                                   "%s</b>.\nDo you have all the required packages installed?" % self.selected_device.model_fullname)
+                widget.set_text(_("There is no appropriate driver for the device <b>" + \
+                                   "%s</b>.\nDo you have all the required packages installed?") % self.selected_device.model_fullname)
                 widget.set_use_markup(True)                
                 self.keyboard_tab.set_visible(False)
                 self.plugins_tab.set_visible(False)
@@ -970,7 +975,7 @@ class G15Config:
                     
                     # Show message if driver has no options
                     if not widget:
-                        widget = gtk.Label("This driver has no configuration options")
+                        widget = gtk.Label(_("This driver has no configuration options"))
                 
                 # Build and show component
                 controls.pack_start(widget, False, False)
@@ -1174,7 +1179,7 @@ class G15Config:
             
             if self.macro_name_field.get_text() == "" or self.macro_name_field.get_text().startswith("Macro "):
                 new_name = " ".join(g15util.get_key_names(keys))
-                self.editing_macro.name = "Macro %s" % new_name
+                self.editing_macro.name = _("Macro %s") % new_name
                 self.macro_name_field.set_text(self.editing_macro.name)
             macro.set_keys(keys)
             
@@ -1190,23 +1195,23 @@ class G15Config:
             in_use = self.selected_profile.are_keys_in_use(memory, keys, exclude = [self.editing_macro])
             if in_use:
                 self.macro_infobar.set_message_type(gtk.MESSAGE_ERROR)
-                self.macro_warning_label.set_text("This key combination is already in use with "+ \
-                                                  "another macro. Please choose a different key or combination of keys")
+                self.macro_warning_label.set_text(_("This key combination is already in use with "+ \
+                                                  "another macro. Please choose a different key or combination of keys"))
                 self.macro_infobar.set_visible(True)
                 self.macro_infobar.show_all()       
                 self.macro_edit_close_button.set_sensitive(False)      
                 return       
             elif reserved:
                 self.macro_infobar.set_message_type(gtk.MESSAGE_WARNING)
-                self.macro_warning_label.set_text("This key combination is reserved for use with an action. You "+ \
-                                                  "may use it, but the results are undefined.")
+                self.macro_warning_label.set_text(_("This key combination is reserved for use with an action. You "+ \
+                                                  "may use it, but the results are undefined."))
                 self.macro_infobar.set_visible(True)
                 self.macro_infobar.show_all()
                 self.macro_edit_close_button.set_sensitive(True)      
                 return
         else:     
             self.macro_infobar.set_message_type(gtk.MESSAGE_WARNING)
-            self.macro_warning_label.set_text("You have not chosen a macro key to assign the action to.")
+            self.macro_warning_label.set_text(_("You have not chosen a macro key to assign the action to."))
             self.macro_infobar.set_visible(True)
             self.macro_infobar.show_all()
             self.macro_edit_close_button.set_sensitive(False)      
@@ -1231,7 +1236,7 @@ class G15Config:
                         break
                     
         if use:
-            macro = self.selected_profile.create_macro(memory, [use], "Macro %s" % " ".join(g15util.get_key_names([use])), g15profile.MACRO_SIMPLE, "")
+            macro = self.selected_profile.create_macro(memory, [use], _("Macro %s") % " ".join(g15util.get_key_names([use])), g15profile.MACRO_SIMPLE, "")
             self._edit_macro(macro)
         else:
             logger.warning("No free keys")
@@ -1616,14 +1621,14 @@ class G15Config:
         self.macro_script.set_sensitive(self.run_macro_script.get_active())
         
     def _browse_for_command(self, widget):
-        dialog = gtk.FileChooserDialog("Open..",
+        dialog = gtk.FileChooserDialog(_("Open.."),
                                None,
                                gtk.FILE_CHOOSER_ACTION_OPEN,
                                (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                 gtk.STOCK_OPEN, gtk.RESPONSE_OK))
         dialog.set_default_response(gtk.RESPONSE_OK)
         filter = gtk.FileFilter()
-        filter.set_name("All files")
+        filter.set_name(_("All files"))
         filter.add_pattern("*")
         dialog.add_filter(filter)
         response = dialog.run()
@@ -1779,7 +1784,7 @@ class G15Config:
         control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE) if self.driver != None else None
         if control != None and not isinstance(control.value, int):
             hbox = gtk.HBox()
-            self.enable_color_for_m_key = gtk.CheckButton("Set backlight colour")
+            self.enable_color_for_m_key = gtk.CheckButton(_("Set backlight colour"))
             self.enable_color_for_m_key.connect("toggled", self._color_for_mkey_enabled)
             hbox.pack_start(self.enable_color_for_m_key, True, False)            
             self.color_button = gtk.ColorButton()

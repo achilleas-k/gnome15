@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cd $(dirname $0)
+
+# Python
+xgettext --from-code=UTF-8 --language=Python --keyword=N_ --keyword=_ --output=gnome15-drivers.pot ../main/python/gnome15/drivers/*.py
+xgettext --from-code=UTF-8 --language=Python --keyword=N_ --keyword=_ --output=gnome15.pot ../main/python/gnome15/*.py
+
+# Glade
+for i in *.h; do
+	bn=$(basename ${i} .h)
+bn=$(basename ${bn} .glade).pot
+	xgettext --from-code=UTF-8 --language=Python --keyword=N_ --keyword=_ --output=${bn} ${i}
+done 

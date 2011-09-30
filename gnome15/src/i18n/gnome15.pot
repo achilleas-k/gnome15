@@ -1,0 +1,184 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-09-29 22:02+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../main/python/gnome15/g15config.py:418
+msgid "Start Service"
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:427
+msgid "No supported devices could be found. Is the "
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:595
+msgid "The Gnome15 desktop service is not running. It is recommended "
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:600
+msgid "The Gnome15 desktop service is starting up. Please wait"
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:604
+msgid "The Gnome15 desktop service is stopping."
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:622
+msgid "The Gnome15 desktop service is running, but failed to connect "
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:783
+msgid "<b>Hold</b>"
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:956
+msgid "There is no appropriate driver for the device <b>"
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:976
+msgid "This driver has no configuration options"
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:1180
+#: ../main/python/gnome15/g15config.py:1237
+#, python-format
+msgid "Macro %s"
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:1196
+msgid "This key combination is already in use with "
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:1204
+msgid "This key combination is reserved for use with an action. You "
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:1212
+msgid "You have not chosen a macro key to assign the action to."
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:1622
+msgid "Open.."
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:1629
+msgid "All files"
+msgstr ""
+
+#: ../main/python/gnome15/g15config.py:1785
+msgid "Set backlight colour"
+msgstr ""
+
+#: ../main/python/gnome15/g15desktop.py:824
+msgid "Desktop integration for Logitech 'G' keyboards."
+msgstr ""
+
+#: ../main/python/gnome15/g15desktop.py:878
+msgid "Stop Desktop Service"
+msgstr ""
+
+#: ../main/python/gnome15/g15desktop.py:901
+msgid "Cycle screens automatically"
+msgstr ""
+
+#: ../main/python/gnome15/g15desktop.py:923
+#, python-format
+msgid "Enable %s"
+msgstr ""
+
+#: ../main/python/gnome15/g15desktop.py:937
+msgid "Start Desktop Service"
+msgstr ""
+
+#: ../main/python/gnome15/g15desktop.py:980
+#, python-format
+msgid ""
+"%s is now the active keyboard. Use mouse wheel up and down to cycle screens "
+"on this device"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:315
+msgid "Virtual LCD Window"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:316
+msgid "Logitech G11 Keyboard"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:317
+msgid "Logitech G19 Gaming Keyboard"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:318
+msgid "Logitech G15 Gaming Keyboard (version 1)"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:319
+msgid "Logitech G15 Gaming Keyboard (version 2)"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:320
+msgid "Logitech G13 Advanced Gameboard"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:321
+msgid "Logitech G510 Keyboard"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:322
+msgid "Logitech G510 Keyboard (audio)"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:323
+msgid "Logitech Z10 Speakers"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:324
+msgid "Logitech G110 Keyboard"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:325
+msgid "Logitech GamePanel"
+msgstr ""
+
+#: ../main/python/gnome15/g15devices.py:328
+msgid "Logitech MX5500"
+msgstr ""
+
+#: ../main/python/gnome15/g15drivermanager.py:94
+#: ../main/python/gnome15/g15drivermanager.py:110
+#, python-format
+msgid "No drivers support the model %s"
+msgstr ""
+
+#: ../main/python/gnome15/g15drivermanager.py:101
+#, python-format
+msgid ""
+"Driver %s is not available. Do you have to appropriate package installed?"
+msgstr ""
+
+#: ../main/python/gnome15/g15exceptions.py:25
+msgid "Failed to connect."
+msgstr ""
+
+#: ../main/python/gnome15/g15screen.py:481
+msgid "The current device has no suitable output device"
+msgstr ""
+
+#: ../main/python/gnome15/g15screen.py:1532
+msgid "Starting up .."
+msgstr ""

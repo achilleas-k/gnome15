@@ -22,6 +22,8 @@
 Main implementation of a G19 Driver that uses g19d to control and query the
 keyboard
 """
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("gnome15-drivers").ugettext
  
 
 from cStringIO import StringIO
@@ -42,12 +44,12 @@ import logging
 logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
-name="G19D"
+name=_("G19D")
 id="g19"
-description="For use with the Logitech G19 only, this driver uses <i>G19D</i>, " + \
+description=_("For use with the Logitech G19 only, this driver uses <i>G19D</i>, " + \
             "a sub-project of Gnome15. The g19daemon service must be running when " + \
             "starting Gnome15. This method is intended as a temporary measure until " + \
-            "kernel support is available for this keyboard."
+            "kernel support is available for this keyboard.")
 has_preferences=True
 
 DEFAULT_PORT=15551
@@ -96,7 +98,9 @@ KEY_MAP = {
 """
 
 def show_preferences(device, parent, gconf_client):
+    g15locale.get_translation("driver_g19")
     widget_tree = gtk.Builder()
+    widget_tree.set_translation_domain("driver_g19")
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19.glade"))
     g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/g19d_port" % device.uid, "Port", DEFAULT_PORT, widget_tree, False)
     return widget_tree.get_object("DriverComponent")
@@ -140,13 +144,13 @@ class EventReceive(Thread):
             
             
 # Controls
-mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
-keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-default_keyboard_backlight_control = g15driver.Control("default_backlight_colour", "Boot Keyboard Backlight Colour", (0, 255, 0))
-lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
-foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
-background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
-highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
+mkeys_control = g15driver.Control("mkeys", _("Memory Bank Keys"), 0, 0, 15, hint=g15driver.HINT_MKEYS)
+keyboard_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+default_keyboard_backlight_control = g15driver.Control("default_backlight_colour", _("Boot Keyboard Backlight Colour"), (0, 255, 0))
+lcd_brightness_control = g15driver.Control("lcd_brightness", _("LCD Brightness"), 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
+foreground_control = g15driver.Control("foreground", _("Default LCD Foreground"), (255, 255, 255), hint = g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
+background_control = g15driver.Control("background", _("Default LCD Background"), (0, 0, 0), hint = g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
+highlight_control = g15driver.Control("highlight", _("Default Highlight Color"), (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
 controls = [ mkeys_control, keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control, highlight_control ]
 
 
@@ -192,7 +196,7 @@ class Driver(g15driver.AbstractDriver):
             self.lock.release()
             
     def get_name(self):
-        return "G19D Network Daemon Driver"
+        return _("G19D Network Daemon Driver")
     
     def get_model_names(self):
         return [ g15driver.MODEL_G19 ]

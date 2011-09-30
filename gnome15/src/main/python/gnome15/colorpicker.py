@@ -71,7 +71,6 @@ class ColorPicker(gtk.DrawingArea):
             self.down = True
     
     def _button_release(self, widget, event):
-        print "Release"
         self.down = False
 
     def _expose(self, widget, event):

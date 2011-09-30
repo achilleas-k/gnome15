@@ -17,6 +17,10 @@
 #        | along with this program; if not, write to the Free Software                 |
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
+
+
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("gnome15").ugettext
    
 """
 Page priorities
@@ -474,7 +478,7 @@ class G15Screen():
         theme_attributes_callback -- function to call to get theme attributes
         """
         if self.driver.get_bpp() == 0:
-            raise Exception("The current device has no suitable output device")
+            raise Exception(_("The current device has no suitable output device"))
         
         logger.info("Creating new page with %s of priority %d" % (id, priority))
         self.page_model_lock.acquire()
@@ -1525,7 +1529,7 @@ class G15Splash():
     def __init__(self, screen, gconf_client):
         self.screen = screen        
         self.progress = 0.0
-        self.text = "Starting up .."
+        self.text = _("Starting up ..")
         icon_path = g15util.get_icon_path("gnome15")
         if icon_path == None:
             icon_path = os.path.join(g15globals.icons_dir,"hicolor", "apps", "scalable", "gnome15.svg")

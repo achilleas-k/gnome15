@@ -91,14 +91,14 @@ def get_driver(conf_client, device, on_close = None):
         # If no driver has yet been configured, always use the best driver
         driver = get_best_driver(conf_client, device, on_close)
         if driver == None:
-            raise Exception("No drivers support the model %s" % device.model_id)
+            raise Exception(_("No drivers support the model %s") % device.model_id)
             
         logger.info("Using first available driver for %s, %s" % ( device.model_id, driver.get_name()))
         return driver
     
     driver_mod_key = "driver_" + driver_name
     if not driver_mod_key in imported_drivers:
-        raise Exception("Driver " + driver_name + " is not available. Do you have to appropriate package installed?")
+        raise Exception(_("Driver %s is not available. Do you have to appropriate package installed?") % driver_name)
     driver_mod = imported_drivers[driver_mod_key]
     driver = driver_mod.Driver(device, on_close = on_close)
     
@@ -107,7 +107,7 @@ def get_driver(conf_client, device, on_close = None):
         # If no driver has yet been configured, always use the best driver
         driver = get_best_driver(conf_client, device, on_close)
         if driver == None:
-            raise Exception("No drivers support the model %s" % device.model_id)
+            raise Exception(_("No drivers support the model %s") % device.model_id)
         logger.warning("Ignoring configured driver %s, as the model is not supported by it. Looking for best driver" % driver)
         return driver
     else:

@@ -1,0 +1,173 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-09-29 22:02+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../main/python/gnome15/drivers/driver_g15direct.py:57
+#: ../main/python/gnome15/drivers/driver_g15direct.py:232
+msgid "G15 Direct"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g15direct.py:59
+msgid ""
+"For use with the G15 based devices only, this driver communicates directly, "
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g15direct.py:120
+#: ../main/python/gnome15/drivers/driver_g15.py:106
+#: ../main/python/gnome15/drivers/driver_g19direct.py:104
+#: ../main/python/gnome15/drivers/driver_g19.py:145
+#: ../main/python/gnome15/drivers/driver_gtk.py:43
+#: ../main/python/gnome15/drivers/driver_gtk.py:50
+#: ../main/python/gnome15/drivers/driver_kernel.py:175
+#: ../main/python/gnome15/drivers/driver_kernel.py:190
+msgid "Memory Bank Keys"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g15direct.py:121
+#: ../main/python/gnome15/drivers/driver_g15direct.py:122
+#: ../main/python/gnome15/drivers/driver_g15.py:107
+#: ../main/python/gnome15/drivers/driver_g15.py:108
+#: ../main/python/gnome15/drivers/driver_g19direct.py:105
+#: ../main/python/gnome15/drivers/driver_g19.py:146
+#: ../main/python/gnome15/drivers/driver_gtk.py:44
+#: ../main/python/gnome15/drivers/driver_gtk.py:54
+#: ../main/python/gnome15/drivers/driver_kernel.py:176
+#: ../main/python/gnome15/drivers/driver_kernel.py:183
+msgid "Keyboard Backlight Colour"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g15direct.py:123
+#: ../main/python/gnome15/drivers/driver_g15.py:109
+#: ../main/python/gnome15/drivers/driver_gtk.py:51
+#: ../main/python/gnome15/drivers/driver_kernel.py:191
+msgid "Keyboard Backlight Level"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g15direct.py:124
+#: ../main/python/gnome15/drivers/driver_g15.py:110
+msgid "LCD Backlight Level"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g15direct.py:125
+#: ../main/python/gnome15/drivers/driver_g15.py:111
+#: ../main/python/gnome15/drivers/driver_kernel.py:193
+msgid "LCD Contrast"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g15direct.py:126
+#: ../main/python/gnome15/drivers/driver_g15.py:112
+#: ../main/python/gnome15/drivers/driver_gtk.py:52
+#: ../main/python/gnome15/drivers/driver_kernel.py:194
+msgid "Invert LCD"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g15.py:49
+msgid "G15Daemon"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g15.py:51
+msgid ""
+"For use with the Logitech G15v1, G15v2, G13, G510 and G110. This driver uses "
+"g15daemon, available from "
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g15.py:352
+msgid "g15daemon driver"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g19direct.py:53
+msgid "G19 Direct"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g19direct.py:55
+msgid "For use with the Logitech G19 only, this driver communicates directly, "
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g19direct.py:106
+#: ../main/python/gnome15/drivers/driver_g19.py:147
+msgid "Boot Keyboard Backlight Colour"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g19direct.py:107
+#: ../main/python/gnome15/drivers/driver_g19.py:148
+#: ../main/python/gnome15/drivers/driver_gtk.py:45
+msgid "LCD Brightness"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g19direct.py:108
+#: ../main/python/gnome15/drivers/driver_g19.py:149
+#: ../main/python/gnome15/drivers/driver_gtk.py:46
+#: ../main/python/gnome15/drivers/driver_kernel.py:178
+msgid "Default LCD Foreground"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g19direct.py:109
+#: ../main/python/gnome15/drivers/driver_g19.py:150
+#: ../main/python/gnome15/drivers/driver_gtk.py:47
+#: ../main/python/gnome15/drivers/driver_kernel.py:179
+msgid "Default LCD Background"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g19direct.py:110
+#: ../main/python/gnome15/drivers/driver_g19.py:151
+#: ../main/python/gnome15/drivers/driver_gtk.py:48
+#: ../main/python/gnome15/drivers/driver_kernel.py:180
+msgid "Default Highlight Color"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g19direct.py:160
+#: ../main/python/gnome15/drivers/driver_g19.py:197
+msgid "G19D Network Daemon Driver"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g19.py:47
+msgid "G19D"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_g19.py:49
+msgid "For use with the Logitech G19 only, this driver uses <i>G19D</i>, "
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_gtk.py:35
+msgid "GTK Virtual Keyboard Driver"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_gtk.py:36
+msgid "A special development driver that emulates all supported, "
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_gtk.py:131
+msgid "GTK Keyboard Emulator Driver"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_kernel.py:51
+msgid "Kernel Drivers"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_kernel.py:52
+msgid ""
+"Requires ali123's Logitech Kernel drivers. This method requires no other "
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_kernel.py:192
+msgid "LCD Backlight"
+msgstr ""
+
+#: ../main/python/gnome15/drivers/driver_kernel.py:650
+msgid "Linux Logitech Kernel Driver"
+msgstr ""

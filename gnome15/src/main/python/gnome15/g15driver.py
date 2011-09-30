@@ -684,23 +684,6 @@ class AbstractDriver(object):
         for control in self.get_controls():
             if control.hint & HINT_VIRTUAL == 0:
                 self.update_control(control)
-        
-#    def set_controls_from_configuration(self, conf_client, update = False):
-#        controls = self.get_controls()
-#        if controls:
-#            for control in controls:
-#                self.set_control_from_configuration(control, conf_client)
-#                if update:
-#                    self.update_control(control)
-#            
-#    def set_control_from_configuration(self, control, conf_client):
-#        entry = conf_client.get("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ))
-#        if entry != None:
-#            if isinstance(control.value, int):
-#                control.value = entry.get_int()
-#            else:
-#                rgb = entry.get_string().split(",")
-#                control.value = (int(rgb[0]),int(rgb[1]),int(rgb[2]))
     
     def get_color_as_ratios(self, hint, default):
         fg_control = self.get_control_for_hint(hint)

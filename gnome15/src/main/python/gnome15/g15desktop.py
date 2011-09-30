@@ -26,6 +26,9 @@ of the desktop service. It is used for Indicators, System tray icons and panel a
 deals with all the hard work of connecting to DBus and monitoring events.
 """
 
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("gnome15").ugettext
+
 import sys
 import pygtk
 pygtk.require('2.0')
@@ -818,7 +821,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
         about.set_authors(AUTHORS)
         about.set_documenters(["Brett Smith <tanktarta@blueyonder.co.uk>"])
         about.set_logo(gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
-        about.set_comments("Desktop integration for Logitech 'G' keyboards.")
+        about.set_comments(_("Desktop integration for Logitech 'G' keyboards."))
         about.run()
         about.hide()
         
@@ -841,7 +844,6 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
             otherwise toggle between the devices (used to select what to scroll with up
             and down) 
             """
-            print "Screens %s" % str(self.screens)
             if direction == gtk.gdk.SCROLL_LEFT:
                 self._get_active_screen_object().CycleKeyboard(-1)
             elif direction == gtk.gdk.SCROLL_RIGHT:
@@ -873,7 +875,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
         logger.debug("Building new menu")
         if self.service and self.connected:
             
-            item = gtk.MenuItem("Stop Desktop Service")
+            item = gtk.MenuItem(_("Stop Desktop Service"))
             item.connect("activate", self.stop_desktop_service)
             self.add_service_item(item)
             self.add_service_item(gtk.MenuItem())
@@ -896,7 +898,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                         self.add_service_item(item)
                     
                     # Cycle screens
-                    item = gtk.CheckMenuItem("Cycle screens automatically")
+                    item = gtk.CheckMenuItem(_("Cycle screens automatically"))
                     item.set_active(g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % screen.device_uid, True))
                     self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/cycle_screens" % screen.device_uid, self._cycle_screens_option_changed))
                     item.connect("toggled", self._cycle_screens_changed, screen.device_uid)
@@ -918,7 +920,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                 else:
                     # Enable
                     if len(devices) > 1:
-                        item = gtk.MenuItem("Enable %s" % remote_device.GetModelFullName())
+                        item = gtk.MenuItem(_("Enable %s") % remote_device.GetModelFullName())
                         item.connect("activate", self._enable, remote_device)
                         self.add_service_item(item)
                 i += 1
@@ -932,7 +934,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
         self.check_attention()
         
     def add_start_desktop_service(self):
-        item = gtk.MenuItem("Start Desktop Service")
+        item = gtk.MenuItem(_("Start Desktop Service"))
         item.connect("activate", self.start_desktop_service)
         self.add_service_item(item)
         
@@ -975,7 +977,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
     def _set_active_screen_number(self):
         self._close_notify_message()
         screen = list(self.screens.values())[self.screen_number]
-        body = "%s is now the active keyboard. Use mouse wheel up and down to cycle screens on this device" % screen.device_model_fullname
+        body = _("%s is now the active keyboard. Use mouse wheel up and down to cycle screens on this device") % screen.device_model_fullname
         self.notify_message = g15notify.notify(screen.device_model_fullname, body, "preferences-desktop-keyboard-shortcuts")
         
     def _close_notify_message(self):

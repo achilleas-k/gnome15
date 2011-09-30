@@ -11,6 +11,8 @@
 ##
 ############################################################################
 
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("gnome15-drivers").ugettext
  
 from cStringIO import StringIO
 from pyinputevent.uinput import UInputDevice
@@ -46,9 +48,9 @@ logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
 id = "kernel"
-name = "Kernel Drivers"
-description = "Requires ali123's Logitech Kernel drivers. This method requires no other " + \
-            "daemons to be running, and works with the G13, G15, G19 and G110 keyboards. " 
+name = _("Kernel Drivers")
+description = _("Requires ali123's Logitech Kernel drivers. This method requires no other " + \
+            "daemons to be running, and works with the G13, G15, G19 and G110 keyboards. ") 
 has_preferences = True
 
 
@@ -170,26 +172,26 @@ g110_key_map = {
                S.KEY_F12 : g15driver.G_KEY_G12
                }
 
-g19_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
-g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 255, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+g19_mkeys_control = g15driver.Control("mkeys", _("Memory Bank Keys"), 0, 0, 15, hint=g15driver.HINT_MKEYS)
+g19_keyboard_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (0, 255, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
 
-g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint=g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
-g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint=g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
-g19_highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
+g19_foreground_control = g15driver.Control("foreground", _("Default LCD Foreground"), (255, 255, 255), hint=g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
+g19_background_control = g15driver.Control("background", _("Default LCD Background"), (0, 0, 0), hint=g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
+g19_highlight_control = g15driver.Control("highlight", _("Default Highlight Color"), (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
 g19_controls = [ g19_keyboard_backlight_control, g19_foreground_control, g19_background_control, g19_highlight_control, g19_mkeys_control ]
 
-g110_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (255, 0, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
+g110_keyboard_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (255, 0, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
 g110_controls = [ g110_keyboard_backlight_control ]
 
 # TODO doesn't work yet
 #g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint=g15driver.HINT_SHADEABLE)
 
 
-g15_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 1, 0, 15, hint=g15driver.HINT_MKEYS)
-g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 2, 0, 2, hint=g15driver.HINT_DIMMABLE)
-g15_lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight", 2, 0, 2, g15driver.HINT_SHADEABLE)
-g15_lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 22, 0, 48, 0)
-g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint=g15driver.HINT_SWITCH)
+g15_mkeys_control = g15driver.Control("mkeys", _("Memory Bank Keys"), 1, 0, 15, hint=g15driver.HINT_MKEYS)
+g15_backlight_control = g15driver.Control("keyboard_backlight", _("Keyboard Backlight Level"), 2, 0, 2, hint=g15driver.HINT_DIMMABLE)
+g15_lcd_backlight_control = g15driver.Control("lcd_backlight", _("LCD Backlight"), 2, 0, 2, g15driver.HINT_SHADEABLE)
+g15_lcd_contrast_control = g15driver.Control("lcd_contrast", _("LCD Contrast"), 22, 0, 48, 0)
+g15_invert_control = g15driver.Control("invert_lcd", _("Invert LCD"), 0, 0, 1, hint=g15driver.HINT_SWITCH)
 g15_controls = [ g15_mkeys_control, g15_backlight_control, g15_invert_control, g15_lcd_backlight_control, g15_lcd_contrast_control ]  
 g11_controls = [ g15_mkeys_control, g15_backlight_control ]
 g13_controls = [ g19_keyboard_backlight_control, g15_mkeys_control, g15_invert_control, g15_mkeys_control ]
@@ -358,7 +360,9 @@ device_info = {
 EVIOCGRAB = 0x40044590
 
 def show_preferences(device, parent, gconf_client):
+    g15locale.get_translation("driver_kernel")
     widget_tree = gtk.Builder()
+    widget_tree.set_translation_domain("driver_kernel")
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_kernel.glade"))  
     device_model = widget_tree.get_object("DeviceModel")
     device_model.clear()
@@ -645,7 +649,7 @@ class Driver(g15driver.AbstractDriver):
         return device_info.keys()
             
     def get_name(self):
-        return "Linux Logitech Kernel Driver"
+        return _("Linux Logitech Kernel Driver")
     
     def get_model_name(self):
         return self.device.model_id if self.device != None else None

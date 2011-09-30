@@ -1,0 +1,416 @@
+# English translations for gnome15 package.
+# Copyright (C) 2011 THE gnome15'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome15 package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome15 0.8.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-09-29 22:02+0100\n"
+"PO-Revision-Date: 2011-09-29 22:02+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: g15-config.glade.h:1
+msgid "<b>Controls</b>"
+msgstr "<b>Controls</b>"
+
+#: g15-config.glade.h:2
+msgid "<b>Global Plugins</b>"
+msgstr "<b>Global Plugins</b>"
+
+#: g15-config.glade.h:3
+msgid "<b>Keys Pressed</b>"
+msgstr "<b>Keys Pressed</b>"
+
+#: g15-config.glade.h:4
+msgid "<b>Keys</b>"
+msgstr "<b>Keys</b>"
+
+#: g15-config.glade.h:5
+msgid "<b>Memory Bank:</b>"
+msgstr "<b>XXXXXXX:</b>"
+
+#: g15-config.glade.h:6
+msgid "<b>Memory Bank</b>"
+msgstr "<b>XXX</b>"
+
+#: g15-config.glade.h:7
+msgid "<b>Name:</b>"
+msgstr "<b>Name:</b>"
+
+#: g15-config.glade.h:8
+msgid "<b>Options</b>"
+msgstr "<b>Options</b>"
+
+#: g15-config.glade.h:9
+msgid "<b>Profile Icon</b>"
+msgstr "<b>Profile Icon</b>"
+
+#: g15-config.glade.h:10
+msgid "<b>Profiles</b>"
+msgstr "<b>Profiles</b>"
+
+#: g15-config.glade.h:11
+msgid "<b>Switches</b>"
+msgstr "<b>Switches</b>"
+
+#: g15-config.glade.h:12
+msgid "A. Author <a_user@company.com>"
+msgstr "A. Author <a_user@company.com>"
+
+#: g15-config.glade.h:13
+msgid "About Plugin"
+msgstr "About Plugin"
+
+#: g15-config.glade.h:14
+msgid "Activate"
+msgstr "Activate"
+
+#: g15-config.glade.h:15
+msgid ""
+"Activate this profile when a window with\n"
+"the following title has focus"
+msgstr "Activate this profile when a window with\n"
+"the following title has focus"
+
+#: g15-config.glade.h:17
+msgid ""
+"Activate this profile when no others are\n"
+"active"
+msgstr "Activate this profile when no others are\n"
+"active"
+
+#: g15-config.glade.h:19
+msgid "Activation"
+msgstr "Activation"
+
+#: g15-config.glade.h:20
+msgid "Add Profile"
+msgstr "Add Profile"
+
+#: g15-config.glade.h:21
+msgid "Allow combination of keys"
+msgstr "Allow combination of keys"
+
+#: g15-config.glade.h:22
+msgid "Are you sure you wish to remove this macro?"
+msgstr "Are you sure you wish to remove this macro?"
+
+#: g15-config.glade.h:23
+msgid "Are you sure you wish to remove this profile?"
+msgstr "Are you sure you wish to remove this profile?"
+
+#: g15-config.glade.h:24
+msgid "Author:"
+msgstr "Author:"
+
+#: g15-config.glade.h:25
+msgid "Balh"
+msgstr "Balh"
+
+#: g15-config.glade.h:26
+msgid "Clear"
+msgstr "Clear"
+
+#: g15-config.glade.h:27
+msgid "Configure"
+msgstr "Configure"
+
+#: g15-config.glade.h:28
+msgid "Copyright © 2006 A. Author"
+msgstr "Copyright © 2006 A. Author"
+
+#: g15-config.glade.h:29
+msgid "Copyright:"
+msgstr "Copyright:"
+
+#: g15-config.glade.h:30
+msgid "Cycle screens"
+msgstr "Cycle screens"
+
+#: g15-config.glade.h:31
+msgid "Delays"
+msgstr "Delays"
+
+#: g15-config.glade.h:32
+msgid "Description of plugin. <b>bold</b>"
+msgstr "Description of plugin. <b>bold</b>"
+
+#: g15-config.glade.h:33
+msgid "Description:"
+msgstr "Description:"
+
+#: g15-config.glade.h:34
+msgid "Driver"
+msgstr "Driver"
+
+#: g15-config.glade.h:35
+msgid "Edit Macro"
+msgstr "Edit Macro"
+
+#: g15-config.glade.h:36
+msgid "Enabled"
+msgstr "Enabled"
+
+#: g15-config.glade.h:37
+msgid "Every"
+msgstr "Every"
+
+#: g15-config.glade.h:38
+msgid "Global Options"
+msgstr "Global Options"
+
+#: g15-config.glade.h:39
+msgid "Joystick Button"
+msgstr "Joystick Button"
+
+#: g15-config.glade.h:40
+msgid "Keyboard"
+msgstr "Keyboard"
+
+#: g15-config.glade.h:41
+msgid "Keyboard Key"
+msgstr "Keyboard Key"
+
+#: g15-config.glade.h:42
+msgid "Logitech G Keyboard Configuration"
+msgstr "Logitech G Keyboard Configuration"
+
+#: g15-config.glade.h:43
+msgid "Logitech Keyboard Device"
+msgstr "Logitech Keyboard Device"
+
+#: g15-config.glade.h:44
+msgid "M1"
+msgstr "M1"
+
+#: g15-config.glade.h:45
+msgid "M2"
+msgstr "M2"
+
+#: g15-config.glade.h:46
+msgid "M3"
+msgstr "M3"
+
+#: g15-config.glade.h:47
+msgid ""
+"Macro scripts consists of one or more commands, one one each line. \n"
+"Supported commands are :-\n"
+"\n"
+"Press <key_name> - Simulates depression of a key\n"
+"Release <key_name> - Simulates release of a key\n"
+"Delay <ms> - Waits for a number of milliseconds\n"
+"Exec <command> - Executes a command\n"
+msgstr "Macro scripts consists of one or more commands, one one each line. \n"
+"Supported commands are :-\n"
+"\n"
+"Press <key_name> - Simulates depression of a key\n"
+"Release <key_name> - Simulates release of a key\n"
+"Delay <ms> - Waits for a number of milliseconds\n"
+"Exec <command> - Executes a command\n"
+
+#: g15-config.glade.h:55
+msgid "Macros"
+msgstr "Macros"
+
+#: g15-config.glade.h:56
+msgid "Mapped to"
+msgstr "Mappppppppppped To"
+
+#: g15-config.glade.h:57
+msgid "Models supported."
+msgstr "Models supported."
+
+#: g15-config.glade.h:58
+msgid "Mouse Button"
+msgstr "Mouse Button"
+
+#: g15-config.glade.h:59
+msgid "No Repeat"
+msgstr "No Repeat"
+
+#: g15-config.glade.h:60
+msgid "Only Show Indicator On Error"
+msgstr "Only Show Indicator On Error"
+
+#: g15-config.glade.h:61
+msgid "Plugin Name"
+msgstr "Plugin Name"
+
+#: g15-config.glade.h:62
+msgid "Plugins"
+msgstr "Plugins"
+
+#: g15-config.glade.h:63
+msgid "Press for"
+msgstr "Press for"
+
+#: g15-config.glade.h:64
+msgid "Profile"
+msgstr "Profile"
+
+#: g15-config.glade.h:65
+msgid "Profile Name:"
+msgstr "Profile Name:"
+
+#: g15-config.glade.h:66
+msgid "Profile already exists"
+msgstr "Profile already exists"
+
+#: g15-config.glade.h:67
+msgid "Release, then wait"
+msgstr "Release, then wait"
+
+#: g15-config.glade.h:68
+msgid "Remove Macro"
+msgstr "Remove Macro"
+
+#: g15-config.glade.h:69
+msgid "Remove Profile"
+msgstr "Remove Profile"
+
+#: g15-config.glade.h:70
+msgid "Run _macro script"
+msgstr "Run _macro script"
+
+#: g15-config.glade.h:71
+msgid "Run this _command"
+msgstr "Run this _command"
+
+#: g15-config.glade.h:72
+msgid "Select Window"
+msgstr "Select Window"
+
+#: g15-config.glade.h:73
+msgid "Select a window from those active"
+msgstr "Select a window from those active"
+
+#: g15-config.glade.h:74
+msgid "Send delays with keystrokes"
+msgstr "Send delays with keystrokes"
+
+#: g15-config.glade.h:75
+msgid "Send this _simple macro"
+msgstr "Send this _simple macro"
+
+#: g15-config.glade.h:76
+msgid "Site:"
+msgstr "Site:"
+
+#: g15-config.glade.h:77
+msgid "Start Desktop Service On Login"
+msgstr "Start Desktop Service On Login"
+
+#: g15-config.glade.h:78
+msgid "Start Indicator On Login"
+msgstr "Start Indicator On Login"
+
+#: g15-config.glade.h:79
+msgid "Start System Tray Icon On Login"
+msgstr "Start System Tray Icon On Login"
+
+#: g15-config.glade.h:80
+msgid "Stop Service"
+msgstr "Stop Service"
+
+#: g15-config.glade.h:81
+msgid "Supported Models:"
+msgstr "Supported Models:"
+
+#: g15-config.glade.h:82
+msgid "Test"
+msgstr "Test"
+
+#: g15-config.glade.h:83
+msgid ""
+"The profile name you have supplied already exists, please\n"
+"choose another name."
+msgstr "The profile name you have supplied already exists, please\n"
+"choose another name."
+
+#: g15-config.glade.h:85
+msgid "Until released"
+msgstr "Until released"
+
+#: g15-config.glade.h:86
+msgid "Until toggled"
+msgstr "Until toggled"
+
+#: g15-config.glade.h:87
+msgid "Use"
+msgstr "Use"
+
+#: g15-config.glade.h:88
+msgid "Use fixed delay"
+msgstr "Use fixed delay"
+
+#: g15-config.glade.h:89
+msgid "Use macros from another profile when they are not set in this one"
+msgstr "Use macros from another profile when they are not set in this one"
+
+#: g15-config.glade.h:90
+msgid "Window"
+msgstr "Window"
+
+#: g15-config.glade.h:91
+msgid "You can use & to run the command in the background"
+msgstr "You can use & to run the command in the background"
+
+#: g15-config.glade.h:92
+msgid ""
+"\\r for Return, \\e for escape, \\b for backspace, \\t for tab\n"
+"\\p for pause and \\\\ for backslash"
+msgstr "\\r for Return, \\e for escape, \\b for backspace, \\t for tab\n"
+"\\p for pause and \\\\ for backslash"
+
+#: g15-config.glade.h:94
+msgid "_Browse"
+msgstr "_Browse"
+
+#: g15-config.glade.h:95
+msgid "joystick"
+msgstr "joystick"
+
+#: g15-config.glade.h:96
+msgid "keyboard"
+msgstr "keyboard"
+
+#: g15-config.glade.h:97
+msgid "label"
+msgstr "label"
+
+#: g15-config.glade.h:98
+msgid "mouse"
+msgstr "mouse"
+
+#: g15-config.glade.h:99
+msgid "none"
+msgstr "none"
+
+#: g15-config.glade.h:100
+msgid "released"
+msgstr "released"
+
+#: g15-config.glade.h:101
+msgid "seconds"
+msgstr "seconds"
+
+#: g15-config.glade.h:102
+msgid "toggled"
+msgstr "toggled"
+
+#: g15-config.glade.h:103
+msgid "toolbutton1"
+msgstr "toolbutton1"
+
+#: g15-config.glade.h:104
+msgid "toolbutton2"
+msgstr "toolbutton2"
+

@@ -22,6 +22,8 @@
 Alternative implementation of a G19 Driver that uses pylibg19 to communicate directly
 with the keyboard 
 """ 
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("gnome15-drivers").ugettext
 
 from cStringIO import StringIO
 from threading import RLock
@@ -48,12 +50,12 @@ from g19.g19 import G19
 
 
 # Driver information (used by driver selection UI)
-name="G19 Direct"
+name=_("G19 Direct")
 id="g19direct"
-description="For use with the Logitech G19 only, this driver communicates directly, " + \
+description=_("For use with the Logitech G19 only, this driver communicates directly, " + \
             "with the keyboard and so is more efficient than the G19D driver. Note, " + \
             "you will have to ensure the permissions of the USB devices are read/write " + \
-            "for your user."
+            "for your user.")
 has_preferences=True
 
 MAX_X=320
@@ -99,18 +101,21 @@ KEY_MAP = {
             
             
 # Controls
-mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
-keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-default_keyboard_backlight_control = g15driver.Control("default_backlight_colour", "Boot Keyboard Backlight Colour", (0, 255, 0))
-lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
-foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
-background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
-highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
+mkeys_control = g15driver.Control("mkeys", _("Memory Bank Keys"), 0, 0, 15, hint=g15driver.HINT_MKEYS)
+keyboard_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+default_keyboard_backlight_control = g15driver.Control("default_backlight_colour", _("Boot Keyboard Backlight Colour"), (0, 255, 0))
+lcd_brightness_control = g15driver.Control("lcd_brightness", _("LCD Brightness"), 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
+foreground_control = g15driver.Control("foreground", _("Default LCD Foreground"), (255, 255, 255), hint = g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
+background_control = g15driver.Control("background", _("Default LCD Background"), (0, 0, 0), hint = g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
+highlight_control = g15driver.Control("highlight", _("Default Highlight Color"), (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
 controls = [ mkeys_control, keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control, highlight_control ]
 
-def show_preferences(device, parent, gconf_client):
+def show_preferences(device, parent, gconf_client):    
+    g15locale.get_translation("driver_g19direct")
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.glade"))    
+    widget_tree.set_translation_domain("driver_g19direct")
+    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.glade"))
+    
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/reset_usb" % device.uid, "Reset", False, widget_tree, True)
     g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
     g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/reset_wait" % device.uid, "ResetWait", 0, widget_tree, False)
@@ -155,7 +160,7 @@ class Driver(g15driver.AbstractDriver):
             self.lock.release()
             
     def get_name(self):
-        return "G19D Network Daemon Driver"
+        return _("G19D Network Daemon Driver")
     
     def get_model_names(self):
         return [ g15driver.MODEL_G19 ]

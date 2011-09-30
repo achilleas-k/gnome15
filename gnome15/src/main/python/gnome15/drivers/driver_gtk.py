@@ -11,6 +11,8 @@
 ##
 ############################################################################
 
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("gnome15-drivers").ugettext
 
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
@@ -30,26 +32,26 @@ logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
 id="gtk"
-name="GTK"
-description="A special development driver that emulates all supported, " + \
+name=_("GTK Virtual Keyboard Driver")
+description=_("A special development driver that emulates all supported, " + \
             "models as a window on your desktop. This allows " + \
-            "you to develop plugins without having access to a real Logitech hardward "
+            "you to develop plugins without having access to a real Logitech hardward ")
 has_preferences=True
 
 # Controls
 
-g19_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 0, 0, 15, hint=g15driver.HINT_MKEYS)
-g19_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-g19_lcd_brightness_control = g15driver.Control("lcd_brightness", "LCD Brightness", 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
-g19_foreground_control = g15driver.Control("foreground", "Default LCD Foreground", (255, 255, 255), hint = g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
-g19_background_control = g15driver.Control("background", "Default LCD Background", (0, 0, 0), hint = g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
-g19_highlight_control = g15driver.Control("highlight", "Default Highlight Color", (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
+g19_mkeys_control = g15driver.Control("mkeys", _("Memory Bank Keys"), 0, 0, 15, hint=g15driver.HINT_MKEYS)
+g19_keyboard_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+g19_lcd_brightness_control = g15driver.Control("lcd_brightness", _("LCD Brightness"), 100, 0, 100, hint = g15driver.HINT_SHADEABLE)
+g19_foreground_control = g15driver.Control("foreground", _("Default LCD Foreground"), (255, 255, 255), hint = g15driver.HINT_FOREGROUND | g15driver.HINT_VIRTUAL)
+g19_background_control = g15driver.Control("background", _("Default LCD Background"), (0, 0, 0), hint = g15driver.HINT_BACKGROUND | g15driver.HINT_VIRTUAL)
+g19_highlight_control = g15driver.Control("highlight", _("Default Highlight Color"), (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
 
-g15_mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 1, 0, 15, hint=g15driver.HINT_MKEYS)
-g15_backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 2, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-g15_invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
+g15_mkeys_control = g15driver.Control("mkeys", _("Memory Bank Keys"), 1, 0, 15, hint=g15driver.HINT_MKEYS)
+g15_backlight_control = g15driver.Control("keyboard_backlight", _("Keyboard Backlight Level"), 2, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+g15_invert_control = g15driver.Control("invert_lcd", _("Invert LCD"), 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
-g110_keyboard_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (255, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
+g110_keyboard_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (255, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
 
 controls = { 
   g15driver.MODEL_G11 : [ g15_mkeys_control, g15_backlight_control ], 
@@ -66,7 +68,9 @@ controls = {
 def show_preferences(device, parent, gconf_client):
     if device.model_id != 'virtual':
         return None
+    g15locale.get_translation("driver_gtk")
     widget_tree = gtk.Builder()
+    widget_tree.set_translation_domain("driver_gtk")
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_gtk.glade")) 
     mode_model = widget_tree.get_object("ModeModel")
     mode_model.clear()
@@ -126,7 +130,7 @@ class Driver(g15driver.AbstractDriver):
         return [ 'virtual' ]
             
     def get_name(self):
-        return "GTK Keyboard Emulator Driver"
+        return _("GTK Keyboard Emulator Driver")
     
     def get_model_name(self):
         return self.mode

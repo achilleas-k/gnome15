@@ -22,6 +22,8 @@
 Alternative implementation of a G19 Driver that uses pylibg19 to communicate directly
 with the keyboard 
 """ 
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("gnome15-drivers").ugettext
 
 from threading import RLock
 import cairo
@@ -52,12 +54,12 @@ if g15globals.dev:
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", "..", "pylibg19"))    
 
 # Driver information (used by driver selection UI)
-name="G15 Direct"
+name=_("G15 Direct")
 id="g15direct"
-description="For use with the G15 based devices only, this driver communicates directly, " + \
+description=_("For use with the G15 based devices only, this driver communicates directly, " + \
             "with the keyboard and so is more efficient than the g15daemon driver. Note, " + \
             "you will have to ensure the permissions of the USB devices are read/write " + \
-            "for your user."
+            "for your user.")
 has_preferences=True
 
 
@@ -115,13 +117,13 @@ EXT_REVERSE_KEY_MAP = {}
 for k in EXT_KEY_MAP.keys():
     EXT_REVERSE_KEY_MAP[EXT_KEY_MAP[k]] = k
 
-mkeys_control = g15driver.Control("mkeys", "Memory Bank Keys", 1, 0, 15, hint=g15driver.HINT_MKEYS)
-color_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-red_blue_backlight_control = g15driver.Control("backlight_colour", "Keyboard Backlight Colour", (255, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
-backlight_control = g15driver.Control("keyboard_backlight", "Keyboard Backlight Level", 2, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
-lcd_backlight_control = g15driver.Control("lcd_backlight", "LCD Backlight Level", 2, 0, 2, hint = g15driver.HINT_SHADEABLE)
-lcd_contrast_control = g15driver.Control("lcd_contrast", "LCD Contrast", 22, 0, 2)
-invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g15driver.HINT_SWITCH )
+mkeys_control = g15driver.Control("mkeys", _("Memory Bank Keys"), 1, 0, 15, hint=g15driver.HINT_MKEYS)
+color_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (0, 255, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+red_blue_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (255, 0, 0), hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
+backlight_control = g15driver.Control("keyboard_backlight", _("Keyboard Backlight Level"), 2, 0, 2, hint = g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
+lcd_backlight_control = g15driver.Control("lcd_backlight", _("LCD Backlight Level"), 2, 0, 2, hint = g15driver.HINT_SHADEABLE)
+lcd_contrast_control = g15driver.Control("lcd_contrast", _("LCD Contrast"), 22, 0, 2)
+invert_control = g15driver.Control("invert_lcd", _("Invert LCD"), 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
 controls = {
   g15driver.MODEL_G11 : [ mkeys_control, backlight_control ],
@@ -157,7 +159,9 @@ G15_LOG_INFO = 1
 G15_LOG_WARN = 0
 
 def show_preferences(device, parent, gconf_client):
+    g15locale.get_translation("driver_g15direct")
     widget_tree = gtk.Builder()
+    widget_tree.set_translation_domain("driver_g15direct")
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15direct.glade"))  
     g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)  
     g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
@@ -227,7 +231,7 @@ class Driver(g15driver.AbstractDriver):
             self.lock.release()
             
     def get_name(self):
-        return "G15 Direct"
+        return _("G15 Direct")
     
     def get_model_names(self):
         return [ g15driver.MODEL_G11, g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G110, g15driver.MODEL_G510, g15driver.MODEL_G13 ]
@@ -270,21 +274,25 @@ class Driver(g15driver.AbstractDriver):
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/timeout" % self.device.uid, self._config_changed, None))
             
         # Setup joystick configuration on G13
-        self.calibration = 18   
+        self.calibration = 20   
         self._load_configuration()
         
     def _load_configuration(self):
         self.joy_mode = self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
         g15uinput.deregister_codes("g15_direct/%s" % self.device.uid)
         if self.joy_mode == "mouse":
+            self.calibration = 20   
             logger.info("Enabling relative mouse emulation")            
             g15uinput.register_codes("g15_direct/%s" % self.device.uid, g15uinput.MOUSE, [uinput.BTN_MOUSE, uinput.BTN_RIGHT, uinput.BTN_MIDDLE ])
         elif self.joy_mode == "joystick":
-            logger.info("Enabling Joystick emulation")            
+            logger.info("Enabling Joystick emulation")
+            self.calibration = 20               
             g15uinput.register_codes("g15_direct/%s" % self.device.uid, g15uinput.JOYSTICK, [uinput.BTN_1, uinput.BTN_2, uinput.BTN_3 ], {
                                         uinput.ABS_X: (0, 255, 0, 0),
                                         uinput.ABS_Y: (0, 255, 0, 0),
                                                  })
+        else:
+            self.calibration = 64               
             
     def _config_changed(self, client, connection_id, entry, args):
         self._load_configuration()
@@ -446,9 +454,11 @@ class Driver(g15driver.AbstractDriver):
                 if not k in this_keys and not k in down:
                     up.append(k)
                 
-        if len(down) > 0:            
+        if len(down) > 0:         
+            print "Down %s" % down   
             self.callback(down, g15driver.KEY_STATE_DOWN)
         if len(up) > 0:            
+            print "Up %s" % up   
             self.callback(up, g15driver.KEY_STATE_UP)
         
         self.last_keys = this_keys
@@ -461,7 +471,7 @@ class Driver(g15driver.AbstractDriver):
         elif pos[1] < low_val:
             this_keys.append(g15driver.G_KEY_UP)
         elif pos[1] > high_val:
-            this_keys.append(g15driver.G_KEY_DOWN)
+            this_keys.append(g15driver.G_KEY_DOWN) 
             
     def _check_js_buttons(self, this_keys):        
         self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_LEFT, uinput.BTN_1)

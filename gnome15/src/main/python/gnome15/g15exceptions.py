@@ -18,7 +18,10 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15locale as g15locale
+_ = g15locale.get_translation("gnome15").ugettext
+
 class NotConnectedException(Exception):
-    def __init__(self, message = "Failed to connect."):
+    def __init__(self, message = _("Failed to connect.")):
         Exception.__init__(self, message)
     
