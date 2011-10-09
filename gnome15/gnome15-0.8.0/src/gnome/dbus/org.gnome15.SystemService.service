@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.gnome15.SystemService
+Exec=/usr/bin/g15-system-service
+User=root

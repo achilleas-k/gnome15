@@ -12,19 +12,21 @@ if os.path.exists(image_dir):
 	font_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "fonts"))
 	icons_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "icons"))
 	themes_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "themes"))
+	ukeys_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "ukeys"))
 	plugin_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "plugins"))
 	scripts_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "scripts"))
 	themes_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "themes"))
 	i18n_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "i18n"))
 else: 
-	image_dir = "/usr/local/share/gnome15/images"
-	glade_dir = "/usr/local/share/gnome15/glade"
-	font_dir = "/usr/local/share/gnome15"
-	plugin_dir = "/usr/local/share/gnome15/plugins"
-	themes_dir = "/usr/local/share/gnome15/themes"
-	i18n_dir = "/usr/local/share/gnome15/i18n"
-	icons_dir = "/usr/local/share/icons"
-	scripts_dir = "/usr/local/bin"
+	image_dir = "/usr/share/gnome15/images"
+	glade_dir = "/usr/share/gnome15/glade"
+	font_dir = "/usr/share/gnome15"
+	plugin_dir = "/usr/share/gnome15/plugins"
+	themes_dir = "/usr/share/gnome15/themes"
+	ukeys_dir = "/usr/share/gnome15/ukeys"
+	i18n_dir = "/usr/share/gnome15/i18n"
+	icons_dir = "/usr/share/icons"
+	scripts_dir = "/usr/bin"
 
 # Differs from distro to distro, and so is a ./configure option. See
 # --enable-fixed-size-font=[name] 

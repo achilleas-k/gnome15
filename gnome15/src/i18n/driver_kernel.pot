@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-29 22:02+0100\n"
+"POT-Creation-Date: 2011-10-09 14:52+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,45 +26,37 @@ msgid "Device:"
 msgstr ""
 
 #: driver_kernel.glade.h:3
-msgid "Emit Macro Keys"
+msgid "Digital Joystick"
 msgstr ""
 
 #: driver_kernel.glade.h:4
-msgid "Joystick mode:"
+msgid "Emit Macro Keys"
 msgstr ""
 
 #: driver_kernel.glade.h:5
-msgid "Mouse"
+msgid "Joystick mode:"
 msgstr ""
 
 #: driver_kernel.glade.h:6
-msgid "auto"
+msgid "Mouse"
 msgstr ""
 
 #: driver_kernel.glade.h:7
-msgid "g13"
+msgid "auto"
 msgstr ""
 
 #: driver_kernel.glade.h:8
-msgid "g15v1"
+msgid "g13"
 msgstr ""
 
 #: driver_kernel.glade.h:9
-msgid "g15v2"
+msgid "g15v1"
 msgstr ""
 
 #: driver_kernel.glade.h:10
-msgid "g19"
+msgid "g15v2"
 msgstr ""
 
 #: driver_kernel.glade.h:11
-msgid "joystick"
-msgstr ""
-
-#: driver_kernel.glade.h:12
-msgid "macro"
-msgstr ""
-
-#: driver_kernel.glade.h:13
-msgid "mouse"
+msgid "g19"
 msgstr ""

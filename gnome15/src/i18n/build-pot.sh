@@ -7,8 +7,12 @@ xgettext --from-code=UTF-8 --language=Python --keyword=N_ --keyword=_ --output=g
 xgettext --from-code=UTF-8 --language=Python --keyword=N_ --keyword=_ --output=gnome15.pot ../main/python/gnome15/*.py
 
 # Glade
+for i in ../main/resources/glade/*.glade; do
+	intltool-extract --type=gettext/glade $i
+        mv ${i}.h .
+done
 for i in *.h; do
 	bn=$(basename ${i} .h)
-bn=$(basename ${bn} .glade).pot
+	bn=$(basename ${bn} .glade).pot
 	xgettext --from-code=UTF-8 --language=Python --keyword=N_ --keyword=_ --output=${bn} ${i}
 done 

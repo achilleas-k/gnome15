@@ -1,0 +1,119 @@
+#!/usr/bin/env python
+ 
+#        +-----------------------------------------------------------------------------+
+#        | GPL                                                                         |
+#        +-----------------------------------------------------------------------------+
+#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        |                                                                             |
+#        | This program is free software; you can redistribute it and/or               |
+#        | modify it under the terms of the GNU General Public License                 |
+#        | as published by the Free Software Foundation; either version 2              |
+#        | of the License, or (at your option) any later version.                      |
+#        |                                                                             |
+#        | This program is distributed in the hope that it will be useful,             |
+#        | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+#        | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+#        | GNU General Public License for more details.                                |
+#        |                                                                             |
+#        | You should have received a copy of the GNU General Public License           |
+#        | along with this program; if not, write to the Free Software                 |
+#        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+#        +-----------------------------------------------------------------------------+
+
+"""
+DBUS System Service that is intended to replace 'lgsetled', the command line tool initially
+used by the kernel driver support to set the brightness of keyboard lights (the device
+files of which require root access, as they are in /sys). 
+"""
+
+
+import sys
+import os
+import glib
+
+# Logging
+import logging
+logging.basicConfig(format='%(threadName)s:%(name)s:%(message)s')
+logger = logging.getLogger()
+
+LEVELS = {'debug': logging.DEBUG,
+          'info': logging.INFO,
+          'warning': logging.WARNING,
+          'error': logging.ERROR,
+          'critical': logging.CRITICAL}
+
+# Allow running from local path
+path = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..","main", "python"))
+if os.path.exists(path):
+    sys.path.insert(0, path) 
+    
+#
+import gobject
+gobject.threads_init()
+
+# DBUS - Use to check current desktop service status or stop it
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+from dbus.mainloop.glib import threads_init
+threads_init()
+DBusGMainLoop(set_as_default=True)
+
+# Server host class
+
+def check_service_status(system_dbus):
+    try :
+        system_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/SystemService').GetServerInformation()
+        return True
+    except:
+        return False
+
+def start_service(bus, no_trap=False,):    
+    try :
+        import setproctitle
+        setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
+    except ImportError as ie:
+        # Not a big issue
+        logger.debug("No setproctitle, process will be named 'python'")
+
+    # Start the loop    
+    try :
+        import gnome15.g15system as g15system   
+        service = g15system.G15SystemServiceController(bus, no_trap=no_trap)
+        service.start_loop()
+    except dbus.exceptions.NameExistsException:
+        print "Gnome15 desktop service is already running"
+        sys.exit(1)
+    
+if __name__ == "__main__":
+    import optparse
+    parser = optparse.OptionParser()
+    parser.add_option("-l", "--log", dest="log_level", metavar="INFO,DEBUG,WARNING,ERROR,CRITICAL",
+        default="warning" , help="Log level")
+    parser.add_option("-f", "--foreground", action="store_true", dest="foreground",
+        default=False, help="Run desktop service in foreground.")
+    parser.add_option("-s", "--session", action="store_true", dest="use_session_bus",
+        default=False, help="Use the session bus instead of system bus.")
+    parser.add_option("-n", "--notrap", action="store_true", dest="no_trap",
+        default=False, help="Do not try to trap signals.")
+    (options, args) = parser.parse_args()
+    
+    level = logging.NOTSET
+    if options.log_level != None:      
+        level = LEVELS.get(options.log_level.lower(), logging.NOTSET)
+        logger.setLevel(level = level)
+        
+    if len(args) == 1 and ( args[0] == "stop" or args[0] == "restart" ):
+        system_bus = dbus.SessionBus() if options.use_session_bus else dbus.SystemBus()
+        if not check_service_status(system_bus):
+            if args[0] == "stop":
+                print "Gnome15 system service is not running"
+        else:            
+            session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/SystemService').Stop();
+            
+    if len(args) == 0 or ( len(args) == 1 and ( args[0] == "start" or args[0] == "restart" ) ):
+        system_bus = dbus.SessionBus() if options.use_session_bus else dbus.SystemBus()
+        if check_service_status(system_bus):
+            print "Gnome15 desktop service already running"
+        else:
+            if options.foreground or ( not options.foreground and os.fork() == 0 ):
+                start_service(system_bus, options.no_trap)

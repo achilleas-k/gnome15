@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome15 0.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-29 22:02+0100\n"
-"PO-Revision-Date: 2011-09-29 22:02+0100\n"
+"POT-Creation-Date: 2011-10-09 14:52+0100\n"
+"PO-Revision-Date: 2011-10-09 14:54+0100\n"
 "Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
 "Language-Team: English (British)\n"
 "Language: en_GB\n"
@@ -20,19 +20,3 @@ msgstr ""
 #: driver_gtk.glade.h:1
 msgid "Mode:"
 msgstr "Mode:"
-
-#: driver_gtk.glade.h:2
-msgid "g13"
-msgstr "g13"
-
-#: driver_gtk.glade.h:3
-msgid "g15v1"
-msgstr "g15v1"
-
-#: driver_gtk.glade.h:4
-msgid "g15v2"
-msgstr "g15v2"
-
-#: driver_gtk.glade.h:5
-msgid "g19"
-msgstr "g19"

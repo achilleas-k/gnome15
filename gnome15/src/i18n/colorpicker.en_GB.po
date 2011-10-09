@@ -1,0 +1,30 @@
+# English translations for gnome15 package.
+# Copyright (C) 2011 THE gnome15'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome15 package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome15 0.8.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 14:52+0100\n"
+"PO-Revision-Date: 2011-10-09 14:54+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: colorpicker.glade.h:1
+msgid "Blue:"
+msgstr "Blue:"
+
+#: colorpicker.glade.h:2
+msgid "Pick Colour"
+msgstr "Pick Colour"
+
+#: colorpicker.glade.h:3
+msgid "Red:"
+msgstr "Red:"

@@ -1,0 +1,139 @@
+#!/usr/bin/env python
+ 
+#        +-----------------------------------------------------------------------------+
+#        | GPL                                                                         |
+#        +-----------------------------------------------------------------------------+
+#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        |                                                                             |
+#        | This program is free software; you can redistribute it and/or               |
+#        | modify it under the terms of the GNU General Public License                 |
+#        | as published by the Free Software Foundation; either version 2              |
+#        | of the License, or (at your option) any later version.                      |
+#        |                                                                             |
+#        | This program is distributed in the hope that it will be useful,             |
+#        | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+#        | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+#        | GNU General Public License for more details.                                |
+#        |                                                                             |
+#        | You should have received a copy of the GNU General Public License           |
+#        | along with this program; if not, write to the Free Software                 |
+#        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+#        +-----------------------------------------------------------------------------+
+
+'''
+Provides a panel indicator that can be used to control and monitor the Gnome15
+desktop service (g15-desktop-service). It will display a list of currently active
+screens on activation, and allow the configuration UI to be launched (g15-config)
+'''
+
+
+import sys
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gnome
+import gnome.ui
+import os
+import gconf
+import traceback
+from threading import RLock
+
+# Logging
+import logging
+logging.basicConfig()
+logger = logging.getLogger()
+
+# Allow running from local path
+path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..", "gnome15", "src", "main", "python")
+if os.path.exists(path):
+    sys.path.insert(0, path)
+    
+# This block MUST be before the imports of the gnome15 modules
+import dbus
+import gobject
+gobject.threads_init()
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+from dbus.mainloop.glib import threads_init
+threads_init()
+DBusGMainLoop(set_as_default=True)
+
+import gnome15.g15globals as g15globals
+import gnome15.g15service as g15service
+import gnome15.g15screen as g15screen
+import gnome15.g15util as g15util
+import gnome15.g15desktop as g15desktop
+
+class G15SystemTray(g15desktop.G15GtkMenuPanelComponent):
+    
+    def __init__(self):      
+        self.prefs_menu = gtk.Menu()
+        g15desktop.G15GtkMenuPanelComponent.__init__(self)
+        
+    def create_component(self):
+        self.status_icon = gtk.StatusIcon()
+        
+        self.status_icon.connect('popup-menu', self._on_popup_menu)
+        self.status_icon.connect('activate', self._on_activate)
+        self.status_icon.connect('scroll_event', self.scroll_event)
+        
+    def clear_attention(self):
+        self.remove_attention_menu_item()
+        self.status_icon.set_from_pixbuf(self.normal_icon)
+        self.status_icon.set_tooltip("")
+        self.status_icon.set_visible(not self.conf_client.get_bool("/apps/gnome15/indicate_only_on_error"))
+        
+    def attention(self, message=None):
+        self.status_icon.set_visible(True)
+        self.status_icon.set_from_pixbuf(self.attention_icon)
+        self.status_icon.set_tooltip(message if message != None else self.default_message)
+        
+    def _on_popup_menu(self, status, button, time):
+        self.prefs_menu.popup(None, None, None, button, time)
+        
+    def _on_activate(self, status):
+        if len(self.menu.get_children()) > 0:
+            self.menu.popup(None, None, None, 1, gtk.get_current_event_time())
+        
+    def _about_info(self, widget):         
+        about = gnome.ui.About("Gnome15", g15globals.version, "GPL", \
+                               "Desktop integration for Logitech 'G' keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
+                               g15desktop.AUTHORS, "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
+        about.show()
+        
+    def add_service_item(self, item):
+        self._append_item(item, self.prefs_menu)   
+             
+    def add_start_desktop_service(self):
+        g15desktop.G15GtkMenuPanelComponent.add_start_desktop_service(self)
+        self.add_service_item(gtk.MenuItem())
+        
+    def rebuild_desktop_component(self):
+        g15desktop.G15GtkMenuPanelComponent.rebuild_desktop_component(self)
+        if len(self.devices)> 1:
+            self.add_service_item(gtk.MenuItem())  
+        item = gtk.MenuItem("Properties")
+        item.connect("activate", self.show_configuration)
+        self.add_service_item(item)        
+        item = gtk.MenuItem("About")
+        item.connect("activate", self.about_info)
+        self.add_service_item(item)        
+        self.status_icon.menu = self.prefs_menu
+        
+        self.prefs_menu.show_all()
+        
+    def icons_changed(self):
+        self.normal_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15util.get_icon_path([ "logitech-g-keyboard-applet", "logitech-g-keyboard-panel" ]), self.status_icon.get_size(), self.status_icon.get_size())
+        self.attention_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15util.get_icon_path([ "logitech-g-keyboard-error-panel", "logitech-g-keyboard-error-applet" ]), self.status_icon.get_size(), self.status_icon.get_size())
+    
+# run it in a gtk window
+if __name__ == "__main__":
+    try :
+        import setproctitle
+        setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
+    except:
+        pass
+    
+    tray = G15SystemTray()
+    tray.start_service()
+    gtk.main()

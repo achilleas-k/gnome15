@@ -1,0 +1,423 @@
+#!/usr/bin/env python
+ 
+#        +-----------------------------------------------------------------------------+
+#        | GPL                                                                         |
+#        +-----------------------------------------------------------------------------+
+#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        |                                                                             |
+#        | This program is free software; you can redistribute it and/or               |
+#        | modify it under the terms of the GNU General Public License                 |
+#        | as published by the Free Software Foundation; either version 2              |
+#        | of the License, or (at your option) any later version.                      |
+#        |                                                                             |
+#        | This program is distributed in the hope that it will be useful,             |
+#        | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+#        | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+#        | GNU General Public License for more details.                                |
+#        |                                                                             |
+#        | You should have received a copy of the GNU General Public License           |
+#        | along with this program; if not, write to the Free Software                 |
+#        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+#        +-----------------------------------------------------------------------------+
+
+import sys
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gobject
+import gnome.ui
+import gnomeapplet
+import os
+import gconf
+import dbus
+import traceback
+
+from threading import RLock
+from dbus.mainloop.glib import DBusGMainLoop
+from dbus.mainloop.glib import threads_init
+                
+gobject.threads_init()
+dbus.mainloop.glib.threads_init()
+DBusGMainLoop(set_as_default=True)
+loop = gobject.MainLoop()
+
+# Allow running from local path
+path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..", "gnome15", "src", "main", "python")
+if os.path.exists(path):
+    sys.path.insert(0, path)
+
+import gnome15.g15globals as g15globals
+import gnome15.g15setup as g15setup
+import gnome15.g15drivermanager as g15drivermanager
+import gnome15.g15screen as g15screen
+import gnome15.g15util as g15util
+
+session_bus = dbus.SessionBus()
+
+# bonobo factory of pycentrinoApplets
+def g15_applet_factory(applet, iid, parent_window=None):
+    print "Creating new applet",applet,iid,parent_window
+    app = G15Applet(applet,iid,parent_window)
+    if parent_window != None:
+        parent_window.connect("delete-event", shutdown, app)
+    else:
+        applet.connect("delete-event", stop, app)
+	return True
+    
+def stop(window, evt, applet):
+    print "Stopping applet"
+    if applet.service.plugins.get_active():
+        applet.service.plugins.deactivate()
+    if applet.service.plugins.get_started():
+        applet.service.plugins.destroy()
+    
+def shutdown(window, evt, applet):
+    print "Shutting down runtime"
+    stop(window, evt, applet)
+    gtk.main_quit()
+
+'''
+This is the Gnome panel applet version of Gnome15. 
+'''
+class G15Applet(gnomeapplet.Applet):
+    
+    def __init__(self, applet, iid, parent_window=None):
+        gnomeapplet.Applet.__init__(self)
+
+        self.icon_theme = gtk.icon_theme_get_default()
+        if g15globals.dev:
+            self.icon_theme.prepend_search_path(g15globals.icons_dir)
+        
+        self.parent_window = parent_window
+        self.driver = None
+        self.applet = applet
+        self.attention_required = False
+        self.page_items = {}
+        self.service = None
+        self.start_service_item = None
+        self.attention_item = None
+        self.pages = []    
+        self.lock = RLock()
+        
+        self.conf_client = gconf.client_get_default()
+        self.conf_client.add_dir('/desktop/gnome/interface', gconf.CLIENT_PRELOAD_NONE)
+        self.conf_client.notify_add("/desktop/gnome/interface/icon_theme", self._theme_changed)
+        self.orientation = self.applet.get_orient()
+        
+        # Widgets for showing icon
+        self.container = gtk.EventBox()
+#        self.container.set_visible_window(False)
+        self.container.connect("button-press-event",self.button_press)
+        self.box = None
+        if self.orientation == gnomeapplet.ORIENT_UP or self.orientation == gnomeapplet.ORIENT_DOWN:
+            self.box = gtk.HBox()
+        else:
+            self.box = gtk.VBox()
+        self.container.add(self.box)
+        self.applet.add(self.container)      
+        self.image = gtk.Image()
+        self._size_changed() 
+        self.box.pack_start(self.image, True, True)
+        
+        # Screen menu        
+        self.screen_menu = gtk.Menu()    
+        self.screen_menu.attach_to_widget(self.container, None)     
+        
+        # Connect some events   
+        self.applet.connect("button-press-event",self.button_clicked)
+        self.applet.connect("destroy",self.cleanup)
+        self.applet.connect("change-orient",self.change_orientation)
+        self.applet.connect("change-size",self._size_changed)
+        self.applet.connect("change-background",self.background_changed)
+        self.applet.connect("scroll-event",self.applet_scroll)
+        self.connect("configure-event", self._size_allocated)
+        
+        # Show the applet
+        self.applet.show_all()
+        
+        # Try and connect to the service now
+        try :
+            self._connect()        
+        except dbus.exceptions.DBusException:
+            self._disconnect()
+
+        # Watch for Gnome15 starting and stopping
+        session_bus.add_signal_receiver(self._name_owner_changed,
+                                     dbus_interface='org.freedesktop.DBus',
+                                     signal_name='NameOwnerChanged')  
+        
+    '''
+    DBUS Event Callbacks
+    ''' 
+    def _name_owner_changed(self, name, old_owner, new_owner):
+        if name == "org.gnome15.Gnome15":
+            if old_owner == "":
+                if self.service == None:
+                    self._connect()
+            else:
+                if self.service != None:
+                    self._disconnect()
+        
+    def _page_created(self, page_sequence_number, page_title):
+        page = session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Page%d' % page_sequence_number)
+        self.lock.acquire()
+        try :
+            if page.GetPriority() >= g15screen.PRI_LOW:
+                self._add_page(page)
+        finally :
+            self.lock.release()
+        
+    def _page_title_changed(self, page_sequence_number, title):
+        self.lock.acquire()
+        try : 
+            key = str(page_sequence_number)
+            if key in self.page_items:
+                item = self.page_items[key]
+                item.set_label(title)
+        finally :
+            self.lock.release()
+    
+    def _page_destroyed(self, page_sequence_number):
+        self.lock.acquire()
+        try :
+            page_item_key = str(page_sequence_number)
+            if page_item_key in self.page_items:
+                item = self.page_items[page_item_key]
+                self.screen_menu.remove(item)
+                item.destroy()
+                del self.page_items[page_item_key]
+                self.screen_menu.show_all()
+        finally :
+            self.lock.release()
+        
+    def _clear_attention(self):    
+        self.attention_required = False
+        self._size_changed()
+        
+    def _attention(self, message = None):
+        self.attention_required = True
+        self._size_changed()
+        
+    '''
+    Private
+    '''
+        
+    def applet_scroll(self, widget, event):
+        direction = event.direction
+        if direction == gtk.gdk.SCROLL_UP:
+            self.service.ClearPopup() 
+            self.service.Cycle(1)
+        elif direction == gtk.gdk.SCROLL_DOWN:
+            self.service.ClearPopup() 
+            self.service.Cycle(-1)
+        elif direction == gtk.gdk.SCROLL_LEFT:
+            self.driver.CycleKeyboard(-1)
+        elif direction == gtk.gdk.SCROLL_RIGHT:
+            self.driver.CycleKeyboard(1)
+        
+    def background_changed(self, applet, bg_type, color, pixmap):
+        rc_style = gtk.RcStyle()
+        self._recreate_icon() 
+        for c in [ self.applet, self.container, self.image, self.box ]:
+            c.set_style(None)
+            c.modify_style(rc_style)
+            if bg_type == gnomeapplet.PIXMAP_BACKGROUND:
+                style = self.applet.get_style()
+                style.bg_pixmap[gtk.STATE_NORMAL] = pixmap
+                c.set_style(style)
+            if bg_type == gnomeapplet.COLOR_BACKGROUND:
+                c.modify_bg(gtk.STATE_NORMAL, color)
+        
+    def change_orientation(self,arg1,data):
+        self.orientation = self.applet.get_orient()
+        if self.orientation == gnomeapplet.ORIENT_UP or self.orientation == gnomeapplet.ORIENT_DOWN:
+            tmpbox = gtk.HBox()
+        else:
+            tmpbox = gtk.VBox()
+        
+        for i in (self.box.get_children()):
+            i.reparent(tmpbox)
+
+        self.container.remove(self.container.get_children()[0])
+        self.box = tmpbox
+        self.container.add(self.box)
+        self.applet.show_all()
+        
+    def cleanup(self,event):
+        self.shutting_down = True
+        
+    def show_page_from_menu(self, event, page):
+        page.CycleTo()
+        
+    def button_clicked(self,widget,event):
+        if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS: 
+            self._configuration()
+        
+    def button_press(self,widget,event):
+        if event.type == gtk.gdk.BUTTON_PRESS and event.button == 3 :
+            self._create_menu()
+        elif event.type == gtk.gdk.BUTTON_PRESS and event.button == 1 :
+            self._create_and_display_screens_menu(widget, event)
+
+    
+    '''
+    Private
+    '''
+    def _connect(self):
+        self.service = session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service')
+        self.driver = session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Driver')
+        
+        # Load the initial pages
+        self.lock.acquire()
+        try : 
+            for page_sequence_number in self.service.GetPageSequenceNumbers(g15screen.PRI_LOW):
+                self._add_page(session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Page%d' % page_sequence_number))
+        finally :
+            self.lock.release()
+        
+        # Listen for events
+        session_bus.add_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Service", signal_name = "PageCreated")
+        session_bus.add_signal_receiver(self._page_title_changed, dbus_interface = "org.gnome15.Service", signal_name = "PageTitleChanged")
+        session_bus.add_signal_receiver(self._page_destroyed, dbus_interface = "org.gnome15.Service", signal_name = "PageDestroyed")
+        session_bus.add_signal_receiver(self._attention, dbus_interface = "org.gnome15.Service", signal_name = "AttentionRequested")
+        session_bus.add_signal_receiver(self._clear_attention, dbus_interface = "org.gnome15.Service", signal_name = "AttentionCleared")
+            
+        # Set the initial attention status
+        if self.service.IsAttentionRequested():
+            message = self.service.GetMessage()
+            self._attention(message)
+            
+            if self.attention_item == None:
+                self.attention_item = gtk.MenuItem(message)
+                self.menu.append(self.attention_item)
+                self.menu.show_all()
+                
+        else:
+            self._clear_attention()
+            self.message = self.service.GetMessage()
+            
+    def _disconnect(self):            
+            
+        session_bus.remove_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Service", signal_name = "PageCreated")
+        session_bus.remove_signal_receiver(self._page_title_changed, dbus_interface = "org.gnome15.Service", signal_name = "PageTitleChanged")
+        session_bus.remove_signal_receiver(self._page_destroyed, dbus_interface = "org.gnome15.Service", signal_name = "PageDestroyed")
+        session_bus.remove_signal_receiver(self._attention, dbus_interface = "org.gnome15.Service", signal_name = "AttentionRequested")
+        session_bus.remove_signal_receiver(self._clear_attention, dbus_interface = "org.gnome15.Service", signal_name = "AttentionCleared")
+             
+              
+        print "No DBUS, clearing up"  
+        self._remove_all_page_menu_items()            
+        self._attention("g15-desktop-service is not running.")                   
+        self.service = None
+        
+    def _remove_all_page_menu_items(self):
+        for page_item_key in self.page_items:
+            item = self.page_items[page_item_key]
+            self.screen_menu.remove(item)
+            item.destroy()
+            self.screen_menu.show_all()
+        self.page_items = {}
+        
+    def _start_desktop_service(self, widget, data): 
+        g15util.run_script("g15-desktop-service", ["-f"])
+    
+    def _theme_changed(self, client, connection_id, entry, args):
+        self._recreate_icon()
+        
+    def _size_allocated(self, arg1=None, arg2=None):
+        return True
+        
+    def _size_changed(self, arg1=None, arg2=None):
+        self._recreate_icon()
+        return True
+        
+    def _recreate_icon(self):   
+        if self.attention_required:       
+            pixbuf = self.icon_theme.load_icon("logitech-g-keyboard-error-applet", 128, 0)
+        else:       
+            pixbuf = self.icon_theme.load_icon("logitech-g-keyboard-applet", 128, 0)
+        size = int(self.applet.get_size() * 0.8)
+        pixbuf = pixbuf.scale_simple(size, size, gtk.gdk.INTERP_BILINEAR)
+        self.image.set_from_pixbuf(pixbuf)
+        
+    def _configuration(self, widget = None, data = None):             
+        g15util.run_script("g15-config")
+        
+    def _about_info(self, widget, data):         
+        about = gnome.ui.About("Gnome15", g15globals.version, "GPL", \
+                               "Desktop integration for Logitech 'G' keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
+                               ["Brett Smith <tanktarta@blueyonder.co.uk>"], "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
+        about.show()
+
+    def _create_menu(self):
+        
+        verbs = [ ( "Props", self._configuration ), ( "About", self._about_info ) ]
+        propxml="""
+        <popup name="button3">
+        <menuitem name="Item 1" verb="Props" label="_Preferences..." pixtype="stock" pixname="gtk-properties"/>
+        <menuitem name="Item 2" verb="About" label="_About..." pixtype="stock" pixname="gnome-stock-about"/>
+        """
+        
+        if self.attention_required and self.service == None:
+            verbs.append( ( "Start", self._start_desktop_service ) )
+            propxml += "<menuitem name=\"Item 3\" verb=\"Start\" label=\"Start Gnome15 Desktop Service\" pixtype=\"stock\" pixname=\"player_play\"/>"
+        
+        propxml += "</popup>"
+        
+        self.applet.setup_menu(propxml,verbs,None)
+        
+    def _add_page(self, page):
+        print "Adding page",page.GetTitle(),"seq",page.GetSequenceNumber()
+        item = gtk.MenuItem(page.GetTitle())
+        item.connect("activate", self.show_page_from_menu, page)
+        item.show()
+        self.page_items[str(page.GetSequenceNumber())] = item
+        self.screen_menu.append(item)
+        self.screen_menu.show_all()
+        
+    def  _create_and_display_screens_menu(self, widget, event):
+        print "Displaying screen menu"
+        if len(self.page_items) > 0:
+            self.screen_menu.popup(None, None, self._screens_menu_position, event.button, event.time, None)
+
+    def _screens_menu_position(self, menu, data=None):
+        orig_x,orig_y = self.applet.window.get_origin()
+        applet_width = self.applet.get_allocation().width
+        applet_height = self.applet.get_allocation().height
+        menu_width, menu_height = menu.size_request()
+        screen_width = gtk.gdk.screen_width()
+        screen_height = gtk.gdk.screen_height()
+
+        if self.orientation == gnomeapplet.ORIENT_UP :
+            x = orig_x
+            y = orig_y - menu_height
+        elif self.orientation == gnomeapplet.ORIENT_DOWN :
+            x = orig_x
+            y = orig_y + applet_height
+        elif self.orientation == gnomeapplet.ORIENT_LEFT :
+            x = orig_x - menu_width
+            y = orig_y
+        elif self.orientation == gnomeapplet.ORIENT_RIGHT :
+            x = orig_x + applet_width
+            y = orig_y
+
+        x = min(screen_width - menu_width - 1, x)
+        y = min(screen_height - menu_height - 1, y)
+
+        return (x, y , gtk.TRUE)
+   
+if g15drivermanager.get_configured_driver("-c" in sys.argv) != None:
+    if len(sys.argv) > 1 and "-w" in sys.argv:
+        main_window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        main_window.set_title("Gnome15") 
+        main_window.set_icon_from_file(g15globals.image_dir + "/g15key.png")
+        app = gnomeapplet.Applet()
+        g15_applet_factory(app, None, parent_window=main_window)
+        app.reparent(main_window)
+        main_window.show_all()
+        gtk.main()
+    else:
+        if __name__ == '__main__':
+            gnomeapplet.bonobo_factory("OAFIID:GNOME_G15Applet_Factory",
+                                        G15Applet.__gtype__, 
+                                        "gnome15", "0", g15_applet_factory)

@@ -1,0 +1,8 @@
+# This file maintains permissions for Gnome15's "G19 Direct" driver. These are the
+# defaults, you might want to tighten them up a bit.
+#
+# See udev(7) for syntax.
+#
+
+# Logitech G19 Gaming Keyboard
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c229", MODE="0660", GROUP="plugdev"

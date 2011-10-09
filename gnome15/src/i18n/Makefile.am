@@ -1,4 +1,5 @@
-EXTRA_DIST = gnome15.po \
+EXTRA_DIST = colorpicker.en_GB.po \
+			gnome15.po \
 			gnome15-drivers.po \
 			gnome15.en_GB.po \
 			gnome15-drivers.en_GB.po \
@@ -8,7 +9,8 @@ EXTRA_DIST = gnome15.po \
 			driver_g19direct.en_GB.po \
 			driver_gtk.en_GB.po \
 			driver_kernel.en_GB.po \
-			g15-config.en_GB.po
+			g15-config.en_GB.po \
+			macro-editor.en_GB.po
 
 all-local:
 	for M_LOCALE in en_GB; do \

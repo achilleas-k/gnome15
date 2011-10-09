@@ -1,0 +1,33 @@
+.\" Process this file with
+.\" groff -man -Tascii g15-config.1
+.\"
+.TH g15-config 1
+.SH NAME
+g15-config \- Configuration tool for Logitech G keyboards
+.SH SYNOPSIS
+.B g15-config [-c] 
+.SH DESCRIPTION
+.B g15-config
+Starts the 
+.B Gnome15  
+Logitech G keyboard configuration tool.
+It allows you to configure things such as the keyboard
+backlight colour or level, screen cycling options and which
+plugins are enabled.
+
+If the desktop service is not running, this tool will detect
+that and offer advice as to what to do.
+ 
+The first time
+.B g15-config 
+is used, you will be prompted for which driver to use. 
+.SH OPTIONS
+.IP -c
+Force the first-run configuration dialog to appear, allowing
+choice of which driver to use (additional packages may be required
+for your hardware).
+.SH AUTHOR
+Brett Smith <tanktarta@blueyonder.co.uk>
+.SH "SEE ALSO"
+.BR g15-indicator (1),
+.BR g15-macros (1)

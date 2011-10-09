@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="136"
+   height="32"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.1 r9760"
+   sodipodi:docname="mx5500-menu-screen.svg">
+  <defs
+     id="defs4">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3785">
+      <rect
+         style="fill:#000000;fill-opacity:1;stroke:none"
+         id="rect3787"
+         width="85.000763"
+         height="4.9999552"
+         x="0"
+         y="1020.353" />
+    </clipPath>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="7.9195959"
+     inkscape:cx="44.249881"
+     inkscape:cy="25.40152"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     borderlayer="false"
+     inkscape:window-width="1398"
+     inkscape:window-height="755"
+     inkscape:window-x="2170"
+     inkscape:window-y="259"
+     inkscape:window-maximized="0">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3986"
+       empspacing="10"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-1020.3622)">
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="-1.1428572"
+       y="1020.1479"
+       id="text2985"
+       sodipodi:linespacing="125%"
+       text-rendering="optimizeLegibility" />
+    <text
+       xml:space="preserve"
+       style="font-size:5.99993658px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="-0.4980416"
+       y="1025.3744"
+       id="text3037"
+       sodipodi:linespacing="125%"
+       transform="scale(0.99999098,1.000009)"
+       class="shadow"
+       clip-path="url(#clipPath3785)"><tspan
+         sodipodi:role="line"
+         id="tspan3039"
+         x="-0.4980416"
+         y="1025.3744">${title}</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.89858413px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 0.40372671,1026.9129 129.19254329,0"
+       id="path3041"
+       inkscape:connector-curvature="0" />
+    <rect
+       style="fill:none;stroke:none"
+       id="menu"
+       width="130"
+       height="24"
+       x="0"
+       y="1028.3622"
+       rx="6"
+       ry="7.1999993" />
+    <g
+       id="viewScrollbar"
+       transform="translate(-25,0)">
+      <rect
+         y="1021"
+         x="158"
+         height="29"
+         width="1"
+         id="rect2995"
+         style="fill:#000000;fill-opacity:1;stroke:none"
+         class="track" />
+      <rect
+         y="1021"
+         x="156"
+         height="2"
+         width="5"
+         id="rect3765"
+         style="fill:#808080;fill-opacity:1;stroke:none"
+         class="knob" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:5.99993658px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="128.69408"
+       y="1025.3744"
+       id="text3037-0"
+       sodipodi:linespacing="125%"
+       transform="scale(0.999991,1.000009)"
+       class="shadow"><tspan
+         sodipodi:role="line"
+         id="tspan3039-6"
+         x="128.69408"
+         y="1025.3744">${alt_title}</tspan></text>
+  </g>
+</svg>

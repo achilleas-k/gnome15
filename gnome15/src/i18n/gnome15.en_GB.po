@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome15 0.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-29 22:02+0100\n"
-"PO-Revision-Date: 2011-09-29 22:02+0100\n"
+"POT-Creation-Date: 2011-10-09 14:52+0100\n"
+"PO-Revision-Date: 2011-10-09 14:54+0100\n"
 "Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
 "Language-Team: English (British)\n"
 "Language: en_GB\n"
@@ -17,69 +17,49 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../main/python/gnome15/g15config.py:418
+#: ../main/python/gnome15/g15config.py:409
 msgid "Start Service"
 msgstr "Start Service"
 
-#: ../main/python/gnome15/g15config.py:427
+#: ../main/python/gnome15/g15config.py:417
 msgid "No supported devices could be found. Is the "
 msgstr "No supported devices could be found. Is the "
 
-#: ../main/python/gnome15/g15config.py:595
+#: ../main/python/gnome15/g15config.py:572
 msgid "The Gnome15 desktop service is not running. It is recommended "
 msgstr "The Gnome15 desktop service is not running. It is recommended "
 
-#: ../main/python/gnome15/g15config.py:600
+#: ../main/python/gnome15/g15config.py:577
 msgid "The Gnome15 desktop service is starting up. Please wait"
 msgstr "The Gnome15 desktop service is starting up. Please wait"
 
-#: ../main/python/gnome15/g15config.py:604
+#: ../main/python/gnome15/g15config.py:581
 msgid "The Gnome15 desktop service is stopping."
 msgstr "The Gnome15 desktop service is stopping."
 
-#: ../main/python/gnome15/g15config.py:622
+#: ../main/python/gnome15/g15config.py:599
 msgid "The Gnome15 desktop service is running, but failed to connect "
 msgstr "The Gnome15 desktop service is running, but failed to connect "
 
-#: ../main/python/gnome15/g15config.py:783
+#: ../main/python/gnome15/g15config.py:754
 msgid "<b>Hold</b>"
 msgstr "<b>Hold</b>"
 
-#: ../main/python/gnome15/g15config.py:956
+#: ../main/python/gnome15/g15config.py:932
 msgid "There is no appropriate driver for the device <b>"
 msgstr "There is no appropriate driver for the device <b>"
 
-#: ../main/python/gnome15/g15config.py:976
+#: ../main/python/gnome15/g15config.py:952
 msgid "This driver has no configuration options"
 msgstr "This driver has no configuration options"
 
-#: ../main/python/gnome15/g15config.py:1180
-#: ../main/python/gnome15/g15config.py:1237
+#: ../main/python/gnome15/g15config.py:1243
+#: ../main/python/gnome15/g15macroeditor.py:311
 #, python-format
 msgid "Macro %s"
 msgstr "Macro %s"
 
-#: ../main/python/gnome15/g15config.py:1196
-msgid "This key combination is already in use with "
-msgstr "This key combination is already in use with "
-
-#: ../main/python/gnome15/g15config.py:1204
-msgid "This key combination is reserved for use with an action. You "
-msgstr "This key combination is reserved for use with an action. You "
-
-#: ../main/python/gnome15/g15config.py:1212
-msgid "You have not chosen a macro key to assign the action to."
-msgstr "You have not chosen a macro key to assign the action to."
-
-#: ../main/python/gnome15/g15config.py:1622
-msgid "Open.."
-msgstr "Open.."
-
-#: ../main/python/gnome15/g15config.py:1629
-msgid "All files"
-msgstr "All files"
-
-#: ../main/python/gnome15/g15config.py:1785
+#: ../main/python/gnome15/g15config.py:1635
 msgid "Set backlight colour"
 msgstr "Set backlight colour"
 
@@ -113,51 +93,51 @@ msgstr ""
 "%s is now the active keyboard. Use mouse wheel up and down to cycle screens "
 "on this device"
 
-#: ../main/python/gnome15/g15devices.py:315
+#: ../main/python/gnome15/g15devices.py:310
 msgid "Virtual LCD Window"
 msgstr "Virtual LCD Window"
 
-#: ../main/python/gnome15/g15devices.py:316
+#: ../main/python/gnome15/g15devices.py:311
 msgid "Logitech G11 Keyboard"
 msgstr "Logitech G11 Keyboard"
 
-#: ../main/python/gnome15/g15devices.py:317
+#: ../main/python/gnome15/g15devices.py:312
 msgid "Logitech G19 Gaming Keyboard"
 msgstr "Logitech G19 Gaming Keyboard"
 
-#: ../main/python/gnome15/g15devices.py:318
+#: ../main/python/gnome15/g15devices.py:313
 msgid "Logitech G15 Gaming Keyboard (version 1)"
 msgstr "Logitech G15 Gaming Keyboard (version 1)"
 
-#: ../main/python/gnome15/g15devices.py:319
+#: ../main/python/gnome15/g15devices.py:314
 msgid "Logitech G15 Gaming Keyboard (version 2)"
 msgstr "Logitech G15 Gaming Keyboard (version 2)"
 
-#: ../main/python/gnome15/g15devices.py:320
+#: ../main/python/gnome15/g15devices.py:315
 msgid "Logitech G13 Advanced Gameboard"
 msgstr "Logitech G13 Advanced Gameboard"
 
-#: ../main/python/gnome15/g15devices.py:321
+#: ../main/python/gnome15/g15devices.py:316
 msgid "Logitech G510 Keyboard"
 msgstr "Logitech G510 Keyboard"
 
-#: ../main/python/gnome15/g15devices.py:322
+#: ../main/python/gnome15/g15devices.py:317
 msgid "Logitech G510 Keyboard (audio)"
 msgstr "Logitech G510 Keyboard (audio)"
 
-#: ../main/python/gnome15/g15devices.py:323
+#: ../main/python/gnome15/g15devices.py:318
 msgid "Logitech Z10 Speakers"
 msgstr "Logitech Z10 Speakers"
 
-#: ../main/python/gnome15/g15devices.py:324
+#: ../main/python/gnome15/g15devices.py:319
 msgid "Logitech G110 Keyboard"
 msgstr "Logitech G110 Keyboard"
 
-#: ../main/python/gnome15/g15devices.py:325
+#: ../main/python/gnome15/g15devices.py:320
 msgid "Logitech GamePanel"
 msgstr "Logitech GamePanel"
 
-#: ../main/python/gnome15/g15devices.py:328
+#: ../main/python/gnome15/g15devices.py:323
 msgid "Logitech MX5500"
 msgstr "Logitech MX5500"
 
@@ -178,10 +158,30 @@ msgstr ""
 msgid "Failed to connect."
 msgstr "Failed to connect."
 
-#: ../main/python/gnome15/g15screen.py:481
+#: ../main/python/gnome15/g15macroeditor.py:257
+msgid "Open.."
+msgstr "Open.."
+
+#: ../main/python/gnome15/g15macroeditor.py:264
+msgid "All files"
+msgstr "All files"
+
+#: ../main/python/gnome15/g15macroeditor.py:466
+msgid "This key combination is already in use with "
+msgstr "This key combination is already in use with "
+
+#: ../main/python/gnome15/g15macroeditor.py:476
+msgid "This key combination is reserved for use with an action. You "
+msgstr "This key combination is reserved for use with an action. You "
+
+#: ../main/python/gnome15/g15macroeditor.py:485
+msgid "You have not chosen a macro key to assign the action to."
+msgstr "You have not chosen a macro key to assign the action to."
+
+#: ../main/python/gnome15/g15screen.py:505
 msgid "The current device has no suitable output device"
 msgstr "The current device has no suitable output device"
 
-#: ../main/python/gnome15/g15screen.py:1532
+#: ../main/python/gnome15/g15screen.py:1678
 msgid "Starting up .."
 msgstr "Starting up .."

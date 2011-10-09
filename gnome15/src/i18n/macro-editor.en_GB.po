@@ -1,0 +1,138 @@
+# English translations for gnome15 package.
+# Copyright (C) 2011 THE gnome15'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome15 package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome15 0.8.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 14:52+0100\n"
+"PO-Revision-Date: 2011-10-09 14:54+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: macro-editor.glade.h:1
+msgid "<b>Keys Pressed</b>"
+msgstr "<b>Keys Pressed</b>"
+
+#: macro-editor.glade.h:2
+msgid "<b>Memory Bank:</b>"
+msgstr "<b>Memory Bank:</b>"
+
+#: macro-editor.glade.h:3
+msgid "<b>Name:</b>"
+msgstr "<b>Name:</b>"
+
+#: macro-editor.glade.h:4
+msgid "<b>Repetition</b>"
+msgstr "<b>Repetition</b>"
+
+#: macro-editor.glade.h:5
+msgid "<b>Target:</b>"
+msgstr "<b>Target:</b>"
+
+#: macro-editor.glade.h:6
+msgid "Action"
+msgstr "Action"
+
+#: macro-editor.glade.h:7
+msgid "Allow combination of keys"
+msgstr "Allow combination of keys"
+
+#: macro-editor.glade.h:8
+msgid "BTN_TEST"
+msgstr "BTN_TEST"
+
+#: macro-editor.glade.h:9
+msgid "Delay between repeats"
+msgstr "Delay between repeats"
+
+#: macro-editor.glade.h:10
+msgid "Digital Joystick"
+msgstr "Digital Joystick"
+
+#: macro-editor.glade.h:11
+msgid "Edit Macro"
+msgstr "Edit Macro"
+
+#: macro-editor.glade.h:12
+msgid "Filter:"
+msgstr "Filter:"
+
+#: macro-editor.glade.h:13
+msgid "Joystick Button"
+msgstr "Joystick Button"
+
+#: macro-editor.glade.h:14
+msgid "KEY_TEST"
+msgstr "KEY_TEST"
+
+#: macro-editor.glade.h:15
+msgid "Keyboard Key"
+msgstr "Keyboard Key"
+
+#: macro-editor.glade.h:16
+msgid "Macro Script"
+msgstr "Macro Script"
+
+#: macro-editor.glade.h:17
+msgid "Mode:"
+msgstr "Mode:"
+
+#: macro-editor.glade.h:18
+msgid "Mouse Button"
+msgstr "Mouse Button"
+
+#: macro-editor.glade.h:19
+msgid "None"
+msgstr "None"
+
+#: macro-editor.glade.h:20
+msgid "Override default repeat delay"
+msgstr "Override default repeat delay"
+
+#: macro-editor.glade.h:21
+msgid "Run Command"
+msgstr "Run Command"
+
+#: macro-editor.glade.h:22
+msgid "Simple Macro"
+msgstr "Simple Macro"
+
+#: macro-editor.glade.h:23
+msgid "Toggle"
+msgstr "Toggle"
+
+#: macro-editor.glade.h:24
+msgid "When held"
+msgstr "When held"
+
+#: macro-editor.glade.h:25
+msgid "You can use & to run the command in the background"
+msgstr "You can use & to run the command in the background"
+
+#: macro-editor.glade.h:26
+msgid ""
+"\\r for Return, \\e for escape, \\b for backspace, \\t for tab\n"
+"\\p for pause and \\\\ for backslash"
+msgstr ""
+"\\r for Return, \\e for escape, \\b for backspace, \\t for tab\n"
+"\\p for pause and \\\\ for backslash"
+
+#: macro-editor.glade.h:28
+msgid "_Browse"
+msgstr "_Browse"
+
+#: macro-editor.glade.h:29
+msgid "column"
+msgstr "column"
+
+#: macro-editor.glade.h:30
+msgid "label"
+msgstr "label"

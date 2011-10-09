@@ -56,7 +56,7 @@
           </object>
         </child>
         <child>
-          <object class="GtkLabel" id="label">
+          <object class="GtkLabel" id="JoyModeLabel">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="xalign">0</property>
@@ -115,15 +115,15 @@
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">macro</col>
+        <col id="0">macro</col>
         <col id="1" translatable="yes">Emit macro keys</col>
       </row>
       <row>
-        <col id="0" translatable="yes">joystick</col>
+        <col id="0">joystick</col>
         <col id="1" translatable="yes">Analogue Joystick</col>
       </row>
       <row>
-        <col id="0" translatable="yes">mouse</col>
+        <col id="0">mouse</col>
         <col id="1" translatable="yes">Mouse</col>
       </row>
     </data>

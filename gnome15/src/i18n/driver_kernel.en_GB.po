@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome15 0.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-29 22:02+0100\n"
-"PO-Revision-Date: 2011-09-29 22:02+0100\n"
+"POT-Creation-Date: 2011-10-09 14:52+0100\n"
+"PO-Revision-Date: 2011-10-09 14:54+0100\n"
 "Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
 "Language-Team: English (British)\n"
 "Language: en_GB\n"
@@ -26,46 +26,37 @@ msgid "Device:"
 msgstr "Device:"
 
 #: driver_kernel.glade.h:3
-msgid "Emit Macro Keys"
-msgstr "Emit Macro Keys FoSho"
+msgid "Digital Joystick"
+msgstr "Digital Joystick"
 
 #: driver_kernel.glade.h:4
+msgid "Emit Macro Keys"
+msgstr "Emit Macro Keys"
+
+#: driver_kernel.glade.h:5
 msgid "Joystick mode:"
 msgstr "Joystick mode:"
 
-#: driver_kernel.glade.h:5
+#: driver_kernel.glade.h:6
 msgid "Mouse"
 msgstr "Mouse"
 
-#: driver_kernel.glade.h:6
+#: driver_kernel.glade.h:7
 msgid "auto"
 msgstr "auto"
 
-#: driver_kernel.glade.h:7
+#: driver_kernel.glade.h:8
 msgid "g13"
 msgstr "g13"
 
-#: driver_kernel.glade.h:8
+#: driver_kernel.glade.h:9
 msgid "g15v1"
 msgstr "g15v1"
 
-#: driver_kernel.glade.h:9
+#: driver_kernel.glade.h:10
 msgid "g15v2"
 msgstr "g15v2"
 
-#: driver_kernel.glade.h:10
+#: driver_kernel.glade.h:11
 msgid "g19"
 msgstr "g19"
-
-#: driver_kernel.glade.h:11
-msgid "joystick"
-msgstr "joystick"
-
-#: driver_kernel.glade.h:12
-msgid "macro"
-msgstr "macro"
-
-#: driver_kernel.glade.h:13
-msgid "mouse"
-msgstr "mouse"
-
