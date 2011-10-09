@@ -1,0 +1,106 @@
+# English translations for impulse package.
+# Copyright (C) 2011 THE impulse'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the impulse package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: impulse 15\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:36+0100\n"
+"PO-Revision-Date: 2011-10-09 19:39+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: i18n/impulse15.glade.h:1
+msgid "Animate M-Key lights"
+msgstr "Animate M-Key lights"
+
+#: i18n/impulse15.glade.h:2
+msgid "Audio Source"
+msgstr "Audio Source"
+
+#: i18n/impulse15.glade.h:3
+msgid "Background"
+msgstr "Background"
+
+#: i18n/impulse15.glade.h:4
+msgid "Bar Height"
+msgstr "Bar Height"
+
+#: i18n/impulse15.glade.h:5
+msgid "Bar Width"
+msgstr "Bar Width"
+
+#: i18n/impulse15.glade.h:6
+msgid "Bars"
+msgstr "Bars"
+
+#: i18n/impulse15.glade.h:7
+msgid "Circle LCD"
+msgstr "Circle LCD"
+
+#: i18n/impulse15.glade.h:8
+msgid "Circle Line"
+msgstr "Circle Line"
+
+#: i18n/impulse15.glade.h:9
+msgid "Color 1"
+msgstr "Color 1"
+
+#: i18n/impulse15.glade.h:10
+msgid "Color 2"
+msgstr "Color 2"
+
+#: i18n/impulse15.glade.h:11
+msgid "Default"
+msgstr "Default"
+
+#: i18n/impulse15.glade.h:12
+msgid "Disco mode"
+msgstr "Disco mode"
+
+#: i18n/impulse15.glade.h:13
+msgid "Display"
+msgstr "Display"
+
+#: i18n/impulse15.glade.h:14
+msgid "Foreground"
+msgstr "Foreground"
+
+#: i18n/impulse15.glade.h:15
+msgid "Frame rate"
+msgstr "Frame rate"
+
+#: i18n/impulse15.glade.h:16
+msgid "Impulse Preferences"
+msgstr "Impulse Preferences"
+
+#: i18n/impulse15.glade.h:17
+msgid "Mode"
+msgstr "Mode"
+
+#: i18n/impulse15.glade.h:18
+msgid "Original"
+msgstr "Original"
+
+#: i18n/impulse15.glade.h:19
+msgid "Rows"
+msgstr "Rows"
+
+#: i18n/impulse15.glade.h:20
+msgid "Screen"
+msgstr "Screen"
+
+#: i18n/impulse15.glade.h:21
+msgid "Spacing"
+msgstr "Spacing"
+
+#: i18n/impulse15.glade.h:22
+msgid "screen"
+msgstr "screen"

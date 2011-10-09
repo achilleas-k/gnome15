@@ -1,4 +1,0 @@
-# This file maintains permissions for Gnome15 input devices
-#
-
-KERNEL=="uinput", GROUP="plugdev", MODE="0660"

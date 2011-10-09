@@ -1,0 +1,62 @@
+# English translations for gnome15-plugins package.
+# Copyright (C) 2011 THE gnome15-plugins'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome15-plugins package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome15-plugins 0.7.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"PO-Revision-Date: 2011-10-09 19:48+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: i18n/lcdbiff.glade.h:1
+msgid "<b>Account Options</b>"
+msgstr "<b>Account Options</b>"
+
+#: i18n/lcdbiff.glade.h:2
+msgid "<b>Accounts</b>"
+msgstr "<b>Accounts</b>"
+
+#: i18n/lcdbiff.glade.h:3
+msgid "<b>Options</b>"
+msgstr "<b>Options</b>"
+
+#: i18n/lcdbiff.glade.h:4
+msgid "Check every"
+msgstr "Check every"
+
+#: i18n/lcdbiff.glade.h:5
+msgid "IMAP"
+msgstr "IMAP"
+
+#: i18n/lcdbiff.glade.h:6
+msgid "Mail Notification Preferences"
+msgstr "Mail Notification Preferences"
+
+#: i18n/lcdbiff.glade.h:7
+msgid "POP3"
+msgstr "POP3"
+
+#: i18n/lcdbiff.glade.h:8
+msgid "Type:"
+msgstr "Type:"
+
+#: i18n/lcdbiff.glade.h:9
+msgid "minutes"
+msgstr "minutes"
+
+#: i18n/lcdbiff.glade.h:10
+msgid "toolbutton1"
+msgstr "toolbutton1"
+
+#: i18n/lcdbiff.glade.h:11
+msgid "toolbutton2"
+msgstr "toolbutton2"

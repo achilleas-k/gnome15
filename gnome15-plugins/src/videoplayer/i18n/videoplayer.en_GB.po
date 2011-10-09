@@ -1,0 +1,64 @@
+# English translations for gnome15-plugins package.
+# Copyright (C) 2011 THE gnome15-plugins'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome15-plugins package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome15-plugins 0.7.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"PO-Revision-Date: 2011-10-09 19:49+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: videoplayer.py:39
+msgid "Video Player"
+msgstr "Video Player"
+
+#: videoplayer.py:40
+msgid ""
+"Plays videos! Very much experimental, this plugin uses mplayer to generate "
+"JPEG images which are then loaded and displayed on the LCD. This means it is "
+"very CPU AND disk intensive and should only be used as a toy. "
+msgstr ""
+"Plays videos! Very much experimental, this plugin uses mplayer to generate "
+"JPEG images which are then loaded and displayed on the LCD. This means it is "
+"very CPU AND disk intensive and should only be used as a toy. "
+
+#: videoplayer.py:45
+msgid "Copyright (C)2010 Brett Smith"
+msgstr "Copyright (C)2010 Brett Smith"
+
+#: videoplayer.py:50
+msgid "Stop"
+msgstr "Stop"
+
+#: videoplayer.py:51
+msgid "Play"
+msgstr "Play"
+
+#: videoplayer.py:52
+msgid "Open file"
+msgstr "Open file"
+
+#: videoplayer.py:53
+msgid "Toggle Mute"
+msgstr "Toggle Mute"
+
+#: videoplayer.py:54
+msgid "Change aspect"
+msgstr "Change aspect"
+
+#: videoplayer.py:211
+msgid "All files"
+msgstr "All files"
+
+#: videoplayer.py:216
+msgid "Movies"
+msgstr "Movies"

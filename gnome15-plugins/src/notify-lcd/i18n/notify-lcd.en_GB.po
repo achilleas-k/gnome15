@@ -1,0 +1,74 @@
+# English translations for gnome15-plugins package.
+# Copyright (C) 2011 THE gnome15-plugins'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome15-plugins package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome15-plugins 0.7.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"PO-Revision-Date: 2011-10-09 19:48+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: i18n/notify-lcd.glade.h:1
+msgid "<b>Notification</b>"
+msgstr "<b>Notification</b>"
+
+#: i18n/notify-lcd.glade.h:2
+msgid "<b>Options</b>"
+msgstr "<b>Options</b>"
+
+#: i18n/notify-lcd.glade.h:3
+msgid "Allow actions"
+msgstr "Allow actions"
+
+#: i18n/notify-lcd.glade.h:4
+msgid "Allow application to cancel notification"
+msgstr "Allow application to cancel notification"
+
+#: i18n/notify-lcd.glade.h:5
+msgid "Blink keyboard backlight"
+msgstr "Blink keyboard backlight"
+
+#: i18n/notify-lcd.glade.h:6
+msgid "Blink memory bank lights"
+msgstr "Blink memory bank lights"
+
+#: i18n/notify-lcd.glade.h:7
+msgid "Change keyboard backlight colour"
+msgstr "Change keyboard backlight colour"
+
+#: i18n/notify-lcd.glade.h:8
+msgid "Color"
+msgstr "Color"
+
+#: i18n/notify-lcd.glade.h:9
+msgid "Delay"
+msgstr "Delay"
+
+#: i18n/notify-lcd.glade.h:10
+msgid "Enable sounds"
+msgstr "Enable sounds"
+
+#: i18n/notify-lcd.glade.h:11
+msgid "Message on desktop (as normal)"
+msgstr "Message on desktop (as normal)"
+
+#: i18n/notify-lcd.glade.h:12
+msgid "Message on keyboard's screen"
+msgstr "Message on keyboard's screen"
+
+#: i18n/notify-lcd.glade.h:13
+msgid "Notify Preferences"
+msgstr "Notify Preferences"
+
+#: i18n/notify-lcd.glade.h:14
+msgid "Respect requested timeout"
+msgstr "Respect requested timeout"

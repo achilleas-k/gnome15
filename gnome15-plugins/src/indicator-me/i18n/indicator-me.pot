@@ -1,0 +1,87 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: indicator-me.py:45
+msgid "Indicator Me"
+msgstr ""
+
+#: indicator-me.py:46
+msgid ""
+"Indicator that shows user information and status.\n"
+"\n"
+"NOTE, this plugin is not required on Ubuntu 11.10 and onwards, as the "
+"functionality is now provided by Indicator Messages"
+msgstr ""
+
+#: indicator-me.py:50
+msgid "Copyright (C)2010 Brett Smith"
+msgstr ""
+
+#: indicator-me.py:55
+msgid "Previous status"
+msgstr ""
+
+#: indicator-me.py:56
+msgid "Next status"
+msgstr ""
+
+#: indicator-me.py:57
+msgid "Choose status"
+msgstr ""
+
+#: indicator-me.py:67
+msgid "Available"
+msgstr ""
+
+#: indicator-me.py:68
+msgid "Away"
+msgstr ""
+
+#: indicator-me.py:69
+msgid "Busy"
+msgstr ""
+
+#: indicator-me.py:70
+msgid "Offline"
+msgstr ""
+
+#: indicator-me.py:71 indicator-me.py:72
+msgid "Invisible"
+msgstr ""
+
+#: indicator-me.py:165
+msgid "Indicator Me Status"
+msgstr ""
+
+#: indicator-me.py:169
+msgid "Indicator Me Popup"
+msgstr ""
+
+#: indicator-me.py:210
+#, python-format
+msgid "Status - %s"
+msgstr ""
+
+#: indicator-me.py:219
+msgid "Status"
+msgstr ""
+
+#: indicator-me.py:225
+msgid "Unknown"
+msgstr ""

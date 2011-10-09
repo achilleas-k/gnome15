@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-30 03:07+0100\n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,23 +34,23 @@ msgid "Check every"
 msgstr ""
 
 #: i18n/lcdbiff.glade.h:5
-msgid "Mail Notification Preferences"
+msgid "IMAP"
 msgstr ""
 
 #: i18n/lcdbiff.glade.h:6
-msgid "Type:"
+msgid "Mail Notification Preferences"
 msgstr ""
 
 #: i18n/lcdbiff.glade.h:7
-msgid "imap"
+msgid "POP3"
 msgstr ""
 
 #: i18n/lcdbiff.glade.h:8
-msgid "minutes"
+msgid "Type:"
 msgstr ""
 
 #: i18n/lcdbiff.glade.h:9
-msgid "pop3"
+msgid "minutes"
 msgstr ""
 
 #: i18n/lcdbiff.glade.h:10

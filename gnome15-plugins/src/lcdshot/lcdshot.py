@@ -24,6 +24,7 @@ _ = g15locale.get_translation("lcdshot", modfile = __file__).ugettext
 import gnome15.g15driver as g15driver
 import gnome15.g15devices as g15devices
 import gnome15.g15globals as g15globals
+import gnome15.g15actions as g15actions
 import os.path 
 import logging
 import gtk
@@ -34,8 +35,8 @@ logger = logging.getLogger("lcdshot")
 SCREENSHOT = "screenshot"
 
 # Register the action with all supported models
-g15devices.g15_action_keys[SCREENSHOT] = g15devices.ActionBinding(SCREENSHOT, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_HELD)
-g15devices.g19_action_keys[SCREENSHOT] = g15devices.ActionBinding(SCREENSHOT, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_HELD)
+g15devices.g15_action_keys[SCREENSHOT] = g15actions.ActionBinding(SCREENSHOT, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_HELD)
+g15devices.g19_action_keys[SCREENSHOT] = g15actions.ActionBinding(SCREENSHOT, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_HELD)
  
 # Plugin details - All of these must be provided
 id="lcdshot"

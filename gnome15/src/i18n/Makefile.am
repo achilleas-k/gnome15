@@ -13,7 +13,7 @@ EXTRA_DIST = colorpicker.en_GB.po \
 			macro-editor.en_GB.po
 
 all-local:
-	for M_LOCALE in en_GB; do \
+	for M_LOCALE in @BUILD_LOCALES@; do \
 		mkdir -p $$M_LOCALE/LC_MESSAGES ; \
 		for M_PO in *.po; do \
 			BN=`basename $$M_PO .po`; \
@@ -24,7 +24,8 @@ all-local:
 	done
 	
 install-exec-hook:
-	for M_LOCALE in en_GB; do \
+	for M_LOCALE in @BUILD_LOCALES@; do \
+		mkdir -p $(DESTDIR)$(datadir)/gnome15/i18n; \
 		cp -pR $$M_LOCALE $(DESTDIR)$(datadir)/gnome15/i18n; \
 	done
 	

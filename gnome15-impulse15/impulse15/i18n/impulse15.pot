@@ -1,0 +1,106 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:36+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: i18n/impulse15.glade.h:1
+msgid "Animate M-Key lights"
+msgstr ""
+
+#: i18n/impulse15.glade.h:2
+msgid "Audio Source"
+msgstr ""
+
+#: i18n/impulse15.glade.h:3
+msgid "Background"
+msgstr ""
+
+#: i18n/impulse15.glade.h:4
+msgid "Bar Height"
+msgstr ""
+
+#: i18n/impulse15.glade.h:5
+msgid "Bar Width"
+msgstr ""
+
+#: i18n/impulse15.glade.h:6
+msgid "Bars"
+msgstr ""
+
+#: i18n/impulse15.glade.h:7
+msgid "Circle LCD"
+msgstr ""
+
+#: i18n/impulse15.glade.h:8
+msgid "Circle Line"
+msgstr ""
+
+#: i18n/impulse15.glade.h:9
+msgid "Color 1"
+msgstr ""
+
+#: i18n/impulse15.glade.h:10
+msgid "Color 2"
+msgstr ""
+
+#: i18n/impulse15.glade.h:11
+msgid "Default"
+msgstr ""
+
+#: i18n/impulse15.glade.h:12
+msgid "Disco mode"
+msgstr ""
+
+#: i18n/impulse15.glade.h:13
+msgid "Display"
+msgstr ""
+
+#: i18n/impulse15.glade.h:14
+msgid "Foreground"
+msgstr ""
+
+#: i18n/impulse15.glade.h:15
+msgid "Frame rate"
+msgstr ""
+
+#: i18n/impulse15.glade.h:16
+msgid "Impulse Preferences"
+msgstr ""
+
+#: i18n/impulse15.glade.h:17
+msgid "Mode"
+msgstr ""
+
+#: i18n/impulse15.glade.h:18
+msgid "Original"
+msgstr ""
+
+#: i18n/impulse15.glade.h:19
+msgid "Rows"
+msgstr ""
+
+#: i18n/impulse15.glade.h:20
+msgid "Screen"
+msgstr ""
+
+#: i18n/impulse15.glade.h:21
+msgid "Spacing"
+msgstr ""
+
+#: i18n/impulse15.glade.h:22
+msgid "screen"
+msgstr ""

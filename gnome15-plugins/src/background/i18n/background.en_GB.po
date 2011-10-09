@@ -1,0 +1,66 @@
+# English translations for gnome15-plugins package.
+# Copyright (C) 2011 THE gnome15-plugins'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome15-plugins package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome15-plugins 0.7.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"PO-Revision-Date: 2011-10-09 19:48+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: i18n/background.glade.h:1
+msgid "Allow macro profiles to override background"
+msgstr "Allow macro profiles to override background"
+
+#: i18n/background.glade.h:2
+msgid "Background Image"
+msgstr "Background Image"
+
+#: i18n/background.glade.h:3
+msgid "Center"
+msgstr "Center"
+
+#: i18n/background.glade.h:4
+msgid "Scale"
+msgstr "Scale"
+
+#: i18n/background.glade.h:5
+msgid "Select A Background"
+msgstr "Select A Background"
+
+#: i18n/background.glade.h:6
+msgid "Stretch"
+msgstr "Stretch"
+
+#: i18n/background.glade.h:7
+msgid "Style"
+msgstr "Style"
+
+#: i18n/background.glade.h:8
+msgid "Tile"
+msgstr "Tile"
+
+#: i18n/background.glade.h:9
+msgid "Use _image file"
+msgstr "Use _image file"
+
+#: i18n/background.glade.h:10
+msgid "Wallpaper Preferences"
+msgstr "Wallpaper Preferences"
+
+#: i18n/background.glade.h:11
+msgid "Zoom"
+msgstr "Zoom"
+
+#: i18n/background.glade.h:12
+msgid "_Same as desktop background"
+msgstr "_Same as desktop background"

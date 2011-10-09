@@ -132,7 +132,10 @@ class G15Message():
         self.icon = icon
         self.summary = "None" if summary == None else summary
         if body != None and len(body) > 0:
-            self.body = lxml.html.fromstring(body).text_content()
+            try:
+                self.body = lxml.html.fromstring(body).text_content()
+            except Exception as e:
+                self.body = body
         else:
             self.body = body
         self.timeout = timeout

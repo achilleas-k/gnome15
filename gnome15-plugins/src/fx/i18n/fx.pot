@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-30 03:07+0100\n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,29 +26,29 @@ msgid "Animation Speed"
 msgstr ""
 
 #: i18n/fx.glade.h:3
-msgid "Special Effects Preferences"
+msgid "Fade"
 msgstr ""
 
 #: i18n/fx.glade.h:4
-msgid "fade"
+msgid "Horizontal Slide"
 msgstr ""
 
 #: i18n/fx.glade.h:5
-msgid "horizontal-scroll"
+msgid "None"
 msgstr ""
 
 #: i18n/fx.glade.h:6
-msgid "none"
+msgid "Random"
 msgstr ""
 
 #: i18n/fx.glade.h:7
-msgid "random"
+msgid "Special Effects Preferences"
 msgstr ""
 
 #: i18n/fx.glade.h:8
-msgid "vertical-scroll"
+msgid "Vertical Slide"
 msgstr ""
 
 #: i18n/fx.glade.h:9
-msgid "zoom"
+msgid "Zoom"
 msgstr ""

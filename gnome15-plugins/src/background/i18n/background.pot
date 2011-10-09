@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-30 03:07+0100\n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,45 +18,49 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: i18n/background.glade.h:1
-msgid "Background Image"
+msgid "Allow macro profiles to override background"
 msgstr ""
 
 #: i18n/background.glade.h:2
-msgid "Select A Background"
+msgid "Background Image"
 msgstr ""
 
 #: i18n/background.glade.h:3
-msgid "Style"
+msgid "Center"
 msgstr ""
 
 #: i18n/background.glade.h:4
-msgid "Use _image file"
+msgid "Scale"
 msgstr ""
 
 #: i18n/background.glade.h:5
-msgid "Wallpaper Preferences"
+msgid "Select A Background"
 msgstr ""
 
 #: i18n/background.glade.h:6
-msgid "_Same as desktop background"
+msgid "Stretch"
 msgstr ""
 
 #: i18n/background.glade.h:7
-msgid "center"
+msgid "Style"
 msgstr ""
 
 #: i18n/background.glade.h:8
-msgid "scale"
+msgid "Tile"
 msgstr ""
 
 #: i18n/background.glade.h:9
-msgid "stretch"
+msgid "Use _image file"
 msgstr ""
 
 #: i18n/background.glade.h:10
-msgid "tile"
+msgid "Wallpaper Preferences"
 msgstr ""
 
 #: i18n/background.glade.h:11
-msgid "zoom"
+msgid "Zoom"
+msgstr ""
+
+#: i18n/background.glade.h:12
+msgid "_Same as desktop background"
 msgstr ""

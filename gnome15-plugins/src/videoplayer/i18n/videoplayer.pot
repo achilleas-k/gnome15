@@ -1,0 +1,61 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: videoplayer.py:39
+msgid "Video Player"
+msgstr ""
+
+#: videoplayer.py:40
+msgid ""
+"Plays videos! Very much experimental, this plugin uses mplayer to generate "
+"JPEG images which are then loaded and displayed on the LCD. This means it is "
+"very CPU AND disk intensive and should only be used as a toy. "
+msgstr ""
+
+#: videoplayer.py:45
+msgid "Copyright (C)2010 Brett Smith"
+msgstr ""
+
+#: videoplayer.py:50
+msgid "Stop"
+msgstr ""
+
+#: videoplayer.py:51
+msgid "Play"
+msgstr ""
+
+#: videoplayer.py:52
+msgid "Open file"
+msgstr ""
+
+#: videoplayer.py:53
+msgid "Toggle Mute"
+msgstr ""
+
+#: videoplayer.py:54
+msgid "Change aspect"
+msgstr ""
+
+#: videoplayer.py:211
+msgid "All files"
+msgstr ""
+
+#: videoplayer.py:216
+msgid "Movies"
+msgstr ""

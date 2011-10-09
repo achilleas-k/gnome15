@@ -24,6 +24,7 @@ _ = g15locale.get_translation("cal", modfile = __file__).ugettext
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15screen as g15screen
 import datetime
 import time
 import os
@@ -142,15 +143,19 @@ class G15Cal():
                                      thumbnail_painter = self._paint_thumbnail)
         self._page.set_title("Evolution Calendar")
         self._page.set_theme(self._theme)
-        self._page.add_child(self._menu)
-        self._page.add_child(self._calendar)
-        self._page.add_child(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
-        
-        # Screen
-        self._screen.add_page(self._page)
         self._screen.action_listeners.append(self)
         self._calendar.set_focused(True)
         
+        def on_redraw():
+            self._page.add_child(self._menu)
+            self._page.add_child(self._calendar)
+            self._page.add_child(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
+            self._screen.add_page(self._page)
+            self._page.redraw()
+            
+        g15screen.run_on_redraw(on_redraw)
+        
+        # Must be on GTK thread for python
         gobject.idle_add(self._first_load)
         
     def deactivate(self):
@@ -158,7 +163,7 @@ class G15Cal():
         if self._timer != None:
             self._timer.cancel()
         if self._page != None:
-            self._screen.del_page(self._page)
+            g15screen.run_on_redraw(self._screen.del_page, self._page)
         
     def destroy(self):
         pass
@@ -177,7 +182,7 @@ class G15Cal():
                 elif binding.action == g15driver.CLEAR:
                     self._calendar_date = None
                     self._loaded_minute =- -1
-                    self._screen.redraw(self._page)
+                    g15screen.run_on_redraw(self._load_month_events, self._calendar_date)
             if binding.action == g15driver.VIEW:
                 self._page.next_focus()
     
@@ -189,8 +194,7 @@ class G15Cal():
         if self._calendar_date == None:
             self._calendar_date = datetime.datetime.now()
         self._calendar_date = self._calendar_date + datetime.timedelta(amount)
-        self._load_month_events(self._calendar_date)
-        self._screen.redraw(self._page) 
+        g15screen.run_on_redraw(self._load_month_events, self._calendar_date) 
         
     def _first_load(self):
         self._load_month_events(datetime.datetime.now())
@@ -266,24 +270,28 @@ class G15Cal():
                         day += 1
                     
         # Set the events
-        self._menu.remove_all_children()
-        if str(now.day) in self._event_days:
-            events = self._event_days[str(now.day)]
+        def on_redraw():
+            self._menu.remove_all_children()
+            if str(now.day) in self._event_days:
+                events = self._event_days[str(now.day)]
+                i = 0
+                for event in events:
+                    self._menu.add_child(EventMenuItem(event, id = "menuItem-%d" % i))
+                    i += 1
+                
+            # Add the date cell components
+            self._calendar.remove_all_children()
+            cal = calendar.Calendar()
             i = 0
-            for event in events:
-                self._menu.add_child(EventMenuItem(event, id = "menuItem-%d" % i))
+            for day in cal.itermonthdates(now.year, now.month):
+                event = None
+                if str(day.day) in self._event_days:
+                    event = self._event_days[str(day.day)]                
+                self._calendar.add_child(Cell(day, now, event, "cell-%d" % i))
                 i += 1
-            
-        # Add the date cell components
-        self._calendar.remove_all_children()
-        cal = calendar.Calendar()
-        i = 0
-        for day in cal.itermonthdates(now.year, now.month):
-            event = None
-            if str(day.day) in self._event_days:
-                event = self._event_days[str(day.day)]                
-            self._calendar.add_child(Cell(day, now, event, "cell-%d" % i))
-            i += 1
+                
+            self._page.redraw()
+        g15screen.run_on_redraw(on_redraw)
             
         self._page.mark_dirty()
         

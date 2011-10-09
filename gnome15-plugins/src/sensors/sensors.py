@@ -29,9 +29,8 @@ import os.path
 import commands
 import dbus
 import libsensors
-import pylibatasmart
 
-from ctypes import *
+import subprocess
 
 # Logging
 import logging
@@ -111,18 +110,24 @@ class UDisksSource():
                             if n: 
                                 sensor_name += " (%s)" % n
                     sensor = Sensor(sensor_name, 0.0)
+                    device_file = str(udisk_properties.Get(UDISKS_DEVICE_NAME, "DeviceFile"))
                     if int(udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartTimeCollected")) > 0:
                         # Only get the temperature if SMART data is collected to avoide spinning up disk
                         smart_blob = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartBlob")
                         smart_blob_str = ""
                         for c in smart_blob:
                             smart_blob_str += str(c)
-                        sk_disk = pylibatasmart.sk_disk_open(None)
-#                        pylibatasmart.sk_disk_set_blob(sk_disk, smart_blob_str)
-#                        kelvin = pylibatasmart.sk_disk_smart_get_temperature(sk_disk) 
-#                        kelvin /= 1000;
-#                        temp_c = kelvin - 273.15
-#                        sensor.value = temp_c
+                            
+                        process = subprocess.Popen(['skdump', '--temperature', '--load=-'], shell = False, stdout = subprocess.PIPE, stdin = subprocess.PIPE)
+                        process.stdin.write(smart_blob_str)
+                        process.stdin.flush()
+                        process.stdin.close()                            
+                        result  = process.stdout.readline()
+                        process.wait()
+                        kelvin = int(result) 
+                        kelvin /= 1000;
+                        temp_c = kelvin - 273.15
+                        sensor.value = temp_c
                         
                     self.sensors[sensor.name] = sensor
                 
@@ -217,6 +222,10 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
     def populate_page(self):
         g15plugin.G15RefreshingPlugin.populate_page(self)
         self.menu = g15theme.Menu("menu")
+        def menu_selected():
+            self.page.mark_dirty()
+            self.page.redraw()
+        self.menu.on_selected = menu_selected
         self.page.add_child(self.menu)
         self.page.theme.svg_processor = self._process_svg        
         self.page.add_child(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
@@ -243,8 +252,47 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
     def _process_svg(self, document, properties, attributes):
         root = document.getroot()
         if self.menu.selected is not None:
-            for element in root.xpath('//svg:rect[@class=\'needle\']',namespaces=self.page.theme.nsmap):
-                g15util.rotate_element(element, self.menu.selected.sensor.value)
+            needle = self.page.theme.get_element("needle")
+            needle_center = self.page.theme.get_element("needle_center")
+            val = float(self.menu.selected.sensor.value)
+            
+            """
+            The title contains the bounds for the gauge, in the format
+            lower_val,upper_val,middle_val,lower_deg,upper_deg
+            """
+            gauge_data = needle_center.get("title").split(",")
+            lower_val = float(gauge_data[0])
+            upper_val = float(gauge_data[1])
+            middle_val = float(gauge_data[2])
+            lower_deg = float(gauge_data[3])
+            upper_deg = float(gauge_data[4])
+            
+            # Clamp the value
+            val = min(upper_val, max(lower_val, val))
+            
+            # Ratio of gauge bounds to rotate by 
+            ratio = val / ( upper_val - lower_val )
+            
+            """
+            Work out total number of degrees in the bounds
+            """
+            total_deg = upper_deg + ( 360 - lower_deg )
+            
+            
+            # Work out total number of degress to rotate
+            rot_degrees = total_deg * ratio
+            
+            # 
+            degr = lower_deg
+            degr += rot_degrees
+            
+            
+            """
+            This is a bit weak. It doesn't take transformations into account,
+            so care is needed in the SVG.            
+            """
+            center_bounds = g15util.get_bounds(needle_center)
+            needle.set("transform", "rotate(%f,%f,%f)" % (degr, center_bounds[0], center_bounds[1]) )
         
     def _get_stats(self):
         for c in self.sensor_sources:

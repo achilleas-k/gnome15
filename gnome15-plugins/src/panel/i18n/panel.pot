@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-30 03:07+0100\n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,37 +18,37 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: i18n/panel.glade.h:1
-msgid "Colour and opacity"
+msgid "Bottom"
 msgstr ""
 
 #: i18n/panel.glade.h:2
-msgid "Panel Preferences"
+msgid "Colour and opacity"
 msgstr ""
 
 #: i18n/panel.glade.h:3
-msgid "Position"
+msgid "Left"
 msgstr ""
 
 #: i18n/panel.glade.h:4
-msgid "Size"
+msgid "Panel Preferences"
 msgstr ""
 
 #: i18n/panel.glade.h:5
-msgid "Stretch screen content"
+msgid "Position"
 msgstr ""
 
 #: i18n/panel.glade.h:6
-msgid "bottom"
+msgid "Right"
 msgstr ""
 
 #: i18n/panel.glade.h:7
-msgid "left"
+msgid "Size"
 msgstr ""
 
 #: i18n/panel.glade.h:8
-msgid "right"
+msgid "Stretch screen content"
 msgstr ""
 
 #: i18n/panel.glade.h:9
-msgid "top"
+msgid "Top"
 msgstr ""

@@ -1,0 +1,30 @@
+# English translations for g package.
+# Copyright (C) 2011 THE g'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the g package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: g 15daemon-server\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"PO-Revision-Date: 2011-10-09 19:48+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: i18n/g15daemon-server.glade.h:1
+msgid "G15Daemon Compatibility Preferences"
+msgstr "G15Daemon Compatibility Preferences"
+
+#: i18n/g15daemon-server.glade.h:2
+msgid "Keep Aspect Ratio"
+msgstr "Keep Aspect Ratio"
+
+#: i18n/g15daemon-server.glade.h:3
+msgid "Port"
+msgstr "Port"

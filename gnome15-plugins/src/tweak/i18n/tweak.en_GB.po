@@ -1,0 +1,110 @@
+# English translations for gnome15-plugins package.
+# Copyright (C) 2011 THE gnome15-plugins'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome15-plugins package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome15-plugins 0.7.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"PO-Revision-Date: 2011-10-09 19:49+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: i18n/tweak.glade.h:1
+msgid "Animation Delay"
+msgstr "Animation Delay"
+
+#: i18n/tweak.glade.h:2
+msgid "Disable SVG Glow"
+msgstr "Disable SVG Glow"
+
+#: i18n/tweak.glade.h:3
+msgid "Fade keyboard backlight on close"
+msgstr "Fade keyboard backlight on close"
+
+#: i18n/tweak.glade.h:4
+msgid "Fade screen on close"
+msgstr "Fade screen on close"
+
+#: i18n/tweak.glade.h:5
+msgid "Gnome15 Hidden Preferences"
+msgstr "Gnome15 Hidden Preferences"
+
+#: i18n/tweak.glade.h:6
+msgid "Key Hold Duration"
+msgstr "Key Hold Duration"
+
+#: i18n/tweak.glade.h:7
+msgid "Power off all lights on close"
+msgstr "Power off all lights on close"
+
+#: i18n/tweak.glade.h:8
+msgid "Scroll Amount"
+msgstr "Scroll Amount"
+
+#: i18n/tweak.glade.h:9
+msgid "Scroll Delay"
+msgstr "Scroll Delay"
+
+#: i18n/tweak.glade.h:10
+msgid "Start each screen in it's own thread"
+msgstr "Start each screen in it's own thread"
+
+#: i18n/tweak.glade.h:11
+msgid ""
+"The SVG glow effect currently\n"
+"uses lots of CPU. Select this option\n"
+"to remove the effect."
+msgstr ""
+"The SVG glow effect currently\n"
+"uses lots of CPU. Select this option\n"
+"to remove the effect."
+
+#: i18n/tweak.glade.h:14
+msgid "Use XTEST for macros and macro recording"
+msgstr "Use XTEST for macros and macro recording"
+
+#: i18n/tweak.glade.h:15
+msgid ""
+"When enabled, the XTEST \n"
+"extensions will be used for\n"
+"recording macros and sending\n"
+"keystrokes. When disable, raw\n"
+"X11 events will be used."
+msgstr ""
+"When enabled, the XTEST \n"
+"extensions will be used for\n"
+"recording macros and sending\n"
+"keystrokes. When disable, raw\n"
+"X11 events will be used."
+
+#: i18n/tweak.glade.h:20
+msgid "center"
+msgstr "center"
+
+#: i18n/tweak.glade.h:21
+msgid "ms"
+msgstr "ms"
+
+#: i18n/tweak.glade.h:22
+msgid "scale"
+msgstr "scale"
+
+#: i18n/tweak.glade.h:23
+msgid "stretch"
+msgstr "stretch"
+
+#: i18n/tweak.glade.h:24
+msgid "tile"
+msgstr "tile"
+
+#: i18n/tweak.glade.h:25
+msgid "zoom"
+msgstr "zoom"

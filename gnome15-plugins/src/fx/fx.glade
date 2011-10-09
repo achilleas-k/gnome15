@@ -77,7 +77,7 @@
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderertext1"/>
                               <attributes>
-                                <attribute name="text">0</attribute>
+                                <attribute name="text">1</attribute>
                               </attributes>
                             </child>
                           </object>
@@ -160,25 +160,33 @@
     <columns>
       <!-- column-name TransitionName -->
       <column type="gchararray"/>
+      <!-- column-name TransitionDescription -->
+      <column type="gchararray"/>
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">horizontal-scroll</col>
+        <col id="0">horizontal-scroll</col>
+        <col id="1" translatable="yes">Horizontal Slide</col>
       </row>
       <row>
-        <col id="0" translatable="yes">vertical-scroll</col>
+        <col id="0">vertical-scroll</col>
+        <col id="1" translatable="yes">Vertical Slide</col>
       </row>
       <row>
-        <col id="0" translatable="yes">fade</col>
+        <col id="0">fade</col>
+        <col id="1" translatable="yes">Fade</col>
       </row>
       <row>
-        <col id="0" translatable="yes">zoom</col>
+        <col id="0">zoom</col>
+        <col id="1" translatable="yes">Zoom</col>
       </row>
       <row>
-        <col id="0" translatable="yes">random</col>
+        <col id="0">random</col>
+        <col id="1" translatable="yes">Random</col>
       </row>
       <row>
-        <col id="0" translatable="yes">none</col>
+        <col id="0">none</col>
+        <col id="1" translatable="yes">None</col>
       </row>
     </data>
   </object>

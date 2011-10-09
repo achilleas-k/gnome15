@@ -186,7 +186,6 @@ class G15Weather():
                 properties["message"] = _("No weather data for location:-\n%s") % loc
             else:                                            
                 properties["message"] = ""
-                print "Current %s" % str(current)
                 t_icon = self._translate_icon(current['icon'])
                 if t_icon != None:
                     attributes["icon"] = g15util.load_surface_from_file(t_icon)

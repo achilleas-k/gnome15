@@ -6,6 +6,14 @@ AM_MAINTAINER_MODE
 dnl check for python
 AM_PATH_PYTHON
 
+dnl Build locales
+AC_ARG_ENABLE([locales],
+	[AS_HELP_STRING([--enable-locales=list-of-locales],
+		[List of locales to build for])],
+	[build_locales=${enableval}],
+	[build_locales=en_GB])	
+AC_SUBST(BUILD_LOCALES, $build_locales)
+
 dnl Name of Fixed size font
 AC_ARG_ENABLE([fixed-size-font],
 	[AS_HELP_STRING([--with-fixed-size-font=fixed size font name],
@@ -320,4 +328,6 @@ AS_ECHO("-------------------")
 AS_ECHO("Fixed size font name        - $fixed_size_font")
 AS_ECHO("Device group                - $devicegroup")
 AS_ECHO("Device mode                 - $devicemode")
+AS_ECHO("")
+AS_ECHO("Building i18n for locales: $build_locales")
 AS_ECHO("")

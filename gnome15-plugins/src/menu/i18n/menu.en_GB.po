@@ -1,0 +1,56 @@
+# English translations for gnome15-plugins package.
+# Copyright (C) 2011 THE gnome15-plugins'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome15-plugins package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome15-plugins 0.7.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"PO-Revision-Date: 2011-10-09 19:48+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: menu.py:39
+msgid "Menu"
+msgstr "Menu"
+
+#: menu.py:40
+msgid ""
+"Allows selections of any currently active screen through a menu on the LCD."
+msgstr ""
+"Allows selections of any currently active screen through a menu on the LCD."
+
+#: menu.py:42
+msgid "Copyright (C)2010 Brett Smith"
+msgstr "Copyright (C)2010 Brett Smith"
+
+#: menu.py:48
+msgid "Previous item"
+msgstr "Previous item"
+
+#: menu.py:49
+msgid "Next item"
+msgstr "Next item"
+
+#: menu.py:50
+msgid "Next page"
+msgstr "Next page"
+
+#: menu.py:51
+msgid "Previous page"
+msgstr "Previous page"
+
+#: menu.py:52
+msgid "Show selected item"
+msgstr "Show selected item"
+
+#: menu.py:53
+msgid "Show menu"
+msgstr "Show menu"

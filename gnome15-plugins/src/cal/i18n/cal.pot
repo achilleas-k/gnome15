@@ -1,0 +1,52 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: cal.py:37
+msgid "Calendar"
+msgstr ""
+
+#: cal.py:38
+msgid "Calendar. Integrates with Evolution calendar."
+msgstr ""
+
+#: cal.py:40
+msgid "Copyright (C)2010 Brett Smith"
+msgstr ""
+
+#: cal.py:44
+msgid "Previous day/Event"
+msgstr ""
+
+#: cal.py:45
+msgid "Next day/Event"
+msgstr ""
+
+#: cal.py:46
+msgid ""
+"Toggle between calendar\n"
+"and events"
+msgstr ""
+
+#: cal.py:47
+msgid "Next week"
+msgstr ""
+
+#: cal.py:48
+msgid "Previous week"
+msgstr ""

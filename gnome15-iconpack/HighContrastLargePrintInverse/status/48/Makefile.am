@@ -1,4 +1,5 @@
-imagesdir = $(datadir)/icons/HighContrastLargePrintInverse/48x48/status
+
+imagesdir = $(datadir)/icons/@HIGHCONTRAST_PATH@/48x48/status
 images_DATA = logitech-g-keyboard-error-panel.png \
 		logitech-g-keyboard-panel.png
 

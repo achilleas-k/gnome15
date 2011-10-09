@@ -2,7 +2,14 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
+  <object class="GtkAdjustment" id="OpacityAdjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+    <property name="page_size">10</property>
+  </object>
   <object class="GtkDialog" id="PanelDialog">
+    <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Panel Preferences</property>
     <property name="resizable">False</property>
@@ -12,13 +19,44 @@
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox10">
         <property name="visible">True</property>
+        <property name="can_focus">False</property>
         <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area10">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="button9">
+                <property name="label">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_action_appearance">False</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
         <child>
           <object class="GtkVBox" id="vbox1">
             <property name="visible">True</property>
+            <property name="can_focus">False</property>
             <child>
               <object class="GtkTable" id="table1">
                 <property name="visible">True</property>
+                <property name="can_focus">False</property>
                 <property name="n_rows">3</property>
                 <property name="n_columns">2</property>
                 <property name="column_spacing">8</property>
@@ -26,6 +64,7 @@
                 <child>
                   <object class="GtkLabel" id="label1">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <property name="xalign">0</property>
                     <property name="label" translatable="yes">Colour and opacity</property>
                   </object>
@@ -33,6 +72,7 @@
                 <child>
                   <object class="GtkLabel" id="label2">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <property name="xalign">0</property>
                     <property name="label" translatable="yes">Size</property>
                   </object>
@@ -46,6 +86,10 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="invisible_char">●</property>
+                    <property name="primary_icon_activatable">False</property>
+                    <property name="secondary_icon_activatable">False</property>
+                    <property name="primary_icon_sensitive">True</property>
+                    <property name="secondary_icon_sensitive">True</property>
                     <property name="adjustment">SizeAdjustment</property>
                   </object>
                   <packing>
@@ -59,6 +103,7 @@
                 <child>
                   <object class="GtkLabel" id="label3">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <property name="xalign">0</property>
                     <property name="label" translatable="yes">Position</property>
                   </object>
@@ -70,11 +115,12 @@
                 <child>
                   <object class="GtkComboBox" id="PositionCombo">
                     <property name="visible">True</property>
+                    <property name="can_focus">False</property>
                     <property name="model">PositionModel</property>
                     <child>
                       <object class="GtkCellRendererText" id="cellrenderertext1"/>
                       <attributes>
-                        <attribute name="text">0</attribute>
+                        <attribute name="text">1</attribute>
                       </attributes>
                     </child>
                   </object>
@@ -91,6 +137,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="color">#000000000000</property>
                   </object>
                   <packing>
@@ -101,6 +148,8 @@
                 </child>
               </object>
               <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
                 <property name="position">0</property>
               </packing>
             </child>
@@ -110,6 +159,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
+                <property name="use_action_appearance">False</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -126,31 +176,6 @@
             <property name="position">1</property>
           </packing>
         </child>
-        <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area10">
-            <property name="visible">True</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="button9">
-                <property name="label">gtk-close</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
       </object>
     </child>
     <action-widgets>
@@ -161,19 +186,25 @@
     <columns>
       <!-- column-name position -->
       <column type="gchararray"/>
+      <!-- column-name position_name -->
+      <column type="gchararray"/>
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">top</col>
+        <col id="0">top</col>
+        <col id="1" translatable="yes">Top</col>
       </row>
       <row>
-        <col id="0" translatable="yes">bottom</col>
+        <col id="0">bottom</col>
+        <col id="1" translatable="yes">Bottom</col>
       </row>
       <row>
-        <col id="0" translatable="yes">left</col>
+        <col id="0">left</col>
+        <col id="1" translatable="yes">Left</col>
       </row>
       <row>
-        <col id="0" translatable="yes">right</col>
+        <col id="0">right</col>
+        <col id="1" translatable="yes">Right</col>
       </row>
     </data>
   </object>
@@ -181,12 +212,5 @@
     <property name="upper">200</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
-    <property name="page_size">10</property>
-  </object>
-  <object class="GtkAdjustment" id="OpacityAdjustment">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-    <property name="page_size">10</property>
   </object>
 </interface>

@@ -533,19 +533,25 @@
     <columns>
       <!-- column-name Mode -->
       <column type="gchararray"/>
+      <!-- column-name ModeName -->
+      <column type="gchararray"/>
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">default</col>
+        <col id="0">default</col>
+        <col id="1" translatable="yes">Default</col>
       </row>
       <row>
-        <col id="0" translatable="yes">original</col>
+        <col id="0">original</col>
+        <col id="1" translatable="yes">Original</col>
       </row>
       <row>
-        <col id="0" translatable="yes">circlelcd</col>
+        <col id="0">circlelcd</col>
+        <col id="1" translatable="yes">Circle LCD</col>
       </row>
       <row>
-        <col id="0" translatable="yes">circleline</col>
+        <col id="0">circleline</col>
+        <col id="1" translatable="yes">Circle Line</col>
       </row>
     </data>
   </object>
@@ -553,16 +559,21 @@
     <columns>
       <!-- column-name Paint -->
       <column type="gchararray"/>
+      <!-- column-name PaintName -->
+      <column type="gchararray"/>
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">background</col>
+        <col id="0">background</col>
+        <col id="1" translatable="yes">Background</col>
       </row>
       <row>
-        <col id="0" translatable="yes">foreground</col>
+        <col id="0">foreground</col>
+        <col id="1" translatable="yes">Foreground</col>
       </row>
       <row>
         <col id="0" translatable="yes">screen</col>
+        <col id="1" translatable="yes">Screen</col>
       </row>
     </data>
   </object>

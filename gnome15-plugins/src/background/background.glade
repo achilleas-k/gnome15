@@ -147,7 +147,7 @@
                     <child>
                       <object class="GtkCellRendererText" id="cellrenderertext1"/>
                       <attributes>
-                        <attribute name="text">0</attribute>
+                        <attribute name="text">1</attribute>
                       </attributes>
                     </child>
                   </object>
@@ -198,22 +198,29 @@
     <columns>
       <!-- column-name Style -->
       <column type="gchararray"/>
+      <!-- column-name StyleName -->
+      <column type="gchararray"/>
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">zoom</col>
+        <col id="0">zoom</col>
+        <col id="1" translatable="yes">Zoom</col>
       </row>
       <row>
-        <col id="0" translatable="yes">tile</col>
+        <col id="0">tile</col>
+        <col id="1" translatable="yes">Tile</col>
       </row>
       <row>
-        <col id="0" translatable="yes">center</col>
+        <col id="0">center</col>
+        <col id="1" translatable="yes">Center</col>
       </row>
       <row>
-        <col id="0" translatable="yes">scale</col>
+        <col id="0">scale</col>
+        <col id="1" translatable="yes">Scale</col>
       </row>
       <row>
-        <col id="0" translatable="yes">stretch</col>
+        <col id="0">stretch</col>
+        <col id="1" translatable="yes">Stretch</col>
       </row>
     </data>
   </object>

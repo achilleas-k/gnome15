@@ -145,8 +145,8 @@ class G15CairoClock():
     
     def deactivate(self):
         self._cancel_refresh()
-        self.gconf_client.notify_remove(self.notify_handler);
-        self.screen.del_page(self.page)
+        self.gconf_client.notify_remove(self.notify_handler)
+        g15screen.run_on_redraw(self.screen.del_page, self.page)
         self.page = None
         
     def destroy(self):

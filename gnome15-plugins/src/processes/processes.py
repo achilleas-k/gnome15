@@ -88,7 +88,7 @@ class ProcessMenuItem(g15theme.MenuItem):
     
     def activate(self):
         kill_name = str(self.process_id) if isinstance(self.process_id, int) else self.process_name 
-        self.plugin.confirm_screen = g15theme.ConfirmationScreen(self.get_screen(), _("Kill Process"), _("Are you sure you want to kill %s") % kill_name,  
+        self.plugin.confirm_screen = g15theme.ConfirmationScreen(self.get_screen(), _("Kill Process"), _("Are you sure you want to kill\n%s") % kill_name,  
                                     g15util.get_icon_path("utilities-system-monitor"), self.plugin._kill_process, self.process_id,
                                     cancel_callback = self.plugin._cancel_kill)
                     

@@ -1,11 +1,12 @@
+char *s = N_("Allow macro profiles to override background");
 char *s = N_("Background Image");
+char *s = N_("Center");
+char *s = N_("Scale");
 char *s = N_("Select A Background");
+char *s = N_("Stretch");
 char *s = N_("Style");
+char *s = N_("Tile");
 char *s = N_("Use _image file");
 char *s = N_("Wallpaper Preferences");
+char *s = N_("Zoom");
 char *s = N_("_Same as desktop background");
-char *s = N_("center");
-char *s = N_("scale");
-char *s = N_("stretch");
-char *s = N_("tile");
-char *s = N_("zoom");

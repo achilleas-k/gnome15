@@ -28,6 +28,7 @@ import gnome15.g15devices as g15devices
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15profile as g15profile
+import gnome15.g15actions as g15actions
 import datetime
 from threading import Timer
 import gtk
@@ -47,8 +48,8 @@ from threading import Thread
 RECORD = "record"
 
 # Register the action with all supported models
-g15devices.g15_action_keys[RECORD] = g15devices.ActionBinding(RECORD, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_UP)
-g15devices.g19_action_keys[RECORD] = g15devices.ActionBinding(RECORD, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_UP)
+g15devices.g15_action_keys[RECORD] = g15actions.ActionBinding(RECORD, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[RECORD] = g15actions.ActionBinding(RECORD, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_UP)
 
 # Plugin details - All of these must be provided
 id="macro-recorder"

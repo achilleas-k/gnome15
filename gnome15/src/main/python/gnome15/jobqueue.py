@@ -195,7 +195,7 @@ class JobQueue():
         self.stopping = True
         self.clear()
         for i in range(0, self.number_of_workers):
-            self.work_queue.put(self.JobItem(self._dummy))
+            self.work_queue.put(self.JobItem("Stopping", self._dummy))
         logger.info("Stopped queue %s" % self.name)
         
     def _dummy(self):

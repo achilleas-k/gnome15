@@ -1,0 +1,91 @@
+# English translations for gnome15-plugins package.
+# Copyright (C) 2011 THE gnome15-plugins'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the gnome15-plugins package.
+# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome15-plugins 0.7.6\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"PO-Revision-Date: 2011-10-09 19:48+0100\n"
+"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
+"Language-Team: English (British)\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: indicator-me.py:45
+msgid "Indicator Me"
+msgstr "Indicator Me"
+
+#: indicator-me.py:46
+msgid ""
+"Indicator that shows user information and status.\n"
+"\n"
+"NOTE, this plugin is not required on Ubuntu 11.10 and onwards, as the "
+"functionality is now provided by Indicator Messages"
+msgstr ""
+"Indicator that shows user information and status.\n"
+"\n"
+"NOTE, this plugin is not required on Ubuntu 11.10 and onwards, as the "
+"functionality is now provided by Indicator Messages"
+
+#: indicator-me.py:50
+msgid "Copyright (C)2010 Brett Smith"
+msgstr "Copyright (C)2010 Brett Smith"
+
+#: indicator-me.py:55
+msgid "Previous status"
+msgstr "Previous status"
+
+#: indicator-me.py:56
+msgid "Next status"
+msgstr "Next status"
+
+#: indicator-me.py:57
+msgid "Choose status"
+msgstr "Choose status"
+
+#: indicator-me.py:67
+msgid "Available"
+msgstr "Available"
+
+#: indicator-me.py:68
+msgid "Away"
+msgstr "Away"
+
+#: indicator-me.py:69
+msgid "Busy"
+msgstr "Busy"
+
+#: indicator-me.py:70
+msgid "Offline"
+msgstr "Offline"
+
+#: indicator-me.py:71 indicator-me.py:72
+msgid "Invisible"
+msgstr "Invisible"
+
+#: indicator-me.py:165
+msgid "Indicator Me Status"
+msgstr "Indicator Me Status"
+
+#: indicator-me.py:169
+msgid "Indicator Me Popup"
+msgstr "Indicator Me Popup"
+
+#: indicator-me.py:210
+#, python-format
+msgid "Status - %s"
+msgstr "Status - %s"
+
+#: indicator-me.py:219
+msgid "Status"
+msgstr "Status"
+
+#: indicator-me.py:225
+msgid "Unknown"
+msgstr "Unknown"

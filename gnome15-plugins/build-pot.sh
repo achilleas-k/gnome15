@@ -20,10 +20,13 @@ for i in src/*; do
              pushd default
              mkdir -p i18n
              if [ $(ls *.svg 2>/dev/null|wc -l) -gt 0 ]; then 
+                 echo "Found SVG"
                  for s in *.svg; do
+                     echo "Generating C header$s"
                      svgname=$(basename ${s} .svg)
                      ${basedir}/../gnome15/mksvgheaders.py ${s} > i18n/${svgname}.h
                     if [ -s i18n/${svgname}.h ]; then
+                        echo "Generating POT for ${svgname}.h"
                     	xgettext --language=Python --keyword=_ --keyword=N_ --output=i18n/${svgname}.pot i18n/${svgname}.h
                 	else
                 		rm -f i18n/${svgname}.h
