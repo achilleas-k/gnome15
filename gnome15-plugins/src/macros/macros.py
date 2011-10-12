@@ -130,14 +130,15 @@ class G15Macros(g15plugin.G15MenuPlugin):
     
     """
     def memory_bank_changed(self):
-        self._reload()
-        if g15util.get_bool_or_default(self.gconf_client, "%s/raise" % self.gconf_key, True):
-            self._popup()
+        g15screen.run_on_redraw(self._reload_and_popup)
             
     """
     Private functions
     """
     def _profiles_changed(self, arg0 = None, arg1 = None, arg2 = None, arg3 = None):
+        g15screen.run_on_redraw(self._reload_and_popup)
+            
+    def _reload_and_popup(self):
         self._reload()
         if g15util.get_bool_or_default(self.gconf_client, "%s/raise" % self.gconf_key, True):
             self._popup()
@@ -149,11 +150,23 @@ class G15Macros(g15plugin.G15MenuPlugin):
         self._get_configuration()
         self.menu.remove_all_children()
         self.page.set_title(_("Macros - %s") % self._active_profile.name)
-        macros = list(self._active_profile.macros[self._mkey - 1])
+        
+        macro_keys = []
+        macros = []
+        self._load_profile(self._active_profile, macros, macro_keys)
         macros.sort(self._comparator)
+        print "Adding %s" % macros
         for macro in macros:
             self._add_macro(macro)
         self.screen.redraw(self.page)
+        
+    def _load_profile(self, profile, macros, macro_keys):
+        for m in profile.macros[self._mkey - 1]:
+            if not m.keys in macro_keys:
+                macros.append(m)
+                macro_keys.append(m.keys)
+        if profile.base_profile != -1:
+            self._load_profile(g15profile.get_profile(profile.device, profile.base_profile), macros, macro_keys)
         
     def _comparator(self, o1, o2):
         return o1.compare(o2)

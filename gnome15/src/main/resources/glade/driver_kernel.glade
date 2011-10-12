@@ -2,6 +2,7 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy toplevel-contextual -->
+  <object class="GtkAction" id="action1"/>
   <object class="GtkListStore" id="DeviceModel">
     <columns>
       <!-- column-name Device -->
@@ -36,7 +37,9 @@
           <object class="GtkTable" id="grid1">
             <property name="can_focus">False</property>
             <property name="n_rows">2</property>
-            <property name="n_columns">2</property>
+            <property name="n_columns">3</property>
+            <property name="column_spacing">4</property>
+            <property name="row_spacing">4</property>
             <child>
               <object class="GtkLabel" id="label1">
                 <property name="width_request">128</property>
@@ -91,6 +94,25 @@
                 <property name="top_attach">1</property>
               </packing>
             </child>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <object class="GtkButton" id="JoyCalibrate">
+                <property name="label" translatable="yes">Calibrate</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_action_appearance">False</property>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
+                <property name="right_attach">3</property>
+                <property name="top_attach">1</property>
+                <property name="bottom_attach">2</property>
+                <property name="x_options"></property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -132,5 +154,4 @@
       </row>
     </data>
   </object>
-  <object class="GtkAction" id="action1"/>
 </interface>

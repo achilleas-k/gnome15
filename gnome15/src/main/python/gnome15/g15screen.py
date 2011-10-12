@@ -341,7 +341,6 @@ class G15Screen():
         self.notify_handles = [] 
         if self.is_active() and not quickly and ( self.service.fade_screen_on_close \
                                                   or self.service.fade_keyboard_backlight_on_close ):                
-            logger.info("Fading %s" % self.device.uid)
             # Start fading keyboard
             acquisition = None
             slow_shutdown_duration = 3.0
@@ -353,10 +352,10 @@ class G15Screen():
                     First acquire, and turn all lights off, this is the state it will
                     return to before disconnecting (we never release it)
                     """
-                    self.driver.acquire_control(bl_control, val = 0 if isinstance(bl_control, int) else (0, 0, 0))
+                    self.driver.acquire_control(bl_control, val = 0 if isinstance(current_val, int) else (0, 0, 0))
                     
                     acquisition = self.driver.acquire_control(bl_control, val = current_val)
-                    acquisition.fade(duration = slow_shutdown_duration, release = True, step = 1 if isinstance(bl_control, int) else 10)
+                    acquisition.fade(duration = slow_shutdown_duration, release = True, step = 1 if isinstance(current_val, int) else 10)
                 
             # Fade screen
             if self.driver.get_bpp() > 0 and self.service.fade_screen_on_close:
@@ -364,9 +363,7 @@ class G15Screen():
                 
             # Wait for keyboard fade to finish as well if it hasn't already
             if acquisition:  
-                logger.info("Waiting for fade to complete for %s" % self.device.uid)
                 acquisition.wait()
-            logger.info("Fade complete for %s" % self.device.uid)
                 
         if self.plugins and self.plugins.is_activated():
             self.plugins.deactivate()

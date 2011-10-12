@@ -100,7 +100,7 @@ def run_script(script, args = None, background = True):
             a += "\"%s\"" % arg
     p = os.path.realpath(os.path.join(pglobals.scripts_dir,script))
     logger.info("Running '%s'" % p)
-    os.system("python \"%s\" %s %s" % ( p, a, " &" if background else "" ))
+    return os.system("python \"%s\" %s %s" % ( p, a, " &" if background else "" ))
 
 
 '''

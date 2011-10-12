@@ -22,8 +22,8 @@ all-local:
 	
 install-exec-hook:
 	for M_LOCALE in @BUILD_LOCALES@; do \
-		mkdir -p $(datadir)/gnome15/plugins/impulse15/i18n; \
-		cp -pR i18n/$$M_LOCALE $(datadir)/gnome15/plugins/impulse15/i18n; \
+		mkdir -p $(DESTDIR)$(datadir)/gnome15/plugins/impulse15/i18n; \
+		cp -pR i18n/$$M_LOCALE $(DESTDIR)$(datadir)/gnome15/plugins/impulse15/i18n; \
 	done
 
 	

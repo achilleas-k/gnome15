@@ -38,7 +38,6 @@ import fb
 import Image
 import ImageMath
 import array
-import time
 import dbus
 import gobject
 
@@ -364,7 +363,7 @@ device_info = {
                g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", r"usb-Logitech_G19_Gaming_Keyboard-event-if.*", r"usb-Logitech_G19_Gaming_Keyboard-event-kbd.*",), 
                g15driver.MODEL_G11: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g11_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if"), 
                g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if", r"G15_Keyboard_G15.*kbd"), 
-               g15driver.MODEL_G15_V2: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15v2_key_map, "g15v2", r"G15v2_Keyboard_G15v2.*if", r"G15v2_Keyboard_G15v2.*kbd"),
+               g15driver.MODEL_G15_V2: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15v2_key_map, "g15v2", r"G15_Gaming_Keyboard.*if", r"G15_Gaming_Keyboard.*kbd"),
                g15driver.MODEL_G13: DeviceInfo(["red:m1", "red:m2", "red:m3", "red:mr" ], g13_controls, g13_key_map, "g13", r"_G13-event-mouse"),
                g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g110_controls, g110_key_map, "g110", r"usb-LOGITECH_G110_G-keys-event-if.*", r"usb-LOGITECH_G110_G-keys-event-kbd.*")
                }
@@ -374,17 +373,55 @@ device_info = {
 EVIOCGRAB = 0x40044590
 
 def show_preferences(device, parent, gconf_client):
-    widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_kernel.glade"))  
-    device_model = widget_tree.get_object("DeviceModel")
-    device_model.clear()
-    device_model.append(["auto"])
-    for dir in os.listdir("/dev"):
-        if dir.startswith("fb"):
-            device_model.append(["/dev/" + dir])    
-    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/fb_device" % device.uid, "DeviceCombo", "auto", widget_tree)  
-    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
-    return widget_tree.get_object("DriverComponent")
+    prefs = KernelDriverPreferences(device, gconf_client)
+    return prefs.component
+
+class KernelDriverPreferences():
+    
+    def __init__(self, device, gconf_client):
+        self.device = device
+        
+        widget_tree = gtk.Builder()
+        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_kernel.glade"))
+        
+        self.joy_mode_label = widget_tree.get_object("JoyModeLabel")
+        self.joy_mode_combo = widget_tree.get_object("JoyModeCombo")
+        self.joy_calibrate = widget_tree.get_object("JoyCalibrate")
+        
+        device_model = widget_tree.get_object("DeviceModel")
+        device_model.clear()
+        device_model.append(["auto"])
+        for dev_file in os.listdir("/dev"):
+            if dev_file.startswith("fb"):
+                device_model.append(["/dev/%s" % dev_file])
+                  
+        g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/fb_device" % device.uid, "DeviceCombo", "auto", widget_tree)  
+        g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
+        
+        # See if jstest-gtk is available to do the calibration
+        status = os.system("which jstest-gtk")
+        self.calibrate_available = status == 0 
+            
+        self.joy_mode_combo.connect("changed", self._set_available_options)        
+        self.joy_calibrate.connect("clicked", self._do_calibrate)
+            
+        self.component = widget_tree.get_object("DriverComponent")
+        self._set_available_options()
+        
+    def _set_available_options(self, widget = None):
+        self.joy_mode_label.set_sensitive(self.device.model_id == g15driver.MODEL_G13)
+        self.joy_mode_combo.set_sensitive(self.device.model_id == g15driver.MODEL_G13)
+        self.joy_calibrate.set_sensitive(g15uinput.get_device(self._get_device_type()) is not None and \
+                                       self.device.model_id == g15driver.MODEL_G13 and \
+                                       self.calibrate_available and \
+                                       self.joy_mode_combo.get_active() in [1, 3])
+        
+    def _get_device_type(self):
+        return g15uinput.JOYSTICK if self.joy_mode_combo.get_active() == 1 \
+            else g15uinput.DIGITAL_JOYSTICK
+            
+    def _do_calibrate(self, widget):
+        g15uinput.calibrate(self._get_device_type())
     
 class KeyboardReceiveThread(Thread):
     def __init__(self, device):
@@ -421,7 +458,8 @@ class KeyboardReceiveThread(Thread):
             for x, e in self.poll.poll(1000):
                 dev = self.fds[x]
                 try :
-                    dev.read()
+                    if dev:
+                        dev.read()
                 except OSError as e:
                     # Ignore this error if deactivated
                     if self._run:
@@ -479,29 +517,29 @@ class ForwardDevice(SimpleDevice):
         return code
     
     def receive(self, event): 
-        if self.driver.joy_mode == g15uinput.JOYSTICK:
-            # Just pass-through when in analogue joystick mode
-            g15uinput.emit(self.driver.joy_mode, event.ecode, event.evalue, False, event.etype)
-        else:
-            if event.etype == S.EV_ABS:
+        if event.etype == S.EV_ABS:
+            if self.driver.joy_mode == g15uinput.JOYSTICK:
+                # Just pass-through when in analogue joystick mode
+                g15uinput.emit(self.driver.joy_mode, event.ecode, event.evalue, False, event.etype)
+            else:
                 self._update_joystick(event)                        
-            elif event.etype == S.EV_KEY:
-                state = g15driver.KEY_STATE_DOWN if event.evalue == 1 else g15driver.KEY_STATE_UP
-                if event.ecode in [ S.BTN_X, S.BTN_Y, S.BTN_Z ]:
-                    if self.driver.joy_mode ==g15uinput.MOUSE:                    
-                        g15uinput.emit(g15uinput.MOUSE, self._translate_mouse_buttons(event.ecode), event.evalue, syn=True)                
-                    elif self.driver.joy_mode == g15uinput.DIGITAL_JOYSTICK:
-                        g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, event.ecode, event.evalue, syn=True)                
-                    else:
-                        if event.evalue != 2:
-                            self._event(event.ecode, state)
+        elif event.etype == S.EV_KEY:
+            state = g15driver.KEY_STATE_DOWN if event.evalue == 1 else g15driver.KEY_STATE_UP
+            if event.ecode in [ S.BTN_X, S.BTN_Y, S.BTN_Z ]:
+                if self.driver.joy_mode ==g15uinput.MOUSE:                    
+                    g15uinput.emit(g15uinput.MOUSE, self._translate_mouse_buttons(event.ecode), event.evalue, syn=True)                
+                elif self.driver.joy_mode == g15uinput.DIGITAL_JOYSTICK:
+                    g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, event.ecode, event.evalue, syn=True)                
                 else:
                     if event.evalue != 2:
                         self._event(event.ecode, state)
-            elif event.etype == 0:
-                return
             else:
-                logger.warning("Unhandled event: %s" % str(event))
+                if event.evalue != 2:
+                    self._event(event.ecode, state)
+        elif event.etype == 0:
+            return
+        else:
+            logger.warning("Unhandled event: %s" % str(event))
                 
     """
     Private
@@ -794,7 +832,12 @@ class Driver(g15driver.AbstractDriver):
         self._load_configuration()
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/joymode" % self.device.uid, self._config_changed, None))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/fb_device" % self.device.uid, self._framebuffer_device_changed, None))
-             
+        
+        # Centre the joystick by default
+        if self.joy_mode in [ g15uinput.JOYSTICK, g15uinput.DIGITAL_JOYSTICK ]:
+            g15uinput.emit(self.joy_mode, uinput.ABS_X, 128, False)
+            g15uinput.emit(self.joy_mode, uinput.ABS_Y, 128, False)
+            g15uinput.syn(self.joy_mode)
                    
     def _load_configuration(self):
         self.joy_mode = self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)

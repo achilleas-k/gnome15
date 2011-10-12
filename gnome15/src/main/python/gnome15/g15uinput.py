@@ -25,6 +25,7 @@ joystick events) into the kernel.
         
 import logging
 import uinput
+import g15util
 import os
 from threading import RLock
 from gnome15 import g15globals
@@ -38,12 +39,12 @@ DEVICE_TYPES = [ MOUSE, KEYBOARD, JOYSTICK, DIGITAL_JOYSTICK ]
 
 registered_parameters = { MOUSE: {}, 
                    JOYSTICK:  {
-                    uinput.ABS_X: (0, 255, 0, 4),
-                    uinput.ABS_Y: (0, 255, 0, 4),
+                    uinput.ABS_X: (0, 255, 0, 18),
+                    uinput.ABS_Y: (0, 255, 0, 18),
                              }, 
                    DIGITAL_JOYSTICK:  {
-                    uinput.ABS_X: (0, 255, 0, 15),
-                    uinput.ABS_Y: (0, 255, 0, 15),
+                    uinput.ABS_X: (0, 255, 0, 18),
+                    uinput.ABS_Y: (0, 255, 0, 18),
                              }, 
                    KEYBOARD: {} }
 uinput_devices = {}
@@ -76,6 +77,68 @@ def close_devices():
         if device_type in uinput_devices:
             logger.debug("Closing UINPUT device %s" % device_type)
             del uinput_devices[device_type]
+            
+def load_calibration(device_type):
+    """
+    Load joystick calibration for the specified device
+    
+    Keyword arguments:
+    device_type    --    device type 
+    """
+    if not device_type in [ JOYSTICK, DIGITAL_JOYSTICK ]:
+        raise Exception("Cannot calibrate this device type")
+    device_file = get_device(device_type)
+    if device_file:
+        js_config_file = "%s/%s.js" % ( os.path.expanduser("~/.config/gnome15"), device_type )
+        if os.path.exists(js_config_file):
+            if os.system("jstest-gtk -l '%s' '%s'" % (js_config_file, device_file)) != 0:
+                logger.warning("Failed to load joystick calibration. Do you have jstest-gtk installed?")
+            
+def calibrate(device_type):
+    """
+    Run external joystick calibration utility
+    
+    Keyword arguments:
+    device_type    --    device type
+    """
+    if not device_type in [ JOYSTICK, DIGITAL_JOYSTICK ]:
+        raise Exception("Cannot calibrate this device type (%s)" % device_type)
+    device_file = get_device(device_type)
+    if device_file:
+        js_config_file = "%s/%s.js" % ( os.path.expanduser("~/.config/gnome15"), device_type )
+        if os.path.exists(js_config_file):
+            os.system("jstest-gtk -l '%s' '%s'" % (js_config_file, device_file))
+        os.system("jstest-gtk %s" % device_file )
+        g15util.mkdir_p(os.path.expanduser("~/.config/gnome15"))
+        os.system("jstest-gtk -s '%s' '%s'" % (js_config_file, device_file))
+            
+def get_device(device_type):
+    """
+    Find the actual input device given the virtual device type
+    
+    Keyword arguments:
+    device_type    --    device type
+    """
+    vi_path = "/sys/devices/virtual/input"
+    if os.path.exists(vi_path):
+        for p in os.listdir(vi_path):
+            dev_dir = "%s/%s" % (vi_path, p)
+            name_file = "%s/name" % (dev_dir)
+            if os.path.exists(name_file):
+                f = open(name_file, "r")
+                try :
+                    device_name = f.readline().replace("\n", "")
+                    if device_name == "gnome15-%s" % device_type:
+                        dev_files = os.listdir(dev_dir)
+                        for dp in dev_files:
+                            if dp.startswith("js"):
+                                return "/dev/input/%s" % dp
+                        for dp in dev_files:
+                            if dp.startswith("event"):
+                                return "/dev/input/%s" % dp
+                finally :
+                    f.close() 
+                
     
 def syn(target):
     """
@@ -188,4 +251,12 @@ def __check_devices():
                                           vendor = GNOME15_USB_VENDOR_ID,
                                           product = virtual_product_id)                
             uinput_devices[device_type] = uinput_device
-            uinput_device.emit(0, 0, 0, True)
+            
+            # Centre the joystick by default
+            if device_type == JOYSTICK or device_type == DIGITAL_JOYSTICK:
+                emit(device_type, uinput.ABS_X, 128, False)
+                emit(device_type, uinput.ABS_Y, 128, False)
+                syn(device_type)
+                load_calibration(device_type)
+            
+            

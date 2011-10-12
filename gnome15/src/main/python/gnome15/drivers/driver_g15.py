@@ -323,7 +323,7 @@ class Driver(g15driver.AbstractDriver):
     def on_update_control(self, control):
         level = control.value
         if control == backlight_control:
-            logger.info("Sending kb backlight level of %d" % level)
+            logger.info("Sending kb backlight level of %s" % str(level))
             self.send(chr(CLIENT_CMD_KB_BACKLIGHT  + level),socket.MSG_OOB)
         elif control == lcd_backlight_control:
             logger.info("Sending backlight level of %d" % level)

@@ -46,17 +46,6 @@ from cStringIO import StringIO
 logger = logging.getLogger("macros")
 active_profile = None
 conf_client = gconf.client_get_default()
-
-# Create macro profiles directory
-conf_dir = os.path.expanduser("~/.config/gnome15/macro_profiles")
-try:
-    os.makedirs(conf_dir)
-except OSError as exc: # Python >2.5
-    if exc.errno == errno.EEXIST:
-        pass
-    else: 
-        raise
-    
     
 '''
 Watch for changes in macro configuration directory.
@@ -67,6 +56,10 @@ profile_listeners = []
 
 wm = pyinotify.WatchManager()
 mask = pyinotify.IN_DELETE | pyinotify.IN_MODIFY | pyinotify.IN_CREATE | pyinotify.IN_ATTRIB  # watched events
+
+# Create macro profiles directory
+conf_dir = os.path.expanduser("~/.config/gnome15/macro_profiles")
+g15util.mkdir_p(conf_dir)
 
 class EventHandler(pyinotify.ProcessEvent):
     """
@@ -465,6 +458,9 @@ class G15Macro:
             if ki is None:
                 ki = 200
             return 200 + ki
+        
+    def __repr__(self):
+        return "[Macro %d/%s (%s)" % ( self.memory, self.name, self.key_list_key )
  
 class G15Profile():
     """

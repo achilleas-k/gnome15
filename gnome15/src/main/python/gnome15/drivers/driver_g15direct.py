@@ -99,15 +99,15 @@ KEY_MAP = {
 }
 
 EXT_KEY_MAP = {        
-        g15driver.G_KEY_G19 : 1<<1,
-        g15driver.G_KEY_G20 : 1<<2,
-        g15driver.G_KEY_G21 : 1<<3,
-        g15driver.G_KEY_G22 : 1<<4,
+        g15driver.G_KEY_G19 : 1<<0,
+        g15driver.G_KEY_G20 : 1<<1,
+        g15driver.G_KEY_G21 : 1<<2,
+        g15driver.G_KEY_G22 : 1<<3,
         
-        g15driver.G_KEY_JOY_LEFT  : 1<<5,
-        g15driver.G_KEY_JOY_DOWN  : 1<<6,
-        g15driver.G_KEY_JOY_CENTER  : 1<<7,
-        g15driver.G_KEY_JOY : 1<<8
+        g15driver.G_KEY_JOY_LEFT  : 1<<4,
+        g15driver.G_KEY_JOY_DOWN  : 1<<5,
+        g15driver.G_KEY_JOY_CENTER  : 1<<6,
+        g15driver.G_KEY_JOY : 1<<7
         }
 
 REVERSE_KEY_MAP = {}
@@ -126,13 +126,14 @@ lcd_contrast_control = g15driver.Control("lcd_contrast", _("LCD Contrast"), 22, 
 invert_control = g15driver.Control("invert_lcd", _("Invert LCD"), 0, 0, 1, hint = g15driver.HINT_SWITCH )
 
 controls = {
-  g15driver.MODEL_G11 : [ mkeys_control, backlight_control ],
-  g15driver.MODEL_G15_V1 : [ mkeys_control, backlight_control, lcd_contrast_control, lcd_backlight_control, invert_control ], 
-  g15driver.MODEL_G15_V2 : [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
-  g15driver.MODEL_G13 : [ mkeys_control, color_backlight_control, invert_control ],
-  g15driver.MODEL_G510 : [ mkeys_control, color_backlight_control, invert_control ],
-  g15driver.MODEL_Z10 : [ backlight_control, lcd_backlight_control, invert_control ],
-  g15driver.MODEL_G110 : [ mkeys_control, red_blue_backlight_control ],
+  g15driver.MODEL_G11 :         [ mkeys_control, backlight_control ],
+  g15driver.MODEL_G15_V1 :      [ mkeys_control, backlight_control, lcd_contrast_control, lcd_backlight_control, invert_control ], 
+  g15driver.MODEL_G15_V2 :      [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
+  g15driver.MODEL_G13 :         [ mkeys_control, color_backlight_control, invert_control ],
+  g15driver.MODEL_G510 :        [ mkeys_control, color_backlight_control, invert_control ],
+  g15driver.MODEL_G510_AUDIO :  [ mkeys_control, color_backlight_control, invert_control ],
+  g15driver.MODEL_Z10 :         [ backlight_control, lcd_backlight_control, invert_control ],
+  g15driver.MODEL_G110 :        [ mkeys_control, red_blue_backlight_control ],
             }   
 
 G15_LCD = 1
@@ -385,13 +386,31 @@ class Driver(g15driver.AbstractDriver):
     """
     Private
     """
+    def _is_ext_key(self, code):
+        return code & (1<<28) != 0
             
     def _convert_from_g15daemon_code(self, code):
         keys = []
-        if code & (1<<28) != 0:
-            for key in EXT_REVERSE_KEY_MAP:
-                if code & key != 0:
-                    keys.append(EXT_REVERSE_KEY_MAP[key])
+        if self._is_ext_key(code):
+            if self.get_model_name() in [ g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO ]:
+                if code & 1 << 0 != 0:
+                    keys.append(uinput.KEY_PLAYPAUSE)
+                elif code & 1 << 1 != 0:
+                    keys.append(uinput.KEY_STOP)
+                elif code & 1 << 2 != 0:
+                    keys.append(uinput.KEY_NEXTSONG)
+                elif code & 1 << 3 != 0:
+                    keys.append(uinput.KEY_PREVIOUSSONG)
+                elif code & 1 << 4 != 0:
+                    keys.append(uinput.KEY_MUTE)
+                elif code & 1 << 5 != 0:
+                    keys.append(uinput.KEY_VOLUMEUP)
+                elif code & 1 << 6 != 0:
+                    keys.append(uinput.KEY_VOLUMEDOWN)
+            else:
+                for key in EXT_REVERSE_KEY_MAP:
+                    if code & key != 0:
+                        keys.append(EXT_REVERSE_KEY_MAP[key])
         else:
             for key in REVERSE_KEY_MAP:
                 if code & key != 0:
@@ -440,12 +459,25 @@ class Driver(g15driver.AbstractDriver):
                 if not k in this_keys and not k in down:
                     up.append(k)
                 
-        if len(down) > 0:         
-            print "Down %s" % down   
-            self.callback(down, g15driver.KEY_STATE_DOWN)
-        if len(up) > 0:            
-            print "Up %s" % up   
-            self.callback(up, g15driver.KEY_STATE_UP)
+        
+                
+        if self._is_ext_key(code) and self.get_model_name() in [ g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO ]:
+            """
+            This is experimental code to handle multimedia keys on the G510
+            """            
+            if len(down) > 0:
+                for uinput_code in down:
+                    g15uinput.emit(g15uinput.KEYBOARD, uinput_code, 1, False)
+                g15uinput.syn(g15uinput.KEYBOARD)
+            if len(up) > 0:            
+                for uinput_code in down:
+                    g15uinput.emit(g15uinput.KEYBOARD, uinput_code, 0, False)
+                g15uinput.syn(g15uinput.KEYBOARD)
+        else:
+            if len(down) > 0:
+                self.callback(down, g15driver.KEY_STATE_DOWN)
+            if len(up) > 0:            
+                self.callback(up, g15driver.KEY_STATE_UP)
         
         self.last_keys = this_keys
         

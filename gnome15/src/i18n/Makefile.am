@@ -1,6 +1,4 @@
 EXTRA_DIST = colorpicker.en_GB.po \
-			gnome15.po \
-			gnome15-drivers.po \
 			gnome15.en_GB.po \
 			gnome15-drivers.en_GB.po \
 			driver_g15.en_GB.po \

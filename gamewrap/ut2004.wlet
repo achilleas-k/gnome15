@@ -1,0 +1,58 @@
+# GameWrap config for Unreal Tourname 2004
+
+# activate defines a list of patterns to match against the command line
+# arguments. When a game is launched with parameters that match these,
+# this config file will be activated.
+
+activate "ut2004", ".*/ut2004"
+
+#
+# Map the internal terminology to the game terminology
+#
+
+terminology {
+	energy:		"Health",
+	game:		"Round",
+	set:		"Game",
+	match:		"Tournament",
+	shield:		"Shield",
+	boost:		"Adrenalin"	
+}
+
+#
+# Defines which patterns will activate which events
+#
+
+events {
+	# Game
+	new-game:	"NewGame",
+	lost-game:	"ASGameInfo::EndRound",
+	won-game:	"ASGameInfo::EndRound",
+	game-over:	"ASGameInfo::EndRound",
+	
+	# Round
+	new-round:	"NewRound",
+	lost-round:	"LostRound",
+	won-round:	"LostRound",
+	round-over:	"LostRound",
+	
+	# Lives
+	life-lost:		"Lifelost",
+	life-gained:	"newlist",
+	
+	# Energy
+	energy-low:		"Lifelost",
+	energy-boost:	"newlist",
+	energy-max:		"max-energy",
+	energy-level:	"energy-level",
+	
+	# Shield
+	shield-full:	"",
+	shield-empty:	"",
+	shield-level:	"",
+	
+	# Boost
+	boost-available:	"",
+	boost-empty:		"",
+	
+}
