@@ -28,9 +28,13 @@ cat /proc/meminfo
 
 # Gnome15 packages
 echo -e "Gnome15 Packages\n"
-if which dpkg >/dev/null
+if which dpkg >/dev/null 2>&1
 then echo -e "Debian based packaging found\n"
      dpkg -l 'gnome15*' 'pylibg19*' 'lg4l*' 'python-uinput*' 'python-inputevent*' 'libsuinput*' 'libg15*' 'g15*' 2>/dev/null
+fi
+if which rpm >/dev/null 2>&1
+then echo -e "RPM based packaging found\n"
+     rpm -qa 'gnome15*' 'pylibg19*' 'lg4l*' 'python-uinput*' 'python-inputevent*' 'libsuinput*' 'libg15*' 'g15*' 2>/dev/null
 fi
 separator
 
@@ -101,3 +105,9 @@ then echo "Frame buffer information"
      done
      separator
 fi
+
+if [ -d /sys/bus/usb/drivers ]
+then echo "Drivers bound to USB devices"
+     find /sys/bus/usb/drivers
+     separator
+ fi
