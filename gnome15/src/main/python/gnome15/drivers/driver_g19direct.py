@@ -278,7 +278,7 @@ class Driver(g15driver.AbstractDriver):
         keys_down = event.keysDown
         keys_up = event.keysUp
         
-        if logger.level == logging.DEBUG:
+        if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Processing input, keys_down = %d, keys_up = %d" % ( len(keys_down), len(keys_up)))
 
         if len(keys_up) > 0:

@@ -101,10 +101,10 @@ class G15LCDShot():
         self._gconf_key = gconf_key
 
     def activate(self):
-        self._screen.action_listeners.append(self) 
+        self._screen.key_handler.action_listeners.append(self) 
     
     def deactivate(self):
-        self._screen.action_listeners.remove(self)
+        self._screen.key_handler.action_listeners.remove(self)
         
     def destroy(self):
         pass

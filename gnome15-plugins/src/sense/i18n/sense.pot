@@ -17,31 +17,31 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: sensors.py:40
-msgid "Sensors"
+#: sense.py:40
+msgid "Sense"
 msgstr ""
 
-#: sensors.py:41
+#: sense.py:41
 msgid ""
 "Display information from various sensors, such as temperature and fan speeds."
 msgstr ""
 
-#: sensors.py:44
+#: sense.py:44
 msgid "Copyright (C)2010 Brett Smith"
 msgstr ""
 
-#: sensors.py:49
+#: sense.py:49
 msgid "Previous sensor"
 msgstr ""
 
-#: sensors.py:50
+#: sense.py:50
 msgid "Next sensor"
 msgstr ""
 
-#: sensors.py:51
+#: sense.py:51
 msgid "Next page"
 msgstr ""
 
-#: sensors.py:52
+#: sense.py:52
 msgid "Previous page"
 msgstr ""

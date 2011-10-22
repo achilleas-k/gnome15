@@ -110,11 +110,16 @@ class G15TailsPreferences():
         self._gconf_client.set_list(self._gconf_key + "/files", gconf.VALUE_STRING, files)
         
     def file_edited(self, widget, row_index, value):
-        row = self.file_model[row_index] 
+        files = self._gconf_client.get_list(self._gconf_key + "/files", gconf.VALUE_STRING)
+        row_index = int(row_index)
         if value != "":
-            self.add_file(row[0])
+            if self.file_model[row_index][0] != value:
+                self.file_model.set_value(self.file_model.get_iter(row_index), 0, value)
+                self._gconf_client.set_list(self._gconf_key + "/files", gconf.VALUE_STRING, files)
         else:
-            self.feed_model.remove(self.feed_model.get_iter(row_index))
+            self.file_model.remove(self.file_model.get_iter(row_index))
+            del files[row_index]
+            self._gconf_client.set_list(self._gconf_key + "/files", gconf.VALUE_STRING, files)
         
     def files_changed(self, client, connection_id, entry, args):
         self.reload_model()
@@ -175,24 +180,29 @@ class G15TailThread(Thread):
         self.line_seq = 0
         self.setDaemon(True)
         self.setName("Monitor%s" % self.page.file_path)
+        self._stopped = False
         
     def stop_monitoring(self):
         if self.fd is not None:
             self.fd.close()
+        self._stopped = True
         
     def run(self):
         for line in tailer.tail(open(self.page.file_path), self.page.plugin.lines):
             g15screen.run_on_redraw(self._add_line, line)
-        self.page.redraw()
         self.fd = open(self.page.file_path)
-        for line in tailer.follow(self.fd):
-            g15screen.run_on_redraw(self._add_line, line)
+        try:
+            for line in tailer.follow(self.fd):
+                g15screen.run_on_redraw(self._add_line, line)
+        except ValueError as e:
+            if not self._stopped:
+                raise e
         self.page.redraw()
             
     def _add_line(self, line):
         line = line.strip()
         if len(line) > 0:
-            while self.page._menu.get_child_count() > self.page.plugin.lines:                
+            while self.page._menu.get_child_count() > self.page.plugin.lines:
                 self.page._menu.remove_child_at(0)
             self.page._menu.add_child(G15TailMenuItem("Line-%d" % self.line_seq, line, self.page.file_path))
             self.page._menu.select_last_item()
@@ -311,14 +321,15 @@ class G15Tails():
         self._load_files()
     
     def _load_files(self):
-        self.lines = self._gconf_client.get_int(self._gconf_key + "/lines")
+        self.lines = g15util.get_int_or_default(self._gconf_client, "%s/lines" % self._gconf_key, 10)
         file_list = self._gconf_client.get_list(self._gconf_key + "/files", gconf.VALUE_STRING)
         
         def init():
             # Add new pages
             for file_path in file_list:
                 if not file_path in self._pages:
-                    self._pages[file_path] = G15TailPage(self, file_path)
+                    pg = G15TailPage(self, file_path)
+                    self._pages[file_path] = pg
                 else:
                     self._pages[file_path]._reload()
                     

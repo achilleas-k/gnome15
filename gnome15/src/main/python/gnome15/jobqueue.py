@@ -63,10 +63,10 @@ class GTimer:
         
     def exec_item(self, function, *args):
         try:
-            if logger.level == logging.DEBUG:
+            if logger.isEnabledFor(logging.DEBUG):
                 logging.debug("Executing GTimer %s" % str(self.task_name))
             ji = self.task_queue.run(self.stack, function, *args)
-            if logger.level == logging.DEBUG:
+            if logger.isEnabledFor(logging.DEBUG):
                 logging.debug("Executed GTimer %s" % str(self.task_name))
         finally:
             self.scheduler.all_jobs_lock.acquire()
@@ -131,7 +131,7 @@ class JobScheduler():
             self.queues[queue_name].stop()
     
     def execute(self, queue_name, name, function, *args):
-        if logger.level == logging.DEBUG:
+        if logger.isEnabledFor(logging.DEBUG):
             logging.debug("Executing on queue %s" % ( queue_name ) )
         if not queue_name in self.queues:
             self.queues[queue_name] = JobQueue(name=queue_name)   
@@ -147,12 +147,12 @@ class JobScheduler():
         
         if not hasattr(function, "__call__"):
             raise Exception("Not a function")
-        if logger.level == logging.DEBUG:
+        if logger.isEnabledFor(logging.DEBUG):
             logging.debug("Queueing %s on %s for execution in %f" % ( name, queue_name, interval ) )
         if not queue_name in self.queues:
             self.queues[queue_name] = JobQueue(name=queue_name)
         timer = GTimer(self, self.queues[queue_name], name, interval, function, self._get_stack(), *args)
-        if logger.level == logging.DEBUG:
+        if logger.isEnabledFor(logging.DEBUG):
             logging.debug("Queued %s" % name)
         return timer
 
@@ -169,7 +169,7 @@ class JobQueue():
             self.stack = stack
         
     def __init__(self,number_of_workers=1, name="JobQueue"):
-        if logger.level == logging.DEBUG:
+        if logger.isEnabledFor(logging.DEBUG):
             logging.debug("Creating job queue %s with %d workers" % (name, number_of_workers))
         self.work_queue = Queue.Queue()
         self.queued_jobs = []
@@ -224,7 +224,7 @@ class JobQueue():
             return
         self.all_jobs_lock.acquire()
         try :
-            if logger.level == logging.DEBUG:
+            if logger.isEnabledFor(logging.DEBUG):
                 logging.debug("Queued task on %s", self.name)
             ji = self.JobItem(stack, item, args)
             self.queued_jobs.append(ji)
@@ -244,7 +244,7 @@ class JobQueue():
             try:
                 if item != None:
                     try:
-                        if logger.level == logging.DEBUG:
+                        if logger.isEnabledFor(logging.DEBUG):
                             logging.debug("Running task on %s", self.name)
                         item.started = time.time()
                         if item.args and len(item.args) > 0:
@@ -252,7 +252,7 @@ class JobQueue():
                         else:
                             item.item()
                         item.finished = time.time()
-                        if logger.level == logging.DEBUG:
+                        if logger.isEnabledFor(logging.DEBUG):
                             logging.debug("Ran task on %s", self.name)
                     finally:
                         if item in self.queued_jobs: 

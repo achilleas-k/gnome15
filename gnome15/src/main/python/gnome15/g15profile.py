@@ -31,9 +31,11 @@ import time
 import g15util
 import g15devices
 import g15uinput
+import g15driver
 import ConfigParser
 import codecs
 import os.path
+import stat
 import errno
 import pyinotify
 import logging
@@ -72,8 +74,7 @@ class EventHandler(pyinotify.ProcessEvent):
         device_uid = os.path.basename(os.path.dirname(event.pathname))
         if path.endswith(".macros") and not path.startswith("."):
             id_no = path.split(".")[0]
-            if id_no.isdigit():
-                return ( int(id_no), device_uid )
+            return ( id_no, device_uid )
     
     def _notify(self, event):
         ids = self._get_profile_ids(event)
@@ -125,6 +126,27 @@ Defaults
 """
 DEFAULT_REPEAT_DELAY = -1.0
 
+
+__profile_dirs = []
+
+def add_profile_dir(profile_dir):
+    '''
+    Add a new location to search for macro profiles. This allows plugins to
+    register their own directories and contribute new profiles.
+    
+    profile_dir    -- profile directory to register
+    '''
+    __profile_dirs.append(profile_dir)
+
+def remove_profile_dir(profile_dir):
+    '''
+    Remove a location being search for macro profiles. This allows plugins to
+    de-register their own directories and stop contributing new profiles.
+    
+    profile_dir    -- profile directory to de-register
+    '''
+    __profile_dirs.remove(profile_dir)
+
 def get_profiles(device):
     '''
     Get list of all configured macro profiles for the specified device.
@@ -133,12 +155,27 @@ def get_profiles(device):
     device        -- device associated with profiles
     '''
     profiles = []
-    for profile in os.listdir(get_profile_dir(device)):
-        if not profile.startswith(".") and profile.endswith(".macros"):
-            id = profile.split(".")[0]
-            if id.isdigit():
-                profiles.append(G15Profile(device, int(id)))
+    for profile_dir in get_all_profile_dirs(device):
+        for profile in os.listdir(profile_dir):
+            if not profile.startswith(".") and profile.endswith(".macros"):
+                profile_id = ".".join(profile.split(".")[:-1])
+                profile_object = G15Profile(device, profile_id, \
+                                           file_path = "%s/%s" % \
+                                           ( profile_dir, profile ))
+                if device.model_id in profile_object.models:
+                    profiles.append(profile_object)
     return profiles
+
+def get_all_profile_dirs(device):
+    """
+    Get a list of all the directories profiles are searched for in.
+    
+    Keyword arguments:
+    device        --    device
+    """
+    dirs = list(__profile_dirs)
+    dirs.append(get_profile_dir(device))
+    return dirs
 
 def create_default(device):
     """
@@ -147,12 +184,13 @@ def create_default(device):
     Keyword arguments:
     device        -- device associated with default profile
     """
-    if not get_profile(device, 0):
+    if not get_profile(device, "0"):
         logger.info("No default macro profile. Creating one")
-        default_profile = G15Profile(device, id = 0)
+        default_profile = G15Profile(device, id = "0")
         default_profile.name = "Default"
         default_profile.device = device
         default_profile.activate_on_focus = True
+        default_profile.activate_on_launch = False
         create_profile(default_profile)
 
 def create_profile(profile):
@@ -162,9 +200,9 @@ def create_profile(profile):
     Keyword arguments:
     profile        --    profile to save
     """
-    if profile.id == -1:
-        profile.id = int(time.time())
-    logger.info("Creating profile %d, %s" % ( profile.id, profile.name ))
+    if profile.id == None:
+        profile.id = str(time.time())
+    logger.info("Creating profile %s, %s" % ( profile.id, profile.name ))
     profile.save()
     
 def get_profile(device, profile_id):
@@ -177,9 +215,10 @@ def get_profile(device, profile_id):
     device        -- device associated with profile
     profile_id    -- ID of profile to load
     """
-    path = "%s/%s/%d.macros" % ( conf_dir, device.uid, profile_id )
-    if os.path.exists(path):
-        return G15Profile(device, profile_id);
+    for profile_dir in get_all_profile_dirs(device):
+        path = "%s/%s.macros" % ( profile_dir, profile_id )
+        if os.path.exists(path):
+            return G15Profile(device, profile_id, file_path = path);
 
 def get_active_profile(device):
     """
@@ -190,8 +229,11 @@ def get_active_profile(device):
     device        -- device associated with profile
     """
     val= conf_client.get("/apps/gnome15/%s/active_profile" % device.uid)
-    if val != None:
-        return get_profile(device, val.get_int())
+    if val != None and val.type == gconf.VALUE_INT:
+        # This is just here for compatibility with <= 0.7.x
+        return get_profile(device, str(val.get_int()))
+    elif val != None and val.type == gconf.VALUE_STRING:
+        return get_profile(device, val.get_string())
     else:
         return get_default_profile(device)
       
@@ -202,7 +244,7 @@ def get_default_profile(device):
     Keyword arguments:
     device        -- device associated with default profile
     """
-    return get_profile(device, 0)
+    return get_profile(device, "0")
 
 def get_keys_from_key(key_list_key):
     """
@@ -245,6 +287,51 @@ def is_uinput_type(macro_type):
                           MACRO_KEYBOARD, \
                           MACRO_JOYSTICK, \
                           MACRO_DIGITAL_JOYSTICK ]
+    
+def find_profile_for_command(args, device):
+    """
+    Searchs for a profile that is associated with a particular command. When
+    the command is launched through g15-launch, the desktop service will
+    call the function to find the profile to launch the command under. See
+    G15Profile.launch() for details on launching applications through 
+    Gnome15.
+    
+    Keyword arguments:
+    device      --  device
+    args        --  list of arguments the command was launched with. The 
+                    first argument is the either the executable name (when the
+                    executable is on the PATH, or the full path)
+                    full path to the executable
+    """
+    
+    
+    """
+    First reformat the arguments so they are all wrapped in single quotes.
+    They shell that called g15-launch would have already expanded any
+    variables or filepaths that exist, so let's use single quotes
+    """
+    command_line = ""
+    for a in args:
+        if len(command_line) > 0:
+            command_line += " "
+        command_line += "'" + a + "'"
+        
+    logger.info("Processed command \"%s\"" % command_line)
+    
+    for p in get_profiles(device):
+        if p.can_launch(command_line):
+            return p
+        
+def to_key_state_name(key_state_id):
+    """
+    Return an english representation of a key state code
+    
+    Keyword arguments:
+    key_state_id        -- key state ID (g15driver.KEY_STATE_UP, .. DOWN and HELD)
+    """
+    return "Up" if key_state_id == g15driver.KEY_STATE_UP else \
+        ( "Down" if key_state_id == g15driver.KEY_STATE_DOWN else "Held" )
+        
 
 class G15Macro:
     """
@@ -469,7 +556,7 @@ class G15Profile():
     list of macros themselves.
     """
     
-    def __init__(self, device, id=-1):
+    def __init__(self, device, profile_id=None, file_path = None):
         """
         Constructor
         
@@ -478,22 +565,40 @@ class G15Profile():
         id            -- profile ID 
         """
         
-        self.id = id
+        self.id = profile_id
         self.device = device
+        self.read_only = False
         self.parser = ConfigParser.ConfigParser({
                                                      })        
         self.name = None
         self.icon = None
         self.background = None
+        self.filename = None
         self.author = ""
         self.macros = []        
         self.mkey_color = {}
         self.activate_on_focus = False
+        self.activate_on_launch = False
+        self.launch_pattern = None
+        self.monitor = [ "stdout" ]
+        self.models = [ device.model_id ]
         self.window_name = ""
-        self.base_profile = -1
+        self.base_profile = None
         self.version = 2.0
-        self.load()
+        self.load(file_path)
         
+    def can_launch(self, command_line):
+        """
+        Test if this profile can launch a command with the provided arguments,
+        monitoring it's output (or other log files) for output, and produce
+        events and extract information that may be used by a "Game Theme" or "Game Plugin"
+        
+        Keyword arguments:
+        command_line        -- command line to match against. this should have
+                               each argument wrapped in quotes for consistency.
+        """
+        return re.search(self.launch_pattern, command_line) 
+            
     def export(self, filename):
         """
         Save this profile in a format that may be transmitted to another
@@ -509,13 +614,13 @@ class G15Profile():
         try:
             # Icon
             if profile_copy.icon and os.path.exists(profile_copy.icon):
-                base_path = "%d.resources/%s" % ( profile_copy.id, os.path.basename(profile_copy.icon) )
+                base_path = "%s.resources/%s" % ( profile_copy.id, os.path.basename(profile_copy.icon) )
                 archive_file.write(profile_copy.icon, base_path )  
                 profile_copy.icon = base_path
                 
             # Background            
             if profile_copy.background and os.path.exists(profile_copy.background):
-                base_path = "%d.resources/%s" % ( profile_copy.id, os.path.basename(profile_copy.background) )
+                base_path = "%s.resources/%s" % ( profile_copy.id, os.path.basename(profile_copy.background) )
                 archive_file.write(profile_copy.background, base_path)  
                 profile_copy.background = base_path
                 
@@ -523,7 +628,7 @@ class G15Profile():
             profile_data = StringIO()
             try:
                 profile_copy.save(profile_data)
-                archive_file.writestr("%d.macros" % profile_copy.id, profile_data.getvalue())
+                archive_file.writestr("%s.macros" % profile_copy.id, profile_data.getvalue())
             finally:
                 profile_data.close()
         finally:
@@ -558,8 +663,11 @@ class G15Profile():
         """
         Save this profile to disk
         """
-        logger.info("Saving macro profile %d, %s" % ( self.id, self.name ))
-    
+        if self.read_only:
+            raise Exception("Cannot write to read-only profile")
+        logger.info("Saving macro profile %s, %s" % ( self.id, self.name ))
+        if filename is not None:
+            self.filename = filename
         if self.window_name == None:
             self.window_name = ""
         if self.icon == None:
@@ -569,8 +677,11 @@ class G15Profile():
         self.parser.set("DEFAULT", "name", self.name)
         self.parser.set("DEFAULT", "version", str(self.version))
         self.parser.set("DEFAULT", "icon", self.icon)
-        self.parser.set("DEFAULT", "window_name", self.window_name)    
-        self.parser.set("DEFAULT", "base_profile", str(self.base_profile))
+        self.parser.set("DEFAULT", "window_name", self.window_name)
+        if self.version == 1.0:
+            self.parser.set("DEFAULT", "base_profile", str(self.base_profile) if self.base_profile is not None else "-1")
+        else:   
+            self.parser.set("DEFAULT", "base_profile", str(self.base_profile) if self.base_profile is not None else "")
         self.parser.set("DEFAULT", "icon", self.icon)
         self.parser.set("DEFAULT", "background", self.background)
         self.parser.set("DEFAULT", "author", self.author)
@@ -579,7 +690,17 @@ class G15Profile():
         self.parser.set("DEFAULT", "fixed_delays", str(self.fixed_delays))
         self.parser.set("DEFAULT", "press_delay", str(self.press_delay))
         self.parser.set("DEFAULT", "release_delay", str(self.release_delay))
-        self.parser.set("DEFAULT", "model", str(self.device.model_id))
+        self.parser.set("DEFAULT", "models", ",".join(self.models))
+        
+        # Set the launch options
+        if self.launch_pattern is not None:
+            self.parser.set("LAUNCH", "pattern", self.launch_pattern)
+            self.parser.set("LAUNCH", "monitor", ",".join(self.monitor))
+            self.parser.set("LAUNCH", "activate_on_launch", str(self.activate_on_launch))
+        else:
+            self._remove_if_exists("pattern", "LAUNCH")
+            self._remove_if_exists("monitor", "LAUNCH")
+            self._remove_if_exists("activate_on_launch", "LAUNCH")
         
         # Remove and re-add the bank sections
         for i in range(1, 4): 
@@ -597,7 +718,7 @@ class G15Profile():
             for macro in self.get_sorted_macros(i):
                 macro._store()
                 
-        self._write(filename)
+        self._write(self.filename)
             
     def set_mkey_color(self, memory, rgb):
         """
@@ -639,7 +760,7 @@ class G15Profile():
         key_list_key = get_keys_key(keys)
         logger.info("Deleting macro M%d, for %s" % ( memory, key_list_key ))
         self._delete_key(section_name, key_list_key)
-        self._write()
+        self._write(self.filename)
         bank_macros = self.macros[memory - 1] 
         for macro in bank_macros:
             if macro.key_list_key == key_list_key and macro in bank_macros:
@@ -658,7 +779,29 @@ class G15Profile():
         icon = self.icon
         if icon == None or icon == "":
             icon = "preferences-desktop-keyboard-shortcuts"
-        return g15util.get_icon_path(icon, height)
+        if icon.startswith("/"):
+            return icon
+        else:
+            path = self.get_resource_path(icon)
+            if path is None:
+                return g15util.get_icon_path(icon, height)
+        return path
+        
+    def get_resource_path(self, resource_name):
+        """
+        Get the full path of a resource (i.e. a path relative to the location
+        of the profile's file. None will be returned if no such resource exists
+        
+        Keyword arguments:
+        resource_name --    resource name
+        """
+        if resource_name is not None and resource_name != "":
+            if resource_name.startswith("/"):
+                return resource_name        
+            if self.filename is not None:
+                path = os.path.join(os.path.dirname(self.filename), resource_name)
+                if os.path.exists(path):
+                    return path
         
     def create_macro(self, memory, keys, name, macro_type, macro):
         """
@@ -703,9 +846,9 @@ class G15Profile():
         """
         Make this the currently active profile
         """
-        conf_client.set_int("/apps/gnome15/%s/active_profile" % self.device.uid, self.id)
+        conf_client.set_string("/apps/gnome15/%s/active_profile" % self.device.uid, self.id)
         
-    def load(self, filename = None):
+    def load(self, filename = None, fd = None):
         """
         Load the profile from disk
         """
@@ -714,14 +857,18 @@ class G15Profile():
         self.macros = []
         self.mkey_color = {}
         
-        # Load macro file        
+        # Load macro file
         if self.id != -1 or filename is not None:
-            if filename is None:
-                filename = self._get_filename()
-            if isinstance(filename, str) and os.path.exists(filename):
-                self.parser.readfp(codecs.open(filename, "r", "utf8"))
-            else:
-                self.parser.readfp(filename)
+            self.filename = filename
+            self.filename = self._get_filename()
+            if os.path.exists(self.filename):
+                self.read_only = not os.stat(self.filename)[0] & stat.S_IWRITE
+                self.parser.readfp(codecs.open(self.filename, "r", "utf8"))
+            elif fd is not None:
+                self.read_only = True
+                self.parser.readfp(fd)
+        else:
+            self.read_only = False
         
         # Macro file format version. Try to keep macro files backwardly and
         # forwardly compatible
@@ -736,14 +883,27 @@ class G15Profile():
         self.background = self.parser.get("DEFAULT", "background").strip() if self.parser.has_option("DEFAULT", "background") else ""
         self.author = self.parser.get("DEFAULT", "author").strip() if self.parser.has_option("DEFAULT", "author") else ""
         self.window_name = self.parser.get("DEFAULT", "window_name").strip() if self.parser.has_option("DEFAULT", "window_name") else ""
+        self.models = self.parser.get("DEFAULT", "models").strip().split(",") if self.parser.has_option("DEFAULT", "models") else [ self.device.model_id ]
         
         self.activate_on_focus = self.parser.getboolean("DEFAULT", "activate_on_focus") if self.parser.has_option("DEFAULT", "activate_on_focus") else False
         self.send_delays = self.parser.getboolean("DEFAULT", "send_delays") if self.parser.has_option("DEFAULT", "send_delays") else False
         self.fixed_delays = self.parser.getboolean("DEFAULT", "fixed_delays") if self.parser.has_option("DEFAULT", "fixed_delays") else False
         
-        self.base_profile = self._get_int("base_profile", -1, "DEFAULT")
+        self.base_profile = self.parser.get("DEFAULT", "base_profile").strip() if self.parser.has_option("DEFAULT", "base_profile") else ""
+        if self.base_profile == "-1":
+            # For version 1.0 profile format compatibility
+            self.base_profile = None
+            
         self.press_delay = self._get_int("press_delay", 50)
         self.release_delay = self._get_int("release_delay", 50)
+        
+        # Launch
+        self.launch_pattern = self.parser.get("LAUNCH", "pattern").strip() \
+            if self.parser.has_option("LAUNCH", "pattern") else None
+        self.monitor = self.parser.get("LAUNCH", "monitor").strip().split(",") \
+            if self.parser.has_option("LAUNCH", "monitor") else [ "stdout" ]
+        self.activate_on_launch = self.parser.getboolean("LAUNCH", "activate_on_launch") \
+            if self.parser.has_option("LAUNCH", "activate_on_launch") else False
         
         # Bank sections
         for i in range(1, 4):
@@ -793,11 +953,10 @@ class G15Profile():
     def __eq__(self, profile):
         return profile is not None and self.id == profile.id
         
-    def _write(self, filename = None):
-        if filename is None and self.id == -1:
+    def _write(self, save_file = None):
+        if save_file is None and self.id == -1:
             raise Exception("Cannot save a profile without a filename or an id.")
         
-        save_file = self._get_filename() if filename is None else filename
         if isinstance(save_file, str):
             dir_name = os.path.dirname(save_file)
             if not os.path.exists(dir_name):
@@ -820,7 +979,9 @@ class G15Profile():
                 self.parser.remove_option(section_name, option)
         
     def _get_filename(self):
-        return "%s/%s/%d.macros" % ( conf_dir, self.device.uid, self.id )
+        if self.filename is not None:
+            return self.filename
+        return "%s/%s/%s.macros" % ( conf_dir, self.device.uid, self.id )
     
     def _is_excluded(self, excluded, macro):
         for e in excluded:

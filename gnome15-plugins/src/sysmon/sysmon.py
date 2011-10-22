@@ -102,11 +102,11 @@ class G15SysMon():
         self._get_stats()
         self._build_properties()
         self.screen.add_page(self.page)
-        self.screen.action_listeners.append(self)
+        self.screen.key_handler.action_listeners.append(self)
         self.screen.redraw(self.page)
     
     def deactivate(self):
-        self.screen.action_listeners.remove(self)
+        self.screen.key_handler.action_listeners.remove(self)
         self._cancel_refresh()
         self.screen.del_page(self.page)
         

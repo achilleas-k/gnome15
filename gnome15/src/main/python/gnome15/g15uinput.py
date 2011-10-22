@@ -164,16 +164,16 @@ def emit(target, code, value, syn=True, event_type = None):
     ev_type = event_type
     if ev_type is None:
         if target == MOUSE and code in [ uinput.REL_X, uinput.REL_Y ]:
-            if logger.level == logging.DEBUG:
+            if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("UINPUT mouse event at %s, code = %d, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
             ev_type = uinput.EV_REL
         elif ( target == JOYSTICK or target == DIGITAL_JOYSTICK ) and code in [ uinput.ABS_X, uinput.ABS_Y ]:
-            if logger.level == logging.DEBUG:
+            if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("UINPUT joystick event at %s, code = %d, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
             ev_type = uinput.EV_ABS
         else: 
             ev_type = uinput.EV_KEY
-            if logger.level == logging.DEBUG:
+            if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("UINPUT uinput keyboard event at %s, code = %d, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
     
     locks[target].acquire()
@@ -215,7 +215,7 @@ def get_buttons(device_type):
 def __check_devices():
     for device_type in DEVICE_TYPES:
         if not device_type in uinput_devices:
-            logger.debug("Opening UINPUT device for %s" % device_type)
+            logger.info("Opening uinput device for %s" % device_type)
             abs_parms = { }       
             keys = []
             for b, v in get_buttons(device_type):
@@ -258,5 +258,8 @@ def __check_devices():
                 emit(device_type, uinput.ABS_Y, 128, False)
                 syn(device_type)
                 load_calibration(device_type)
+            else:
+                emit(device_type, 0, 0)
+                emit(device_type, 0, 1)
             
             

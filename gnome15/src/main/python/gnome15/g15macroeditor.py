@@ -101,6 +101,7 @@ class G15MacroEditor():
             self.editing_macro = macro
             self.selected_profile = macro.profile
             self.memory_number = macro.memory
+            self.widget_tree.get_object("KeyBox").set_sensitive(not self.selected_profile.read_only)
             keys_frame = self.widget_tree.get_object("KeysFrame")
             self.__allow_combination.set_active(len(self.editing_macro.keys) > 1)
             
@@ -244,6 +245,7 @@ class G15MacroEditor():
             self.__load_keys()
         finally:
             self.adjusting = False
+        self._key_selected(None)
     
     def _simple_macro_changed(self, widget):
         self.editing_macro.macro = widget.get_text()
@@ -320,7 +322,7 @@ class G15MacroEditor():
     def _key_selected(self, widget):
         if not self.adjusting:
             (model, path) = self.__uinput_tree.get_selection().get_selected()
-            if path:
+            if path is not None:
                 key = model[path][0]
                 self.editing_macro.macro = key
                 self.__save_macro(self.editing_macro)
@@ -351,9 +353,10 @@ class G15MacroEditor():
         Keyword arguments:
         macro        -- macro to save
         """
-        if self.__macro_save_timer is not None:
-            self.__macro_save_timer.cancel()
-        self.__macro_save_timer = g15util.schedule("SaveMacro", 2, self.__do_save_macro, macro)            
+        if not self.adjusting:
+            if self.__macro_save_timer is not None:
+                self.__macro_save_timer.cancel()
+            self.__macro_save_timer = g15util.schedule("SaveMacro", 2, self.__do_save_macro, macro)            
             
     def __do_save_macro(self, macro):
         """
@@ -362,9 +365,8 @@ class G15MacroEditor():
         Keyword arguments:
         macro        -- macro to save
         """
-        if not self.adjusting:
-            logger.info("Saving macro %s" % macro.name)
-            macro.save()
+        logger.info("Saving macro %s" % macro.name)
+        macro.save()
             
     def __load_actions(self):
         self.__action_model.clear()
@@ -415,11 +417,16 @@ class G15MacroEditor():
             if path:
                 sel = model[path][0]
             model.clear()
+            found = False
             for n, v in g15uinput.get_buttons(sel_type):
                 if len(filter_text) == 0 or filter_text in n.lower(): 
                     model.append([n, v])
                     if n == sel:
-                        self.__mapped_key_type_combo.set_active(len(model))
+                        self.__select_tree_row(self.__uinput_tree, len(model))
+                        found  = True
+            (model, path) = self.__uinput_tree.get_selection().get_selected()
+            if not found and len(model) > 0:
+                self.__select_tree_row(self.__uinput_tree, 0)
             
     def __get_selected_type(self):
         """

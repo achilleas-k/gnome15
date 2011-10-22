@@ -55,6 +55,7 @@ class RunThread(threading.Thread):
                     match = re.search(pattern, line)
                     if match:
                         logger.info("Match! %s" % str(match))
+                        gobject.idle_add(self.controller.PatternMatched(patter_id, line))
             else:
                 break
         logger.info("Waiting for process to complete")
@@ -123,6 +124,18 @@ class G15GameWrapperServiceController(dbus.service.Object):
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssssas')
     def GetInformation(self):
         return ("GameWrapper Service", "Gnome15 Project", VERSION, "1.0", self.args)
+    
+
+    """
+    Signals
+    """
+    
+    """
+    DBUS Signals
+    """
+    @dbus.service.signal(SCREEN_IF_NAME, signature='ss')
+    def PatternMatch(self, pattern_id, line):
+        pass
         
     """
     Private

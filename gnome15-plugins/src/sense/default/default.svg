@@ -19,22 +19,22 @@
      id="defs4">
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath2996">
-      <rect
-         y="1009.3638"
-         x="0"
-         height="8.0000124"
-         width="89.999855"
-         id="rect2998"
-         style="fill:#000000;fill-opacity:1;stroke:none" />
-    </clipPath>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
        id="clipPath3010">
       <rect
          style="opacity:0.98999999;fill:#000000;fill-opacity:1;stroke:none"
          id="rect3012"
          width="59.999905"
+         height="8.0000124"
+         x="0"
+         y="1009.3638" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3012">
+      <rect
+         style="fill:#000000;fill-opacity:1;stroke:none"
+         id="rect3014"
+         width="37.999939"
          height="8.0000124"
          x="0"
          y="1009.3638" />
@@ -47,17 +47,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="7.9195959"
-     inkscape:cx="70.620262"
-     inkscape:cy="16.537536"
+     inkscape:zoom="5.6"
+     inkscape:cx="98.167664"
+     inkscape:cy="10.573529"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="317"
-     inkscape:window-y="115"
+     inkscape:window-x="486"
+     inkscape:window-y="175"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -94,17 +94,17 @@
        text-rendering="optimizeLegibility" />
     <text
        xml:space="preserve"
-       style="font-size:8.0000124px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="43.293034"
+       style="font-size:8.0000124px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="0.33593601"
        y="1016.0591"
        id="text3037"
        sodipodi:linespacing="125%"
-       transform="matrix(1.0000016,0,0,0.9999984,64,0)"
+       transform="matrix(1.0000016,0,0,0.9999984,62,0)"
        class="shadow"
-       clip-path="url(#clipPath2996)"><tspan
+       clip-path="url(#clipPath3012)"><tspan
          sodipodi:role="line"
          id="tspan3039"
-         x="43.293034"
+         x="0.33593601"
          y="1016.0591">${temp_c}</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
@@ -167,31 +167,33 @@
        sodipodi:start="0.85423822"
        sodipodi:end="7.117418"
        sodipodi:open="true" />
+    <rect
+       style="opacity:0.98999999;fill-opacity:1;stroke:none"
+       id="needle"
+       width="1"
+       height="12"
+       x="24"
+       y="1024.3622" />
+    <rect
+       style="opacity:0.98999999;fill:#ff0000;stroke:none"
+       id="needle_center"
+       width="1"
+       height="1"
+       x="24"
+       y="1036.3622"
+       title="0,140,72,223,130" />
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="11.604492"
-       y="1051.2772"
-       id="text3765"
+       x="6.7070312"
+       y="1036.2772"
+       id="text3777"
        sodipodi:linespacing="125%"
        class="shadow"><tspan
          sodipodi:role="line"
-         id="tspan3767"
-         x="11.604492"
-         y="1051.2772">0</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:5.99988747px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="31.341431"
-       y="1051.2574"
-       id="text3769"
-       sodipodi:linespacing="125%"
-       transform="scale(0.99998121,1.0000188)"
-       class="shadow"><tspan
-         sodipodi:role="line"
-         id="tspan3771"
-         x="31.341431"
-         y="1051.2574">140</tspan></text>
+         id="tspan3779"
+         x="6.7070312"
+         y="1036.2772">40</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:5.99996853px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
@@ -208,18 +210,6 @@
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="4.7070312"
-       y="1038.2772"
-       id="text3777"
-       sodipodi:linespacing="125%"
-       class="shadow"><tspan
-         sodipodi:role="line"
-         id="tspan3779"
-         x="4.7070312"
-         y="1038.2772">40</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:6px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
        x="34.707031"
        y="1038.2772"
        id="text3777-5"
@@ -229,20 +219,30 @@
          id="tspan3779-3"
          x="34.707031"
          y="1038.2772">110</tspan></text>
-    <rect
-       style="opacity:0.98999999;fill-opacity:1;stroke:none"
-       id="needle"
-       width="1"
-       height="18.000017"
-       x="24"
-       y="1024.3622" />
-    <rect
-       style="opacity:0.98999999;fill:#ff0000;stroke:none"
-       id="needle_center"
-       width="1"
-       height="1"
-       x="24"
-       y="1036.3622"
-       title="0,140,72,223,130" />
+    <text
+       xml:space="preserve"
+       style="font-size:5.99988747px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="31.341431"
+       y="1051.2574"
+       id="text3769"
+       sodipodi:linespacing="125%"
+       transform="scale(0.99998121,1.0000188)"
+       class="shadow"><tspan
+         sodipodi:role="line"
+         id="tspan3771"
+         x="31.341431"
+         y="1051.2574">140</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="11.604492"
+       y="1051.2772"
+       id="text3765"
+       sodipodi:linespacing="125%"
+       class="shadow"><tspan
+         sodipodi:role="line"
+         id="tspan3767"
+         x="11.604492"
+         y="1051.2772">0</tspan></text>
   </g>
 </svg>

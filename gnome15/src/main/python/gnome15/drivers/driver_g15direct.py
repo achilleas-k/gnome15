@@ -237,7 +237,10 @@ class Driver(g15driver.AbstractDriver):
         return _("G15 Direct")
     
     def get_model_names(self):
-        return [ g15driver.MODEL_G11, g15driver.MODEL_G15_V1, g15driver.MODEL_G15_V2, g15driver.MODEL_G110, g15driver.MODEL_G510, g15driver.MODEL_G13 ]
+        return [ g15driver.MODEL_G11, g15driver.MODEL_G15_V1, \
+                g15driver.MODEL_G15_V2, g15driver.MODEL_G110, \
+                g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO, \
+                g15driver.MODEL_G13 ]
     
     def get_model_name(self):
         return self.device.model_id
@@ -373,7 +376,7 @@ class Driver(g15driver.AbstractDriver):
                             arrbuf[byte_offset] = pv &  ~(1 << bit_offset)
                 buf = arrbuf.tostring()
                 try :
-                    if logger.level == logging.DEBUG:
+                    if logger.isEnabledFor(logging.DEBUG):
                         logger.debug("Writing buffer of %d byts" % len(buf))
                     pylibg15.write_pixmap(buf)
                 except IOError as (errno, strerror):
@@ -386,48 +389,54 @@ class Driver(g15driver.AbstractDriver):
     """
     Private
     """
-    def _is_ext_key(self, code):
-        return code & (1<<28) != 0
+    def _get_g510_multimedia_keys(self, code):
+        keys = []
+        code &= ~(1<<28)
+        print "Actual code = %d" % code
+        if code & 1 << 0 != 0:
+            keys.append(uinput.KEY_PLAYPAUSE)
+        elif code & 1 << 1 != 0:
+            keys.append(uinput.KEY_STOP)
+        elif code & 1 << 2 != 0:
+            keys.append(uinput.KEY_NEXTSONG)
+        elif code & 1 << 3 != 0:
+            keys.append(uinput.KEY_PREVIOUSSONG)
+        elif code & 1 << 4 != 0:
+            keys.append(uinput.KEY_MUTE)
+        elif code & 1 << 5 != 0:
+            keys.append(uinput.KEY_VOLUMEUP)
+        elif code & 1 << 6 != 0:
+            keys.append(uinput.KEY_VOLUMEDOWN)
+        return keys  
+    
+    def _convert_ext_g15daemon_code(self, code):
+        keys = []
+        for key in EXT_REVERSE_KEY_MAP:
+            if code & key != 0:
+                keys.append(EXT_REVERSE_KEY_MAP[key])
+        return keys    
             
     def _convert_from_g15daemon_code(self, code):
         keys = []
-        if self._is_ext_key(code):
-            if self.get_model_name() in [ g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO ]:
-                if code & 1 << 0 != 0:
-                    keys.append(uinput.KEY_PLAYPAUSE)
-                elif code & 1 << 1 != 0:
-                    keys.append(uinput.KEY_STOP)
-                elif code & 1 << 2 != 0:
-                    keys.append(uinput.KEY_NEXTSONG)
-                elif code & 1 << 3 != 0:
-                    keys.append(uinput.KEY_PREVIOUSSONG)
-                elif code & 1 << 4 != 0:
-                    keys.append(uinput.KEY_MUTE)
-                elif code & 1 << 5 != 0:
-                    keys.append(uinput.KEY_VOLUMEUP)
-                elif code & 1 << 6 != 0:
-                    keys.append(uinput.KEY_VOLUMEDOWN)
-            else:
-                for key in EXT_REVERSE_KEY_MAP:
-                    if code & key != 0:
-                        keys.append(EXT_REVERSE_KEY_MAP[key])
-        else:
-            for key in REVERSE_KEY_MAP:
-                if code & key != 0:
-                    keys.append(REVERSE_KEY_MAP[key])
+        for key in REVERSE_KEY_MAP:
+            if code & key != 0:
+                keys.append(REVERSE_KEY_MAP[key])
         return keys   
+    
         
-    def _handle_key_event(self, code):
-        
+    def _handle_key_event(self, code, ext_code):
         if not self.is_connected() or self.disconnecting:
             return
-        
-        if logger.level == logging.DEBUG:
+        if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Key code %d" % code)
+
         this_keys = [] if code == 0 else self._convert_from_g15daemon_code(code)
+        if ext_code > 0 and self.get_model_name() in \
+            [ g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO ]:
+            this_keys += self._get_g510_multimedia_keys(ext_code)
+        elif ext_code > 0:
+            this_keys += self._convert_ext_g15daemon_code(ext_code)
         
-                    
-        # For now, emulate a digital joystick
         if self.get_model_name() == g15driver.MODEL_G13:
             low_val = 128 - self.calibration
             high_val = 128 + self.calibration
@@ -437,7 +446,7 @@ class Driver(g15driver.AbstractDriver):
                 this_keys.remove(g15driver.G_KEY_JOY)
             pos = pylibg15.get_joystick_position()
             
-            if logger.level == logging.DEBUG:
+            if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Joystick at %s" % str(pos))
             
             if self.joy_mode == "joystick":
@@ -458,28 +467,55 @@ class Driver(g15driver.AbstractDriver):
             for k in self.last_keys:
                 if not k in this_keys and not k in down:
                     up.append(k)
-                
-        
-                
-        if self._is_ext_key(code) and self.get_model_name() in [ g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO ]:
-            """
-            This is experimental code to handle multimedia keys on the G510
-            """            
-            if len(down) > 0:
-                for uinput_code in down:
-                    g15uinput.emit(g15uinput.KEYBOARD, uinput_code, 1, False)
-                g15uinput.syn(g15uinput.KEYBOARD)
-            if len(up) > 0:            
-                for uinput_code in down:
-                    g15uinput.emit(g15uinput.KEYBOARD, uinput_code, 0, False)
-                g15uinput.syn(g15uinput.KEYBOARD)
+            
+        if ( ext_code > 0 ) and self.get_model_name() \
+            in [ g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO ]:
+            self._do_macro_keys(self._filter_macro_keys(down), self._filter_macro_keys(up))
+            self._do_uinput_keys(self._filter_uinput_keys(down), self._filter_uinput_keys(up))
         else:
-            if len(down) > 0:
-                self.callback(down, g15driver.KEY_STATE_DOWN)
-            if len(up) > 0:            
-                self.callback(up, g15driver.KEY_STATE_UP)
+            self._do_macro_keys(down, up)
         
         self.last_keys = this_keys
+        
+    def _do_uinput_keys(self, down, up):
+        if len(down) > 0:
+            for uinput_code in down:
+                g15uinput.emit(g15uinput.KEYBOARD, uinput_code, 1, False)
+            g15uinput.syn(g15uinput.KEYBOARD)
+        if len(up) > 0:            
+            for uinput_code in up:
+                g15uinput.emit(g15uinput.KEYBOARD, uinput_code, 0, False)
+            g15uinput.syn(g15uinput.KEYBOARD)
+        
+    def _do_macro_keys(self, down, up):
+        if len(down) > 0:
+            self.callback(down, g15driver.KEY_STATE_DOWN)
+        if len(up) > 0:            
+            self.callback(up, g15driver.KEY_STATE_UP)
+        
+    def _filter_macro_keys(self, keys):
+        m = []
+        for c in keys:
+            if isinstance(c, str):
+                m.append(c)
+        return m
+        
+    def _filter_uinput_keys(self, keys):     
+        m = []
+        for c in keys:
+            if isinstance(c, int):
+                m.append(c)
+        return m
+        
+    def _emit_macro_keys(self, this_keys, pos, low_val, high_val):
+        if pos[0] < low_val:
+            this_keys.append(g15driver.G_KEY_LEFT)                    
+        elif pos[0] > high_val:
+            this_keys.append(g15driver.G_KEY_RIGHT)                    
+        elif pos[1] < low_val:
+            this_keys.append(g15driver.G_KEY_UP)
+        elif pos[1] > high_val:
+            this_keys.append(g15driver.G_KEY_DOWN)
         
     def _emit_macro_keys(self, this_keys, pos, low_val, high_val):
         if pos[0] < low_val:

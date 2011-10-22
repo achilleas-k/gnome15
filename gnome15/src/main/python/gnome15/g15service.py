@@ -171,7 +171,7 @@ class G15Service(g15desktop.G15AbstractService):
         try:
             self._do_start_service()
         except Exception as e:
-            traceback.print_exc(file=sys.stdout)
+            self.shutdown(True)
             logger.error("Failed to start service. %s" % str(e))
     
     def sigint_handler(self, signum, frame):
@@ -254,7 +254,7 @@ class G15Service(g15desktop.G15AbstractService):
                     time.sleep(release_delay + press_delay)
                 else:                          
                     if i > 0:
-                        if logger.level == logging.DEBUG:
+                        if logger.isEnabledFor(logging.DEBUG):
                             logger.debug("Release delay of %f" % release_delay)
                         time.sleep(release_delay)
                         
@@ -276,7 +276,7 @@ class G15Service(g15desktop.G15AbstractService):
                         
                     self.send_string(c, True)
                     time.sleep(press_delay)
-                    if logger.level == logging.DEBUG:
+                    if logger.isEnabledFor(logging.DEBUG):
                         logger.debug("Press delay of %f" % press_delay)
                     self.send_string(c, False)
                     
@@ -298,12 +298,12 @@ class G15Service(g15desktop.G15AbstractService):
                 elif op == "Press":
                     if i > 0:
                         delay = 0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
-                        if logger.level == logging.DEBUG:
+                        if logger.isEnabledFor(logging.DEBUG):
                             logger.debug("Release delay of %f" % delay) 
                         time.sleep(delay)
                     self.send_string(val, True)
                     delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.press_delay) / 1000.0 )
-                    if logger.level == logging.DEBUG:
+                    if logger.isEnabledFor(logging.DEBUG):
                         logger.debug("Press delay of %f" % delay) 
                     time.sleep(delay)
                 elif op == "Release":
@@ -405,20 +405,20 @@ class G15Service(g15desktop.G15AbstractService):
         ch        --    character to send
         press     --    boolean indicating if this is a PRESS or RELEASE
         """
-        if logger.level == logging.DEBUG:
+        if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Sending string %s" % ch)
             
         if self.virtual_keyboard is not None:
             keysym = self.get_keysym(ch)
             if press:
-                if logger.level == logging.DEBUG:
+                if logger.isEnabledFor(logging.DEBUG):
                     logger.debug("Sending keychar %s press = %s, keysym = %d (%x)" % (ch, press, keysym, keysym))
                 self.virtual_keyboard.press_keysym(keysym)
             else:
                 self.virtual_keyboard.release_keysym(self.get_keysym(ch))
         else:
             keycode, shift_mask = self.char_to_keycodes(ch)
-            if logger.level == logging.DEBUG:
+            if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Sending keychar %s keycode %d, press = %s, shift = %d" % (ch, int(keycode), str(press), shift_mask))
             if (self.x_test_available and self.use_x_test) :
                 if press:

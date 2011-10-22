@@ -114,7 +114,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
         self._timer = None
         self._matches = []
         g15plugin.G15MenuPlugin.activate(self)
-        self.screen.action_listeners.append(self)
+        self.screen.key_handler.action_listeners.append(self)
         if self.bamf_matcher is not None:        
             self._matches.append(self.bamf_matcher.connect_to_signal("ViewOpened", self._view_opened))
             self._matches.append(self.bamf_matcher.connect_to_signal("ViewClosed", self._view_closed))
@@ -123,7 +123,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
         g15plugin.G15MenuPlugin.deactivate(self)
         for m in self._matches:
             m.remove()
-        self.screen.action_listeners.remove(self)
+        self.screen.key_handler.action_listeners.remove(self)
         if self.confirm_screen is not None:
             self.confirm_screen.delete()
             self.confirm_screen = None

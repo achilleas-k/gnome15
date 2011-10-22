@@ -300,7 +300,7 @@ class G15NotifyLCD():
             self._bus.add_match_string_non_blocking(PASSIVE_MATCH_STRING)
             self._bus.add_message_filter(self.msg_cb)
             
-        self._screen.action_listeners.append(self)
+        self._screen.key_handler.action_listeners.append(self)
         self._notify_handle = self._gconf_client.notify_add(self._gconf_key, self._configuration_changed)
             
     def msg_cb(self, bus, msg):
@@ -318,7 +318,7 @@ class G15NotifyLCD():
         self.clear()
         if self._notify_handle:
             self._gconf_client.notify_remove(self._notify_handle)
-        self._screen.action_listeners.remove(self)
+        self._screen.key_handler.action_listeners.remove(self)
         if self._service:
             if not self._screen.service.shutting_down:
                 logger.warn("Deactivated notify service. Currently the service cannot be reactivated once deactivated. You must completely restart Gnome15")
@@ -344,7 +344,8 @@ class G15NotifyLCD():
                 self.action()
     
     def notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
-        logger.info("Notify app=%s id=%s '%s' {%s}", app_name, id, summary, hints)
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Notify app=%s id=%s '%s' {%s}", app_name, id, summary, hints)
         try :                
             if self._active:
                 timeout = float(timeout) / 1000.0

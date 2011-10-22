@@ -25,9 +25,13 @@ import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 from threading import Timer
+import lcdsink
 import gtk
+import gst
+import cairo
 import os
 import select
+import array
 import gobject
 import tempfile
 import subprocess
@@ -61,60 +65,6 @@ This simple plugin displays system statistics
 def create(gconf_key, gconf_client, screen):
     return G15VideoPlayer(gconf_key, gconf_client, screen)
 
-
-class PlayThread(Thread):
-    
-    def __init__(self, page):
-        Thread.__init__(self)
-        self.name = "PlayThread" 
-        self.setDaemon(True)
-        self._page = page
-          
-        self.temp_dir = tempfile.mkdtemp("g15", "tmp")
-        self._process = subprocess.Popen(['mplayer', '-slave', '-noconsolecontrols','-really-quiet', 
-                                         '-vo', 'jpeg', self._page._movie_path], cwd=self.temp_dir, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        self._page.redraw()
-        
-    def _playing(self):
-        return self._process.poll() == None
-        
-    def _stop(self):
-        try:
-            self._process.terminate()
-        except OSError:
-            # Got killed
-            pass
-        self._page.redraw()
-        
-    def _mute(self, mute):
-        if mute:
-            print self._command("mute", "1")
-        else:
-            print self._command("mute", "0")
-            
-    def _readlines(self):
-        ret = []
-        while any(select.select([self._process.stdout.fileno()], [], [], 0.6)):
-            ret.append( self._process.stdout.readline() )
-        return ret
-    
-    def _command(self, name, *args):
-        cmd = '%s%s%s\n'%(name,
-                ' ' if args else '',
-                ' '.join(repr(a) for a in args)
-                )
-        self._process.stdin.write(cmd)
-        if name == 'quit':
-            return
-        return self.readlines()
-        
-    def set_aspect(self, aspect):
-        pass
-#        self.command("switch_ratio",str(float(aspect[0]) / float(aspect[1])))
-        
-    def run(self):      
-        self._process.wait()
-        
 class G15VideoPage(g15theme.G15Page):
     
     def __init__(self, screen):
@@ -130,8 +80,16 @@ class G15VideoPage(g15theme.G15Page):
         self._playing = None
         self._active = True
         self._frame_index = 1
-        self._frame_wait = 0.04
         self._thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player" ]))
+        
+        # Create GStreamer pipeline
+        self.pipeline = gst.Pipeline("mypipeline")
+        self.videotestsrc = gst.element_factory_make("videotestsrc", "video")
+        self.pipeline.add(self.videotestsrc)
+        self.sink = lcdsink.CairoSurfaceThumbnailSink()
+        self.pipeline.add(self.sink)
+        self.videotestsrc.link(self.sink)
+        self.sink.connect('thumbnail', self._redraw_cb)
             
     def get_theme_properties(self):
         properties = g15theme.G15Page.get_theme_properties(self)
@@ -150,26 +108,8 @@ class G15VideoPage(g15theme.G15Page):
     
     def paint(self, canvas):
         g15theme.G15Page.paint(self, canvas)
-        wait = self._frame_wait
         size = self._screen.driver.get_size()
-            
         if self._playing != None:
-            
-            # Process may have been killed
-            if not self._playing._playing():
-                self._stop()
-            
-            dir = sorted(os.listdir(self._playing.temp_dir), reverse=True)
-            if len(dir) > 1:
-                dir = dir[1:]
-                file = os.path.join(self._playing.temp_dir, dir[0])
-                self._surface = g15util.load_surface_from_file(file)
-                for path in dir:
-                    file = os.path.join(self._playing.temp_dir, path)
-                    os.remove(file)
-            else:
-                wait = 0.1
-            
             if self._surface != None:
                 target_size = ( float(size[0]), float(size[0]) * (float(self._aspect[1]) ) / float(self._aspect[0]) )
                 sx = float(target_size[0]) / float(self._surface.get_width())
@@ -179,16 +119,31 @@ class G15VideoPage(g15theme.G15Page):
                 canvas.scale(sx, sy)
                 canvas.set_source_surface(self._surface)
                 canvas.paint()
-                canvas.restore()   
-        
-        if self._playing != None:
-            timer = Timer(wait, self.redraw)
-            timer.name = "VideoRedrawTimer"
-            timer.setDaemon(True)
-            timer.start()
+                canvas.restore()
+                
+    """
+    GStream callbacks
+    """
+                
+    def _redraw_cb(self, unused_thsink, buf, width, height, timestamp):
+        print "**REDRAW** %d, %d, %d, %d" % ( len(str(unused_thsink)), len(buf), width, height )
+        b = array.array("b")
+        b.fromstring(buf)
+        print "buf len: %s / %s" % ( str(len(buf)), str(len(b)) )
+        self._surface = cairo.ImageSurface.create_for_data(b,
+            # We don't use FORMAT_ARGB32 because Cairo uses premultiplied
+            # alpha, and gstreamer does not.  Discarding the alpha channel
+            # is not ideal, but the alternative would be to compute the
+            # conversion in python (slow!).
+            cairo.FORMAT_RGB24,
+            width,
+            height,
+            width * 4)
+        self.redraw()
     
     ''' Functions specific to plugin
     ''' 
+        
     def _hide_sidebar(self, after = 0.0):
         if after == 0.0:
             self._sidebar_offset = -1    
@@ -264,22 +219,15 @@ class G15VideoPage(g15theme.G15Page):
     def _play(self):
         self._lock.acquire()
         try:
-            self._hide_sidebar(3.0)
-            self._playing = PlayThread(self)
-            self._playing.set_aspect(self._aspect)
-            self._playing.mute(self.muted)
-            self._playing.start()
+            self._hide_sidebar(3.0)            
+            self.pipeline.set_state(gst.STATE_PLAYING)
         finally:
             self._lock.release()
     
     def _stop(self):
         self._lock.acquire()
         try:
-            if self._hide_timer != None:
-                self._hide_timer.cancel()
-            self._sidebar_offset = 0
-            self._playing._stop()
-            self._playing = None
+            self.pipeline.set_state(gst.STATE_READY)
         finally:
             self._lock.release()
     
@@ -300,13 +248,13 @@ class G15VideoPlayer():
         self._page = G15VideoPage(self._screen)
         self._screen.add_page(self._page)
         self._screen.redraw(self._page)
-        self._screen.action_listeners.append(self)
+        self._screen.key_handler.action_listeners.append(self)
     
     def deactivate(self):
         if self._page._playing != None:
             self._page._stop()
         self._screen.del_page(self._page)
-        self._screen.action_listeners.remove(self)
+        self._screen.key_handler.action_listeners.remove(self)
         
     def destroy(self):
         pass

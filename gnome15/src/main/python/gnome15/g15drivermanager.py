@@ -59,7 +59,7 @@ def get_driver_mod(id):
     for driver_mod in imported_drivers.values():
         if driver_mod.id == id:
             return driver_mod
-
+        
 def get_configured_driver(device, force_config = False):
     '''
     Get the configured driver, starting the setup dialog if no driver is set, or

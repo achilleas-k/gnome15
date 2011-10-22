@@ -28,7 +28,9 @@ import gnome15.g15util as g15util
 import os.path
 import commands
 import dbus
-import libsensors
+import sensors
+
+from ctypes import byref, c_int
 
 import subprocess
 
@@ -36,10 +38,9 @@ import subprocess
 import logging
 logger = logging.getLogger()
 
-id = "sensors"
-name = _("Sensors")
-description = _("Display information from various sensors, such as temperature \
-and fan speeds.")        
+id = "sense"
+name = _("Temperature Sensors")
+description = _("Display information from various temperature sensors.")        
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://www.gnome15.org"
@@ -139,34 +140,32 @@ class LibsensorsSource():
         self.started = False
     
     def get_sensors(self):
-        sensors = []
-        for chip_name in libsensors.get_detected_chips(None):
-            s = str(chip_name)
-            logger.debug("Found chip %s, adapter %s" % ( str(chip_name), libsensors.get_adapter_name(chip_name.bus)))
-            for feature in libsensors.get_features(chip_name):
-                label = libsensors.get_label(chip_name, feature)
-                value = libsensors.get_value(chip_name, feature.number)
-                logger.debug("   %s = %s" % (label, value) )
-                sensor = Sensor(label, float(value))
-                sensors.append(sensor)
-                for subfeature in libsensors.get_all_subfeatures(chip_name, feature,):
-                    value = libsensors.get_value(chip_name, subfeature.number)
-                    if subfeature.name.endswith("_crit"):
-                        sensor.critical = float(value)
-                    elif subfeature.name.endswith("_input"):
-                        sensor.value = float(value)
-                    logger.debug("       %s = %s" % (subfeature.name, value) )
-        return sensors
+        sensor_objects = []
+        
+        for chip in sensors.iter_detected_chips():
+            logger.debug("Found chip %s, adapter %s" % ( chip, chip.adapter_name))
+            for feature in chip:
+                logger.debug("'  %s: %.2f" % (feature.label, feature.get_value()))
+                sensor = Sensor(feature.label, float(feature.get_value()))
+                sensor_objects.append(sensor)
+                
+                for subfeature in feature:
+                    name = subfeature.name                    
+                    if name.endswith("_crit"):
+                        sensor.critical = float(subfeature.get_value())
+                    elif name.endswith("_input"):
+                        sensor.value = float(subfeature.get_value())
+        return sensor_objects
     
     def is_valid(self):     
         if not self.started:   
-            libsensors.init()
+            sensors.init()
             self.started = True
         return self.started
     
     def stop(self):
         if self.started:
-            libsensors.cleanup()
+            sensors.cleanup()
 
 class NvidiaSource():
     def __init__(self):

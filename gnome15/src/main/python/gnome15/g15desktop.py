@@ -523,7 +523,7 @@ class G15DesktopComponent():
         try :
             self._connect()        
         except dbus.exceptions.DBusException:
-            if logger.level == logging.DEBUG:
+            if logger.isEnabledFor(logging.DEBUG):
                 traceback.print_exc(file=sys.stdout)
             self._disconnect()
         
@@ -880,50 +880,55 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
             self.add_service_item(item)
             self.add_service_item(gtk.MenuItem())
         
-            devices = self.service.GetDevices()
-            for device_path in devices:
-                remote_device = self.session_bus.get_object('org.gnome15.Gnome15', device_path)
-                screen_path = remote_device.GetScreen()
-                
-                screen = self.screens[screen_path] if len(screen_path) > 0 and screen_path in self.screens else None
-                
-                if screen:
-                    if i > 0:
-                        logger.debug("Adding separator")
-                        self._append_item(gtk.MenuItem())
-                    # Disable
-                    if len(devices) > 1:
-                        item = gtk.MenuItem("Disable %s"  % screen.device_model_fullname)
-                        item.connect("activate", self._disable, remote_device)
-                        self.add_service_item(item)
+            try:
+                devices = self.service.GetDevices()
+                for device_path in devices:
+                    remote_device = self.session_bus.get_object('org.gnome15.Gnome15', device_path)
+                    screen_path = remote_device.GetScreen()
                     
-                    # Cycle screens
-                    item = gtk.CheckMenuItem(_("Cycle screens automatically"))
-                    item.set_active(g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % screen.device_uid, True))
-                    self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/cycle_screens" % screen.device_uid, self._cycle_screens_option_changed))
-                    item.connect("toggled", self._cycle_screens_changed, screen.device_uid)
-                    self._append_item(item)
+                    screen = self.screens[screen_path] if len(screen_path) > 0 and screen_path in self.screens else None
                     
-                    # Alert message            
-                    if screen.message:
-                        self._append_item(gtk.MenuItem(screen.message))
-                    
-                    logger.debug("Adding items")
-                    
-                    
-                    sorted_x = sorted(screen.items.iteritems(), key=operator.itemgetter(1))
-                    for item_key, text in sorted_x:
-                        logger.debug("Adding item %s = %s " % (item_key, text ) )
-                        item = gtk.MenuItem(text)
-                        item.connect("activate", self._show_page, item_key)
+                    if screen:
+                        if i > 0:
+                            logger.debug("Adding separator")
+                            self._append_item(gtk.MenuItem())
+                        # Disable
+                        if len(devices) > 1:
+                            item = gtk.MenuItem("Disable %s"  % screen.device_model_fullname)
+                            item.connect("activate", self._disable, remote_device)
+                            self.add_service_item(item)
+                        
+                        # Cycle screens
+                        item = gtk.CheckMenuItem(_("Cycle screens automatically"))
+                        item.set_active(g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % screen.device_uid, True))
+                        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/cycle_screens" % screen.device_uid, self._cycle_screens_option_changed))
+                        item.connect("toggled", self._cycle_screens_changed, screen.device_uid)
                         self._append_item(item)
-                else:
-                    # Enable
-                    if len(devices) > 1:
-                        item = gtk.MenuItem(_("Enable %s") % remote_device.GetModelFullName())
-                        item.connect("activate", self._enable, remote_device)
-                        self.add_service_item(item)
-                i += 1
+                        
+                        # Alert message            
+                        if screen.message:
+                            self._append_item(gtk.MenuItem(screen.message))
+                        
+                        logger.debug("Adding items")
+                        
+                        
+                        sorted_x = sorted(screen.items.iteritems(), key=operator.itemgetter(1))
+                        for item_key, text in sorted_x:
+                            logger.debug("Adding item %s = %s " % (item_key, text ) )
+                            item = gtk.MenuItem(text)
+                            item.connect("activate", self._show_page, item_key)
+                            self._append_item(item)
+                    else:
+                        # Enable
+                        if len(devices) > 1:
+                            item = gtk.MenuItem(_("Enable %s") % remote_device.GetModelFullName())
+                            item.connect("activate", self._enable, remote_device)
+                            self.add_service_item(item)
+                    i += 1
+            except Exception as e:
+                logger.debug("Failed to find devices, service probably stopped. %s", str(e))
+                self.connected = False
+                self.rebuild_desktop_component()
                 
             self.devices = devices
         else:

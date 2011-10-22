@@ -155,7 +155,6 @@ class G15Macros(g15plugin.G15MenuPlugin):
         macros = []
         self._load_profile(self._active_profile, macros, macro_keys)
         macros.sort(self._comparator)
-        print "Adding %s" % macros
         for macro in macros:
             self._add_macro(macro)
         self.screen.redraw(self.page)
@@ -165,7 +164,7 @@ class G15Macros(g15plugin.G15MenuPlugin):
             if not m.keys in macro_keys:
                 macros.append(m)
                 macro_keys.append(m.keys)
-        if profile.base_profile != -1:
+        if profile.base_profile != None:
             self._load_profile(g15profile.get_profile(profile.device, profile.base_profile), macros, macro_keys)
         
     def _comparator(self, o1, o2):

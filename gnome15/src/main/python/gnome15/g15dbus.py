@@ -74,14 +74,14 @@ class AbstractG15DBUSService(dbus.service.Object):
             
     @dbus.service.method(SCREEN_IF_NAME, in_signature='b')
     def set_receive_actions(self, enabled):
-        if enabled and self in self._screen.action_listeners:
+        if enabled and self in self._screen.key_handler.action_listeners:
             raise Exception("Already receiving actions")
-        elif not enabled and not self in self._screen.action_listeners:
+        elif not enabled and not self in self._screen.key_handler.action_listeners:
             raise Exception("Not receiving actions")
         if enabled:
-            self._screen.action_listeners.append(self)
+            self._screen.key_handler.action_listeners.append(self)
         else:
-            self._screen.action_listeners.remove(self)
+            self._screen.key_handler.action_listeners.remove(self)
     
 class G15DBUSDebugService(dbus.service.Object):
     
@@ -222,7 +222,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         self._service = dbus_service._service
         self._screen = screen
         self._screen.add_screen_change_listener(self)
-        self._screen.key_handlers.append(self)
+        self._screen.key_handler.key_handlers.append(self)
         self._dbus_pages = {}
         self._clients = {}
         
@@ -343,16 +343,16 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         self._screen.request_attention(message)
     
     @dbus.service.method(SCREEN_IF_NAME, in_signature='ssn', out_signature='s', sender_keyword = 'sender')
-    def CreatePage(self, id, title, priority, sender = None):
-        print "SENDER = %s" % str(sender)
-        page = self._screen.new_page(None, priority = priority, id = id, thumbnail_painter = None, panel_painter = None)
+    def CreatePage(self, page_id, title, priority, sender = None):
+        page = g15theme.G15Page(page_id, self._screen, priority = priority)
+        self._screen.add_page(page)
         page.set_title(title)
         self._get_client(sender).pages.append(page)
-        return self.GetPageForID(id)
+        return self.GetPageForID(page_id)
             
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='b')
     def IsReceiveActions(self):
-        return self in self._screen.action_listeners
+        return self in self._screen.key_handler.action_listeners
             
     @dbus.service.method(SCREEN_IF_NAME, in_signature='s')
     def ReserveKey(self, key_name):
@@ -640,7 +640,7 @@ class G15DBUSPageService(AbstractG15DBUSService):
             
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='b')
     def IsReceiveActions(self):
-        return self in self._screen.action_listeners
+        return self in self._screen.key_handler.action_listeners
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='')
     def Delete(self):
@@ -729,19 +729,19 @@ class G15DBUSPageService(AbstractG15DBUSService):
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='ss')
     def LoadTheme(self, dir, variant):
-        self._page.add_theme(g15theme.G15Theme(dir, self._screen_service._screen, variant))
+        self._page.set_theme(g15theme.G15Theme(dir, variant))
         
     @dbus.service.method(PAGE_IF_NAME, in_signature='s')
     def SetThemeSVG(self, svg_text):
-        self._page.add_theme(g15theme.G15Theme(None, self._screen_service._screen, None, svg_text = svg_text))
+        self._page.set_theme(g15theme.G15Theme(None, None, svg_text = svg_text))
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='ss')
     def SetThemeProperty(self, name, value):
-        self._page.properties[name] = value
+        self._page.theme_properties[name] = value
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='a{ss}')
     def SetThemeProperties(self, properties):
-        self._page.properties = properties
+        self._page.theme_properties = properties
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='ndd')
     def SetPriority(self, priority, revert_after, delete_after):
@@ -913,6 +913,10 @@ class G15DBUSService(AbstractG15DBUSService):
         for screen in self._dbus_screens:
             l.append("%s/%s" % (SCREEN_NAME, screen ) )
         return l
+
+    @dbus.service.method(IF_NAME, in_signature='ssas')
+    def Launch(self, profile_name, screen_id, args):
+        logger.info("Launch under profile %s, screen %s, args = %s" % (profile_name, screen_id, str(args)))
     
     """
     Private

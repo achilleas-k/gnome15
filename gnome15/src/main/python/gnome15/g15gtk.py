@@ -101,11 +101,11 @@ class G15OffscreenWindow(g15theme.Component):
     def on_configure(self):
         g15theme.Component.on_configure(self)        
         gobject.idle_add(self._create_window)
-        self.get_screen().action_listeners.append(self)
+        self.get_screen().key_handler.action_listeners.append(self)
         
     def notify_remove(self):
         g15theme.Component.notify_remove(self)
-        self.get_screen().action_listeners.remove(self)
+        self.get_screen().key_handler.action_listeners.remove(self)
         
     def set_content(self, content):
         self.content = content

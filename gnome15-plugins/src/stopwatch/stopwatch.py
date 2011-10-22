@@ -99,13 +99,13 @@ class G15Stopwatch():
             self._page.panel_painter = self.paint_thumbnail
         self._screen.add_page(self._page)
         self._screen.redraw(self._page)
-        self._screen.action_listeners.append(self)
+        self._screen.key_handler.action_listeners.append(self)
         self._schedule_redraw()
         self._notify_handle = self._gconf_client.notify_add(self._gconf_key, self._config_changed);
 
     def deactivate(self):
         self._gconf_client.notify_remove(self._notify_handle);
-        self._screen.action_listeners.remove(self)
+        self._screen.key_handler.action_listeners.remove(self)
         self._cancel_refresh()
         self._screen.del_page(self._page)
 

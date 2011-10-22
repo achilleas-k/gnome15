@@ -143,7 +143,7 @@ class G15Cal():
                                      thumbnail_painter = self._paint_thumbnail)
         self._page.set_title("Evolution Calendar")
         self._page.set_theme(self._theme)
-        self._screen.action_listeners.append(self)
+        self._screen.key_handler.action_listeners.append(self)
         self._calendar.set_focused(True)
         
         def on_redraw():
@@ -159,7 +159,7 @@ class G15Cal():
         gobject.idle_add(self._first_load)
         
     def deactivate(self):
-        self._screen.action_listeners.remove(self)
+        self._screen.key_handler.action_listeners.remove(self)
         if self._timer != None:
             self._timer.cancel()
         if self._page != None:

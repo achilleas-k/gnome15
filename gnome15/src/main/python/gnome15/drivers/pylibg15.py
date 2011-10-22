@@ -63,8 +63,19 @@ class KeyboardReceiveThread(Thread):
         try:
             while self._run:
                 err = libg15.getPressedKeys(byref(pressed_keys), 10)
+                code = 0
+                ext_code = 0
                 if err == G15_NO_ERROR:
-                    self.callback(pressed_keys.value)
+                    key_ext = is_ext_key(pressed_keys.value)
+                    if key_ext:
+                        ext_code = pressed_keys.value
+                        ext_code &= ~(1<<28)
+                        err = libg15.getPressedKeys(byref(pressed_keys), 10)
+                        if err == G15_NO_ERROR:
+                            code = pressed_keys.value
+                    else:
+                        code = pressed_keys.value
+                    self.callback(code, ext_code)
         finally:
             if self.on_exit is not None:
                 self.on_exit()
@@ -76,10 +87,28 @@ class libg15_devices_t(Structure):
                  ("productid", c_int),
                  ("caps", c_int) ]
     
+def is_ext_key(code):
+    """
+    Get if the key code provide is an "Extended Key". Extended keys are used
+    to cope with libg15's restriction on the number of available codes,
+    which the G13 exceeds.
+    
+    Keyword arguments:
+    code        --    code to test if extended
+    """
+    return code & (1<<28) != 0
+    
 def grab_keyboard(callback):
     """
     Start polling for keyboard events. Device must be initialised. The thread
     returned can be stopped by calling deactivate().
+    
+    The callback is invoked with two arguments. The first being the bit mask
+    of any pressed non-extended codes. The second is the mask of any extended
+    key presses. 
+    
+    Keyword arguments:
+    callback        -- function to call on key event
     """
     t = KeyboardReceiveThread(callback)
     t.start()

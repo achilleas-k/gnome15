@@ -30,12 +30,12 @@ REDRAW_QUEUE = "redrawQueue"
 """
 Page priorities
 """ 
-PRI_POPUP=999
-PRI_EXCLUSIVE=100
-PRI_HIGH=99
-PRI_NORMAL=50
-PRI_LOW=20
-PRI_INVISIBLE=0
+PRI_POPUP = 999
+PRI_EXCLUSIVE = 100
+PRI_HIGH = 99
+PRI_NORMAL = 50
+PRI_LOW = 20
+PRI_INVISIBLE = 0
 
 """
 Paint stages
@@ -53,6 +53,7 @@ import g15util
 import g15profile
 import g15globals
 import g15drivermanager
+import g15keyboard
 import g15theme
 import g15uinput
 import g15actions
@@ -192,7 +193,28 @@ class ScreenChangeAdapter():
         """
         pass
             
-
+    
+        
+class KeyState():
+    """
+    Holds the current state of a single macro key
+    """
+    def __init__(self, key):
+        self.key = key
+        self.state_id = None
+        self.timer = None
+        
+    def cancel_timer(self):
+        """
+        Cancel the HELD timer if one exists.
+        """
+        if self.timer is not None:
+            self.timer.cancel()
+            self.timer = None
+            
+    def __repr__(self):
+        return "%s = %s" % (self.key, g15profile.to_key_state_name(self.state_id))      
+    
 class Painter():
     """
     Painters may be added to screens to draw stuff either beneath (BACKGROUND_PAINTER)
@@ -202,7 +224,7 @@ class Painter():
     """
 
     
-    def __init__(self, place = BACKGROUND_PAINTER, z_order = 0):
+    def __init__(self, place=BACKGROUND_PAINTER, z_order=0):
         """
         Constructor
         
@@ -233,7 +255,6 @@ class G15Screen():
         self.screen_change_listeners = []
         self.local_data = threading.local()
         self.local_data.surface = None
-        self.key_handlers = []
         self.plugins = []
         self.conf_client = service.conf_client
         self.notify_handles = []
@@ -244,7 +265,6 @@ class G15Screen():
         self.attention_message = g15globals.name
         self.attention = False
         self.splash = None
-        self.active_key_state = {}
         self.reschedule_lock = RLock()        
         self.last_error = None
         self.loading_complete = False
@@ -256,19 +276,13 @@ class G15Screen():
         self.reconnect_timer = None
         self.plugins = self.plugin_manager_module.G15Plugins(self)
         self.pages = []
-        self.keys_held = {}
-        self.action_listeners = []
         self.memory_bank_color_control = None
         self.acquired_controls = {}
         self.painters = []
         self.fader = None
         self.mkey = 1
-        self.keys_up = []
-        self.keys_down = []
         self.temp_acquired_controls = {}
-        self.repeat_macros = []
-        self.defeat_key_release = []
-        self.__macro_repeat_timer = None
+        self.key_handler = g15keyboard.G15KeyHandler(self)
         
         if not self._load_driver():
             raise Exception("Driver failed to load") 
@@ -282,7 +296,7 @@ class G15Screen():
         Keyword arguments:
         application_name        -- application name
         """
-        found  = False
+        found = False
         if self.defeat_profile_change < 1:
             choose_profile = None         
             # Active window has changed, see if we have a profile that matches it
@@ -309,8 +323,6 @@ class G15Screen():
     def start(self):
         logger.info("Starting %s." % self.device.uid)
         
-        g15profile.profile_listeners.append(self._profile_changed)
-        
         # Remove previous fader is it exists
         if self.fader:
             self.painters.remove(self.fader)
@@ -318,6 +330,11 @@ class G15Screen():
         
         # Start the driver
         self.attempt_connection() 
+        
+        # Start handling keys
+        self.key_handler.start()
+        self.key_handler.action_listeners.append(self)
+        self.key_handler.key_handlers.append(self)
         
         # Monitor gconf
         screen_key = "/apps/gnome15/%s" % self.device.uid
@@ -327,20 +344,30 @@ class G15Screen():
         self.notify_handles.append(self.conf_client.notify_add("%s/active_profile" % screen_key, self.active_profile_changed))
         self.notify_handles.append(self.conf_client.notify_add("%s/driver" % screen_key, self.driver_changed))
         for control in self.driver.get_controls():
-            self.notify_handles.append(self.conf_client.notify_add("%s/%s" % ( screen_key, control.id ), self._control_changed))
+            self.notify_handles.append(self.conf_client.notify_add("%s/%s" % (screen_key, control.id), self._control_changed))
         logger.info("Starting for %s is complete." % self.device.uid)
         
-    def stop(self, quickly = False):  
+    def stop(self, quickly=False):  
         logger.info("Stopping screen for %s" % self.device.uid)
         self.stopping = True
-        g15util.stop_queue("MacroQueue-%s" % self.device.uid)
+        
+        # Clean up key handler
+        self.key_handler.action_listeners.remove(self)
+        self.key_handler.key_handlers.remove(self)
+        self.key_handler.stop()
+        
+        # Stop listening for profile changes
         if self._profile_changed in g15profile.profile_listeners:
             g15profile.profile_listeners.remove(self._profile_changed)
+            
+        # Stop listening for configuration changes
         for h in self.notify_handles:
             self.conf_client.notify_remove(h)
         self.notify_handles = [] 
-        if self.is_active() and not quickly and ( self.service.fade_screen_on_close \
-                                                  or self.service.fade_keyboard_backlight_on_close ):                
+        
+        # Shutdown effects
+        if self.is_active() and not quickly and (self.service.fade_screen_on_close \
+                                                  or self.service.fade_keyboard_backlight_on_close):                
             # Start fading keyboard
             acquisition = None
             slow_shutdown_duration = 3.0
@@ -352,22 +379,25 @@ class G15Screen():
                     First acquire, and turn all lights off, this is the state it will
                     return to before disconnecting (we never release it)
                     """
-                    self.driver.acquire_control(bl_control, val = 0 if isinstance(current_val, int) else (0, 0, 0))
+                    self.driver.acquire_control(bl_control, val=0 if isinstance(current_val, int) else (0, 0, 0))
                     
-                    acquisition = self.driver.acquire_control(bl_control, val = current_val)
-                    acquisition.fade(duration = slow_shutdown_duration, release = True, step = 1 if isinstance(current_val, int) else 10)
+                    acquisition = self.driver.acquire_control(bl_control, val=current_val)
+                    acquisition.fade(duration=slow_shutdown_duration, release=True, step=1 if isinstance(current_val, int) else 10)
                 
             # Fade screen
             if self.driver.get_bpp() > 0 and self.service.fade_screen_on_close:
-                self.fade(True, duration = slow_shutdown_duration, step = 10)
+                self.fade(True, duration=slow_shutdown_duration, step=10)
                 
             # Wait for keyboard fade to finish as well if it hasn't already
             if acquisition:  
                 acquisition.wait()
                 
+        # Stop the plugins
         if self.plugins and self.plugins.is_activated():
             self.plugins.deactivate()
-            self.plugins.destroy()                
+            self.plugins.destroy()
+            
+        # Disconnect the driver                
         if self.driver and self.driver.is_connected():
             self.driver.all_off_on_disconnect = self.service.all_off_on_disconnect      
             self.driver.disconnect()
@@ -397,23 +427,6 @@ class G15Screen():
         self.set_color_for_mkey()
         for listener in self.screen_change_listeners:
             listener.memory_bank_changed(bank)  
-    
-    def handle_key(self, keys, state, post=False):
-        self.resched_cycle()
-        
-        # Event first goes to this objects key handlers
-        for h in self.key_handlers:
-            if h.handle_key(keys, state, post):
-                return True
-
-        # Next it goes to the visible page         
-        visible = self.get_visible_page()
-        if visible != None:
-            for h in visible.key_handlers:
-                if h.handle_key(keys, state, post):
-                    return True
-                
-        return False
     
     def index(self, page):
         """
@@ -478,9 +491,9 @@ class G15Screen():
         finally:
             self.page_model_lock.release() 
     
-    def new_page(self, painter = None, priority=PRI_NORMAL, on_shown=None, on_hidden=None, on_deleted = None,
-                 id="Unknown", thumbnail_painter = None, panel_painter = None, title=None,\
-                 theme_properties_callback = None, theme_attributes_callback = None):
+    def new_page(self, painter=None, priority=PRI_NORMAL, on_shown=None, on_hidden=None, on_deleted=None,
+                 id="Unknown", thumbnail_painter=None, panel_painter=None, title=None, \
+                 theme_properties_callback=None, theme_attributes_callback=None):
         logger.warning("DEPRECATED call to G15Screen.new_page, use G15Screen.add_page instead")
         
         """
@@ -512,8 +525,8 @@ class G15Screen():
                         priority = PRI_HIGH
                         break
                     
-            page = g15theme.G15Page(id, self, painter, priority, on_shown, on_hidden, on_deleted,\
-                           thumbnail_painter, panel_painter, theme_properties_callback,\
+            page = g15theme.G15Page(id, self, painter, priority, on_shown, on_hidden, on_deleted, \
+                           thumbnail_painter, panel_painter, theme_properties_callback, \
                            theme_attributes_callback)
             self.pages.append(page)   
             for l in self.screen_change_listeners:
@@ -554,7 +567,7 @@ class G15Screen():
         '''
         return page.id in self.reverting or page.id in self.deleting
     
-    def set_priority(self, page, priority, revert_after=0.0, delete_after=0.0, do_redraw = True):
+    def set_priority(self, page, priority, revert_after=0.0, delete_after=0.0, do_redraw=True):
         """
         Change the priority of a page, optionally reverting or deleting after a specified time. Returns timer object used for reverting or deleting. May be canceled
         
@@ -660,7 +673,7 @@ class G15Screen():
             self.set_active_application_name(self.service.get_active_application_name())
                     
             logger.info("Grabbing keyboard")
-            self.driver.grab_keyboard(self.key_received)
+            self.driver.grab_keyboard(self.key_handler.key_received)
             
             logger.info("Grabbed keyboard")
             self.clear_attention()
@@ -673,9 +686,6 @@ class G15Screen():
             if self._process_exception(e):
                 raise
         
-    def key_received(self, keys, state):
-        g15util.schedule("KeyReceived", 0, self._do_key_received, keys, state)
-            
     def screen_cycle(self):
         page = self.get_visible_page()
         if page != None and page.priority < PRI_HIGH:
@@ -716,18 +726,18 @@ class G15Screen():
         if self.color_no >= len(COLOURS):
             self.color_no = 0
         color = COLOURS[self.color_no]
-        self.conf_client.set_string("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ), "%d,%d,%d" % (color[0], color[1], color[2] ) )
+        self.conf_client.set_string("/apps/gnome15/%s/%s" % (self.device.uid, control.id), "%d,%d,%d" % (color[0], color[1], color[2]))
         
             
     def cycle_level(self, val, control):
         logger.debug("Cycling of %s level by %d" % (control.id, val))
-        level = self.conf_client.get_int("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ))
+        level = self.conf_client.get_int("/apps/gnome15/%s/%s" % (self.device.uid, control.id))
         level += val
         if level > control.upper - 1:
             level = control.lower
         if level < control.lower - 1:
             level = control.upper
-        self.conf_client.set_int("/apps/gnome15/%s/%s" % ( self.device.uid, control.id ), level)
+        self.conf_client.set_int("/apps/gnome15/%s/%s" % (self.device.uid, control.id), level)
         
     def control_configuration_changed(self, client, connection_id, entry, args):
         key = os.path.basename(entry.key)
@@ -755,7 +765,7 @@ class G15Screen():
                         acq = self.temp_acquired_controls[control.id]
                         if acq.is_active():
                             self.driver.release_control(acq)                    
-                    acq = self.driver.acquire_control(control, release_after = 3.0)
+                    acq = self.driver.acquire_control(control, release_after=3.0)
                     self.temp_acquired_controls[control.id] = acq
                     acq.set_value(value)
                     
@@ -769,6 +779,7 @@ class G15Screen():
         if self.defeat_profile_change < 1:
             raise Exception("Cannot release defeat profile change if not requested")
         self.defeat_profile_change -= 1
+        
     def driver_changed(self, client, connection_id, entry, args):
         if self.reconnect_timer:
             self.reconnect_timer.cancel()
@@ -808,7 +819,7 @@ class G15Screen():
         for listener in self.screen_change_listeners:
             listener.attention_cleared()
             
-    def request_attention(self, message = None):
+    def request_attention(self, message=None):
         logger.debug("Requesting attention '%s'" % message)
         self.attention = True
         if message != None:
@@ -816,343 +827,30 @@ class G15Screen():
             
         for listener in self.screen_change_listeners:
             listener.attention_requested(message)
-
-        
-    '''
-    Private
-    '''
-                
-    def _init_screen(self):
-        logger.info("Starting screen")
-        self.pages = []
-        self.content_surface = None
-        self.width = self.driver.get_size()[0]
-        self.height = self.driver.get_size()[1]
-        
-        self.surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
-        self.size = ( self.width, self.height )
-        self.available_size = (0, 0, self.size[0], self.size[1])
-        
-        self.page_model_lock = threading.RLock()
-        self.draw_lock = threading.Lock()
-        self.visible_page = None
-        self.old_canvas = None
-        self.transition_function = None
-        self.painter_function = None
-        self.mkey = 1
-        self.reverting = { }
-        self.deleting = { }
-        self._do_redraw()
-        
-        
-        
-    def _do_key_received(self, keys, state):
+    
+    def handle_key(self, keys, state_id, post):
         """
-        Most of the processing of any keys handled is done here. It will keep
-        track of which keys are held, invoke actions and trigger macros.  
+        Do not call. This is invoked by the key handler
         
         Keyword arguments:
-        keys            -- list of keys to process. You will only get a list of
-                           more than one if the keys were pressed or released 
-                           at exactly the same time
-        state           -- indicates whether the keys are down or up 
-                           (g15driver.KEY_STATE_UP / g15driver.KEY_STATE_DOWN)
+        keys        --    list of keys
+        state_id    --    key state ID (g15driver.KEY_STATED_UP, _DOWN and _HELD)
         """
         
-        try :            
-            # Watch for keys that are being held down
-            if state == g15driver.KEY_STATE_DOWN:
-                self.keys_down += keys
-                if logger.level == logging.DEBUG:
-                    logger.debug("Keys %s pressed" % str(keys))
-                for k in keys:
-                    if logger.level == logging.DEBUG:
-                        logger.debug("Keys %s held" % str(k))
-                    self.keys_held[k] = g15util.schedule("HoldKey%s" % str(k), self.service.key_hold_duration, self.key_received, keys, g15driver.KEY_STATE_HELD)
-            elif state == g15driver.KEY_STATE_UP:
-                if logger.level == logging.DEBUG:
-                    logger.debug("Keys %s released" % str(keys))
-                
-                """
-                If the key was never down, it has been removed since (i.e.
-                if an action was triggered). In this case, cancel any further
-                key presses
-                """                
-                for k in keys:
-                    if not k in self.keys_down:
-                        keys.remove(k)
-                
-                self.keys_up += keys
-                        
-                for k in self.keys_held.keys():
-                    if logger.level == logging.DEBUG:
-                        logger.debug("Keys %s unheld" % str(k))
-                    timer = self.keys_held[k]
-                    if timer.is_complete():
-                        # Key "hold" completed
-                        if logger.level == logging.DEBUG:
-                            logger.debug("Consuming key %s" %k)
-                        if k in self.active_key_state:
-                            del self.active_key_state[k]
-                    self.keys_held[k].cancel()
-                    del self.keys_held[k]
-                if len(self.keys_held) == 0:
-                    self.active_key_state = {}
-            elif state == g15driver.KEY_STATE_HELD:
-                if logger.level == logging.DEBUG:
-                    logger.debug("Keys %s HELD" % str(keys))
-                    
-            self.keys_up = sorted(self.keys_up)
-            self.keys_down = sorted(self.keys_down)
-                
-            if logger.level == logging.DEBUG:
-                logger.debug("This keys %d (%s), Keys up %d (%s), keys down %d (%s)" % ( len(keys), str(keys), len(self.keys_up), str(self.keys_up), len(self.keys_down), str(self.keys_down) ))
-           
-                        
-            if len(keys) > 0:
-                # See if the screen itself, or the plugins,  want to handle the key 
-                if self.handle_key(keys, state, post=False) or self.plugins.handle_key(keys, state, post=False):
-                    return  
-                        
-                handled = False
-
-                """
-                uinput macros are handled differently. These are mapped directly
-                to the received keypresses.
-                """
-                uinput_macros = []
-                events_sent = 0                
-                for k in keys:
-                    macro = self._find_macro([k])
-                    if macro is not None:
-                        if macro.is_uinput():
-                            if self._handle_uinput_macro(macro, state, False):
-                                events_sent += 1
-                            if logger.level == logging.DEBUG:
-                                logger.debug("Handling macro %s" % macro.name)
-                            uinput_macros.append(macro)
-                            handled = True
-                        
-                """
-                If there were any macros mapped to uinput events,
-                now send the SYN. 
-                """
-                if events_sent > 0:
-                    if logger.level == logging.DEBUG:
-                        logger.debug("Sending SYN to %s" % macro.type)
-                    g15uinput.syn(macro.type)
-                
-                """
-                Now process ordinary macros (single key and multiple key)
-                """ 
-                if not handled and ( self.keys_up == self.keys_down or state == g15driver.KEY_STATE_HELD) :           
-                    macro = self._find_macro(self.keys_down)
-                    if macro is not None and not macro.is_uinput():
-                        self._handle_macro(macro, state)
-                        handled = True
-                    
-                if state == g15driver.KEY_STATE_UP:
-                    if len(self.keys_down) > len(self.keys_up):
-                        # Not all keys have yet been released
-                        if logger.level == logging.DEBUG:
-                            logger.debug("All keys not yet released")
-                        return
-                    else:
-                        if logger.level == logging.DEBUG:
-                            logger.debug("All keys now released")
-                        # All keys now released
-                        keys = self.keys_down
-                        self.keys_down = []
-                        self.keys_up = []
-                                    
-                # See if there is any 'post' handling by the screen itself or by the plugins
-                if not self.handle_key(keys, state, post=True) or self.plugins.handle_key(keys, state, post=True):
-                    # See if any action sequences have been type
-                    action_keys = self.driver.get_action_keys()
-                    if action_keys:
-                        if self.active_key_state == None:
-                            # An action sequence could be starting
-                            if state != g15driver.KEY_STATE_DOWN:
-                                logger.warning("Action keys in unexpected state %d" % state)
-                            self.active_key_state = {}
-                                
-                        for k in keys:
-                            self.active_key_state[k] = state
-                            
-                        for action in action_keys:
-                            binding = action_keys[action]
-                            f = 0
-                            for k in binding.keys:
-                                if k in self.active_key_state and binding.state == self.active_key_state[k]:
-                                    del self.active_key_state[k]
-                                    f += 1
-                                    if k in self.keys_down:
-                                        self.keys_down.remove(k)
-                            if f == len(binding.keys):
-                                self._action_performed(binding)
-                                self.keys_down = []
-                
-                
-        except Exception as e:
-            logger.error("Error in key handling. %s" % str(e))
-            traceback.print_exc(file=sys.stderr)
-            
-    def _send_uinput_keypress(self, macro, uc, syn = True):
-        g15uinput.locks[macro.type].acquire()
-        try:
-            g15uinput.emit(macro.type, uc, 1, True)
-            g15uinput.emit(macro.type, uc, 0, syn)                            
-        finally:
-            g15uinput.locks[macro.type].release()
-            
-    def _repeat_uinput(self, macro, uc):
-        if macro in self.repeat_macros:
-            self._send_uinput_keypress(macro, uc)
-        if macro in self.repeat_macros:
-            self.__macro_repeat_timer = g15util.queue("MacroQueue-%s" % self.device.uid, "MacroRepeat", macro.repeat_delay, self._repeat_uinput, self.__reload_macro_instance(macro), uc)
+        self.resched_cycle()
         
-    def _handle_uinput_macro(self, macro, state, syn = True):
-        emited = False
-        uc = macro.get_uinput_code()
-        if state == g15driver.KEY_STATE_UP:                
-            if macro in self.defeat_key_release:
-                self.defeat_key_release.remove(macro)
-                if macro in self.repeat_macros and macro.repeat_mode == g15profile.REPEAT_WHILE_HELD and macro.repeat_delay != -1:
-                    self.repeat_macros.remove(macro)
-            else:
-                g15uinput.emit(macro.type, uc, 0, syn)
-                emited = True                
-        elif state == g15driver.KEY_STATE_DOWN:
-            if macro in self.repeat_macros:
-                if macro.repeat_mode == g15profile.REPEAT_TOGGLE and macro.repeat_delay != -1:
-                    """
-                    For REPEAT_TOGGLE mode with custom repeat rate, we now cancel
-                    the repeat timer and defeat the key release.
-                    """                   
-                    self.repeat_macros.remove(macro)
-                    self.defeat_key_release.append(macro)                 
-                else:
-                    """
-                    For REPEAT_TOGGLE mode with default repeat rate, we will send a release if this 
-                    is the second press. We also defeat the 2nd release.
-                    """
-                    g15uinput.emit(macro.type, uc, 0, syn)
-                    emited = True                
-                    self.repeat_macros.remove(macro)
-                    self.defeat_key_release.append(macro)
-            else:
-                if macro.repeat_mode == g15profile.REPEAT_TOGGLE:
-                    if not macro in self.repeat_macros:
-                        self.defeat_key_release.append(macro) 
-                        self.repeat_macros.append(macro)                        
-                        if macro.repeat_delay != -1:
-                            self._repeat_uinput(macro, uc)
-                        else:
-                            g15uinput.emit(macro.type, uc, 1, syn)
-                            emited = True
-                elif macro.repeat_mode == g15profile.NO_REPEAT:
-                    """
-                    For NO_REPEAT macros we send the release now, and defeat the
-                    actual key release that will come later.
-                    """
-                    self._send_uinput_keypress(macro, uc, False)
-                    emited = True                
-                    self.defeat_key_release.append(macro)                    
-                elif macro.repeat_mode == g15profile.REPEAT_WHILE_HELD and macro.repeat_delay != -1:
-                    self._send_uinput_keypress(macro, uc, False)                
-                    self.defeat_key_release.append(macro)
-                    emited = True
-                else:
-                    g15uinput.emit(macro.type, uc, 1, syn)
-                    emited = True
-                            
-        elif state == g15driver.KEY_STATE_HELD:
-            if macro.repeat_mode == g15profile.REPEAT_WHILE_HELD and macro.repeat_delay != -1:
-                self.repeat_macros.append(macro)
-                self.defeat_key_release.append(macro)
-                self._repeat_uinput(macro, uc)                 
-                                            
-        return emited                
+        # Next it goes to the visible page         
+        visible = self.get_visible_page()
+        if visible != None:
+            for h in visible.key_handlers:
+                if h.handle_key(keys, state_id, post):
+                    return True
                 
-    def _handle_macro(self, macro, state, syn = True, repetition = False):
-        if state == g15driver.KEY_STATE_UP:
-            if macro.type == g15profile.MACRO_ACTION:
-                if not self._action_performed(g15actions.ActionBinding(macro.macro, macro.keys, state)):
-                    # Send it to the service for handling
-                    self.service.handle_macro(macro)
-            else:
-                # Send it to the service for handling
-                self.service.handle_macro(macro)                
-            
-        """
-        Handle repetition
-        """
-        delay = macro.repeat_delay if macro.repeat_delay != -1 else 0.1
-        if macro.repeat_mode == g15profile.REPEAT_TOGGLE and not state == g15driver.KEY_STATE_HELD:
-            if macro in self.repeat_macros and not repetition:
-                # Key pressed again, so stop repeating
-                self.__cancel_macro_repeat_timer()
-                self.repeat_macros.remove(macro)
-            else:
-                if not macro in self.repeat_macros and not repetition:
-                    self.repeat_macros.append(macro)
-                    
-                # We test again because a toggle might have stopped the repeat
-                if macro in self.repeat_macros:
-                    self.__macro_repeat_timer = g15util.queue("MacroQueue-%s" % self.device.uid, "RepeatMacro", delay, self._handle_macro, self.__reload_macro_instance(macro), state, syn, True)
-        elif macro.repeat_mode == g15profile.REPEAT_WHILE_HELD:
-            if state == g15driver.KEY_STATE_UP and macro in self.repeat_macros and not repetition:
-                # Key released again, so stop repeating
-                self.__cancel_macro_repeat_timer()
-                self.repeat_macros.remove(macro)
-            else:
-                if state == g15driver.KEY_STATE_HELD and not macro in self.repeat_macros and not repetition:
-                    self.repeat_macros.append(macro)
-                    
-                # We test again because a toggle might have stopped the repeat
-                if macro in self.repeat_macros:
-                    self.__macro_repeat_timer = g15util.queue("MacroQueue-%s" % self.device.uid, "RepeatMacro", delay, self._handle_macro, self.__reload_macro_instance(macro), g15driver.KEY_STATE_UP, syn, True)
-                    
-    def __cancel_macro_repeat_timer(self):
-        """
-        Cancel the currently pending macro repeat
-        """
-        if self.__macro_repeat_timer is not None:
-            self.__macro_repeat_timer.cancel()
-            self.__macro_repeat_timer = None
-                    
-    def __reload_macro_instance(self, macro):
-        """
-        Get a new instance of the same macro, which will have any changes that
-        might have been made since the macro started. This allows repeat delays
-        to be adjusted while the macro is running
-        """
-        return g15profile.get_profile(macro.profile.device, macro.profile.id).get_macro(macro.memory, macro.keys)
-                
-    def _find_macro(self, keys):
-        """
-        Search for a macro matching the supplied keys in the currently 
-        active profile, and any parent profiles it is linked to.
+        # Now to all the plugins
+        if self.plugins.handle_key(keys, state_id, post=False):
+            return True
         
-        Keyword arguments:
-        keys        --        list of keys
-        """
-        profile = g15profile.get_active_profile(self.device)
-        macro = None
-        while profile is not None:
-            macro = profile.get_macro(self.get_memory_bank(), keys)
-            if macro is None:
-                base_profile = profile.base_profile
-                if base_profile != -1:                    
-                    profile = g15profile.get_profile(self.device, base_profile)
-                else:
-                    profile = None
-            else:
-                profile = None
-        return macro
-                
-            
-    def _action_performed(self, binding):
+    def action_performed(self, binding):
         if binding.action == g15driver.MEMORY_1:
             self.set_memory_bank(1)
             return True
@@ -1174,11 +872,33 @@ class G15Screen():
         elif binding.action == g15actions.PREVIOUS_BACKLIGHT:
             self.cycle_backlight(-1)
             return True
-        else:
-            logger.info("Invoking action '%s'" % binding.action)
-            for l in self.action_listeners:  
-                if l.action_performed(binding):
-                    return True
+        
+    '''
+    Private
+    '''
+        
+                
+    def _init_screen(self):
+        logger.info("Starting screen")
+        self.pages = []
+        self.content_surface = None
+        self.width = self.driver.get_size()[0]
+        self.height = self.driver.get_size()[1]
+        
+        self.surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, self.width, self.height)
+        self.size = (self.width, self.height)
+        self.available_size = (0, 0, self.size[0], self.size[1])
+        
+        self.page_model_lock = threading.RLock()
+        self.draw_lock = threading.Lock()
+        self.visible_page = None
+        self.old_canvas = None
+        self.transition_function = None
+        self.painter_function = None
+        self.mkey = 1
+        self.reverting = { }
+        self.deleting = { }
+        self._do_redraw()
              
     def _control_changed(self, client, connection_id, entry, args):
         control_id = entry.get_key().split("/")[-1]
@@ -1202,7 +922,7 @@ class G15Screen():
         self.resched_cycle()   
         self.driver = None     
         if self.should_reconnect(exception):
-            if logger.level == logging.DEBUG:
+            if logger.isEnabledFor(logging.DEBUG):
                 traceback.print_exc(file=sys.stderr)
             self.attempt_connection(5.0)
         else:
@@ -1230,7 +950,7 @@ class G15Screen():
             self.driver = None
             return False
         
-    def error_on_keyboard_display(self, text, title = "Error", icon = "dialog-error"):
+    def error_on_keyboard_display(self, text, title="Error", icon="dialog-error"):
         page = g15theme.ErrorScreen(self, title, text, icon)
         return page
         
@@ -1289,15 +1009,15 @@ class G15Screen():
         self.transition_function = transition
         return o_transition
     
-    def cycle_to(self, page, transitions = True):
+    def cycle_to(self, page, transitions=True):
         g15util.clear_jobs(REDRAW_QUEUE)
         g15util.execute(REDRAW_QUEUE, "cycleTo", self._do_cycle_to, page, transitions)
             
-    def cycle(self, number, transitions = True):
+    def cycle(self, number, transitions=True):
         g15util.clear_jobs(REDRAW_QUEUE)
         g15util.execute(REDRAW_QUEUE, "doCycle", self._do_cycle, number, transitions)
             
-    def redraw(self, page = None, direction="up", transitions = True, redraw_content = True, queue = True):
+    def redraw(self, page=None, direction="up", transitions=True, redraw_content=True, queue=True):
         if page:
             logger.debug("Redrawing %s" % page.id)
         else:
@@ -1332,8 +1052,8 @@ class G15Screen():
         sy = float(self.available_size[3]) / float(self.height)
         return min(sx, sy)
 
-    def fade(self, stay_faded=False, duration = 4.0, step = 1):
-        self.fader = Fader(self, stay_faded=stay_faded, duration = duration, step = step).run()
+    def fade(self, stay_faded=False, duration=4.0, step=1):
+        self.fader = Fader(self, stay_faded=stay_faded, duration=duration, step=step).run()
         
     def attempt_connection(self, delay=0.0):
         logger.info("Attempting connection" if delay == 0 else "Attempting connection in %f" % delay)
@@ -1372,9 +1092,9 @@ class G15Screen():
                 self.driver.release_all_acquisitions()
                 for control in self.driver.get_controls():
                     control.set_from_configuration(self.driver.device, self.conf_client)
-                    self.acquired_controls[control.id] = self.driver.acquire_control(control, val = control.value)
+                    self.acquired_controls[control.id] = self.driver.acquire_control(control, val=control.value)
                     logger.info("Acquired control of %s with value of %s" % (control.id, str(control.value)))
-                    self.control_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/%s" %( self.device.uid, control.id), self.control_configuration_changed));
+                    self.control_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/%s" % (self.device.uid, control.id), self.control_configuration_changed));
                 self.driver.update_controls()       
                 self._init_screen()
                 if self.splash == None:
@@ -1403,19 +1123,19 @@ class G15Screen():
         Clears a canvas, filling it with the current background color, and setting the canvas
         paint color to the current foreground color
         """
-        rgb = self.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, ( 255, 255, 255 ))
-        canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
+        rgb = self.driver.get_color_as_ratios(g15driver.HINT_BACKGROUND, (255, 255, 255))
+        canvas.set_source_rgb(rgb[0], rgb[1], rgb[2])
         canvas.rectangle(0, 0, self.width, self.height)
         canvas.fill()
-        rgb = self.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
-        canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
+        rgb = self.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, (0, 0, 0))
+        canvas.set_source_rgb(rgb[0], rgb[1], rgb[2])
         self.configure_canvas(canvas)
     
     '''
     Private functions
     '''
     
-    def _draw_page(self, visible_page, direction="down", transitions = True, redraw_content = True):
+    def _draw_page(self, visible_page, direction="down", transitions=True, redraw_content=True):
         self.draw_lock.acquire()
         try:
             if self.driver == None or not self.driver.is_connected():
@@ -1425,7 +1145,7 @@ class G15Screen():
             if self.driver.get_bpp() == 0:
                 return
             
-            surface =  self.surface
+            surface = self.surface
             
             painters = sorted(self.painters, key=lambda painter: painter.z_order)
             
@@ -1464,7 +1184,7 @@ class G15Screen():
                 
             # Call the screen's painter
             if self.visible_page != None:
-                logger.debug("Drawing page %s (direction = %s, transitions = %s, redraw_content = %s" % ( self.visible_page.id, direction, str(transitions), str(redraw_content)))
+                logger.debug("Drawing page %s (direction = %s, transitions = %s, redraw_content = %s" % (self.visible_page.id, direction, str(transitions), str(redraw_content)))
             
                          
                 # Paint the content to a new surface so it can be cached
@@ -1474,8 +1194,8 @@ class G15Screen():
                     self.configure_canvas(content_canvas)
                     self.visible_page.paint(content_canvas)
                 
-                tx =  self.available_size[0]
-                ty =  self.available_size[1]
+                tx = self.available_size[0]
+                ty = self.available_size[1]
                 
                 # Scale to the available space, and center
                 sx = float(self.available_size[2]) / float(self.width)
@@ -1527,7 +1247,7 @@ class G15Screen():
         canvas.set_font_options(fo)
         return fo
     
-    def _do_cycle_to(self, page, transitions = True):            
+    def _do_cycle_to(self, page, transitions=True):            
         self.page_model_lock.acquire()
         try :
             if page.priority == PRI_LOW:
@@ -1545,7 +1265,7 @@ class G15Screen():
                 direction = "up"
                 dir = 1
                 diff = page_list.index(page)
-                if diff >= ( len(page_list) / 2 ):
+                if diff >= (len(page_list) / 2):
                     dir *= -1
                     direction = "down"
                 self._cycle_pages(diff, page_list)
@@ -1553,7 +1273,7 @@ class G15Screen():
         finally:
             self.page_model_lock.release()
                 
-    def _do_cycle(self, number, transitions = True):            
+    def _do_cycle(self, number, transitions=True):            
         self.page_model_lock.acquire()
         try :
             self._flush_reverts_and_deletes()
@@ -1587,11 +1307,11 @@ class G15Screen():
                         pages[i].set_time(pages[i - 1].time)
                     pages[0].set_time(last_time)
             
-    def _cycle(self, number, transitions = True):
+    def _cycle(self, number, transitions=True):
         if len(self.pages) > 0:            
-            self._cycle_pages(number,  self._get_pages_of_priority(PRI_NORMAL))
+            self._cycle_pages(number, self._get_pages_of_priority(PRI_NORMAL))
                 
-    def _do_redraw(self, page = None, direction="up", transitions = True, redraw_content = True):
+    def _do_redraw(self, page=None, direction="up", transitions=True, redraw_content=True):
         self.page_model_lock.acquire()
         try :           
             current_page = self._get_next_page_to_display()
@@ -1624,7 +1344,7 @@ class G15Screen():
     def _get_next_page_to_display(self):
         self.page_model_lock.acquire()
         try :
-            srt = sorted(self.pages, key=lambda key: key.value, reverse = True)
+            srt = sorted(self.pages, key=lambda key: key.value, reverse=True)
             if len(srt) > 0 and srt[0].priority != PRI_INVISIBLE:
                 return srt[0]
         finally:            
@@ -1637,14 +1357,14 @@ increased, creating a fading effect
 """    
 class Fader(Painter):
     
-    def __init__(self, screen, stay_faded=False, duration = 3.0, step = 1):
+    def __init__(self, screen, stay_faded=False, duration=3.0, step=1):
         Painter.__init__(self, FOREGROUND_PAINTER, 9999)
         self.screen = screen
         self.duration = duration
         self.opacity = 0
         self.step = step
         self.stay_faded = stay_faded
-        self.interval = ( duration / 255 ) * step  
+        self.interval = (duration / 255) * step  
         
     def run(self):
         self.screen.painters.append(self)
@@ -1675,10 +1395,10 @@ class G15Splash():
         self.text = _("Starting up ..")
         icon_path = g15util.get_icon_path("gnome15")
         if icon_path == None:
-            icon_path = os.path.join(g15globals.icons_dir,"hicolor", "apps", "scalable", "gnome15.svg")
+            icon_path = os.path.join(g15globals.icons_dir, "hicolor", "apps", "scalable", "gnome15.svg")
         self.logo = g15util.load_surface_from_file(icon_path)
-        self.page = g15theme.G15Page("Splash", self.screen, priority = PRI_EXCLUSIVE, thumbnail_painter=self._paint_thumbnail, \
-                                         theme_properties_callback = self._get_properties, theme = g15theme.G15Theme(g15globals.image_dir, "background"))        
+        self.page = g15theme.G15Page("Splash", self.screen, priority=PRI_EXCLUSIVE, thumbnail_painter=self._paint_thumbnail, \
+                                         theme_properties_callback=self._get_properties, theme=g15theme.G15Theme(g15globals.image_dir, "background"))        
         self.screen.add_page(self.page)
         
     def complete(self):

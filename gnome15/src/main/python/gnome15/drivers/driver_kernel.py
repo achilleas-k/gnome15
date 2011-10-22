@@ -189,6 +189,36 @@ g110_key_map = {
                S.KEY_F11 : g15driver.G_KEY_G11,
                S.KEY_F12 : g15driver.G_KEY_G12
                }
+g510_key_map = {
+               S.KEY_PROG1 : g15driver.G_KEY_M1,
+               S.KEY_PROG2 : g15driver.G_KEY_M2,
+               S.KEY_PROG3 : g15driver.G_KEY_M3,
+               S.KEY_RECORD : g15driver.G_KEY_MR,
+               S.KEY_OK : g15driver.G_KEY_L1,
+               S.KEY_LEFT : g15driver.G_KEY_L2,
+               S.KEY_UP : g15driver.G_KEY_L3,
+               S.KEY_DOWN : g15driver.G_KEY_L4,
+               S.KEY_RIGHT : g15driver.G_KEY_L5,
+               228 : g15driver.G_KEY_LIGHT,
+               S.KEY_F1 : g15driver.G_KEY_G1,
+               S.KEY_F2 : g15driver.G_KEY_G2,
+               S.KEY_F3 : g15driver.G_KEY_G3,
+               S.KEY_F4 : g15driver.G_KEY_G4,
+               S.KEY_F5 : g15driver.G_KEY_G5,
+               S.KEY_F6 : g15driver.G_KEY_G6,
+               S.KEY_F7 : g15driver.G_KEY_G7,
+               S.KEY_F8 : g15driver.G_KEY_G8,
+               S.KEY_F9 : g15driver.G_KEY_G9,
+               S.KEY_F10 : g15driver.G_KEY_G10,
+               S.KEY_F11 : g15driver.G_KEY_G11,
+               S.KEY_F12 : g15driver.G_KEY_G12,
+               S.KEY_F13 : g15driver.G_KEY_G13,
+               S.KEY_F14 : g15driver.G_KEY_G14,
+               S.KEY_F15 : g15driver.G_KEY_G15,
+               S.KEY_F16 : g15driver.G_KEY_G16,
+               S.KEY_F17 : g15driver.G_KEY_G17,
+               S.KEY_F18 : g15driver.G_KEY_G18
+               }
 
 g19_mkeys_control = g15driver.Control("mkeys", _("Memory Bank Keys"), 0, 0, 15, hint=g15driver.HINT_MKEYS)
 g19_keyboard_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (0, 255, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE)
@@ -348,7 +378,42 @@ K_KEYMAPS = {
                                    0x000F : S.KEY_RECORD,
                                    0x0013 : 228,
                                    },
+             g15driver.MODEL_G510: {
+                                   0x0000 : S.KEY_F1,
+                                   0x0001 : S.KEY_F2,
+                                   0x0002 : S.KEY_F3,
+                                   0x0003 : S.KEY_F4,
+                                   0x0004 : S.KEY_F5,
+                                   0x0005 : S.KEY_F6,
+                                   0x0006 : S.KEY_F7,
+                                   0x0007 : S.KEY_F8,
+                                   
+                                   0x0008 : S.KEY_F9,
+                                   0x0009 : S.KEY_F10,
+                                   0x000A : S.KEY_F11,
+                                   0x000B : S.KEY_F12,
+                                   0x000C : S.KEY_F13,
+                                   0x000D : S.KEY_F14,
+                                   0x000E : S.KEY_F15,
+                                   0x000F : S.KEY_F16,
+                                   
+                                   0x0010 : S.KEY_F17,
+                                   0x0011 : S.KEY_F18,                                   
+                                   0x0013 : 228,
+                                   0x0014 : S.KEY_PROG1,
+                                   0x0015 : S.KEY_PROG2,
+                                   0x0016 : S.KEY_PROG3,
+                                   0x0017 : S.KEY_RECORD,
+                                   
+                                   0x0018 : S.KEY_OK,
+                                   0x0019 : S.KEY_LEFT,
+                                   0x001A : S.KEY_UP,
+                                   0x001B : S.KEY_DOWN,
+                                   0x001C : S.KEY_RIGHT
+                                   
+                                   },
              }
+K_KEYMAPS[g15driver.MODEL_G510_AUDIO] = K_KEYMAPS[g15driver.MODEL_G510] 
 
 class DeviceInfo:
     def __init__(self, leds, controls, key_map, led_prefix, keydev_pattern, sink_pattern = None):
@@ -362,10 +427,12 @@ class DeviceInfo:
 device_info = {
                g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", r"usb-Logitech_G19_Gaming_Keyboard-event-if.*", r"usb-Logitech_G19_Gaming_Keyboard-event-kbd.*",), 
                g15driver.MODEL_G11: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g11_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if"), 
-               g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if", r"G15_Keyboard_G15.*kbd"), 
-               g15driver.MODEL_G15_V2: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15v2_key_map, "g15v2", r"G15_Gaming_Keyboard.*if", r"G15_Gaming_Keyboard.*kbd"),
+               g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if", r"G15_Keyboard_G15.*kbd"),
+               g15driver.MODEL_G15_V2: DeviceInfo(["red:m1", "red:m2", "red:m3", "blue:mr" ], g15_controls, g15v2_key_map, "g15v2", r"G15_GamePanel_LCD-event-if.*", r"G15_GamePanel_LCD-event-kdb.*"),
                g15driver.MODEL_G13: DeviceInfo(["red:m1", "red:m2", "red:m3", "red:mr" ], g13_controls, g13_key_map, "g13", r"_G13-event-mouse"),
-               g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g110_controls, g110_key_map, "g110", r"usb-LOGITECH_G110_G-keys-event-if.*", r"usb-LOGITECH_G110_G-keys-event-kbd.*")
+               g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g110_controls, g110_key_map, "g110", r"usb-LOGITECH_G110_G-keys-event-if.*", r"usb-LOGITECH_G110_G-keys-event-kbd.*"),
+               g15driver.MODEL_G510: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g13_controls, g510_key_map, "g510", r"G510_Gaming_Keyboard.*event-if.*", r"G510_Gaming_Keyboard.*event.*kbd.*"),
+               g15driver.MODEL_G510_AUDIO: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g13_controls, g510_key_map, "g510", r"G510_Gaming_Keyboard.*event-if.*", r"G510_Gaming_Keyboard.*event.*kbd.*")
                }
         
 
@@ -475,7 +542,7 @@ class SinkDevice(SimpleDevice):
         SimpleDevice.__init__(self, *args, **kwargs)
         
     def receive(self, event):
-        if logger.level == logging.DEBUG:
+        if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Sunk event %s" % str(event))
 
 '''
@@ -825,7 +892,11 @@ class Driver(g15driver.AbstractDriver):
             
         # Connect to DBUS        
         system_bus = dbus.SystemBus()
-        system_service_object = system_bus.get_object('org.gnome15.SystemService', '/org/gnome15/SystemService')     
+        try:
+            system_service_object = system_bus.get_object('org.gnome15.SystemService', '/org/gnome15/SystemService')
+        except dbus.DBusException:
+            raise Exception("Failed to connect to Gnome15 system service. Is g15-system-service running (as root). \
+It should be launched automatically if Gnome15 is installed correctly.")          
         self.system_service = dbus.Interface(system_service_object, 'org.gnome15.SystemService')    
         # Setup joystick configuration on G13
         self.calibration = 18   
@@ -980,7 +1051,11 @@ class Driver(g15driver.AbstractDriver):
                 # device for the blue value 
                 self._write_to_led("green:bl", control.value[2])       
         elif control == g15_backlight_control:
-            self._write_to_led("blue:keys", control.value)          
+            if self.get_model_name() == g15driver.MODEL_G15_V2:
+                # G15v2 has different coloured backlight
+                self._write_to_led("orange:keys", control.value)
+            else:
+                self._write_to_led("blue:keys", control.value)  
         elif control == g15_lcd_backlight_control or control == g19_brightness_control:
             self._write_to_led("white:screen", control.value)          
         elif control == g15_lcd_contrast_control:

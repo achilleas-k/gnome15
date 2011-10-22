@@ -497,10 +497,10 @@ class Component():
         
 
 class G15Page(Component):
-    def __init__(self, id, screen, painter = None, priority = g15screen.PRI_NORMAL, on_shown=None, on_hidden=None, on_deleted=None, \
+    def __init__(self, page_id, screen, painter = None, priority = g15screen.PRI_NORMAL, on_shown=None, on_hidden=None, on_deleted=None, \
                  thumbnail_painter = None, panel_painter = None, theme_properties_callback = None, \
                  theme_attributes_callback = None, theme = None, title = None):
-        Component.__init__(self, id)
+        Component.__init__(self, page_id)
         self.title = title if title else self.id
         self.time = time.time()
         self.thumbnail_painter = thumbnail_painter
@@ -805,11 +805,11 @@ class Menu(Component):
         if menu_theme:
             self.set_theme(menu_theme)
         self._recalc_scroll_values()
-        self.get_screen().action_listeners.append(self)
+        self.get_screen().key_handler.action_listeners.append(self)
         
     def notify_remove(self):
         Component.notify_remove(self)
-        self.get_screen().action_listeners.remove(self)
+        self.get_screen().key_handler.action_listeners.remove(self)
           
     def load_theme(self):
         pass
@@ -1211,14 +1211,14 @@ class ErrorScreen(G15Page):
                            "text": text,
                            "icon": g15util.get_icon_path(icon)
                       }               
-        self.screen.add_page(self)
+        self.get_screen().add_page(self)
         self.redraw()
-        self.screen.action_listeners.append(self)
+        self.get_screen().key_handler.action_listeners.append(self)
         
     def action_performed(self, binding):             
         if binding.action == g15driver.SELECT:
-            self.screen.del_page(self)
-            self.screen.action_listeners.remove(self)  
+            self.get_screen().del_page(self)
+            self.get_screen().key_handler.action_listeners.remove(self)  
     
 class ConfirmationScreen(G15Page):
     
@@ -1233,27 +1233,29 @@ class ConfirmationScreen(G15Page):
         self.arg = arg
         self.callback = callback               
         self.cancel_callback = cancel_callback
-        self.screen.add_page(self)
+        self.get_screen().add_page(self)
         self.redraw()
-        self.screen.action_listeners.append(self)
+        self.get_screen().key_handler.action_listeners.append(self)
         
     def action_performed(self, binding):             
         if binding.action == g15driver.PREVIOUS_SELECTION:
-            self.screen.del_page(self)
-            self.screen.action_listeners.remove(self)
+            self.get_screen().del_page(self)
+            self.get_screen().key_handler.action_listeners.remove(self)
             if self.cancel_callback is not None:
                 self.cancel_callback(self.arg)
         elif binding.action == g15driver.NEXT_SELECTION:
-            self.screen.del_page(self)
-            self.screen.action_listeners.remove(self)
+            self.get_screen().del_page(self)
+            self.get_screen().key_handler.action_listeners.remove(self)
             self.callback(self.arg)  
                 
 class G15Theme():    
     def __init__(self, dir, variant = None, svg_text = None, prefix = None, auto_dirty = True, translation = None):
         if isinstance(dir, str):
             self.dir = dir
-        else:
+        elif dir is not None:
             self.dir = os.path.join(os.path.dirname(sys.modules[dir.__module__].__file__), "default")
+        else:
+            self.dir = None
         self.document = None       
         self.variant = variant
         self.page = None
@@ -1627,9 +1629,10 @@ class G15Theme():
     def _set_relative_image_paths(self, root):
         for element in root.xpath('//svg:image[@xlink:href]',namespaces=self.nsmap):
             href = element.get("{http://www.w3.org/1999/xlink}href")
-            if href and not "${" in href and ( href.startswith("./") or ( not href.startswith("http:") and not \
-                                          href.startswith("https:") and not href.startswith("file:") \
-                                          and not href.startswith("/") ) ):
+            is_data = href and href.startswith("data:")
+            is_abs = href and ( href.startswith("http:") or href.startswith("https:") or href.startswith("file:") or href.startswith("/"))
+            is_var = href and "${" in href
+            if not is_data and not is_abs and not is_var:
                 href = os.path.join(self.dir, href)
                 element.set("{http://www.w3.org/1999/xlink}href", href)
     

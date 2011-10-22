@@ -311,6 +311,12 @@ class G15Config:
         self.profile_author = self.widget_tree.get_object("ProfileAuthor")
         self.export_profile = self.widget_tree.get_object("Export")
         self.import_profile = self.widget_tree.get_object("ImportButton")
+        self.information_content = self.widget_tree.get_object("InformationContent")
+        self.delays_content = self.widget_tree.get_object("DelaysContent")
+        self.activation_content = self.widget_tree.get_object("ActivationContent")
+        self.launch_pattern_box = self.widget_tree.get_object("LaunchPatternBox")
+        self.activate_on_launch = self.widget_tree.get_object("ActivateOnLaunch")
+        self.launch_pattern = self.widget_tree.get_object("LaunchPattern")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -867,7 +873,7 @@ class G15Config:
     def _parent_profile_changed(self, widget):
         if not self.adjusting:
             sel = self.parent_profile_combo.get_active()
-            self.selected_profile.base_profile = self.parent_profile_model[sel][0] if sel > 0 else -1 
+            self.selected_profile.base_profile = self.parent_profile_model[sel][0] if sel > 0 else None 
             self._save_profile(self.selected_profile)
         
     def _window_name_changed(self, widget):
@@ -1012,7 +1018,7 @@ class G15Config:
             self.selected_profile = g15profile.get_active_profile(self.selected_device)  
             self._set_cycle_seconds_value_from_configuration()
             self._set_cycle_screens_value_from_configuration()
-            
+        self.selected_profile = None
         self._add_controls()
         self.main_window.show_all()
         self._load_profile_list()
@@ -1039,7 +1045,7 @@ class G15Config:
         
     def _set_available_actions(self):
         (model, path) = self.macro_list.get_selection().get_selected()
-        self.delete_macro_button.set_sensitive(path != None)
+        self.delete_macro_button.set_sensitive(path != None and not self.selected_profile.read_only)
         self.macro_properties_button.set_sensitive(path != None)
         
     def _activate(self, widget):
@@ -1282,14 +1288,14 @@ class G15Config:
             self._load_profile_list()
             
     def _save_profile(self, profile):
-        if self.profile_save_timer is not None:
-            self.profile_save_timer.cancel()
-        self.profile_save_timer = g15util.schedule("SaveProfile", 2, self._do_save_profile, profile)
+        if not self.adjusting:
+            if self.profile_save_timer is not None:
+                self.profile_save_timer.cancel()
+            self.profile_save_timer = g15util.schedule("SaveProfile", 2, self._do_save_profile, profile)
             
     def _do_save_profile(self, profile):
-        if not self.adjusting:
-            logger.info("Saving profile %s" % profile.name)
-            profile.save()
+        logger.info("Saving profile %s" % profile.name)
+        profile.save()
             
     def _show_global_options(self, widget): 
         G15GlobalConfig(self.main_window, self.widget_tree, self.conf_client)
@@ -1317,6 +1323,7 @@ class G15Config:
         
     def _load_devices(self):
         self.device_model.clear()
+        self.selected_device = None
         self.devices = g15devices.find_all_devices()
         previous_sel_device_name = self.conf_client.get_string("/apps/gnome15/config_device_name")
         sel_device_name = None
@@ -1352,7 +1359,7 @@ class G15Config:
         if self.selected_device != None:
             tree_selection = self.profiles_tree.get_selection()
             active = g15profile.get_active_profile(self.selected_device)
-            active_id = -1
+            active_id = ""
             if active != None:
                 active_id = active.id
             self.selected_profile = None
@@ -1361,18 +1368,19 @@ class G15Config:
                 weight = 400
                 if profile.id == active_id:
                     weight = 700
-                self.profiles_model.append([profile.name, weight, profile.id, profile.name != "Default" ])
+                self.profiles_model.append([profile.name, weight, profile.id, profile.name != "Default", not profile.read_only ])
                 if current_selection != None and profile.id == current_selection.id:
                     tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(len(self.profiles_model) - 1)))
-                    self.selected_profile = profile
-            if self.selected_profile != None:                             
-                self._load_configuration(self.selected_profile)             
-            elif len(self.profiles) > 0:            
-                tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(0)))
-            else:
+                    self.selected_profile = profile         
+            if len(self.profiles) == 0:
                 default_profile = g15profile.G15Profile(self.selected_device, "Default")
                 g15profile.create_profile(default_profile)
                 self._load_profile_list()
+            if self.selected_profile == None:                
+                tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(0)))
+                self.selected_profile = self.profiles[0]
+            if self.selected_profile != None:                             
+                self._load_configuration(self.selected_profile)
                 
     def _load_parent_profiles(self):
         self.parent_profile_model.clear()
@@ -1422,7 +1430,7 @@ class G15Config:
             selected_macro = None
             macros = self._get_sorted_list()
             for macro in macros:
-                self.macros_model.append([", ".join(g15util.get_key_names(macro.keys)), macro.name, macro.key_list_key, True])
+                self.macros_model.append([", ".join(g15util.get_key_names(macro.keys)), macro.name, macro.key_list_key, not profile.read_only])
                 if current_selection != None and macro.key_list_key == current_selection.key_list_key:
                     tree_selection.select_path(self.macros_model.get_path(self.macros_model.get_iter(len(self.macros_model) - 1)))
                     selected_macro = macro        
@@ -1430,6 +1438,7 @@ class G15Config:
                 tree_selection.select_path(self.macros_model.get_path(self.macros_model.get_iter(0)))
                     
             self.activate_on_focus.set_active(profile.activate_on_focus)
+            self.launch_pattern.set_text("" if profile.launch_pattern is None else profile.launch_pattern)
             self.profile_author.set_text(profile.author)
             self.activate_by_default.set_active(profile.activate_on_focus)
             if profile.window_name != None:
@@ -1442,12 +1451,19 @@ class G15Config:
             self.press_delay_adjustment.set_value(float(profile.press_delay) / 1000.0)
             self.release_delay_adjustment.set_value(float(profile.release_delay) / 1000.0)
             self.window_combo.set_sensitive(self.activate_on_focus.get_active())
+            self.new_macro_button.set_sensitive(not profile.read_only)
+            self.delete_macro_button.set_sensitive(not profile.read_only)
+            self.information_content.set_sensitive(not profile.read_only)
+            self.delays_content.set_sensitive(not profile.read_only)
+            self.activation_content.set_sensitive(not profile.read_only)
 
-            self._set_image(self.profile_icon, profile.icon)            
-            self._set_image(self.background, profile.background)
+            self._set_image(self.profile_icon, profile.get_profile_icon_path(48))            
+            self._set_image(self.background, profile.get_resource_path(profile.background))
             
             if profile.get_default():
                 self.activate_on_focus.set_visible(False)
+                self.launch_pattern_box.set_visible(False)
+                self.activate_on_launch.set_visible(False)
                 self.window_label.set_visible(False)
                 self.window_select.set_visible(False)
                 self.parent_profile_label.set_visible(False)
@@ -1457,6 +1473,8 @@ class G15Config:
                 self.remove_button.set_sensitive(False)
             else:
                 self._load_windows()
+                self.launch_pattern_box.set_visible(True)
+                self.activate_on_launch.set_visible(True)
                 self.window_name.set_visible(True)
                 self.parent_profile_label.set_visible(True)
                 self.parent_profile_box.set_visible(True)
@@ -1464,8 +1482,11 @@ class G15Config:
                 self.activate_on_focus.set_visible(True)
                 self.window_label.set_visible(True)
                 self.activate_by_default.set_visible(False)
-                self.remove_button.set_sensitive(True)
+                self.remove_button.set_sensitive(not profile.read_only)
                 
+            self.activate_on_launch.set_active(profile.activate_on_launch)
+            self.launch_pattern.set_sensitive(self.activate_on_launch.get_active())
+            
             if self.color_button != None:
                 rgb = profile.get_mkey_color(self._get_memory_number())
                 if rgb == None:
@@ -1473,14 +1494,15 @@ class G15Config:
                     self.color_button.set_sensitive(False)
                     self.color_button.set_color(g15util.to_color((255, 255, 255)))
                 else:
-                    self.color_button.set_sensitive(True)
+                    self.color_button.set_sensitive(True and not profile.read_only)
                     self.color_button.set_color(g15util.to_color(rgb))
                     self.enable_color_for_m_key.set_active(True)
+                self.enable_color_for_m_key.set_sensitive(not profile.read_only)
                     
             self._load_parent_profiles()
             self.parent_profile_combo.set_active(0)
             for i in range(0, len(self.parent_profile_model)): 
-                if ( profile.base_profile == -1 and i == 0 ) or \
+                if ( profile.base_profile == None and i == 0 ) or \
                    ( i > 0 and profile.base_profile == self.parent_profile_model[i][0] ):
                     self.parent_profile_combo.set_active(i)
                 

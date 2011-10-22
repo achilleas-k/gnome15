@@ -11,6 +11,6 @@ if ENABLE_DRIVER_KERNEL
     MAYBE_KERNEL = g15-system-service
 endif
 
-bin_SCRIPTS = g15-config g15-desktop-service $(MAYBE_INDICATOR) $(MAYBE_SYSTEMTRAY) $(MAYBE_KERNEL)
+bin_SCRIPTS = g15-config g15-desktop-service g15-support-dump $(MAYBE_INDICATOR) $(MAYBE_SYSTEMTRAY) $(MAYBE_KERNEL)
 
-EXTRA_DIST = g15-config g15-desktop-service g15-systemtray g15-indicator g15-system-service
+EXTRA_DIST = g15-config g15-desktop-service g15-systemtray g15-indicator g15-system-service g15-support-dump

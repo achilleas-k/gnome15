@@ -93,11 +93,11 @@ class G15Menu(g15plugin.G15MenuPlugin):
         self.reload_theme()
         self.listener = MenuScreenChangeListener(self)
         self.screen.add_screen_change_listener(self.listener)
-        self.screen.action_listeners.append(self)
+        self.screen.key_handler.action_listeners.append(self)
         
     def deactivate(self): 
         g15plugin.G15MenuPlugin.deactivate(self)
-        self.screen.action_listeners.remove(self)
+        self.screen.key_handler.action_listeners.remove(self)
         self.screen.remove_screen_change_listener(self.listener)
         
     def action_performed(self, binding):

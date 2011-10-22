@@ -97,7 +97,7 @@ def list_plugin_dirs(path):
     
     Keyword arguments:
     path -- path to look for plugins
-    """
+    """ 
     plugindirs = []
     if os.path.exists(path):
         for dir in os.listdir(path):
@@ -136,7 +136,7 @@ for plugindir in get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("
             imported_plugins.append(mod)
     except Exception as e:
         logger.error("Failed to load plugin module %s. %s" % (plugindir, str(e)))
-        if logger.level == logging.DEBUG:                  
+        if logger.isEnabledFor(logging.DEBUG):                  
             traceback.print_exc(file=sys.stderr) 
         
 def get_module_for_id(id):

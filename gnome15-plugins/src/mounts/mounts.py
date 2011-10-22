@@ -186,7 +186,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         
     def activate(self):
         g15plugin.G15MenuPlugin.activate(self)
-        self.screen.action_listeners.append(self)
+        self.screen.key_handler.action_listeners.append(self)
         
         # Get the initial list of volumes and mounts
         self.volume_monitor = gio.VolumeMonitor()
@@ -207,7 +207,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         
     def deactivate(self):
         g15plugin.G15MenuPlugin.deactivate(self)
-        self.screen.action_listeners.remove(self)
+        self.screen.key_handler.action_listeners.remove(self)
         for handle in self._signal_handles:
             self.session_bus.remove_signal_receiver(handle)
         if self._handle:
