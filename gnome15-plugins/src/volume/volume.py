@@ -25,6 +25,8 @@ import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
+import gnome15.g15devices as g15devices
+import gnome15.g15actions as g15actions
 
 import alsaaudio
 import select
@@ -36,17 +38,38 @@ logger = logging.getLogger("volume")
 
 from threading import Thread
 
+# Custom actions
+VOLUME_UP = "volume-up"
+VOLUME_DOWN = "volume-down"
+MUTE = "mute"
+
+# Register the action with all supported models
+g15devices.g15_action_keys[VOLUME_UP] = g15actions.ActionBinding(VOLUME_UP, [ g15driver.G_KEY_VOL_UP ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[VOLUME_UP] = g15actions.ActionBinding(VOLUME_UP, [ g15driver.G_KEY_VOL_UP ], g15driver.KEY_STATE_UP)
+g15devices.g15_action_keys[VOLUME_DOWN] = g15actions.ActionBinding(VOLUME_DOWN, [ g15driver.G_KEY_VOL_DOWN ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[VOLUME_DOWN] = g15actions.ActionBinding(VOLUME_DOWN, [ g15driver.G_KEY_VOL_DOWN ], g15driver.KEY_STATE_UP)
+g15devices.g15_action_keys[MUTE] = g15actions.ActionBinding(MUTE, [ g15driver.G_KEY_MUTE ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[MUTE] = g15actions.ActionBinding(MUTE, [ g15driver.G_KEY_MUTE ], g15driver.KEY_STATE_UP)
+
 # Plugin details - All of these must be provided
 id="volume"
 name=_("Volume Monitor")
 description=_("Uses the M-Key lights as a volume meter. If your model has \
 a screen, a page will also popup showing the current volume. \
-You may choose the mixer that is monitored in the preferences for this plugin.")
+You may choose the mixer that is monitored in the preferences for this plugin.\n\n \
+This plugin also registers some actions that may be assigned to macro keys. \
+The actions volume-up, volume-down and mute all work directly on the mixer, \
+so may be used control the master volume when full screen games are running too.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 default_enabled=True
+actions={ 
+         VOLUME_UP : "Increase the volume",
+         VOLUME_DOWN : "Decrease the volume",
+         MUTE : "Mute",
+         }
 
 
 ''' 
@@ -82,17 +105,64 @@ class G15Volume():
         self._lights_timer = None
 
     def activate(self):
+        self._screen.key_handler.action_listeners.append(self) 
         self._activated = True
         self._start_monitoring()
         self._notify_handler = self._gconf_client.notify_add(self._gconf_key, self._config_changed); 
     
     def deactivate(self):
+        self._screen.key_handler.action_listeners.remove(self)
         self._activated = False
         self._stop_monitoring()
         self._gconf_client.notify_remove(self._notify_handler)
         
     def destroy(self):
         pass
+    
+    def action_performed(self, binding):
+        if binding.action in [ VOLUME_UP, VOLUME_DOWN, MUTE ]:
+            vol_mixer = self._open_mixer()
+            try :
+                if binding.action == MUTE:      
+                    # Handle mute        
+                    mute = False
+                    mutes = None
+                    try :
+                        vol_mixer = self._open_mixer()
+                        mutes = vol_mixer.getmute()
+                    except alsaaudio.ALSAAudioError:
+                        if vol_mixer is not None:
+                            vol_mixer.close()
+                        # Some pulse weirdness maybe?
+                        vol_mixer = self._open_mixer("PCM")
+                        try :
+                            mutes = vol_mixer.getmute()
+                        except alsaaudio.ALSAAudioError:
+                            logger.warning("No mute switch found")
+                    if mutes != None:        
+                        for ch_mute in mutes:
+                            if ch_mute:
+                                mute = True
+                        vol_mixer.setmute(1 if not mute else 0)
+                else:
+                    volumes = vol_mixer.getvolume()        
+                    total = 0
+                    for vol in volumes:
+                        total += vol
+                    volume = total / len(volumes)
+                    
+                    if binding.action == VOLUME_UP and volume < 100:
+                        volume += 10
+                        vol_mixer.setvolume(min(volume, 100))
+                    elif binding.action == VOLUME_DOWN and volume > 0:
+                        volume -= 10
+                        vol_mixer.setvolume(max(volume, 0))
+                
+            finally :
+                if vol_mixer is not None:
+                    vol_mixer.close()
+            
+            
         
     ''' Functions specific to plugin
     ''' 
@@ -133,6 +203,16 @@ class G15Volume():
         if self._light_controls is not None:
             self._screen.driver.release_control(self._light_controls)
             self._light_controls = None
+            
+    def _open_mixer(self, mixer_name = None):
+        mixer_name = self._gconf_client.get_string(self._gconf_key + "/mixer") if mixer_name is None else mixer_name
+        if not mixer_name or mixer_name == "":
+            mixer_name = "Master"
+            
+        logger.info("Opening mixer %s" % mixer_name)
+        
+        vol_mixer = alsaaudio.Mixer(mixer_name, cardindex=0)
+        return vol_mixer
     
     def _popup(self):
         if not self._activated:
@@ -157,14 +237,8 @@ class G15Volume():
             self._screen.raise_page(page)
             self._screen.delete_after(3.0, page)
         
-        
-        mixer_name = self._gconf_client.get_string(self._gconf_key + "/mixer")
-        if not mixer_name or mixer_name == "":
-            mixer_name = "Master"
-            
-        logger.info("Opening mixer %s" % mixer_name)
-        
-        vol_mixer = alsaaudio.Mixer(mixer_name, cardindex=0)
+       
+        vol_mixer = self._open_mixer()
         mute_mixer = None
         
         try :

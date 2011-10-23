@@ -202,6 +202,7 @@ class G15TailThread(Thread):
     def _add_line(self, line):
         line = line.strip()
         if len(line) > 0:
+            line  = g15util.html_escape(line)
             while self.page._menu.get_child_count() > self.page.plugin.lines:
                 self.page._menu.remove_child_at(0)
             self.page._menu.add_child(G15TailMenuItem("Line-%d" % self.line_seq, line, self.page.file_path))

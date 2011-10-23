@@ -29,6 +29,7 @@ getting the default or active profile.
 import gconf
 import time
 import g15util
+import g15actions
 import g15devices
 import g15uinput
 import g15driver
@@ -434,8 +435,14 @@ class G15Macro:
         self.profile.parser.set(section_name, "%s_name" % pk, self._encode_val(self.name))
         self.profile.parser.set(section_name, "%s_type" % pk, self.type)
         
-        self.profile.parser.set(section_name, "%s_repeatdelay" % pk, self.repeat_delay)
-        self.profile.parser.set(section_name, "%s_repeatmode" % pk, self.repeat_mode)
+        if self.repeat_mode == REPEAT_WHILE_HELD:
+            self.profile._remove_if_exists("%s_repeatmode" % pk, section_name)
+        else:
+            self.profile.parser.set(section_name, "%s_repeatmode" % pk, self.repeat_mode)
+        if self.repeat_delay == -1:
+            self.profile._remove_if_exists("%s_repeatdelay" % pk, section_name)
+        else:
+            self.profile.parser.set(section_name, "%s_repeatdelay" % pk, self.repeat_delay)            
         
         if self.profile.version == 1.0:
             
@@ -719,6 +726,20 @@ class G15Profile():
                 macro._store()
                 
         self._write(self.filename)
+        
+    def get_binding_for_action(self, action_name):
+        """
+        Get an ActionBinding if this profile contains a map to the supplied
+        action name.
+        
+        Keyword arguments:
+        action_name        -- name of action
+        """
+        for bank in self.macros:
+            for m in bank:
+                if m.type == MACRO_ACTION and m.macro == action_name:
+                    # TODO held actions?
+                    return g15actions.ActionBinding(action_name, m.keys, g15driver.KEY_STATE_UP)
             
     def set_mkey_color(self, memory, rgb):
         """

@@ -129,26 +129,31 @@ class G15MacroRecorder():
     
     def activate(self):
         self._theme = g15theme.G15Theme(self)
+        self._screen.key_handler.action_listeners.append(self) 
         self._listener = MacroRecorderScreenChangeListener(self)
         self._screen.add_screen_change_listener(self._listener)
     
     def deactivate(self):
         self._cancel_macro()
+        self._screen.key_handler.action_listeners.remove(self)
         self._screen.remove_screen_change_listener(self._listener)
         
     def destroy(self):
         if self._record_thread != None:
             self._record_thread.disable_record_context()
     
+    def action_performed(self, binding):
+        if binding.action == RECORD:
+            if self._record_thread is None:
+                self._start_recording()
+                return True
+            else:
+                self._cancel_macro(None)
+                return True
+    
     def handle_key(self, keys, state, post):
         # Memory keys
-        if not post and state == g15driver.KEY_STATE_UP and g15driver.G_KEY_MR in keys and self._record_thread != None:              
-            self._cancel_macro(None)
-            return True
-        elif not post and state == g15driver.KEY_STATE_UP and g15driver.G_KEY_MR in keys and self._record_thread is None:
-            self._start_recording()
-            return True
-        elif not post and state == g15driver.KEY_STATE_UP and not g15driver.G_KEY_MR in keys:
+        if not post and state == g15driver.KEY_STATE_UP and not g15driver.G_KEY_MR in keys:
             """
             All other keys end recording. We use the UP keystate, so it doesn't trigger the
             macro itself when it is released at the end of recording
@@ -158,9 +163,6 @@ class G15MacroRecorder():
                 self._record_keys = keys
                 self._done_recording()
                 return True
-                              
-        
-        return self._record_thread != None
                 
     '''
     Private

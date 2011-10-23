@@ -43,7 +43,14 @@ images_DATA = g15key.png \
 	key-m1.png \
 	key-m2.png \
 	key-m3.png \
-	key-mr.png
+	key-mr.png \
+	key-vol-up.png \
+	key-vol-down.png \
+	key-mute.png \
+	key-next.png \
+	key-prev.png \
+	key-play.png \
+	key-stop.png
 
 EXTRA_DIST =  			\
 	$(images_DATA)

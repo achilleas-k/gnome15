@@ -66,6 +66,7 @@ import os.path
 import sys
 import g15globals as pglobals
 import g15driver as g15driver
+import g15actions as g15actions
 import gconf
 import traceback
 import threading
@@ -120,24 +121,7 @@ def get_extra_plugin_dirs():
     if "G15_PLUGINS" in os.environ:
         for dir in os.environ["G15_PLUGINS"].split(":"):
             plugindirs += list_plugin_dirs(dir)
-    return plugindirs
-
-"""
-Loads the python modules for all plugins for all known locations.
-"""
-for plugindir in get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + \
-            list_plugin_dirs(os.path.expanduser("~/.config/gnome15/plugins")) + list_plugin_dirs(pglobals.plugin_dir): 
-    plugin_name = os.path.basename(plugindir)
-    pluginfiles = [fname[:-3] for fname in os.listdir(plugindir) if fname == plugin_name + ".py"]
-    if not plugindir in sys.path:
-        sys.path.insert(0, plugindir)
-    try :
-        for mod in ([__import__(fname) for fname in pluginfiles]):
-            imported_plugins.append(mod)
-    except Exception as e:
-        logger.error("Failed to load plugin module %s. %s" % (plugindir, str(e)))
-        if logger.isEnabledFor(logging.DEBUG):                  
-            traceback.print_exc(file=sys.stderr) 
+    return plugindirs 
         
 def get_module_for_id(id):
     """
@@ -214,6 +198,32 @@ def get_actions(plugin_module):
     except AttributeError: 
         pass 
     return {}
+
+
+
+"""
+Loads the python modules for all plugins for all known locations.
+"""
+for plugindir in get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + \
+            list_plugin_dirs(os.path.expanduser("~/.config/gnome15/plugins")) + list_plugin_dirs(pglobals.plugin_dir): 
+    plugin_name = os.path.basename(plugindir)
+    pluginfiles = [fname[:-3] for fname in os.listdir(plugindir) if fname == plugin_name + ".py"]
+    if not plugindir in sys.path:
+        sys.path.insert(0, plugindir)
+    try :
+        for mod in ([__import__(fname) for fname in pluginfiles]):
+            imported_plugins.append(mod)
+            actions = get_actions(mod)
+            for a in actions:
+                if not a in g15actions.actions:
+                    g15actions.actions.append(a)
+    except Exception as e:
+        logger.error("Failed to load plugin module %s. %s" % (plugindir, str(e)))
+        if logger.isEnabledFor(logging.DEBUG):                  
+            traceback.print_exc(file=sys.stderr)
+
+
+
 
 class G15Plugins():
     """

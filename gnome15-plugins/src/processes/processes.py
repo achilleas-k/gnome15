@@ -146,6 +146,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
                     self._mode = "applications"
                 self._cancel_timer()
                 self._refresh()
+                return True
     
     def create_menu(self):
         menu = g15plugin.G15MenuPlugin.create_menu(self)

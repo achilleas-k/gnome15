@@ -205,6 +205,11 @@ class G15MacroEditor():
     def _macro_script_changed(self, text_buffer):
         self.editing_macro.macro = text_buffer.get_text(text_buffer.get_start_iter(), text_buffer.get_end_iter())
         self.__save_macro(self.editing_macro)
+        
+    def _show_script_editor(self, widget):
+        editor = G15MacroScriptEditor(self.editing_macro)
+        editor.window.set_transient_for(self.window)
+        editor.run()
     
     def _turbo_changed(self, widget):
         if not self.adjusting:
@@ -536,6 +541,40 @@ class G15MacroEditor():
         else:
             font.set_weight(pango.WEIGHT_MEDIUM)
         label.modify_font(font)
+        
+OP_ICONS = { 'delay' : 'gtk-media-pause',
+            'press' : 'gtk-go-down',
+            'release' : 'gtk-go-up',
+            'execute' : 'gtk-execute' }
+        
+class G15MacroScriptEditor():
+    
+    def __init__(self, editing_macro):
+        widget_tree = gtk.Builder()
+        widget_tree.set_translation_domain("g15-macroeditor")
+        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "script-editor.glade"))
+        self.window = widget_tree.get_object("EditScriptDialog")
+        self.script_model = widget_tree.get_object("ScriptModel")
+        self.window.set_transient_for(self.window)
+        self.set_macro(editing_macro)
+        
+    def set_macro(self, macro):
+        self.editing_macro = macro
+        self.script_model.clear()
+        macros = self.editing_macro.macro.split("\n")
+        i = 0
+        for macro_text in macros:
+            split = macro_text.split(" ")
+            op = split[0].lower()
+            if len(split) > 1:
+                val = split[1]                
+                if op in OP_ICONS:
+                    self.script_model.append([gtk.gdk.pixbuf_new_from_file(g15util.get_icon_path(OP_ICONS[op], 24)), val])
+        
+    def run(self):
+        self.window.run()
+        self.window.hide()
+        
 
 if __name__ == "__main__":
     me = G15MacroEditor()

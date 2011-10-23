@@ -1845,8 +1845,11 @@ class G15Theme():
             svg.write(xml)
         except:
             traceback.print_exc(file=sys.stderr)
+        try :
+            svg.close()
+        except:
+            traceback.print_exc(file=sys.stderr)
         
-        svg.close()
         svg.render_cairo(canvas)
          
         if len(render.text_boxes) > 0:

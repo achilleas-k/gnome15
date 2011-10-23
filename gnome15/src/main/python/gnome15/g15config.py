@@ -749,10 +749,16 @@ class G15Config:
             self.key_table.set_property("n-rows", rows)         
         row = 0
         for action in actions:
-            device_info = g15devices.get_device_info(self.driver.get_model_name())
-            if action in device_info.action_keys:
-                action_binding = device_info.action_keys[action]
+            # First try the active profile to see if the action has been re-mapped
+            active_profile = g15profile.get_active_profile(self.driver.device)
+            action_binding = active_profile.get_binding_for_action(action)
+            if action_binding is None:
+                # No other keys bound to action, try the device defaults
+                device_info = g15devices.get_device_info(self.driver.get_model_name())                
+                if action in device_info.action_keys:
+                    action_binding = device_info.action_keys[action]
                 
+            if action_binding is not None:
                 # If hold
                 label = gtk.Label("")
                 label.set_size_request(40, -1)

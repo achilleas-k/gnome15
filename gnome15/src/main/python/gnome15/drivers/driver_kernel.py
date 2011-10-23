@@ -82,7 +82,14 @@ g19_key_map = {
                S.KEY_F9 : g15driver.G_KEY_G9,
                S.KEY_F10 : g15driver.G_KEY_G10,
                S.KEY_F11 : g15driver.G_KEY_G11,
-               S.KEY_F12 : g15driver.G_KEY_G12
+               S.KEY_F12 : g15driver.G_KEY_G12,
+               S.KEY_MUTE : g15driver.G_KEY_MUTE,
+               S.KEY_VOLUMEDOWN : g15driver.G_KEY_VOL_DOWN,
+               S.KEY_VOLUMEUP  : g15driver.G_KEY_VOL_UP,
+               S.KEY_NEXTSONG  : g15driver.G_KEY_NEXT,
+               S.KEY_PREVIOUSSONG  : g15driver.G_KEY_PREV,
+               S.KEY_PLAYPAUSE : g15driver.G_KEY_PLAY,
+               S.KEY_STOPCD : g15driver.G_KEY_STOP,
                }
 g15_key_map = {
                S.KEY_PROG1 : g15driver.G_KEY_M1,
@@ -416,16 +423,17 @@ K_KEYMAPS = {
 K_KEYMAPS[g15driver.MODEL_G510_AUDIO] = K_KEYMAPS[g15driver.MODEL_G510] 
 
 class DeviceInfo:
-    def __init__(self, leds, controls, key_map, led_prefix, keydev_pattern, sink_pattern = None):
+    def __init__(self, leds, controls, key_map, led_prefix, keydev_pattern, sink_pattern = None, mm_pattern = None):
         self.leds = leds
         self.controls = controls
         self.key_map = key_map
         self.led_prefix = led_prefix 
         self.sink_pattern = sink_pattern
         self.keydev_pattern = keydev_pattern
+        self.mm_pattern = mm_pattern
         
 device_info = {
-               g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", r"usb-Logitech_G19_Gaming_Keyboard-event-if.*", r"usb-Logitech_G19_Gaming_Keyboard-event-kbd.*",), 
+               g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", r"usb-Logitech_G19_Gaming_Keyboard-event-if.*", r"usb-Logitech_G19_Gaming_Keyboard-event-kbd.*", r"usb-046d_G19_Gaming_Keyboard-event-if.*"), 
                g15driver.MODEL_G11: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g11_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if"), 
                g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if", r"G15_Keyboard_G15.*kbd"),
                g15driver.MODEL_G15_V2: DeviceInfo(["red:m1", "red:m2", "red:m3", "blue:mr" ], g15_controls, g15v2_key_map, "g15v2", r"G15_GamePanel_LCD-event-if.*", r"G15_GamePanel_LCD-event-kdb.*"),
@@ -544,18 +552,49 @@ class SinkDevice(SimpleDevice):
     def receive(self, event):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Sunk event %s" % str(event))
+            
+'''
+Abstract input device
+'''
+class AbstractInputDevice(SimpleDevice):
+    def __init__(self, callback, key_map, *args, **kwargs):
+        SimpleDevice.__init__(self, *args, **kwargs)
+        self.callback = callback
+        self.key_map = key_map
+
+    def _event(self, event_code, state):
+        if event_code in self.key_map:
+            key = self.key_map[event_code]
+            self.callback([key], state)
+        else:
+            logger.warning("Unmapped key for event: %s" % event_code)
+        
+'''
+SimpleDevice implementation for handling multi-media keys. 
+'''
+class MultiMediaDevice(AbstractInputDevice):
+    def __init__(self, callback, key_map, *args, **kwargs):
+        AbstractInputDevice.__init__(self, callback, key_map, *args, **kwargs)
+        
+    def receive(self, event):
+        if event.etype == S.EV_KEY:
+            state = g15driver.KEY_STATE_DOWN if event.evalue == 1 else g15driver.KEY_STATE_UP
+            if event.evalue != 2:
+                self._event(event.ecode, state)
+        elif event.etype == 0:
+            return
+        else:
+            logger.warning("Unhandled event: %s" % str(event))
 
 '''
 SimpleDevice implementation that translates kernel input events
 into Gnome15 key events and forwards them to the registered 
 Gnome15 keyboard callback.
 '''
-class ForwardDevice(SimpleDevice):
+class ForwardDevice(AbstractInputDevice):
     def __init__(self, driver, callback, key_map, *args, **kwargs):
-        SimpleDevice.__init__(self, *args, **kwargs)
-        self.callback = callback
+        AbstractInputDevice.__init__(self, callback, key_map, *args, **kwargs)
         self.driver = driver
-        self.key_map = key_map
         self.ctrl = False
         self.held_keys = []
         self.alt = False
@@ -773,13 +812,6 @@ class ForwardDevice(SimpleDevice):
                 self.digital_down.remove("d")
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, uinput.REL_Y, 128)
 
-    def _event(self, event_code, state):
-        if event_code in self.key_map:
-            key = self.key_map[event_code]
-            self.callback([key], state)
-        else:
-            logger.warning("Unmapped key for event: %s" % event_code)
-
 class Driver(g15driver.AbstractDriver):
 
     def __init__(self, device, on_close=None):
@@ -853,6 +885,12 @@ class Driver(g15driver.AbstractDriver):
             l.append([ g15driver.G_KEY_UP ])
             l.append([ g15driver.G_KEY_JOY_LEFT, g15driver.G_KEY_LEFT, g15driver.G_KEY_JOY_CENTER, g15driver.G_KEY_RIGHT ])
             l.append([ g15driver.G_KEY_JOY_DOWN, g15driver.G_KEY_DOWN ])
+            return l
+        elif self.get_model_name() == g15driver.MODEL_G19:
+            l = list(self.device.key_layout)
+            l.append([])
+            l.append([ g15driver.G_KEY_VOL_UP, g15driver.G_KEY_VOL_DOWN, g15driver.G_KEY_MUTE ])
+            l.append([ g15driver.G_KEY_PREV, g15driver.G_KEY_PLAY, g15driver.G_KEY_STOP, g15driver.G_KEY_NEXT ])
             return l
         else:
             return self.device.key_layout
@@ -1092,6 +1130,9 @@ It should be launched automatically if Gnome15 is installed correctly.")
         for devpath in self.sink_devices:
             logger.info("Adding input sink device %s" % devpath)
             self.key_thread.devices.append(SinkDevice(devpath, devpath))
+        for devpath in self.mm_devices:
+            logger.info("Adding input multi-media device %s" % devpath)
+            self.key_thread.devices.append(MultiMediaDevice(callback, self.device_info.key_map, devpath, devpath))
         self.key_thread.start()
         
     '''
@@ -1191,6 +1232,8 @@ It should be launched automatically if Gnome15 is installed correctly.")
         # Try and find the paths for the keyboard devices
         self.keyboard_devices = []
         self.sink_devices = []
+        self.mm_devices = []
+        
         dir = "/dev/input/by-id"
         for p in os.listdir(dir):
             if re.search(self.device_info.keydev_pattern, p):
@@ -1199,3 +1242,6 @@ It should be launched automatically if Gnome15 is installed correctly.")
             if self.device_info.sink_pattern is not None and re.search(self.device_info.sink_pattern, p):
                 logger.info("Input sink device %s matches %s" % (p, self.device_info.sink_pattern))
                 self.sink_devices.append(dir + "/" + p)
+            if self.device_info.mm_pattern is not None and re.search(self.device_info.mm_pattern, p):
+                logger.info("Input multi-media device %s matches %s" % (p, self.device_info.mm_pattern))
+                self.mm_devices.append(dir + "/" + p)

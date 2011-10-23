@@ -131,4 +131,6 @@ class G15LCDShot():
                     self._screen.error_on_keyboard_display(_("Failed to save screenshot to %s. %s") % (dir, str(e)))
                 finally:
                     self._screen.draw_lock.release()
+                    
+                return True
         

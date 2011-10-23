@@ -511,6 +511,7 @@ class G15Im(g15plugin.G15MenuPlugin):
             self.gconf_client.set_string(self.gconf_key + "/mode", self.menu.mode)
             self.menu.reload()
             self.screen.redraw(self.page)
+            return True
     
     def get_theme_properties(self):
         props = g15plugin.G15MenuPlugin.get_theme_properties(self)

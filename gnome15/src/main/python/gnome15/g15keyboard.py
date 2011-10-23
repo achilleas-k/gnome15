@@ -48,6 +48,10 @@ class KeyState():
         self.timer = None
         self.consumed = False
         self.defeat_release = False
+        self.consume_until_release = False
+        
+    def is_consumed(self):
+        return self.consumed or self.consume_until_release
         
     def cancel_timer(self):
         """
@@ -58,7 +62,7 @@ class KeyState():
             self.timer = None
             
     def __repr__(self):
-        return "%s = %s" % (self.key, g15profile.to_key_state_name(self.state_id) )      
+        return "%s = %s [consumed = %s]" % (self.key, g15profile.to_key_state_name(self.state_id), str(self.consumed) )      
     
 class G15KeyHandler():
     """
@@ -153,7 +157,7 @@ class G15KeyHandler():
         Keyword arguments:
         keys        --    list of keys
         state_id    --    key state (g15driver.KEY_STATE_UP, _DOWN and _HELD)
-        """        
+        """
                
         """
         See if the screen itself, or the plugins, want to handle the key. This
@@ -174,7 +178,8 @@ class G15KeyHandler():
             Now set up the macro key state. This is where we decide what macros
             and actions to activate.
             """
-            if self._configure_key_state(key, state_id):        
+            if self._configure_key_state(key, state_id):
+                        
                 """
                 Do uinput macros first. These are treated slightly differently, because
                 a press of the Macro key equals a "press" of the virtual key,
@@ -205,22 +210,29 @@ class G15KeyHandler():
         for k, v in self.__key_states.items():
             if v.state_id == g15driver.KEY_STATE_UP:
                 up += 1
-        if up == len(self.__key_states):
+        if up > 0 and up == len(self.__key_states):
             self.__key_states = {}
             
     def _handle_actions(self):
+        """
+        This handles the default action bindings. The actions may have
+        already re-mapped as a macro, in which case they will be ignored 
+        here.
+        """
         action_keys = self.__screen.driver.get_action_keys()
         if action_keys:
             for action in action_keys:
                 binding = action_keys[action]
                 f = 0
                 for k in binding.keys:
-                    if k in self.__key_states and binding.state == self.__key_states[k].state_id:
+                    if k in self.__key_states and \
+                            binding.state == self.__key_states[k].state_id and \
+                            not self.__key_states[k].is_consumed():
                         f += 1
                 if f == len(binding.keys):
                     self._action_performed(binding)
                     for k in binding.keys:
-                        del self.__key_states[k]
+                        self.__key_states[k].consume_until_release = True
         
     def _handle_normal_macros(self):
         """
@@ -233,9 +245,9 @@ class G15KeyHandler():
             for k in m.keys:
                 if k in self.__key_states:
                     key_state = self.__key_states[k]
-                    if not key_state.consumed and key_state.state_id == g15driver.KEY_STATE_UP:
+                    if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_UP:
                         up.append(key_state)
-                    if not key_state.consumed and key_state.state_id == g15driver.KEY_STATE_HELD:
+                    if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_HELD:
                         held.append(key_state)
                         
             if len(up) == len(m.keys):
@@ -256,7 +268,7 @@ class G15KeyHandler():
             for k in m.keys:
                 if k in self.__key_states:
                     key_state = self.__key_states[k]
-                    if not key_state.consumed:
+                    if not key_state.is_consumed():
                         if key_state.state_id == g15driver.KEY_STATE_UP and not key_state.defeat_release:
                             up.append(key_state)
                         if key_state.state_id == g15driver.KEY_STATE_DOWN:
@@ -473,11 +485,15 @@ class G15KeyHandler():
         for k in key_states:
             k.consumed = True         
             
-    def _process_macro(self, macro, state):   
+    def _process_macro(self, macro, state, key_states):   
         if macro.type == g15profile.MACRO_ACTION:
-            if not self._action_performed(g15actions.ActionBinding(macro.macro, macro.keys, state)):
+            binding = g15actions.ActionBinding(macro.macro, macro.keys, state)
+            if not self._action_performed(binding):
                 # Send it to the service for handling
                 self.__screen.service.handle_macro(macro)
+            else:
+                for k in key_states:
+                    k.consume_until_released = True
         else:
             # Send it to the service for handling
             self.__screen.service.handle_macro(macro)
@@ -494,7 +510,7 @@ class G15KeyHandler():
                 if not macro in self.__repeat_macros and not repetition:
                     self.__repeat_macros.append(macro)
                 else:
-                    self._process_macro(macro, state)
+                    self._process_macro(macro, state, key_states)
                     
                 # We test again because a toggle might have stopped the repeat
                 if macro in self.__repeat_macros:
@@ -507,13 +523,13 @@ class G15KeyHandler():
             else:
                 if state == g15driver.KEY_STATE_HELD and not macro in self.__repeat_macros and not repetition:
                     self.__repeat_macros.append(macro)
-                self._process_macro(macro, state)
+                self._process_macro(macro, state, key_states)
                     
                 # We test again because a toggle might have stopped the repeat
                 if macro in self.__repeat_macros:
                     self.__macro_repeat_timer = g15util.queue(self.queue_name, "RepeatMacro", delay, self._handle_macro, macro, g15driver.KEY_STATE_HELD, key_states, True)
         elif state == g15driver.KEY_STATE_UP:
-            self._process_macro(macro, state)
+            self._process_macro(macro, state, key_states)
                     
     def __cancel_macro_repeat_timer(self):
         """
