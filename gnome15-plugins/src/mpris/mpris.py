@@ -26,6 +26,8 @@ import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
+import gnome15.g15devices as g15devices
+import gnome15.g15actions as g15actions
 import dbus
 import os
 import time
@@ -37,6 +39,22 @@ import urllib
 import logging
 from dbus.exceptions import DBusException
 logger = logging.getLogger("mpris")
+
+# Custom actions
+NEXT_TRACK = "next-track"
+PREV_TRACK = "previous-track"
+PLAY_TRACK = "play-track"
+STOP_TRACK = "stop-track"
+
+# Register the action with all supported models
+g15devices.g15_action_keys[NEXT_TRACK] = g15actions.ActionBinding(NEXT_TRACK, [ g15driver.G_KEY_NEXT ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[NEXT_TRACK] = g15actions.ActionBinding(NEXT_TRACK, [ g15driver.G_KEY_NEXT ], g15driver.KEY_STATE_UP)
+g15devices.g15_action_keys[PREV_TRACK] = g15actions.ActionBinding(PREV_TRACK, [ g15driver.G_KEY_PREV ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[PREV_TRACK] = g15actions.ActionBinding(PREV_TRACK, [ g15driver.G_KEY_PREV ], g15driver.KEY_STATE_UP)
+g15devices.g15_action_keys[STOP_TRACK] = g15actions.ActionBinding(STOP_TRACK, [ g15driver.G_KEY_STOP ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[STOP_TRACK] = g15actions.ActionBinding(STOP_TRACK, [ g15driver.G_KEY_STOP ], g15driver.KEY_STATE_UP)
+g15devices.g15_action_keys[PLAY_TRACK] = g15actions.ActionBinding(PLAY_TRACK, [ g15driver.G_KEY_PLAY ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[PLAY_TRACK] = g15actions.ActionBinding(PLAY_TRACK, [ g15driver.G_KEY_PLAY ], g15driver.KEY_STATE_UP)
 
 # Plugin details - All of these must be provided
 id="mpris"
@@ -51,6 +69,12 @@ copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
+actions={ 
+         NEXT_TRACK : "Skip to the next track",
+         PREV_TRACK : "Skip to the previous track",
+         STOP_TRACK : "Stop the current track",
+         PLAY_TRACK : "Play / Pause the current track",
+         }
 
 # Players that are not supported
 mpris_blacklist = [ "org.mpris.xbmc" ]
@@ -84,6 +108,32 @@ class AbstractMPRISPlayer():
         self.song_properties = {}
         self.status = "Stopped"      
         self.redraw_timer = None  
+        
+    def action_performed(self, binding):
+        if binding.action == NEXT_TRACK:
+            self.next_track()
+            return True
+        elif binding.action == PREV_TRACK:
+            self.prev_track()
+            return True
+        elif binding.action == PLAY_TRACK:
+            self.play_pause_track()
+            return True
+        elif binding.action == STOP_TRACK:
+            self.stop_track()
+            return True
+        
+    def next_track(self):
+        logger.warn("Next track not implemented")
+        
+    def prev_track(self):
+        logger.warn("Previous track not implemented")
+        
+    def play_pause_track(self):
+        logger.warn("Play pause track not implemented")
+        
+    def stop_track(self):
+        logger.warn("Stop track not implemented")
         
     def check_status(self):        
         new_status = self.get_new_status()
@@ -331,6 +381,22 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)            
         session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
+    def next_track(self):
+        self.player.Next()
+        
+    def prev_track(self):
+        self.player.Prev()
+        
+    def play_pause_track(self):
+        status = self.player.GetStatus()
+        if status[0] == 0:
+            self.player.Pause()
+        else:
+            self.player.Play()
+        
+    def stop_track(self):
+        self.player.Stop()
+        
     def update_track(self):
         self._get_elapsed()
         self.playback_started = time.time()
@@ -441,6 +507,18 @@ class MPRIS2Player(AbstractMPRISPlayer):
         # xnoise doesn't send seeked signals, so we need to refresh
         if "xnoise" in bus_name:
             self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)        
+        
+    def next_track(self):
+        self.player.Next()
+        
+    def prev_track(self):
+        self.player.Previous()
+        
+    def play_pause_track(self):
+        self.player.PlayPause()
+        
+    def stop_track(self):
+        self.player.Stop()
         
     def load_track_list(self):
         logger.info("Loading tracklist")        
@@ -599,6 +677,9 @@ class G15MPRIS():
         if self.session_bus == None:
             self.session_bus = dbus.SessionBus()
             self.session_bus.call_on_disconnection(self._dbus_disconnected)
+            
+            
+        self.screen.key_handler.action_listeners.append(self) 
         self._discover()
         
         # Watch for players appearing and disappearing
@@ -607,6 +688,7 @@ class G15MPRIS():
                                      signal_name='NameOwnerChanged')  
     
     def deactivate(self):
+        self.screen.key_handler.action_listeners.remove(self)
         for key in self.players.keys():
             self.players[key].stop()
         g15util.stop_queue("mprisDataQueue-%s" % self.screen.device.uid)
@@ -616,8 +698,19 @@ class G15MPRIS():
         
     def destroy(self):
         pass
-
         
+    def action_performed(self, binding):
+        vis_page = self.screen.get_visible_page()
+        
+        # First send to the visible player
+        for p in self.players.values():
+            if vis_page == p.page:                
+                return p.action_performed(binding)
+            
+        # Now send to just the first player
+        if len(self.players) > 0:
+            return self.players[0].action_performed(binding)
+            
     def _name_owner_changed(self, name, old_owner, new_owner):
         logger.debug("Name owner changed for %s from %s to %s", name, old_owner, new_owner)
         if name.startswith("org.mpris.MediaPlayer2"):
