@@ -25,6 +25,8 @@ import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
+import gnome15.g15actions as g15actions
+import gnome15.g15devices as g15devices
 import gobject
 import os
 import pwd
@@ -60,7 +62,8 @@ actions={
          g15driver.NEXT_SELECTION : _("Next item"),
          g15driver.NEXT_PAGE : _("Next page"),
          g15driver.PREVIOUS_PAGE : _("Previous page"),
-         g15driver.SELECT : _("Compose new mail")
+         g15driver.SELECT : _("Compose new mail"),
+         g15driver.VIEW : _("Check mail status")
          }
 
 # Constants
@@ -600,14 +603,22 @@ class G15Biff(g15plugin.G15MenuPlugin):
             g15plugin.G15MenuPlugin.activate(self)
         self.update_time_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/update_time", self._update_time_changed)
         self.schedule_refresh(10.0)
+        self.screen.key_handler.action_listeners.append(self)
             
     def deactivate(self):
+        self.screen.key_handler.action_listeners.remove(self)
         g15plugin.G15MenuPlugin.deactivate(self)
         self._stop_blink()
         if self.refresh_timer:
             self.refresh_timer.cancel()
             self.refresh_timer.task_queue.stop()
         self.gconf_client.notify_remove(self.update_time_changed_handle)
+        
+    def action_performed(self, binding):
+        if binding.action == g15driver.VIEW:
+            if self.refresh_timer:
+                self.refresh_timer.cancel()
+            self.refresh()
         
     def load_menu_items(self):
         items = []

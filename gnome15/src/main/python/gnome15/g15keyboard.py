@@ -24,6 +24,7 @@ into Macros or actions. The different types of macro are handled accordingly, as
 as the repetition functions.
 
 All key events are handled on a queue (one per instance of a key handler). 
+
 """
 
 import gnome15.g15locale as g15locale
@@ -92,6 +93,7 @@ class G15KeyHandler():
         self.__macro_repeat_timer = None
         self.__uinput_macros = []
         self.__normal_macros = []
+        self.__normal_held_macros = []
         self.__notify_handles = []
         self.__key_states = {}
         
@@ -148,6 +150,7 @@ class G15KeyHandler():
         
     def _reload_active_macros(self):
         self.__normal_macros = self._get_all_macros(mapped_to_key = False)
+        self.__normal_held_macros = self._get_all_macros(mapped_to_key = False, state = g15driver.KEY_STATE_HELD)
         self.__uinput_macros = self._get_all_macros(mapped_to_key = True)
         
     def _do_key_received(self, keys, state_id):
@@ -236,8 +239,24 @@ class G15KeyHandler():
         
     def _handle_normal_macros(self):
         """
+        First check for any KEY_STATE_HELD macros. We do these first so KEY_STATE_UP
+        macros don't consume the key states
+        """        
+        for m in self.__normal_held_macros:
+            held = []
+            for k in m.keys:
+                if k in self.__key_states:
+                    key_state = self.__key_states[k]
+                    if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_HELD:
+                        held.append(key_state)
+                        
+            if len(held) == len(m.keys):
+                self._handle_macro(m, g15driver.KEY_STATE_HELD, held)
+        
+        
+        """
         Search for all the non-uinput macros that would be activated by the
-        current key state
+        current key state. In this case, KEY_STATE_UP macros are looked for
         """
         for m in self.__normal_macros:
             up = []
@@ -245,7 +264,7 @@ class G15KeyHandler():
             for k in m.keys:
                 if k in self.__key_states:
                     key_state = self.__key_states[k]
-                    if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_UP:
+                    if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_UP and not key_state.defeat_release:
                         up.append(key_state)
                     if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_HELD:
                         held.append(key_state)
@@ -254,6 +273,7 @@ class G15KeyHandler():
                 self._handle_macro(m, g15driver.KEY_STATE_UP, up)
             if len(held) == len(m.keys):
                 self._handle_macro(m, g15driver.KEY_STATE_HELD, held)
+                
             
     def _handle_uinput_macros(self):
         """
@@ -343,7 +363,7 @@ class G15KeyHandler():
             
             return True
                 
-    def _get_all_macros(self, profile = None, macro_list = None, mapped_to_key = False):
+    def _get_all_macros(self, profile = None, macro_list = None, mapped_to_key = False, state = None):
         """
         Get all macros, including those in parent profiles. By default, the
         "root" is the active profile
@@ -357,14 +377,18 @@ class G15KeyHandler():
             profile = g15profile.get_active_profile(self.__screen.device)
         if macro_list is None:
             macro_list = []
-        for m in profile.macros[self.__screen.get_memory_bank() - 1]:
+            
+        if state == None:
+            state = g15driver.KEY_STATE_UP
+             
+        for m in profile.macros[state][self.__screen.get_memory_bank() - 1]:
             if ( not mapped_to_key and not m.is_uinput() ) or \
                 ( mapped_to_key and m.is_uinput() ):
                 macro_list.append(m)
         if profile.base_profile is not None:
             profile = g15profile.get_profile(self.__screen.device, profile.base_profile)
             if profile is not None:
-                self._get_all_macros(profile, macro_list, mapped_to_key)
+                self._get_all_macros(profile, macro_list, mapped_to_key, state)
         return macro_list
                 
     def _check_key_state(self, new_state_id, key_state):
@@ -416,7 +440,6 @@ class G15KeyHandler():
             g15uinput.emit(macro.type, uc, 0)
         elif state == g15driver.KEY_STATE_DOWN:
             if macro in self.__repeat_macros:
-#                self._defeat_release(key_states)
                 if macro.repeat_mode == g15profile.REPEAT_TOGGLE and macro.repeat_delay != -1:
                     """
                     For REPEAT_TOGGLE mode with custom repeat rate, we now cancel
@@ -485,7 +508,7 @@ class G15KeyHandler():
         for k in key_states:
             k.consumed = True         
             
-    def _process_macro(self, macro, state, key_states):   
+    def _process_macro(self, macro, state, key_states): 
         if macro.type == g15profile.MACRO_ACTION:
             binding = g15actions.ActionBinding(macro.macro, macro.keys, state)
             if not self._action_performed(binding):
@@ -528,8 +551,13 @@ class G15KeyHandler():
                 # We test again because a toggle might have stopped the repeat
                 if macro in self.__repeat_macros:
                     self.__macro_repeat_timer = g15util.queue(self.queue_name, "RepeatMacro", delay, self._handle_macro, macro, g15driver.KEY_STATE_HELD, key_states, True)
-        elif state == g15driver.KEY_STATE_UP:
+        elif state == g15driver.KEY_STATE_UP and macro.activate_on == g15driver.KEY_STATE_UP:
             self._process_macro(macro, state, key_states)
+        elif state == g15driver.KEY_STATE_HELD and macro.activate_on == g15driver.KEY_STATE_HELD:
+            self._process_macro(macro, state, key_states)
+            
+            # Also defeat the key release so any normal KEY_STATE_UP macros don't get activated as well
+            self._defeat_release(key_states)
                     
     def __cancel_macro_repeat_timer(self):
         """

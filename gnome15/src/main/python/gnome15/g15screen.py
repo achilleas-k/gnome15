@@ -336,6 +336,9 @@ class G15Screen():
         self.key_handler.action_listeners.append(self)
         self.key_handler.key_handlers.append(self)
         
+        # This is just here for backwards compatibility and may be removed at some point
+        self.action_listeners = self.key_handler.action_listeners
+        
         # Monitor gconf
         screen_key = "/apps/gnome15/%s" % self.device.uid
         logger.info("Watching GConf settings in %s" % screen_key)
@@ -1370,7 +1373,7 @@ class Fader(Painter):
         self.screen.painters.append(self)
         try:
             while self.opacity <= 255:
-                self.screen.redraw()
+                self.screen.redraw(redraw_content = False)
                 time.sleep(self.interval)
         finally:
             if not self.stay_faded:

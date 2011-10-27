@@ -630,7 +630,7 @@ class G15Config:
 
         if type == gtk.MESSAGE_WARNING:
             self.warning_image.set_from_stock(gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_DIALOG)
-            self.warning_label.modify_fg(gtk.STATE_NORMAL, gtk.gdk.Color(0, 0, 0))
+#            self.warning_label.modify_fg(gtk.STATE_NORMAL, gtk.gdk.Color(0, 0, 0))
         
         self.main_window.check_resize()        
         self.infobar.show_all()
@@ -748,15 +748,16 @@ class G15Config:
         if  rows > 0:
             self.key_table.set_property("n-rows", rows)         
         row = 0
-        for action in actions:
+        for action_id in actions:
             # First try the active profile to see if the action has been re-mapped
             active_profile = g15profile.get_active_profile(self.driver.device)
-            action_binding = active_profile.get_binding_for_action(action)
-            if action_binding is None:
-                # No other keys bound to action, try the device defaults
-                device_info = g15devices.get_device_info(self.driver.get_model_name())                
-                if action in device_info.action_keys:
-                    action_binding = device_info.action_keys[action]
+            for state in [ g15driver.KEY_STATE_UP, g15driver.KEY_STATE_HELD ]:
+                action_binding = active_profile.get_binding_for_action(state, action_id)
+                if action_binding is None:
+                    # No other keys bound to action, try the device defaults
+                    device_info = g15devices.get_device_info(self.driver.get_model_name())                
+                    if action_id in device_info.action_keys:
+                        action_binding = device_info.action_keys[action_id]
                 
             if action_binding is not None:
                 # If hold
@@ -782,13 +783,13 @@ class G15Config:
                 self.key_table.attach(keys, 1, 2, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
                 
                 # Text
-                label = gtk.Label(actions[action])
+                label = gtk.Label(actions[action_id])
                 label.set_alignment(0.0, 0.5)
                 label.show()
                 self.key_table.attach(label, 2, 3, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
                 row += 1
             else:
-                logger.warning("Plugin %s requires an action that is not available (%s)" % ( plugin.id, action))
+                logger.warning("Plugin %s requires an action that is not available (%s)" % ( plugin.id, action_id))
             
         if row > 0:
             self.key_frame.set_visible(True)
@@ -1246,13 +1247,17 @@ class G15Config:
             if not use:
                 for key in row:                
                     reserved = g15devices.are_keys_reserved(self.driver.get_model_name(), list(key))
-                    in_use = self.selected_profile.are_keys_in_use(memory, [ key ])
+                    in_use = self.selected_profile.are_keys_in_use(g15driver.KEY_STATE_UP, memory, [ key ])
                     if not in_use and not reserved:
                         use = key
                         break
                     
         if use:
-            macro = self.selected_profile.create_macro(memory, [use], _("Macro %s") % " ".join(g15util.get_key_names([use])), g15profile.MACRO_SIMPLE, "")
+            macro = self.selected_profile.create_macro(memory, [use], 
+                                                       _("Macro %s") % " ".join(g15util.get_key_names([use])), 
+                                                       g15profile.MACRO_SIMPLE, 
+                                                       "", 
+                                                       g15driver.KEY_STATE_UP)
             self._edit_macro(macro)
         else:
             logger.warning("No free keys")
@@ -1263,8 +1268,10 @@ class G15Config:
     def _get_selected_macro(self):        
         (model, path) = self.macro_list.get_selection().get_selected()
         if model and path:
-            key_list_key = model[path][2]
-            return self.selected_profile.get_macro(self._get_memory_number(), g15profile.get_keys_from_key(key_list_key))
+            row = model[path]
+            return self.selected_profile.get_macro(row[4], 
+                                                   self._get_memory_number(), 
+                                                   g15profile.get_keys_from_key(row[2]))
         
     def _select_window(self, widget):
         dialog = self.widget_tree.get_object("SelectWindowDialog")  
@@ -1284,13 +1291,14 @@ class G15Config:
         memory = self._get_memory_number()
         (model, path) = self.macro_list.get_selection().get_selected()
         key_list_key = model[path][2]
+        activate_on = model[path][4]
         dialog = self.widget_tree.get_object("ConfirmRemoveMacroDialog") 
         dialog.set_transient_for(self.main_window)
         response = dialog.run()
         dialog.hide()
         if response == 1:
             keys = g15profile.get_keys_from_key(key_list_key)
-            self.selected_profile.delete_macro(memory, keys)
+            self.selected_profile.delete_macro(activate_on, memory, keys)
             self._load_profile_list()
             
     def _save_profile(self, profile):
@@ -1420,8 +1428,7 @@ class G15Config:
         return o1.compare(o2)
         
     def _get_sorted_list(self):
-        sm = list(self.selected_profile.macros[self._get_memory_number() - 1])
-        sm.sort(self._comparator)
+        sm = list(self.selected_profile.get_sorted_macros(None, self._get_memory_number()))
         return sm
         
     def _load_configuration(self, profile):
@@ -1436,7 +1443,14 @@ class G15Config:
             selected_macro = None
             macros = self._get_sorted_list()
             for macro in macros:
-                self.macros_model.append([", ".join(g15util.get_key_names(macro.keys)), macro.name, macro.key_list_key, not profile.read_only])
+                on_name = "Hold" if macro.activate_on == g15driver.KEY_STATE_HELD else ""
+                row = [", ".join(g15util.get_key_names(macro.keys)), 
+                                          macro.name, 
+                                          macro.key_list_key, 
+                                          not profile.read_only, 
+                                          macro.activate_on, 
+                                          on_name  ]
+                self.macros_model.append(row)
                 if current_selection != None and macro.key_list_key == current_selection.key_list_key:
                     tree_selection.select_path(self.macros_model.get_path(self.macros_model.get_iter(len(self.macros_model) - 1)))
                     selected_macro = macro        
@@ -1599,7 +1613,6 @@ class G15Config:
                     hscale.set_digits(0)
                     hscale.set_range(control.lower,control.upper)
                     hscale.set_value(control.value)
-#                    hscale.set_size_request(240, -1)
                     hscale.connect("value-changed", self._control_changed, control)
                     hscale.show()
                     
@@ -1616,7 +1629,6 @@ class G15Config:
                 
                 picker = colorpicker.ColorPicker(redblue = control.hint & g15driver.HINT_RED_BLUE_LED != 0)
                 picker.set_color(control.value)    
-#                picker.set_size_request(160, 22)                 
                 picker.connect("color-chosen", self._color_chosen, control)
                 table.attach(picker, 1, 2, row, row + 1)
                 
@@ -1666,7 +1678,6 @@ class G15Config:
             self.color_button = gtk.ColorButton()
             self.color_button.set_sensitive(False)                
             self.color_button.connect("color-set", self._profile_color_changed)
-#            color_button.set_color(self._to_color(control.value))
             hbox.pack_start(self.color_button, True, False)
             self.memory_bank_vbox.add(hbox)
             hbox.show_all()

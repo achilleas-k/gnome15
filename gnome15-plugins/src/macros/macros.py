@@ -160,10 +160,11 @@ class G15Macros(g15plugin.G15MenuPlugin):
         self.screen.redraw(self.page)
         
     def _load_profile(self, profile, macros, macro_keys):
-        for m in profile.macros[self._mkey - 1]:
-            if not m.keys in macro_keys:
-                macros.append(m)
-                macro_keys.append(m.keys)
+        for bank in profile.macros.values():
+            for m in bank[self._mkey - 1]:
+                if not m.keys in macro_keys:
+                    macros.append(m)
+                    macro_keys.append(m.keys)
         if profile.base_profile != None:
             self._load_profile(g15profile.get_profile(profile.device, profile.base_profile), macros, macro_keys)
         

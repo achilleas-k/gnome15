@@ -85,7 +85,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="66.580097"
+     inkscape:cx="110.17857"
      inkscape:cy="134.31407"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -148,12 +148,12 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/tails/default/${icon}"
        xlink:href="${icon}"
-       id="image4256"
-       x="249.54773"
-       y="801.11218"
-       width="64"
+       transform="matrix(0.37499987,0,0,0.37878803,206.96738,487.66046)"
        height="65.999985"
-       transform="matrix(0.37499987,0,0,0.37878803,206.96738,487.66046)" />
+       width="64"
+       y="801.11218"
+       x="249.54773"
+       id="image4256" />
     <text
        xml:space="preserve"
        style="font-size:18px;font-style:normal;font-weight:normal;text-align:start;line-height:100%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans"
@@ -226,5 +226,17 @@
        y="826.11218"
        clip-path="none"
        class="listView" />
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;text-anchor:middle;text-align:center"
+       x="151.62039"
+       y="126.42857"
+       id="text3006"
+       sodipodi:linespacing="125%"
+       transform="translate(9.5477353,786.11217)"><tspan
+         sodipodi:role="line"
+         id="tspan3008"
+         x="89.64286"
+         y="126.42857">${message}</tspan></text>
   </g>
 </svg>

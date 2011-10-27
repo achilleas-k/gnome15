@@ -174,8 +174,8 @@ g13_key_map = {
                S.KEY_F21 : g15driver.G_KEY_G21,
                S.KEY_F22 : g15driver.G_KEY_G22,
                S.BTN_X: g15driver.G_KEY_JOY_LEFT,                  
-               S.BTN_Z: g15driver.G_KEY_JOY_DOWN,                     
-               S.BTN_Y: g15driver.G_KEY_JOY_CENTER,
+               S.BTN_Y: g15driver.G_KEY_JOY_DOWN,                     
+               S.BTN_Z: g15driver.G_KEY_JOY_CENTER,
                }
 g110_key_map = {
                S.KEY_PROG1 : g15driver.G_KEY_M1,
@@ -435,7 +435,7 @@ class DeviceInfo:
 device_info = {
                g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", r"usb-Logitech_G19_Gaming_Keyboard-event-if.*", r"usb-Logitech_G19_Gaming_Keyboard-event-kbd.*", r"usb-046d_G19_Gaming_Keyboard-event-if.*"), 
                g15driver.MODEL_G11: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g11_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if"), 
-               g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if", r"G15_Keyboard_G15.*kbd"),
+               g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if", r"G15_Keyboard_G15.*kbd", r"usb-Logitech_Logitech_Gaming_Keyboard-event-if.*"),
                g15driver.MODEL_G15_V2: DeviceInfo(["red:m1", "red:m2", "red:m3", "blue:mr" ], g15_controls, g15v2_key_map, "g15v2", r"G15_GamePanel_LCD-event-if.*", r"G15_GamePanel_LCD-event-kdb.*"),
                g15driver.MODEL_G13: DeviceInfo(["red:m1", "red:m2", "red:m3", "red:mr" ], g13_controls, g13_key_map, "g13", r"_G13-event-mouse"),
                g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g110_controls, g110_key_map, "g110", r"usb-LOGITECH_G110_G-keys-event-if.*", r"usb-LOGITECH_G110_G-keys-event-kbd.*"),
@@ -462,6 +462,7 @@ class KernelDriverPreferences():
         self.joy_mode_label = widget_tree.get_object("JoyModeLabel")
         self.joy_mode_combo = widget_tree.get_object("JoyModeCombo")
         self.joy_calibrate = widget_tree.get_object("JoyCalibrate")
+        self.grab_multimedia = widget_tree.get_object("GrabMultimedia")
         
         device_model = widget_tree.get_object("DeviceModel")
         device_model.clear()
@@ -471,11 +472,13 @@ class KernelDriverPreferences():
                 device_model.append(["/dev/%s" % dev_file])
                   
         g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/fb_device" % device.uid, "DeviceCombo", "auto", widget_tree)  
-        g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
+        g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)  
+        g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/grab_multimedia" % device.uid, "GrabMultimedia", False, widget_tree)
+        
+        self.grab_multimedia.set_sensitive(device_info[device.model_id].mm_pattern is not None)
         
         # See if jstest-gtk is available to do the calibration
-        status = os.system("which jstest-gtk")
-        self.calibrate_available = status == 0 
+        self.calibrate_available = g15uinput.are_calibration_tools_available() 
             
         self.joy_mode_combo.connect("changed", self._set_available_options)        
         self.joy_calibrate.connect("clicked", self._do_calibrate)
@@ -635,7 +638,9 @@ class ForwardDevice(AbstractInputDevice):
                 if self.driver.joy_mode ==g15uinput.MOUSE:                    
                     g15uinput.emit(g15uinput.MOUSE, self._translate_mouse_buttons(event.ecode), event.evalue, syn=True)                
                 elif self.driver.joy_mode == g15uinput.DIGITAL_JOYSTICK:
-                    g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, event.ecode, event.evalue, syn=True)                
+                    g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, event.ecode, event.evalue, syn=True)              
+                elif self.driver.joy_mode == g15uinput.JOYSTICK:
+                    g15uinput.emit(g15uinput.JOYSTICK, event.ecode, event.evalue, syn=True)                                
                 else:
                     if event.evalue != 2:
                         self._event(event.ecode, state)
@@ -643,7 +648,9 @@ class ForwardDevice(AbstractInputDevice):
                 if event.evalue != 2:
                     self._event(event.ecode, state)
         elif event.etype == 0:
-            return
+            if self.driver.joy_mode == g15uinput.JOYSTICK:
+                # Just pass-through when in analogue joystick mode
+                g15uinput.emit(self.driver.joy_mode, event.ecode, event.evalue, False, event.etype)
         else:
             logger.warning("Unhandled event: %s" % str(event))
                 
@@ -816,6 +823,7 @@ class Driver(g15driver.AbstractDriver):
 
     def __init__(self, device, on_close=None):
         g15driver.AbstractDriver.__init__(self, "kernel")
+        self.notify_handles = []
         self.fb = None
         self.var_info = None
         self.on_close = on_close
@@ -834,6 +842,10 @@ class Driver(g15driver.AbstractDriver):
                 self._init_device()
             else:            
                 logger.warning("Could not open %s. %s" %(self.device_name, str(e)))
+                
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/joymode" % self.device.uid, self._config_changed, None))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/fb_device" % self.device.uid, self._framebuffer_device_changed, None))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/grab_multimedia" % self.device.uid, self._config_changed, None))
     
     def get_antialias(self):         
         if self.device.bpp != 1:
@@ -844,9 +856,6 @@ class Driver(g15driver.AbstractDriver):
     def on_disconnect(self):
         if not self.is_connected():
             raise Exception("Not connected")
-        
-        for h in self.notify_handles:
-            self.conf_client.notify_remove(h)
         self._stop_receiving_keys()
         if self.fb is not None:
             self.fb.__del__()
@@ -886,7 +895,7 @@ class Driver(g15driver.AbstractDriver):
             l.append([ g15driver.G_KEY_JOY_LEFT, g15driver.G_KEY_LEFT, g15driver.G_KEY_JOY_CENTER, g15driver.G_KEY_RIGHT ])
             l.append([ g15driver.G_KEY_JOY_DOWN, g15driver.G_KEY_DOWN ])
             return l
-        elif self.get_model_name() == g15driver.MODEL_G19:
+        elif self.device_info.mm_pattern is not None and self.grab_multimedia:
             l = list(self.device.key_layout)
             l.append([])
             l.append([ g15driver.G_KEY_VOL_UP, g15driver.G_KEY_VOL_DOWN, g15driver.G_KEY_MUTE ])
@@ -936,11 +945,6 @@ class Driver(g15driver.AbstractDriver):
             raise Exception("Failed to connect to Gnome15 system service. Is g15-system-service running (as root). \
 It should be launched automatically if Gnome15 is installed correctly.")          
         self.system_service = dbus.Interface(system_service_object, 'org.gnome15.SystemService')    
-        # Setup joystick configuration on G13
-        self.calibration = 18   
-        self._load_configuration()
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/joymode" % self.device.uid, self._config_changed, None))
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/fb_device" % self.device.uid, self._framebuffer_device_changed, None))
         
         # Centre the joystick by default
         if self.joy_mode in [ g15uinput.JOYSTICK, g15uinput.DIGITAL_JOYSTICK ]:
@@ -950,13 +954,14 @@ It should be launched automatically if Gnome15 is installed correctly.")
                    
     def _load_configuration(self):
         self.joy_mode = self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
-        if self.joy_mode == "mouse":
+        self.grab_multimedia = self.conf_client.get_bool("/apps/gnome15/%s/grab_multimedia" % self.device.uid)
+        if self.joy_mode == g15uinput.MOUSE:
             logger.info("Enabling mouse emulation")
             self.calibration = 20
-        elif self.joy_mode == "joystick":
+        elif self.joy_mode == g15uinput.JOYSTICK:
             logger.info("Enabling analogue joystick emulation")            
             self.calibration = 20
-        elif self.joy_mode == "joystick":
+        elif self.joy_mode == g15uinput.DIGITAL_JOYSTICK:
             logger.info("Enabling digital joystick emulation")            
             self.calibration = 64
         else:
@@ -964,11 +969,10 @@ It should be launched automatically if Gnome15 is installed correctly.")
             self.calibration = 64
             
     def _config_changed(self, client, connection_id, entry, args):
-        self._load_configuration()
+        self._reload_and_reconnect()
         
     def _framebuffer_device_changed(self, client, connection_id, entry, args):
-        if self.is_connected():
-            self.disconnect()
+        self._reload_and_reconnect()
         
     def get_size(self):
         return self.device.lcd_size
@@ -1138,6 +1142,12 @@ It should be launched automatically if Gnome15 is installed correctly.")
     '''
     Private
     '''
+        
+    def _reload_and_reconnect(self):
+        self._load_configuration()
+        if self.is_connected():
+            self.disconnect()
+            
     def _set_mkey_lights(self, lights):
         if self.device_info.leds:
             leds = self.device_info.leds
@@ -1179,11 +1189,9 @@ It should be launched automatically if Gnome15 is installed correctly.")
     def _mode_changed(self, client, connection_id, entry, args):
         if self.is_connected():
             self.disconnect()
-        else:
-            logger.warning("WARNING: Mode change would cause disconnect when already connected.", entry)
-            
     
     def _init_device(self):
+        self._load_configuration()
         if not self.device.model_id in device_info:
             return
             
@@ -1242,6 +1250,10 @@ It should be launched automatically if Gnome15 is installed correctly.")
             if self.device_info.sink_pattern is not None and re.search(self.device_info.sink_pattern, p):
                 logger.info("Input sink device %s matches %s" % (p, self.device_info.sink_pattern))
                 self.sink_devices.append(dir + "/" + p)
-            if self.device_info.mm_pattern is not None and re.search(self.device_info.mm_pattern, p):
+            if self.grab_multimedia and self.device_info.mm_pattern is not None and re.search(self.device_info.mm_pattern, p):
                 logger.info("Input multi-media device %s matches %s" % (p, self.device_info.mm_pattern))
                 self.mm_devices.append(dir + "/" + p)
+                
+    def __del__(self):
+        for h in self.notify_handles:
+            self.conf_client.notify_remove(h)

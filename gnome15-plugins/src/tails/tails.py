@@ -115,6 +115,7 @@ class G15TailsPreferences():
         if value != "":
             if self.file_model[row_index][0] != value:
                 self.file_model.set_value(self.file_model.get_iter(row_index), 0, value)
+                files[row_index] = value
                 self._gconf_client.set_list(self._gconf_key + "/files", gconf.VALUE_STRING, files)
         else:
             self.file_model.remove(self.file_model.get_iter(row_index))
@@ -266,10 +267,12 @@ class G15TailPage(g15theme.G15Page):
         self._stop()
         if os.path.exists(self.file_path):
             self._subtitle =  time.strftime('%Y-%m-%d %H:%M', time.localtime(os.path.getmtime(self.file_path)))
+            self._message = ""
             self.thread = G15TailThread(self)
             self.thread.start()
         else:
-            self._subtitle = "File does not exist"
+            self._subtitle = ""
+            self._message = "File does not exist"
             
     def _stop(self):
         if self.thread is not None:
@@ -281,6 +284,7 @@ class G15TailPage(g15theme.G15Page):
         properties["title"] = self.title
         properties["icon"] = self._icon_embedded
         properties["subtitle"] = self._subtitle
+        properties["message"] = self._message
         properties["alt_title"] = ""
         return properties 
         

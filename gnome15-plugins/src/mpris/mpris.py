@@ -709,7 +709,7 @@ class G15MPRIS():
             
         # Now send to just the first player
         if len(self.players) > 0:
-            return self.players[0].action_performed(binding)
+            return self.players.values()[0].action_performed(binding)
             
     def _name_owner_changed(self, name, old_owner, new_owner):
         logger.debug("Name owner changed for %s from %s to %s", name, old_owner, new_owner)

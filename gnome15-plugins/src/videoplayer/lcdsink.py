@@ -24,8 +24,6 @@ GdkPixbuf thumbnail sink
 
 import gobject
 import gst
-import cairo
-import array
 import struct
 
 big_to_cairo_alpha_mask = struct.unpack('=i', '\xFF\x00\x00\x00')[0]
@@ -43,7 +41,7 @@ class CairoSurfaceThumbnailSink(gst.BaseSink):
     __gsignals__ = {
         "thumbnail": (gobject.SIGNAL_RUN_LAST,
                       gobject.TYPE_NONE,
-                      (gobject.TYPE_STRING, gobject.TYPE_UINT64, gobject.TYPE_UINT64, gobject.TYPE_UINT64))
+                      ([gobject.TYPE_UINT64]))
         }
 
     __gsttemplates__ = (
@@ -68,9 +66,10 @@ class CairoSurfaceThumbnailSink(gst.BaseSink):
 
     def __init__(self):
         gst.BaseSink.__init__(self)
-        self._width = 1
-        self._height = 1
+        self.width = 1
+        self.height = 1
         self.set_sync(False)
+        self.data = None
 
     def do_set_caps(self, caps):
         self.log("caps %s" % caps.to_string())
@@ -84,7 +83,8 @@ class CairoSurfaceThumbnailSink(gst.BaseSink):
     def do_render(self, buf):
         print "buffer %s %d" % (gst.TIME_ARGS(buf.timestamp),
                                    len(buf.data))
-        self.emit('thumbnail', buf.data, self.width, self.height, buf.timestamp)
+        self.data = str(buf.data)
+        self.emit('thumbnail', buf.timestamp)
         return gst.FLOW_OK
 
     def do_preroll(self, buf): 

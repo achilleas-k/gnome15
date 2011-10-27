@@ -27,6 +27,7 @@ import logging
 import uinput
 import g15util
 import os
+import subprocess
 from threading import RLock
 from gnome15 import g15globals
 logger = logging.getLogger("uinput")
@@ -39,12 +40,12 @@ DEVICE_TYPES = [ MOUSE, KEYBOARD, JOYSTICK, DIGITAL_JOYSTICK ]
 
 registered_parameters = { MOUSE: {}, 
                    JOYSTICK:  {
-                    uinput.ABS_X: (0, 255, 0, 18),
-                    uinput.ABS_Y: (0, 255, 0, 18),
+                    uinput.ABS_X: (0, 255, 0, 0),
+                    uinput.ABS_Y: (0, 255, 0, 0),
                              }, 
                    DIGITAL_JOYSTICK:  {
-                    uinput.ABS_X: (0, 255, 0, 18),
-                    uinput.ABS_Y: (0, 255, 0, 18),
+                    uinput.ABS_X: (0, 255, 0, 0),
+                    uinput.ABS_Y: (0, 255, 0, 0),
                              }, 
                    KEYBOARD: {} }
 uinput_devices = {}
@@ -62,6 +63,11 @@ GNOME15_JOYSTICK_PRODUCT_ID = 0x0002
 GNOME15_KEYBOARD_PRODUCT_ID = 0x0003
 GNOME15_DIGITAL_JOYSTICK_PRODUCT_ID = 0x0004
     
+def are_calibration_tools_available():
+    """
+    Test for the existence of calibration tools 'jstest-gtk' and 'jscal'.
+    """
+    return os.system("which jstest-gtk") == 0 and os.system("which jscal") == 0
     
 def open_devices():
     """
@@ -78,22 +84,6 @@ def close_devices():
             logger.debug("Closing UINPUT device %s" % device_type)
             del uinput_devices[device_type]
             
-def load_calibration(device_type):
-    """
-    Load joystick calibration for the specified device
-    
-    Keyword arguments:
-    device_type    --    device type 
-    """
-    if not device_type in [ JOYSTICK, DIGITAL_JOYSTICK ]:
-        raise Exception("Cannot calibrate this device type")
-    device_file = get_device(device_type)
-    if device_file:
-        js_config_file = "%s/%s.js" % ( os.path.expanduser("~/.config/gnome15"), device_type )
-        if os.path.exists(js_config_file):
-            if os.system("jstest-gtk -l '%s' '%s'" % (js_config_file, device_file)) != 0:
-                logger.warning("Failed to load joystick calibration. Do you have jstest-gtk installed?")
-            
 def calibrate(device_type):
     """
     Run external joystick calibration utility
@@ -101,16 +91,65 @@ def calibrate(device_type):
     Keyword arguments:
     device_type    --    device type
     """
-    if not device_type in [ JOYSTICK, DIGITAL_JOYSTICK ]:
-        raise Exception("Cannot calibrate this device type (%s)" % device_type)
-    device_file = get_device(device_type)
-    if device_file:
-        js_config_file = "%s/%s.js" % ( os.path.expanduser("~/.config/gnome15"), device_type )
-        if os.path.exists(js_config_file):
-            os.system("jstest-gtk -l '%s' '%s'" % (js_config_file, device_file))
-        os.system("jstest-gtk %s" % device_file )
-        g15util.mkdir_p(os.path.expanduser("~/.config/gnome15"))
-        os.system("jstest-gtk -s '%s' '%s'" % (js_config_file, device_file))
+    if are_calibration_tools_available():
+        if not device_type in [ JOYSTICK, DIGITAL_JOYSTICK ]:
+            raise Exception("Cannot calibrate this device type (%s)" % device_type)
+        device_file = get_device(device_type)
+        if device_file:
+            load_calibration(device_type)
+            g15util.mkdir_p(os.path.expanduser("~/.config/gnome15"))
+            os.system("jstest-gtk '%s'" % (device_file))
+            save_calibration(device_type)
+        
+def save_calibration(device_type):
+    """
+    Run external joystick calibration utility
+    
+    Keyword arguments:
+    device_type    --    device type
+    """
+    if are_calibration_tools_available():
+        if not device_type in [ JOYSTICK, DIGITAL_JOYSTICK ]:
+            raise Exception("Cannot calibrate this device type (%s)" % device_type)
+        device_file = get_device(device_type)
+        if device_file:
+            proc = subprocess.Popen(["jscal", "-q", device_file ], stdout=subprocess.PIPE) 
+            out = proc.communicate()[0]
+            js_config_file = "%s/%s.js" % ( os.path.expanduser("~/.config/gnome15"), device_type )
+            g15util.mkdir_p(os.path.expanduser("~/.config/gnome15"))
+            f = open(js_config_file, "w")
+            try :
+                f.write(out)
+            finally :
+                f.close()
+        
+def load_calibration(device_type):
+    """
+    Run external joystick calibration utility
+    
+    Keyword arguments:
+    device_type    --    device type
+    """
+    if are_calibration_tools_available():
+        if not device_type in [ JOYSTICK, DIGITAL_JOYSTICK ]:
+            raise Exception("Cannot calibrate this device type (%s)" % device_type)
+        device_file = get_device(device_type)
+        if device_file:
+            js_config_file = "%s/%s.js" % ( os.path.expanduser("~/.config/gnome15"), device_type )
+            if os.path.exists(js_config_file):
+                f = open(js_config_file, "r")
+                try :
+                    cal = f.readline().split()
+                    logger.info("Calibrating using '%s'" % cal) 
+                    proc = subprocess.Popen(cal, stdout=subprocess.PIPE) 
+                    logger.info("Calibrated. %s" % proc.communicate()[0])
+                except Exception as e:
+                    logger.error("Failed to calibrate joystick device. %s" % e)
+                finally :
+                    f.close()
+            else:
+                logger.warn("No joystick calibration available.")
+
             
 def get_device(device_type):
     """

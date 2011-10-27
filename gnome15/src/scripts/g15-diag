@@ -54,6 +54,8 @@ gobject.threads_init()
 import gconf
 import gnome15.g15drivermanager as g15drivermanager
 import gnome15.g15devices as g15devices
+import gnome15.g15uinput as g15uinput
+import gnome15.g15driver as g15driver
 import termios, sys, os
 
 TERMIOS = termios
@@ -110,8 +112,39 @@ def get_driver(device):
         driver = g15drivermanager.get_best_driver(conf_client, device)
         reconfigured = True
     return driver, reconfigured
+
+def _check_hint(hint, value, name, list):
+    if value & hint:
+        list.append(name)
+
+def controls(uid):
+    g15uinput.open_devices()
+    device = g15devices.get_device(uid)    
+    driver, reconfigured = get_driver(device)
+    if driver is None:
+        raise Exception("No driver for device with UID of %s." % uid)
+    
+    for c in driver.get_controls():
+        print "%s" % c.id
+        print "\tName: %s" % c.name
+        print "\tLower: %s" % str(c.lower)
+        print "\tHigher: %s" % str(c.upper)
+        print "\tValue: %s" % str(c.value)
+        print "\tDefault Value: %s" % str(c.default_value)
+        hint_names = []
+        _check_hint(g15driver.HINT_DIMMABLE, c.hint, "Dimmable", hint_names)
+        _check_hint(g15driver.HINT_SHADEABLE, c.hint, "Shadeable", hint_names)
+        _check_hint(g15driver.HINT_FOREGROUND, c.hint, "Foreground", hint_names)
+        _check_hint(g15driver.HINT_BACKGROUND, c.hint, "Background", hint_names)
+        _check_hint(g15driver.HINT_HIGHLIGHT, c.hint, "Highlight", hint_names)
+        _check_hint(g15driver.HINT_SWITCH, c.hint, "Switch", hint_names)
+        _check_hint(g15driver.HINT_MKEYS, c.hint, "MKeys", hint_names)
+        _check_hint(g15driver.HINT_VIRTUAL, c.hint, "Virtual", hint_names)
+        _check_hint(g15driver.HINT_RED_BLUE_LED, c.hint, "Red/Blue", hint_names)
+        print "\tHints: %s" % ",".join(hint_names)
         
 def keytest(uid):
+    g15uinput.open_devices()
     device = g15devices.get_device(uid)
     if uid is None:
         raise Exception("No device with UID of %s." % uid)
@@ -149,3 +182,20 @@ if __name__ == "__main__":
             print "No device UID specified. Use 'g15-diag devices' to show devices"
             sys.exit(1)
         keytest(args[0])
+    elif args[0] == "controls":
+        del args[0]
+        if len(args) == 0:
+            print "No device UID specified. Use 'g15-diag devices' to show devices"
+            sys.exit(1)
+        controls(args[0])
+    elif args[0] == "control":
+        del args[0]
+        if len(args) == 0:
+            print "No device UID specified. Use 'g15-diag devices' to show devices"
+            sys.exit(1)
+        device = arg[0]
+        del args[0]
+        if len(args) == 0:
+            print "No control ID specified. Use 'g15-diag controls <device>' to show controls"
+            sys.exit(1)
+        control(device, args[0])

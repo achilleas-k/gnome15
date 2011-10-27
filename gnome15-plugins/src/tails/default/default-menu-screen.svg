@@ -37,7 +37,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
-     inkscape:cx="30.787825"
+     inkscape:cx="93.482144"
      inkscape:cy="42.399584"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -45,8 +45,8 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="2137"
-     inkscape:window-y="249"
+     inkscape:window-x="2083"
+     inkscape:window-y="231"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -103,7 +103,7 @@
          sodipodi:role="line"
          id="tspan3039"
          x="0.33593482"
-         y="1016.0591">${title}</tspan></text>
+         y="1016.0591">${title} - ${subtitle}</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        d="m 0.5,1018.8622 160,0"
@@ -129,5 +129,17 @@
          style="fill:#808080;fill-opacity:1;stroke:none"
          class="knob" />
     </g>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Sans"
+       x="80"
+       y="1038.3622"
+       id="text2993"
+       sodipodi:linespacing="125%"
+       class="shadow"><tspan
+         sodipodi:role="line"
+         id="tspan2995"
+         x="80"
+         y="1038.3622">${message}</tspan></text>
   </g>
 </svg>

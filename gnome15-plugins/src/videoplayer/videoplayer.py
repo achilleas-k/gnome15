@@ -83,13 +83,100 @@ class G15VideoPage(g15theme.G15Page):
         self._thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player" ]))
         
         # Create GStreamer pipeline
-        self.pipeline = gst.Pipeline("mypipeline")
-        self.videotestsrc = gst.element_factory_make("videotestsrc", "video")
-        self.pipeline.add(self.videotestsrc)
+#        self.pipeline = gst.Pipeline("mypipeline")
+#        self.videotestsrc = gst.element_factory_make("videotestsrc", "video")
+#        self.pipeline.add(self.videotestsrc)
+#        self.sink = lcdsink.CairoSurfaceThumbnailSink()
+#        self.pipeline.add(self.sink)
+#        self.videotestsrc.link(self.sink)
+
+
+#        self.pipeline = gst.Pipeline("player")
+#        
+#        self.sink = lcdsink.CairoSurfaceThumbnailSink()
+#        source = gst.element_factory_make("filesrc", "file-source")
+##        demuxer = gst.element_factory_make("mpegdemux", "demuxer")
+#        demuxer = gst.element_factory_make("oggdemux", "demuxer")
+#        demuxer.connect("pad-added", self.demuxer_callback)
+#        
+#                
+##        self.video_decoder = gst.element_factory_make("mpeg2dec", "video-decoder") 
+#        self.video_decoder = gst.element_factory_make("theoradec", "video-decoder")
+#       
+##        self.audio_decoder = gst.element_factory_make("mad", "audio-decoder")
+#        self.audio_decoder = gst.element_factory_make("vorbisdec", "audio-decoder")
+#        
+#        audioconv = gst.element_factory_make("audioconvert", "converter")
+#        audiosink = gst.element_factory_make("autoaudiosink", "audio-output")
+#        self.queuea = gst.element_factory_make("queue", "queuea")
+#        self.queuev = gst.element_factory_make("queue", "queuev")
+#        colorspace = gst.element_factory_make("ffmpegcolorspace", "colorspace")
+#        
+#        self.pipeline.add(source, demuxer, self.video_decoder, self.audio_decoder, audioconv,
+#            audiosink, self.sink, self.queuea, self.queuev, colorspace)
+#        gst.element_link_many(source, demuxer)
+#        gst.element_link_many(self.queuev, self.video_decoder, colorspace, self.sink)
+#        gst.element_link_many(self.queuea, self.audio_decoder, audioconv, audiosink)
+#
+#        bus = self.pipeline.get_bus()
+#        bus.add_signal_watch()
+#        bus.enable_sync_message_emission()
+#        bus.connect("message", self.on_message)
+#        bus.connect("sync-message::element", self.on_sync_message)
+
+
+        self.pipeline = gst.Pipeline("player")
         self.sink = lcdsink.CairoSurfaceThumbnailSink()
-        self.pipeline.add(self.sink)
-        self.videotestsrc.link(self.sink)
+        source = gst.element_factory_make("filesrc", "file-source")
+        decoder = gst.element_factory_make("decodebin", "decoder")
+        decoder.connect("new-decoded-pad", self.decoder_callback)        
+        self.audio_sink = gst.element_factory_make("autoaudiosink", "audio-output")
+        
+        self.pipeline.add(source, decoder, self.audio_sink, self.sink)
+        gst.element_link_many(source, decoder)
+        
+        bus = self.pipeline.get_bus()
+        bus.add_signal_watch()
+        bus.connect("message", self.on_message)
+
         self.sink.connect('thumbnail', self._redraw_cb)
+        
+    def on_message(self, bus, message):
+        t = message.type
+        if t == gst.MESSAGE_EOS:
+            self.pipeline.set_state(gst.STATE_NULL)
+            print "EOS"
+            self._show_sidebar()
+        elif t == gst.MESSAGE_ERROR:
+            err, debug = message.parse_error()
+            print "Error: %s" % err, debug
+            self.pipeline.set_state(gst.STATE_NULL)
+            self._show_sidebar()
+    
+    def on_sync_message(self, bus, message):
+        if message.structure is None:
+            return
+        message_name = message.structure.get_name()
+        
+    def decoder_callback(self, decoder, pad, data):
+        structure_name = pad.get_caps()[0].get_name()
+        if structure_name.startswith("video"):
+            fv_pad = self.sink.get_pad("sink")
+            pad.link(fv_pad)
+        elif structure_name.startswith("audio"):
+            fa_pad = self.audio_sink.get_pad("sink")
+            pad.link(fa_pad)
+    
+    def demuxer_callback(self, demuxer, pad):
+        typ = pad.get_caps()[0].get_name()
+        if typ.startswith("video"):
+            print "Link video"
+            qv_pad = self.queuev.get_pad("sink")
+            pad.link(qv_pad)
+        elif typ.startswith("audio"):
+            print "Link audio"
+            qa_pad = self.queuea.get_pad("sink")
+            pad.link(qa_pad)
             
     def get_theme_properties(self):
         properties = g15theme.G15Page.get_theme_properties(self)
@@ -125,8 +212,11 @@ class G15VideoPage(g15theme.G15Page):
     GStream callbacks
     """
                 
-    def _redraw_cb(self, unused_thsink, buf, width, height, timestamp):
-        print "**REDRAW** %d, %d, %d, %d" % ( len(str(unused_thsink)), len(buf), width, height )
+    def _redraw_cb(self, unused_thsink, timestamp):
+        print "**REDRAW** %d, %d" % ( len(str(unused_thsink)), timestamp )
+        buf = self.sink.data
+        width = self.sink.width
+        height = self.sink.height
         b = array.array("b")
         b.fromstring(buf)
         print "buf len: %s / %s" % ( str(len(buf)), str(len(b)) )
@@ -219,15 +309,23 @@ class G15VideoPage(g15theme.G15Page):
     def _play(self):
         self._lock.acquire()
         try:
-            self._hide_sidebar(3.0)            
+            self._hide_sidebar(3.0)       
+            self._playing = self._movie_path
+            self.pipeline.get_by_name("file-source").set_property("location", self._playing)
             self.pipeline.set_state(gst.STATE_PLAYING)
         finally:
             self._lock.release()
+            
+    def _show_sidebar(self):
+        self._sidebar_offset = 0
+        self.redraw() 
     
     def _stop(self):
         self._lock.acquire()
         try:
             self.pipeline.set_state(gst.STATE_READY)
+            self._playing = None
+            self._show_sidebar()
         finally:
             self._lock.release()
     

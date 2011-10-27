@@ -138,7 +138,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="checkbutton1">
+              <object class="GtkCheckButton" id="GrabMultimedia">
                 <property name="label" translatable="yes">Grab multimedia keys</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

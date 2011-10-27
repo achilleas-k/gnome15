@@ -341,7 +341,7 @@ class G15Macro:
     MACRO_SCRIPT, MACRO_MOUSE, MACRO_JOYSTICK, MACRO_DIGITAL_JOYSTICK,
     MACRO_KEYBOARD or MACRO_ACTION
     """
-    def __init__(self, profile, memory, key_list_key):
+    def __init__(self, profile, memory, key_list_key, activate_on):
         """
         Constructor
         
@@ -349,7 +349,9 @@ class G15Macro:
         profile        --    parent profile object
         memory         --    memory bank this macro exists in
         key_list_key   --    string representation of keys required to activate macro
+        activate_on    --    whether to activate on RELEASE or when HELD
         """
+        self.activate_on = activate_on
         self.keys = key_list_key.split("_")
         self.key_list_key = key_list_key
         self.memory = memory
@@ -405,7 +407,6 @@ class G15Macro:
         self.profile._delete_key(section_name, self.key_list_key)
         self.keys = keys
         self.key_list_key = get_keys_key(keys)
-        self.save()
         
     def save(self):
         """
@@ -421,6 +422,22 @@ class G15Macro:
         """   
         self.profile.delete_macro(self.memory, self.key_list_key)
         
+    def set_activate_on(self, new_activate_on):
+        """
+        Changes the Activate On mode (i.e. when released or when held). This
+        function should be used rather than just modifying the property, as
+        the parent profile needs to be adjusted as well
+        
+        Keyword arguments:
+        new_activate_on        -- new activate on ID 
+        """
+        current_list = self.profile.macros[self.activate_on][self.memory - 1] 
+        current_list.remove(self)
+        self.profile._delete_key(self._get_section_name(), self.key_list_key)
+        self.activate_on = new_activate_on
+        self.profile.macros[self.activate_on][self.memory - 1].append(self)
+        
+        
     """
     Private
     """
@@ -428,9 +445,12 @@ class G15Macro:
     def _remove_option(self, section_name, option_key):
         if self.profile.parser.has_option(section_name, option_key):
             self.profile.parser.remove_option(section_name, option_key)
+            
+    def _get_section_name(self):        
+        return self.profile._get_section_name(self.activate_on, self.memory)
         
     def _store(self): 
-        section_name = "m%d" % self.memory
+        section_name = self._get_section_name() 
         pk = "keys_%s" % self.key_list_key 
         self.profile.parser.set(section_name, "%s_name" % pk, self._encode_val(self.name))
         self.profile.parser.set(section_name, "%s_type" % pk, self.type)
@@ -519,7 +539,7 @@ class G15Macro:
                 self.macro = self._decode_val(self._get("action", ""))
         
     def _get(self, key, default_value):
-        section_name = "m%d" % self.memory
+        section_name = self._get_section_name()
         option_key = "keys_" + self.key_list_key + "_" + key
         return self.profile.parser.get(section_name, option_key) if self.profile.parser.has_option(section_name, option_key) else default_value
             
@@ -527,7 +547,7 @@ class G15Macro:
         return not self.__eq__(macro)
     
     def __eq__(self, macro):
-        return macro is not None and self.profile.id == macro.profile.id and self.key_list_key == macro.key_list_key
+        return macro is not None and self.profile.id == macro.profile.id and self.key_list_key == macro.key_list_key and self.activate_on == macro.activate_on
     
     def _get_total(self, keys):
         t = 0
@@ -554,7 +574,7 @@ class G15Macro:
             return 200 + ki
         
     def __repr__(self):
-        return "[Macro %d/%s (%s)" % ( self.memory, self.name, self.key_list_key )
+        return "[Macro %d/%s (%s) [%s]" % ( self.memory, self.name, self.key_list_key, to_key_state_name(self.activate_on) )
  
 class G15Profile():
     """
@@ -582,7 +602,9 @@ class G15Profile():
         self.background = None
         self.filename = None
         self.author = ""
-        self.macros = []        
+        self.macros = { g15driver.KEY_STATE_UP: [],
+                       g15driver.KEY_STATE_HELD: []
+                       }      
         self.mkey_color = {}
         self.activate_on_focus = False
         self.activate_on_launch = False
@@ -641,7 +663,7 @@ class G15Profile():
         finally:
             archive_file.close()
         
-    def are_keys_in_use(self, memory, keys, exclude = None):
+    def are_keys_in_use(self, activate_on, memory, keys, exclude = None):
         """
         Get if the specified keys are currently in use for a macro in the
         supplied memory bank number. Optionally, a list of macros that 
@@ -650,11 +672,12 @@ class G15Profile():
         use a set of keys)
         
         Keyword arguments:
+        activate_on   --    the key state to activate the macro on
         memory        --    memory bank number
         keys          --    keys to search for
         exclude       --    list of macro objects to exclude
         """
-        bank = self.macros[memory - 1]
+        bank = self.macros[activate_on][memory - 1]
         for macro in bank:
             if ( exclude == None or ( exclude != None and not self._is_excluded(exclude, macro) ) ) and sorted(keys) == sorted(macro.keys):
                 return True
@@ -710,34 +733,40 @@ class G15Profile():
             self._remove_if_exists("activate_on_launch", "LAUNCH")
         
         # Remove and re-add the bank sections
-        for i in range(1, 4): 
-            section_name = "m%d" % i
-            if not self.parser.has_section(section_name):
-                self.parser.add_section(section_name) 
-            col = self.mkey_color[i] if i in self.mkey_color else None
-            if col:
-                self.parser.set(section_name, "backlight_color", g15util.rgb_to_string(col))
-            elif self.parser.has_option(section_name, "backlight_color"):
-                self.parser.remove_option(section_name, "backlight_color")
+        for activate_on in [ g15driver.KEY_STATE_UP, g15driver.KEY_STATE_HELD ]:  
+            for i in range(1, 4):
+                section_name = "m%d" % i
+                if activate_on != g15driver.KEY_STATE_UP:
+                    section_name = "%s-%s" % ( section_name, activate_on ) 
+                if not self.parser.has_section(section_name):
+                    self.parser.add_section(section_name) 
+                col = self.mkey_color[i] if i in self.mkey_color else None
+                if col:
+                    self.parser.set(section_name, "backlight_color", g15util.rgb_to_string(col))
+                elif self.parser.has_option(section_name, "backlight_color"):
+                    self.parser.remove_option(section_name, "backlight_color")
                 
         # Add the macros
-        for i in range(1, 4):
-            for macro in self.get_sorted_macros(i):
-                macro._store()
+        for activate_on in [ g15driver.KEY_STATE_UP, g15driver.KEY_STATE_HELD ]:  
+            for i in range(1, 4):  
+                for macro in self.get_sorted_macros(activate_on, i):
+                    if len(macro.keys) > 0:
+                        macro._store()
                 
         self._write(self.filename)
         
-    def get_binding_for_action(self, action_name):
+    def get_binding_for_action(self, activate_on, action_name):
         """
         Get an ActionBinding if this profile contains a map to the supplied
         action name.
         
         Keyword arguments:
+        activate_on        -- the key state to activate the macro on
         action_name        -- name of action
         """
-        for bank in self.macros:
+        for bank in self.macros[activate_on]:
             for m in bank:
-                if m.type == MACRO_ACTION and m.macro == action_name:
+                if m.type == MACRO_ACTION and m.macro == action_name and activate_on == m.activate_on:
                     # TODO held actions?
                     return g15actions.ActionBinding(action_name, m.keys, g15driver.KEY_STATE_UP)
             
@@ -768,21 +797,22 @@ class G15Profile():
         """
         os.remove(self._get_filename())
         
-    def delete_macro(self, memory, keys):
+    def delete_macro(self, activate_on, memory, keys):
         """
         Delete the macro that is activated by the specified keys in the 
         supplied memory bank number
         
         Keyword arguments:
+        activate_on   -- key state to activate the macro on
         memory        -- memory bank number (starts at 1)
         keys          -- keys that activate the macro
         """
-        section_name = "m%d" % memory     
+        section_name = self._get_section_name(activate_on, memory)     
         key_list_key = get_keys_key(keys)
         logger.info("Deleting macro M%d, for %s" % ( memory, key_list_key ))
         self._delete_key(section_name, key_list_key)
         self._write(self.filename)
-        bank_macros = self.macros[memory - 1] 
+        bank_macros = self.macros[activate_on][memory - 1] 
         for macro in bank_macros:
             if macro.key_list_key == key_list_key and macro in bank_macros:
                 bank_macros.remove(macro)
@@ -824,7 +854,7 @@ class G15Profile():
                 if os.path.exists(path):
                     return path
         
-    def create_macro(self, memory, keys, name, macro_type, macro):
+    def create_macro(self, memory, keys, name, macro_type, macro, activate_on):
         """
         Create a new macro
         
@@ -837,24 +867,25 @@ class G15Profile():
         """
         key_list_key = get_keys_key(keys)  
         logger.info("Creating macro M%d, for %s" % ( memory, key_list_key ))
-        new_macro = G15Macro(self, memory, key_list_key)
+        new_macro = G15Macro(self, memory, key_list_key, activate_on)
         new_macro.name = name
         new_macro.type = macro_type
         new_macro.macro = macro
-        self.macros[memory - 1].append(new_macro)
+        self.macros[activate_on][memory - 1].append(new_macro)
         new_macro.save()
         return new_macro
     
-    def get_macro(self, memory, keys):
+    def get_macro(self, activate_on, memory, keys):
         """
         Get the macro given the memory bank number and the list of keys
         the macro requires to activate
         
         Keyword arguments:
+        activate_on   --    the key state to activate the macro on
         memory        --    memory bank number (starts at 1)
         keys          --    list of keys that activate the macro
         """
-        bank = self.macros[memory - 1]
+        bank = self.macros[activate_on][memory - 1]
         for macro in bank:
             key_count = 0
             for k in macro.keys:
@@ -875,7 +906,9 @@ class G15Profile():
         """
                  
         # Initial values
-        self.macros = []
+        self.macros = { g15driver.KEY_STATE_UP: [],
+                       g15driver.KEY_STATE_HELD: []
+                       }
         self.mkey_color = {}
         
         # Load macro file
@@ -927,28 +960,38 @@ class G15Profile():
             if self.parser.has_option("LAUNCH", "activate_on_launch") else False
         
         # Bank sections
-        for i in range(1, 4):
-            section_name = "m%d" % i
-            if not self.parser.has_section(section_name):
-                self.parser.add_section(section_name)
-            self.mkey_color[i] = g15util.to_rgb(self.parser.get(section_name, "backlight_color")) if self.parser.has_option(section_name, "backlight_color") else None
-            memory_macros = []
-            self.macros.append(memory_macros)
-            for option in self.parser.options(section_name):
-                if option.startswith("keys_") and option.endswith("_name"):
-                    key_list_key = option[5:-5]
-                    macro_obj = G15Macro(self, i, key_list_key)
-                    macro_obj._load()
-                    memory_macros.append(macro_obj)
         
-    def get_sorted_macros(self, memory_number):
+        for activate_on in [ g15driver.KEY_STATE_UP, g15driver.KEY_STATE_HELD ]:  
+            for i in range(1, 4):
+                section_name = "m%d" % i
+                if activate_on != g15driver.KEY_STATE_UP:
+                    section_name = "%s-%s" % ( section_name, activate_on ) 
+                if not self.parser.has_section(section_name):
+                    self.parser.add_section(section_name)
+                self.mkey_color[i] = g15util.to_rgb(self.parser.get(section_name, "backlight_color")) if self.parser.has_option(section_name, "backlight_color") else None
+                memory_macros = []
+                self.macros[activate_on].append(memory_macros)
+                for option in self.parser.options(section_name):
+                    if option.startswith("keys_") and option.endswith("_name"):
+                        key_list_key = option[5:-5]
+                        macro_obj = G15Macro(self, i, key_list_key, activate_on)
+                        macro_obj._load()
+                        memory_macros.append(macro_obj)
+        
+    def get_sorted_macros(self, activate_on, memory_number):
         """
         Get the list of macros sorted
         
         Keyword arguments:
+        activate_on          --    the state the macro is activated on
         memory_number        --    memory bank number to retrieve macros from  (starts at 1)
         """
-        sm = list(self.macros[memory_number - 1])
+        sm = []
+        if activate_on is None:
+            for activate_on in [ g15driver.KEY_STATE_UP, g15driver.KEY_STATE_HELD ]:
+                sm += self.macros[activate_on][memory_number - 1]
+        else:
+            sm += self.macros[activate_on][memory_number - 1]
         sm.sort(self._comparator)
         return sm
                     
@@ -961,6 +1004,12 @@ class G15Profile():
     def _remove_if_exists(self, name, section = "DEFAULT"):
         if self.parser.has_option(section, name):
             self.parser.remove_option(section, name)
+            
+    def _get_section_name(self, state, memory):        
+        section_name = "m%d" % memory
+        if state != g15driver.KEY_STATE_UP:
+            section_name = "%s-%s" % ( section_name, state )
+        return section_name
             
     def _get_int(self, name, default_value, section = "DEFAULT"):
         try:

@@ -31,6 +31,7 @@ import g15profile
 import g15util
 import g15uinput
 import g15devices
+import g15driver
 import g15actions
 import pygtk
 pygtk.require('2.0')
@@ -40,6 +41,12 @@ import pango
 
 import logging
 logger = logging.getLogger("config")
+
+# Key validation constants
+IN_USE = "in-use"
+RESERVED_FOR_ACTION = "reserved"
+NO_KEYS = "no-keys"
+OK = "ok"
 
 class G15MacroEditor():
     
@@ -128,6 +135,11 @@ class G15MacroEditor():
             keys_frame.add(self.__rows)     
             keys_frame.show_all()
             
+            # Set the activation mode
+            for index, (activate_on_id, activate_on_name) in enumerate(self.__activate_on_combo.get_model()):
+                if activate_on_id == self.editing_macro.activate_on:
+                    self.__activate_on_combo.set_active(index)
+                        
             # Set the repeat mode
             for index, (repeat_mode_id, repeat_mode_name) in enumerate(self.__repeat_mode_combo.get_model()):
                 if repeat_mode_id == self.editing_macro.repeat_mode:
@@ -228,13 +240,6 @@ class G15MacroEditor():
             self.editing_macro.type = key
             self.adjusting = True
             try:
-                # Adjust what repeat options are available based on type
-                if key in [ g15profile.MACRO_SCRIPT, g15profile.MACRO_COMMAND, g15profile.MACRO_SIMPLE, g15profile.MACRO_SCRIPT ]:
-                    self.__repeat_mode_combo.set_active(0)
-                    if len(self.__repeat_mode_combo.get_model()) > 3:
-                        del self.__repeat_mode_combo.get_model()[3]
-                else:
-                    self.__repeat_mode_combo.set_active(2)
                 self.__load_keys()
             finally:
                 self.adjusting = False
@@ -312,7 +317,9 @@ class G15MacroEditor():
                         keys.remove(ikey)
             keys.append(key)
             
-        if not self.selected_profile.are_keys_in_use(self.memory_number, keys, exclude=[self.editing_macro]):
+        if not self.selected_profile.are_keys_in_use(self.editing_macro.activate_on, 
+                                                     self.memory_number, keys, 
+                                                     exclude=[self.editing_macro]):
             if self.__macro_name_field.get_text() == "" or self.__macro_name_field.get_text().startswith("Macro "):
                 new_name = " ".join(g15util.get_key_names(keys))
                 self.editing_macro.name = _("Macro %s") % new_name
@@ -323,6 +330,7 @@ class G15MacroEditor():
         
         if not self.adjusting:
             self.__check_macro(keys)
+            self.__save_macro(self.editing_macro)
             
     def _key_selected(self, widget):
         if not self.adjusting:
@@ -339,6 +347,15 @@ class G15MacroEditor():
                 key = model[path][0]
                 self.editing_macro.macro = key
                 self.__save_macro(self.editing_macro)
+    
+    def _activate_on_changed(self, widget):
+        if not self.adjusting:
+            self.editing_macro.set_activate_on(widget.get_model()[widget.get_active()][0])
+            self.__save_macro(self.editing_macro)
+            if self.editing_macro.activate_on == g15driver.KEY_STATE_HELD:
+                self.__repeat_mode_combo.set_active(0)
+            self.__set_available_options()            
+            self.__check_macro(list(self.editing_macro.keys)) 
         
     """
     Private
@@ -370,8 +387,9 @@ class G15MacroEditor():
         Keyword arguments:
         macro        -- macro to save
         """
-        logger.info("Saving macro %s" % macro.name)
-        macro.save()
+        if self.__validate_macro(macro.keys) in [ OK, RESERVED_FOR_ACTION ] :
+            logger.info("Saving macro %s" % macro.name)
+            macro.save()
             
     def __load_actions(self):
         self.__action_model.clear()
@@ -408,7 +426,7 @@ class G15MacroEditor():
         self.__turbo_box = self.widget_tree.get_object("TurboBox")
         self.__filter = self.widget_tree.get_object("Filter")
         self.__override_default_repeat = self.widget_tree.get_object("OverrideDefaultRepeat")
-        
+        self.__activate_on_combo = self.widget_tree.get_object("ActivateOnCombo")
         
     def __load_keys(self):
         """
@@ -447,6 +465,13 @@ class G15MacroEditor():
         
         sel_type = self.__get_selected_type();
         uinput_type = g15profile.is_uinput_type(sel_type)
+        opposite_state = g15driver.KEY_STATE_UP if \
+                               self.editing_macro.activate_on == \
+                               g15driver.KEY_STATE_HELD else \
+                               g15driver.KEY_STATE_HELD
+        key_conflict = self.selected_profile.get_macro(opposite_state, \
+                                           self.editing_macro.memory,
+                                           self.editing_macro.keys) is not None
         
         self.__uinput_tree.set_sensitive(uinput_type)
         self.__command.set_sensitive(sel_type == g15profile.MACRO_COMMAND)
@@ -454,6 +479,8 @@ class G15MacroEditor():
         self.__simple_macro.set_sensitive(sel_type == g15profile.MACRO_SIMPLE)
         self.__macro_script.set_sensitive(sel_type == g15profile.MACRO_SCRIPT)
         self.__action_tree.set_sensitive(sel_type == g15profile.MACRO_ACTION)
+        self.__activate_on_combo.set_sensitive(not uinput_type and not key_conflict)
+        self.__repeat_mode_combo.set_sensitive(self.__activate_on_combo.get_active() != 1)
         self.__override_default_repeat.set_sensitive(self.editing_macro.repeat_mode != g15profile.NO_REPEAT)
         self.__turbo_box.set_sensitive(self.editing_macro.repeat_mode != g15profile.NO_REPEAT and self.__override_default_repeat.get_active())
         
@@ -463,6 +490,30 @@ class G15MacroEditor():
         self.__script_box.set_visible(sel_type == g15profile.MACRO_SCRIPT)
         self.__uinput_box.set_visible(uinput_type)
         
+    def __validate_macro(self, keys):
+        """
+        Validate the list of keys, checking if they are in use, reserved
+        for an action, and that some have actually been supplier
+        
+        Keyword arguments:
+        keys        -- list of keys to validate
+        """
+        if len(keys) > 0:
+            reserved = g15devices.are_keys_reserved(self.__driver.get_model_name(), keys)
+            
+            in_use = self.selected_profile.are_keys_in_use(self.editing_macro.activate_on, 
+                                                           self.memory_number, 
+                                                           keys, 
+                                                           exclude=[self.editing_macro])
+            if in_use:
+                return IN_USE       
+            elif reserved:
+                return RESERVED_FOR_ACTION
+            else:
+                return OK
+        else:     
+            return NO_KEYS
+        
     def __check_macro(self, keys):
         """
         Check with the keys provided are valid for the current state, e.g.
@@ -470,40 +521,35 @@ class G15MacroEditor():
         allows the change to happen, it will just show a warning and prevent
         the window from being closed if 
         """
-        if len(keys) > 0:
-            reserved = g15devices.are_keys_reserved(self.__driver.get_model_name(), keys)
-            in_use = self.selected_profile.are_keys_in_use(self.memory_number, keys, exclude=[self.editing_macro])
-            if in_use:
-                self.__macro_infobar.set_message_type(gtk.MESSAGE_ERROR)
-                self.__macro_warning_label.set_text(_("This key combination is already in use with " + \
-                                                  "another macro. Please choose a different key or combination of keys"))
-                self.__macro_infobar.set_visible(True)
-                self.__macro_infobar.show_all()
-                
-                if self.close_button is not None:
-                    self.close_button.set_sensitive(False)      
-                return       
-            elif reserved:
-                self.__macro_infobar.set_message_type(gtk.MESSAGE_WARNING)
-                self.__macro_warning_label.set_text(_("This key combination is reserved for use with an action. You " + \
-                                                  "may use it, but the results are undefined."))
-                self.__macro_infobar.set_visible(True)
-                self.__macro_infobar.show_all()
-                if self.close_button is not None:
-                    self.close_button.set_sensitive(True)      
-                return
-        else:     
+        val = self.__validate_macro(keys)
+        if val == IN_USE:
+            self.__macro_infobar.set_message_type(gtk.MESSAGE_ERROR)
+            self.__macro_warning_label.set_text(_("This key combination is already in use with " + \
+                                              "another macro. Please choose a different key or combination of keys"))
+            self.__macro_infobar.set_visible(True)
+            self.__macro_infobar.show_all()
+            
+            if self.close_button is not None:
+                self.close_button.set_sensitive(False)
+        elif val == RESERVED_FOR_ACTION:
+            self.__macro_infobar.set_message_type(gtk.MESSAGE_WARNING)
+            self.__macro_warning_label.set_text(_("This key combination is reserved for use with an action. You " + \
+                                              "may use it, but the results are undefined."))
+            self.__macro_infobar.set_visible(True)
+            self.__macro_infobar.show_all()
+            if self.close_button is not None:
+                self.close_button.set_sensitive(True)      
+        elif val == NO_KEYS:     
             self.__macro_infobar.set_message_type(gtk.MESSAGE_WARNING)
             self.__macro_warning_label.set_text(_("You have not chosen a macro key to assign the action to."))
             self.__macro_infobar.set_visible(True)
             self.__macro_infobar.show_all()
             if self.close_button is not None:
-                self.close_button.set_sensitive(False)      
-            return
-            
-        self.__macro_infobar.set_visible(False)
-        if self.close_button is not None:
-            self.close_button.set_sensitive(True)
+                self.close_button.set_sensitive(False)
+        else:
+            self.__macro_infobar.set_visible(False)
+            if self.close_button is not None:
+                self.close_button.set_sensitive(True)
         
     def __create_macro_info_bar(self):
         """

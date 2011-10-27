@@ -807,15 +807,11 @@
       <column type="gchararray"/>
       <!-- column-name MacroEditable -->
       <column type="gboolean"/>
+      <!-- column-name MacroActivateOn -->
+      <column type="guint"/>
+      <!-- column-name MacroActivateOnText -->
+      <column type="gchararray"/>
     </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">Test</col>
-        <col id="1" translatable="yes">Balh</col>
-        <col id="2" translatable="yes"></col>
-        <col id="3">False</col>
-      </row>
-    </data>
   </object>
   <object class="GtkDialog" id="MainWindow">
     <property name="can_focus">False</property>
@@ -1445,6 +1441,17 @@
                                                 <property name="headers_clickable">False</property>
                                                 <property name="search_column">1</property>
                                                 <child>
+                                                  <object class="GtkTreeViewColumn" id="On">
+                                                    <property name="title" translatable="yes">On</property>
+                                                    <child>
+                                                      <object class="GtkCellRendererText" id="OnRenderer"/>
+                                                      <attributes>
+                                                        <attribute name="text">5</attribute>
+                                                      </attributes>
+                                                    </child>
+                                                  </object>
+                                                </child>
+                                                <child>
                                                   <object class="GtkTreeViewColumn" id="KeyName">
                                                     <property name="min_width">0</property>
                                                     <property name="title">Key</property>
@@ -1470,12 +1477,6 @@
                                                         <attribute name="text">1</attribute>
                                                       </attributes>
                                                     </child>
-                                                  </object>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkTreeViewColumn" id="MacroId">
-                                                    <property name="visible">False</property>
-                                                    <property name="title">Id</property>
                                                   </object>
                                                 </child>
                                               </object>
