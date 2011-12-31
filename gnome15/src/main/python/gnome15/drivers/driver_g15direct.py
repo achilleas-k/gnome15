@@ -265,8 +265,9 @@ class Driver(g15driver.AbstractDriver):
             self.timeout = e.get_int()
         
         logger.info("Initialising pylibg15, looking for %s:%s" % ( hex(self.device.controls_usb_id[0]), hex(self.device.controls_usb_id[1]) ))
-        if logger.level < logging.WARN and logger.level != logging.NOTSET:
-            pylibg15.set_debug(pylibg15.G15_LOG_INFO)
+#        if logger.level < logging.WARN and logger.level != logging.NOTSET:
+#            pylibg15.set_debug(pylibg15.G15_LOG_INFO)
+        pylibg15.set_debug(pylibg15.G15_LOG_INFO)
         err = pylibg15.init(False, self.device.controls_usb_id[0], self.device.controls_usb_id[1])
         if err != G15_NO_ERROR:
             raise g15exceptions.NotConnectedException("libg15 returned error %d " % err)
@@ -467,7 +468,7 @@ class Driver(g15driver.AbstractDriver):
             for k in self.last_keys:
                 if not k in this_keys and not k in down:
                     up.append(k)
-            
+                    
         if ( ext_code > 0 ) and self.get_model_name() \
             in [ g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO ]:
             self._do_macro_keys(self._filter_macro_keys(down), self._filter_macro_keys(up))
@@ -516,16 +517,6 @@ class Driver(g15driver.AbstractDriver):
             this_keys.append(g15driver.G_KEY_UP)
         elif pos[1] > high_val:
             this_keys.append(g15driver.G_KEY_DOWN)
-        
-    def _emit_macro_keys(self, this_keys, pos, low_val, high_val):
-        if pos[0] < low_val:
-            this_keys.append(g15driver.G_KEY_LEFT)                    
-        elif pos[0] > high_val:
-            this_keys.append(g15driver.G_KEY_RIGHT)                    
-        elif pos[1] < low_val:
-            this_keys.append(g15driver.G_KEY_UP)
-        elif pos[1] > high_val:
-            this_keys.append(g15driver.G_KEY_DOWN) 
             
     def _check_js_buttons(self, this_keys):        
         self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_LEFT, uinput.BTN_1)

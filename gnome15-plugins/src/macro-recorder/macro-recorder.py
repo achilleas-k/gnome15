@@ -50,6 +50,7 @@ RECORD = "record"
 # Register the action with all supported models
 g15devices.g15_action_keys[RECORD] = g15actions.ActionBinding(RECORD, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_UP)
 g15devices.g19_action_keys[RECORD] = g15actions.ActionBinding(RECORD, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_UP)
+g15devices.g110_action_keys[RECORD] = g15actions.ActionBinding(RECORD, [ g15driver.G_KEY_MR ], g15driver.KEY_STATE_UP)
 
 # Plugin details - All of these must be provided
 id="macro-recorder"

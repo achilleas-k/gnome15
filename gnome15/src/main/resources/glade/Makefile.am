@@ -5,6 +5,7 @@ glade_DATA = driver_gtk.glade \
 	driver_g15direct.glade \
 	g15-config.glade \
 	macro-editor.glade \
+	script-editor.glade \
 	colorpicker.glade \
 	redblue.png
 

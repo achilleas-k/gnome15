@@ -237,7 +237,7 @@ g19_highlight_control = g15driver.Control("highlight", _("Default Highlight Colo
 g19_controls = [ g19_brightness_control, g19_keyboard_backlight_control, g19_foreground_control, g19_background_control, g19_highlight_control, g19_mkeys_control ]
 
 g110_keyboard_backlight_control = g15driver.Control("backlight_colour", _("Keyboard Backlight Colour"), (255, 0, 0), hint=g15driver.HINT_DIMMABLE | g15driver.HINT_SHADEABLE | g15driver.HINT_RED_BLUE_LED)
-g110_controls = [ g110_keyboard_backlight_control ]
+g110_controls = [ g110_keyboard_backlight_control, g19_mkeys_control ]
 
 g15_mkeys_control = g15driver.Control("mkeys", _("Memory Bank Keys"), 1, 0, 15, hint=g15driver.HINT_MKEYS)
 g15_backlight_control = g15driver.Control("keyboard_backlight", _("Keyboard Backlight Level"), 2, 0, 2, hint=g15driver.HINT_DIMMABLE)
@@ -1087,11 +1087,9 @@ It should be launched automatically if Gnome15 is installed correctly.")
             self._write_to_led("red:bl", control.value[0])
             if control.hint & g15driver.HINT_RED_BLUE_LED == 0:
                 self._write_to_led("green:bl", control.value[1])
-                self._write_to_led("blue:bl", control.value[2])
             else:
-                # The G110 only has red and blue LEDs, and uses the green 
-                # device for the blue value 
-                self._write_to_led("green:bl", control.value[2])       
+                # The G110 only has red and blue LEDs
+                self._write_to_led("blue:bl", control.value[2])
         elif control == g15_backlight_control:
             if self.get_model_name() == g15driver.MODEL_G15_V2:
                 # G15v2 has different coloured backlight

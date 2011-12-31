@@ -31,6 +31,7 @@ import g15drivermanager
 import g15macroeditor
 import g15devices
 import g15util
+import g15theme
 import colorpicker
 import subprocess
 import shutil
@@ -317,6 +318,9 @@ class G15Config:
         self.launch_pattern_box = self.widget_tree.get_object("LaunchPatternBox")
         self.activate_on_launch = self.widget_tree.get_object("ActivateOnLaunch")
         self.launch_pattern = self.widget_tree.get_object("LaunchPattern")
+        self.theme_model = self.widget_tree.get_object("ThemeModel")
+        self.theme_label = self.widget_tree.get_object("ThemeLabel")
+        self.theme_combo = self.widget_tree.get_object("ThemeCombo")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -378,6 +382,7 @@ class G15Config:
         self.device_view.connect("selection-changed", self._device_selection_changed)
         self.device_enabled.connect("toggled", self._device_enabled_changed)
         self.driver_combo.connect("changed", self._driver_changed)
+        self.theme_combo.connect("changed", self._theme_changed)
         self.global_options_button.connect("clicked", self._show_global_options)
         self.macro_list.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         self.macro_list.connect("button_press_event", self._macro_list_clicked)
@@ -650,6 +655,7 @@ class G15Config:
             
     def _color_chosen(self, widget, control):
         color = widget.color
+        print "CC: %s" % str(color)
         self.conf_client.set_string(self._get_full_key(control.id), "%d,%d,%d" % ( color[0],color[1],color[2]))
         
     def _control_changed(self, widget, control):
@@ -737,6 +743,25 @@ class G15Config:
             self.widget_tree.get_object("SiteLabel").set_label(plugin.site)
             self.widget_tree.get_object("PreferencesButton").set_sensitive(plugin.has_preferences and self.driver is not None)
             self.widget_tree.get_object("PluginDetails").set_visible(True)
+            
+            themes = g15theme.get_themes(self.selected_device.model_id, plugin)
+            self.theme_model.clear()
+            if len(themes) > 1:
+                key  = self._get_full_key("plugins/%s/theme" % plugin.id )
+                plugin_theme = self.conf_client.get_string(key)
+                if plugin_theme is None:
+                    plugin_theme = "default"
+                for i, t in enumerate(themes):
+                    print "%d = %s" % (i, t.theme_id)
+                    self.theme_model.append([t.theme_id,t.name])
+                    if t.theme_id == plugin_theme:
+                        print " yup!"
+                        self.theme_combo.set_active(i)
+                self.theme_label.set_visible(True)
+                self.theme_combo.set_visible(True)
+            else:
+                self.theme_label.set_visible(False)
+                self.theme_combo.set_visible(False)
         else:
             self.widget_tree.get_object("PluginDetails").set_visible(False)
             
@@ -985,6 +1010,15 @@ class G15Config:
                 
     def _device_enabled_changed(self, widget = None):
         gobject.idle_add(self._set_device)
+                
+    def _theme_changed(self, widget = None):
+        if not self.adjusting:
+            sel = widget.get_active()
+            if sel >= 0:
+                print "Setting theme for %s to %d" % ( self._get_selected_plugin().id, sel )
+                key  = self._get_full_key("plugins/%s/theme" % self._get_selected_plugin().id )
+                path = self.theme_model.get_iter(sel)
+                self.conf_client.set_string(key, self.theme_model[path][0])
                 
     def _driver_changed(self, widget = None):
         if len(self.driver_model) > 0:

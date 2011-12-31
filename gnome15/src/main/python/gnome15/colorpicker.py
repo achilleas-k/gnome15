@@ -74,12 +74,17 @@ class ColorPreview(gtk.DrawingArea):
         img_surface = cairo.ImageSurface.create_from_png(os.path.join(g15globals.glade_dir, 'redblue.png'))
         
         r_adjustment = widget_tree.get_object("RAdjustment")
+        r_adjustment.set_value(self.picker.color[0])
         b_adjustment = widget_tree.get_object("BAdjustment")
+        b_adjustment.set_value(self.picker.color[2])
         self.adjusting_rb = False
         self.picker_down = False
         
+        def _update_adj(c):
+            self.picker._select_color((int(r_adjustment.get_value()), \
+                                       0, int(b_adjustment.get_value())))
+        
         def _set_color(c):
-            self.picker._select_color(c)
             r_adjustment.set_value(c[0])
             b_adjustment.set_value(c[2])
             
@@ -94,6 +99,8 @@ class ColorPreview(gtk.DrawingArea):
             if self.picker_down:
                 _set_color(_get_color_at(img_surface, event.x, event.y))
             
+        r_adjustment.connect("value-changed", _update_adj)
+        b_adjustment.connect("value-changed", _update_adj)
         c_widget.connect("button-press-event", _button_press)
         c_widget.connect("button-release-event", _button_release)
         c_widget.connect("motion-notify-event", _mouse_motion)

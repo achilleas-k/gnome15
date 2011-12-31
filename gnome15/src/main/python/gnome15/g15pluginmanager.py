@@ -67,6 +67,7 @@ import sys
 import g15globals as pglobals
 import g15driver as g15driver
 import g15actions as g15actions
+import g15theme as g15theme
 import gconf
 import traceback
 import threading

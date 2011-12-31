@@ -65,11 +65,73 @@ from copy import deepcopy
 from cStringIO import StringIO
 from lxml import etree
 from threading import RLock
+import ConfigParser
 
 BASE_PX=18.0
 
 # The color in SVG theme files that by default gets replaced with the current 'highlight' color
 DEFAULT_HIGHLIGHT_COLOR="#ff0000"
+
+class ThemeDefinition():
+    def __init__(self, theme_id, directory):
+        self.theme_id = theme_id
+        self.directory = directory
+        self.supported = []
+        self.unsupported = []
+        filename = os.path.join(self.directory, "%s.theme"  % theme_id)
+        if not os.path.exists(filename):
+            if theme_id == "default":
+                self.name = "Simple"
+                self.description = "Default theme supplied with Gnome15"
+            else:
+                raise Exception("No theme descriptor %s" % filename)
+        else:  
+            print filename
+            parser = ConfigParser.ConfigParser({})
+            parser.read(filename)
+            self.name = parser.get("theme", "name")
+            self.description = parser.get("theme", "description")
+            if parser.has_option("theme", "supported_models"):
+                self.supported = parser.get("theme", "supported_models").split(",")
+            if parser.has_option("theme", "unsupported_models"):
+                self.unsupported = parser.get("theme", "unsupported_models").split(",")
+            
+    def supports(self, model_id):
+        return ( len(self.supported) == 0 or model_id in self.supported )  \
+            and not model_id in self.unsupported  
+            
+def get_theme(theme_id, plugin_module):
+    """
+    Get a theme definition give it's ID and the plugin that contains it
+    
+    Keyword arguments:
+    theme_id         -- theme ID
+    plugin_module    -- plugin
+    """
+    module_dir = os.path.dirname(plugin_module.__file__)
+    theme_dir = os.path.join(module_dir, theme_id)
+    if os.path.isdir(theme_dir) and ( theme_id == "default" or \
+                                os.path.exists(os.path.join(theme_dir, "%s.theme" % theme_id))):
+        return ThemeDefinition(theme_id, theme_dir)
+        
+def get_themes(model_id, plugin_module):
+    """
+    Get a list of themes this plugin supports for the requested model
+    
+    Keyword arguments:
+    model_id         -- model support is required for
+    plugin_module    -- plugin
+    """
+    themes = []
+    module_dir = os.path.dirname(plugin_module.__file__)
+    for d in os.listdir(module_dir):
+        theme_dir = os.path.join(module_dir, d)
+        if os.path.isdir(theme_dir) and ( d == "default" or \
+                                    os.path.exists(os.path.join(theme_dir, "%s.theme" % d))):
+            definition = ThemeDefinition(d, theme_dir)
+            if definition.supports(model_id):
+                themes.append(definition)
+    return themes
             
 class Render():
     def __init__(self, document, properties, text_boxes, attributes, processing_result):
@@ -227,6 +289,8 @@ class Component():
         self.theme = theme
         theme._set_component(self)
         self.view_bounds = theme.bounds
+        for c in self.get_children():
+            c.configure(self)
         
     def mark_dirty(self):
         if self.theme is not None:
@@ -805,7 +869,8 @@ class Menu(Component):
         if menu_theme:
             self.set_theme(menu_theme)
         self._recalc_scroll_values()
-        self.get_screen().key_handler.action_listeners.append(self)
+        if not self in self.get_screen().key_handler.action_listeners:
+            self.get_screen().key_handler.action_listeners.append(self)
         
     def notify_remove(self):
         Component.notify_remove(self)
@@ -1250,7 +1315,9 @@ class ConfirmationScreen(G15Page):
                 
 class G15Theme():    
     def __init__(self, dir, variant = None, svg_text = None, prefix = None, auto_dirty = True, translation = None):
-        if isinstance(dir, str):
+        if isinstance(dir, ThemeDefinition):
+            self.dir = dir.directory
+        elif isinstance(dir, str):
             self.dir = dir
         elif dir is not None:
             self.dir = os.path.join(os.path.dirname(sys.modules[dir.__module__].__file__), "default")

@@ -504,10 +504,11 @@ src/screensaver/Makefile
 src/screensaver/default/Makefile
 src/stopwatch/Makefile
 src/stopwatch/default/Makefile
-src/sysmon/Makefile
 src/sense/default/Makefile
 src/sense/Makefile
+src/sysmon/Makefile
 src/sysmon/default/Makefile
+src/sysmon/graphs/Makefile
 src/rss/Makefile
 src/rss/default/Makefile
 src/sysmon/dials/Makefile

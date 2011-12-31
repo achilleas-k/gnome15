@@ -187,7 +187,7 @@ def create_default(device):
     """
     if not get_profile(device, "0"):
         logger.info("No default macro profile. Creating one")
-        default_profile = G15Profile(device, id = "0")
+        default_profile = G15Profile(device, profile_id = "0")
         default_profile.name = "Default"
         default_profile.device = device
         default_profile.activate_on_focus = True

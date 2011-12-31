@@ -64,17 +64,6 @@ g510_key_layout = [
                   [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
                   ]
 
-g110_key_layout = [
-                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G7 ],
-                  [ g15driver.G_KEY_G2, g15driver.G_KEY_G8 ], 
-                  [ g15driver.G_KEY_G3, g15driver.G_KEY_G9 ],
-                  [ g15driver.G_KEY_G4, g15driver.G_KEY_G10 ],
-                  [ g15driver.G_KEY_G5, g15driver.G_KEY_G11], 
-                  [ g15driver.G_KEY_G6, g15driver.G_KEY_G12 ],
-                  [ g15driver.G_KEY_MIC_MUTE, g15driver.G_KEY_HEADPHONES_MUTE ],
-                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
-                  ]
-
 g15v2_key_layout = [
                   [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
                   [ g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6 ],
@@ -106,6 +95,26 @@ g15_action_keys = { g15driver.NEXT_SELECTION: g15actions.ActionBinding(g15driver
                     g15driver.MEMORY_2: g15actions.ActionBinding(g15driver.MEMORY_2, [ g15driver.G_KEY_M2 ], g15driver.KEY_STATE_UP),
                     g15driver.MEMORY_3: g15actions.ActionBinding(g15driver.MEMORY_3, [ g15driver.G_KEY_M3 ], g15driver.KEY_STATE_UP)
                    }
+
+"""
+G110 - Only actions we need really are the memory bank ones
+"""
+g110_action_keys = { 
+                    g15driver.MEMORY_1: g15actions.ActionBinding(g15driver.MEMORY_1, [ g15driver.G_KEY_M1 ], g15driver.KEY_STATE_UP),
+                    g15driver.MEMORY_2: g15actions.ActionBinding(g15driver.MEMORY_2, [ g15driver.G_KEY_M2 ], g15driver.KEY_STATE_UP),
+                    g15driver.MEMORY_3: g15actions.ActionBinding(g15driver.MEMORY_3, [ g15driver.G_KEY_M3 ], g15driver.KEY_STATE_UP)
+                   }
+
+g110_key_layout = [
+                  [ g15driver.G_KEY_G1, g15driver.G_KEY_G7 ],
+                  [ g15driver.G_KEY_G2, g15driver.G_KEY_G8 ], 
+                  [ g15driver.G_KEY_G3, g15driver.G_KEY_G9 ],
+                  [ g15driver.G_KEY_G4, g15driver.G_KEY_G10 ],
+                  [ g15driver.G_KEY_G5, g15driver.G_KEY_G11], 
+                  [ g15driver.G_KEY_G6, g15driver.G_KEY_G12 ],
+                  [ g15driver.G_KEY_MIC_MUTE, g15driver.G_KEY_HEADPHONES_MUTE ],
+                  [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
+                  ]
 
 """
 G19
@@ -324,7 +333,7 @@ DeviceInfo(g15driver.MODEL_G13, (0x046d, 0xc21c),(0x046d, 0xc21c),           g13
 DeviceInfo(g15driver.MODEL_G510, (0x046d, 0xc22d), (0x046d, 0xc22d),         g510_key_layout,  1,  ( 160,  43 ),   True, _("Logitech G510 Keyboard"), g15_action_keys)
 DeviceInfo(g15driver.MODEL_G510_AUDIO, (0x046d, 0xc22e), (0x046d, 0xc22e),   g510_key_layout,  1,  ( 160,  43 ),   True, _("Logitech G510 Keyboard (audio)"), g15_action_keys)
 DeviceInfo(g15driver.MODEL_Z10, (0x046d, 0x0a07), (0x046d, 0x0a07),           z10_key_layout,   1,  ( 160,  43 ),   False, _("Logitech Z10 Speakers"), g19_action_keys)
-DeviceInfo(g15driver.MODEL_G110, (0x046d, 0xc22b), (0x046d, 0xc22b),         g110_key_layout,  0,  ( 0,    0 ),    True, _("Logitech G110 Keyboard"), {})
+DeviceInfo(g15driver.MODEL_G110, (0x046d, 0xc22b), (0x046d, 0xc22b),         g110_key_layout,  0,  ( 0,    0 ),    True, _("Logitech G110 Keyboard"), g110_action_keys)
 DeviceInfo(g15driver.MODEL_GAMEPANEL, (0x046d, 0xc251), (0x046d, 0xc251),       g15v1_key_layout, 1,  ( 160,  43 ),   True, _("Logitech GamePanel"), g15_action_keys)
 
 # When I get hold of an MX5500, I will add Bluetood detection as well
