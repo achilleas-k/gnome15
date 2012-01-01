@@ -1087,6 +1087,7 @@ It should be launched automatically if Gnome15 is installed correctly.")
             self._write_to_led("red:bl", control.value[0])
             if control.hint & g15driver.HINT_RED_BLUE_LED == 0:
                 self._write_to_led("green:bl", control.value[1])
+                self._write_to_led("blue:bl", control.value[2])
             else:
                 # The G110 only has red and blue LEDs
                 self._write_to_led("blue:bl", control.value[2])

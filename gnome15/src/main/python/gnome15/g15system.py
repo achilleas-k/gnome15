@@ -118,18 +118,19 @@ def get_int_value(filename):
     return int(get_value(filename))
         
 def get_value(filename):
-    file = open(filename, "r")
+    fd = open(filename, "r")
     try :
-        return file.read()
+        return fd.read()
     finally :
-        file.close()
+        fd.close()
         
 def set_value(filename, value):
-    file = open(filename, "w")
+    logger.debug("Writing %s to %s" % (filename, value))
+    fd = open(filename, "w")
     try :
-        file.write("%s\n" % str(value))
+        fd.write("%s\n" % str(value))
     finally :
-        file.close()            
+        fd.close()            
     
 class KeyboardDevice():
     def __init__(self, device, device_path, index):
@@ -139,9 +140,9 @@ class KeyboardDevice():
         self.minor = get_int_value(os.path.join(device_path, "minor"))  
         self.uid = "%s_%d" % ( device.model_id, index )      
         leds_path = os.path.join(device_path, "leds")
-        for dir in os.listdir(leds_path):
-            f = os.path.join(leds_path, dir)
-            keyboard_device, color, control = dir.split(":")
+        for d in os.listdir(leds_path):
+            f = os.path.join(leds_path, d)
+            keyboard_device, color, control = d.split(":")
             keyboard_device, index = keyboard_device.split("_")
             light_key = "%s:%s" % ( color, control )
             self.leds[light_key] = LED(light_key, self, f)
@@ -171,13 +172,13 @@ class KeyboardDevice():
         val = get_value(os.path.join(self.device_path, "keymap"))
         while val.endswith(chr(0)):
             val = val[:-1]
-        map = {}
+        keymap = {}
         for line in val.splitlines():
             args = line.split(" ")
             keycode = int(args[0], 16)
             scancode = int(args[1], 16)
-            map[keycode] = scancode
-        return map
+            keymap[keycode] = scancode
+        return keymap
         
 class LED():
     """
@@ -198,11 +199,12 @@ class LED():
         """
         if val < 0 or val > self.get_max():
             raise Exception("LED value out of range")
-        file = open(os.path.join(self.filename, "brightness"), "w")
+        logger.debug("Writing %s to %s" % (self.filename, val))
+        fd = open(os.path.join(self.filename, "brightness"), "w")
         try :
-            file.write("%d\n" % val)
+            fd.write("%d\n" % val)
         finally :
-            file.close()            
+            fd.close()            
         
     def get_value(self):
         return get_int_value(os.path.join(self.filename, "brightness"))
