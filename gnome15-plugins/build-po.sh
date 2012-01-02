@@ -9,28 +9,33 @@ if [ -n "${locale}" ]; then
 	for i in src/*; do
 	    if [ -d ${i} ]; then
 	        modname=$(basename $i)
-	        pushd ${i}
+                echo $modname
+	        pushd ${i} >/dev/null
 	        mkdir -p i18n
 	        
 	        # Generate python / glade
-	        pushd i18n
+	        pushd i18n >/dev/null
 			for i in *.pot; do
 				bn=$(basename $i .pot).${locale}.po
-				msginit --input=${i} --output=${bn} --locale=${locale} 
+				msginit --no-translator --input=${i} --output=${bn} --locale=${locale} 
 			done
-			popd
+			popd >/dev/null
 			
 			# Generate theme
-			if [ -d default ]; then
-		        pushd default/i18n
-				for i in *.pot; do
-					bn=$(basename $i .pot).${locale}.po
-					msginit --input=${i} --output=${bn} --locale=${locale} 
+                        for j in *
+                        do
+   			   if [ -d $j/i18n ]; then
+		           pushd $j/i18n >/dev/null
+				for k in *.pot ; do
+					bn=$(basename $k .pot).${locale}.po
+					echo "$k -> $bn [$locale]" 
+					msginit --no-translator --input=${k} --output=${bn} --locale=${locale} 
 				done
-				popd
-			fi
+				popd >/dev/null
+		           fi
+                        done
 	        
-	        popd
+	        popd >/dev/null
 		fi
 	done
 fi

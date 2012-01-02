@@ -64,6 +64,7 @@ from string import Template
 from copy import deepcopy
 from cStringIO import StringIO
 from lxml import etree
+from lxml import objectify
 from threading import RLock
 import ConfigParser
 
@@ -73,8 +74,9 @@ BASE_PX=18.0
 DEFAULT_HIGHLIGHT_COLOR="#ff0000"
 
 class ThemeDefinition():
-    def __init__(self, theme_id, directory):
+    def __init__(self, theme_id, directory, plugin_module = None):
         self.theme_id = theme_id
+        self.plugin_module = plugin_module
         self.directory = directory
         self.supported = []
         self.unsupported = []
@@ -86,7 +88,6 @@ class ThemeDefinition():
             else:
                 raise Exception("No theme descriptor %s" % filename)
         else:  
-            print filename
             parser = ConfigParser.ConfigParser({})
             parser.read(filename)
             self.name = parser.get("theme", "name")
@@ -95,6 +96,12 @@ class ThemeDefinition():
                 self.supported = parser.get("theme", "supported_models").split(",")
             if parser.has_option("theme", "unsupported_models"):
                 self.unsupported = parser.get("theme", "unsupported_models").split(",")
+                
+        # Load any translations for this theme
+        tdomain = "%s.%s" % ( plugin_module.id, theme_id )
+        self.translation = g15locale.get_translation(tdomain, self.directory)
+        if self.translation:
+            logger.info("Found translation %s" % tdomain)
             
     def supports(self, model_id):
         return ( len(self.supported) == 0 or model_id in self.supported )  \
@@ -112,7 +119,7 @@ def get_theme(theme_id, plugin_module):
     theme_dir = os.path.join(module_dir, theme_id)
     if os.path.isdir(theme_dir) and ( theme_id == "default" or \
                                 os.path.exists(os.path.join(theme_dir, "%s.theme" % theme_id))):
-        return ThemeDefinition(theme_id, theme_dir)
+        return ThemeDefinition(theme_id, theme_dir, plugin_module)
         
 def get_themes(model_id, plugin_module):
     """
@@ -128,7 +135,7 @@ def get_themes(model_id, plugin_module):
         theme_dir = os.path.join(module_dir, d)
         if os.path.isdir(theme_dir) and ( d == "default" or \
                                     os.path.exists(os.path.join(theme_dir, "%s.theme" % d))):
-            definition = ThemeDefinition(d, theme_dir)
+            definition = ThemeDefinition(d, theme_dir, plugin_module)
             if definition.supports(model_id):
                 themes.append(definition)
     return themes
@@ -1315,8 +1322,10 @@ class ConfirmationScreen(G15Page):
                 
 class G15Theme():    
     def __init__(self, dir, variant = None, svg_text = None, prefix = None, auto_dirty = True, translation = None):
+        self.translation = translation
         if isinstance(dir, ThemeDefinition):
             self.dir = dir.directory
+            self.translation = dir.translation
         elif isinstance(dir, str):
             self.dir = dir
         elif dir is not None:
@@ -1337,7 +1346,6 @@ class G15Theme():
         self.auto_dirty = auto_dirty
         self.render = None
         self.scroll_state = {}
-        self.translation = translation
         self.nsmap = {
             'sodipodi': 'http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd',
             'cc': 'http://web.resource.org/cc/',
@@ -1405,10 +1413,11 @@ class G15Theme():
         
         # Translate text
         if self.translation is not None:
-            for text in root.xpath('//text()',namespaces=self.nsmap):
-                text = str(text).strip()
-                if len(text) > 0 and text.startswith("_("):
-                    translated = self.translation.ugettext(text[2:-1])
+            for textel in root.xpath('//text()',namespaces=self.nsmap):
+                tpar = textel.getparent()
+                text = tpar.text
+                if text is not None and len(text) > 0 and text.startswith("_("):
+                    tpar.text = self.translation.ugettext(text[2:-1].strip())
                 
         
     def del_namespace(self, prefix, uri):

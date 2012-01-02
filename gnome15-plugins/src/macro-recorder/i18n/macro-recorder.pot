@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"POT-Creation-Date: 2012-01-02 19:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: macro-recorder.py:56
+#: macro-recorder.py:57
 msgid "Macro Recorder"
 msgstr ""
 
-#: macro-recorder.py:57
+#: macro-recorder.py:58
 msgid ""
 "Allows recording of macros. All feedback is provided via the LCD (when "
 "available), as well as blinking of memory bank lights when recording. You "
@@ -29,25 +29,25 @@ msgid ""
 "be recorded on the currently selected profile and memory bank."
 msgstr ""
 
-#: macro-recorder.py:62
+#: macro-recorder.py:63
 msgid "Copyright (C)2010 Brett Smith"
 msgstr ""
 
-#: macro-recorder.py:68
+#: macro-recorder.py:69
 msgid "Start recording macro"
 msgstr ""
 
-#: macro-recorder.py:304
+#: macro-recorder.py:307
 #, python-format
 msgid ""
 "Recording on M%s. Type in your macro then press the G-Key to assign it to, "
 "or MR to cancel."
 msgstr ""
 
-#: macro-recorder.py:308
+#: macro-recorder.py:311
 msgid "No Profile"
 msgstr ""
 
-#: macro-recorder.py:310
+#: macro-recorder.py:313
 msgid "You have no profiles configured. Configure one now using the Macro tool"
 msgstr ""

@@ -1,27 +1,27 @@
 # English translations for gnome15-plugins package.
-# Copyright (C) 2011 THE gnome15-plugins'S COPYRIGHT HOLDER
+# Copyright (C) 2012 THE gnome15-plugins'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome15-plugins package.
-# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+# Automatically generated, 2012.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gnome15-plugins 0.7.6\n"
+"Project-Id-Version: gnome15-plugins 0.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-09 19:46+0100\n"
-"PO-Revision-Date: 2011-10-09 19:48+0100\n"
-"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
-"Language-Team: English (British)\n"
+"POT-Creation-Date: 2012-01-02 19:19+0000\n"
+"PO-Revision-Date: 2012-01-02 19:19+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
 "Language: en_GB\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ASCII\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: mpris.py:43
+#: mpris.py:61
 msgid "Media Player"
 msgstr "Media Player"
 
-#: mpris.py:44
+#: mpris.py:62
 msgid ""
 "Displays information about currently playing media. Requires a player that "
 "supports the MPRIS (version 1 or 2) specification. This includes Rhythmbox, "
@@ -33,10 +33,10 @@ msgstr ""
 "Banshee (with a plugin), Audacious, VLC and others. Supports multiple media "
 "players running at the same time, each gets their own screen."
 
-#: mpris.py:50
+#: mpris.py:68
 msgid "Copyright (C)2010 Brett Smith"
 msgstr "Copyright (C)2010 Brett Smith"
 
-#: mpris.py:232
+#: mpris.py:282
 msgid "No track playing"
 msgstr "No track playing"

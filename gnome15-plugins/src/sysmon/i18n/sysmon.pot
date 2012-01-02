@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"POT-Creation-Date: 2012-01-02 19:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,27 +17,31 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: sysmon.py:32
+#: sysmon.py:35
 msgid "System Monitor"
 msgstr ""
 
-#: sysmon.py:33
+#: sysmon.py:36
 msgid ""
 "Display CPU, Memory, and Network statistics. Either a summary of each "
 "system's stats is displayed, or you may cycle through the CPU and Network "
 "interfaces."
 msgstr ""
 
-#: sysmon.py:36
+#: sysmon.py:39
 msgid "Copyright (C)2010 Brett Smith"
 msgstr ""
 
-#: sysmon.py:41
+#: sysmon.py:44
 msgid "Toggle Monitored CPU"
 msgstr ""
 
-#: sysmon.py:42
+#: sysmon.py:45
 msgid ""
 "Toggle Monitored Network\n"
 "Interface"
+msgstr ""
+
+#: sysmon.py:46
+msgid "Change view (summary or graph)"
 msgstr ""

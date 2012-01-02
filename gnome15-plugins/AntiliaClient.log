@@ -1,0 +1,10 @@
+Antilia Client 5.5.2a (Alpha)
+------------------------------------------------
+Initializing Antilia Client
+------------------------------------------------
+Loading Config File...
+*** Error while reading config file: Unable to open file 'config/antiliaclient.config' !!! ***
+Initializing Thread Pool...
+Threadpool running with 8 threads.
+Initializing Resources...
+Unhandled exception during initialization: Unable to open file 'data/antilia.core.data'

@@ -1,18 +1,10 @@
-AC_INIT(gnome15-iconpack, 0.0.4)
+AC_INIT(gnome15-iconpack, 0.0.5)
 AC_CONFIG_SRCDIR([AwOken/status/16/logitech-g-keyboard-error-panel.png])
 AM_INIT_AUTOMAKE([tar-ustar])
 
 dnl AM_CONFIG_HEADER(config.h)
 
 AM_MAINTAINER_MODE
-
-dnl The HighContrast theme is in a different location in Gnome3
-AC_ARG_ENABLE([highcontrast],
-	[AS_HELP_STRING([--enable-highcontrast=path-to-high-contrast-theme],
-		[Install the high contrast theme to this location])],
-	[highcontrast_path=${enableval}],
-	[highcontrast_path=HighContrastLargePrintInverse])	
-AC_SUBST(HIGHCONTRAST_PATH, $highcontrast_path)
 
 AC_OUTPUT([
 Makefile
@@ -31,11 +23,6 @@ AwOken/apps/24/Makefile
 AwOken/apps/48/Makefile
 AwOken/apps/64/Makefile
 AwOken/apps/128/Makefile
-HighContrastLargePrintInverse/Makefile
-HighContrastLargePrintInverse/apps/Makefile
-HighContrastLargePrintInverse/apps/48/Makefile
-HighContrastLargePrintInverse/status/Makefile
-HighContrastLargePrintInverse/status/48/Makefile
 ubuntu-mono-dark/Makefile
 ubuntu-mono-dark/status/Makefile
 ubuntu-mono-dark/status/16/Makefile

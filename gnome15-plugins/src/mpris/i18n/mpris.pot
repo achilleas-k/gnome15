@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"POT-Creation-Date: 2012-01-02 19:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: mpris.py:43
+#: mpris.py:61
 msgid "Media Player"
 msgstr ""
 
-#: mpris.py:44
+#: mpris.py:62
 msgid ""
 "Displays information about currently playing media. Requires a player that "
 "supports the MPRIS (version 1 or 2) specification. This includes Rhythmbox, "
@@ -29,10 +29,10 @@ msgid ""
 "players running at the same time, each gets their own screen."
 msgstr ""
 
-#: mpris.py:50
+#: mpris.py:68
 msgid "Copyright (C)2010 Brett Smith"
 msgstr ""
 
-#: mpris.py:232
+#: mpris.py:282
 msgid "No track playing"
 msgstr ""

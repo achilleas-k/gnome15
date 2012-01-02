@@ -1,27 +1,27 @@
 # English translations for gnome15-plugins package.
-# Copyright (C) 2011 THE gnome15-plugins'S COPYRIGHT HOLDER
+# Copyright (C) 2012 THE gnome15-plugins'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the gnome15-plugins package.
-# Brett Smith <tanktarta@blueyonder.co.uk>, 2011.
+# Automatically generated, 2012.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gnome15-plugins 0.7.6\n"
+"Project-Id-Version: gnome15-plugins 0.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-09 19:46+0100\n"
-"PO-Revision-Date: 2011-10-09 19:49+0100\n"
-"Last-Translator: Brett Smith <tanktarta@blueyonder.co.uk>\n"
-"Language-Team: English (British)\n"
+"POT-Creation-Date: 2012-01-02 19:19+0000\n"
+"PO-Revision-Date: 2012-01-02 19:19+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
 "Language: en_GB\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ASCII\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: sysmon.py:32
+#: sysmon.py:35
 msgid "System Monitor"
 msgstr "System Monitor"
 
-#: sysmon.py:33
+#: sysmon.py:36
 msgid ""
 "Display CPU, Memory, and Network statistics. Either a summary of each "
 "system's stats is displayed, or you may cycle through the CPU and Network "
@@ -31,18 +31,22 @@ msgstr ""
 "system's stats is displayed, or you may cycle through the CPU and Network "
 "interfaces."
 
-#: sysmon.py:36
+#: sysmon.py:39
 msgid "Copyright (C)2010 Brett Smith"
 msgstr "Copyright (C)2010 Brett Smith"
 
-#: sysmon.py:41
+#: sysmon.py:44
 msgid "Toggle Monitored CPU"
 msgstr "Toggle Monitored CPU"
 
-#: sysmon.py:42
+#: sysmon.py:45
 msgid ""
 "Toggle Monitored Network\n"
 "Interface"
 msgstr ""
 "Toggle Monitored Network\n"
 "Interface"
+
+#: sysmon.py:46
+msgid "Change view (summary or graph)"
+msgstr "Change view (summary or graph)"

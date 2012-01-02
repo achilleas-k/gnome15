@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"POT-Creation-Date: 2012-01-02 19:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,31 +17,46 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: sense.py:40
-msgid "Sense"
+#: i18n/sense.glade.h:1
+msgid "<b>Mode</b>"
 msgstr ""
 
-#: sense.py:41
-msgid ""
-"Display information from various sensors, such as temperature and fan speeds."
+#: i18n/sense.glade.h:2
+msgid "<b>Time (hours:minutes:seconds)</b>"
 msgstr ""
 
-#: sense.py:44
-msgid "Copyright (C)2010 Brett Smith"
+#: i18n/sense.glade.h:3
+msgid "Countdown"
 msgstr ""
 
-#: sense.py:49
-msgid "Previous sensor"
+#: i18n/sense.glade.h:4
+msgid "Enabled"
 msgstr ""
 
-#: sense.py:50
-msgid "Next sensor"
+#: i18n/sense.glade.h:5
+msgid "Keep stopwatch visible while actve"
 msgstr ""
 
-#: sense.py:51
-msgid "Next page"
+#: i18n/sense.glade.h:6
+msgid "Label"
 msgstr ""
 
-#: sense.py:52
-msgid "Previous page"
+#: i18n/sense.glade.h:7
+msgid "Loop"
+msgstr ""
+
+#: i18n/sense.glade.h:8
+msgid "Stopwatch"
+msgstr ""
+
+#: i18n/sense.glade.h:9
+msgid "Stopwatch Preferences"
+msgstr ""
+
+#: i18n/sense.glade.h:10
+msgid "Timer 1"
+msgstr ""
+
+#: i18n/sense.glade.h:11
+msgid "Timer 2"
 msgstr ""

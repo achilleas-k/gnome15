@@ -16,10 +16,12 @@ for i in src/*; do
         xgettext --language=Python --keyword=_ --output=i18n/${modname}.pot *.py
     
         # Theme files
-        if [ -d default ]; then
-             pushd default
-             mkdir -p i18n
+
+        for m in *; do
+            if [ -d "$m" ]; then
+             pushd $m
              if [ $(ls *.svg 2>/dev/null|wc -l) -gt 0 ]; then 
+                 mkdir -p i18n
                  echo "Found SVG"
                  for s in *.svg; do
                      echo "Generating C header$s"
@@ -34,7 +36,8 @@ for i in src/*; do
                  done 
              fi
              popd
-        fi
+           fi
+        done
 
         # Glade files
         if [ $(ls *.glade 2>/dev/null|wc -l) -gt 0 ]; then 

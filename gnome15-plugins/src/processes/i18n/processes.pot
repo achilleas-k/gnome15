@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-10-09 19:46+0100\n"
+"POT-Creation-Date: 2012-01-02 19:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -68,26 +68,26 @@ msgid ""
 "%s"
 msgstr ""
 
-#: processes.py:166
+#: processes.py:167
 msgid "Applications"
 msgstr ""
 
-#: processes.py:167
+#: processes.py:168
 msgid "All"
 msgstr ""
 
-#: processes.py:169
+#: processes.py:170
 msgid "All Processes"
 msgstr ""
 
-#: processes.py:170
+#: processes.py:171
 msgid "Usr"
 msgstr ""
 
-#: processes.py:172
+#: processes.py:173
 msgid "User Processes"
 msgstr ""
 
-#: processes.py:173
+#: processes.py:174
 msgid "App"
 msgstr ""
