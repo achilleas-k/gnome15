@@ -28,8 +28,6 @@ import time
 import gtop
 import sys
 import socket
-import cairoplot
-import cairo
 
 id = "sysmon"
 name = _("System Monitor")
@@ -42,8 +40,7 @@ default_enabled = True
 has_preferences = False
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Toggle Monitored CPU"), 
-         g15driver.NEXT_SELECTION : _("Toggle Monitored Network\nInterface"),
-         g15driver.VIEW : _("Change view (summary or graph)") }
+         g15driver.NEXT_SELECTION : _("Toggle Monitored Network\nInterface") }
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 
 # Various constants
@@ -56,91 +53,6 @@ This plugin displays system statistics
 
 def create(gconf_key, gconf_client, screen):
     return G15SysMon(gconf_key, gconf_client, screen)
-
-class G15Graph(g15theme.Component):
-    
-    def __init__(self, component_id, plugin):
-        g15theme.Component.__init__(self, component_id)
-        self.plugin = plugin
-        
-    def create_plot(self, graph_surface):
-        raise Exception("Not implemented")
-        
-    def paint(self, canvas):
-        g15theme.Component.paint(self, canvas)    
-        if self.view_bounds:
-            graph_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, 
-                                               int(self.view_bounds[2]), 
-                                               int(self.view_bounds[3]))
-            plot =  self.create_plot(graph_surface)
-            plot.line_width = 2.0
-            plot.line_color = self.plugin.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, (255, 255, 255))
-            plot.label_color = self.plugin.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, (255, 255, 255))
-            plot.shadow = True
-            plot.bounding_box = False
-            plot.render()
-            plot.commit()
-            
-            canvas.save()    
-            canvas.translate(self.view_bounds[0], self.view_bounds[1])
-            canvas.set_source_surface(graph_surface, 0.0, 0.0)
-            canvas.paint()
-            canvas.restore()
-
-class G15CPUGraph(G15Graph):
-    
-    def __init__(self, component_id, plugin):
-        G15Graph.__init__(self, component_id, plugin)
-        
-    def create_plot(self, graph_surface):
-        return cairoplot.DotLinePlot( graph_surface, self.plugin.selected_cpu.history, 
-                                      self.view_bounds[2], 
-                                      self.view_bounds[3], 
-                                      background = None,
-                                      axis = False, grid = False, 
-                                      x_labels = [],
-                                      y_labels = ["%-6d" % 0, "%-6d" % 50, "%-6d" % 100],
-                                      y_bounds = (0, 100))
-
-class G15NetGraph(G15Graph):
-    
-    def __init__(self, component_id, plugin):
-        G15Graph.__init__(self, component_id, plugin)
-        
-    def create_plot(self, graph_surface):
-        y_labels = []
-        max_y = max(max(self.plugin.max_send, self.plugin.max_recv), 102400)
-        for x in range(0, int(max_y), int(max_y / 4)):
-            y_labels.append("%-3.2f" % ( float(x) / 102400.0 ) )
-        return cairoplot.DotLinePlot( graph_surface, [ self.plugin.send_history, self.plugin.recv_history ], 
-                                      self.view_bounds[2], 
-                                      self.view_bounds[3], 
-                                      background = None,
-                                      axis = False, grid = False, 
-                                      x_labels = [],
-                                      y_labels = y_labels,
-                                      y_bounds = (0, max_y ) )
-
-class G15MemGraph(G15Graph):
-    """
-    Memory graph
-    """
-    def __init__(self, component_id, plugin):
-        G15Graph.__init__(self, component_id, plugin)
-        
-    def create_plot(self, graph_surface):
-        y_labels = []
-        max_y = self.plugin.total
-        for x in range(0, int(max_y), int(max_y / 4)):
-            y_labels.append("%-4d" % int( float(x) / 1024.0 / 1024.0 ) )
-        return cairoplot.DotLinePlot( graph_surface, [ self.plugin.used_history, self.plugin.cached_history ], 
-                                      self.view_bounds[2], 
-                                      self.view_bounds[3], 
-                                      background = None,
-                                      axis = False, grid = False, 
-                                      x_labels = [],
-                                      y_labels = y_labels,
-                                      y_bounds = (0, max_y ) )
         
 class CPU():
     
@@ -188,6 +100,7 @@ class G15SysMon():
     """    
     def __init__(self, gconf_key, gconf_client, screen):
         self.screen = screen
+        self.notify_handlers = []
         self.hidden = False
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
@@ -250,14 +163,11 @@ class G15SysMon():
         self.used_history =  [0] * GRAPH_SIZE 
         
         # Initial stats load and create the page 
-        self.page = g15theme.G15Page(id, self.screen, on_shown=self._on_shown, on_hidden=self._on_hidden, \
+        self.page = g15theme.G15Page(id, self.screen, 
                                      title = name, 
                                      thumbnail_painter = self._paint_thumbnail,
                                      panel_painter = self._paint_panel )
-        self._create_theme()        
-        self.page.add_child(G15CPUGraph("cpu", self))
-        self.page.add_child(G15NetGraph("net", self))
-        self.page.add_child(G15MemGraph("mem", self))
+        self._create_theme() 
         
         self._get_stats()
         self._build_properties()
@@ -266,11 +176,17 @@ class G15SysMon():
         self.screen.redraw(self.page)
         
         self._reschedule_refresh()
+        
+        # Watch for theme changes
+        # TODO - This should be generic, as should theme loading really
+        self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/theme", self._reactivate))
     
     def deactivate(self):
         self.screen.key_handler.action_listeners.remove(self)
-        self._cancel_refresh()
         self.screen.del_page(self.page)
+        self._cancel_refresh()
+        for h in self.notify_handlers:
+            self.gconf_client.notify_remove(h);
         
     def destroy(self):
         pass
@@ -283,6 +199,7 @@ class G15SysMon():
                 if idx >= len(self.cpu_data):
                     idx = 0                
                 self.gconf_client.set_string(self.gconf_key + "/cpu", self.cpu_data[idx].name)
+                self.selected_cpu = self.cpu_data[idx]
                 self._reschedule_refresh()
                 return True
             elif binding.action == g15driver.NEXT_SELECTION:
@@ -297,6 +214,10 @@ class G15SysMon():
     ''' Private
     '''
             
+    def _reactivate(self, client, connection_id, entry, args):
+        self.deactivate()
+        self.activate()
+            
     def _create_theme(self):
         theme = self.gconf_client.get_string("%s/theme" % self.gconf_key)
         new_theme = None
@@ -306,13 +227,8 @@ class G15SysMon():
                 new_theme = g15theme.G15Theme(theme_def)
         if not new_theme:
             new_theme = g15theme.G15Theme(self)
+        new_theme.plugin = self
         self.page.set_theme(new_theme)
-        
-    def _on_shown(self):
-        self._reschedule_refresh()
-            
-    def _on_hidden(self):
-        self._reschedule_refresh()
             
     def _reschedule_refresh(self):
         self._cancel_refresh()

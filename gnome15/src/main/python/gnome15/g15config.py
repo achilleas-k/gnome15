@@ -655,7 +655,6 @@ class G15Config:
             
     def _color_chosen(self, widget, control):
         color = widget.color
-        print "CC: %s" % str(color)
         self.conf_client.set_string(self._get_full_key(control.id), "%d,%d,%d" % ( color[0],color[1],color[2]))
         
     def _control_changed(self, widget, control):

@@ -1323,12 +1323,15 @@ class ConfirmationScreen(G15Page):
 class G15Theme():    
     def __init__(self, dir, variant = None, svg_text = None, prefix = None, auto_dirty = True, translation = None):
         self.translation = translation
+        self.plugin = None
         if isinstance(dir, ThemeDefinition):
             self.dir = dir.directory
             self.translation = dir.translation
+            self.plugin_module = dir.plugin_module
         elif isinstance(dir, str):
             self.dir = dir
         elif dir is not None:
+            self.plugin = dir
             self.dir = os.path.join(os.path.dirname(sys.modules[dir.__module__].__file__), "default")
         else:
             self.dir = None
@@ -1379,15 +1382,32 @@ class G15Theme():
             if self.dir != None:
                 self.theme_name = os.path.basename(self.dir)
                 prefix_path = self.prefix if self.prefix != None else os.path.basename(os.path.dirname(self.dir)).replace("-", "_")+ "_" + self.theme_name + "_"
+                
+                # The theme may have a python portion
                 module_name = self.get_path_for_variant(self.dir, self.variant, "py", fatal = False, prefix = prefix_path)
                 module = None
                 if module_name != None:
                     if not dir in sys.path:
                         sys.path.insert(0, self.dir)
                     module = __import__(os.path.basename(module_name)[:-3])
-                    self.instance = module.Theme(self.screen, self)
+                    self.instance = module
+                    
                 path = self.get_path_for_variant(self.dir, self.variant, "svg")
                 self.document = etree.parse(path)
+                
+                    
+                # Give the python portion of the theme chance to initialize
+                if self.instance != None:            
+                    try :
+                        getattr(self.instance, "create")
+                        try :
+                            self.instance.create(self)
+                        except:
+                            traceback.print_exc(file=sys.stderr)
+                    except AttributeError:                
+                        # Doesn't exist
+                        pass
+                        
             elif self.svg_text != None:
                 self.document = etree.ElementTree(etree.fromstring(self.svg_text))
             else:
