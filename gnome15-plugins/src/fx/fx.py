@@ -68,10 +68,10 @@ class G15Fx():
     
     def activate(self):
         self.chained_transition =self.screen.set_transition(self.transition)
-        self.notify_handler = self.gconf_client.notify_add(self.gconf_key, self.config_changed); 
+        self.notify_handler = self.gconf_client.notify_add(self.gconf_key, self.config_changed)
     
     def deactivate(self):
-        self.gconf_client.notify_remove(self.notify_handler); 
+        self.gconf_client.notify_remove(self.notify_handler)
         self.screen.set_transition(self.chained_transition)
         
     def destroy(self):

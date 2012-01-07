@@ -1359,6 +1359,10 @@ class G15Theme():
             'inkscape': 'http://www.inkscape.org/namespaces/inkscape',
             }
         
+    def set_variant(self, variant):     
+        self.variant = variant
+        self._set_component(self.component)
+        
     def clear_scroll(self):
         for s in self.scroll_state:
             self.scroll_state[s].reset()

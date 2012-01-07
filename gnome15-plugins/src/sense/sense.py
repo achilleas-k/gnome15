@@ -29,6 +29,8 @@ import os.path
 import commands
 import dbus
 import sensors
+import gtk
+import gconf
 
 from ctypes import byref, c_int
 
@@ -39,12 +41,18 @@ import logging
 logger = logging.getLogger()
 
 id = "sense"
-name = _("Temperature Sensors")
-description = _("Display information from various temperature sensors.")        
+name = _("Sensors")
+description = _("Display information from various sensors. The plugin \
+supports Temperatures, Fans and Voltages from various sources. \
+\n\n\
+Sources include libsensors, nvidiactl and UDisks.\
+\n\n\
+NOTE: UDisk may cause a delay in starting up Gnome15. This bug is\
+being investigated.")        
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://www.gnome15.org"
-has_preferences = False
+has_preferences = True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11 ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Previous sensor"), 
@@ -56,6 +64,16 @@ actions={
 UDISKS_DEVICE_NAME = "org.freedesktop.UDisks.Device"
 UDISKS_BUS_NAME= "org.freedesktop.UDisks"
 
+'''
+Sensor types
+'''
+VOLTAGE = 0
+TEMPERATURE = 2
+FAN = 1
+
+TYPE_NAMES = [ "Volt", "Fan", "Temp", "????", "????", "????" ]
+VARIANT_NAMES = { VOLTAGE : "volt", TEMPERATURE : None, FAN : "fan" } 
+
 ''' 
 This plugin displays sensor information
 '''
@@ -63,12 +81,96 @@ This plugin displays sensor information
 def create(gconf_key, gconf_client, screen):
     return G15Sensors(gconf_key, gconf_client, screen)
 
+def show_preferences(parent, driver, gconf_client, gconf_key):
+    G15TailsPreferences(parent, driver, gconf_client, gconf_key)
+    
+def get_sensor_sources():
+    sensor_sources = []
+    for c in [ LibsensorsSource(), NvidiaSource(), UDisksSource() ]:
+        logger.info("Testing if '%s' is a valid sensor source" % c.name)
+        if c.is_valid():
+            logger.info("Adding '%s' as a sensor source" % c.name)
+            sensor_sources.append(c)
+        else:
+            c.stop()
+    return sensor_sources
+
+class G15TailsPreferences():
+    
+    def __init__(self, parent, driver, gconf_client, gconf_key):
+        self._gconf_client = gconf_client
+        self._gconf_key = gconf_key
+        
+        widget_tree = gtk.Builder()
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "sense.glade"))
+        
+        # Feeds
+        self.sensor_model = widget_tree.get_object("SensorModel")
+        self.reload_model()
+        self.sensor_list = widget_tree.get_object("SensorList")
+        self.enabled_renderer = widget_tree.get_object("EnabledRenderer")
+        self.label_renderer = widget_tree.get_object("LabelRenderer")
+        
+        # Lines
+        self.interval_adjustment = widget_tree.get_object("IntervalAdjustment")
+        self.interval_adjustment.set_value(g15util.get_float_or_default(self._gconf_client, "%s/interval" % self._gconf_key, 10))
+        
+        # Connect to events
+        self.interval_adjustment.connect("value-changed", self.interval_changed)
+        self.label_renderer.connect("edited", self.label_edited)
+        self.enabled_renderer.connect("toggled", self.sensor_toggled)
+        
+        # Show dialog
+        self.dialog = widget_tree.get_object("SenseDialog")
+        self.dialog.set_transient_for(parent)
+        
+        self.dialog.run()
+        self.dialog.hide()
+        
+    def interval_changed(self, widget):
+        self._gconf_client.set_float(self._gconf_key + "/interval", int(widget.get_value()))
+        
+    def label_edited(self, widget, row_index, value):
+        row_index = int(row_index)
+        if value != "":
+            if self.sensor_model[row_index][2] != value:
+                self.sensor_model.set_value(self.sensor_model.get_iter(row_index), 2, value)
+                sensor_name = self.sensor_model[row_index][0]
+                self._gconf_client.set_string("%s/sensors/%s/label" % (self._gconf_key, gconf.escape_key(sensor_name, len(sensor_name))), value)
+            
+    def sensor_toggled(self, widget, row_index):
+        row_index = int(row_index)
+        now_active = not widget.get_active()
+        self.sensor_model.set_value(self.sensor_model.get_iter(row_index), 1, now_active)
+        sensor_name = self.sensor_model[row_index][0]
+        self._gconf_client.set_bool("%s/sensors/%s/enabled" % (self._gconf_key, gconf.escape_key(sensor_name, len(sensor_name))), now_active)
+        
+    def reload_model(self):
+        self.sensor_model.clear() 
+        for source in get_sensor_sources():
+            for sensor in source.get_sensors():
+                sense_key = "%s/sensors/%s" % (self._gconf_key, gconf.escape_key(sensor.name, len(sensor.name)))
+                self.sensor_model.append([ sensor.name, g15util.get_bool_or_default(self._gconf_client, "%s/enabled" % (sense_key), True), 
+                                          g15util.get_string_or_default(self._gconf_client, "%s/label" % (sense_key), sensor.name), TYPE_NAMES[sensor.sense_type] ])
+
 class Sensor():
     
-    def __init__(self, name, value, critical = None):
+    def __init__(self, sense_type, name, value, critical = None):
+        self.sense_type = sense_type
         self.name = name
         self.value = value
         self.critical = critical
+        
+    def get_default_crit(self):
+        # Meaningless really, but more sensible than a single value
+        
+        if self.sense_type == FAN:
+            return 7000
+        elif self.sense_type == VOLTAGE:
+            return 12
+        else:
+            return 100
+        
         
 class UDisksSource():
     
@@ -110,7 +212,7 @@ class UDisksSource():
                             n = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveSerial")
                             if n: 
                                 sensor_name += " (%s)" % n
-                    sensor = Sensor(sensor_name, 0.0)
+                    sensor = Sensor(TEMPERATURE, sensor_name, 0.0)
                     device_file = str(udisk_properties.Get(UDISKS_DEVICE_NAME, "DeviceFile"))
                     if int(udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartTimeCollected")) > 0:
                         # Only get the temperature if SMART data is collected to avoide spinning up disk
@@ -141,12 +243,26 @@ class LibsensorsSource():
     
     def get_sensors(self):
         sensor_objects = []
+        sensor_names = []
         
         for chip in sensors.iter_detected_chips():
             logger.debug("Found chip %s, adapter %s" % ( chip, chip.adapter_name))
             for feature in chip:
-                logger.debug("'  %s: %.2f" % (feature.label, feature.get_value()))
-                sensor = Sensor(feature.label, float(feature.get_value()))
+                sensor_name = feature.label
+                
+                # Prevent name conflicts across chips
+                if not sensor_name in sensor_names:
+                    sensor_names.append(sensor_name)
+                else:
+                    o = sensor_name
+                    idx = 1
+                    while sensor_name in sensor_names:
+                        idx += 1
+                        sensor_name = "%s-%d" % (o, idx) 
+                    sensor_names.append(sensor_name)
+                
+                logger.debug("'  %s: %.2f" % (sensor_name, feature.get_value()))
+                sensor = Sensor(feature.type, sensor_name, float(feature.get_value()))
                 sensor_objects.append(sensor)
                 
                 for subfeature in feature:
@@ -172,7 +288,7 @@ class NvidiaSource():
         self.name = "NVidia"
         
     def get_sensors(self):
-        return [Sensor("GPUCoreTemp", int(commands.getoutput("nvidia-settings -q GPUCoreTemp -t")))]
+        return [Sensor(TEMPERATURE, "GPUCoreTemp", int(commands.getoutput("nvidia-settings -q GPUCoreTemp -t")))]
     
     def is_valid(self):
         if not os.path.exists("/dev/nvidiactl"):
@@ -187,66 +303,79 @@ class NvidiaSource():
 
 class SensorMenuItem(g15theme.MenuItem):
     
-    def __init__(self,  item_id, sensor):
+    def __init__(self,  item_id, sensor, sensor_label):
         g15theme.MenuItem.__init__(self, item_id)
         self.sensor = sensor
+        self.sensor_label = sensor_label
         
     def get_theme_properties(self):        
         properties = g15theme.MenuItem.get_theme_properties(self)
-        properties["item_name"] = self.sensor.name
+        properties["item_name"] = self.sensor_label
         properties["item_alt"] = "%.2f" % self.sensor.value
         properties["item_alt2"] = "%.2f" % self.sensor.critical if self.sensor.critical is not None else ""
-        max = self.sensor.critical if self.sensor.critical is not None else 100.0
+        max = self.sensor.critical if self.sensor.critical is not None else self.sensor.get_default_crit()
         properties["temp_percent"] = ( self.sensor.value / max ) * 100.0
         return properties
      
-    
 class G15Sensors(g15plugin.G15RefreshingPlugin):
     
     def __init__(self, gconf_key, gconf_client, screen):
         g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, [ "system" ], id, name, 5.0)
         
     def activate(self):
-        self.sensor_sources = []
-        self.sensor_dict = {}
-        for c in [ LibsensorsSource(), NvidiaSource(), UDisksSource() ]:
-            logger.info("Testing if '%s' is a valid sensor source" % c.name)
-            if c.is_valid():
-                logger.info("Adding '%s' as a sensor source" % c.name)
-                self.sensor_sources.append(c)
-            else:
-                c.stop()        
-        g15plugin.G15RefreshingPlugin.activate(self)
-        
+        self.sensor_sources = get_sensor_sources()
+        self.sensor_dict = {}        
+        g15plugin.G15RefreshingPlugin.activate(self)        
+        self._sensors_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/sensors", self._sensors_changed)
+    
     def populate_page(self):
         g15plugin.G15RefreshingPlugin.populate_page(self)
         self.menu = g15theme.Menu("menu")
         def menu_selected():
-            self.page.mark_dirty()
+            self.page.theme.set_variant(VARIANT_NAMES[self.menu.selected.sensor.sense_type])
+            self.refresh()
             self.page.redraw()
+            
         self.menu.on_selected = menu_selected
         self.page.add_child(self.menu)
         self.page.theme.svg_processor = self._process_svg        
         self.page.add_child(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
         i = 0
         for c in self.sensor_sources:
-            for s in c.get_sensors():
-                menu_item = SensorMenuItem("menuitem-%d" % i, s)
-                self.sensor_dict[s.name] = menu_item
-                self.menu.add_child(menu_item)
-                i += 1
+            for s in c.get_sensors():                
+                sense_key = "%s/sensors/%s" % (self.gconf_key, gconf.escape_key(s.name, len(s.name)))
+                if g15util.get_bool_or_default(self.gconf_client, "%s/enabled" % (sense_key), True):
+                    sense_label = g15util.get_string_or_default(self.gconf_client, "%s/label" % (sense_key), s.name) 
+                    menu_item = SensorMenuItem("menuitem-%d" % i, s, sense_label)
+                    self.sensor_dict[s.name] = menu_item
+                    self.menu.add_child(menu_item)
+                    
+                    # If this is the first child, change the theme variant
+                    if self.menu.get_child_count() == 1: 
+                        self.page.theme.set_variant(VARIANT_NAMES[menu_item.sensor.sense_type])
+                    
+                    i += 1
     
     def deactivate(self):
         for c in self.sensor_sources:
             c.stop()
         g15plugin.G15RefreshingPlugin.deactivate(self)
+        self.gconf_client.notify_remove(self._sensors_changed_handle)
         
     def refresh(self):
         self._get_stats()
         self._build_properties()
     
+    def get_next_tick(self):
+        return g15util.get_float_or_default(self.gconf_client, "%s/interval" % self.gconf_key, 5.0)
+    
     ''' Private
     '''
+    
+    def _sensors_changed(self, client, connection_id, entry, args):        
+        self.page.remove_all_children()
+        self.populate_page()
+        self.refresh()
         
     def _process_svg(self, document, properties, attributes):
         root = document.getroot()
@@ -296,16 +425,22 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
     def _get_stats(self):
         for c in self.sensor_sources:
             for s in c.get_sensors(): 
-                self.sensor_dict[s.name].sensor = s
-                if s.critical is not None:
-                    logger.debug("Sensor %s on %s is %f (critical %f)" % ( s.name, c.name, s.value, s.critical ))
-                else:
-                    logger.debug("Sensor %s on %s is %f" % ( s.name, c.name, s.value ))
+                if s.name in self.sensor_dict:
+                    self.sensor_dict[s.name].sensor = s
+                    if s.critical is not None:
+                        logger.debug("Sensor %s on %s is %f (critical %f)" % ( s.name, c.name, s.value, s.critical ))
+                    else:
+                        logger.debug("Sensor %s on %s is %f" % ( s.name, c.name, s.value ))
                     
     def _build_properties(self): 
         self.page.mark_dirty()
         properties = {}
         if self.menu.selected is not None:
-            properties["sensor"] = self.menu.selected.sensor.name        
-            properties["temp_c"] = "%.2f C" % float(self.menu.selected.sensor.value)
+            properties["sensor"] = self.menu.selected.sensor.name
+            if self.menu.selected.sensor.sense_type == FAN:        
+                properties["rpm"] = "%4d" % float(self.menu.selected.sensor.value)
+            elif self.menu.selected.sensor.sense_type == VOLTAGE:        
+                properties["voltage"] = "%.2f" % float(self.menu.selected.sensor.value)
+            else:        
+                properties["temp_c"] = "%.2f C" % float(self.menu.selected.sensor.value)
         self.page.theme_properties = properties

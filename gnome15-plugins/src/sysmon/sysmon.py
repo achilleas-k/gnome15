@@ -26,6 +26,8 @@ import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import time
 import gtop
+import gtk
+import os
 import sys
 import socket
 
@@ -37,7 +39,7 @@ author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://www.gnome15.org"
 default_enabled = True
-has_preferences = False
+has_preferences = True
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Toggle Monitored CPU"), 
          g15driver.NEXT_SELECTION : _("Toggle Monitored Network\nInterface") }
@@ -53,6 +55,15 @@ This plugin displays system statistics
 
 def create(gconf_key, gconf_client, screen):
     return G15SysMon(gconf_key, gconf_client, screen)
+
+def show_preferences(parent, driver, gconf_client, gconf_key):
+    widget_tree = gtk.Builder()
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "sysmon.glade"))    
+    dialog = widget_tree.get_object("SysmonDialog")
+    dialog.set_transient_for(parent)    
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/show_cpu_on_panel", "ShowCPUUsageOnPanel", True, widget_tree)
+    dialog.run()
+    dialog.hide()
         
 class CPU():
     
@@ -165,8 +176,7 @@ class G15SysMon():
         # Initial stats load and create the page 
         self.page = g15theme.G15Page(id, self.screen, 
                                      title = name, 
-                                     thumbnail_painter = self._paint_thumbnail,
-                                     panel_painter = self._paint_panel )
+                                     thumbnail_painter = self._paint_thumbnail)
         self._create_theme() 
         
         self._get_stats()
@@ -175,11 +185,12 @@ class G15SysMon():
         self.screen.key_handler.action_listeners.append(self)
         self.screen.redraw(self.page)
         
-        self._reschedule_refresh()
+        self._set_panel()
         
         # Watch for theme changes
         # TODO - This should be generic, as should theme loading really
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/theme", self._reactivate))
+        self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/show_cpu_on_panel", self._set_panel))
     
     def deactivate(self):
         self.screen.key_handler.action_listeners.remove(self)
@@ -214,6 +225,10 @@ class G15SysMon():
     ''' Private
     '''
             
+    def _set_panel(self, client = None, connection_id = None, entry = None, args = None):        
+        self.page.panel_painter = self._paint_panel if g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/show_cpu_on_panel", True) else None
+        self._reschedule_refresh()
+            
     def _reactivate(self, client, connection_id, entry, args):
         self.deactivate()
         self.activate()
@@ -242,7 +257,7 @@ class G15SysMon():
     def _schedule_refresh(self):
         if self.screen.is_visible(self.page):
             self.timer = g15util.schedule("SysmonRedraw", 1.0, self._refresh)
-        else:
+        elif self.page.panel_painter is not None:
             self.timer = g15util.schedule("SysmonRedraw", 1.0, self._refresh_panel_only)
         
     def _get_stats(self):

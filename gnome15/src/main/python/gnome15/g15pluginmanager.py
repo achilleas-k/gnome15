@@ -471,11 +471,11 @@ class G15Plugins():
                 logger.info("%s may only be run once, checking if there is another instance" % mod.id)
                 if  mod.id in self.service.active_plugins:
                     raise Exception("Plugin may %s only run on one device at a time." % mod.id)
+            if callback != None:
+                callback(idx, len(self.started), mod.name)
             instance.activate()
             self.service.active_plugins[mod.id] = True
             self.activated.append(instance)
-            if callback != None:
-                callback(idx, len(self.started), mod.name)
         except Exception as e:
             logger.error("Failed to activate plugin %s. %s" % (mod.id, str(e)))   
             self.conf_client.set_bool(self._get_plugin_key("%s/enabled" % mod.id), False)              
