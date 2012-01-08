@@ -1,0 +1,5 @@
+# This file maintains permissions for Gnome15 input devices
+#
+
+SUBSYSTEM=="input", RUN+="/sbin/modprobe uinput"
+KERNEL=="event*|uinput", GROUP="@DEVICEGROUP@", MODE="@DEVICEMODE@"
