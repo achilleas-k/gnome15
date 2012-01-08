@@ -75,7 +75,7 @@ def check_service_status(session_dbus):
         return False
 
 def start_service(no_trap=False): 
-	if module_exists("setproctitle"):
+    if module_exists("setproctitle"):
         import setproctitle
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
     else:
