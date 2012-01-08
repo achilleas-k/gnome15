@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 19:19+0000\n"
+"POT-Creation-Date: 2012-01-08 11:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,45 +18,29 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: i18n/sense.glade.h:1
-msgid "<b>Mode</b>"
+msgid "<b>Options</b>"
 msgstr ""
 
 #: i18n/sense.glade.h:2
-msgid "<b>Time (hours:minutes:seconds)</b>"
-msgstr ""
-
-#: i18n/sense.glade.h:3
-msgid "Countdown"
-msgstr ""
-
-#: i18n/sense.glade.h:4
 msgid "Enabled"
 msgstr ""
 
-#: i18n/sense.glade.h:5
-msgid "Keep stopwatch visible while actve"
-msgstr ""
-
-#: i18n/sense.glade.h:6
+#: i18n/sense.glade.h:3
 msgid "Label"
 msgstr ""
 
+#: i18n/sense.glade.h:4
+msgid "Refresh interval"
+msgstr ""
+
+#: i18n/sense.glade.h:5
+msgid "Sensors Preferences"
+msgstr ""
+
+#: i18n/sense.glade.h:6
+msgid "Type"
+msgstr ""
+
 #: i18n/sense.glade.h:7
-msgid "Loop"
-msgstr ""
-
-#: i18n/sense.glade.h:8
-msgid "Stopwatch"
-msgstr ""
-
-#: i18n/sense.glade.h:9
-msgid "Stopwatch Preferences"
-msgstr ""
-
-#: i18n/sense.glade.h:10
-msgid "Timer 1"
-msgstr ""
-
-#: i18n/sense.glade.h:11
-msgid "Timer 2"
+msgid "seconds"
 msgstr ""

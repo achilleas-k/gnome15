@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome15-plugins 0.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 19:19+0000\n"
-"PO-Revision-Date: 2012-01-02 19:19+0000\n"
+"POT-Creation-Date: 2012-01-08 11:23+0000\n"
+"PO-Revision-Date: 2012-01-08 11:23+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: en_GB\n"
@@ -18,45 +18,29 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: i18n/sense.glade.h:1
-msgid "<b>Mode</b>"
-msgstr "<b>Mode</b>"
+msgid "<b>Options</b>"
+msgstr "<b>Options</b>"
 
 #: i18n/sense.glade.h:2
-msgid "<b>Time (hours:minutes:seconds)</b>"
-msgstr "<b>Time (hours:minutes:seconds)</b>"
-
-#: i18n/sense.glade.h:3
-msgid "Countdown"
-msgstr "Countdown"
-
-#: i18n/sense.glade.h:4
 msgid "Enabled"
 msgstr "Enabled"
 
-#: i18n/sense.glade.h:5
-msgid "Keep stopwatch visible while actve"
-msgstr "Keep stopwatch visible while actve"
-
-#: i18n/sense.glade.h:6
+#: i18n/sense.glade.h:3
 msgid "Label"
 msgstr "Label"
 
+#: i18n/sense.glade.h:4
+msgid "Refresh interval"
+msgstr "Refresh interval"
+
+#: i18n/sense.glade.h:5
+msgid "Sensors Preferences"
+msgstr "Sensors Preferences"
+
+#: i18n/sense.glade.h:6
+msgid "Type"
+msgstr "Type"
+
 #: i18n/sense.glade.h:7
-msgid "Loop"
-msgstr "Loop"
-
-#: i18n/sense.glade.h:8
-msgid "Stopwatch"
-msgstr "Stopwatch"
-
-#: i18n/sense.glade.h:9
-msgid "Stopwatch Preferences"
-msgstr "Stopwatch Preferences"
-
-#: i18n/sense.glade.h:10
-msgid "Timer 1"
-msgstr "Timer 1"
-
-#: i18n/sense.glade.h:11
-msgid "Timer 2"
-msgstr "Timer 2"
+msgid "seconds"
+msgstr "seconds"

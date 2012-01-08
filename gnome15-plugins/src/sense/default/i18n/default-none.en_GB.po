@@ -17,30 +17,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: i18n/macros.glade.h:1
-msgid "Indicator Messages Preferences"
-msgstr "Indicator Messages Preferences"
-
-#: i18n/macros.glade.h:2
-msgid "Raise page when profile or memory bank changes"
-msgstr "Raise page when profile or memory bank changes"
-
-#: i18n/macros.glade.h:3
-msgid "center"
-msgstr "center"
-
-#: i18n/macros.glade.h:4
-msgid "scale"
-msgstr "scale"
-
-#: i18n/macros.glade.h:5
-msgid "stretch"
-msgstr "stretch"
-
-#: i18n/macros.glade.h:6
-msgid "tile"
-msgstr "tile"
-
-#: i18n/macros.glade.h:7
-msgid "zoom"
-msgstr "zoom"
+#: i18n/default-none.h:1
+msgid "No sensors enabled"
+msgstr "No sensors enabled"

@@ -17,29 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: i18n/imap.glade.h:1
-msgid "Advanced"
-msgstr ""
-
-#: i18n/imap.glade.h:2
-msgid "Folder"
-msgstr ""
-
-#: i18n/imap.glade.h:3
-msgid "Server:"
-msgstr ""
-
-#: i18n/imap.glade.h:4
-msgid "Use SSL"
-msgstr ""
-
-#: i18n/imap.glade.h:5
-msgid "Username"
-msgstr ""
-
-#: i18n/imap.glade.h:6
-msgid ""
-"You may enter a hostname or IP address to use the\n"
-"default port, or suffix the hostname with a colon and\n"
-"the port number, e.g. mail.mycompany.com:143"
+#: i18n/default-none.h:1
+msgid "No sensors enabled"
 msgstr ""

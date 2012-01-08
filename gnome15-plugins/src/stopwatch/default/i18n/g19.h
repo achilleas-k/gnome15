@@ -1,1 +1,1 @@
-char *s = N_("No time");
+char *s = N_("No timer enabled.");

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gnome15-plugins 0.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-01-02 19:19+0000\n"
-"PO-Revision-Date: 2012-01-02 19:19+0000\n"
+"POT-Creation-Date: 2012-01-08 11:23+0000\n"
+"PO-Revision-Date: 2012-01-08 11:23+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: en_GB\n"
@@ -17,36 +17,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: sysmon.py:35
-msgid "System Monitor"
-msgstr "System Monitor"
+#: i18n/sysmon.glade.h:1
+msgid "Sensors Preferences"
+msgstr "Sensors Preferences"
 
-#: sysmon.py:36
-msgid ""
-"Display CPU, Memory, and Network statistics. Either a summary of each "
-"system's stats is displayed, or you may cycle through the CPU and Network "
-"interfaces."
-msgstr ""
-"Display CPU, Memory, and Network statistics. Either a summary of each "
-"system's stats is displayed, or you may cycle through the CPU and Network "
-"interfaces."
-
-#: sysmon.py:39
-msgid "Copyright (C)2010 Brett Smith"
-msgstr "Copyright (C)2010 Brett Smith"
-
-#: sysmon.py:44
-msgid "Toggle Monitored CPU"
-msgstr "Toggle Monitored CPU"
-
-#: sysmon.py:45
-msgid ""
-"Toggle Monitored Network\n"
-"Interface"
-msgstr ""
-"Toggle Monitored Network\n"
-"Interface"
-
-#: sysmon.py:46
-msgid "Change view (summary or graph)"
-msgstr "Change view (summary or graph)"
+#: i18n/sysmon.glade.h:2
+msgid "Show CPU usage on panel"
+msgstr "Show CPU usage on panel"

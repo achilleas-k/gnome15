@@ -82,7 +82,7 @@ def create(gconf_key, gconf_client, screen):
     return G15Sensors(gconf_key, gconf_client, screen)
 
 def show_preferences(parent, driver, gconf_client, gconf_key):
-    G15TailsPreferences(parent, driver, gconf_client, gconf_key)
+    G15SensorsPreferences(parent, driver, gconf_client, gconf_key)
     
 def get_sensor_sources():
     sensor_sources = []
@@ -95,7 +95,7 @@ def get_sensor_sources():
             c.stop()
     return sensor_sources
 
-class G15TailsPreferences():
+class G15SensorsPreferences():
     
     def __init__(self, parent, driver, gconf_client, gconf_key):
         self._gconf_client = gconf_client
@@ -147,11 +147,15 @@ class G15TailsPreferences():
         
     def reload_model(self):
         self.sensor_model.clear() 
-        for source in get_sensor_sources():
-            for sensor in source.get_sensors():
+        ss = get_sensor_sources()
+        for source in ss:
+            sa  = source.get_sensors()
+            for sensor in sa:
                 sense_key = "%s/sensors/%s" % (self._gconf_key, gconf.escape_key(sensor.name, len(sensor.name)))
                 self.sensor_model.append([ sensor.name, g15util.get_bool_or_default(self._gconf_client, "%s/enabled" % (sense_key), True), 
                                           g15util.get_string_or_default(self._gconf_client, "%s/label" % (sense_key), sensor.name), TYPE_NAMES[sensor.sense_type] ])
+            source.stop()
+            
 
 class Sensor():
     
@@ -244,7 +248,6 @@ class LibsensorsSource():
     def get_sensors(self):
         sensor_objects = []
         sensor_names = []
-        
         for chip in sensors.iter_detected_chips():
             logger.debug("Found chip %s, adapter %s" % ( chip, chip.adapter_name))
             for feature in chip:
@@ -330,31 +333,45 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
     
     def populate_page(self):
         g15plugin.G15RefreshingPlugin.populate_page(self)
-        self.menu = g15theme.Menu("menu")
-        def menu_selected():
-            self.page.theme.set_variant(VARIANT_NAMES[self.menu.selected.sensor.sense_type])
-            self.refresh()
-            self.page.redraw()
-            
-        self.menu.on_selected = menu_selected
-        self.page.add_child(self.menu)
-        self.page.theme.svg_processor = self._process_svg        
-        self.page.add_child(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
-        i = 0
+        
+        enabled_sensors = []
         for c in self.sensor_sources:
             for s in c.get_sensors():                
                 sense_key = "%s/sensors/%s" % (self.gconf_key, gconf.escape_key(s.name, len(s.name)))
                 if g15util.get_bool_or_default(self.gconf_client, "%s/enabled" % (sense_key), True):
-                    sense_label = g15util.get_string_or_default(self.gconf_client, "%s/label" % (sense_key), s.name) 
-                    menu_item = SensorMenuItem("menuitem-%d" % i, s, sense_label)
-                    self.sensor_dict[s.name] = menu_item
-                    self.menu.add_child(menu_item)
+                    enabled_sensors.append(s)
                     
-                    # If this is the first child, change the theme variant
-                    if self.menu.get_child_count() == 1: 
-                        self.page.theme.set_variant(VARIANT_NAMES[menu_item.sensor.sense_type])
-                    
-                    i += 1
+        self.menu = g15theme.Menu("menu")
+              
+        # If there are no sensors enabled, display the 'none' variant
+        # which shows a message
+        if len(enabled_sensors) == 0: 
+            self.page.theme.set_variant("none")
+        else:      
+            self.page.theme.set_variant(None)
+            def menu_selected():
+                self.page.theme.set_variant(VARIANT_NAMES[self.menu.selected.sensor.sense_type])
+                self.refresh()
+                self.page.redraw()
+                
+            self.menu.on_selected = menu_selected
+            self.page.add_child(self.menu)
+            self.page.theme.svg_processor = self._process_svg        
+            self.page.add_child(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
+            i = 0
+            for s in enabled_sensors:                
+                sense_key = "%s/sensors/%s" % (self.gconf_key, gconf.escape_key(s.name, len(s.name)))
+                sense_label = g15util.get_string_or_default(self.gconf_client, "%s/label" % (sense_key), s.name) 
+                menu_item = SensorMenuItem("menuitem-%d" % i, s, sense_label)
+                self.sensor_dict[s.name] = menu_item
+                self.menu.add_child(menu_item)
+                
+                # If this is the first child, change the theme variant
+                if self.menu.get_child_count() == 1: 
+                    self.page.theme.set_variant(VARIANT_NAMES[menu_item.sensor.sense_type])
+                
+                i += 1
+            
     
     def deactivate(self):
         for c in self.sensor_sources:

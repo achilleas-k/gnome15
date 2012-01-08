@@ -1014,7 +1014,6 @@ class G15Config:
         if not self.adjusting:
             sel = widget.get_active()
             if sel >= 0:
-                print "Setting theme for %s to %d" % ( self._get_selected_plugin().id, sel )
                 key  = self._get_full_key("plugins/%s/theme" % self._get_selected_plugin().id )
                 path = self.theme_model.get_iter(sel)
                 self.conf_client.set_string(key, self.theme_model[path][0])

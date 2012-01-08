@@ -1397,6 +1397,11 @@ class G15Theme():
                     self.instance = module
                     
                 path = self.get_path_for_variant(self.dir, self.variant, "svg")
+                
+                # Load translation for this variant
+                actual_variant = os.path.splitext(os.path.basename(path))[0]
+                self.translation = g15locale.get_translation(actual_variant, self.dir)
+                
                 self.document = etree.parse(path)
                 
                     

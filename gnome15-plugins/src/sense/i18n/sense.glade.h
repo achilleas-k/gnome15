@@ -1,11 +1,7 @@
-char *s = N_("<b>Mode</b>");
-char *s = N_("<b>Time (hours:minutes:seconds)</b>");
-char *s = N_("Countdown");
+char *s = N_("<b>Options</b>");
 char *s = N_("Enabled");
-char *s = N_("Keep stopwatch visible while actve");
 char *s = N_("Label");
-char *s = N_("Loop");
-char *s = N_("Stopwatch");
-char *s = N_("Stopwatch Preferences");
-char *s = N_("Timer 1");
-char *s = N_("Timer 2");
+char *s = N_("Refresh interval");
+char *s = N_("Sensors Preferences");
+char *s = N_("Type");
+char *s = N_("seconds");
