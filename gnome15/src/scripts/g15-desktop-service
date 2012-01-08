@@ -21,11 +21,17 @@
 #        +-----------------------------------------------------------------------------+
 
 
+def module_exists(module_name):
+    try:
+        __import__(module_name)
+    except ImportError:
+        return False
+    else:
+        return True
+
 # This must be done first for the Lens plugin to work
-try:
-    from gi.repository import GLib, GObject, Gio
-except:
-    pass
+if module_exists("gi.repository"):
+	from gi.repository import GLib, GObject, Gio
 
 import sys
 import os
@@ -68,11 +74,11 @@ def check_service_status(session_dbus):
     except:
         return False
 
-def start_service(no_trap=False):    
-    try :
+def start_service(no_trap=False): 
+	if module_exists("setproctitle"):
         import setproctitle
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
-    except ImportError as ie:
+    else:
         # Not a big issue
         logger.debug("No setproctitle, process will be named 'python'")
 

@@ -69,7 +69,12 @@ STATUS_ICONS = { "user-available-panel" : _("Available"),
                  "user-busy-panel" : _("Busy"), 
                  "user-offline-panel" : _("Offline"), 
                  "user-invisible-panel" : _("Invisible"),
-                 "user-indeterminate" : _("Invisible") }
+                 "user-indeterminate" : _("Invisible"),
+                 "user-available" : _("Available"), 
+                 "user-away" : _("Away"), 
+                 "user-busy" : _("Busy"), 
+                 "user-offline" : _("Offline"), 
+                 "user-invisible" : _("Invisible") }
 '''
 Indicator Messages  DBUSMenu property names
 '''
