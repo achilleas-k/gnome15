@@ -165,7 +165,7 @@ class G15Macros(g15plugin.G15MenuPlugin):
                 if not m.keys in macro_keys:
                     macros.append(m)
                     macro_keys.append(m.keys)
-        if profile.base_profile != None:
+        if profile.base_profile != None and profile.base_profile != "":
             self._load_profile(g15profile.get_profile(profile.device, profile.base_profile), macros, macro_keys)
         
     def _comparator(self, o1, o2):
