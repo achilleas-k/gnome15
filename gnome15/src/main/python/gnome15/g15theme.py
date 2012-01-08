@@ -64,7 +64,6 @@ from string import Template
 from copy import deepcopy
 from cStringIO import StringIO
 from lxml import etree
-from lxml import objectify
 from threading import RLock
 import ConfigParser
 

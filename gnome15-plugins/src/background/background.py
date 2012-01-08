@@ -30,6 +30,7 @@ import gtk
 import os
 import logging
 import gconf
+from lxml import etree
 logger = logging.getLogger("background")
 
 # Plugin details - All of these must be provided
@@ -232,6 +233,17 @@ class G15Background():
             self.this_image = self.bg_img
             self.current_style = bg_style
             if g15util.is_url(self.bg_img) or os.path.exists(self.bg_img):
+                
+                """
+                TODO handle background themes and transitions from XML files properly
+                
+                For now, just get the first static image
+                """
+                if self.bg_img.endswith(".xml"):                    
+                    filet = etree.parse(self.bg_img).getroot().findtext('.//file')
+                    if filet:
+                        self.bg_img = filet                
+                
                 img_surface = g15util.load_surface_from_file(self.bg_img)
                 if img_surface is not None:
                     sx = float(screen_size[0]) / img_surface.get_width()
