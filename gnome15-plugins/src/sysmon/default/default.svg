@@ -25,16 +25,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="3.959798"
-     inkscape:cx="85.556126"
+     inkscape:cx="84.798512"
      inkscape:cy="19.356369"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1398"
-     inkscape:window-height="789"
-     inkscape:window-x="2442"
-     inkscape:window-y="57"
+     inkscape:window-height="755"
+     inkscape:window-x="417"
+     inkscape:window-y="132"
      inkscape:window-maximized="0">
     <inkscape:grid
        type="xygrid"
@@ -66,76 +66,76 @@
        id="mem_used_pc_progress"
        width="93"
        height="8"
-       x="-20"
-       y="1082.3622"
+       x="26"
+       y="1036.3622"
        class="progress" />
     <rect
        style="fill:#808080;fill-opacity:1;stroke:none"
        id="mem_cached_pc_progress"
        width="93"
        height="8"
-       x="120"
-       y="1072.3622"
+       x="26"
+       y="1036.3622"
        class="progress" />
     <rect
        style="fill:#000000;fill-opacity:1;stroke:none"
        id="net_recv_pc_progress"
        width="93"
        height="4"
-       x="-40"
-       y="992.36218"
+       x="26"
+       y="1027.3622"
        class="progress" />
     <rect
        style="fill:#000000;fill-opacity:1;stroke:none"
        id="cpu_pc_progress"
        width="93"
        height="8"
-       x="20"
-       y="982.36218"
+       x="26"
+       y="1018.3622"
        class="progress" />
     <rect
        style="fill:#000000;fill-opacity:1;stroke:none"
        id="net_send_pc_progress"
        width="93"
        height="4"
-       x="120"
-       y="992.36218"
+       x="26"
+       y="1031.3622"
        class="progress" />
     <text
        xml:space="preserve"
        style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="9.9998283"
-       y="1072.3806"
+       x="0.3359203"
+       y="1024.995"
        id="text3012"
        sodipodi:linespacing="125%"
        transform="scale(1.0000172,0.9999828)"><tspan
          sodipodi:role="line"
          id="tspan3014"
-         x="9.9998283"
-         y="1072.3806">${cpu_no}:</tspan></text>
+         x="0.3359203"
+         y="1024.995">${cpu_no}:</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="-59.998966"
-       y="1072.3806"
+       x="0.3359203"
+       y="1034.295"
        id="text3012-0"
        sodipodi:linespacing="125%"
        transform="scale(1.0000172,0.9999828)"><tspan
          sodipodi:role="line"
          id="tspan3014-9"
-         x="-59.998966"
-         y="1072.3806">${net_no}</tspan></text>
+         x="0.3359203"
+         y="1034.295">${net_no}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="80"
-       y="1072.3622"
+       x="0.21484375"
+       y="1042.2772"
        id="text3012-6"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3014-3"
-         x="80"
-         y="1072.3622">Mem:</tspan></text>
+         x="0.21484375"
+         y="1042.2772">Mem:</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:6.00010347px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
@@ -151,27 +151,27 @@
     <text
        xml:space="preserve"
        style="font-size:6.00010347px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="69.998795"
-       y="972.37891"
+       x="156.67906"
+       y="1032.995"
        id="text3012-1-5"
        sodipodi:linespacing="125%"
        transform="scale(1.0000172,0.9999828)"><tspan
          sodipodi:role="line"
          id="tspan3014-0-8"
-         x="69.998795"
-         y="972.37891">${net_recv_mbps}/${net_send_mbps}</tspan></text>
+         x="156.67906"
+         y="1032.995">${net_recv_mbps}/${net_send_mbps}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:6.00010347px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="209.99638"
-       y="972.37891"
+       x="158.2635"
+       y="1041.995"
        id="text3012-1-5-6"
        sodipodi:linespacing="125%"
        transform="scale(1.0000172,0.9999828)"><tspan
          sodipodi:role="line"
          id="tspan3014-0-8-2"
-         x="209.99638"
-         y="972.37891">${mem_used_gb}/${mem_total_gb}</tspan></text>
+         x="158.2635"
+         y="1041.995">${mem_used_gb}/${mem_total_gb}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:6px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans;font-stretch:normal;font-variant:normal;writing-mode:lr"
@@ -220,13 +220,5 @@
          id="tspan3006-7"
          x="102.52634"
          y="1050.9502">L4 ${next_net_no}</tspan></text>
-    <rect
-       style="opacity:0.98999999;fill:#ff0000;fill-opacity:0.53881273;stroke:none"
-       id="cpu"
-       width="50"
-       height="20"
-       x="0"
-       y="1018.3622"
-       class="graph" />
   </g>
 </svg>

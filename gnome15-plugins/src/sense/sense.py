@@ -26,13 +26,10 @@ import gnome15.g15plugin as g15plugin
 import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
 import os.path
-import commands
 import dbus
 import sensors
 import gtk
 import gconf
-
-from ctypes import byref, c_int
 
 import subprocess
 
@@ -70,9 +67,10 @@ Sensor types
 VOLTAGE = 0
 TEMPERATURE = 2
 FAN = 1
+UNKNOWN_1 = 3
 
 TYPE_NAMES = [ "Volt", "Fan", "Temp", "????", "????", "????" ]
-VARIANT_NAMES = { VOLTAGE : "volt", TEMPERATURE : None, FAN : "fan" } 
+VARIANT_NAMES = { VOLTAGE : "volt", TEMPERATURE : None, FAN : "fan", UNKNOWN_1 : "volt" } 
 
 ''' 
 This plugin displays sensor information
@@ -291,8 +289,16 @@ class NvidiaSource():
         self.name = "NVidia"
         
     def get_sensors(self):
-        return [Sensor(TEMPERATURE, "GPUCoreTemp", int(commands.getoutput("nvidia-settings -q GPUCoreTemp -t")))]
+        return [Sensor(TEMPERATURE, "GPUCoreTemp", int(self.getstatusoutput("nvidia-settings -q GPUCoreTemp -t")[1]))]
     
+    def getstatusoutput(self, cmd):
+        pipe = os.popen('{ ' + cmd + '; } 2>/dev/null', 'r')
+        text = pipe.read()
+        sts = pipe.close()
+        if sts is None: sts = 0
+        if text[-1:] == '\n': text = text[:-1]
+        return sts, text
+
     def is_valid(self):
         if not os.path.exists("/dev/nvidiactl"):
             return False

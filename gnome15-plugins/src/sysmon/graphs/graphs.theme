@@ -1,4 +1,4 @@
 [theme]
 name=Graphs
 description=Displays system status as a number graphs.
-unsupported_models=g11,g110
+supported_models=g19
