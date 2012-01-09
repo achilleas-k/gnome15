@@ -313,7 +313,6 @@ class G19UsbController(object):
         config = self.__lcd_device.configurations[0]
         display_interface = config.interfaces[0][0]
         macro_and_backlight_interface = config.interfaces[1][0]
-        logger.debug("Display Interface = %d, Macro / Backlight interface = %d" % ( display_interface.iInterface, macro_and_backlight_interface.iInterface ) )
 
         try:
             logger.debug("Detaching kernel driver for LCD device")
