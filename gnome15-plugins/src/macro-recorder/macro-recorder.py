@@ -154,16 +154,24 @@ class G15MacroRecorder():
     
     def handle_key(self, keys, state, post):
         # Memory keys
-        if not post and state == g15driver.KEY_STATE_UP and not g15driver.G_KEY_MR in keys:
-            """
-            All other keys end recording. We use the UP keystate, so it doesn't trigger the
-            macro itself when it is released at the end of recording
-            """
-            self._last_keys = keys                    
-            if self._record_thread != None:
+                            
+        if self._record_thread != None:            
+            # Let the M1-M3 and MR key be handled as actions 
+            if g15driver.G_KEY_MR in keys or g15driver.G_KEY_M1 in keys or g15driver.G_KEY_M2 in keys or g15driver.G_KEY_M3 in keys:
+                return False
+            
+            # Stop recording on release of a macro key
+            if not post and ( state == g15driver.KEY_STATE_UP or state == g15driver.KEY_STATE_HELD):
+                """
+                All other keys end recording. We use the UP keystate, so it doesn't trigger the
+                macro itself when it is released at the end of recording
+                """
+                self._last_keys = keys
                 self._record_keys = keys
-                self._done_recording()
-                return True
+                self._done_recording(state)
+                
+            # When recording, we want all key events until recording is done
+            return True
                 
     '''
     Private
@@ -213,17 +221,18 @@ class G15MacroRecorder():
                     self._script_model.append([pr, s])
                 self._redraw()
             
-    def _done_recording(self):
+    def _done_recording(self, state):
         if self._record_keys != None:
             record_keys = self._record_keys    
             self._halt_recorder()   
               
             active_profile = g15profile.get_active_profile(self._screen.device)
             key_name = ", ".join(g15util.get_key_names(record_keys))
+            print "script: %s" % str(self._script_model)
             if len(self._script_model) == 0:  
                 self.icon = "edit-delete"
                 self._message = key_name + " deleted"
-                active_profile.delete_macro(self._screen.get_memory_bank(), record_keys)  
+                active_profile.delete_macro(state, self._screen.get_memory_bank(), record_keys)  
                 self._screen.redraw(self._page)   
             else:
                 macro_script = ""
@@ -234,7 +243,7 @@ class G15MacroRecorder():
                 self.icon = "tag-new"   
                 self._message = key_name + " created"
                 memory = self._screen.get_memory_bank()
-                macro = active_profile.get_macro(memory, record_keys)
+                macro = active_profile.get_macro(state, memory, record_keys)
                 if macro:
                     macro.type = g15profile.MACRO_SCRIPT
                     macro.macro = macro_script

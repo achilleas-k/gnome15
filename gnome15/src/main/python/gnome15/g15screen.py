@@ -850,7 +850,7 @@ class G15Screen():
                     return True
                 
         # Now to all the plugins
-        if self.plugins.handle_key(keys, state_id, post=False):
+        if self.plugins.handle_key(keys, state_id, post=post):
             return True
         
     def action_performed(self, binding):
