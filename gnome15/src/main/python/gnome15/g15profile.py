@@ -201,8 +201,8 @@ def create_profile(profile):
     Keyword arguments:
     profile        --    profile to save
     """
-    if profile.id == None:
-        profile.id = str(time.time())
+    if profile.id == None or profile.id == -1:
+        profile.set_id(str(time.time()))
     logger.info("Creating profile %s, %s" % ( profile.id, profile.name ))
     profile.save()
     
@@ -600,7 +600,7 @@ class G15Profile():
         self.name = None
         self.icon = None
         self.background = None
-        self.filename = None
+        self.filename = file_path
         self.author = ""
         self.macros = { g15driver.KEY_STATE_UP: [],
                        g15driver.KEY_STATE_HELD: []
@@ -639,7 +639,7 @@ class G15Profile():
         """
         profile_copy = get_profile(self.device, self.id)
         
-        archive_file = zipfile.ZipFile(filename, "w")
+        archive_file = zipfile.ZipFile(filename, "w", compression = zipfile.ZIP_DEFLATED)
         try:
             # Icon
             if profile_copy.icon and os.path.exists(profile_copy.icon):
@@ -696,8 +696,8 @@ class G15Profile():
         if self.read_only:
             raise Exception("Cannot write to read-only profile")
         logger.info("Saving macro profile %s, %s" % ( self.id, self.name ))
-        if filename is not None:
-            self.filename = filename
+        if filename is None:
+            filename = self.filename
         if self.window_name == None:
             self.window_name = ""
         if self.icon == None:
@@ -753,7 +753,12 @@ class G15Profile():
                     if len(macro.keys) > 0:
                         macro._store()
                 
-        self._write(self.filename)
+        self._write(filename)
+        
+    def set_id(self, profile_id):
+        self.id = profile_id
+        self.read_only = False
+        self.filename = "%s/%s/%s.macros" % ( conf_dir, self.device.uid, self.id )
         
     def get_binding_for_action(self, activate_on, action_name):
         """
@@ -795,7 +800,7 @@ class G15Profile():
         """
         Delete this macro profile
         """
-        os.remove(self._get_filename())
+        os.remove(self.filename)
         
     def delete_macro(self, activate_on, memory, keys):
         """
@@ -913,11 +918,9 @@ class G15Profile():
         
         # Load macro file
         if self.id != -1 or filename is not None:
-            self.filename = filename
-            self.filename = self._get_filename()
-            if os.path.exists(self.filename):
-                self.read_only = not os.stat(self.filename)[0] & stat.S_IWRITE
-                self.parser.readfp(codecs.open(self.filename, "r", "utf8"))
+            if isinstance(filename, str) and  os.path.exists(filename):
+                self.read_only = not os.stat(filename)[0] & stat.S_IWRITE
+                self.parser.readfp(codecs.open(filename, "r", "utf8"))
             elif fd is not None:
                 self.read_only = True
                 self.parser.readfp(fd)
@@ -989,9 +992,11 @@ class G15Profile():
         sm = []
         if activate_on is None:
             for activate_on in [ g15driver.KEY_STATE_UP, g15driver.KEY_STATE_HELD ]:
-                sm += self.macros[activate_on][memory_number - 1]
+                if activate_on in self.macros and memory_number <= len(self.macros[activate_on]):
+                    sm += self.macros[activate_on][memory_number - 1]
         else:
-            sm += self.macros[activate_on][memory_number - 1]
+            if activate_on in self.macros and memory_number <= len(self.macros[activate_on]):
+                sm += self.macros[activate_on][memory_number - 1]
         sm.sort(self._comparator)
         return sm
                     
@@ -1024,7 +1029,7 @@ class G15Profile():
         return profile is not None and self.id == profile.id
         
     def _write(self, save_file = None):
-        if save_file is None and self.id == -1:
+        if save_file is None or self.id == -1:
             raise Exception("Cannot save a profile without a filename or an id.")
         
         if isinstance(save_file, str):
@@ -1048,11 +1053,6 @@ class G15Profile():
             if option.startswith("keys_" + key_list_key + "_"):
                 self.parser.remove_option(section_name, option)
         
-    def _get_filename(self):
-        if self.filename is not None:
-            return self.filename
-        return "%s/%s/%s.macros" % ( conf_dir, self.device.uid, self.id )
-    
     def _is_excluded(self, excluded, macro):
         for e in excluded:
             if e == macro:

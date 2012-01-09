@@ -1128,18 +1128,20 @@ class G15Config:
             import_filename = dialog.get_filename()
             profile_dir = g15profile.get_profile_dir(self.selected_device)
             file = zipfile.ZipFile(import_filename, "r")
+            
+            # Find the next free id
+            # TODO bit crap
+            profile_id = 0
+            while True:
+                if g15profile.get_profile(self.selected_device, profile_id):
+                    profile_id += 1
+                else:
+                    break
+            
             try:
                 for info in file.infolist():
                     file_split = info.filename.split(".", 1)
-                    profile_id = int(file_split[0])
                     dest_name = info.filename
-                    
-                    # Find the next free id
-                    while True:
-                        if g15profile.get_profile(self.selected_device, profile_id):
-                            profile_id += 1
-                        else:
-                            break
                         
                     dest_name = "%d.%s" % ( profile_id, file_split[1])
                     
@@ -1149,29 +1151,35 @@ class G15Config:
                         macro_file = file.open(info.filename, 'r')
                         try:
                             imported_profile = g15profile.G15Profile(self.selected_device)
-                            imported_profile.load(macro_file)
-                            imported_profile.id = profile_id
+                            imported_profile.load(None, macro_file)
+                            imported_profile.set_id(profile_id)
                         finally:
                             macro_file.close()
-                            new_name = imported_profile.name
-                            idx = 1
-                            while True:
-                                found = False
-                                for p in profiles:
-                                    if new_name == p.name:
-                                        found = True
-                                        break
-                                if found:
-                                    idx += 1
-                                    new_name = "%s (%d)" % (imported_profile.name, idx)
-                                else:
+                            
+                        # Find the best new name for the profile
+                        new_name = imported_profile.name
+                        idx = 1
+                        while True:
+                            found = False
+                            for p in profiles:
+                                if new_name == p.name:
+                                    found = True
                                     break
-                            imported_profile.name = new_name
-                            if imported_profile.icon:
-                                imported_profile.icon = "%s/%d.%s" % ( profile_dir, profile_id, imported_profile.icon.split(".", 1)[1] )
-                            if imported_profile.background:
-                                imported_profile.background = "%s/%d.%s" % ( profile_dir, profile_id, imported_profile.background.split(".", 1)[1] )
-                            g15profile.create_profile(imported_profile)
+                            if found:
+                                idx += 1
+                                new_name = "%s (%d)" % (imported_profile.name, idx)
+                            else:
+                                break
+                        imported_profile.name = new_name
+                        
+                        # Set the icons
+                        if imported_profile.icon:
+                            imported_profile.icon = "%s/%d.%s" % ( profile_dir, profile_id, imported_profile.icon.split(".", 1)[1] )
+                        if imported_profile.background:
+                            imported_profile.background = "%s/%d.%s" % ( profile_dir, profile_id, imported_profile.background.split(".", 1)[1] )
+                            
+                        # Actually save
+                        g15profile.create_profile(imported_profile)
                     else:
                         # Just extract all other files                        
                         dest_dir = os.path.join(profile_dir, os.path.dirname(dest_name))
