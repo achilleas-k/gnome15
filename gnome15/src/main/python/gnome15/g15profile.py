@@ -202,7 +202,7 @@ def create_profile(profile):
     profile        --    profile to save
     """
     if profile.id == None or profile.id == -1:
-        profile.set_id(str(time.time()))
+        profile.set_id(long(time.time()))
     logger.info("Creating profile %s, %s" % ( profile.id, profile.name ))
     profile.save()
     
@@ -592,7 +592,7 @@ class G15Profile():
         id            -- profile ID 
         """
         
-        self.id = profile_id
+        
         self.device = device
         self.read_only = False
         self.parser = ConfigParser.ConfigParser({
@@ -601,6 +601,8 @@ class G15Profile():
         self.icon = None
         self.background = None
         self.filename = file_path
+        if profile_id is not None:
+            self.set_id(profile_id)
         self.author = ""
         self.macros = { g15driver.KEY_STATE_UP: [],
                        g15driver.KEY_STATE_HELD: []
@@ -756,7 +758,7 @@ class G15Profile():
         self._write(filename)
         
     def set_id(self, profile_id):
-        self.id = profile_id
+        self.id = int(profile_id)
         self.read_only = False
         self.filename = "%s/%s/%s.macros" % ( conf_dir, self.device.uid, self.id )
         
@@ -903,7 +905,7 @@ class G15Profile():
         """
         Make this the currently active profile
         """
-        conf_client.set_string("/apps/gnome15/%s/active_profile" % self.device.uid, self.id)
+        conf_client.set_string("/apps/gnome15/%s/active_profile" % self.device.uid, str(self.id))
         
     def load(self, filename = None, fd = None):
         """
