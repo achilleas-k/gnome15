@@ -525,7 +525,13 @@ class G15Service(g15desktop.G15AbstractService):
             listener.service_starting_up()
             
         # UINPUT
-        g15uinput.open_devices()
+        try:
+            g15uinput.open_devices()
+        except IOError as (errno, strerror):
+            if errno == 13:
+                raise Exception("Failed to open uinput devices. Do you have the uinput module loaded (try modprobe uinput), and are the permissions of /dev/uinput correct? %s" % strerror)
+            else:
+                raise
         
         self.session_bus = dbus.SessionBus()
         
