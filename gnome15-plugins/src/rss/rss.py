@@ -199,7 +199,7 @@ class G15FeedPage(g15theme.G15Page):
             elif "link" in img:
                 icon = img["link"]
         if icon is None:
-            icon = g15util.get_icon_path("application-rss+xml", self._screen.height)
+            icon = g15util.get_icon_path(["application-rss+xml","gnome-mime-application-rss+xml"], self._screen.height)
             
         if icon == None:
             self._icon_surface = None

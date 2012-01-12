@@ -67,7 +67,7 @@ def are_calibration_tools_available():
     """
     Test for the existence of calibration tools 'jstest-gtk' and 'jscal'.
     """
-    return os.system("which jstest-gtk") == 0 and os.system("which jscal") == 0
+    return os.system("which jstest-gtk >/dev/null") == 0 and os.system("which jscal >/dev/null") == 0
     
 def open_devices():
     """

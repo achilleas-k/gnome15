@@ -102,6 +102,14 @@ def run_script(script, args = None, background = True):
     logger.info("Running '%s'" % p)
     return os.system("python \"%s\" %s %s" % ( p, a, " &" if background else "" ))
 
+def call_if_exists(obj, function_name, *args):
+    """
+    Call a function on an object if it exists, ignoring any errors if it doesn't
+    """
+    func = getattr(obj, function_name, None)
+    if callable(func):
+        func(*args)
+
 
 '''
 GConf stuff
@@ -445,12 +453,15 @@ def flip_hv_centered_on(context, fx, fy, cx, cy):
     mtrx = cairo.Matrix(fx,0,0,fy,cx*(1-fx),cy*(fy-1))
     context.transform(mtrx)
     
-def get_image_cache_file(filename, size = None):
+def get_cache_filename(filename, size = None):    
     cache_file = base64.urlsafe_b64encode("%s-%s" % ( filename, str(size if size is not None else "0,0") ) )
     cache_dir = os.path.expanduser("~/.cache/gnome15")
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
-    full_cache_path = "%s/%s.img" % ( cache_dir, cache_file )
+    return "%s/%s.img" % ( cache_dir, cache_file )
+    
+def get_image_cache_file(filename, size = None):
+    full_cache_path = get_cache_filename(filename, size)
     if os.path.exists(full_cache_path):
         return full_cache_path
     
@@ -485,6 +496,7 @@ def load_surface_from_file(filename, size = None):
                 type = str(mime.get_type(filename))
             
             if filename.startswith("http:") or filename.startswith("https:"):
+                full_cache_path = get_cache_filename(filename, size)
                 cache_fileobj = open(full_cache_path, "w")
                 cache_fileobj.write(data)
                 cache_fileobj.close()

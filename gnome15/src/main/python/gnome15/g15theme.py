@@ -653,8 +653,7 @@ class G15Page(Component):
         self.title = title
         screen = self.get_screen()
         if screen and screen.get_page(self.id) is not None:
-            for l in screen.screen_change_listeners:
-                l.title_changed(self, title)
+            screen.page_title_changed(self, title)
         
     def set_priority(self, priority):
         screen = self.get_screen()
@@ -775,23 +774,47 @@ class G15Page(Component):
         if font_weight:
             self.font_weight = font_weight
             
-    def text(self, text, x, y, width, height, text_align = "left"):
+    def text(self, text, x, y, width, height, constraints = ""):
         bounds = None
         if width > 0 and height > 0:
             bounds = (x, y, width, height)
-        if text_align == "center":
-            align = pango.ALIGN_CENTER
-        elif text_align == "right":
-            align = pango.ALIGN_RIGHT
-        else:
-            align = pango.ALIGN_LEFT
-        self.text_handler.set_attributes(text, bounds = bounds, align = align, font_desc = self.font_family, font_pt_size = self.font_size, \
-                                 style = self.font_style, weight = self.font_weight)
+             
+        al = constraints.split(",")
+        align = None
+        valign = None
+        wrap = None
+        wrap_width = None
+        for con in al:
+            if con == "wrapchar":
+                wrap = pango.WRAP_CHAR    
+            elif con == "wrapword":
+                wrap = pango.WRAP_WORD
+            elif con == "wrapwordchar":
+                wrap = pango.WRAP_WORD_CHAR
+            else:
+                if align == None:
+                    align = self._parse_align(con)
+                else:
+                    valign = self._parse_align(con)
+            
+        wrap_width = int(pango.SCALE * width) if width > 0 and height > 0 else None
+            
+        self.text_handler.set_attributes(text, bounds, align = align, valign = valign, \
+                                         font_desc = self.font_family, font_pt_size = self.font_size, \
+                                         style = self.font_style, weight = self.font_weight, \
+                                         width = wrap_width, wrap = wrap)
         self.text_handler.draw(x, y)
         
     """
     Private
     """
+    def _parse_align(self, align):
+        if align == "center":
+            return pango.ALIGN_CENTER
+        elif align == "right" or align == "bottom":
+            return pango.ALIGN_RIGHT
+        else:
+            return pango.ALIGN_LEFT
         
     def _do_on_shown(self):
         for l in self.on_shown_listeners:

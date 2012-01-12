@@ -87,6 +87,13 @@ KEY_MAP = {
         g15driver.G_KEY_M3  : 1<<20,
         g15driver.G_KEY_MR  : 1<<21,
         
+        # L1-L5
+        g15driver.G_KEY_L1     : 1<<22,
+        g15driver.G_KEY_L2   : 1<<23,
+        g15driver.G_KEY_L3     : 1<<24,
+        g15driver.G_KEY_L4  : 1<<25,
+        g15driver.G_KEY_L5   : 1<<26,
+        
         # Map to L1-L5
         g15driver.G_KEY_UP     : 1<<22,
         g15driver.G_KEY_LEFT   : 1<<23,
@@ -109,6 +116,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     
     g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/port", "PortAdjustment", 15550, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/keep_aspect_ratio", "KeepAspectRatio", False, widget_tree, True)
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/take_over_macro_keys", "TakeOverMacroKeys", True, widget_tree, True)
     
     dialog.run()
     dialog.hide()
@@ -221,9 +229,10 @@ class G15DaemonClient(asyncore.dispatcher):
                 mask_img = pil_img.copy()                           
                 mask_img = mask_img.convert("L")
                 pil_img = pil_img.convert("P")
-                pil_img.putpalette(self.plugin.palette)                              
-                pil_img = pil_img.convert("RGBA")                        
-                pil_img.putalpha(mask_img)                    
+                if self.plugin.palette is not None:
+                    pil_img.putpalette(self.plugin.palette)                              
+                    pil_img = pil_img.convert("RGBA")                        
+                    pil_img.putalpha(mask_img)                    
 
                 # TODO find a quicker way of converting
                 pixbuf = g15util.image_to_pixbuf(pil_img, "png")
@@ -392,12 +401,16 @@ class G15DaemonServer():
         for c in self.clients:
             c.handle_close()
         
-    def load_configuration(self):        
+    def load_configuration(self):
+        self.take_over_macro_keys = g15util.get_bool_or_default(self.gconf_client, "%s/take_over_macro_keys" % self.gconf_key, True) 
         foreground_control = self.screen.driver.get_control("foreground")
-        self.palette = [0 for n in range(768)]
-        self.palette[765] = foreground_control.value[0]
-        self.palette[766] = foreground_control.value[1]
-        self.palette[767] = foreground_control.value[2]
+        if foreground_control is None:
+            self.palette = None
+        else:        
+            self.palette = [0 for n in range(768)]
+            self.palette[765] = foreground_control.value[0]
+            self.palette[766] = foreground_control.value[1]
+            self.palette[767] = foreground_control.value[2]
         
         backlight_control = self.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
         self.default_backlight = backlight_control.value if backlight_control is not None else None 
@@ -413,11 +426,12 @@ class G15DaemonServer():
         self.clients.append(client)
                     
     def handle_key(self, keys, state, post):
-        if not post:
+        if ( not post and self.take_over_macro_keys ) or ( post and not self.take_over_macro_keys ):
             visible = self.screen.get_visible_page()    
             for client in self.clients:
                 if client.enable_keys and client.page == visible:
-                    client.handley_key(keys, state)
+                    client.handle_key(keys, state)
+                    return True
     
 class G15Daemon(asyncore.dispatcher):
     def __init__(self, port, plugin):

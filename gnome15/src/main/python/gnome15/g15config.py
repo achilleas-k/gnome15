@@ -37,6 +37,7 @@ import subprocess
 import shutil
 import traceback
 import zipfile
+import time
 
 import logging
 logger = logging.getLogger("config")
@@ -262,7 +263,7 @@ class G15Config:
         self.window_entry = self.widget_tree.get_object("WindowEntry")
         self.window_name = self.widget_tree.get_object("WindowName")
         self.window_select = self.widget_tree.get_object("WindowSelect")
-        self.remove_button = self.widget_tree.get_object("RemoveButton")
+        self.context_remove_profile = self.widget_tree.get_object("ContextRemoveProfile")
         self.activate_on_focus = self.widget_tree.get_object("ActivateProfileOnFocusCheckbox")
         self.macro_name_renderer = self.widget_tree.get_object("MacroNameRenderer")
         self.profile_name_renderer = self.widget_tree.get_object("ProfileNameRenderer")
@@ -276,6 +277,7 @@ class G15Config:
         self.release_delay_adjustment = self.widget_tree.get_object("ReleaseDelayAdjustment")
         self.profile_icon = self.widget_tree.get_object("ProfileIcon")
         self.background = self.widget_tree.get_object("Background")
+        self.background_label = self.widget_tree.get_object("BackgroundLabel")
         self.icon_browse_button = self.widget_tree.get_object("BrowseForIcon")
         self.background_browse_button = self.widget_tree.get_object("BrowseForBackground")
         self.clear_icon_button = self.widget_tree.get_object("ClearIcon")
@@ -287,6 +289,7 @@ class G15Config:
         self.macros_model = self.widget_tree.get_object("MacroModel")     
         self.mapped_key_model = self.widget_tree.get_object("MappedKeyModel")
         self.profiles_model = self.widget_tree.get_object("ProfileModel")
+        self.profiles_context_menu = self.widget_tree.get_object("ProfileContextMenu")
         self.device_model = self.widget_tree.get_object("DeviceModel")
         self.device_view = self.widget_tree.get_object("DeviceView")
         self.main_pane = self.widget_tree.get_object("MainPane")
@@ -349,7 +352,9 @@ class G15Config:
         self.widget_tree.get_object("PreferencesButton").connect("clicked", self._show_preferences)
         self.widget_tree.get_object("AboutPluginButton").connect("clicked", self._show_about_plugin)
         self.widget_tree.get_object("AddButton").connect("clicked", self._add_profile)
-        self.widget_tree.get_object("ActivateButton").connect("clicked", self._activate)
+        self.widget_tree.get_object("ContextDuplicateProfile").connect("activate", self._copy_profile)
+        self.widget_tree.get_object("ContextActivateProfile").connect("activate", self._activate)
+        self.widget_tree.get_object("ContextExportProfile").connect("activate", self._export)
         self.activate_on_focus.connect("toggled", self._activate_on_focus_changed)
         self.activate_by_default.connect("toggled", self._activate_on_focus_changed)
         self.clear_icon_button.connect("clicked", self._clear_icon)
@@ -366,7 +371,8 @@ class G15Config:
         self.m2.connect("toggled", self._memory_changed)
         self.m3.connect("toggled", self._memory_changed)
         self.profiles_tree.connect("cursor-changed", self._select_profile)
-        self.remove_button.connect("clicked", self._remove_profile)
+        self.profiles_tree.connect("button-press-event", self._show_profile_list_context)
+        self.context_remove_profile.connect("activate", self._remove_profile)
         self.send_delays.connect("toggled", self._send_delays_changed)
         self.fixed_delays.connect("toggled", self._send_delays_changed)
         self.press_delay_adjustment.connect("value-changed", self._send_delays_changed)
@@ -705,7 +711,7 @@ class G15Config:
     def _load_drivers(self):
         self.driver_model.clear()
         if self.selected_device:
-            for driver_mod_key in g15drivermanager.imported_drivers:
+            for driver_mod_key in list(g15drivermanager.imported_drivers):
                 driver_mod = g15drivermanager.imported_drivers[driver_mod_key]
                 try:
                     driver = driver_mod.Driver(self.selected_device)
@@ -713,6 +719,8 @@ class G15Config:
                         self.driver_model.append((driver_mod.id, driver_mod.name))
                 except Exception as e:
                     logger.error("Failed to load driver. %s" % str(e))
+                    # No point in continually displaying this error
+                    del g15drivermanager.imported_drivers[driver_mod_key]
             
         self.driver_combo.set_sensitive(len(self.driver_model) > 1)
         self._set_driver_from_configuration()
@@ -1355,7 +1363,7 @@ class G15Config:
         G15GlobalConfig(self.main_window, self.widget_tree, self.conf_client)
         
     def _add_profile(self, widget):
-        dialog = self.widget_tree.get_object("AddProfileDialog") 
+        dialog = self.widget_tree.get_object("NewProfileDialog") 
         dialog.set_transient_for(self.main_window) 
         response = dialog.run()
         dialog.hide()
@@ -1365,6 +1373,37 @@ class G15Config:
             new_profile.name = new_profile_name
             g15profile.create_profile(new_profile)
             self.selected_profile = g15profile.get_profile(self.selected_device, new_profile.id)
+            self._load_profile_list()
+        
+    def _copy_profile(self, widget):
+        dupe_profile = g15profile.get_profile(self.selected_device, self.selected_profile.id)
+        dialog = self.widget_tree.get_object("CopyProfileDialog") 
+        dialog.set_transient_for(self.main_window)
+        
+        # Choose a default name for the copy
+        default_name = self.selected_profile.name
+        last_cb = default_name.rfind(")")
+        last_ob = default_name.rfind("(")
+        i = 0
+        if last_cb >=0 and last_ob >0:
+            i = int(default_name[last_ob + 1:last_cb])
+            default_name = default_name[:last_ob].strip()
+        new_name = default_name
+        while True:
+            p = g15profile.get_profile_by_name(self.selected_device, new_name)
+            if p is None:
+                break
+            i += 1
+            new_name = "%s (%i)" % ( default_name, i )
+         
+        self.widget_tree.get_object("CopiedProfileName").set_text(new_name)
+        response = dialog.run()
+        dialog.hide()
+        if response == 1:            
+            dupe_profile.set_id(long(time.time()))
+            dupe_profile.name = self.widget_tree.get_object("CopiedProfileName").get_text()
+            dupe_profile.save()
+            self.selected_profile = dupe_profile
             self._load_profile_list()
         
     def _get_memory_number(self):
@@ -1530,7 +1569,7 @@ class G15Config:
                 self.parent_profile_box.set_visible(False)
                 self.window_name.set_visible(False)
                 self.activate_by_default.set_visible(True)
-                self.remove_button.set_sensitive(False)
+                self.context_remove_profile.set_sensitive(False)
             else:
                 self._load_windows()
                 self.launch_pattern_box.set_visible(True)
@@ -1542,7 +1581,7 @@ class G15Config:
                 self.activate_on_focus.set_visible(True)
                 self.window_label.set_visible(True)
                 self.activate_by_default.set_visible(False)
-                self.remove_button.set_sensitive(not profile.read_only)
+                self.context_remove_profile.set_sensitive(not profile.read_only)
                 
             self.activate_on_launch.set_active(profile.activate_on_launch)
             self.launch_pattern.set_sensitive(self.activate_on_launch.get_active())
@@ -1558,6 +1597,10 @@ class G15Config:
                     self.color_button.set_color(g15util.to_color(rgb))
                     self.enable_color_for_m_key.set_active(True)
                 self.enable_color_for_m_key.set_sensitive(not profile.read_only)
+                
+            self.background_browse_button.set_visible(self.driver.get_bpp() > 1)
+            self.background_label.set_visible(self.driver.get_bpp() > 1)
+            self.clear_background_button.set_visible(self.driver.get_bpp() > 1)
                     
             self._load_parent_profiles()
             self.parent_profile_combo.set_active(0)
@@ -1734,3 +1777,16 @@ class G15Config:
     def _color_for_mkey_enabled(self, widget):
         self.color_button.set_sensitive(widget.get_active())        
         self._profile_color_changed(self.color_button)
+        
+    def _show_profile_list_context(self, treeview, event):
+        if event.button == 3:
+            x = int(event.x)
+            y = int(event.y)
+            time = event.time
+            pthinfo = treeview.get_path_at_pos(x, y)
+            if pthinfo is not None:
+                path, col, cellx, celly = pthinfo
+                treeview.grab_focus()
+                treeview.set_cursor( path, col, 0)
+                self.profiles_context_menu.popup( None, None, None, event.button, time)
+            return True

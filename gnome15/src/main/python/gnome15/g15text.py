@@ -47,10 +47,9 @@ class G15Text():
     def __init__(self, antialias):
         self.antialias = antialias
         
-    def set_attributes(self, text, bounds = None, wrap = None, align = None, width = None, spacing = None, \
-            font_desc = None, font_absolute_size = None):
+    def set_attributes(self, text, bounds):
         self.text = text
-        self.bounds = bounds
+        self.bounds = bounds        
         
     def measure(self):
         raise Exception("Not implemented")
@@ -78,6 +77,7 @@ class G15PangoText(G15Text):
         pangocairo.context_set_font_options(pango_context, self._create_font_options())   
         self.pango_cairo_context = None
         self.layout = None
+        self.valign = pango.ALIGN_CENTER
         
     def set_canvas(self, canvas):           
         G15Text.set_canvas(self, canvas)
@@ -87,13 +87,15 @@ class G15PangoText(G15Text):
         
     def set_attributes(self, text, bounds = None, wrap = None, align = pango.ALIGN_LEFT, width = None, spacing = None, \
             font_desc = None, font_absolute_size = None, attributes = None,
-            weight = None, style = None, font_pt_size = None):
+            weight = None, style = None, font_pt_size = None,
+            valign = None):
         
         logger.debug("Text: %s, bounds = %s, wrap = %s, align = %s, width = %s, attributes = %s, spacing = %s, font_desc = %s, weight = %s, style = %s, font_pt_size = %s" \
                 % ( str(text), str(bounds), str(wrap), str(align), str(width), str(attributes), str(spacing), str(font_desc), \
                     str(weight), str(style), str(font_pt_size))) 
         
-        G15Text.set_attributes(self, text, bounds, wrap, align, width, spacing, font_desc, font_absolute_size)  
+        G15Text.set_attributes(self, text, bounds)
+        self.valign = valign
             
         font_desc_name = "Sans" if font_desc == None else font_desc
         if weight:
@@ -127,17 +129,20 @@ class G15PangoText(G15Text):
     
     def draw(self, x, y):
         self.pango_cairo_context.save()
-        if self.bounds:
+        if self.bounds is not None:
             self.pango_cairo_context.rectangle(self.bounds[0] - 1, self.bounds[1] - 1, self.bounds[2] + 2, self.bounds[3] + 2)
             self.pango_cairo_context.clip()
             
-        # Can only align text when they are bounds within which to align it
-        if self.bounds is not None:
-            y = y - ( self.metrics.get_ascent()  / 1000.0 )
-            if self.layout.get_alignment() == pango.ALIGN_CENTER:
-                x = x - ( self.bounds[2] / 2 )
-            elif self.layout.get_alignment() == pango.ALIGN_RIGHT:
-                x = x - ( self.bounds[2] )
+            if self.valign == pango.ALIGN_RIGHT:
+                y += self.bounds[3] - ( self.metrics.get_ascent()  / 1000.0 )
+            elif self.valign == pango.ALIGN_CENTER:
+                y += ( self.bounds[3] - ( self.metrics.get_ascent()  / 1000.0 ) ) / 2
+            # Can only align text when they are bounds within which to align it
+#            y = y - ( self.metrics.get_ascent()  / 1000.0 )
+#            if self.layout.get_alignment() == pango.ALIGN_CENTER:
+#                x = x - ( self.bounds[2] / 2 )
+#            elif self.layout.get_alignment() == pango.ALIGN_RIGHT:
+#                x = x - ( self.bounds[2] )
         
         self.pango_cairo_context.move_to(x, y)
         self.pango_cairo_context.show_layout(self.layout)

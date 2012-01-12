@@ -182,8 +182,15 @@ class G15MacroEditor():
             else:
                 self.__simple_macro.set_text("")
             if self.editing_macro.type == g15profile.MACRO_COMMAND:
-                self.__command.set_text(self.editing_macro.macro)
+                cmd = self.editing_macro.macro
+                background = False
+                if cmd.endswith("&"):
+                    cmd = cmd[:-1]
+                    background = True
+                self.__command.set_text(cmd)
+                self.__run_in_background.set_active(background)
             else:
+                self.__run_in_background.set_active(False)
                 self.__command.set_text("")
             if self.editing_macro.type == g15profile.MACRO_SCRIPT:
                 text_buffer.set_text(self.editing_macro.macro)
@@ -262,8 +269,7 @@ class G15MacroEditor():
         self.__save_macro(self.editing_macro)
         
     def _command_changed(self, widget):
-        self.editing_macro.macro = widget.get_text()
-        self.__save_macro(self.editing_macro)
+        self.__save_command()
         
     def _browse_for_command(self, widget):
         dialog = gtk.FileChooserDialog(_("Open.."),
@@ -283,6 +289,10 @@ class G15MacroEditor():
             self.__command.set_text(dialog.get_filename())
         dialog.destroy()
         return False
+        
+    def _run_in_background_changed(self, widget):
+        if not self.adjusting:
+            self.__save_command()
         
     def _allow_combination_changed(self, widget):
         if not self.adjusting and not self.__allow_combination.get_active():
@@ -360,6 +370,14 @@ class G15MacroEditor():
     """
     Private
     """
+            
+    def __save_command(self):
+        macrotext = self.__command.get_text()
+        if self.__run_in_background.get_active():
+            macrotext += "&"
+        self.editing_macro.macro = macrotext
+        self.__save_macro(self.editing_macro)
+        
     def __select_tree_row(self, tree, row):
         tree_iter = tree.get_model().iter_nth_child(None, row)
         if tree_iter:
@@ -407,6 +425,7 @@ class G15MacroEditor():
         self.__map_type_model = self.widget_tree.get_object("MapTypeModel")
         self.__simple_macro = self.widget_tree.get_object("SimpleMacro")
         self.__command = self.widget_tree.get_object("Command")
+        self.__run_in_background = self.widget_tree.get_object("RunInBackground")
         self.__browse_for_command = self.widget_tree.get_object("BrowseForCommand")
         self.__allow_combination = self.widget_tree.get_object("AllowCombination")
         self.__macro_name_field = self.widget_tree.get_object("MacroNameField")
@@ -474,6 +493,7 @@ class G15MacroEditor():
                                            self.editing_macro.keys) is not None
         
         self.__uinput_tree.set_sensitive(uinput_type)
+        self.__run_in_background.set_sensitive(sel_type == g15profile.MACRO_COMMAND)
         self.__command.set_sensitive(sel_type == g15profile.MACRO_COMMAND)
         self.__browse_for_command.set_sensitive(sel_type == g15profile.MACRO_COMMAND)
         self.__simple_macro.set_sensitive(sel_type == g15profile.MACRO_SIMPLE)

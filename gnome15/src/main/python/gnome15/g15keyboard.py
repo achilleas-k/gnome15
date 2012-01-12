@@ -104,6 +104,7 @@ class G15KeyHandler():
         screen_key = "/apps/gnome15/%s" % self.__screen.device.uid
         logger.info("Starting %s's key handler." % self.__screen.device.uid)
         g15profile.profile_listeners.append(self._profile_changed)
+        self.__screen.screen_change_listeners.append(self)
         self.__notify_handles.append(self.__conf_client.notify_add("%s/active_profile" % screen_key, self._active_profile_changed))
         logger.info("Starting of %s's key handler is complete." % self.__screen.device.uid)
         self._reload_active_macros()
@@ -114,6 +115,7 @@ class G15KeyHandler():
         """  
         logger.info("Stopping key handler for %s" % self.__screen.device.uid)
         g15util.stop_queue(self.queue_name)
+        self.__screen.screen_change_listeners.remove(self)
         if self._profile_changed in g15profile.profile_listeners:
             g15profile.profile_listeners.remove(self._profile_changed)
         for h in self.__notify_handles:
@@ -132,6 +134,9 @@ class G15KeyHandler():
         state_id           -- key state ID (g15driver.KEY_STATE_UP, _DOWN and _HELD)
         """
         g15util.queue(self.queue_name, "KeyReceived", 0, self._do_key_received, keys, state_id)
+            
+    def memory_bank_changed(self, bank):
+        self._reload_active_macros()
         
     """
     Callbacks

@@ -429,7 +429,7 @@ class G15Screen():
             self.acquired_controls[control.id].set_value(val)
         self.set_color_for_mkey()
         for listener in self.screen_change_listeners:
-            listener.memory_bank_changed(bank)  
+            g15util.call_if_exists(listener, "memory_bank_changed", bank)
     
     def index(self, page):
         """
@@ -489,7 +489,7 @@ class G15Screen():
                         break
             self.pages.append(page)   
             for l in self.screen_change_listeners:
-                l.new_page(page) 
+                g15util.call_if_exists(l, "new_page", page) 
             return page
         finally:
             self.page_model_lock.release() 
@@ -532,8 +532,8 @@ class G15Screen():
                            thumbnail_painter, panel_painter, theme_properties_callback, \
                            theme_attributes_callback)
             self.pages.append(page)   
-            for l in self.screen_change_listeners:
-                l.new_page(page) 
+            for l in self.screen_change_listeners:                
+                g15util.call_if_exists(l, "new_page", page)
             if title:
                 page.set_title(title)
             return page
@@ -640,8 +640,8 @@ class G15Screen():
                     self.reverting[page.id][1].cancel()
                     del self.reverting[page.id]   
                         
-                for l in self.screen_change_listeners:
-                    l.deleting_page(page)                                            
+                for l in self.screen_change_listeners:       
+                    g15util.call_if_exists(l, "deleting_page", page)                 
             
                 if page == self.visible_page:
                     self.visible_page = None   
@@ -653,7 +653,7 @@ class G15Screen():
                 page._do_on_deleted()                   
                 self.redraw()                   
                 for l in self.screen_change_listeners:
-                    l.deleted_page(page) 
+                    g15util.call_if_exists(l, "deleted_page", page)
         finally:
             self.page_model_lock.release()
             
@@ -820,7 +820,7 @@ class G15Screen():
         logger.debug("Clearing attention")
         self.attention = False
         for listener in self.screen_change_listeners:
-            listener.attention_cleared()
+            g15util.call_if_exists(listener, "attention_cleared")
             
     def request_attention(self, message=None):
         logger.debug("Requesting attention '%s'" % message)
@@ -829,7 +829,7 @@ class G15Screen():
             self.attention_message = message
             
         for listener in self.screen_change_listeners:
-            listener.attention_requested(message)
+            g15util.call_if_exists(listener, "attention_requested", message)
     
     def handle_key(self, keys, state_id, post):
         """
@@ -977,7 +977,7 @@ class G15Screen():
                 self.del_page(page)
 
         for listener in self.screen_change_listeners:
-            listener.driver_disconnected(driver)
+            g15util.call_if_exists(listener, "driver_disconnected", driver)
                 
         if not self.service.shutting_down and not self.stopping:
             if retry:
@@ -1109,7 +1109,7 @@ class G15Screen():
                 self.activate_profile()
                 self.last_error = None
                 for listener in self.screen_change_listeners:
-                    listener.driver_connected(self.driver)
+                    g15util.call_if_exists(listener, "driver_sconnected", self.driver)
                              
                 self.complete_loading()
 
@@ -1133,6 +1133,17 @@ class G15Screen():
         rgb = self.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, (0, 0, 0))
         canvas.set_source_rgb(rgb[0], rgb[1], rgb[2])
         self.configure_canvas(canvas)
+        
+    def page_title_changed(self, page, title):
+        """
+        Tell all screen listeners a page title has changed
+        
+        Keyword arguments:
+        page            -- page object
+        title           -- new title
+        """
+        for l in self.screen_change_listeners:
+            g15util.call_if_exists(l, "title_changed", page, title)
     
     '''
     Private functions
@@ -1183,7 +1194,7 @@ class G15Screen():
                         
                 self.resched_cycle()
                 for l in self.screen_change_listeners:
-                    l.page_changed(self.visible_page)
+                    g15util.call_if_exists(l, "page_changed", self.visible_page)
                 
             # Call the screen's painter
             if self.visible_page != None:

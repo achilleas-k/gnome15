@@ -699,8 +699,8 @@ class G15DBUSPageService(AbstractG15DBUSService):
         self._page.set_font(font_size, font_family, font_style, font_weight)
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='sdddds')
-    def Text(self, text, x, y, width, height, text_align = "left"):
-        self._page.text(text, x, y, width, height, text_align)
+    def Text(self, text, x, y, width, height, contraints = "left"):
+        self._page.text(text, x, y, width, height, contraints)
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='sdddd')
     def Image(self, path, x, y, width, height):
@@ -882,7 +882,7 @@ class G15DBUSService(AbstractG15DBUSService):
     ''' 
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
     def GetServerInformation(self):
-        return ( g15globals.name, "Gnome15 Project", g15globals.version, "2.0" )
+        return ( g15globals.name, "Gnome15 Project", g15globals.version, "2.1" )
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='')
     def Stop(self):

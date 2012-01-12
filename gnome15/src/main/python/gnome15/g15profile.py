@@ -147,6 +147,20 @@ def remove_profile_dir(profile_dir):
     profile_dir    -- profile directory to de-register
     '''
     __profile_dirs.remove(profile_dir)
+    
+def get_profile_by_name(device, name):
+    """
+    Get a profile given it's name. If there is more than one profile with
+    the same name, the first will be return. If no profile is found, None
+    will be returned
+    
+    Keyword arguments:
+    device        -- device associated with profile
+    name          -- profile name to find
+    """
+    for profile in get_profiles(device):
+        if profile.name == name:
+            return profile
 
 def get_profiles(device):
     '''
@@ -689,7 +703,7 @@ class G15Profile():
         """
         Get if this profile is the default one
         """
-        return self.id == 0
+        return self.id == "0"
         
     def save(self, filename = None):
         """
@@ -758,7 +772,7 @@ class G15Profile():
         self._write(filename)
         
     def set_id(self, profile_id):
-        self.id = int(profile_id)
+        self.id = str(profile_id)
         self.read_only = False
         self.filename = "%s/%s/%s.macros" % ( conf_dir, self.device.uid, self.id )
         
