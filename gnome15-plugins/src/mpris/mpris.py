@@ -648,7 +648,11 @@ class MPRIS2Player(AbstractMPRISPlayer):
         self.process_properties()
         
     def get_volume(self):
-        return int(self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Volume") * 100)
+        try:
+            return int(self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Volume") * 100)
+        except DBusException as d:
+            # Nuvola doesn't support the Volume property
+            return 100
             
     def get_progress(self):
         if self.status == "Playing":

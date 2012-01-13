@@ -154,9 +154,11 @@ class G15KeyHandler():
     """
         
     def _reload_active_macros(self):
-        self.__normal_macros = self._get_all_macros(mapped_to_key = False)
         self.__normal_held_macros = self._get_all_macros(mapped_to_key = False, state = g15driver.KEY_STATE_HELD)
-        self.__uinput_macros = self._get_all_macros(mapped_to_key = True)
+         
+        macro_keys = []
+        self.__normal_macros = self._get_all_macros(mapped_to_key = False, macro_keys = macro_keys)
+        self.__uinput_macros = self._get_all_macros(mapped_to_key = True, macro_keys = macro_keys)
         
     def _do_key_received(self, keys, state_id):
         """
@@ -269,6 +271,7 @@ class G15KeyHandler():
             for k in m.keys:
                 if k in self.__key_states:
                     key_state = self.__key_states[k]
+                    print "Keystate of %s is %s = %s" % (k, str(key_state), str(key_state.is_consumed()))
                     if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_UP and not key_state.defeat_release:
                         up.append(key_state)
                     if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_HELD:
@@ -368,7 +371,7 @@ class G15KeyHandler():
             
             return True
                 
-    def _get_all_macros(self, profile = None, macro_list = None, mapped_to_key = False, state = None):
+    def _get_all_macros(self, profile = None, macro_list = None, macro_keys = None, mapped_to_key = False, state = None):
         """
         Get all macros, including those in parent profiles. By default, the
         "root" is the active profile
@@ -382,18 +385,23 @@ class G15KeyHandler():
             profile = g15profile.get_active_profile(self.__screen.device)
         if macro_list is None:
             macro_list = []
+        if macro_keys is None:
+            macro_keys = []
             
         if state == None:
             state = g15driver.KEY_STATE_UP
              
-        for m in profile.macros[state][self.__screen.get_memory_bank() - 1]:
-            if ( not mapped_to_key and not m.is_uinput() ) or \
-                ( mapped_to_key and m.is_uinput() ):
-                macro_list.append(m)
+        bank = self.__screen.get_memory_bank()
+        for m in profile.macros[state][bank - 1]:
+            if not m.key_list_key in macro_keys:
+                if ( not mapped_to_key and not m.is_uinput() ) or \
+                    ( mapped_to_key and m.is_uinput() ):
+                    macro_list.append(m)
+                    macro_keys.append(m.key_list_key)
         if profile.base_profile is not None:
             profile = g15profile.get_profile(self.__screen.device, profile.base_profile)
             if profile is not None:
-                self._get_all_macros(profile, macro_list, mapped_to_key, state)
+                self._get_all_macros(profile, macro_list, macro_keys, mapped_to_key, state)
         return macro_list
                 
     def _check_key_state(self, new_state_id, key_state):

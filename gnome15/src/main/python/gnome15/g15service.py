@@ -670,12 +670,13 @@ class G15Service(g15desktop.G15AbstractService):
             
     def _active_session_changed(self, object_path):        
         logger.debug("Adding seat %s" % object_path)
-        self.session_active = object_path == self.this_session_path
-        if self.session_active:
-            logger.info("g15-desktop service is running on the active session")
-        else:
-            logger.info("g15-desktop service is NOT running on the active session")
-        g15util.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
+        if g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/monitor_desktop_session", True):
+            self.session_active = object_path == self.this_session_path
+            if self.session_active:
+                logger.info("g15-desktop service is running on the active session")
+            else:
+                logger.info("g15-desktop service is NOT running on the active session")
+            g15util.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
         
     def _configure_window_monitoring(self):
         logger.info("Attempting to set up BAMF")

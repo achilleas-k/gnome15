@@ -365,6 +365,9 @@ class G15Macro:
         key_list_key   --    string representation of keys required to activate macro
         activate_on    --    whether to activate on RELEASE or when HELD
         """
+        if profile is None:
+            raise Exception("No profile provided")
+        
         self.activate_on = activate_on
         self.keys = key_list_key.split("_")
         self.key_list_key = key_list_key
@@ -630,7 +633,7 @@ class G15Profile():
         self.window_name = ""
         self.base_profile = None
         self.version = 2.0
-        self.load(file_path)
+        self.load(self.filename)
         
     def can_launch(self, command_line):
         """
@@ -934,7 +937,7 @@ class G15Profile():
         
         # Load macro file
         if self.id != -1 or filename is not None:
-            if isinstance(filename, str) and  os.path.exists(filename):
+            if ( isinstance(filename, str) or isinstance(filename, unicode) ) and os.path.exists(filename):
                 self.read_only = not os.stat(filename)[0] & stat.S_IWRITE
                 self.parser.readfp(codecs.open(filename, "r", "utf8"))
             elif fd is not None:

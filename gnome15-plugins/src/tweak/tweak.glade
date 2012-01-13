@@ -65,6 +65,25 @@
             <property name="can_focus">False</property>
             <property name="spacing">4</property>
             <child>
+              <object class="GtkCheckButton" id="MonitorDesktopSession">
+                <property name="label" translatable="yes">Monitor desktop session</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="tooltip_text" translatable="yes">When enabled, Gnome15 will deactivate
+if the user's desktop session is disable (e.g.
+if you switch to another virtual console, or
+switch to another user)</property>
+                <property name="use_action_appearance">False</property>
+                <property name="draw_indicator">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkCheckButton" id="UseXTest">
                 <property name="label" translatable="yes">Use XTEST for macros and macro recording</property>
                 <property name="visible">True</property>
@@ -81,7 +100,7 @@ X11 events will be used.</property>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
-                <property name="position">0</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -96,7 +115,7 @@ X11 events will be used.</property>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
-                <property name="position">1</property>
+                <property name="position">2</property>
               </packing>
             </child>
             <child>
@@ -111,7 +130,7 @@ X11 events will be used.</property>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
-                <property name="position">2</property>
+                <property name="position">3</property>
               </packing>
             </child>
             <child>
@@ -129,7 +148,7 @@ to remove the effect.</property>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
-                <property name="position">3</property>
+                <property name="position">4</property>
               </packing>
             </child>
             <child>
@@ -144,7 +163,7 @@ to remove the effect.</property>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
-                <property name="position">4</property>
+                <property name="position">5</property>
               </packing>
             </child>
             <child>
@@ -159,7 +178,7 @@ to remove the effect.</property>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
-                <property name="position">5</property>
+                <property name="position">6</property>
               </packing>
             </child>
             <child>
@@ -329,7 +348,7 @@ to remove the effect.</property>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="padding">4</property>
-                <property name="position">6</property>
+                <property name="position">7</property>
               </packing>
             </child>
           </object>

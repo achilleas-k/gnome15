@@ -199,27 +199,40 @@ class G15MacroRecorder():
             event, data = rq.EventField(None).parse_binary_value(data, record_dpy.display, None, None)
             if event.type in [X.KeyPress, X.KeyRelease]:
                 pr = event.type == X.KeyPress and "Press" or "Release"
-                delay = 0
-                if self._key_down == None:
-                    self._key_down = time.time()
-                else :
-                    
-                    now = time.time()
-                    delay = time.time() - self._key_down
-                    self._script_model.append(["Delay", str(int(delay * 1000))])
-                    self._key_down = now
-                
                 logger.debug("Event detail = %s" % event.detail)
                 keysym = local_dpy.keycode_to_keysym(event.detail, 0)
                 if not keysym:
-                    logger.debug("Recorded %s" % event.detail)
-                    self._script_model.append([pr, event.detail])
+                    logger.debug("Recorded %s" % event.detail)  
+                    self._record_key(event, event.detail)                    
                 else:
                     logger.debug("Keysym = %s" % str(keysym))
                     s = self._lookup_keysym(keysym)
                     logger.debug("Recorded %s" % s)
-                    self._script_model.append([pr, s])
+                    self._record_key_callback(event, s)
+                    
                 self._redraw()
+                
+    def _record_key_callback(self, event, keyname):
+        if self._key_down == None:
+            self._key_down = time.time()
+        else:
+            now = time.time()
+            delay = time.time() - self._key_down
+            self._script_model.append(["Delay", str(int(delay * 1000))])
+            self._key_down = now
+        pr = event.type == X.KeyPress and "Press" or "Release"
+        keydown = self._key_state[keyname] if keyname in self._key_state else None
+        if keydown is None:
+            if event.type == X.KeyPress:
+                self._key_state[keyname] = True
+                self._script_model.append([pr, keyname])
+            else:
+                # Got a release without getting a press - ignore
+                pass
+        else:
+            if event.type == X.KeyRelease:
+                self._script_model.append([pr, keyname])
+                del self._key_state[keyname]
             
     def _done_recording(self, state):
         if self._record_keys != None:
@@ -228,7 +241,6 @@ class G15MacroRecorder():
               
             active_profile = g15profile.get_active_profile(self._screen.device)
             key_name = ", ".join(g15util.get_key_names(record_keys))
-            print "script: %s" % str(self._script_model)
             if len(self._script_model) == 0:  
                 self.icon = "edit-delete"
                 self._message = key_name + " deleted"
@@ -249,7 +261,7 @@ class G15MacroRecorder():
                     macro.macro = macro_script
                     macro.save()
                 else:                
-                    active_profile.create_macro(memory, record_keys, key_name, g15profile.MACRO_SCRIPT, macro_script)
+                    active_profile.create_macro(memory, record_keys, key_name, g15profile.MACRO_SCRIPT, macro_script, state)
                 self._redraw()
             self._hide_recorder(3.0)    
         else:
@@ -283,7 +295,9 @@ class G15MacroRecorder():
             self._screen.redraw(self._page)     
         
     def _start_recording(self):      
-        self._script_model = []      
+        self._script_model = []
+        self._key_state = {}
+        self._key_down = None
         if self._screen.driver.get_bpp() > 0:
             if self._page == None:
                 self._page = g15theme.G15Page(id, self._screen, priority=g15screen.PRI_EXCLUSIVE,\
