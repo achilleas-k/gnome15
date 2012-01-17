@@ -6,6 +6,7 @@ import time
 import usb
 import Image as Img
 import logging
+import array
 logger = logging.getLogger()
 
 class G19(object):
@@ -299,6 +300,8 @@ class G19UsbController(object):
         self.__lcd_device = self._find_device(0x046d, 0xc229)
         if not self.__lcd_device:
             raise usb.USBError("G19 LCD not found on USB bus")
+        
+        # Reset
         self.handleIf0 = self.__lcd_device.open()
         if resetOnStart:
             logger.info("Resetting LCD device")
@@ -312,18 +315,25 @@ class G19UsbController(object):
         
         config = self.__lcd_device.configurations[0]
         display_interface = config.interfaces[0][0]
-        macro_and_backlight_interface = config.interfaces[1][0]
+        
+        # This is to cope with a difference in pyusb 1.0 compatibility layer
+        if len(config.interfaces) > 1:
+            macro_and_backlight_interface = config.interfaces[1][0]
+        else:
+            macro_and_backlight_interface = config.interfaces[0][1]
 
         try:
             logger.debug("Detaching kernel driver for LCD device")
-            self.handleIf0.detachKernelDriver(display_interface)
+            # Use .interfaceNumber for pyusb 1.0 compatibility layer
+            self.handleIf0.detachKernelDriver(display_interface.interfaceNumber)
             logger.debug("Detached kernel driver for LCD device")
         except usb.USBError:
             logger.debug("Detaching kernel driver for LCD device failed.")
             
         try:
             logger.debug("Detaching kernel driver for macro / backlight device")
-            self.handleIf1.detachKernelDriver(macro_and_backlight_interface)
+            # Use .interfaceNumber for pyusb 1.0 compatibility layer
+            self.handleIf1.detachKernelDriver(macro_and_backlight_interface.interfaceNumber)
             logger.debug("Detached kernel driver for macro / backlight device")
         except usb.USBError:
             logger.debug("Detaching kernel driver for macro / backlight device failed.")

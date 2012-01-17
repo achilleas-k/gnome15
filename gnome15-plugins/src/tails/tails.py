@@ -184,9 +184,9 @@ class G15TailThread(Thread):
         self._stopped = False
         
     def stop_monitoring(self):
+        self._stopped = True
         if self.fd is not None:
             self.fd.close()
-        self._stopped = True
         
     def run(self):
         for line in tailer.tail(open(self.page.file_path), self.page.plugin.lines):
@@ -194,7 +194,11 @@ class G15TailThread(Thread):
         self.fd = open(self.page.file_path)
         try:
             for line in tailer.follow(self.fd):
+                if self._stopped:
+                    break
                 g15screen.run_on_redraw(self._add_line, line)
+                if self._stopped:
+                    break
         except ValueError as e:
             if not self._stopped:
                 raise e
@@ -202,7 +206,7 @@ class G15TailThread(Thread):
             
     def _add_line(self, line):
         line = line.strip()
-        if len(line) > 0:
+        if len(line) > 0 and not self._stopped:
             line  = g15util.html_escape(line)
             while self.page._menu.get_child_count() > self.page.plugin.lines:
                 self.page._menu.remove_child_at(0)
@@ -231,25 +235,22 @@ class G15TailPage(g15theme.G15Page):
         self.add_child(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
         self._reload() 
         self._screen.add_page(self)
-        self._screen.redraw(self)  
-            
-    def notify_remove(self):
-        g15theme.G15Page.notify_remove(self)
-        self._stop()
+        self._screen.redraw(self)
+        self.on_deleted = self._stop
             
     """
     Private
     """
         
     def _reload(self):
-        icon = None
+        icons = []
         mime_type = mime.get_type(self.file_path)
         if mime_type != None:
-            icon = g15util.get_icon_path(str(mime_type).replace("/","-"), size=self.plugin._screen.height, include_missing = False)
-            if icon is None:                    
-                icon = g15util.get_icon_path("text-plain", size=self.plugin._screen.height, include_missing = False)
-        if icon is None:
-            icon = g15util.get_icon_path([ "panel-searchtool", "gnome-searchtool" ], size=self.plugin._screen.height)  
+            icons.append(str(mime_type).replace("/","-"))
+        icons.append("text-plain")
+        icons.append("panel-searchtool")
+        icons.append("gnome-searchtool")
+        icon = g15util.get_icon_path(icons, size=self.plugin._screen.height)  
         
         if icon is None:
             self._icon_surface = None
@@ -290,8 +291,8 @@ class G15TailPage(g15theme.G15Page):
         
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._icon_surface:
-            return g15util.paint_thumbnail_image(allocated_size, self._icon_surface, canvas)
-        
+            return g15util.paint_thumbnail_image(allocated_size, self._icon_surface, canvas)  
+            
 class G15Tails():
     
     def __init__(self, gconf_client, gconf_key, screen):

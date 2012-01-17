@@ -1572,8 +1572,11 @@ class G15Config:
                 self.context_remove_profile.set_sensitive(False)
             else:
                 self._load_windows()
-                self.launch_pattern_box.set_visible(True)
-                self.activate_on_launch.set_visible(True)
+#                self.launch_pattern_box.set_visible(True)
+#                self.activate_on_launch.set_visible(True)
+                self.launch_pattern_box.set_visible(False)
+                self.activate_on_launch.set_visible(False)
+                
                 self.window_name.set_visible(True)
                 self.parent_profile_label.set_visible(True)
                 self.parent_profile_box.set_visible(True)
@@ -1598,9 +1601,9 @@ class G15Config:
                     self.enable_color_for_m_key.set_active(True)
                 self.enable_color_for_m_key.set_sensitive(not profile.read_only)
                 
-            self.background_browse_button.set_visible(self.driver.get_bpp() > 1)
-            self.background_label.set_visible(self.driver.get_bpp() > 1)
-            self.clear_background_button.set_visible(self.driver.get_bpp() > 1)
+            self.background_browse_button.set_visible(self.driver is not None and self.driver.get_bpp() > 1)
+            self.background_label.set_visible(self.driver is not None and self.driver.get_bpp() > 1)
+            self.clear_background_button.set_visible(self.driver is not None and self.driver.get_bpp() > 1)
                     
             self._load_parent_profiles()
             self.parent_profile_combo.set_active(0)

@@ -134,7 +134,8 @@ class G15CairoClock():
         self.display_seconds = False
     
     def activate(self): 
-        self.text = g15text.new_text(self.screen)
+        self.panel_text = g15text.new_text(self.screen)
+        self.time_text = g15text.new_text(self.screen)
         self.notify_handler = self.gconf_client.notify_add(self.gconf_key, self.config_changed);   
         self._load_surfaces()         
         self.page = g15theme.G15Page(name, self.screen, painter = self._paint, priority=g15screen.PRI_NORMAL, 
@@ -262,7 +263,7 @@ class G15CairoClock():
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
         if not self.screen.is_visible(self.page):
-            self.text.set_canvas(canvas)
+            self.panel_text.set_canvas(canvas)
             
             # Don't display the date or seconds on mono displays, not enough room as it is
             if self.screen.driver.get_bpp() == 1:
@@ -284,8 +285,8 @@ class G15CairoClock():
                 x = 4
                 gap = 8
                 
-            self.text.set_attributes(text, align = pango.ALIGN_CENTER, font_desc = font_name, font_absolute_size = font_size * pango.SCALE / factor)
-            x, y, width, height = self.text.measure()
+            self.panel_text.set_attributes(text, align = pango.ALIGN_CENTER, font_desc = font_name, font_absolute_size = font_size * pango.SCALE / factor)
+            x, y, width, height = self.panel_text.measure()
             if horizontal: 
                 if self.screen.driver.get_bpp() == 1:
                     y = 0
@@ -294,7 +295,7 @@ class G15CairoClock():
             else:      
                 x = (allocated_size / 2) - width / 2
                 y = 0
-            self.text.draw(x, y)
+            self.panel_text.draw(x, y)
             if horizontal:
                 return width + gap
             else:
@@ -319,39 +320,31 @@ class G15CairoClock():
         if self.display_year:
             return datetime.datetime.now().strftime(locale.nl_langinfo(locale.D_FMT))
         else:
-            return datetime.datetime.now().strftime(locale.nl_langinfo(locale.D_FMT).replace("/%y", ""))    
+            dformat = locale.nl_langinfo(locale.D_FMT)
+            for s in [ "/%y", "/%Y", ".%y", ".%Y", ".%y", ".%Y" ]:
+                dformat = dformat.replace(s, "")
+            return datetime.datetime.now().strftime(dformat)    
         
     def _do_paint(self, canvas, width, height, draw_date = True, draw_time = True): 
         canvas.save()   
         self._do_paint_clock(canvas, width, height, draw_date and self.screen.driver.get_bpp() != 1, draw_time and self.screen.driver.get_bpp() != 1)
-        canvas.restore()
+        canvas.restore()        
+        self.time_text.set_canvas(canvas)
         
         if self.screen.driver.get_bpp() == 1:
+            
+            rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
+            canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
+                
             if draw_date:        
                 date_text = self._get_date_text()
-                canvas.select_font_face(g15globals.fixed_size_font_name,
-                            cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-                canvas.set_font_size(12.0)
-                rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
-                canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])   
-                x_bearing, y_bearing, text_width, text_height = canvas.text_extents(date_text)[:4]         
-                tx = 0       
-                ty = ( ( self.height - text_height ) / 2 ) - y_bearing
-                canvas.move_to(tx, ty )
-                canvas.show_text(date_text)
+                self.time_text.set_attributes(pxwidth = 56, text = date_text, align = pango.ALIGN_CENTER, font_desc = "Fixed", font_absolute_size = 12 * pango.SCALE)
+                self.time_text.draw(0, 15)
                 
             if draw_time:        
-                time_text = self._get_time_text()
-                canvas.select_font_face(g15globals.fixed_size_font_name,
-                            cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-                canvas.set_font_size(12.0)
-                rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
-                canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])   
-                x_bearing, y_bearing, text_width, text_height = canvas.text_extents(time_text)[:4]         
-                tx = self.width - text_width - x_bearing       
-                ty = ( ( self.height - text_height ) / 2 ) - y_bearing
-                canvas.move_to(tx, ty )
-                canvas.show_text(time_text)
+                time_text = self._get_time_text()                
+                self.time_text.set_attributes(pxwidth = 56, text = time_text, align = pango.ALIGN_CENTER, font_desc = "Fixed", font_absolute_size = 12 * pango.SCALE)
+                self.time_text.draw(self.width - 56, 15)
         
     def _do_paint_clock(self, canvas, width, height, draw_date = True, draw_time = True):
             

@@ -88,7 +88,7 @@ class G15PangoText(G15Text):
     def set_attributes(self, text, bounds = None, wrap = None, align = pango.ALIGN_LEFT, width = None, spacing = None, \
             font_desc = None, font_absolute_size = None, attributes = None,
             weight = None, style = None, font_pt_size = None,
-            valign = None):
+            valign = None, pxwidth = None):
         
         logger.debug("Text: %s, bounds = %s, wrap = %s, align = %s, width = %s, attributes = %s, spacing = %s, font_desc = %s, weight = %s, style = %s, font_pt_size = %s" \
                 % ( str(text), str(bounds), str(wrap), str(align), str(width), str(attributes), str(spacing), str(font_desc), \
@@ -115,6 +115,8 @@ class G15PangoText(G15Text):
             self.layout.set_spacing(spacing)
         if width != None:
             self.layout.set_width(width)
+        if pxwidth != None:
+            self.layout.set_width(int(pango.SCALE * pxwidth))
         if wrap:
             self.layout.set_wrap(wrap)
         if attributes:
@@ -127,9 +129,15 @@ class G15PangoText(G15Text):
         text_extents = self.layout.get_extents()[1]
         return text_extents[0] / pango.SCALE, text_extents[1] / pango.SCALE, text_extents[2] / pango.SCALE, text_extents[3] / pango.SCALE
     
-    def draw(self, x, y):
+    def draw(self, x = None, y = None):
         self.pango_cairo_context.save()
+        
         if self.bounds is not None:
+            if x == None:
+                x = self.bounds[0]
+            if y == None:
+                y = self.bounds[1]
+            
             self.pango_cairo_context.rectangle(self.bounds[0] - 1, self.bounds[1] - 1, self.bounds[2] + 2, self.bounds[3] + 2)
             self.pango_cairo_context.clip()
             
@@ -137,13 +145,9 @@ class G15PangoText(G15Text):
                 y += self.bounds[3] - ( self.metrics.get_ascent()  / 1000.0 )
             elif self.valign == pango.ALIGN_CENTER:
                 y += ( self.bounds[3] - ( self.metrics.get_ascent()  / 1000.0 ) ) / 2
-            # Can only align text when they are bounds within which to align it
-#            y = y - ( self.metrics.get_ascent()  / 1000.0 )
-#            if self.layout.get_alignment() == pango.ALIGN_CENTER:
-#                x = x - ( self.bounds[2] / 2 )
-#            elif self.layout.get_alignment() == pango.ALIGN_RIGHT:
-#                x = x - ( self.bounds[2] )
-        
-        self.pango_cairo_context.move_to(x, y)
+                
+        if x is not None and y is not None:                
+            self.pango_cairo_context.move_to(x, y)
+            
         self.pango_cairo_context.show_layout(self.layout)
         self.pango_cairo_context.restore()

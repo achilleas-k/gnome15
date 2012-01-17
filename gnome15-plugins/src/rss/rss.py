@@ -141,7 +141,8 @@ class G15FeedsMenuItem(g15theme.MenuItem):
         element_properties = g15theme.MenuItem.get_theme_properties(self)
         element_properties["ent_title"] = self.entry.title
         element_properties["ent_link"] = self.entry.link
-        element_properties["ent_description"] = self.entry.description
+        if g15util.attr_exists(self.entry, "description"):
+            element_properties["ent_description"] = self.entry.description
         
         element_properties["ent_locale_date_time"] = time.strftime("%x %X", self.entry.date_parsed)            
         element_properties["ent_locale_time"] = time.strftime("%X", self.entry.date_parsed)            

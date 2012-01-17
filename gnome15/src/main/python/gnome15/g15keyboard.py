@@ -271,7 +271,6 @@ class G15KeyHandler():
             for k in m.keys:
                 if k in self.__key_states:
                     key_state = self.__key_states[k]
-                    print "Keystate of %s is %s = %s" % (k, str(key_state), str(key_state.is_consumed()))
                     if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_UP and not key_state.defeat_release:
                         up.append(key_state)
                     if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_HELD:

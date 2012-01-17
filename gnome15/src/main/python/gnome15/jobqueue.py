@@ -208,7 +208,7 @@ class JobQueue():
             try :
                 while True:
                     item = self.work_queue.get_nowait()
-                    logger.info("Removed func = %s, args = %s, queued = %s, started = %s, finished = %s" % ( str(item.item), str(item.args), str(item.queued), str(item.started), str(item.finished) ) )
+                    logger.debug("Removed func = %s, args = %s, queued = %s, started = %s, finished = %s" % ( str(item.item), str(item.args), str(item.queued), str(item.started), str(item.finished) ) )
                     if item in self.queued_jobs:
                         self.queued_jobs.remove(item)
             except Queue.Empty:

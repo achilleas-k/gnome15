@@ -102,6 +102,16 @@ def run_script(script, args = None, background = True):
     logger.info("Running '%s'" % p)
     return os.system("python \"%s\" %s %s" % ( p, a, " &" if background else "" ))
 
+def attr_exists(obj, attr_name):
+    """
+    Get if an attribute exists on an object
+    
+    Keyword arguments:
+    obj            -- object
+    attr_name      -- attribute name
+    """    
+    return getattr(obj, attr_name, None) is not None
+
 def call_if_exists(obj, function_name, *args):
     """
     Call a function on an object if it exists, ignoring any errors if it doesn't

@@ -50,7 +50,7 @@ actions={
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 
 # How often refresh from the evolution calendar. This can be a slow process, so not too often
-REFRESH_INTERVAL = 15 * 60.0
+REFRESH_INTERVAL = 15 * 60
 
 def create(gconf_key, gconf_client, screen):
     return G15Cal(gconf_key, gconf_client, screen)
@@ -125,10 +125,9 @@ class G15Cal():
         self._active = True
         self._event_days = None
         self._calendar_date = None
-        self._loaded = 0
         self._page = None
         self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), auto_dirty = False)
-        self._loaded = time.time()
+        self._loaded = 0
         
         # Calendar
         self._calendar = Calendar()
@@ -181,8 +180,8 @@ class G15Cal():
                     self._adjust_calendar_date(7)
                 elif binding.action == g15driver.CLEAR:
                     self._calendar_date = None
-                    self._loaded_minute =- -1
-                    g15screen.run_on_redraw(self._load_month_events, self._calendar_date)
+                    self._loaded_minute =- -1                    
+                    gobject.idle_add(self._load_month_events, self._calendar_date) 
             if binding.action == g15driver.VIEW:
                 self._page.next_focus()
     
@@ -194,7 +193,7 @@ class G15Cal():
         if self._calendar_date == None:
             self._calendar_date = datetime.datetime.now()
         self._calendar_date = self._calendar_date + datetime.timedelta(amount)
-        g15screen.run_on_redraw(self._load_month_events, self._calendar_date) 
+        gobject.idle_add(self._load_month_events, self._calendar_date) 
         
     def _first_load(self):
         self._load_month_events(datetime.datetime.now())
@@ -312,8 +311,11 @@ class G15Cal():
     def _redraw(self):
         t = time.time()
         if t > self._loaded + REFRESH_INTERVAL:
-            self._loaded = t
-            self._load_month_events(datetime.datetime.now())
+            self._loaded = t                        
+        gobject.idle_add(self._redraw_now)
+            
+    def _redraw_now(self):
+        self._load_month_events(datetime.datetime.now())
         self._screen.redraw(self._page)
         self._schedule_redraw()
     

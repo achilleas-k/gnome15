@@ -39,6 +39,7 @@ import gtk
 import usb
 import traceback 
 import logging
+import array
 logger = logging.getLogger("driver")
 
 # Import from local version of pylibg19 if available
@@ -172,9 +173,15 @@ class Driver(g15driver.AbstractDriver):
         if self.is_connected():
             raise Exception("Already connected")
         
+        # Detect what version of pyusb we are using
+        pyusb = 1
+        try:
+            import usb.core
+        except:
+            pyusb = 0
+        
         self.callback = None
         
-        # TODO Enable UINPUT if multimedia key support is required?
         reset = self.conf_client.get_bool("/apps/gnome15/%s/reset_usb" % self.device.uid)
         timeout = 10000
         reset_wait = 0
@@ -184,6 +191,9 @@ class Driver(g15driver.AbstractDriver):
         e = self.conf_client.get("/apps/gnome15/%s/reset_wait" % self.device.uid)
         if e:
             reset_wait = e.get_int()
+        if reset and pyusb == 1:
+            logger.warning("Using pyusb 1.0. Resetting device causes crash in this version, no reset will be done")
+            reset = False
         
         try:
             self.lg19 = G19(reset, False, timeout, reset_wait)
@@ -255,10 +265,9 @@ class Driver(g15driver.AbstractDriver):
                 g = ord(data[i + 1])
                 b = ord(data[i + 0])
                 file_str.write(self._rgb_to_uint16(r, g, b))                
-            buf = file_str.getvalue()
+            buf = array.array('B', file_str.getvalue())   
         else:   
-            buf = str(back_surface.get_data())     
-            
+            buf = array.array('B', str(back_surface.get_data()))   
                   
         expected_size = MAX_X * MAX_Y * ( self.get_bpp() / 8 )
         if len(buf) != expected_size:
