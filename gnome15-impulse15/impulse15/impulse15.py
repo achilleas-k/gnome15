@@ -63,6 +63,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col1", "Color1", ( 255, 0, 0 ), widget_tree, default_alpha = 255)
     g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col2", "Color2", ( 0, 0, 255 ), widget_tree, default_alpha = 255)
     g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/frame_rate", "FrameRateAdjustment", 10.0, widget_tree)
+    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/gain", "GainAdjustment", 1.0, widget_tree)
     
     if driver.get_bpp() == 0:
         widget_tree.get_object("LCDTable").set_visible(False)
@@ -117,7 +118,14 @@ class G15ImpulsePainter(g15screen.Painter):
         if hasattr( self.theme_module, "fft" ) and self.theme_module.fft:
             fft = True
 
-        return impulse.getSnapshot( fft )
+        audio_sample_array = impulse.getSnapshot( fft )
+        if self.plugin.gain != 1:
+            arr = []
+            for a in audio_sample_array:
+                arr.append(a * self.plugin.gain)
+            audio_sample_array = arr
+        
+        return audio_sample_array
     
     def _col_avg(self, list):
         cols = []
@@ -296,6 +304,7 @@ class G15Impulse():
         self.mode = self.gconf_client.get_string(self.gconf_key + "/mode")
         self.disco = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/disco", False)
         self.refresh_interval = 1.0 / g15util.get_float_or_default(self.gconf_client, self.gconf_key + "/frame_rate", 25.0)
+        self.gain = g15util.get_float_or_default(self.gconf_client, self.gconf_key + "/gain", 1.0)
         logger.info("Refresh interval is %f" % self.refresh_interval)
         self.animate_mkeys = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/animate_mkeys", False)
         if self.mode == None or self.mode == "" or self.mode == "spectrum" or self.mode == "scope":
