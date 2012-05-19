@@ -582,7 +582,7 @@ class G15DBUSControlAcquisition(AbstractG15DBUSService):
             
     @dbus.service.method(CONTROL_ACQUISITION_IF_NAME)
     def Release(self):
-        self._screen_service.driver.release_control(self._acquisition)
+        self._screen_service._screen.driver.release_control(self._acquisition)
         
     """
     Private

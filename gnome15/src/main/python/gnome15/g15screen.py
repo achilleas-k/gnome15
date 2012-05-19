@@ -768,7 +768,7 @@ class G15Screen():
                         acq = self.temp_acquired_controls[control.id]
                         if acq.is_active():
                             self.driver.release_control(acq)                    
-                    acq = self.driver.acquire_control(control, release_after=3.0)
+                    acq = self.driver.acquire_control(control, release_after=3.0, val = value)
                     self.temp_acquired_controls[control.id] = acq
                     acq.set_value(value)
                     

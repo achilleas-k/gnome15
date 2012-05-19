@@ -290,14 +290,12 @@ class Control():
         
 class AbstractControlAcquisition(object):
     
-    def __init__(self, driver, initial_value = 0):
+    def __init__(self, driver):
         self.driver = driver
-        self.val = initial_value
-        self.adjust(self.val)
+        self.val = None
         self.on_released = None
         self.reset_timer = None
         self.fade_timer = None
-        self.reset_val = initial_value
         self.on = False
         self._released = False
         self._waiting = False
@@ -344,13 +342,19 @@ class AbstractControlAcquisition(object):
         
     def set_value(self, val, reset_after = None):
         old_val = val
-        if val != self.val or reset_after is not None:
-            logger.debug("Set value of control to %s" % str(val))
+        if self.val is None or val != self.val or reset_after is not None:
+            if self.val is None:
+                logger.debug("Initial value of control is %s" % str(val))
+                self.reset_val = val
+            
             self.val = val
             self.on = True
             self.cancel_fade()
             self.adjust(val)
-            self.cancel_reset()        
+            self.cancel_reset()
+            
+            logger.debug("Set value of control to %s" % str(val))
+                    
             if reset_after:
                 self.reset_val = old_val
                 self.reset_timer = g15util.queue(FX_QUEUE, "LEDReset", reset_after, self.reset)
@@ -398,9 +402,9 @@ class AbstractControlAcquisition(object):
     
 class ControlAcquisition(AbstractControlAcquisition):
     
-    def __init__(self, driver, control, val = None):
+    def __init__(self, driver, control):
         self.control = control
-        AbstractControlAcquisition.__init__(self, driver, ( (0,0,0) if isinstance(control.value, tuple) else 0) if val == None else val)
+        AbstractControlAcquisition.__init__(self, driver)
         
     def is_active(self):
         if self.control.id in self.driver.acquired_controls:
@@ -503,9 +507,13 @@ class AbstractDriver(object):
         if len(control_acquisitions) == 0:
             self.initial_acquired_control_values[control.id] = control.value
             
-        control_acquisition = ControlAcquisition(self, control, val)
+        control_acquisition = ControlAcquisition(self, control)
         control_acquisition.on_release = on_release
         control_acquisitions.append(control_acquisition)
+        
+        # Only set the value when active (i.e. in the control_acquisitions list)
+        control_acquisition.set_value(val if val is not None else control.value)
+        
         if release_after:
             g15util.queue(FX_QUEUE, "ReleaseControl", release_after, self._release_control, control_acquisition)
         return control_acquisition
