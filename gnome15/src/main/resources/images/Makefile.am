@@ -4,6 +4,7 @@ images_DATA = g15key.png \
 	g19-background.svg \
 	mx5500-background.svg \
 	default-background.svg \
+	locked.png \
 	key-g1.png \
 	key-g2.png \
 	key-g3.png \

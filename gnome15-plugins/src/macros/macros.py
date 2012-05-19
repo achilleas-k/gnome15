@@ -98,7 +98,9 @@ class G15Macros(g15plugin.G15MenuPlugin):
     def activate(self):
         self._get_configuration()
         g15plugin.G15MenuPlugin.activate(self)
-        self._notify_handle = self.gconf_client.notify_add("/apps/gnome15/%s/active_profile" % self.screen.device.uid, self._profiles_changed)
+        self._notify_handles = []
+        self._notify_handles.append(self.gconf_client.notify_add("/apps/gnome15/%s/active_profile" % self.screen.device.uid, self._profiles_changed))
+        self._notify_handles.append(self.gconf_client.notify_add("/apps/gnome15/%s/locked" % self.screen.device.uid, self._profiles_changed))
         g15profile.profile_listeners.append(self._profiles_changed)
         self.listener = MacrosScreenChangeAdapter(self)
         self.screen.add_screen_change_listener(self.listener)
@@ -106,7 +108,8 @@ class G15Macros(g15plugin.G15MenuPlugin):
         
     def deactivate(self):
         g15plugin.G15MenuPlugin.deactivate(self)
-        self.gconf_client.notify_remove(self._notify_handle)
+        for h in self._notify_handles:
+            self.gconf_client.notify_remove(h)
         g15profile.profile_listeners.remove(self._profiles_changed)
         self.screen.remove_screen_change_listener(self.listener)
             

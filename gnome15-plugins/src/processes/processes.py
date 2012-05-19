@@ -104,7 +104,8 @@ class G15Processes(g15plugin.G15MenuPlugin):
         self.session_bus = dbus.SessionBus()
         self.bamf_matcher = None
         try :
-            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
+            bamf_object = self.session_bus.get_object('org.ayatana.bamf', '/org/ayatana/bamf/matcher')     
+            self.bamf_matcher = dbus.Interface(bamf_object, 'org.ayatana.bamf.matcher')
         except:
             logger.warning("BAMF not available, falling back to WNCK")
 

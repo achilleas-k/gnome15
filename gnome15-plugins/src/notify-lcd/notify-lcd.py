@@ -443,11 +443,12 @@ class G15NotifyLCD():
         self._cancel_timer()
         if len(self._message_queue) > 0:
             message = self._message_queue[0]
-            action = message.actions[0]
-            if self._service:
-                logger.debug("Action invoked")
-                self._service.ActionInvoked(message.id, action[0])
-            self._move_to_next()
+            if len(message.actions) > 0:
+                action = message.actions[0]
+                if self._service:
+                    logger.debug("Action invoked")
+                    self._service.ActionInvoked(message.id, action[0])
+                self._move_to_next()
       
     ''' 
     Private

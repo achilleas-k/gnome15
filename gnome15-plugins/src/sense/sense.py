@@ -30,6 +30,7 @@ import dbus
 import sensors
 import gtk
 import gconf
+import gobject
 
 import subprocess
 
@@ -68,9 +69,10 @@ VOLTAGE = 0
 TEMPERATURE = 2
 FAN = 1
 UNKNOWN_1 = 3
+INTRUSION = 17
 
-TYPE_NAMES = [ "Volt", "Fan", "Temp", "????", "????", "????" ]
-VARIANT_NAMES = { VOLTAGE : "volt", TEMPERATURE : None, FAN : "fan", UNKNOWN_1 : "volt" } 
+TYPE_NAMES = { VOLTAGE: "Voltage", FAN: "Fan", TEMPERATURE : "Temp" }
+VARIANT_NAMES = { VOLTAGE : "volt", TEMPERATURE : None, FAN : "fan", UNKNOWN_1 : "volt", INTRUSION: "intrusion" } 
 
 ''' 
 This plugin displays sensor information
@@ -150,8 +152,9 @@ class G15SensorsPreferences():
             sa  = source.get_sensors()
             for sensor in sa:
                 sense_key = "%s/sensors/%s" % (self._gconf_key, gconf.escape_key(sensor.name, len(sensor.name)))
-                self.sensor_model.append([ sensor.name, g15util.get_bool_or_default(self._gconf_client, "%s/enabled" % (sense_key), True), 
-                                          g15util.get_string_or_default(self._gconf_client, "%s/label" % (sense_key), sensor.name), TYPE_NAMES[sensor.sense_type] ])
+                if sensor.sense_type in TYPE_NAMES:
+                    self.sensor_model.append([ sensor.name, g15util.get_bool_or_default(self._gconf_client, "%s/enabled" % (sense_key), True), 
+                                              g15util.get_string_or_default(self._gconf_client, "%s/label" % (sense_key), sensor.name), TYPE_NAMES[sensor.sense_type] ])
             source.stop()
             
 
@@ -218,11 +221,8 @@ class UDisksSource():
                     device_file = str(udisk_properties.Get(UDISKS_DEVICE_NAME, "DeviceFile"))
                     if int(udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartTimeCollected")) > 0:
                         # Only get the temperature if SMART data is collected to avoide spinning up disk
-                        smart_blob = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartBlob")
-                        smart_blob_str = ""
-                        for c in smart_blob:
-                            smart_blob_str += str(c)
-                            
+                        smart_blob = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartBlob", byte_arrays=True)
+                        smart_blob_str = str(smart_blob)
                         process = subprocess.Popen(['skdump', '--temperature', '--load=-'], shell = False, stdout = subprocess.PIPE, stdin = subprocess.PIPE)
                         process.stdin.write(smart_blob_str)
                         process.stdin.flush()
@@ -320,11 +320,14 @@ class SensorMenuItem(g15theme.MenuItem):
     def get_theme_properties(self):        
         properties = g15theme.MenuItem.get_theme_properties(self)
         properties["item_name"] = self.sensor_label
-        properties["item_alt"] = "%.2f" % self.sensor.value
-        properties["item_alt2"] = "%.2f" % self.sensor.critical if self.sensor.critical is not None else ""
-        max = self.sensor.critical if self.sensor.critical is not None else self.sensor.get_default_crit()
-        properties["temp_percent"] = ( self.sensor.value / max ) * 100.0
+        properties["item_alt"] = self._format_value(self.sensor.value)
+        properties["item_alt2"] = self._format_value(self.sensor.critical) if self.sensor.critical is not None else ""
+        max_val = self.sensor.critical if self.sensor.critical is not None else self.sensor.get_default_crit()
+        properties["temp_percent"] = ( self.sensor.value / max_val ) * 100.0
         return properties
+    
+    def _format_value(self, val):
+        return "%.2f" % val if val < 1000 else "%4d" % int(val)
      
 class G15Sensors(g15plugin.G15RefreshingPlugin):
     
@@ -332,6 +335,9 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
         g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, [ "system" ], id, name, 5.0)
         
     def activate(self):
+        gobject.idle_add(self._do_activate)
+        
+    def _do_activate(self):
         self.sensor_sources = get_sensor_sources()
         self.sensor_dict = {}        
         g15plugin.G15RefreshingPlugin.activate(self)        
@@ -366,17 +372,18 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
             self.page.add_child(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
             i = 0
             for s in enabled_sensors:                
-                sense_key = "%s/sensors/%s" % (self.gconf_key, gconf.escape_key(s.name, len(s.name)))
-                sense_label = g15util.get_string_or_default(self.gconf_client, "%s/label" % (sense_key), s.name) 
-                menu_item = SensorMenuItem("menuitem-%d" % i, s, sense_label)
-                self.sensor_dict[s.name] = menu_item
-                self.menu.add_child(menu_item)
-                
-                # If this is the first child, change the theme variant
-                if self.menu.get_child_count() == 1: 
-                    self.page.theme.set_variant(VARIANT_NAMES[menu_item.sensor.sense_type])
-                
-                i += 1
+                if s.sense_type in TYPE_NAMES:
+                    sense_key = "%s/sensors/%s" % (self.gconf_key, gconf.escape_key(s.name, len(s.name)))
+                    sense_label = g15util.get_string_or_default(self.gconf_client, "%s/label" % (sense_key), s.name) 
+                    menu_item = SensorMenuItem("menuitem-%d" % i, s, sense_label)
+                    self.sensor_dict[s.name] = menu_item
+                    self.menu.add_child(menu_item)
+                    
+                    # If this is the first child, change the theme variant
+                    if self.menu.get_child_count() == 1: 
+                        self.page.theme.set_variant(VARIANT_NAMES[menu_item.sensor.sense_type])
+                    
+                    i += 1
             
     
     def deactivate(self):

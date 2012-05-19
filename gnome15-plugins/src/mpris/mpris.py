@@ -186,7 +186,7 @@ class AbstractMPRISPlayer():
     
     def show_page(self):
         self.load_song_details()
-        self.page = self.screen.get_page(id="MPRIS%s" % self.title)
+        self.page = self.screen.get_page(page_id="MPRIS%s" % self.title)
         if self.page == None:
             self.page = g15theme.G15Page("MPRIS%s" % self.title, self.screen, on_shown=self.on_shown, \
                                          on_hidden=self.on_hidden, theme_properties_callback = self._get_properties, \

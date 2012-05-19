@@ -681,10 +681,11 @@ class G15Service(g15desktop.G15AbstractService):
     def _configure_window_monitoring(self):
         logger.info("Attempting to set up BAMF")
         try :
-            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
-            bamf_matcher_interface = dbus.Interface(self.bamf_matcher, 'org.ayatana.bamf.matcher')  
+            
+            bamf_object = self.session_bus.get_object('org.ayatana.bamf', '/org/ayatana/bamf/matcher')     
+            self.bamf_matcher = dbus.Interface(bamf_object, 'org.ayatana.bamf.matcher')
             self.session_bus.add_signal_receiver(self._active_window_changed, dbus_interface = 'org.ayatana.bamf.matcher', signal_name="ActiveWindowChanged")
-            active_window = bamf_matcher_interface.ActiveWindow() 
+            active_window = self.bamf_matcher.ActiveWindow() 
             logger.info("Will be using BAMF for window matching")
             if active_window:
                 self._active_window_changed("", active_window)

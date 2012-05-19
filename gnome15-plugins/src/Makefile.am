@@ -38,6 +38,9 @@ endif
 if ENABLE_MACROS_PLUGIN
     MAYBE_MACROS = macros
 endif
+if ENABLE_PROFILES_PLUGIN
+    MAYBE_PROFILES = profiles
+endif
 if ENABLE_MOUNTS_PLUGIN
     MAYBE_MOUNTS = mounts
 endif
@@ -95,9 +98,9 @@ endif
 
 SUBDIRS = $(MAYBE_BACKGROUND) $(MAYBE_CAIRO_CLOCK) $(MAYBE_CLOCK) $(MAYBE_FX) $(MAYBE_MACRO_RECORDER) $(MAYBE_MACROS) $(MAYBE_MOUNTS) \
 	$(MAYBE_NOTIFY_LCD) $(MAYBE_IM) $(MAYBE_WEATHER) $(MAYBE_MPRIS) $(MAYBE_MENU) $(MAYBE_PANEL) $(MAYBE_VIDEOPLAYER) $(MAYBE_G15DAEMON_SERVER) \
-	$(MAYBE_STOPWATCH) $(MAYBE_SCREENSAVER) $(MAYBE_INDICATOR_ME) $(MAYBE_INDICATOR_MESSAGES) \
+	$(MAYBE_STOPWATCH) $(MAYBE_SCREENSAVER) $(MAYBE_INDICATOR_ME) $(MAYBE_INDICATOR_MESSAGES) $(MAYBE_PROFILES) \
 	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_WEBCAM) $(MAYBE_CAL) $(MAYBE_LCDBIFF) $(MAYBE_SENSE) \
 	$(MAYBE_LCDSHOT) $(MAYBE_TWEAK) $(MAYBE_LENS) $(MAYBE_TAILS)
 	
 DIST_SUBDIRS = background cairo-clock clock fx macro-recorder macros mounts notify-lcd im weather mpris menu panel videoplayer g15daemon-server stopwatch \
-	sysmon volume rss processes webcam screensaver cal lcdbiff indicator-me indicator-messages sense lcdshot tweak lens tails
+	profiles sysmon volume rss processes webcam screensaver cal lcdbiff indicator-me indicator-messages sense lcdshot tweak lens tails

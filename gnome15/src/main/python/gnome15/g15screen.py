@@ -297,7 +297,7 @@ class G15Screen():
         application_name        -- application name
         """
         found = False
-        if self.defeat_profile_change < 1:
+        if self.defeat_profile_change < 1 and not g15profile.is_locked(self.device):
             choose_profile = None         
             # Active window has changed, see if we have a profile that matches it
             if application_name is not None:
@@ -445,15 +445,15 @@ class G15Screen():
             i = i + 1
         return i
     
-    def get_page(self, id):
+    def get_page(self, page_id):
         """
         Return a page object given it's ID
         
         Keyword arguments:
-        id -- page ID
+        page_id -- page ID
         """
         for page in self.pages:
-            if page.id == id:
+            if page.id == page_id:
                 return page
             
     def clear_popup(self):

@@ -251,6 +251,26 @@ def get_active_profile(device):
         return get_profile(device, val.get_string())
     else:
         return get_default_profile(device)
+
+def is_locked(device):
+    """
+    Get if the active profile is "locked" or if it may be changed for the specified device. 
+    
+    Keyword arguments:
+    device        -- device associated with profile
+    """
+    return g15util.get_bool_or_default(conf_client, "/apps/gnome15/%s/locked" % device.uid, False)
+
+def set_locked(device, locked):
+    """
+    Set if the active profile is 'locked', or if it may be changed 
+    for the specified device. 
+    
+    Keyword arguments:
+    device        -- device associated with profile
+    locked        -- lock statue
+    """
+    conf_client.set_bool("/apps/gnome15/%s/locked" % device.uid, locked)
       
 def get_default_profile(device):
     """
@@ -617,9 +637,11 @@ class G15Profile():
         self.name = None
         self.icon = None
         self.background = None
-        self.filename = file_path
+        self.filename = None
         if profile_id is not None:
             self.set_id(profile_id)
+        if file_path is not None:
+            self.filename = file_path
         self.author = ""
         self.macros = { g15driver.KEY_STATE_UP: [],
                        g15driver.KEY_STATE_HELD: []
@@ -917,11 +939,22 @@ class G15Profile():
                     key_count += 1
             if key_count == len(macro.keys) and key_count == len(keys):
                 return macro
-        
+            
+    def is_active(self):
+        """
+        Get if this profile is the currently active one
+        """
+        return self.id == get_active_profile(self.device).id
+                
     def make_active(self):
         """
-        Make this the currently active profile
+        Make this the currently active profile. An Exception will be raised
+        if the profile is currently locked for this device 
         """
+        if is_locked(self.device):
+            raise Exception("Cannot change active profile when locked.")
+        
+        
         conf_client.set_string("/apps/gnome15/%s/active_profile" % self.device.uid, str(self.id))
         
     def load(self, filename = None, fd = None):

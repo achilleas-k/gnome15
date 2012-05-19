@@ -1,4 +1,4 @@
-AC_INIT(gnome15-plugins, 0.8.3)
+AC_INIT(gnome15-plugins, 0.8.4)
 AC_CONFIG_SRCDIR([src/cal/cal.py])
 AM_INIT_AUTOMAKE
 
@@ -132,6 +132,18 @@ AC_ARG_ENABLE([macros],
  	esac],
 	[macros_plugin=yes])
 AM_CONDITIONAL([ENABLE_MACROS_PLUGIN], [test x$macros_plugin = xyes])
+
+dnl Profile selection plugin
+AC_ARG_ENABLE([profiles],
+	[AS_HELP_STRING([--enable-profiles],
+		[Enable profile selector plugin.])],
+	[case "${enableval}" in
+ 				yes)	profiles_plugin=yes ;;
+ 				no)		profiles_plugin=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-profiles]) ;;
+ 	esac],
+	[profiles_plugin=yes])
+AM_CONDITIONAL([ENABLE_PROFILES_PLUGIN], [test x$profiles_plugin = xyes])
 
 dnl Menu plugin
 AC_ARG_ENABLE([menu],
@@ -489,6 +501,8 @@ src/mounts/Makefile
 src/mounts/default/Makefile
 src/menu/Makefile
 src/panel/Makefile
+src/profiles/Makefile
+src/profiles/default/Makefile
 src/processes/Makefile
 src/processes/default/Makefile
 src/im/Makefile
@@ -603,6 +617,10 @@ AS_IF([test "x$macro_recorder_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("macros                      - ")
 AS_IF([test "x$macros_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("profiles                    - ")
+AS_IF([test "x$profiles_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("menu                        - ")

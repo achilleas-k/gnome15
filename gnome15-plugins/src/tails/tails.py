@@ -158,7 +158,7 @@ class G15TailMenuItem(g15theme.MenuItem):
     def __init__(self, id, line, file_path):
         g15theme.MenuItem.__init__(self, id)
         self.line = line
-        self.file = file
+        self.file = file_path
         
     def on_configure(self):
         self.set_theme(g15theme.G15Theme(self.parent.get_theme().dir, "menu-entry"))
@@ -169,8 +169,8 @@ class G15TailMenuItem(g15theme.MenuItem):
         return element_properties 
     
     def activate(self):
-        logger.info("xdg-open '%s'" % self.file_path)
-        subprocess.Popen(['xdg-open', self.file_path])
+        logger.info("xdg-open '%s'" % self.file)
+        subprocess.Popen(['xdg-open', self.file])
         return True
         
 class G15TailThread(Thread):

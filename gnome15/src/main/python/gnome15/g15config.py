@@ -264,6 +264,9 @@ class G15Config:
         self.window_name = self.widget_tree.get_object("WindowName")
         self.window_select = self.widget_tree.get_object("WindowSelect")
         self.context_remove_profile = self.widget_tree.get_object("ContextRemoveProfile")
+        self.context_activate_profile = self.widget_tree.get_object("ContextActivateProfile")
+        self.context_lock_profile = self.widget_tree.get_object("LockProfile")
+        self.context_unlock_profile = self.widget_tree.get_object("UnlockProfile")
         self.activate_on_focus = self.widget_tree.get_object("ActivateProfileOnFocusCheckbox")
         self.macro_name_renderer = self.widget_tree.get_object("MacroNameRenderer")
         self.profile_name_renderer = self.widget_tree.get_object("ProfileNameRenderer")
@@ -353,8 +356,10 @@ class G15Config:
         self.widget_tree.get_object("AboutPluginButton").connect("clicked", self._show_about_plugin)
         self.widget_tree.get_object("AddButton").connect("clicked", self._add_profile)
         self.widget_tree.get_object("ContextDuplicateProfile").connect("activate", self._copy_profile)
-        self.widget_tree.get_object("ContextActivateProfile").connect("activate", self._activate)
+        self.context_activate_profile.connect("activate", self._activate)
         self.widget_tree.get_object("ContextExportProfile").connect("activate", self._export)
+        self.context_unlock_profile.connect("activate", self._unlock_profile)
+        self.context_lock_profile.connect("activate", self._lock_profile)
         self.activate_on_focus.connect("toggled", self._activate_on_focus_changed)
         self.activate_by_default.connect("toggled", self._activate_on_focus_changed)
         self.clear_icon_button.connect("clicked", self._clear_icon)
@@ -401,14 +406,13 @@ class G15Config:
         
         # Connection to BAMF for running applications list
         try :
-            self.bamf_matcher = self.session_bus.get_object("org.ayatana.bamf", '/org/ayatana/bamf/matcher')
+            bamf_object = self.session_bus.get_object('org.ayatana.bamf', '/org/ayatana/bamf/matcher')     
+            self.bamf_matcher = dbus.Interface(bamf_object, 'org.ayatana.bamf.matcher')
         except:
             logger.warning("BAMF not available, falling back to WNCK")
             self.bamf_matcher = None            
             import wnck
             self.screen = wnck.screen_get_default()
-            while gtk.events_pending():
-                gtk.main_iteration()
         
         # Show infobar component to start desktop service if it is not running
         self.infobar = gtk.InfoBar()    
@@ -780,48 +784,53 @@ class G15Config:
         if  rows > 0:
             self.key_table.set_property("n-rows", rows)         
         row = 0
-        for action_id in actions:
-            # First try the active profile to see if the action has been re-mapped
-            active_profile = g15profile.get_active_profile(self.driver.device)
-            for state in [ g15driver.KEY_STATE_UP, g15driver.KEY_STATE_HELD ]:
-                action_binding = active_profile.get_binding_for_action(state, action_id)
-                if action_binding is None:
-                    # No other keys bound to action, try the device defaults
-                    device_info = g15devices.get_device_info(self.driver.get_model_name())                
-                    if action_id in device_info.action_keys:
-                        action_binding = device_info.action_keys[action_id]
+        active_profile = g15profile.get_active_profile(self.driver.device)
+        if active_profile is None:
+            logger.warning("No active profile found. It's possible the profile no longer exists, or is supplied with a plugin that cannot be found.")
+        else:
+            for action_id in actions:
+                # First try the active profile to see if the action has been re-mapped
+                action_binding = None
+                for state in [ g15driver.KEY_STATE_UP, g15driver.KEY_STATE_HELD ]:
+                    action_binding = active_profile.get_binding_for_action(state, action_id)
+                    if action_binding is None:
+                        # No other keys bound to action, try the device defaults
+                        device_info = g15devices.get_device_info(self.driver.get_model_name())                
+                        if action_id in device_info.action_keys:
+                            action_binding = device_info.action_keys[action_id]
                 
-            if action_binding is not None:
-                # If hold
-                label = gtk.Label("")
-                label.set_size_request(40, -1)
-                if action_binding.state == g15driver.KEY_STATE_HELD:
-                    label.set_text(_("<b>Hold</b>"))
-                    label.set_use_markup(True)
-                label.set_alignment(0.0, 0.5)
-                self.key_table.attach(label, 0, 1, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2);
-                label.show()
-                
-                # Keys
-                keys = gtk.HBox(spacing = 4)
-                for k in action_binding.keys:
-                    fname = os.path.abspath("%s/key-%s.png" % (g15globals.image_dir, k))
-                    pixbuf = gtk.gdk.pixbuf_new_from_file(fname)
-                    pixbuf = pixbuf.scale_simple(22, 14, gtk.gdk.INTERP_BILINEAR)
-                    img = gtk.image_new_from_pixbuf(pixbuf)
-                    img.show()
-                    keys.add(img)
-                keys.show()
-                self.key_table.attach(keys, 1, 2, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
-                
-                # Text
-                label = gtk.Label(actions[action_id])
-                label.set_alignment(0.0, 0.5)
-                label.show()
-                self.key_table.attach(label, 2, 3, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
-                row += 1
-            else:
-                logger.warning("Plugin %s requires an action that is not available (%s)" % ( plugin.id, action_id))
+                if action_binding is not None:
+                    # If hold
+                    label = gtk.Label("")
+                    label.set_size_request(40, -1)
+                    if action_binding.state == g15driver.KEY_STATE_HELD:
+                        label.set_text(_("<b>Hold</b>"))
+                        label.set_use_markup(True)
+                    label.set_alignment(0.0, 0.5)
+                    self.key_table.attach(label, 0, 1, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2);
+                    label.show()
+                    
+                    # Keys
+                    keys = gtk.HBox(spacing = 4)
+                    for k in action_binding.keys:
+                        fname = os.path.abspath("%s/key-%s.png" % (g15globals.image_dir, k))
+                        pixbuf = gtk.gdk.pixbuf_new_from_file(fname)
+                        pixbuf = pixbuf.scale_simple(22, 14, gtk.gdk.INTERP_BILINEAR)
+                        img = gtk.image_new_from_pixbuf(pixbuf)
+                        img.show()
+                        keys.add(img)
+                    keys.show()
+                    self.key_table.attach(keys, 1, 2, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
+                    
+                    # Text
+                    label = gtk.Label(actions[action_id])
+                    label.set_alignment(0.0, 0.5)
+                    label.show()
+                    self.key_table.attach(label, 2, 3, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
+                    row += 1
+                else:
+                    logger.warning("Plugin %s requires an action that is not available (%s)" % ( plugin.id, action_id))
+                    
             
         if row > 0:
             self.key_frame.set_visible(True)
@@ -904,9 +913,8 @@ class G15Config:
         
     def _activate_on_focus_changed(self, widget=None):
         if not self.adjusting:
-            self.selected_profile.activate_on_focus = widget.get_active()        
-            self.window_name.set_sensitive(self.selected_profile.activate_on_focus)        
-            self.window_select.set_sensitive(self.selected_profile.activate_on_focus)
+            self.selected_profile.activate_on_focus = widget.get_active()   
+            self._set_available_profile_actions()
             self._save_profile(self.selected_profile)
             
     def _parent_profile_changed(self, widget):
@@ -1060,6 +1068,7 @@ class G15Config:
             self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("cycle_screens"), self._cycle_screens_configuration_changed));
             self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("plugins"), self._plugins_changed))
             self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("active_profile"), self._active_profile_changed))
+            self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("locked"), self._active_profile_changed))
             self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("enabled"), self._device_enabled_configuration_changed))
             self.notify_handles.append(self.conf_client.notify_add(self._get_full_key("driver"), self._driver_configuration_changed))
             self.selected_profile = g15profile.get_active_profile(self.selected_device)  
@@ -1094,6 +1103,10 @@ class G15Config:
         (model, path) = self.macro_list.get_selection().get_selected()
         self.delete_macro_button.set_sensitive(path != None and not self.selected_profile.read_only)
         self.macro_properties_button.set_sensitive(path != None)
+        
+    def _set_available_profile_actions(self):
+        self.window_name.set_sensitive(self.selected_profile.activate_on_focus)        
+        self.window_select.set_sensitive(self.selected_profile.activate_on_focus)
         
     def _activate(self, widget):
         (model, path) = self.profiles_tree.get_selection().get_selected()
@@ -1205,6 +1218,16 @@ class G15Config:
                 file.close()
             
         dialog.destroy()
+        
+    def _lock_profile(self, widget):
+        if g15profile.is_locked(self.selected_device):
+            g15profile.set_locked(self.selected_device, False)
+        if not self.selected_profile.is_active():
+            self.selected_profile.make_active()
+        g15profile.set_locked(self.selected_device, True)
+        
+    def _unlock_profile(self, widget):
+        g15profile.set_locked(self.selected_device, False)
         
     def _export(self, widget):
         dialog = gtk.FileChooserDialog("Export..",
@@ -1369,7 +1392,7 @@ class G15Config:
         dialog.hide()
         if response == 1:
             new_profile_name = self.widget_tree.get_object("NewProfileName").get_text()
-            new_profile = g15profile.G15Profile(self.selected_device, -1)
+            new_profile = g15profile.G15Profile(self.selected_device, long(time.time()))
             new_profile.name = new_profile_name
             g15profile.create_profile(new_profile)
             self.selected_profile = g15profile.get_profile(self.selected_device, new_profile.id)
@@ -1457,11 +1480,14 @@ class G15Config:
                 active_id = active.id
             self.selected_profile = None
             self.profiles = g15profile.get_profiles(self.selected_device)
+            locked = g15profile.is_locked(self.selected_device)
             for profile in self.profiles: 
                 weight = 400
-                if profile.id == active_id:
+                selected = profile.id == active_id
+                if selected:
                     weight = 700
-                self.profiles_model.append([profile.name, weight, profile.id, profile.name != "Default", not profile.read_only ])
+                lock_icon = gtk.gdk.pixbuf_new_from_file(os.path.join(g15globals.image_dir, "locked.png")) if locked and selected else None 
+                self.profiles_model.append([profile.name, weight, profile.id, profile.name != "Default", not profile.read_only, lock_icon ])
                 if current_selection != None and profile.id == current_selection.id:
                     tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(len(self.profiles_model) - 1)))
                     self.selected_profile = profile         
@@ -1521,6 +1547,8 @@ class G15Config:
             self.macros_model.clear()
             selected_macro = None
             macros = self._get_sorted_list()
+            
+            # Build the macro model and set the initial selection
             for macro in macros:
                 on_name = "Hold" if macro.activate_on == g15driver.KEY_STATE_HELD else ""
                 row = [", ".join(g15util.get_key_names(macro.keys)), 
@@ -1536,28 +1564,14 @@ class G15Config:
             if selected_macro == None and len(macros) > 0:            
                 tree_selection.select_path(self.macros_model.get_path(self.macros_model.get_iter(0)))
                     
-            self.activate_on_focus.set_active(profile.activate_on_focus)
-            self.launch_pattern.set_text("" if profile.launch_pattern is None else profile.launch_pattern)
-            self.profile_author.set_text(profile.author)
-            self.activate_by_default.set_active(profile.activate_on_focus)
-            if profile.window_name != None:
-                self.window_name.set_text(profile.window_name)
-            else:
-                self.window_name.set_text("")
-            self.send_delays.set_active(profile.send_delays)
-            self.fixed_delays.set_active(profile.fixed_delays)
-            self._set_delay_state()
-            self.press_delay_adjustment.set_value(float(profile.press_delay) / 1000.0)
-            self.release_delay_adjustment.set_value(float(profile.release_delay) / 1000.0)
-            self.window_combo.set_sensitive(self.activate_on_focus.get_active())
+            
+            # Various enabled / disabled and visible / invisible states are
+            # adjusted depending on the selected profile
             self.new_macro_button.set_sensitive(not profile.read_only)
             self.delete_macro_button.set_sensitive(not profile.read_only)
             self.information_content.set_sensitive(not profile.read_only)
             self.delays_content.set_sensitive(not profile.read_only)
             self.activation_content.set_sensitive(not profile.read_only)
-
-            self._set_image(self.profile_icon, profile.get_profile_icon_path(48))            
-            self._set_image(self.background, profile.get_resource_path(profile.background))
             
             if profile.get_default():
                 self.activate_on_focus.set_visible(False)
@@ -1586,9 +1600,38 @@ class G15Config:
                 self.activate_by_default.set_visible(False)
                 self.context_remove_profile.set_sensitive(not profile.read_only)
                 
+            # Set actions available based on locked state
+            locked = g15profile.is_locked(self.selected_device)
+            self.context_activate_profile.set_sensitive(not locked and not profile.is_active())
+            self.context_unlock_profile.set_sensitive(profile.is_active() and locked)
+            self.context_lock_profile.set_sensitive(not profile.is_active() or ( profile.is_active() and not locked ) )
             self.activate_on_launch.set_active(profile.activate_on_launch)
             self.launch_pattern.set_sensitive(self.activate_on_launch.get_active())
             
+            # Background button state             
+            self.background_browse_button.set_visible(self.driver is not None and self.driver.get_bpp() > 1)
+            self.background_label.set_visible(self.driver is not None and self.driver.get_bpp() > 1)
+            self.clear_background_button.set_visible(self.driver is not None and self.driver.get_bpp() > 1)
+            
+            # Set the values of the widgets
+            self.launch_pattern.set_text("" if profile.launch_pattern is None else profile.launch_pattern)
+            self.profile_author.set_text(profile.author)
+            self.activate_by_default.set_active(profile.activate_on_focus)
+            if profile.window_name != None:
+                self.window_name.set_text(profile.window_name)
+            else:
+                self.window_name.set_text("")
+            self.send_delays.set_active(profile.send_delays)
+            self.fixed_delays.set_active(profile.fixed_delays)
+            self._set_delay_state()
+            self.press_delay_adjustment.set_value(float(profile.press_delay) / 1000.0)
+            self.release_delay_adjustment.set_value(float(profile.release_delay) / 1000.0)
+            self._set_image(self.profile_icon, profile.get_profile_icon_path(48))            
+            self._set_image(self.background, profile.get_resource_path(profile.background))
+            self.activate_on_focus.set_active(profile.activate_on_focus)
+            self.window_combo.set_sensitive(self.activate_on_focus.get_active())
+            
+            # Set up colors 
             if self.color_button != None:
                 rgb = profile.get_mkey_color(self._get_memory_number())
                 if rgb == None:
@@ -1600,11 +1643,8 @@ class G15Config:
                     self.color_button.set_color(g15util.to_color(rgb))
                     self.enable_color_for_m_key.set_active(True)
                 self.enable_color_for_m_key.set_sensitive(not profile.read_only)
-                
-            self.background_browse_button.set_visible(self.driver is not None and self.driver.get_bpp() > 1)
-            self.background_label.set_visible(self.driver is not None and self.driver.get_bpp() > 1)
-            self.clear_background_button.set_visible(self.driver is not None and self.driver.get_bpp() > 1)
                     
+            # Parent profile
             self._load_parent_profiles()
             self.parent_profile_combo.set_active(0)
             for i in range(0, len(self.parent_profile_model)): 
@@ -1612,7 +1652,9 @@ class G15Config:
                    ( i > 0 and profile.base_profile == self.parent_profile_model[i][0] ):
                     self.parent_profile_combo.set_active(i)
                 
+            # Inital state based on macro and profile selection
             self._set_available_actions()
+            self._set_available_profile_actions()
         finally:
             self.adjusting = False
             

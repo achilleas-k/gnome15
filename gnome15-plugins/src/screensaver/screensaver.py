@@ -99,9 +99,10 @@ class G15ScreenSaver():
                 self._controls.append(control)
         self._dbus_name = "org.gnome.ScreenSaver"
         self._dbus_interface = "org.gnome.ScreenSaver"
+        self._in_screen_saver = False
                 
         if self._session_bus == None:
-            
+            screen_saver = None
             try:
                 self._session_bus = dbus.SessionBus()
             except Exception as e:
@@ -110,17 +111,18 @@ class G15ScreenSaver():
                 Timer(10, self.activate, ()).start()
                 return
             
-        
             try :
                 screen_saver = dbus.Interface(self._session_bus.get_object(self._dbus_name, '/'), self._dbus_interface)
             except Exception as e:
                 self._dbus_name = "org.kde.screensaver"
                 self._dbus_interface = "org.freedesktop.ScreenSaver"
                 screen_saver = dbus.Interface(self._session_bus.get_object(self._dbus_name, '/ScreenSaver'), self._dbus_interface)
+                if screen_saver is None:
+                    raise Exception("No support DBUS screen saver interface found.")
                 
             self._session_bus.add_signal_receiver(self._screensaver_changed_handler, dbus_interface = self._dbus_interface, signal_name = "ActiveChanged")
+            self._in_screensaver = screen_saver.GetActive()
             
-        self._in_screensaver = screen_saver.GetActive()
         self._activated = True
         self._check_page()
     

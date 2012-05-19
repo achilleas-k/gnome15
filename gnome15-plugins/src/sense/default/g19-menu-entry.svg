@@ -14,7 +14,7 @@
    height="56"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19-menu-entry.svg"
    style="display:inline">
   <defs
@@ -311,7 +311,7 @@
        id="text2999-0-1-7"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999-5-0-7)"
-       transform="matrix(1.0000023,0,0,1,-74.363261,-4.112244)"><tspan
+       transform="matrix(1.0000023,0,0,1,-58.363261,-4.112244)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-9-0"
          x="176.15961"
@@ -324,57 +324,11 @@
        id="text2999-0-1-7-4"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999-5-0-7-1)"
-       transform="matrix(1.0000023,0,0,1,-82.648975,9.530613)"><tspan
+       transform="matrix(1.0000023,0,0,1,-66.648975,9.530613)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-9-0-5"
          x="183.80023"
          y="798.28217">${item_alt2}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:Sans"
-       x="108.85714"
-       y="794.68738"
-       id="text3072"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         id="tspan3074"
-         x="108.85714"
-         y="794.68738">C</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;display:inline;font-family:Sans"
-       x="108.35713"
-       y="808.18756"
-       id="text3072-3"
-       sodipodi:linespacing="125%"
-       title="del !item_alt2"><tspan
-         sodipodi:role="line"
-         id="tspan3074-3"
-         x="108.35713"
-         y="808.18756">C</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:Sans"
-       x="104.50001"
-       y="788.21436"
-       id="text3867"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         id="tspan3869"
-         x="104.50001"
-         y="788.21436">o</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:10px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;display:inline;font-family:Sans"
-       x="104.5"
-       y="800.64282"
-       id="text3867-9"
-       sodipodi:linespacing="125%"
-       title="del !item_alt2"><tspan
-         sodipodi:role="line"
-         id="tspan3869-8"
-         x="104.5"
-         y="800.64282">o</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:Sans"

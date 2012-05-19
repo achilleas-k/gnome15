@@ -892,6 +892,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hscrollbar_policy">never</property>
+                <property name="vscrollbar_policy">automatic</property>
                 <child>
                   <object class="GtkIconView" id="DeviceView">
                     <property name="visible">True</property>
@@ -1270,6 +1271,8 @@
                                               <object class="GtkScrolledWindow" id="scrolledwindow2">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
+                                                <property name="hscrollbar_policy">automatic</property>
+                                                <property name="vscrollbar_policy">automatic</property>
                                                 <child>
                                                   <object class="GtkTreeView" id="ProfilesTree">
                                                     <property name="height_request">300</property>
@@ -1279,6 +1282,17 @@
                                                     <property name="headers_visible">False</property>
                                                     <property name="headers_clickable">False</property>
                                                     <property name="search_column">0</property>
+                                                    <child>
+                                                      <object class="GtkTreeViewColumn" id="LockedColumn">
+                                                        <property name="title" translatable="yes">column</property>
+                                                        <child>
+                                                          <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf1"/>
+                                                          <attributes>
+                                                            <attribute name="pixbuf">5</attribute>
+                                                          </attributes>
+                                                        </child>
+                                                      </object>
+                                                    </child>
                                                     <child>
                                                       <object class="GtkTreeViewColumn" id="ProfileName">
                                                         <property name="title">Name</property>
@@ -1394,6 +1408,8 @@
                                           <object class="GtkScrolledWindow" id="scrolledwindow1">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
+                                            <property name="hscrollbar_policy">automatic</property>
+                                            <property name="vscrollbar_policy">automatic</property>
                                             <child>
                                               <object class="GtkTreeView" id="MacroList">
                                                 <property name="visible">True</property>
@@ -3007,6 +3023,24 @@ g15-launch matches the following pattern</property>
         <property name="use_underline">True</property>
       </object>
     </child>
+    <child>
+      <object class="GtkMenuItem" id="LockProfile">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="use_action_appearance">False</property>
+        <property name="label" translatable="yes">Lock</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="UnlockProfile">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="use_action_appearance">False</property>
+        <property name="label" translatable="yes">Unlock</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
   </object>
   <object class="GtkMessageDialog" id="ProfileExistsError">
     <property name="can_focus">False</property>
@@ -3072,6 +3106,8 @@ choose another name.</property>
       <column type="gboolean"/>
       <!-- column-name Enabled -->
       <column type="gboolean"/>
+      <!-- column-name Locked -->
+      <column type="GdkPixbuf"/>
     </columns>
   </object>
   <object class="GtkAdjustment" id="ReleaseDelayAdjustment">

@@ -229,7 +229,11 @@ class G15FeedPage(g15theme.G15Page):
         properties["subtitle"] = self._subtitle
         properties["alt_title"] = ""
         try:
-            properties["updated"] = "%s %s" % (time.strftime("%H:%M", self.feed.updated), time.strftime("%a %d %b", self.feed.updated))
+            update_time = self.feed.updated
+            if isinstance(self.feed.updated, str):
+                update_time =  self.feed.updated_parsed
+            
+            properties["updated"] = "%s %s" % (time.strftime("%H:%M", update_time), time.strftime("%a %d %b", update_time))
         except AttributeError:
             pass
         return properties 

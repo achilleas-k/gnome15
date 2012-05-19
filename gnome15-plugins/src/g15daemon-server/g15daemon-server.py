@@ -369,7 +369,8 @@ class G15DaemonServer():
     def deactivate(self):
         self._stop_all_clients()
         self.daemon.close()
-        self.screen.driver.control_update_listeners.remove(self)
+        if self in self.screen.driver.control_update_listeners:
+            self.screen.driver.control_update_listeners.remove(self)
         self.gconf_client.notify_remove(self.notify_handle);
         self.daemon = None
         
