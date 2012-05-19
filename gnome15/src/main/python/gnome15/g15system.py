@@ -25,6 +25,7 @@ import dbus.service
 import os.path
 import g15devices
 import g15driver
+import g15util
 
 # Logging
 import logging
@@ -68,7 +69,7 @@ class SystemService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='ssn')
     def SetLight(self, device, light, value):
-        self._controller.devices[device].leds[light].set_value(value)
+        self._controller.devices[device].leds[light].set_led_value(value);
         
     @dbus.service.method(IF_NAME, in_signature='sb')
     def SetKeymapSwitching(self, device, enabled):        
@@ -125,6 +126,9 @@ def get_value(filename):
         fd.close()
         
 def set_value(filename, value):
+    g15util.execute("System", "setValue", _do_set_value, filename, value);
+        
+def _do_set_value(filename, value):
     logger.debug("Writing %s to %s" % (filename, value))
     fd = open(filename, "w")
     try :
@@ -190,7 +194,7 @@ class LED():
         self.keyboard_device = keyboard_device
         self.filename = filename
         
-    def set_value(self, val):
+    def set_led_value(self, val):
         """
         Set the current brightness of the LED
         
@@ -199,12 +203,7 @@ class LED():
         """
         if val < 0 or val > self.get_max():
             raise Exception("LED value out of range")
-        logger.debug("Writing %s to %s" % (self.filename, val))
-        fd = open(os.path.join(self.filename, "brightness"), "w")
-        try :
-            fd.write("%d\n" % val)
-        finally :
-            fd.close()            
+        set_value(os.path.join(self.filename, "brightness"), val)
         
     def get_value(self):
         return get_int_value(os.path.join(self.filename, "brightness"))
