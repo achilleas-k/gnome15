@@ -229,7 +229,7 @@ class G15SystemServiceController():
         gobject.idle_add(self._start_service)
         
     def stop(self):
-        self._loop.stop()
+        self._loop.quit()
         
     def start_loop(self):
         logger.info("Starting GLib loop")
