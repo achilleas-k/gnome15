@@ -20,28 +20,3 @@ msgstr ""
 #: driver_kernel.glade.h:1
 msgid "Emit Macro Keys"
 msgstr ""
-
-
-#: driver_kernel.glade.h:6
-msgid "Mouse"
-msgstr ""
-
-#: driver_kernel.glade.h:7
-msgid "auto"
-msgstr ""
-
-#: driver_kernel.glade.h:8
-msgid "g13"
-msgstr ""
-
-#: driver_kernel.glade.h:9
-msgid "g15v1"
-msgstr ""
-
-#: driver_kernel.glade.h:10
-msgid "g15v2"
-msgstr ""
-
-#: driver_kernel.glade.h:11
-msgid "g19"
-msgstr ""

@@ -339,7 +339,7 @@ DeviceInfo(g15driver.MODEL_G510_AUDIO, (0x046d, 0xc22e), (0x046d, 0xc22e),   g51
 DeviceInfo(g15driver.MODEL_Z10, (0x046d, 0x0a07), (0x046d, 0x0a07),           z10_key_layout,   1,  ( 160,  43 ),   False, _("Logitech Z10 Speakers"), g19_action_keys)
 DeviceInfo(g15driver.MODEL_G110, (0x046d, 0xc22b), (0x046d, 0xc22b),         g110_key_layout,  0,  ( 0,    0 ),    True, _("Logitech G110 Keyboard"), g110_action_keys)
 DeviceInfo(g15driver.MODEL_GAMEPANEL, (0x046d, 0xc251), (0x046d, 0xc251),       g15v1_key_layout, 1,  ( 160,  43 ),   True, _("Logitech GamePanel"), g15_action_keys)
-DeviceInfo(g15driver.MODEL_G930, (0x046d, 0xc251), (0x046d, 0xa1f),       g930_key_layout, 0,  ( 0,  0 ),   True, _("Logitech G930 Headphones"), {})
+DeviceInfo(g15driver.MODEL_G930, (0x046d, 0xa1f), (0x046d, 0xa1f),       g930_key_layout, 0,  ( 0,  0 ),   True, _("Logitech G930 Headphones"), {})
 
 # When I get hold of an MX5500, I will add Bluetooth detection as well
 DeviceInfo(g15driver.MODEL_MX5500, (0x0000, 0x0000), (0x0000, 0x0000), mx5500_key_layout,  1,  ( 136,    32 ),    False, _("Logitech MX5500"), mx5500_action_keys)

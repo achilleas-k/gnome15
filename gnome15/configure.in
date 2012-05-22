@@ -65,6 +65,17 @@ AC_ARG_ENABLE([g19-driver],
 	[g19_driver=no])
 AM_CONDITIONAL([ENABLE_DRIVER_G19], [test x$g19_driver = xyes])
 
+AC_ARG_ENABLE([g930-driver],
+	[AS_HELP_STRING([--enable-g930-driver],
+		[Enable G930 headset driver support])],
+	[case "${enableval}" in
+ 				yes)	g930_driver=yes ;;
+ 				no)		g930_driver=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-930-driver]) ;;
+ 	esac],
+	[g930_driver=yes])
+AM_CONDITIONAL([ENABLE_DRIVER_G930], [test x$g930_driver = xyes])
+
 AC_ARG_ENABLE([g15-driver],
 	[AS_HELP_STRING([--enable-g15-driver],
 		[Enable G15 driver support (requires g15daemon). Now deprecated, try the kernel driver first])],
@@ -243,6 +254,7 @@ src/udev/98-gnome15.rules
 src/udev/99-gnome15-kernel.rules
 src/udev/99-gnome15-g15direct.rules
 src/udev/99-gnome15-g19direct.rules
+src/udev/99-gnome15-g930.rules
 src/gnome/Makefile
 src/gnome/applet/Makefile
 src/gnome/applet/GNOME_G15Applet.server
@@ -312,6 +324,10 @@ AS_IF([test "x$g15direct_driver" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("driver_g19 (g19d)           - ")
 AS_IF([test "x$g19_driver" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("driver_g930                 - ")
+AS_IF([test "x$g930_driver" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("driver_g19direct            - ")

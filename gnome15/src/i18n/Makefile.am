@@ -4,6 +4,7 @@ EXTRA_DIST = colorpicker.en_GB.po \
 			driver_g15.en_GB.po \
 			driver_g15direct.en_GB.po \
 			driver_g19.en_GB.po \
+			driver_g930.en_GB.po \
 			driver_g19direct.en_GB.po \
 			driver_gtk.en_GB.po \
 			driver_kernel.en_GB.po \

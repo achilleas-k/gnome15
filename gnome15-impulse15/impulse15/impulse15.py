@@ -37,6 +37,7 @@ description="Spectrum analyser. Based on the Impulse screenlet and desktop widge
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith, Ian Halpern"
 site="https://launchpad.net/impulse.bzr"
+unsupported_models = [ g15driver.MODEL_G930 ]
 has_preferences=True
 
 
