@@ -581,7 +581,6 @@ src/tails/Makefile
 src/tails/tailer/Makefile
 src/tails/default/Makefile
 src/display/Makefile
-src/display/tailer/Makefile
 src/display/default/Makefile
 ])
 

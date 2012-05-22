@@ -1,4 +1,3 @@
-SUBDIRS = default
 plugindir = $(datadir)/gnome15/plugins/cal-google
 plugin_DATA = cal-google.py
 
