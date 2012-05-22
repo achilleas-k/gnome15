@@ -65,6 +65,7 @@ copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 default_enabled=True
+unsupported_models = [ g15driver.MODEL_G930 ]
 actions={ 
          VOLUME_UP : "Increase the volume",
          VOLUME_DOWN : "Decrease the volume",

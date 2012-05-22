@@ -46,7 +46,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G930 ]
 reserved_keys = [ g15driver.G_KEY_SETTINGS ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Previous process"), 

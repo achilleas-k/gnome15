@@ -944,7 +944,8 @@ class G15Profile():
         """
         Get if this profile is the currently active one
         """
-        return self.id == get_active_profile(self.device).id
+        active = get_active_profile(self.device)
+        return active is not None and self.id == active.id
                 
     def make_active(self):
         """

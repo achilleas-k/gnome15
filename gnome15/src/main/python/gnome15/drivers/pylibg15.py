@@ -67,7 +67,7 @@ class KeyboardReceiveThread(Thread):
                 ext_code = 0
                 if err == G15_NO_ERROR:
                     key_ext = is_ext_key(pressed_keys.value)
-                    if key_ext:
+                    if key_ext: 
                         ext_code = pressed_keys.value
                         ext_code &= ~(1<<28)
                         err = libg15.getPressedKeys(byref(pressed_keys), 10)

@@ -204,6 +204,7 @@ class G15Config:
     def __init__(self, parent_window=None, service=None):
         self.parent_window = parent_window
         
+        self._controls_visible = False
         self.profile_save_timer = None
         self._signal_handles = []
         self.notify_handles = []
@@ -306,6 +307,7 @@ class G15Config:
         self.macro_edit_close_button = self.widget_tree.get_object("MacroEditCloseButton")
         self.key_table = self.widget_tree.get_object("KeyTable")
         self.key_frame = self.widget_tree.get_object("KeyFrame")
+        self.memory_bank = self.widget_tree.get_object("MemoryBank")
         self.macros_tab = self.widget_tree.get_object("MacrosTab")
         self.macros_tab_label = self.widget_tree.get_object("MacrosTabLabel")
         self.keyboard_tab = self.widget_tree.get_object("KeyboardTab")
@@ -691,6 +693,9 @@ class G15Config:
         device_info = g15devices.get_device_info(self.driver.get_model_name()) if self.driver is not None else None
         self.macros_tab.set_visible(device_info is not None and device_info.macros)
         self.macros_tab_label.set_visible(device_info is not None and device_info.macros)
+            
+        # Hide memory bank if there are no M-Keys
+        self.memory_bank.set_visible(self.driver != None and self.driver.has_memory_bank())
         
     def _load_plugins(self):
         """
@@ -709,8 +714,9 @@ class G15Config:
                         self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(len(self.plugin_model) - 1)))
             if len(self.plugin_model) > 0 and self._get_selected_plugin() == None:            
                 self.plugin_tree.get_selection().select_path(self.plugin_model.get_path(self.plugin_model.get_iter(0)))
-
+        
         self._select_plugin(None)
+        self._set_tab_status()
         
     def _load_drivers(self):
         self.driver_model.clear()
@@ -967,8 +973,8 @@ class G15Config:
         selected_driver = self.conf_client.get_string(self._get_full_key("driver"))
         i = 0
         sel = False
-        for ( id, name ) in self.driver_model:
-            if id == selected_driver:
+        for ( driver_id, driver_name ) in self.driver_model:
+            if driver_id == selected_driver:
                 self.driver_combo.set_active(i)
                 sel = True
             i += 1
@@ -984,12 +990,12 @@ class G15Config:
                 widget = gtk.Label("")
                 widget.set_text(_("There is no appropriate driver for the device <b>" + \
                                    "%s</b>.\nDo you have all the required packages installed?") % self.selected_device.model_fullname)
-                widget.set_use_markup(True)                
+                widget.set_use_markup(True)          
+                self.driver_box.pack_start(widget, False, False)
+                self.driver_box.show_all()      
                 self.keyboard_tab.set_visible(False)
                 self.plugins_tab.set_visible(False)
-                self.driver_box.pack_start(widget, False, False)
-                self.driver_box.show_all()
-            else:
+            else:                
                 controls = self.widget_tree.get_object("DriverOptionsBox")
                 for c in controls.get_children():
                     controls.remove(c)
@@ -1007,6 +1013,10 @@ class G15Config:
                 # Build and show component
                 controls.pack_start(widget, False, False)
                 controls.show_all()
+                
+    def _set_tab_status(self):
+        self.keyboard_tab.set_visible(self._controls_visible)
+        self.plugins_tab.set_visible(len(self.plugin_model) > 0)
             
     def _driver_options_changed(self):
         self._add_controls()
@@ -1048,7 +1058,7 @@ class G15Config:
             g15devices.set_enabled(self.conf_client, self.selected_device, self.device_enabled.get_active())
         
     def _memory_changed(self, widget):
-        self._load_configuration(self.selected_profile)
+        self._load_profile(self.selected_profile)
         
     def _device_selection_changed(self, widget):
         self._load_device()
@@ -1084,6 +1094,7 @@ class G15Config:
         if self.selected_device:
             self._load_drivers()
         self._do_status_change()
+        self._set_tab_status()
         
     def _get_device_conf_key(self):
         return "/apps/gnome15/%s" % self.selected_device.uid
@@ -1094,7 +1105,7 @@ class G15Config:
     def _select_profile(self, widget):
         (model, path) = self.profiles_tree.get_selection().get_selected()
         self.selected_profile = g15profile.get_profile(self.selected_device, model[path][2])
-        self._load_configuration(self.selected_profile)
+        self._load_profile(self.selected_profile)
         
     def _select_macro(self, widget):
         self._set_available_actions()
@@ -1298,6 +1309,8 @@ class G15Config:
         if response == 1:
             active_profile = g15profile.get_active_profile(self.selected_device)
             if self.selected_profile.id == active_profile.id:
+                if g15profile.is_locked(self.selected_device):
+                    g15profile.set_locked(self.selected_device, False)
                 self._make_active(g15profile.get_profile(self.selected_device, 0))
             self.selected_profile.delete()
             self.profiles.remove(self.selected_profile)
@@ -1499,7 +1512,7 @@ class G15Config:
                 tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(0)))
                 self.selected_profile = self.profiles[0]
             if self.selected_profile != None:                             
-                self._load_configuration(self.selected_profile)
+                self._load_profile(self.selected_profile)
                 
     def _load_parent_profiles(self):
         self.parent_profile_model.clear()
@@ -1514,7 +1527,7 @@ class G15Config:
         
     def _profile_name_edited(self, widget, row, value):        
         profile = self.profiles[int(row)]
-        if value != profile.name:
+        if value != profile.name and not profile.read_only:
             profile.name = value
             self._save_profile(profile)
             
@@ -1527,7 +1540,7 @@ class G15Config:
         if value != macro.name:
             macro.name = value
             macro.save()
-            self._load_configuration(self.selected_profile)
+            self._load_profile(self.selected_profile)
         
     def _comparator(self, o1, o2):
         return o1.compare(o2)
@@ -1536,7 +1549,7 @@ class G15Config:
         sm = list(self.selected_profile.get_sorted_macros(None, self._get_memory_number()))
         return sm
         
-    def _load_configuration(self, profile):
+    def _load_profile(self, profile):
         self.adjusting = True
         try : 
             current_selection = self._get_selected_macro()        
@@ -1691,6 +1704,8 @@ class G15Config:
                 i += 1
         
     def _add_controls(self):
+        
+        self._controls_visible = False
                 
         # Remove previous notify handles
         for nh in self.control_notify_handles:
@@ -1763,6 +1778,8 @@ class G15Config:
                 self.control_notify_handles.append(self.conf_client.notify_add(self._get_full_key(control.id), self._control_configuration_changed, [ control, picker]));
                 
             row += 1
+        if row > 0:            
+            self._controls_visible = True
         controls.add(table)
         controls.show_all()
           
@@ -1784,6 +1801,8 @@ class G15Config:
                     check_button.connect("toggled", self._control_changed, control)
                     self.notify_handles.append(self.conf_client.notify_add(self._get_full_key(control.id), self._control_configuration_changed, [ control, check_button ]));
                     row += 1
+        if row > 0:
+            self._controls_visible = True
             
         controls.show_all()
         self.widget_tree.get_object("SwitchesFrame").set_child_visible(row > 0)
@@ -1793,12 +1812,14 @@ class G15Config:
             self.cycle_screens.hide()
             self.cycle_screens_options.hide()
         else:            
+            self._controls_visible = True
             self.cycle_screens.show()
             self.cycle_screens_options.show()
         
         # If the keyboard has a colour dimmer, allow colours to be assigned to memory banks
         control = self.driver.get_control_for_hint(g15driver.HINT_DIMMABLE) if self.driver != None else None
         if control != None and not isinstance(control.value, int):
+            self._controls_visible = True
             hbox = gtk.HBox()
             self.enable_color_for_m_key = gtk.CheckButton(_("Set backlight colour"))
             self.enable_color_for_m_key.connect("toggled", self._color_for_mkey_enabled)

@@ -43,7 +43,7 @@ copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 default_enabled=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G930 ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Previous item"), 
          g15driver.NEXT_SELECTION : _("Next item"),

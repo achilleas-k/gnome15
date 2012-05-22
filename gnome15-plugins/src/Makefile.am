@@ -16,6 +16,12 @@ endif
 if ENABLE_CAL_PLUGIN
     MAYBE_CAL = cal
 endif
+if ENABLE_CAL_EVOLUTION_PLUGIN
+    MAYBE_CAL_EVOLUTION = cal-evolution
+endif
+if ENABLE_CAL_GOOGLE_PLUGIN
+    MAYBE_CAL_GOOGLE = cal-google
+endif
 if ENABLE_LCDBIFF_PLUGIN
     MAYBE_LCDBIFF = lcdbiff
 endif
@@ -95,12 +101,15 @@ endif
 if ENABLE_TAILS_PLUGIN
     MAYBE_TAILS = tails
 endif
+if ENABLE_DISPLAY_PLUGIN
+    MAYBE_DISPLAY = display
+endif
 
 SUBDIRS = $(MAYBE_BACKGROUND) $(MAYBE_CAIRO_CLOCK) $(MAYBE_CLOCK) $(MAYBE_FX) $(MAYBE_MACRO_RECORDER) $(MAYBE_MACROS) $(MAYBE_MOUNTS) \
 	$(MAYBE_NOTIFY_LCD) $(MAYBE_IM) $(MAYBE_WEATHER) $(MAYBE_MPRIS) $(MAYBE_MENU) $(MAYBE_PANEL) $(MAYBE_VIDEOPLAYER) $(MAYBE_G15DAEMON_SERVER) \
 	$(MAYBE_STOPWATCH) $(MAYBE_SCREENSAVER) $(MAYBE_INDICATOR_ME) $(MAYBE_INDICATOR_MESSAGES) $(MAYBE_PROFILES) \
-	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_WEBCAM) $(MAYBE_CAL) $(MAYBE_LCDBIFF) $(MAYBE_SENSE) \
-	$(MAYBE_LCDSHOT) $(MAYBE_TWEAK) $(MAYBE_LENS) $(MAYBE_TAILS)
+	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_WEBCAM) $(MAYBE_CAL) $(MAYBE_CAL_EVOLUTION) $(MAYBE_CAL_GOOGLE) $(MAYBE_LCDBIFF) $(MAYBE_SENSE) \
+	$(MAYBE_LCDSHOT) $(MAYBE_TWEAK) $(MAYBE_LENS) $(MAYBE_TAILS) $(MAYBE_DISPLAY)
 	
 DIST_SUBDIRS = background cairo-clock clock fx macro-recorder macros mounts notify-lcd im weather mpris menu panel videoplayer g15daemon-server stopwatch \
-	profiles sysmon volume rss processes webcam screensaver cal lcdbiff indicator-me indicator-messages sense lcdshot tweak lens tails
+	profiles sysmon volume rss processes webcam screensaver cal cal-evolution cal-google lcdbiff indicator-me indicator-messages sense lcdshot tweak lens tails display

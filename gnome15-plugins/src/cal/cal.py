@@ -28,14 +28,14 @@ import gnome15.g15screen as g15screen
 import datetime
 import time
 import os
-import evolution.ecal
-import vobject
 import gobject
 import calendar
  
 id="cal"
 name=_("Calendar")
-description=_("Calendar. Integrates with Evolution calendar.")
+description=_("Provides basic support for calendars. To make this\n\
+plugin work, you will also need a second plugin for your calendar\n\
+provider. Currently, Gnome15 supports Evolution and Google calendars.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
@@ -47,7 +47,7 @@ actions={
          g15driver.NEXT_PAGE : _("Next week"),
          g15driver.PREVIOUS_PAGE : _("Previous week")
          }
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930 ]
 
 # How often refresh from the evolution calendar. This can be a slow process, so not too often
 REFRESH_INTERVAL = 15 * 60
@@ -55,17 +55,26 @@ REFRESH_INTERVAL = 15 * 60
 def create(gconf_key, gconf_client, screen):
     return G15Cal(gconf_key, gconf_client, screen)
 
-
-
-class Event():
+class CalendarEvent():
     
     def __init__(self):
-        pass
+        self.start_date = None
+        self.end_date = None
+        self.summary = None
 
+class CalendarBackend():
+    
+    def __init__(self):
+        self.start_date = None
+        self.end_date = None
+    
+    def get_events(self, now):
+        raise Exception("Not implemented")
+    
 class EventMenuItem(g15theme.MenuItem):
     
-    def __init__(self,  event, id):
-        g15theme.MenuItem.__init__(self, id)
+    def __init__(self,  event, component_id):
+        g15theme.MenuItem.__init__(self, component_id)
         self.event = event
     
     def get_default_theme_dir(self):
@@ -73,8 +82,8 @@ class EventMenuItem(g15theme.MenuItem):
         
     def get_theme_properties(self):        
         item_properties = g15theme.MenuItem.get_theme_properties(self)
-        item_properties["item_name"] = self.event.summary.value
-        item_properties["item_alt"] = "%s-%s" % ( self.event.dtstart.value.strftime("%H:%M"), self.event.dtend.value.strftime("%H:%M")) 
+        item_properties["item_name"] = self.event.summary
+        item_properties["item_alt"] = "%s-%s" % ( self.event.start_date.strftime("%H:%M"), self.event.end_date.strftime("%H:%M")) 
         try :
             self.event.valarm            
             item_properties["item_icon"] = g15util.get_icon_path([ "stock_alarm", "alarm-clock", "alarm-timer", "dialog-warning" ])
@@ -83,8 +92,8 @@ class EventMenuItem(g15theme.MenuItem):
         return item_properties
     
 class Cell(g15theme.Component):
-    def __init__(self, day, now, event, id):
-        g15theme.Component.__init__(self, id)
+    def __init__(self, day, now, event, component_id):
+        g15theme.Component.__init__(self, component_id)
         self.day = day
         self.now = now
         self.event = event
@@ -97,7 +106,7 @@ class Cell(g15theme.Component):
         properties = {}
         properties["weekday"] = weekday
         properties["day"] = self.day.day
-        properties["event"] = self.event[0].summary.value if self.event else ""    
+        properties["event"] = self.event.summary if self.event else ""    
         if self.now.day == self.day.day and self.now.month == self.day.month:
             properties["today"] = True
         return properties
@@ -107,8 +116,8 @@ class Cell(g15theme.Component):
     
 class Calendar(g15theme.Component):
     
-    def __init__(self, id="calendar"):
-        g15theme.Component.__init__(self, id)
+    def __init__(self, component_id="calendar"):
+        g15theme.Component.__init__(self, component_id)
         self.layout_manager = g15theme.GridLayoutManager(7)
         self.focusable = True
         
@@ -120,6 +129,9 @@ class G15Cal():
         self._gconf_key = gconf_key
         self._timer = None
         self._thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["calendar", "evolution-calendar", "office-calendar", "stock_calendar" ]))
+        
+    def create_backend(self):
+        raise Exception("Not implemented")
     
     def activate(self):
         self._active = True
@@ -128,6 +140,9 @@ class G15Cal():
         self._page = None
         self._theme = g15theme.G15Theme(os.path.join(os.path.dirname(__file__), "default"), auto_dirty = False)
         self._loaded = 0
+        
+        # Backend
+        self._backend = self.create_backend()
         
         # Calendar
         self._calendar = Calendar()
@@ -246,27 +261,7 @@ class G15Cal():
                 pass
             
         # Get all the events for this month
-        for i in evolution.ecal.list_calendars():
-            ecal = evolution.ecal.open_calendar_source(i[1], evolution.ecal.CAL_SOURCE_TYPE_EVENT)
-            for i in ecal.get_all_objects():
-                parsed_event = vobject.readOne(i.get_as_string())
-                event_date = parsed_event.dtstart.value
-                if parsed_event.dtend:
-                    end_event_date = parsed_event.dtend.value
-                else:
-                    end_event_date = datetime.datetime(event_date.year,event_date.month,event_date.day, 23, 59, 0)
-                
-                if event_date.month == now.month and event_date.year == now.year:
-                    day = event_date.day
-                    while day <= end_event_date.day:
-                        key = str(day)
-                        list = []
-                        if key in self._event_days:
-                            list = self._event_days[key]
-                        else:
-                            self._event_days[key] = list
-                        list.append(parsed_event)
-                        day += 1
+        self._event_days = self._backend.get_events(now)
                     
         # Set the events
         def on_redraw():
@@ -290,6 +285,7 @@ class G15Cal():
                 i += 1
                 
             self._page.redraw()
+            
         g15screen.run_on_redraw(on_redraw)
             
         self._page.mark_dirty()
@@ -322,3 +318,210 @@ class G15Cal():
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._page != None and self._thumb_icon != None and self._screen.driver.get_bpp() == 16:
             return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
+        
+
+class G15CalAccountManager():  
+    
+    '''
+    Manages the storage and loading of the account list. This is
+    stored as an XML file in the Gnome configuration directory
+    '''  
+    
+    def __init__(self):
+        self._conf_file = os.path.expanduser("~/.config/gnome15/plugin-data/calendards.xml")
+        self.load()
+        self.checkers = { POP3 : POP3Checker(), IMAP: IMAPChecker() }
+            
+    def load(self):
+        self.accounts = []
+        if not os.path.exists(self._conf_file):
+            dir = os.path.dirname(self._conf_file)
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+        else:
+            document = etree.parse(self._conf_file)        
+            for element in document.getroot().xpath('//mailbox'):
+                acc = G15BiffAccount(element.get("name"), element.get("type"))
+                for property_element in element:
+                    acc.properties[property_element.get("name")] = property_element.get("value") 
+                self.accounts.append(acc)
+            
+    def by_name(self, name):
+        for acc in self.accounts:
+            if acc.name == name:
+                return acc
+            
+    def check_account(self, account):
+        return self.checkers[account.type].check(account)
+            
+    def save(self):        
+        root = etree.Element("xml")
+        document = etree.ElementTree(root)
+        for acc in self.accounts:
+            acc_el = etree.SubElement(root, "mailbox", type=acc.type, name=acc.name)
+            for key in acc.properties:
+                attr_el = etree.SubElement(acc_el, "property", name=key, value=acc.properties[key])
+        xml = etree.tostring(document)
+        fh = open(self._conf_file, "w")
+        try :
+            fh.write(xml)
+        finally :
+            fh.close()
+
+class G15BiffAccount():
+    '''
+    A single account. An account has two main attributes,
+    a name and a type. All protocol specific details are
+    stored in the properties map.
+    '''
+    
+    def __init__(self, name, type=POP3):
+        self.name = name
+        self.type = type
+        self.properties = {}
+        
+    def get_property(self, key, default_value=None): 
+        return self.properties[key] if key in self.properties else default_value
+        
+class G15CalPreferences():
+    '''
+    Configuration UI
+    '''
+     
+    
+    def __init__(self, parent, driver, gconf_client, gconf_key):
+        self.gconf_client = gconf_client
+        self.gconf_key = gconf_key
+        self.visible_options = None
+        
+        self.account_mgr = G15BiffAccountManager()
+        
+        self.widget_tree = gtk.Builder()
+        self.widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cal.glade"))
+        
+        # Models        
+        self.type_model = self.widget_tree.get_object("TypeModel")
+        self.feed_model = self.widget_tree.get_object("AccountModel")
+        
+        # Widgets
+        self.account_type = self.widget_tree.get_object("TypeCombo")
+        self.feed_list = self.widget_tree.get_object("AccountList")
+        self.url_renderer = self.widget_tree.get_object("URLRenderer")
+        
+        # Updates
+        self.update_adjustment = self.widget_tree.get_object("UpdateAdjustment")
+        self.update_adjustment.set_value(get_update_time(gconf_client, gconf_key))
+        self.update_adjustment.set_value(get_update_time(gconf_client, gconf_key))
+        
+        # Connect to events
+        self.feed_list.connect("cursor-changed", self._select_account)
+        self.account_type.connect("changed", self._type_changed)
+        self.update_adjustment.connect("value-changed", self._update_time_changed)
+        self.url_renderer.connect("edited", self._url_edited)
+        self.widget_tree.get_object("NewAccount").connect("clicked", self._new_url)
+        self.widget_tree.get_object("RemoveAccount").connect("clicked", self._remove_url)
+        
+        # Configure widgets 
+        self._reload_model()
+        self._select_account()
+        
+        # Show dialog
+        dialog = self.widget_tree.get_object("CalDialog")
+        dialog.set_transient_for(parent)
+        
+        ah = gconf_client.notify_add(gconf_key + "/urls", self._urls_changed);
+        dialog.run()
+        dialog.hide()
+        gconf_client.notify_remove(ah);
+        
+    def _update_time_changed(self, widget):
+        self.gconf_client.set_int(self.gconf_key + "/update_time", int(widget.get_value()))
+        
+    def _url_edited(self, widget, row_index, value):
+        row = self.feed_model[row_index] 
+        if value != "":
+            acc = self.account_mgr.by_name(row[0])
+            if acc == None:
+                acc = G15BiffAccount(value)
+                self.account_mgr.accounts.append(acc)
+            else: 
+                acc.name = value
+            self.account_mgr.save()
+            self.feed_list.get_selection().select_path(row_index)
+        else:
+            self.account_mgr.accounts.remove(self.account_mgr.by_name(row[0]))
+        self._reload_model()
+        
+    def _urls_changed(self, client, connection_id, entry, args):
+        self._reload_model()
+        
+    def _reload_model(self):
+        acc = self._get_selected_account()
+        self.feed_model.clear()
+        for i in range(0, len(self.account_mgr.accounts)):
+            account = self.account_mgr.accounts[i]
+            row = [ account.name, True ]
+            self.feed_model.append(row)
+            if account == acc:
+                self.feed_list.get_selection().select_path(i)
+                
+        (model, sel) = self.feed_list.get_selection().get_selected()
+        if sel == None:
+            self.feed_list.get_selection().select_path(0)
+        
+    def _new_url(self, widget):
+        self.feed_model.append(["", True])
+        self.feed_list.set_cursor_on_cell(str(len(self.feed_model) - 1), focus_column=self.feed_list.get_column(0), focus_cell=self.url_renderer, start_editing=True)
+        self.feed_list.grab_focus()
+        
+    def _remove_url(self, widget):        
+        (model, path) = self.feed_list.get_selection().get_selected()
+        url = model[path][0]
+        self.account_mgr.accounts.remove(self.account_mgr.by_name(url))
+        self.account_mgr.save()
+        self._reload_model()
+        
+    def _type_changed(self, widget):      
+        sel = self._get_selected_type()      
+        acc = self._get_selected_account()
+        if acc.type != sel:
+            acc.type = sel 
+            self.account_mgr.save()
+            self._load_options_for_type()
+        
+    def _load_options_for_type(self):
+        acc = self._get_selected_account()
+        type = self._get_selected_type()
+        if type == POP3:
+            options = G15BiffPOP3Options(acc, self.account_mgr)
+        else:
+            options = G15BiffIMAPOptions(acc, self.account_mgr)
+            
+        if self.visible_options != None:
+            self.visible_options.component.destroy()
+        self.visible_options = options            
+        self.visible_options.component.reparent(self.widget_tree.get_object("PlaceHolder"))
+     
+    def _select_account(self, widget=None):       
+        account = self._get_selected_account()
+        if account != None:  
+            self.account_type.set_sensitive(True)
+            self.widget_tree.get_object("PlaceHolder").set_visible(True)
+            for i in range(0, len(self.type_model)):
+                if self.type_model[i][0] == account.type:
+                    self.account_type.set_active(i)       
+            if self.account_type.get_active() == -1:                
+                self.account_type.set_active(0)
+            self._load_options_for_type()
+        else:
+            self.account_type.set_sensitive(False)
+            self.widget_tree.get_object("PlaceHolder").set_visible(False)
+            
+    def _get_selected_type(self):
+        active = self.account_type.get_active()
+        return None if active == -1 else self.type_model[active][0]
+            
+    def _get_selected_account(self):
+        (model, path) = self.feed_list.get_selection().get_selected()
+        if path != None:
+            return self.account_mgr.by_name(model[path][0])

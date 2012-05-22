@@ -427,6 +427,7 @@ class G15KeyHandler():
         return True
         
     def _send_uinput_keypress(self, macro, uc, uinput_repeat = False):
+        print "Sending: %d - %s" % ( uc, macro.name )
         g15uinput.locks[macro.type].acquire()
         try:
             if uinput_repeat:

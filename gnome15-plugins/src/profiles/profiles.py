@@ -50,7 +50,7 @@ copyright=_("Copyright (C)2012 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 default_enabled=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930 ]
 actions={ 
          SELECT_PROFILE : _("Show profile selector"),
          g15driver.PREVIOUS_SELECTION : _("Previous item"), 
@@ -74,8 +74,6 @@ class ProfileMenuItem(g15theme.MenuItem):
         self._plugin = plugin
         
     def get_theme_properties(self):
-        if self.parent is not None:
-            print "Selected %s = this = %s" % (str(self.parent.selected), str(self))
         item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self.profile.name
         item_properties["item_radio"] = True
@@ -89,7 +87,12 @@ class ProfileMenuItem(g15theme.MenuItem):
         self.set_theme(g15theme.G15Theme(self.parent.get_theme().dir, "menu-entry" if self.group else "menu-child-entry"))
     
     def activate(self):
+        locked = g15profile.is_locked(self._plugin.screen.device)
+        if locked:
+            g15profile.set_locked(self._plugin.screen.device, False)
         self.profile.make_active()
+        if locked:
+            g15profile.set_locked(self._plugin.screen.device, True)
         
         # Raise the macros page if it is enabled and not raised
         macros_page = self._plugin.screen.get_page("macros")
@@ -107,6 +110,7 @@ class G15Profiles(g15plugin.G15MenuPlugin):
     
     def activate(self):
         g15plugin.G15MenuPlugin.activate(self)
+        g15profile.profile_listeners.append(self._stored_profiles_changed)
         self.delete_timer = None     
         self.screen.key_handler.action_listeners.append(self)
         self._notify_handles = []
@@ -162,6 +166,9 @@ class G15Profiles(g15plugin.G15MenuPlugin):
     '''         
     def _profiles_changed(self, arg0 = None, arg1 = None, arg2 = None, arg3 = None):
         self.screen.redraw(self.page)
+        
+    def _stored_profiles_changed(self, profile_id, device):
+        self._reload_menu()
                     
     def _reload_menu(self):
         self.load_menu_items()

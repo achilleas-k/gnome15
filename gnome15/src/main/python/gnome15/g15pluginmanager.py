@@ -67,7 +67,6 @@ import sys
 import g15globals as pglobals
 import g15driver as g15driver
 import g15actions as g15actions
-import g15theme as g15theme
 import gconf
 import traceback
 import threading
@@ -102,8 +101,8 @@ def list_plugin_dirs(path):
     """ 
     plugindirs = []
     if os.path.exists(path):
-        for dir in os.listdir(path):
-            plugin_path = os.path.join(path, dir)
+        for p_dir in os.listdir(path):
+            plugin_path = os.path.join(path, p_dir)
             if os.path.isdir(plugin_path):
                 plugindirs.append(os.path.realpath(plugin_path))
     else:
@@ -120,19 +119,19 @@ def get_extra_plugin_dirs():
     plugindirs = []
     plugindirs += extra_plugin_dirs
     if "G15_PLUGINS" in os.environ:
-        for dir in os.environ["G15_PLUGINS"].split(":"):
-            plugindirs += list_plugin_dirs(dir)
+        for p_dir in os.environ["G15_PLUGINS"].split(":"):
+            plugindirs += list_plugin_dirs(p_dir)
     return plugindirs 
         
-def get_module_for_id(id):
+def get_module_for_id(module_id):
     """
     Get a plugin module given it's ID.
     
     Keyword arguments:
-    id -- plugin module ID
+    module_id -- plugin module ID
     """
     for mod in imported_plugins:
-        if mod.id == id:
+        if mod.id == module_id:
             return mod
         
 def get_supported_models(plugin_module):    
@@ -203,10 +202,26 @@ def get_actions(plugin_module):
 
 
 """
-Loads the python modules for all plugins for all known locations.
+Loads the python modules for all plugins for all known locations. This is done
+in two phases.
+
+Firstly, the paths of all plugins are added to the python search path.
+
+Secondly, all of these directories are scanned for python files with the same
+name as the directory they are in. Each one of these is the main plugin module.
+
+TODO - These should really be using __init__.py
 """
-for plugindir in get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + \
-            list_plugin_dirs(os.path.expanduser("~/.config/gnome15/plugins")) + list_plugin_dirs(pglobals.plugin_dir): 
+all_plugin_directories = get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + \
+            list_plugin_dirs(os.path.expanduser("~/.config/gnome15/plugins")) + list_plugin_dirs(pglobals.plugin_dir)
+            
+# Phase 1
+for plugindir in all_plugin_directories:
+    if not plugindir in sys.path:
+        sys.path.insert(0, plugindir)
+       
+# Phase 2
+for plugindir in all_plugin_directories: 
     plugin_name = os.path.basename(plugindir)
     pluginfiles = [fname[:-3] for fname in os.listdir(plugindir) if fname == plugin_name + ".py"]
     if not plugindir in sys.path:
@@ -281,25 +296,25 @@ class G15Plugins():
         """
         return self.is_in_active_state() or self.state in [ STARTED, STARTING, DESTROYING ]
         
-    def has_plugin(self, id):
+    def has_plugin(self, module_id):
         """
         Get if the plugin manager contains a plugin install with the 
         given plugin module ID.
          
         Keyword arguments:
-        id -- plugin module ID to search for
+        module_id -- plugin module ID to search for
         """
-        return id in self.module_map
+        return module_id in self.module_map
         
-    def get_plugin(self, id):
+    def get_plugin(self, module_id):
         """
         Get the plugin instance given the plugin module's ID
         
         Keyword arguments:
         id -- plugin module ID to search for
         """
-        if id in self.module_map:
-            return self.module_map[id]
+        if module_id in self.module_map:
+            return self.module_map[module_id]
     
     def start(self):
         """
@@ -337,7 +352,7 @@ class G15Plugins():
     
     def handle_key(self, key, state, post=False):
         """
-        Pass the provide key event to all plugins. For each key event, this
+        Pass the provided key event to all plugins. For each key event, this
         will be called twice, once with post=False, and once with post=True
         
         Keyword arguments:

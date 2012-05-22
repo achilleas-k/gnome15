@@ -63,9 +63,12 @@ controls = {
   g15driver.MODEL_G15_V2 : [ g15_mkeys_control, g15_backlight_control, g15_invert_control ],
   g15driver.MODEL_G13 : [ g15_mkeys_control, g15_backlight_control, g15_invert_control ],
   g15driver.MODEL_G510 : [ g15_mkeys_control, g19_keyboard_backlight_control, g15_invert_control ],
+  g15driver.MODEL_G510_AUDIO : [ g15_mkeys_control, g19_keyboard_backlight_control, g15_invert_control ],
   g15driver.MODEL_Z10 : [ g15_backlight_control, g15_invert_control ],
+  g15driver.MODEL_GAMEPANEL : [ g15_backlight_control, g15_invert_control ],
   g15driver.MODEL_G110 : [ g19_mkeys_control, g110_keyboard_backlight_control ],
   g15driver.MODEL_MX5500 : [ g15_invert_control ],
+  g15driver.MODEL_G930 : [ ],
             }  
 
 def show_preferences(device, parent, gconf_client):

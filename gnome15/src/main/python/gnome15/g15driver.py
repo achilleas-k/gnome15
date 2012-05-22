@@ -143,6 +143,7 @@ MODEL_G15_V2 = "g15v2"
 MODEL_G11 = "g11"
 MODEL_G13 = "g13"
 MODEL_G19 = "g19"
+MODEL_G930 = "g930"
 MODEL_G510 = "g510"
 MODEL_G510_AUDIO = "g510audio"
 MODEL_G110 = "g110"
@@ -150,7 +151,7 @@ MODEL_Z10 = "z10"
 MODEL_MX5500 = "mx5500"
 MODEL_GAMEPANEL = "gamepanel"
 
-MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G11, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G510_AUDIO, MODEL_G110, MODEL_Z10, MODEL_MX5500, MODEL_GAMEPANEL ]
+MODELS = [ MODEL_G15_V1, MODEL_G15_V2, MODEL_G11, MODEL_G13, MODEL_G19, MODEL_G510, MODEL_G510_AUDIO, MODEL_G110, MODEL_Z10, MODEL_MX5500, MODEL_GAMEPANEL, MODEL_G930 ]
 
 """
 Control hints
@@ -485,6 +486,12 @@ class AbstractDriver(object):
         self.disconnecting = False
         self.all_off_on_disconnect = True
         self._reset_state()
+        
+    def has_memory_bank(self):
+        for l in self.get_key_layout():
+            if G_KEY_M1 in l or G_KEY_M2 in l or G_KEY_M3 in l:
+                return True
+        return False
         
     def release_all_acquisitions(self):
         self.acquired_controls = {}

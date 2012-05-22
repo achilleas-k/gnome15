@@ -1,4 +1,4 @@
-AC_INIT(gnome15-plugins, 0.8.4)
+AC_INIT(gnome15-plugins, 0.8.5)
 AC_CONFIG_SRCDIR([src/cal/cal.py])
 AM_INIT_AUTOMAKE
 
@@ -387,22 +387,50 @@ AC_ARG_ENABLE([webcam],
 	[webcam_plugin=${have_opencv}])
 AM_CONDITIONAL([ENABLE_WEBCAM_PLUGIN], [test x$webcam_plugin = xyes])
 
-dnl Evolution Calendar plugin
-AX_PYTHON_MODULE(vobject, [])
-AX_PYTHON_MODULE(evolution, [])
-AS_IF([test "x${HAVE_PYMOD_VOBJECT}" = "xyes" -a "x${HAVE_PYMOD_EVOLUTION}" = "xyes"],
-	  [have_calendar_modules=yes],
-	  [have_calendar_modules=no])
+dnl Calendar plugin (base)
 AC_ARG_ENABLE([cal],
 	[AS_HELP_STRING([--enable-cal],
-		[Enable Evolution calendar plugin. Requires python vobject and python evolution])],
+		[Enable calendar plugin. (required for any calendar support)])],
 	[case "${enableval}" in
  				yes)	cal_plugin=yes ;;
  				no)		cal_plugin=no ;;
  				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-cal]) ;;
  	esac],
-	[cal_plugin=${have_calendar_modules}])
+	[cal_plugin=yes])
 AM_CONDITIONAL([ENABLE_CAL_PLUGIN], [test x$cal_plugin = xyes])
+
+dnl Evolution Calendar plugin
+AX_PYTHON_MODULE(vobject, [])
+AX_PYTHON_MODULE(evolution, [])
+AS_IF([test "x${HAVE_PYMOD_VOBJECT}" = "xyes" -a "x${HAVE_PYMOD_EVOLUTION}" = "xyes"],
+	  [have_calendar_evolution_modules=yes],
+	  [have_calendar_evolution_modules=no])
+AC_ARG_ENABLE([cal-evolution],
+	[AS_HELP_STRING([--enable-cal-evolution],
+		[Enable Evolution calendar plugin. Requires calendar plugin, python vobject and python evolution])],
+	[case "${enableval}" in
+ 				yes)	cal_evolution_plugin=yes ;;
+ 				no)		cal_evolution_plugin=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-cal-evolution]) ;;
+ 	esac],
+	[cal_evolution_plugin=${have_calendar_modules}])
+AM_CONDITIONAL([ENABLE_CAL_EVOLUTION_PLUGIN], [test x$cal_evolution_plugin = xyes])
+
+dnl Google Calendar plugin
+AX_PYTHON_MODULE(gdata.calendar.data, [])
+AS_IF([test "x${HAVE_PYMOD_GDATA_CALENDAR_DATA}" = "xyes" ],
+	  [have_calendar_google_modules=yes],
+	  [have_calendar_google_modules=no])
+AC_ARG_ENABLE([cal-google],
+	[AS_HELP_STRING([--enable-cal-google],
+		[Enable Google calendar plugin. Requires calendar plugin, python gdata])],
+	[case "${enableval}" in
+ 				yes)	cal_google_plugin=yes ;;
+ 				no)		cal_google_plugin=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-cal-google]) ;;
+ 	esac],
+	[cal_google_plugin=${have_calendar_google_modules}])
+AM_CONDITIONAL([ENABLE_CAL_GOOGLE_PLUGIN], [test x$cal_google_plugin = xyes])
 
 dnl POP3/IMAP Email Checker plugin
 AX_PYTHON_MODULE(gnomekeyring, [])
@@ -472,12 +500,26 @@ AC_ARG_ENABLE([tails],
 	[tails_plugin=yes])
 AM_CONDITIONAL([ENABLE_TAILS_PLUGIN], [test x$tails_plugin = xyes])
 
+dnl XRandR
+AC_ARG_ENABLE([display],
+	[AS_HELP_STRING([--enable-display],
+		[Enable Display (XRandR for resolutions and rotation).])],
+	[case "${enableval}" in
+ 				yes)	display_plugin=yes ;;
+ 				no)		display_plugin=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-display]) ;;
+ 	esac],
+	[display_plugin=yes])
+AM_CONDITIONAL([ENABLE_DISPLAY_PLUGIN], [test x$display_plugin = xyes])
+
 
 AC_OUTPUT([
 Makefile
 src/Makefile
 src/cal/Makefile
 src/cal/default/Makefile
+src/cal-evolution/Makefile
+src/cal-google/Makefile
 src/lcdbiff/Makefile
 src/background/Makefile
 src/cairo-clock/Makefile
@@ -538,6 +580,9 @@ src/webcam/default/Makefile
 src/tails/Makefile
 src/tails/tailer/Makefile
 src/tails/default/Makefile
+src/display/Makefile
+src/display/tailer/Makefile
+src/display/default/Makefile
 ])
 
 
@@ -565,6 +610,14 @@ AS_IF([test "x$webcam_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("cal                         - ")
 AS_IF([test "x$cal_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("cal-evolution               - ")
+AS_IF([test "x$cal_evolution_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("cal-google                  - ")
+AS_IF([test "x$cal_google_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("lcdbiff                     - ")
@@ -669,6 +722,10 @@ AS_IF([test "x$sense_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("tails                       - ")
 AS_IF([test "x$tails_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("display                     - ")
+AS_IF([test "x$display_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("")

@@ -64,7 +64,7 @@ copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 default_enabled=True
-unsupported_models = [ g15driver.MODEL_Z10, g15driver.MODEL_MX5500 ]
+unsupported_models = [ g15driver.MODEL_Z10, g15driver.MODEL_MX5500, g15driver.MODEL_G930 ]
 actions={ 
          RECORD : _("Start recording macro")
          }

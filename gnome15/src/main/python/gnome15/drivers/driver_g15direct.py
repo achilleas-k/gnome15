@@ -351,7 +351,7 @@ class Driver(g15driver.AbstractDriver):
             if invert_control.value == 0:            
                 pil_img = pil_img.point(lambda i: 1^i)
     
-            # Covert image buffer to string
+            # Convert image buffer to string
             buf = ""
             for x in list(pil_img.getdata()): 
                 buf += chr(x)
@@ -378,7 +378,7 @@ class Driver(g15driver.AbstractDriver):
                 buf = arrbuf.tostring()
                 try :
                     if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug("Writing buffer of %d byts" % len(buf))
+                        logger.debug("Writing buffer of %d bytes" % len(buf))
                     pylibg15.write_pixmap(buf)
                 except IOError as (errno, strerror):
                     logger.error("Failed to send buffer. %d: %s" % ( errno, strerror ) )                    
@@ -393,7 +393,6 @@ class Driver(g15driver.AbstractDriver):
     def _get_g510_multimedia_keys(self, code):
         keys = []
         code &= ~(1<<28)
-        print "Actual code = %d" % code
         if code & 1 << 0 != 0:
             keys.append(uinput.KEY_PLAYPAUSE)
         elif code & 1 << 1 != 0:
@@ -430,8 +429,8 @@ class Driver(g15driver.AbstractDriver):
             return
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Key code %d" % code)
-
-        this_keys = [] if code == 0 else self._convert_from_g15daemon_code(code)
+            
+        this_keys = [] if ext_code != 0 else self._convert_from_g15daemon_code(code)
         if ext_code > 0 and self.get_model_name() in \
             [ g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO ]:
             this_keys += self._get_g510_multimedia_keys(ext_code)
@@ -513,7 +512,7 @@ class Driver(g15driver.AbstractDriver):
             this_keys.append(g15driver.G_KEY_LEFT)                    
         elif pos[0] > high_val:
             this_keys.append(g15driver.G_KEY_RIGHT)                    
-        elif pos[1] < low_val:
+        if pos[1] < low_val:
             this_keys.append(g15driver.G_KEY_UP)
         elif pos[1] > high_val:
             this_keys.append(g15driver.G_KEY_DOWN)

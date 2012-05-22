@@ -49,7 +49,7 @@ author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://localhost"
 has_preferences = False
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
+unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Stop"), 
          g15driver.NEXT_SELECTION : _("Play"),
@@ -127,13 +127,19 @@ class G15VideoPage(g15theme.G15Page):
 
         self.pipeline = gst.Pipeline("player")
         self.sink = lcdsink.CairoSurfaceThumbnailSink()
-        source = gst.element_factory_make("filesrc", "file-source")
-        decoder = gst.element_factory_make("decodebin", "decoder")
-        decoder.connect("new-decoded-pad", self.decoder_callback)        
-        self.audio_sink = gst.element_factory_make("autoaudiosink", "audio-output")
         
-        self.pipeline.add(source, decoder, self.audio_sink, self.sink)
-        gst.element_link_many(source, decoder)
+#        source = gst.element_factory_make("filesrc", "file-source")
+#        decoder = gst.element_factory_make("decodebin", "decoder")
+#        decoder.connect("new-decoded-pad", self.decoder_callback)        
+#        self.audio_sink = gst.element_factory_make("autoaudiosink", "audio-output")
+        
+#        self.pipeline.add(source, decoder, self.audio_sink, self.sink)
+#        gst.element_link_many(source, decoder)
+
+
+        source = gst.element_factory_make("videotestsrc", "video")
+        self.pipeline.add(source, self.sink)
+        self.pipeline.link(source)
         
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
@@ -209,7 +215,7 @@ class G15VideoPage(g15theme.G15Page):
                 canvas.restore()
                 
     """
-    GStream callbacks
+    GStreamer callbacks
     """
                 
     def _redraw_cb(self, unused_thsink, timestamp):
@@ -311,7 +317,7 @@ class G15VideoPage(g15theme.G15Page):
         try:
             self._hide_sidebar(3.0)       
             self._playing = self._movie_path
-            self.pipeline.get_by_name("file-source").set_property("location", self._playing)
+#            self.pipeline.get_by_name("file-source").set_property("location", self._playing)
             self.pipeline.set_state(gst.STATE_PLAYING)
         finally:
             self._lock.release()
