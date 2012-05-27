@@ -123,6 +123,11 @@ AC_ARG_ENABLE([udevmode],
 AC_SUBST(DEVICEMODE, $devicemode)
 
 dnl Required modules
+AX_PYTHON_MODULE(keyring, [])
+AS_IF([test "x${HAVE_PYMOD_KEYRING}" = "xno"],
+     [AC_MSG_ERROR([Requires Python Keyring Library])])
+
+dnl Required modules
 AX_PYTHON_MODULE(virtkey, [])
 AS_IF([test "x${HAVE_PYMOD_VIRTKEY}" = "xno"],
      [AC_MSG_ERROR([Requires Python Virtkey Library])])

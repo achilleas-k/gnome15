@@ -43,7 +43,7 @@ author="Nuno Araujo <nuno.araujo@russo79.com>"
 copyright=_("Copyright (C)2011 Nuno Araujo")
 site="http://www.gnome15.org/"
 has_preferences=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Toggle selected timer\n(or toggle timer 1)"), 
          g15driver.NEXT_SELECTION : _("Reset selected timer\n(or reset timer 1)"),

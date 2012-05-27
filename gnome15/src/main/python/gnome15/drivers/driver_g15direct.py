@@ -159,6 +159,19 @@ G15_ERROR_UNSUPPORTED = 7
 G15_LOG_INFO = 1
 G15_LOG_WARN = 0
 
+# Default offsets
+ANALOGUE_OFFSET = 20
+DIGITAL_OFFSET = 64
+
+def set_offset_depending_on_mode(widget, gconf_client, device, offset_widget):
+    mode = gconf_client.get_string("/apps/gnome15/%s/joymode" % device.uid)
+    offset_model = offset_widget.get_adjustment()
+    if mode in [ "joystick", "mouse"]:
+        val = g15util.get_int_or_default(gconf_client, "/apps/gnome15/%s/analogue_offset" % device.uid, ANALOGUE_OFFSET)
+    else:
+        val = g15util.get_int_or_default(gconf_client, "/apps/gnome15/%s/digital_offset" % device.uid, DIGITAL_OFFSET)
+    offset_model.set_value(val)
+        
 def show_preferences(device, parent, gconf_client):
     g15locale.get_translation("driver_g15direct")
     widget_tree = gtk.Builder()
@@ -168,6 +181,19 @@ def show_preferences(device, parent, gconf_client):
     g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
     widget_tree.get_object("JoyModeCombo").set_sensitive(device.model_id == g15driver.MODEL_G13)
     widget_tree.get_object("JoyModeLabel").set_sensitive(device.model_id == g15driver.MODEL_G13)
+
+    # We have separate offset values for digital / analogue, so swap between them based on configuration 
+    offset_widget = widget_tree.get_object("Offset")    
+    set_offset_depending_on_mode(None, gconf_client, device, offset_widget)
+    widget_tree.get_object("JoyModeCombo").connect("changed", set_offset_depending_on_mode, gconf_client, device, offset_widget)
+    def spinner_changed(widget):
+        mode = gconf_client.get_string("/apps/gnome15/%s/joymode" % device.uid)
+        if mode in [ "joystick", "mouse"]:
+            gconf_client.set_int("/apps/gnome15/%s/analogue_offset" % device.uid, int(widget.get_value()))
+        else:
+            gconf_client.set_int("/apps/gnome15/%s/digital_offset" % device.uid, int(widget.get_value()))
+    offset_widget.connect("value-changed", spinner_changed)
+    
     return widget_tree.get_object("DriverComponent")
 
 def fix_sans_style(root):
@@ -279,12 +305,15 @@ class Driver(g15driver.AbstractDriver):
         
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/joymode" % self.device.uid, self._config_changed, None))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/timeout" % self.device.uid, self._config_changed, None))
-            
-        self.calibration = 20   
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/digital_offset" % self.device.uid, self._config_changed, None))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/analogue_offset" % self.device.uid, self._config_changed, None))
+        
         self._load_configuration()
         
     def _load_configuration(self):
         self.joy_mode = self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
+        self.digital_calibration = g15util.get_int_or_default(self.conf_client, "/apps/gnome15/%s/digital_offset" % self.device.uid, 63)
+        self.analogue_calibration = g15util.get_int_or_default(self.conf_client, "/apps/gnome15/%s/analogue_offset" % self.device.uid, 20)
             
     def _config_changed(self, client, connection_id, entry, args):
         self._load_configuration()
@@ -438,8 +467,10 @@ class Driver(g15driver.AbstractDriver):
             this_keys += self._convert_ext_g15daemon_code(ext_code)
         
         if self.get_model_name() == g15driver.MODEL_G13:
-            low_val = 128 - self.calibration
-            high_val = 128 + self.calibration
+            c = self.analogue_calibration if self.joy_mode in [ "joystick", "mouse" ] else self.digital_calibration
+            
+            low_val = 128 - c
+            high_val = 128 + c
             max_step = 5
                 
             if g15driver.G_KEY_JOY in this_keys:
@@ -508,6 +539,7 @@ class Driver(g15driver.AbstractDriver):
         return m
         
     def _emit_macro_keys(self, this_keys, pos, low_val, high_val):
+        print "Pos: %s   High: %d   Low: %d" % (str(pos), high_val, low_val)
         if pos[0] < low_val:
             this_keys.append(g15driver.G_KEY_LEFT)                    
         elif pos[0] > high_val:

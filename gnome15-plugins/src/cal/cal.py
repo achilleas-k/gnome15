@@ -25,11 +25,17 @@ import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15screen as g15screen
+import gnome15.g15accounts as g15accounts
 import datetime
 import time
 import os
 import gobject
 import calendar
+
+# Logging
+import logging
+logger = logging.getLogger("cal")
+
  
 id="cal"
 name=_("Calendar")
@@ -39,7 +45,7 @@ provider. Currently, Gnome15 supports Evolution and Google calendars.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
-has_preferences=False
+has_preferences=True
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Previous day/Event"), 
          g15driver.NEXT_SELECTION : _("Next day/Event"), 
@@ -47,26 +53,77 @@ actions={
          g15driver.NEXT_PAGE : _("Next week"),
          g15driver.PREVIOUS_PAGE : _("Previous week")
          }
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 
 # How often refresh from the evolution calendar. This can be a slow process, so not too often
 REFRESH_INTERVAL = 15 * 60
 
+# Configuration
+CONFIG_PATH = "~/.config/gnome15/plugin-data/cal/calendars.xml"
+CONFIG_ITEM_NAME = "calendar"
+
+"""
+Functions
+"""
+
 def create(gconf_key, gconf_client, screen):
     return G15Cal(gconf_key, gconf_client, screen)
 
+def show_preferences(parent, driver, gconf_client, gconf_key):
+    G15CalendarPreferences(parent, gconf_client, gconf_key)
+
+def get_backend(account_type):
+    """
+    Get the backend plugin module, given the account_type
+    
+    Keyword arguments:
+    account_type          -- account type
+    """
+    import gnome15.g15pluginmanager as g15pluginmanager
+    return g15pluginmanager.get_module_for_id("cal-%s" % account_type)
+
+def get_available_backends():
+    """
+    Get the "account type" names that are available by listing all of the
+    backend plugins that are installed 
+    """
+    l = []
+    import gnome15.g15pluginmanager as g15pluginmanager
+    for p in g15pluginmanager.imported_plugins:
+        if p.id.startswith("cal-"):
+            l.append(p.id[4:])
+    return l
+    
 class CalendarEvent():
     
     def __init__(self):
         self.start_date = None
         self.end_date = None
         self.summary = None
+        self.color = None
+        self.alarm = False
+        self.alt_icon = None
+    
+    def activate(self):
+        raise Exception("Not implemented")
 
 class CalendarBackend():
     
     def __init__(self):
         self.start_date = None
         self.end_date = None
+        
+    def check_and_add(self, ve, now, event_days):
+        if ve.start_date.month == now.month and ve.start_date.year == now.year:
+            day = ve.start_date.day
+            while day <= ve.end_date.day:
+                key = str(day)
+                day_event_list = event_days[key] if key is event_days else None
+                if day_event_list is None:
+                    day_event_list = list()
+                    event_days[key] = day_event_list
+                day_event_list.append(ve)
+                day += 1
     
     def get_events(self, now):
         raise Exception("Not implemented")
@@ -84,12 +141,14 @@ class EventMenuItem(g15theme.MenuItem):
         item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self.event.summary
         item_properties["item_alt"] = "%s-%s" % ( self.event.start_date.strftime("%H:%M"), self.event.end_date.strftime("%H:%M")) 
-        try :
-            self.event.valarm            
+        if self.event.alarm:            
             item_properties["item_icon"] = g15util.get_icon_path([ "stock_alarm", "alarm-clock", "alarm-timer", "dialog-warning" ])
-        except AttributeError:
-            pass
+        if self.event.alt_icon:
+            item_properties["alt_icon"] = self.event.alt_icon
         return item_properties
+    
+    def activate(self):
+        self.event.activate()
     
 class Cell(g15theme.Component):
     def __init__(self, day, now, event, component_id):
@@ -121,18 +180,41 @@ class Calendar(g15theme.Component):
         self.layout_manager = g15theme.GridLayoutManager(7)
         self.focusable = True
         
+ 
+class G15CalendarPreferences(g15accounts.G15AccountPreferences):
+    '''
+    Configuration UI
+    '''    
+    
+    def __init__(self, parent, gconf_client, gconf_key):
+        g15accounts.G15AccountPreferences.__init__(self, parent, gconf_client, \
+                                                   gconf_key, \
+                                                   CONFIG_PATH, \
+                                                   CONFIG_ITEM_NAME)
+        
+    def get_account_types(self):
+        return get_available_backends()
+    
+    def get_account_type_name(self, account_type):
+        return _(account_type)
+        
+    def create_options_for_type(self, account, account_type):
+        backend = get_backend(account.type)
+        if backend is None:
+            logger.warning("No backend for account type %s" % account_type)
+            return None
+        return backend.create_options(account, self)
+        
 class G15Cal():  
     
     def __init__(self, gconf_key, gconf_client, screen):
+        
         self._screen = screen
         self._gconf_client = gconf_client
         self._gconf_key = gconf_key
         self._timer = None
         self._thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["calendar", "evolution-calendar", "office-calendar", "stock_calendar" ]))
         
-    def create_backend(self):
-        raise Exception("Not implemented")
-    
     def activate(self):
         self._active = True
         self._event_days = None
@@ -142,7 +224,8 @@ class G15Cal():
         self._loaded = 0
         
         # Backend
-        self._backend = self.create_backend()
+        self._account_manager = g15accounts.G15AccountManager(CONFIG_PATH, CONFIG_ITEM_NAME)
+        self._account_manager.add_change_listener(self._accounts_changed)
         
         # Calendar
         self._calendar = Calendar()
@@ -159,20 +242,10 @@ class G15Cal():
         self._page.set_theme(self._theme)
         self._screen.key_handler.action_listeners.append(self)
         self._calendar.set_focused(True)
-        
-        def on_redraw():
-            self._page.add_child(self._menu)
-            self._page.add_child(self._calendar)
-            self._page.add_child(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
-            self._screen.add_page(self._page)
-            self._page.redraw()
-            
-        g15screen.run_on_redraw(on_redraw)
-        
-        # Must be on GTK thread for python
         gobject.idle_add(self._first_load)
         
     def deactivate(self):
+        self._account_manager.remove_change_listener(self._accounts_changed)
         self._screen.key_handler.action_listeners.remove(self)
         if self._timer != None:
             self._timer.cancel()
@@ -195,25 +268,33 @@ class G15Cal():
                     self._adjust_calendar_date(7)
                 elif binding.action == g15driver.CLEAR:
                     self._calendar_date = None
-                    self._loaded_minute =- -1                    
-                    gobject.idle_add(self._load_month_events, self._calendar_date) 
+                    self._loaded_minute =- -1
+                    g15screen.run_on_redraw(self._rebuild_components, self._get_calendar_date())
             if binding.action == g15driver.VIEW:
                 self._page.next_focus()
     
     """
     Private
     """
+    
+    def _accounts_changed(self, account_manager):
+        print "Calendar accounts changed"
+        self._loaded = 0
+        self._redraw()
                     
     def _adjust_calendar_date(self, amount):
         if self._calendar_date == None:
             self._calendar_date = datetime.datetime.now()
         self._calendar_date = self._calendar_date + datetime.timedelta(amount)
-        gobject.idle_add(self._load_month_events, self._calendar_date) 
+        g15screen.run_on_redraw(self._rebuild_components, self._calendar_date)
         
     def _first_load(self):
         self._load_month_events(datetime.datetime.now())
-        self._screen.redraw(self._page)
-        self._schedule_redraw()
+        self._page.add_child(self._menu)
+        self._page.add_child(self._calendar)
+        self._page.add_child(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
+        self._screen.add_page(self._page)
+        self._redraw()
     
     def _get_calendar_date(self):
         now = datetime.datetime.now()
@@ -261,38 +342,53 @@ class G15Cal():
                 pass
             
         # Get all the events for this month
-        self._event_days = self._backend.get_events(now)
+        for acc in self._account_manager.accounts:
+            backend = get_backend(acc.type)
+            if backend is None:
+                logger.warn("Could not find a calendar backend for %s" % acc.name)
+            else:
+                backend_events = backend.create_backend(acc, self._account_manager).get_events(now)
+                if backend_events is None:
+                    logger.warning("Calendar returned no events, skipping")
+                else:
+                    self._event_days = dict(self._event_days.items() + \
+                                            backend_events.items())
                     
-        # Set the events
-        def on_redraw():
-            self._menu.remove_all_children()
-            if str(now.day) in self._event_days:
-                events = self._event_days[str(now.day)]
-                i = 0
-                for event in events:
-                    self._menu.add_child(EventMenuItem(event, id = "menuItem-%d" % i))
-                    i += 1
-                
-            # Add the date cell components
-            self._calendar.remove_all_children()
-            cal = calendar.Calendar()
-            i = 0
-            for day in cal.itermonthdates(now.year, now.month):
-                event = None
-                if str(day.day) in self._event_days:
-                    event = self._event_days[str(day.day)]                
-                self._calendar.add_child(Cell(day, now, event, "cell-%d" % i))
-                i += 1
-                
-            self._page.redraw()
-            
-        g15screen.run_on_redraw(on_redraw)
-            
+        g15screen.run_on_redraw(self._rebuild_components, now)
         self._page.mark_dirty()
+        
+    def _rebuild_components(self, now):
+        self._menu.remove_all_children()
+        if str(now.day) in self._event_days:
+            events = self._event_days[str(now.day)]
+            i = 0
+            for event in events:
+                self._menu.add_child(EventMenuItem(event, "menuItem-%d" % i))
+                i += 1
+            
+        # Add the date cell components
+        self._calendar.remove_all_children()
+        cal = calendar.Calendar()
+        i = 0
+        for day in cal.itermonthdates(now.year, now.month):
+            event = None
+            if str(day.day) in self._event_days:
+                event = self._event_days[str(day.day)][0]            
+            self._calendar.add_child(Cell(day, now, event, "cell-%d" % i))
+            i += 1
+            
+        self._page.redraw()
         
     def _schedule_redraw(self):
         if self._screen.is_visible(self._page):
-            self._timer = g15util.schedule("CalRedraw", 60.0, self._redraw)
+            if self._timer is not None:
+                self._timer.cancel()
+            
+            """
+            Because the calendar page also displays a clock, we want to
+            redraw at second zero of every minute
+            """
+            self._timer = g15util.schedule("CalRedraw", 60 - time.gmtime().tm_sec, self._redraw)
         
     def _on_shown(self):
         self._hidden = False
@@ -308,7 +404,11 @@ class G15Cal():
         t = time.time()
         if t > self._loaded + REFRESH_INTERVAL:
             self._loaded = t                        
-        gobject.idle_add(self._redraw_now)
+            gobject.idle_add(self._redraw_now)
+        else:
+            self._page.mark_dirty()
+            self._screen.redraw(self._page)
+            self._schedule_redraw()
             
     def _redraw_now(self):
         self._load_month_events(datetime.datetime.now())

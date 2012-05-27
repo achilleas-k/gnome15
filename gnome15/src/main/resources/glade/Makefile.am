@@ -5,9 +5,11 @@ glade_DATA = driver_gtk.glade \
 	driver_g15direct.glade \
 	driver_g930.glade \
 	g15-config.glade \
+	password.glade \
 	macro-editor.glade \
 	script-editor.glade \
 	colorpicker.glade \
+	accounts.glade \
 	redblue.png
 
 EXTRA_DIST =  			\

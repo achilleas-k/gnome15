@@ -66,7 +66,7 @@ copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 single_instance=True
-unsupported_models = [ g15driver.MODEL_G930 ]
+unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 actions={ 
          g15driver.CLEAR : _("Clear all queued messages"), 
          g15driver.NEXT_SELECTION : _("Next message"),

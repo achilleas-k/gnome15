@@ -50,54 +50,10 @@ copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 default_enabled=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930 ]
-
-def create(gconf_key, gconf_client, screen):
-    return G15CairoClock(gconf_key, gconf_client, screen)
-
-def show_preferences(parent, driver, gconf_client, gconf_key):
-    widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cairo-clock.glade"))
-    
-    dialog = widget_tree.get_object("ClockDialog")
-    dialog.set_transient_for(parent)
-    
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_seconds" % gconf_key, "DisplaySecondsCheckbox", True, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_date" % gconf_key, "DisplayDateCheckbox", True, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour" % gconf_key, "TwentyFourHourCheckbox", True, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_digital_time" % gconf_key, "DisplayDigitalTimeCheckbox", True, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_year" % gconf_key, "DisplayYearCheckbox", True, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/second_sweep" % gconf_key, "SecondSweep", False, widget_tree)
-
-    e = gconf_client.get(gconf_key + "/theme")
-    theme_name = "default"
-    if e != None:
-        theme_name = e.get_string()
-    theme_model = widget_tree.get_object("ThemeModel")
-    theme = widget_tree.get_object("ThemeCombo")
-    theme.connect("changed", theme_changed, gconf_key + "/theme", [ gconf_client, theme_model])
-    
-    theme_dirs = get_theme_dirs(driver.get_model_name(), gconf_key, gconf_client)
-    themes = {}
-    for d in theme_dirs:
-        if os.path.exists(d):
-            for fname in os.listdir(d):
-                if os.path.isdir(os.path.join(d, fname)) and not fname in themes and ( driver.get_bpp() == 16 or fname == "default" ) :
-                    theme_model.append([fname])
-                    themes[fname] = True
-                    if fname == theme_name:
-                        theme.set_active(len(theme_model) - 1) 
-    
-    dialog.run()
-    dialog.hide()
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 
 def changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
-    
-def theme_changed(widget, key, args):
-    gconf_client = args[0]
-    model = args[1]
-    gconf_client.set_string(key, model[widget.get_active()][0])
     
 def get_theme_dir(model_name, gconf_key, gconf_client, theme_name):
     for dir in get_theme_dirs(model_name, gconf_key, gconf_client):
@@ -122,6 +78,49 @@ def get_theme_dirs(model_name, gconf_key, gconf_client):
         dirs.append("/usr/share/cairo-clock/themes")
     return dirs
 
+class G15CairoClockPreferences():
+    
+    def __init__(self, parent, driver, gconf_key, gconf_client):
+        widget_tree = gtk.Builder()
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cairo-clock.glade"))
+        
+        dialog = widget_tree.get_object("ClockDialog")
+        dialog.set_transient_for(parent)
+        
+        g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_seconds" % gconf_key, "DisplaySecondsCheckbox", True, widget_tree)
+        g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_date" % gconf_key, "DisplayDateCheckbox", True, widget_tree)
+        g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour" % gconf_key, "TwentyFourHourCheckbox", True, widget_tree)
+        g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_digital_time" % gconf_key, "DisplayDigitalTimeCheckbox", True, widget_tree)
+        g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_year" % gconf_key, "DisplayYearCheckbox", True, widget_tree)
+        g15util.configure_checkbox_from_gconf(gconf_client, "%s/second_sweep" % gconf_key, "SecondSweep", False, widget_tree)
+    
+        e = gconf_client.get(gconf_key + "/theme")
+        theme_name = "default"
+        if e != None:
+            theme_name = e.get_string()
+        theme_model = widget_tree.get_object("ThemeModel")
+        theme = widget_tree.get_object("ThemeCombo")
+        
+        def _theme_changed(widget, key):
+            gconf_client.set_string(key, theme_model[widget.get_active()][0])
+            
+        theme.connect("changed", _theme_changed, gconf_key + "/theme")
+        
+        theme_dirs = get_theme_dirs(driver.get_model_name(), gconf_key, gconf_client)
+        themes = {}
+        for d in theme_dirs:
+            if os.path.exists(d):
+                for fname in os.listdir(d):
+                    if os.path.isdir(os.path.join(d, fname)) and not fname in themes and ( driver.get_bpp() == 16 or fname == "default" ) :
+                        theme_model.append([fname])
+                        themes[fname] = True
+                        if fname == theme_name:
+                            theme.set_active(len(theme_model) - 1) 
+        
+        dialog.run()
+        dialog.hide()
+        
+    
 class G15CairoClock():
     
     def __init__(self, gconf_key, gconf_client, screen):

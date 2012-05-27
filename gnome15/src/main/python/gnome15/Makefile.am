@@ -2,6 +2,7 @@ SUBDIRS = drivers
 gnome15dir = $(pkgpythondir)
 gnome15_PYTHON = 		\
 	__init__.py \
+	g15accounts.py \
 	g15service.py \
 	g15config.py \
 	g15macroeditor.py \

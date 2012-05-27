@@ -36,8 +36,8 @@ logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
 id = "g930"
-name = _("G930 Driver")
-description = _("Simple driver that supports the keys on the G930 headphones. ")
+name = _("G930/G35 Driver")
+description = _("Simple driver that supports the keys on the G930 and G35 headphones. ")
 has_preferences = True
 
 
@@ -179,10 +179,10 @@ class Driver(g15driver.AbstractDriver):
         return self.connected
     
     def get_model_names(self):
-        return [ g15driver.MODEL_G930 ]
+        return [ g15driver.MODEL_G930, g15driver.MODEL_G35 ]
             
     def get_name(self):
-        return "Gnome15 G930 Driver"
+        return "Gnome15 G930/G35 Driver"
     
     def get_model_name(self):
         return self.device.model_id if self.device != None else None
@@ -270,7 +270,8 @@ class Driver(g15driver.AbstractDriver):
         self.mm_devices = []
         dir_path = "/dev/input/by-id"
         for p in os.listdir(dir_path):
-            if re.search(r"usb-Logitech_Logitech_G930_Headset-event-if.*", p):
+            # TODO - not sure about the G35 - feedback needed
+            if re.search(r"usb-Logitech_Logitech_G930_Headset-event-if.*", p) or re.search(r"usb-Logitech_Logitech_G35_Headset-event-if.*", p):
                 logger.info("Input multi-media device %s matches" % p)
                 self.mm_devices.append(dir_path + "/" + p)
                 

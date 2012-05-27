@@ -318,6 +318,9 @@ class G15Screen():
                 choose_profile.make_active()
                 found = True
                 
+        if found:
+            logger.debug("Active application is now %s" % application_name)
+                
         return found
         
     def start(self):

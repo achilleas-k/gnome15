@@ -324,24 +324,28 @@ class G15Plugins():
         try : 
             self.state = STARTING
             self.started = []
+            added = []
             for mod in imported_plugins:
-                plugin_dir_key = self._get_plugin_key(mod.id) 
-                self.conf_client.add_dir(plugin_dir_key, gconf.CLIENT_PRELOAD_NONE)
-                key = "%s/enabled" % plugin_dir_key
-                self.conf_client.notify_add(key, self._plugin_changed)
-                if (self.screen is None and is_global_plugin(mod)) or \
-                   (self.screen is not None and not is_global_plugin(mod)):
-                    if self.conf_client.get(key) == None:
-                        self.conf_client.set_bool(key, is_default_enabled(mod))
-                    if self.conf_client.get_bool(key):
-                        try :
-                            instance = self._create_instance(mod, plugin_dir_key)
-                            if self.screen is None or self.screen.driver.get_model_name() in get_supported_models(mod):
-                                self.started.append(instance)
-                        except Exception as e:
-                            self.conf_client.set_bool(key, False)
-                            logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
-                            traceback.print_exc(file=sys.stderr)
+                plugin_dir_key = self._get_plugin_key(mod.id)
+                if mod.id in added:
+                    logger.warn("Same plugin with ID of %s is already loaded. Only the first copy will be used." % mod.id) 
+                else:
+                    self.conf_client.add_dir(plugin_dir_key, gconf.CLIENT_PRELOAD_NONE)
+                    key = "%s/enabled" % plugin_dir_key
+                    self.conf_client.notify_add(key, self._plugin_changed)
+                    if (self.screen is None and is_global_plugin(mod)) or \
+                       (self.screen is not None and not is_global_plugin(mod)):
+                        if self.conf_client.get(key) == None:
+                            self.conf_client.set_bool(key, is_default_enabled(mod))
+                        if self.conf_client.get_bool(key):
+                            try :
+                                instance = self._create_instance(mod, plugin_dir_key)
+                                if self.screen is None or self.screen.driver.get_model_name() in get_supported_models(mod):
+                                    self.started.append(instance)
+                            except Exception as e:
+                                self.conf_client.set_bool(key, False)
+                                logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
+                                traceback.print_exc(file=sys.stderr)
             self.state = STARTED
         except Exception as a:
             self.state = UNINITIALISED

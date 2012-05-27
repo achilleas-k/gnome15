@@ -32,10 +32,21 @@ import shutil
 import sys
 import subprocess
 
-logger = logging.getLogger("service")
+logger = logging.getLogger("upgrade")
  
 def upgrade():
     version_0_x_0_to_0_7_0()
+    version_0_x_0_to_0_8_5()
+
+def version_0_x_0_to_0_8_5():
+    """
+    Location of mail accounts moved
+    """
+    old_path = os.path.expanduser("~/.gnome2/gnome15/lcdbiff/mailboxes.xml")
+    new_path = os.path.expanduser("~/.config/gnome15/plugin-data/lcdbiff/mailboxes.xml")
+    if os.path.exists(old_path) and not os.path.exists(new_path):
+        logger.warn("Upgrading to 0.8.5, moving mailboxes")
+        os.renames(old_path, new_path)    
 
 def version_0_x_0_to_0_7_0():
     """

@@ -142,7 +142,6 @@ class G15Service(g15desktop.G15AbstractService):
         self.service_host = service_host
         self.active_window = None
         self.shutting_down = False
-        self.active_application_name = None
         self.starting_up = True
         self.conf_client = gconf.client_get_default()
         self.screens = []
@@ -154,6 +153,9 @@ class G15Service(g15desktop.G15AbstractService):
         self.font_faces = {}
         self.devices = g15devices.find_all_devices()
         self.stopping = False
+        self.window_title_listener = None
+        self.active_application_name = None
+        self.active_window_title = None
                 
         # Expose Gnome15 functions via DBus
         logger.debug("Starting the DBUS service")
@@ -465,14 +467,50 @@ class G15Service(g15desktop.G15AbstractService):
         if object_name != "":
             app = self.session_bus.get_object("org.ayatana.bamf", object_name)
             view = dbus.Interface(app, 'org.ayatana.bamf.view')
-            for s in self.screens:
-                self._check_active_application(s, app, view)
+            self.active_application_name = view.Name()
+            screens = list(self.screens)
+            for s in list(screens):
+                if self._check_active_application(s, app, view):
+                    screens.remove(s)
+                    
+            window = dbus.Interface(app, 'org.ayatana.bamf.window')
+            self.active_window_title = self._get_x_prop(window, '_NET_WM_VISIBLE_NAME')
+            if not self.active_window_title:
+                self.active_window_title = self._get_x_prop(window, '_NET_WM_NAME')
+            for s in list(screens):
+                if self._check_active_window(s, app, window):
+                    screens.remove(s)
+                    
+            """
+            Start listening for name changes within the view as well
+            """            
+            if self.window_title_listener is not None:
+                self.window_title_listener.remove()
             
+            def _window_title_changed(old_name, new_name):
+                self.active_window_title = new_name
+                for s in list(self.screens):
+                    self._check_active_window(s, app, window)
+                    
+            self.window_title_listener = view.connect_to_signal('NameChanged', _window_title_changed, None)
+            
+    def _get_x_prop(self, window, key):
+        try :
+            return window.XProps(key)                            
+        except dbus.DBusException:
+            return None
+            
+    def _check_active_window(self, screen, app, window):
+        try :
+            if screen.set_active_application_name(self.active_window_title):
+                return True                            
+        except dbus.DBusException:
+            pass
+        
     def _check_active_application(self, screen, app, view):
         try :
             if view.IsActive() == 1:
                 vn = view.Name()
-                logger.debug("Active application is now %s" % self.active_application_name)
                 if screen.set_active_application_name(vn):
                     return True
                 else:                            
@@ -494,6 +532,7 @@ class G15Service(g15desktop.G15AbstractService):
                 active_application_name = app.get_name() if app is not None else ""
                 if active_application_name != self.active_application_name:
                     self.active_application_name = active_application_name
+                    self.active_window_title = active_application_name
                     logger.info("Active application is now %s" % self.active_application_name)
                     for screen in self.screens:
                         screen.set_active_application_name(active_application_name)

@@ -38,7 +38,8 @@
             <property name="width_request">48</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="xalign">0.10000000149011612</property>
+            <property name="xalign">0</property>
+            <property name="xpad">8</property>
             <property name="label" translatable="yes">ms</property>
           </object>
           <packing>
@@ -87,16 +88,58 @@
           </packing>
         </child>
         <child>
-          <placeholder/>
+          <object class="GtkLabel" id="label2">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="xalign">0</property>
+            <property name="label" translatable="yes">Center Offset</property>
+          </object>
+          <packing>
+            <property name="top_attach">2</property>
+            <property name="bottom_attach">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSpinButton" id="Offset">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="invisible_char">•</property>
+            <property name="primary_icon_activatable">False</property>
+            <property name="secondary_icon_activatable">False</property>
+            <property name="primary_icon_sensitive">True</property>
+            <property name="secondary_icon_sensitive">True</property>
+            <property name="adjustment">OffsetAdjustment</property>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="right_attach">2</property>
+            <property name="top_attach">2</property>
+            <property name="bottom_attach">3</property>
+          </packing>
         </child>
         <child>
           <placeholder/>
         </child>
         <child>
-          <placeholder/>
-        </child>
-        <child>
-          <placeholder/>
+          <object class="GtkLabel" id="label3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="xalign">0</property>
+            <property name="yalign">0</property>
+            <property name="xpad">8</property>
+            <property name="ypad">8</property>
+            <property name="label" translatable="yes">How far off-center the joystick must
+be before registering movement.
+Too low, and the joystick will "stick"
+in one direction. Too high and you
+lose accuracy. </property>
+          </object>
+          <packing>
+            <property name="left_attach">2</property>
+            <property name="right_attach">3</property>
+            <property name="top_attach">2</property>
+            <property name="bottom_attach">3</property>
+          </packing>
         </child>
       </object>
       <packing>
@@ -127,6 +170,11 @@
         <col id="1" translatable="yes">Mouse</col>
       </row>
     </data>
+  </object>
+  <object class="GtkAdjustment" id="OffsetAdjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="ResetWaitAdjustment">
     <property name="upper">1000000</property>

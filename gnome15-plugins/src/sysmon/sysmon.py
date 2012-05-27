@@ -43,7 +43,7 @@ has_preferences = True
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Toggle Monitored CPU"), 
          g15driver.NEXT_SELECTION : _("Toggle Monitored Network\nInterface") }
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 
 # Various constants
 GRAPH_SIZE = 50

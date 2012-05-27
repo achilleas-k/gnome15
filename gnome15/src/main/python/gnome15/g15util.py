@@ -38,6 +38,13 @@ from cStringIO import StringIO
 import jobqueue
 
 from HTMLParser import HTMLParser
+import threading
+
+'''
+GObject thread. Hosting applications may set this so that is_gobject_thread()
+function works
+'''
+gobject_thread = [ None ]
 
 '''
 Lookup tables
@@ -338,10 +345,20 @@ def queue(queue_name, job_name, interval, function, *args):
 
 def stop_all_schedulers():
     scheduler.stop_all()
+    
+'''
+GObject. Allows us to test if we are on the gobject loop
+'''    
+def is_gobject_thread():
+    return threading.currentThread() == gobject_thread[0]
+
+def set_gobject_thread():
+    gobject_thread[0] = threading.currentThread()
 
 '''
 General utilities
 '''
+    
 def module_exists(module_name):
     try:
         __import__(module_name)

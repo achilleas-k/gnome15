@@ -69,6 +69,7 @@ controls = {
   g15driver.MODEL_G110 : [ g19_mkeys_control, g110_keyboard_backlight_control ],
   g15driver.MODEL_MX5500 : [ g15_invert_control ],
   g15driver.MODEL_G930 : [ ],
+  g15driver.MODEL_G35 : [ ],
             }  
 
 def show_preferences(device, parent, gconf_client):

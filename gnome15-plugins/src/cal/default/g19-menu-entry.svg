@@ -14,7 +14,7 @@
    height="28"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19-menu-entry.svg"
    style="display:inline">
   <defs
@@ -196,13 +196,13 @@
      inkscape:cx="121.40922"
      inkscape:cy="21.236491"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1-5-7"
+     inkscape:current-layer="layer1-5"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1255"
      inkscape:window-height="940"
-     inkscape:window-x="496"
-     inkscape:window-y="112"
+     inkscape:window-x="492"
+     inkscape:window-y="36"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -259,7 +259,7 @@
          y="798.28217">${item_name}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:9.9999885px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
+       style="font-size:9.99998856px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
        x="176.15961"
        y="798.28217"
        id="text2999-0-1"
@@ -281,6 +281,17 @@
        xlink:href="/home/tanktarta/dummy.png"
        sodipodi:absref="/home/tanktarta/dummy.png"
        title="item_icon" />
+    <image
+       class="embedded_image"
+       y="785.11121"
+       x="196"
+       height="19"
+       width="19.1"
+       id="item_icon-3-9-6-1-0"
+       style="display:inline"
+       xlink:href="/home/tanktarta/dummy.png"
+       sodipodi:absref="/home/tanktarta/dummy.png"
+       title="alt_icon" />
   </g>
   <g
      inkscape:label="Deselected Layer"
@@ -288,7 +299,7 @@
      id="layer1-5-7"
      transform="translate(-9,-783)"
      title="del item_selected"
-     style="display:inline">
+     style="display:none">
     <rect
        style="fill:#808080;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5-4-5-4"
@@ -335,5 +346,16 @@
        xlink:href="/home/tanktarta/dummy.png"
        sodipodi:absref="/home/tanktarta/dummy.png"
        title="item_icon" />
+    <image
+       class="embedded_image"
+       y="785.11121"
+       x="196"
+       height="19"
+       width="19.1"
+       id="item_icon-3-9-6-1"
+       style="display:inline"
+       xlink:href="/home/tanktarta/dummy.png"
+       sodipodi:absref="/home/tanktarta/dummy.png"
+       title="alt_icon" />
   </g>
 </svg>

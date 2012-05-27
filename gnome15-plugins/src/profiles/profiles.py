@@ -50,7 +50,7 @@ copyright=_("Copyright (C)2012 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 default_enabled=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 actions={ 
          SELECT_PROFILE : _("Show profile selector"),
          g15driver.PREVIOUS_SELECTION : _("Previous item"), 
@@ -58,7 +58,8 @@ actions={
          g15driver.NEXT_PAGE : _("Next page"),
          g15driver.PREVIOUS_PAGE : _("Previous page"),
          g15driver.VIEW : _("Lock profile"),
-         g15driver.SELECT : _("Activate profile")
+         g15driver.SELECT : _("Activate profile"),
+         g15driver.CLEAR : _("Set current window as activator")
          }
 
 def create(gconf_key, gconf_client, screen):
@@ -134,6 +135,15 @@ class G15Profiles(g15plugin.G15MenuPlugin):
                 self.menu.selected.profile.make_active()
                 g15profile.set_locked(self.screen.device, True)
             return True
+        elif binding.action == g15driver.CLEAR:
+            profile = self.menu.selected.profile
+            if self.screen.service.active_application_name is not None:
+                self._configure_profile_with_window_name(profile, self.screen.service.active_application_name)
+                profile.save()
+            elif self.screen.service.active_window_title is not None:
+                self._configure_profile_with_window_name(profile, self.screen.service.active_window_title)
+                profile.save()
+            return True
                 
                 
     def show_menu(self):
@@ -163,7 +173,13 @@ class G15Profiles(g15plugin.G15MenuPlugin):
         
     '''
     Private
-    '''         
+    '''    
+    def _configure_profile_with_window_name(self, profile, window_name):
+        profile.activate_on_focus = True
+        profile.activate_on_launch = False
+        profile.launch_pattern = None
+        profile.window_name = window_name
+         
     def _profiles_changed(self, arg0 = None, arg1 = None, arg2 = None, arg3 = None):
         self.screen.redraw(self.page)
         

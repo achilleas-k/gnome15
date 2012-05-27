@@ -459,6 +459,7 @@ class G15AbstractService(Thread):
         
     def start_loop(self):
         logger.info("Starting GLib loop")
+        g15util.set_gobject_thread()
         try:
             self.loop.run()
         except:
