@@ -37,12 +37,9 @@ import ConfigParser
 import codecs
 import os.path
 import stat
-import errno
 import pyinotify
 import logging
-import uinput
 import re
-import copy
 import zipfile
 from cStringIO import StringIO
  

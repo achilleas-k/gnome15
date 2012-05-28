@@ -52,8 +52,14 @@ has_preferences=True
 default_enabled=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 
+def create(gconf_key, gconf_client, screen):
+    return G15CairoClock(gconf_key, gconf_client, screen)
+
 def changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
+    
+def show_preferences(parent, driver, gconf_client, gconf_key):
+    G15CairoClockPreferences(parent, driver, gconf_key, gconf_client)
     
 def get_theme_dir(model_name, gconf_key, gconf_client, theme_name):
     for dir in get_theme_dirs(model_name, gconf_key, gconf_client):
