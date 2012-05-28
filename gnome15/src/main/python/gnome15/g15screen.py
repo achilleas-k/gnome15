@@ -55,9 +55,7 @@ import g15globals
 import g15drivermanager
 import g15keyboard
 import g15theme
-import g15uinput
 import g15actions
-import jobqueue
 import time
 import threading
 import cairo
@@ -65,10 +63,8 @@ import gconf
 import os.path
 import traceback
 import sys
-import uinput
 import logging
 from threading import RLock
-from threading import current_thread
 from g15exceptions import NotConnectedException
 logger = logging.getLogger("screen")
 
@@ -1280,10 +1276,10 @@ class G15Screen():
                 # Cycle within pages of the same priority
                 page_list = self._get_pages_of_priority(page.priority)
                 direction = "up"
-                dir = 1
+                direction_val = 1
                 diff = page_list.index(page)
                 if diff >= (len(page_list) / 2):
-                    dir *= -1
+                    direction_val *= -1
                     direction = "down"
                 self._cycle_pages(diff, page_list)
                 self._do_redraw(page, direction=direction, transitions=transitions)
@@ -1295,10 +1291,10 @@ class G15Screen():
         try :
             self._flush_reverts_and_deletes()
             self._cycle(number, transitions)
-            dir = "up"
+            direction = "up"
             if number < 0:
-                dir = "down"
-            self._do_redraw(self._get_next_page_to_display(), direction=dir, transitions=transitions)
+                direction = "down"
+            self._do_redraw(self._get_next_page_to_display(), direction=direction, transitions=transitions)
         finally:
             self.page_model_lock.release()
             
@@ -1312,13 +1308,13 @@ class G15Screen():
     def _cycle_pages(self, number, pages):
         if len(pages) > 0:                    
             if number < 0:
-                for p in range(number, 0):                    
+                for _ in range(number, 0):                    
                     first_time = pages[0].time
                     for i in range(0, len(pages) - 1):
                         pages[i].set_time(pages[i + 1].time)
                     pages[len(pages) - 1].set_time(first_time)
             else:                         
-                for p in range(0, number):
+                for _ in range(0, number):
                     last_time = pages[len(pages) - 1].time
                     for i in range(len(pages) - 1, 0, -1):
                         pages[i].set_time(pages[i - 1].time)
@@ -1423,8 +1419,8 @@ class G15Splash():
         self.screen.redraw(self.page)
         g15util.queue(REDRAW_QUEUE, "ClearSplash", 2.0, self._hide)
         
-    def update_splash(self, value, max, text=None):
-        self.progress = (float(value) / float(max)) * 100.0
+    def update_splash(self, value, max_value, text=None):
+        self.progress = (float(value) / float(max_value)) * 100.0
         self.screen.redraw(self.page)
         if text != None:
             self.text = text

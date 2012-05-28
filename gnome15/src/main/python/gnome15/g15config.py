@@ -329,6 +329,10 @@ class G15Config:
         self.theme_model = self.widget_tree.get_object("ThemeModel")
         self.theme_label = self.widget_tree.get_object("ThemeLabel")
         self.theme_combo = self.widget_tree.get_object("ThemeCombo")
+        self.profile_plugins_mode_model = self.widget_tree.get_object("ProfilePluginsModeModel")
+        self.profile_plugins_mode = self.widget_tree.get_object("ProfilePluginsMode")
+        self.enabled_profile_plugins_model = self.widget_tree.get_object("EnabledProfilePluginsModel")
+        self.enabled_profile_plugins = self.widget_tree.get_object("EnabledProfilePlugins")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -396,6 +400,7 @@ class G15Config:
         self.device_enabled.connect("toggled", self._device_enabled_changed)
         self.driver_combo.connect("changed", self._driver_changed)
         self.theme_combo.connect("changed", self._theme_changed)
+        self.profile_plugins_mode.connect("changed", self._profile_plugins_mode_changed)
         self.global_options_button.connect("clicked", self._show_global_options)
         self.macro_list.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         self.macro_list.connect("button_press_event", self._macro_list_clicked)
@@ -1035,7 +1040,7 @@ class G15Config:
                 
     def _device_enabled_changed(self, widget = None):
         gobject.idle_add(self._set_device)
-                
+        
     def _theme_changed(self, widget = None):
         if not self.adjusting:
             sel = widget.get_active()
@@ -1111,13 +1116,16 @@ class G15Config:
         self._set_available_actions()
         
     def _set_available_actions(self):
-        (model, path) = self.macro_list.get_selection().get_selected()
+        (_, path) = self.macro_list.get_selection().get_selected()
         self.delete_macro_button.set_sensitive(path != None and not self.selected_profile.read_only)
         self.macro_properties_button.set_sensitive(path != None)
         
     def _set_available_profile_actions(self):
-        self.window_name.set_sensitive(self.selected_profile.activate_on_focus)        
-        self.window_select.set_sensitive(self.selected_profile.activate_on_focus)
+        sel = self.profile_plugins_mode.get_active()
+        path = self.profile_plugins_mode_model.get_iter(sel)
+        self.enabled_profile_plugins.set_sensitive(not self.selected_profile.read_only and self.profile_plugins_mode_model[path][0] == g15profile.SELECTED_PLUGINS) 
+        self.window_name.set_sensitive(not self.selected_profile.read_only and self.selected_profile.activate_on_focus)        
+        self.window_select.set_sensitive(not self.selected_profile.read_only and self.selected_profile.activate_on_focus)
         
     def _activate(self, widget):
         (model, path) = self.profiles_tree.get_selection().get_selected()
@@ -1126,6 +1134,14 @@ class G15Config:
     def _make_active(self, profile): 
         profile.make_active()
         self._load_profile_list()
+    
+    def _profile_plugins_mode_changed(self, widget = None):
+        if not self.adjusting:
+            sel = widget.get_active()
+            path = self.profile_plugins_mode_model.get_iter(sel)
+            self.selected_profile.plugins_mode = self.profile_plugins_mode_model[path][0] 
+            self._set_available_profile_actions()
+            self._save_profile(self.selected_profile)
         
     def _clear_icon(self, widget):
         if widget == self.clear_icon_button:
@@ -1585,6 +1601,7 @@ class G15Config:
             self.information_content.set_sensitive(not profile.read_only)
             self.delays_content.set_sensitive(not profile.read_only)
             self.activation_content.set_sensitive(not profile.read_only)
+            self.profile_plugins_mode.set_sensitive(not profile.read_only)
             
             if profile.get_default():
                 self.activate_on_focus.set_visible(False)
@@ -1656,6 +1673,20 @@ class G15Config:
                     self.color_button.set_color(g15util.to_color(rgb))
                     self.enable_color_for_m_key.set_active(True)
                 self.enable_color_for_m_key.set_sensitive(not profile.read_only)
+                
+            # Plugins            
+            for i in range(0, len(self.profile_plugins_mode_model)):
+                if profile.plugins_mode == self.profile_plugins_mode_model[i][0]:
+                    self.profile_plugins_mode.set_active(i)
+                    
+            self.enabled_profile_plugins_model.clear()
+            if self.selected_device:
+                for mod in sorted(g15pluginmanager.imported_plugins, key=lambda key: key.name):
+                    key = self._get_full_key("plugins/%s/enabled" % mod.id )
+                    if self.driver and self.driver.get_model_name() in g15pluginmanager.get_supported_models(mod) and not g15pluginmanager.is_global_plugin(mod):
+                        enabled = self.conf_client.get_bool(key)
+                        if enabled:
+                            self.enabled_profile_plugins_model.append([mod.id in profile.selected_plugins, mod.name, mod.id])
                     
             # Parent profile
             self._load_parent_profiles()

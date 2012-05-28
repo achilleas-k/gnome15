@@ -38,6 +38,7 @@ DIGITAL_JOYSTICK = "digital-joystick"
 KEYBOARD = "keyboard"
 DEVICE_TYPES = [ MOUSE, KEYBOARD, JOYSTICK, DIGITAL_JOYSTICK ]
 
+capabilities = uinput.capabilities.CAPABILITIES
 registered_parameters = { MOUSE: {}, 
                    JOYSTICK:  {
                     uinput.ABS_X: (0, 255, 0, 0),
@@ -214,6 +215,9 @@ def emit(target, code, value, syn=True, event_type = None):
             ev_type = uinput.EV_KEY
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("UINPUT uinput keyboard event at %s, code = %d, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
+    
+    if not target in DEVICE_TYPES:
+        raise Exception("Invalid target. Must be one of %s" % str(DEVICE_TYPES))
     
     locks[target].acquire()
     try:

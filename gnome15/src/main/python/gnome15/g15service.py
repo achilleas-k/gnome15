@@ -287,30 +287,60 @@ class G15Service(g15desktop.G15AbstractService):
                 esc = False
         
     def send_macro(self, macro):
-        
         macros = macro.macro.split("\n")
         i = 0
         for macro_text in macros:
             split = macro_text.split(" ")
-            op = split[0]
+            op = split[0].lower()
             if len(split) > 1:
                 val = split[1]
-                if op == "Delay" and macro.profile.send_delays and not macro.profile.fixed_delays:
-                    time.sleep(float(val) / 1000.0 if not macro.profile.fixed_delays else macro.profile.delay_amount)
-                elif op == "Press":
+                if op == "delay":
+                    if macro.profile.send_delays and not macro.profile.fixed_delays:
+                        time.sleep(float(val) / 1000.0 if not macro.profile.fixed_delays else macro.profile.delay_amount)
+                elif op == "press":
                     if i > 0:
-                        delay = 0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
-                        if logger.isEnabledFor(logging.DEBUG):
-                            logger.debug("Release delay of %f" % delay) 
-                        time.sleep(delay)
+                        self._release_delay()
                     self.send_string(val, True)
-                    delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.press_delay) / 1000.0 )
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug("Press delay of %f" % delay) 
-                    time.sleep(delay)
-                elif op == "Release":
+                    self._press_delay(macro)
+                elif op == "release":
                     self.send_string(val, False)
+                elif op == "upress":
+                    if i > 0:
+                        self._release_delay()
+                    if len(split) < 3:                        
+                        logger.error("Invalid operation in macro script. '%s'" % macro_text)
+                    else:
+                        self._send_uinput(split[2], val, 1)
+                elif op == "urelease":
+                    if len(split) < 3:                        
+                        logger.error("Invalid operation in macro script. '%s'" % macro_text)
+                    else:
+                        self._send_uinput(split[2], val, 0)
+                else:
+                    logger.error("Invalid operation in macro script. '%s'" % macro_text)
+                
                 i += 1
+            else:
+                if len(split) > 0:
+                    logger.error("Insufficient arguments in macro script. '%s'" % macro_text)
+
+    def _send_uinput(self, target, val, state):
+        if val in g15uinput.capabilities:
+            g15uinput.emit(target, g15uinput.capabilities[val], state, True)
+        else:                        
+            logger.error("Unknown uinput key %s." % val)
+
+    def _press_delay(self, macro):
+        delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.press_delay) / 1000.0 )
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Press delay of %f" % delay) 
+        time.sleep(delay)
+        
+    def _release_delay(self, macro):
+        delay = 0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Release delay of %f" % delay) 
+        time.sleep(delay)
     
     def get_keysym(self, ch) :
         keysym = Xlib.XK.string_to_keysym(ch)

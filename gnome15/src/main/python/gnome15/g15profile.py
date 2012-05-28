@@ -122,6 +122,13 @@ REPEAT_TOGGLE="toggle"
 NO_REPEAT="none"
 REPEAT_WHILE_HELD="held"
 
+'''
+Plugin modes
+'''
+NO_PLUGINS = "none"
+ALL_PLUGINS = "all"
+SELECTED_PLUGINS = "selected"
+
 """
 Defaults
 """
@@ -431,7 +438,7 @@ class G15Macro:
         """
         if not self.type in [ MACRO_MOUSE, MACRO_KEYBOARD, MACRO_JOYSTICK, MACRO_DIGITAL_JOYSTICK ]:
             raise Exception("Macro of type %s, is not a type that maps to a uinput code." % self.type)
-        return uinput.capabilities.CAPABILITIES[self.macro] if self.macro in uinput.capabilities.CAPABILITIES else 0
+        return g15uinput.capabilities[self.macro] if self.macro in g15uinput.capabilities else 0
     
     def set_keys(self, keys):
         """
@@ -654,7 +661,10 @@ class G15Profile():
         self.models = [ device.model_id ]
         self.window_name = ""
         self.base_profile = None
-        self.version = 2.0
+        self.version = 2.1
+        self.plugins_mode = ALL_PLUGINS
+        self.selected_plugins = []
+        
         self.load(self.filename)
         
     def can_launch(self, command_line):
@@ -757,6 +767,8 @@ class G15Profile():
         self.parser.set("DEFAULT", "background", self.background)
         self.parser.set("DEFAULT", "author", self.author)
         self.parser.set("DEFAULT", "activate_on_focus", str(self.activate_on_focus))
+        self.parser.set("DEFAULT", "plugins_mode", str(self.plugins_mode))
+        self.parser.set("DEFAULT", "selected_plugins", ",".join(self.selected_plugins))
         self.parser.set("DEFAULT", "send_delays", str(self.send_delays))
         self.parser.set("DEFAULT", "fixed_delays", str(self.fixed_delays))
         self.parser.set("DEFAULT", "press_delay", str(self.press_delay))
@@ -994,6 +1006,9 @@ class G15Profile():
         self.author = self.parser.get("DEFAULT", "author").strip() if self.parser.has_option("DEFAULT", "author") else ""
         self.window_name = self.parser.get("DEFAULT", "window_name").strip() if self.parser.has_option("DEFAULT", "window_name") else ""
         self.models = self.parser.get("DEFAULT", "models").strip().split(",") if self.parser.has_option("DEFAULT", "models") else [ self.device.model_id ]
+        self.plugins_mode = self.parser.get("DEFAULT", "plugins_mode").strip() if self.parser.has_option("DEFAULT", "plugins_mode") else ALL_PLUGINS
+        self.selected_plugins = self.parser.get("LAUNCH", "selected_plugins").strip().split(",") \
+            if self.parser.has_option("LAUNCH", "selected_plugins") else [ ]
         
         self.activate_on_focus = self.parser.getboolean("DEFAULT", "activate_on_focus") if self.parser.has_option("DEFAULT", "activate_on_focus") else False
         self.send_delays = self.parser.getboolean("DEFAULT", "send_delays") if self.parser.has_option("DEFAULT", "send_delays") else False
