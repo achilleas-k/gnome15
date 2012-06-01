@@ -35,11 +35,9 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
+passive=True
 global_plugin=True
  
-def create(gconf_key, gconf_client, service):
-    return G15Tweak()
-
 def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "tweak.glade"))
@@ -59,16 +57,3 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     dialog.run()
     dialog.hide()
         
-class G15Tweak():
-    
-    def __init__(self):
-        pass
-
-    def activate(self):
-        pass
-            
-    def deactivate(self):
-        pass
-            
-    def destroy(self):
-        pass   

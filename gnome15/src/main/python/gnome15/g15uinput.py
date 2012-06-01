@@ -28,6 +28,7 @@ import uinput
 import g15util
 import os
 import subprocess
+from uinput.ev import *
 from threading import RLock
 from gnome15 import g15globals
 logger = logging.getLogger("uinput")
@@ -38,7 +39,8 @@ DIGITAL_JOYSTICK = "digital-joystick"
 KEYBOARD = "keyboard"
 DEVICE_TYPES = [ MOUSE, KEYBOARD, JOYSTICK, DIGITAL_JOYSTICK ]
 
-capabilities = uinput.capabilities.CAPABILITIES
+#capabilities = uinput.capabilities.CAPABILITIES
+capabilities = uinput.ev.__dict__
 registered_parameters = { MOUSE: {}, 
                    JOYSTICK:  {
                     uinput.ABS_X: (0, 255, 0, 0),
@@ -63,6 +65,14 @@ GNOME15_MOUSE_PRODUCT_ID = 0x0001
 GNOME15_JOYSTICK_PRODUCT_ID = 0x0002
 GNOME15_KEYBOARD_PRODUCT_ID = 0x0003
 GNOME15_DIGITAL_JOYSTICK_PRODUCT_ID = 0x0004
+
+"""
+python-uinput currently doesn't expose these constants
+"""
+
+EV_KEY = 0x01
+EV_REL = 0x02
+EV_ABS = 0x03
     
 def are_calibration_tools_available():
     """
@@ -189,48 +199,47 @@ def syn(target):
     """
     uinput_devices[target].syn()
     
-def emit(target, code, value, syn=True, event_type = None):
+def emit(target, code, value, syn=True):
     """
     Emit an input event, optionally emit a SYN as well
     
     Keyword arguments:
     target         --    The target device type (MOUSE, KEYBOARD or JOYSTICK)
                          type code.
-    code           --    uinput code
+    code           --    uinput code (either single code, where type will be 
+                         determined by target or a tuple consisting of event
+                         type and event code)
     value          --    uinput value
     syn            --    emit SYN (defaults to True)
-    ev_type        --    if not supplied, will be default for target type
     """
-    ev_type = event_type
-    if ev_type is None:
-        if target == MOUSE and code in [ uinput.REL_X, uinput.REL_Y ]:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("UINPUT mouse event at %s, code = %d, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
-            ev_type = uinput.EV_REL
-        elif ( target == JOYSTICK or target == DIGITAL_JOYSTICK ) and code in [ uinput.ABS_X, uinput.ABS_Y ]:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("UINPUT joystick event at %s, code = %d, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
-            ev_type = uinput.EV_ABS
-        else: 
-            ev_type = uinput.EV_KEY
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("UINPUT uinput keyboard event at %s, code = %d, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
-    
     if not target in DEVICE_TYPES:
         raise Exception("Invalid target. Must be one of %s" % str(DEVICE_TYPES))
     
+    if not isinstance(code, tuple):
+        if target == MOUSE and code in [ uinput.REL_X[1], uinput.REL_Y[1] ]:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("UINPUT mouse event at %s, code = %d, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
+            code = ( EV_REL, code )
+        elif ( target == JOYSTICK or target == DIGITAL_JOYSTICK ) and code in [ uinput.ABS_X[1], uinput.ABS_Y[1] ]:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("UINPUT joystick event at %s, code = %d, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
+            code = ( EV_ABS, code )
+        else: 
+            code = ( EV_KEY, code )
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("UINPUT uinput keyboard event at %s, code = %d, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
+    
     locks[target].acquire()
     try:
-        uinput_devices[target].emit(ev_type, code, value, syn)
+        uinput_devices[target].emit( code, value, syn)
     finally:
         locks[target].release()
     
 def __get_keys(prefix, exclude = None):
     l = []
-    caps = uinput.capabilities.CAPABILITIES
-    for k in sorted(caps.iterkeys()):
+    for k in sorted(capabilities.iterkeys()):
         if k.startswith(prefix) and ( exclude == None or not k.startswith(exclude) ):
-            l.append(caps[k])
+            l.append(capabilities[k])
     return l
 
 def get_keys(device_type):
@@ -244,13 +253,12 @@ def get_keys(device_type):
 def get_buttons(device_type):
     fname = os.path.join(g15globals.ukeys_dir, "%s.keys" % device_type)
     f = open(fname, "r")
-    caps = uinput.capabilities.CAPABILITIES
     b = []
     for line in f.readlines():
         line = line.strip()
         if not line == "" and not line.startswith("#"):
-            if line in caps:
-                b.append((line, caps[line]))
+            if line in capabilities:
+                b.append((line, capabilities[line][1]))
             else:
                 logger.warning("Invalid key name '%s' in %s" % (line, fname))
     return b
@@ -261,44 +269,54 @@ def __check_devices():
             logger.info("Opening uinput device for %s" % device_type)
             abs_parms = { }       
             keys = []
-            for b, v in get_buttons(device_type):
-                keys.append(uinput.capabilities.CAPABILITIES[b])
+            for b, _ in get_buttons(device_type):
+                keys.append(capabilities[b])
+            
             if device_type == MOUSE:
                 virtual_product_id = GNOME15_MOUSE_PRODUCT_ID
-                caps = {
-                    uinput.EV_REL: [uinput.REL_X, uinput.REL_Y],
-                    uinput.EV_KEY: keys,
-                }
+                keys.append(uinput.REL_X)
+                keys.append(uinput.REL_Y)
+#                caps = {
+#                    EV_REL: [uinput.REL_X, uinput.REL_Y],
+#                    EV_KEY: keys,
+#                }
             elif device_type == JOYSTICK:
                 virtual_product_id = GNOME15_JOYSTICK_PRODUCT_ID
-                caps = {
-                    uinput.EV_ABS: [uinput.ABS_X, uinput.ABS_Y],
-                    uinput.EV_KEY: keys,
-                }
-                abs_parms = registered_parameters[device_type]
+                keys.append(uinput.ABS_X)
+                keys.append(uinput.ABS_Y)
+#                caps = {
+#                    EV_ABS: [uinput.ABS_X, uinput.ABS_Y],
+#                    EV_KEY: keys,
+#                }
+#                abs_parms = registered_parameters[device_type]
             elif device_type == DIGITAL_JOYSTICK:
                 virtual_product_id = GNOME15_JOYSTICK_PRODUCT_ID
-                caps = {
-                    uinput.EV_ABS: [uinput.ABS_X, uinput.ABS_Y],
-                    uinput.EV_KEY: keys,
-                }
-                abs_parms = registered_parameters[device_type]
+                keys.append(uinput.ABS_X)
+                keys.append(uinput.ABS_Y)
+#                caps = {
+#                    EV_ABS: [uinput.ABS_X, uinput.ABS_Y],
+#                    EV_KEY: keys,
+#                }
+#                abs_parms = registered_parameters[device_type]
             else:
                 virtual_product_id = GNOME15_KEYBOARD_PRODUCT_ID
-                caps = {
-                    uinput.EV_KEY: keys,
-                }
+#                caps = {
+#                    EV_KEY: keys,
+#                }
+#            uinput_device = uinput.Device(name="gnome15-%s" % device_type,
+#                                          capabilities = caps,
+#                                          abs_parameters = abs_parms,
+#                                          vendor = GNOME15_USB_VENDOR_ID,
+#                                          product = virtual_product_id)
+            caps = tuple(keys)    
             uinput_device = uinput.Device(name="gnome15-%s" % device_type,
-                                          capabilities = caps,
-                                          abs_parameters = abs_parms,
-                                          vendor = GNOME15_USB_VENDOR_ID,
-                                          product = virtual_product_id)                
+                                          events  = caps)                                
             uinput_devices[device_type] = uinput_device
             
             # Centre the joystick by default
             if device_type == JOYSTICK or device_type == DIGITAL_JOYSTICK:
-                emit(device_type, uinput.ABS_X, 128, False)
-                emit(device_type, uinput.ABS_Y, 128, False)
+                emit(device_type, ABS_X, 128, False)
+                emit(device_type, ABS_Y, 128, False)
                 syn(device_type)
                 load_calibration(device_type)
             else:

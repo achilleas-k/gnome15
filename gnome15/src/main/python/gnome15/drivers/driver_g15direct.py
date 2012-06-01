@@ -40,7 +40,6 @@ import traceback
 import logging
 import ImageMath
 import Image
-import uinput
 import array
 load_error = None
 try :
@@ -423,19 +422,19 @@ class Driver(g15driver.AbstractDriver):
         keys = []
         code &= ~(1<<28)
         if code & 1 << 0 != 0:
-            keys.append(uinput.KEY_PLAYPAUSE)
+            keys.append(g15uinput.KEY_PLAYPAUSE)
         elif code & 1 << 1 != 0:
-            keys.append(uinput.KEY_STOP)
+            keys.append(g15uinput.KEY_STOP)
         elif code & 1 << 2 != 0:
-            keys.append(uinput.KEY_NEXTSONG)
+            keys.append(g15uinput.KEY_NEXTSONG)
         elif code & 1 << 3 != 0:
-            keys.append(uinput.KEY_PREVIOUSSONG)
+            keys.append(g15uinput.KEY_PREVIOUSSONG)
         elif code & 1 << 4 != 0:
-            keys.append(uinput.KEY_MUTE)
+            keys.append(g15uinput.KEY_MUTE)
         elif code & 1 << 5 != 0:
-            keys.append(uinput.KEY_VOLUMEUP)
+            keys.append(g15uinput.KEY_VOLUMEUP)
         elif code & 1 << 6 != 0:
-            keys.append(uinput.KEY_VOLUMEDOWN)
+            keys.append(g15uinput.KEY_VOLUMEDOWN)
         return keys  
     
     def _convert_ext_g15daemon_code(self, code):
@@ -550,14 +549,14 @@ class Driver(g15driver.AbstractDriver):
             this_keys.append(g15driver.G_KEY_DOWN)
             
     def _check_js_buttons(self, this_keys):        
-        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_LEFT, uinput.BTN_1)
-        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_DOWN, uinput.BTN_2)
-        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_CENTER, uinput.BTN_3)
+        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_LEFT, g15uinput.BTN_1)
+        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_DOWN, g15uinput.BTN_2)
+        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_CENTER, g15uinput.BTN_3)
             
     def _check_mouse_buttons(self, this_keys):        
-        self._check_buttons(g15uinput.MOUSE, this_keys, g15driver.G_KEY_JOY_LEFT, uinput.BTN_MOUSE)
-        self._check_buttons(g15uinput.MOUSE, this_keys, g15driver.G_KEY_JOY_DOWN, uinput.BTN_RIGHT)
-        self._check_buttons(g15uinput.MOUSE, this_keys, g15driver.G_KEY_JOY_CENTER, uinput.BTN_MIDDLE)
+        self._check_buttons(g15uinput.MOUSE, this_keys, g15driver.G_KEY_JOY_LEFT, g15uinput.BTN_MOUSE)
+        self._check_buttons(g15uinput.MOUSE, this_keys, g15driver.G_KEY_JOY_DOWN, g15uinput.BTN_RIGHT)
+        self._check_buttons(g15uinput.MOUSE, this_keys, g15driver.G_KEY_JOY_CENTER, g15uinput.BTN_MIDDLE)
         
     def _rel_mouse(self, this_keys, pos, low_val, high_val, max_step):
         self._check_mouse_buttons(this_keys)
@@ -587,8 +586,8 @@ class Driver(g15driver.AbstractDriver):
         
     def _abs_joystick(self, this_keys, pos):
         self._check_js_buttons(this_keys) 
-        g15uinput.emit(g15uinput.JOYSTICK, uinput.ABS_X, pos[0], syn=False)
-        g15uinput.emit(g15uinput.JOYSTICK, uinput.ABS_Y, pos[1])
+        g15uinput.emit(g15uinput.JOYSTICK, g15uinput.ABS_X, pos[0], syn=False)
+        g15uinput.emit(g15uinput.JOYSTICK, g15uinput.ABS_Y, pos[1])
         
     def _check_buttons(self, target, this_keys, key, button):        
         if key in this_keys:
@@ -603,9 +602,9 @@ class Driver(g15driver.AbstractDriver):
     def _mouse_move(self):
         if self.move_x != 0 or self.move_y != 0:        
             if self.move_x != 0:
-                g15uinput.emit(g15uinput.MOUSE, uinput.REL_X, self.move_x)        
+                g15uinput.emit(g15uinput.MOUSE, g15uinput.REL_X, self.move_x)        
             if self.move_y != 0:
-                g15uinput.emit(g15uinput.MOUSE, uinput.REL_Y, self.move_y)
+                g15uinput.emit(g15uinput.MOUSE, g15uinput.REL_Y, self.move_y)
             self.timer = g15util.schedule("MouseMove", 0.05, self._mouse_move)
         
     def _do_update_control(self, control):

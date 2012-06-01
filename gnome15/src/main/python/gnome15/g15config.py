@@ -151,7 +151,7 @@ class G15GlobalConfig:
     def _get_selected_plugin(self):
         (model, path) = self.global_plugin_tree.get_selection().get_selected()
         if path != None:
-            return g15pluginmanager.get_module_for_id(model[path][2])
+            return g15pluginmanager.get_module_for_id(model[path][3])
         
     def _select_plugin(self, widget = None):       
         plugin = self._get_selected_plugin()
@@ -174,8 +174,9 @@ class G15GlobalConfig:
         self.global_plugin_model.clear()
         for mod in sorted(g15pluginmanager.imported_plugins, key=lambda key: key.name):
             if g15pluginmanager.is_global_plugin(mod):
-                enabled = self.conf_client.get_bool("/apps/gnome15/global/plugins/%s/enabled" % mod.id )
-                self.global_plugin_model.append([enabled, mod.name, mod.id])
+                passive = g15pluginmanager.is_passive_plugin(mod)
+                enabled = passive or self.conf_client.get_bool("/apps/gnome15/global/plugins/%s/enabled" % mod.id )
+                self.global_plugin_model.append([enabled, not passive, mod.name, mod.id])
                 if mod.id == self.selected_id:
                     self.global_plugin_tree.get_selection().select_path(self.global_plugin_model.get_path(self.global_plugin_model.get_iter(len(self.global_plugin_model) - 1)))
         
@@ -186,7 +187,7 @@ class G15GlobalConfig:
         g15desktop.set_autostart_application(application_name, widget.get_active())
             
     def _toggle_plugin(self, widget, path):
-        plugin = g15pluginmanager.get_module_for_id(self.global_plugin_model[path][2])
+        plugin = g15pluginmanager.get_module_for_id(self.global_plugin_model[path][3])
         if plugin != None:
             key = "/apps/gnome15/global/plugins/%s/enabled" % plugin.id
             self.conf_client.set_bool(key, not self.conf_client.get_bool(key))
@@ -333,6 +334,7 @@ class G15Config:
         self.profile_plugins_mode = self.widget_tree.get_object("ProfilePluginsMode")
         self.enabled_profile_plugins_model = self.widget_tree.get_object("EnabledProfilePluginsModel")
         self.enabled_profile_plugins = self.widget_tree.get_object("EnabledProfilePlugins")
+        self.enabled_profile_plugins_renderer = self.widget_tree.get_object("EnabledProfilePluginsRenderer")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -357,7 +359,8 @@ class G15Config:
         self.cycle_screens.connect("toggled", self._cycle_screens_changed)
         self.site_label.connect("activate", self._open_site)
         self.plugin_tree.connect("cursor-changed", self._select_plugin)
-        self.plugin_enabled_renderer.connect("toggled", self._toggle_plugin)
+        self.plugin_enabled_renderer.connect("toggled", self._toggle_plugin)        
+        self.enabled_profile_plugins_renderer.connect("toggled", self._toggle_enabled_profile_plugins)
         self.widget_tree.get_object("PreferencesButton").connect("clicked", self._show_preferences)
         self.widget_tree.get_object("AboutPluginButton").connect("clicked", self._show_about_plugin)
         self.widget_tree.get_object("AddButton").connect("clicked", self._add_profile)
@@ -744,6 +747,18 @@ class G15Config:
         (model, path) = self.plugin_tree.get_selection().get_selected()
         if path != None:
             return g15pluginmanager.get_module_for_id(model[path][2])
+        
+    def _toggle_enabled_profile_plugins(self, widget, path):
+        row = self.enabled_profile_plugins_model[path]
+        plugin_id = row[2]
+        plugin = g15pluginmanager.get_module_for_id(plugin_id)
+        if plugin != None:
+            if plugin.id in self.selected_profile.selected_plugins:
+                self.selected_profile.selected_plugins.remove(plugin.id)
+            else:
+                self.selected_profile.selected_plugins.append(plugin.id)
+            self._load_enabled_profile_plugins()
+            self._save_profile(self.selected_profile)
             
     def _toggle_plugin(self, widget, path):
         plugin = g15pluginmanager.get_module_for_id(self.plugin_model[path][2])
@@ -887,6 +902,7 @@ class G15Config:
         self._load_plugins()
         self._load_macro_state()
         self._load_drivers()
+        self._load_enabled_profile_plugins()
         
     def _cycle_screens_changed(self, widget=None):
         self.conf_client.set_bool(self._get_full_key("cycle_screens"), self.cycle_screens.get_active())
@@ -1335,8 +1351,9 @@ class G15Config:
             self._load_profile_list()
             
     def _profile_author_changed(self, widget):
-        self.selected_profile.author = widget.get_text()
-        self._save_profile(self.selected_profile)
+        if not self.adjusting:
+            self.selected_profile.author = widget.get_text()
+            self._save_profile(self.selected_profile)
         
     def _new_macro(self, widget):
         memory = self._get_memory_number()
@@ -1674,19 +1691,8 @@ class G15Config:
                     self.enable_color_for_m_key.set_active(True)
                 self.enable_color_for_m_key.set_sensitive(not profile.read_only)
                 
-            # Plugins            
-            for i in range(0, len(self.profile_plugins_mode_model)):
-                if profile.plugins_mode == self.profile_plugins_mode_model[i][0]:
-                    self.profile_plugins_mode.set_active(i)
-                    
-            self.enabled_profile_plugins_model.clear()
-            if self.selected_device:
-                for mod in sorted(g15pluginmanager.imported_plugins, key=lambda key: key.name):
-                    key = self._get_full_key("plugins/%s/enabled" % mod.id )
-                    if self.driver and self.driver.get_model_name() in g15pluginmanager.get_supported_models(mod) and not g15pluginmanager.is_global_plugin(mod):
-                        enabled = self.conf_client.get_bool(key)
-                        if enabled:
-                            self.enabled_profile_plugins_model.append([mod.id in profile.selected_plugins, mod.name, mod.id])
+            # Plugins
+            self._load_enabled_profile_plugins()
                     
             # Parent profile
             self._load_parent_profiles()
@@ -1701,6 +1707,19 @@ class G15Config:
             self._set_available_profile_actions()
         finally:
             self.adjusting = False
+            
+    def _load_enabled_profile_plugins(self):
+        for i in range(0, len(self.profile_plugins_mode_model)):
+            if self.selected_profile.plugins_mode == self.profile_plugins_mode_model[i][0]:
+                self.profile_plugins_mode.set_active(i)
+        self.enabled_profile_plugins_model.clear()
+        if self.selected_device:
+            for mod in sorted(g15pluginmanager.imported_plugins, key=lambda key: key.name):
+                key = self._get_full_key("plugins/%s/enabled" % mod.id )
+                if self.driver and self.driver.get_model_name() in g15pluginmanager.get_supported_models(mod) and not g15pluginmanager.is_global_plugin(mod):
+                    enabled = self.conf_client.get_bool(key)
+                    if enabled:
+                        self.enabled_profile_plugins_model.append([mod.id in self.selected_profile.selected_plugins, mod.name, mod.id])
             
     def _set_image(self, widget, path):
         if path == None or path == "" or not os.path.exists(path):

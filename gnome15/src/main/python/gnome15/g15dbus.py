@@ -303,6 +303,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         else:
             logger.warning("DBUS Page %s was deleted, but it never existed. Huh? %s" % ( page.id, str(self._dbus_pages) ))
         logger.debug("Sent page deleted signal for %s" % page.id)
+        self._screen.remove_screen_change_listener(self)
             
     """
     DBUS Functions
@@ -828,8 +829,12 @@ class G15DBUSService(AbstractG15DBUSService):
         
     def screen_removed(self, screen):
         logger.debug("Screen removed for %s" % screen.device.model_id)
-        screen_service = self._dbus_screens[screen.device.uid]
-        screen_service.remove_from_connection()  
+        try:
+            screen_service = self._dbus_screens[screen.device.uid]
+            screen_service.remove_from_connection()
+        except:
+            # May happen on shutdow
+            pass  
         del self._dbus_screens[screen.device.uid]
         gobject.idle_add(self.ScreenRemoved, "%s/%s" % ( SCREEN_NAME, screen.device.uid ))
         

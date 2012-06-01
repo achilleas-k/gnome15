@@ -26,7 +26,6 @@ import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15globals as g15globals
 import gnome15.g15uinput as g15uinput
-import uinput
 import gconf
 import fcntl
 import os
@@ -629,7 +628,7 @@ class ForwardDevice(AbstractInputDevice):
         if event.etype == S.EV_ABS:
             if self.driver.joy_mode == g15uinput.JOYSTICK:
                 # Just pass-through when in analogue joystick mode
-                g15uinput.emit(self.driver.joy_mode, event.ecode, event.evalue, False, event.etype)
+                g15uinput.emit(self.driver.joy_mode, ( event.etype, event.ecode ), event.evalue, False)
             else:
                 self._update_joystick(event)                        
         elif event.etype == S.EV_KEY:
@@ -650,7 +649,7 @@ class ForwardDevice(AbstractInputDevice):
         elif event.etype == 0:
             if self.driver.joy_mode == g15uinput.JOYSTICK:
                 # Just pass-through when in analogue joystick mode
-                g15uinput.emit(self.driver.joy_mode, event.ecode, event.evalue, False, event.etype)
+                g15uinput.emit(self.driver.joy_mode, ( event.etype, event.ecode ), event.evalue, False)
         else:
             logger.warning("Unhandled event: %s" % str(event))
                 
@@ -721,11 +720,11 @@ class ForwardDevice(AbstractInputDevice):
         ecode        --    event code to translate
         """
         if ecode == S.BTN_X:
-            return uinput.BTN_LEFT
+            return g15uinput.BTN_LEFT
         elif ecode == S.BTN_Y:
-            return uinput.BTN_RIGHT
+            return g15uinput.BTN_RIGHT
         elif ecode == S.BTN_Z:
-            return uinput.BTN_MIDDLE
+            return g15uinput.BTN_MIDDLE
             
     def _compute_bounds(self):
         """
@@ -785,9 +784,9 @@ class ForwardDevice(AbstractInputDevice):
     def _mouse_move(self):
         if self.move_x != 0 or self.move_y != 0:
             if self.move_x != 0:
-                g15uinput.emit(g15uinput.MOUSE, uinput.REL_X, self.move_x)        
+                g15uinput.emit(g15uinput.MOUSE, g15uinput.REL_X, self.move_x)        
             if self.move_y != 0:
-                g15uinput.emit(g15uinput.MOUSE, uinput.REL_Y, self.move_y)
+                g15uinput.emit(g15uinput.MOUSE, g15uinput.REL_Y, self.move_y)
             self.move_timer = g15util.schedule("MouseMove", 0.1, self._mouse_move)
         
     def _digital_joystick(self, event):
@@ -795,29 +794,29 @@ class ForwardDevice(AbstractInputDevice):
         if event.ecode == S.REL_X:
             if event.evalue < low_val and not "l" in self.digital_down:
                 self.digital_down.append("l")
-                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, uinput.REL_X, 0)               
+                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.REL_X, 0)               
             elif event.evalue > high_val and not "r" in self.digital_down:
                 self.digital_down.append("r")
-                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, uinput.REL_X, 255)
+                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.REL_X, 255)
             elif event.evalue >= low_val and event.evalue <= high_val and "l" in self.digital_down:
                 self.digital_down.remove("l")
-                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, uinput.REL_X, 128)
+                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.REL_X, 128)
             elif event.evalue >= low_val and event.evalue <= high_val and "r" in self.digital_down:
                 self.digital_down.remove("r")
-                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, uinput.REL_X, 128)
+                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.REL_X, 128)
         if event.ecode == S.REL_Y:
             if event.evalue < low_val and not "u" in self.digital_down:
                 self.digital_down.append("u")
-                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, uinput.REL_Y, 0)                
+                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.REL_Y, 0)                
             elif event.evalue > high_val and not "d" in self.digital_down:
                 self.digital_down.append("d")
-                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, uinput.REL_Y, 255)
+                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.REL_Y, 255)
             if event.evalue >= low_val and event.evalue <= high_val and "u" in self.digital_down:
                 self.digital_down.remove("u")
-                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, uinput.REL_Y, 128)
+                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.REL_Y, 128)
             elif event.evalue >= low_val and event.evalue <= high_val and "d" in self.digital_down:
                 self.digital_down.remove("d")
-                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, uinput.REL_Y, 128)
+                g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.REL_Y, 128)
 
 class Driver(g15driver.AbstractDriver):
 
@@ -948,8 +947,8 @@ It should be launched automatically if Gnome15 is installed correctly.")
         
         # Centre the joystick by default
         if self.joy_mode in [ g15uinput.JOYSTICK, g15uinput.DIGITAL_JOYSTICK ]:
-            g15uinput.emit(self.joy_mode, uinput.ABS_X, 128, False)
-            g15uinput.emit(self.joy_mode, uinput.ABS_Y, 128, False)
+            g15uinput.emit(self.joy_mode, g15uinput.ABS_X, 128, False)
+            g15uinput.emit(self.joy_mode, g15uinput.ABS_Y, 128, False)
             g15uinput.syn(self.joy_mode)
                    
     def _load_configuration(self):

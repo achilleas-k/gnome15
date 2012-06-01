@@ -231,16 +231,17 @@ class GridLayoutManager(LayoutManager):
         col = 0
         row_height = 0
         for c in parent.get_children():
-            bounds = c.view_bounds
-            c.view_bounds = ( x, y, bounds[2], bounds[3])
-            x += bounds[2]
-            row_height = max(row_height, bounds[3])
-            col += 1
-            if col >= self.columns:
-                x = 0
-                y += row_height
-                row_height = 0
-                col = 0
+            if c.is_showing():
+                bounds = c.view_bounds
+                c.view_bounds = ( x, y, bounds[2], bounds[3])
+                x += bounds[2]
+                row_height = max(row_height, bounds[3])
+                col += 1
+                if col >= self.columns:
+                    x = 0
+                    y += row_height
+                    row_height = 0
+                    col = 0
 
         
 class Component():
@@ -265,6 +266,7 @@ class Component():
         self._tree_lock = RLock()
         self.do_clip = False
         self.allow_scrolling = None
+        self.showing = True
         
     def is_enabled(self):
         return self.enabled
@@ -279,6 +281,12 @@ class Component():
     def clear_scroll(self):
         if self.theme:
             self.theme.clear_scroll()
+    
+    def is_showing(self):
+        return self.showing
+    
+    def set_showing(self, showing):
+        self.showing = showing
         
     def is_focused(self):
         return self.get_root().focused_component == self
@@ -522,10 +530,11 @@ class Component():
                 
             # Paint children
             for c in self._children:
-                canvas.save()
-                if not self.do_clip or c.view_bounds is None or self.overlaps(self.view_bounds, c.view_bounds):
-                    c.paint(canvas)
-                canvas.restore()
+                if c.is_showing():
+                    canvas.save()
+                    if not self.do_clip or c.view_bounds is None or self.overlaps(self.view_bounds, c.view_bounds):
+                        c.paint(canvas)
+                    canvas.restore()
             
             canvas.restore()
         finally:
@@ -958,10 +967,12 @@ class Menu(Component):
             y = 0 
             selected_y = -1
             for item in self.get_children():
-                ih = self.get_item_height(item, True)
-                if item == self.selected:
-                    selected_y = y
-                y += ih
+                # Only include items that are "showing"
+                if item.is_showing():
+                    ih = self.get_item_height(item, True)
+                    if item == self.selected:
+                        selected_y = y
+                    y += ih
                     
             new_base = self.base
                     
@@ -1075,7 +1086,8 @@ class Menu(Component):
     def _recalc_scroll_values(self):
         max_val = 0
         for item in self.get_children():
-            max_val += self.get_item_height(item, True)
+            if item.is_showing():
+                max_val += self.get_item_height(item, True)
         self.scroll_values = max(max_val, self.view_bounds[3]), self.view_bounds[3], self.base
     
     def _check_selected(self):
@@ -1127,7 +1139,7 @@ class Menu(Component):
                                 else:
                                     self.i = first_enabled
                             c = self.get_child(self.i)
-                            if not isinstance(c, MenuSeparator) and c.is_enabled():
+                            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing():
                                 break
             finally:
                 self._do_selected()
@@ -1137,14 +1149,14 @@ class Menu(Component):
     def _get_first_enabled(self):
         for ci in range(0, self.get_child_count()):
             c = self.get_child(ci)
-            if not isinstance(c, MenuSeparator) and c.is_enabled():
+            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing():
                 return ci
         return -1
             
     def _get_last_enabled(self):
         for ci in range(self.get_child_count() - 1, 0, -1):
             c = self.get_child(ci)
-            if not isinstance(c, MenuSeparator) and c.is_enabled():
+            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing():
                 return ci
         return -1
                 
@@ -1178,7 +1190,7 @@ class Menu(Component):
                                 else:
                                     self.i = self._get_last_enabled()
                             c = self.get_child(self.i)
-                            if not isinstance(c, MenuSeparator) and c.is_enabled():
+                            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing():
                                 break
             finally:
                 self._do_selected()

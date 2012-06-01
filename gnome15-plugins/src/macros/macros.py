@@ -139,7 +139,8 @@ class G15Macros(g15plugin.G15MenuPlugin):
     Private functions
     """
     def _profiles_changed(self, arg0 = None, arg1 = None, arg2 = None, arg3 = None):
-        g15screen.run_on_redraw(self._reload_and_popup)
+#        g15screen.run_on_redraw(self._reload_and_popup)
+        self._reload_and_popup()
             
     def _reload_and_popup(self):
         self._reload()

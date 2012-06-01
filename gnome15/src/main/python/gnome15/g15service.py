@@ -20,6 +20,7 @@
  
 import sys
 import pygtk
+from gnome15 import g15accounts
 pygtk.require('2.0')
 import os
 import gobject
@@ -156,6 +157,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.window_title_listener = None
         self.active_application_name = None
         self.active_window_title = None
+        self.ignore_next_sigint = False
                 
         # Expose Gnome15 functions via DBus
         logger.debug("Starting the DBUS service")
@@ -177,11 +179,11 @@ class G15Service(g15desktop.G15AbstractService):
             logger.error("Failed to start service. %s" % str(e))
     
     def sigint_handler(self, signum, frame):
-        logger.info("Got SIGINT signal, shutting down")
+        logger.info("Got SIGINT signal from %s, shutting down" % str(frame))
         self.shutdown(True)
     
     def sigterm_handler(self, signum, frame):
-        logger.info("Got SIGTERM signal, shutting down")
+        logger.info("Got SIGTERM signal from %s, shutting down" % str(frame))
         self.shutdown(True)
         
     def stop(self, quickly = False):
@@ -194,8 +196,13 @@ class G15Service(g15desktop.G15AbstractService):
                 for h in self.notify_handles:
                     self.conf_client.notify_remove(h)
                 try :
-                    logger.info("Stopping file change notification")
+                    logger.info("Stopping profile change notification")
                     g15profile.notifier.stop()
+                except Exception:
+                    pass
+                try :
+                    logger.info("Stopping account change notification")
+                    g15accounts.notifier.stop()
                 except Exception:
                     pass
                 logger.info("Informing listeners we are stopping")

@@ -291,10 +291,12 @@ class G15Screen():
         
         Keyword arguments:
         application_name        -- application name
+        splash                  -- splash callback
+        startup                 -- True when this change is the result of startup
         """
         found = False
         if self.defeat_profile_change < 1 and not g15profile.is_locked(self.device):
-            choose_profile = None         
+            choose_profile = None
             # Active window has changed, see if we have a profile that matches it
             if application_name is not None:
                 for profile in g15profile.get_profiles(self.device):
@@ -313,9 +315,6 @@ class G15Screen():
             elif active_profile == None or choose_profile.id != active_profile.id:
                 choose_profile.make_active()
                 found = True
-                
-        if found:
-            logger.debug("Active application is now %s" % application_name)
                 
         return found
         
@@ -348,6 +347,8 @@ class G15Screen():
         for control in self.driver.get_controls():
             self.notify_handles.append(self.conf_client.notify_add("%s/%s" % (screen_key, control.id), self._control_changed))
         logger.info("Starting for %s is complete." % self.device.uid)
+        
+        g15profile.profile_listeners.append(self._profile_changed)
         
     def stop(self, quickly=False):  
         logger.info("Stopping screen for %s" % self.device.uid)
@@ -664,15 +665,18 @@ class G15Screen():
             
     def complete_loading(self):              
         try :           
-            logger.info("Activating plugins")
-            self.plugins.activate(self.splash.update_splash if self.splash else None) 
+#            logger.info("Activating plugins")
+#            self.plugins.activate(self.splash.update_splash if self.splash else None)
+
+            logger.info("Setting active profile and activating plugins")
+            self.set_active_application_name(self.service.get_active_application_name())
+            self._check_active_plugins(splash=self.splash.update_splash if self.splash else None, \
+                                       startup=True)
+ 
             if self.first_page != None:
                 page = self.get_page(self.first_page)
                 if page:
                     self.raise_page(page)
-                    
-            logger.info("Setting active profile")
-            self.set_active_application_name(self.service.get_active_application_name())
                     
             logger.info("Grabbing keyboard")
             self.driver.grab_keyboard(self.key_handler.key_received)
@@ -797,7 +801,8 @@ class G15Screen():
         else:
             logger.info("Active profile changed to %s" % new_profile.name)
             self.activate_profile()
-        self.set_color_for_mkey()
+        self.set_color_for_mkey()                
+        g15util.schedule("ProfileChange", 1.0, self._check_active_plugins)
                 
         return 1
 
@@ -808,7 +813,8 @@ class G15Screen():
             self.set_memory_bank(1)
                 
     def _profile_changed(self, profile_id, device_uid):
-        self.set_color_for_mkey()
+        self.set_color_for_mkey()        
+        g15util.schedule("ProfileChange", 1.0, self._check_active_plugins)
         
     def deactivate_profile(self):
         logger.debug("De-activating profile")
@@ -951,6 +957,46 @@ class G15Screen():
             self._process_exception(e)
             self.driver = None
             return False
+        
+    def _check_active_plugins(self, splash=None, startup=False):
+                
+        to_activate = []   
+        choose_profile = g15profile.get_active_profile(self.device)
+        
+        """
+        Decide what plugins should de-activated or activated
+        """
+        
+        if not startup:
+            """
+            We don't need to deactivate during startup, nothing will be activated 
+            """
+            l = []
+            for plugin in self.plugins.activated:
+                mod = self.plugins.plugin_map[plugin]
+                if choose_profile.plugins_mode == g15profile.NO_PLUGINS or \
+                   ( choose_profile.plugins_mode == g15profile.SELECTED_PLUGINS and not mod.id in choose_profile.selected_plugins):
+                    l.append(plugin)
+            for plugin in l:
+                self.plugins.deactivate(plugin=plugin)
+                    
+        for plugin in self.plugins.started:
+            if not plugin in self.plugins.activated:
+                mod = self.plugins.plugin_map[plugin]
+                if choose_profile.plugins_mode == g15profile.ALL_PLUGINS or \
+                   ( choose_profile.plugins_mode == g15profile.SELECTED_PLUGINS and mod.id in choose_profile.selected_plugins):
+                    to_activate.append(plugin)
+
+        """
+        If this is happening during startup, then activate the actual
+        plugin manager (i.e. a list of plugins or None). Otherwise, 
+        only activate the individual plugins
+        """                    
+        if startup:
+            self.plugins.activate(splash, plugin=to_activate)
+        else:
+            for plugin in to_activate:
+                self.plugins.activate(plugin=plugin)
         
     def error_on_keyboard_display(self, text, title="Error", icon="dialog-error"):
         page = g15theme.ErrorScreen(self, title, text, icon)

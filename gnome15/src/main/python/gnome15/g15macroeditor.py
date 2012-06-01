@@ -187,6 +187,8 @@ class G15MacroEditor():
                 if cmd.endswith("&"):
                     cmd = cmd[:-1]
                     background = True
+                elif cmd == "":
+                    background = True
                 self.__command.set_text(cmd)
                 self.__run_in_background.set_active(background)
             else:
@@ -245,12 +247,14 @@ class G15MacroEditor():
         if not self.adjusting:
             key = self.__map_type_model[widget.get_active()][0]
             self.editing_macro.type = key
+            self.editing_macro.macro = ""
             self.adjusting = True
             try:
                 self.__load_keys()
             finally:
                 self.adjusting = False
             self.__select_tree_row(self.__uinput_tree, 0)
+            self.set_macro(self.editing_macro)
             self.__set_available_options()
     
     def _clear_filter(self, widget):

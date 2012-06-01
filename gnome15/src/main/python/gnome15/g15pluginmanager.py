@@ -183,6 +183,21 @@ def is_global_plugin(plugin_module):
     except AttributeError: 
         pass 
     return False
+
+def is_passive_plugin(plugin_module):
+    """
+    Get if the provided plugin_module instance should is a "Passive Plugin".
+    Passive plugins just provide additional classes and functions, probably
+    for another plugin. They are always enabled. 
+    
+    Keyword arguments:
+    plugin_module -- plugin module instance
+    """
+    try :
+        return plugin_module.passive
+    except AttributeError: 
+        pass 
+    return False
  
 def get_actions(plugin_module):
     """
@@ -338,14 +353,15 @@ class G15Plugins():
                         if self.conf_client.get(key) == None:
                             self.conf_client.set_bool(key, is_default_enabled(mod))
                         if self.conf_client.get_bool(key):
-                            try :
-                                instance = self._create_instance(mod, plugin_dir_key)
-                                if self.screen is None or self.screen.driver.get_model_name() in get_supported_models(mod):
-                                    self.started.append(instance)
-                            except Exception as e:
-                                self.conf_client.set_bool(key, False)
-                                logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
-                                traceback.print_exc(file=sys.stderr)
+                            if not is_passive_plugin(mod):
+                                try :
+                                    instance = self._create_instance(mod, plugin_dir_key)
+                                    if self.screen is None or self.screen.driver.get_model_name() in get_supported_models(mod):
+                                        self.started.append(instance)
+                                except Exception as e:
+                                    self.conf_client.set_bool(key, False)
+                                    logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
+                                    traceback.print_exc(file=sys.stderr)
             self.state = STARTED
         except Exception as a:
             self.state = UNINITIALISED
@@ -376,47 +392,66 @@ class G15Plugins():
                 return True 
         return False
     
-    def activate(self, callback=None):
+    def activate(self, callback=None, plugin=None):
         """
         Activate all plugins that currently started.
         
         Keyword arguments:
-        callback -- callback function to invoke when each invididual plugin
-        is activated. This is used for the progress bar during initial startup. 
-        """
-        logger.info("Activating plugins")
-        self.lock.acquire()
-        try :
-            self.state = ACTIVATING
-            self.activated = []
-            idx = 0
-            for plugin in self.started:
-                mod = self.plugin_map[plugin]
-                self._activate_instance(plugin, callback, idx)
-                idx += 1           
-            self.state = ACTIVATED
-        except Exception as e:           
-            self.state = STARTED
-            raise e     
-        finally:
-            self.lock.release()
-        logger.debug("Activated plugins")
-    
-    def deactivate(self):
-        """
-        De-activate all plugins that are currently activated.
+        callback      --     callback function to invoke when each invididual plugin
+                            is activated. This is used for the progress bar during initial startup. 
+        plugin        --    If None, all started are activated. If a list, 
+                            those plugins are activated. If a single plugin, 
+                            that plugin is activated. If plugin is either list
+                            or None, the state of the plugin manager will also
+                            be changed
         """
         
-        logger.info("De-activating plugins")
-        self.lock.acquire()
-        try :
-            self.state = DEACTIVATING
-            for plugin in list(self.activated):
-                self._deactivate_instance(plugin)
-        finally:
-            self.state = DEACTIVATED
-            self.lock.release()
-        logger.info("De-activated plugins")
+        if plugin is None or isinstance(plugin, list):
+            logger.info("Activating plugins")
+            self.lock.acquire()
+            try :
+                self.state = ACTIVATING
+                self.activated = []
+                idx = 0
+                for plugin in plugin if isinstance(plugin, list) else self.started:
+                    mod = self.plugin_map[plugin]
+                    self._activate_instance(plugin, callback, idx)
+                    idx += 1           
+                self.state = ACTIVATED
+            except Exception as e:           
+                self.state = STARTED
+                raise e     
+            finally:
+                self.lock.release()
+            logger.debug("Activated plugins")
+        else:
+            self._activate_instance(plugin, callback, 0)
+            
+    
+    def deactivate(self, plugin=None):
+        """
+        De-activate plugins that are currently activated.
+        
+        Keyword arguments:
+        plugin        --    If None, all activated are deactivated. If a list, 
+                            those plugins are deactivated. If a single plugin, 
+                            that plugin is deactivated. If plugin is either list
+                            or None, the state of the plugin manager will also
+                            be changed
+        """
+        if plugin is None or isinstance(plugin, list):
+            logger.info("De-activating plugins")
+            self.lock.acquire()
+            try :
+                self.state = DEACTIVATING
+                for plugin in plugin if isinstance(plugin, list) else list(self.activated):
+                    self._deactivate_instance(plugin)
+            finally:
+                self.state = DEACTIVATED
+                self.lock.release()
+            logger.info("De-activated plugins")
+        else:
+            self._deactivate_instance(plugin)
     
     def destroy(self):
         """

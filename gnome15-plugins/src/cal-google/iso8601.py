@@ -5,7 +5,6 @@ Basic usage:
 >>> iso8601.parse_date("2007-01-25T12:00:00Z")
 datetime.datetime(2007, 1, 25, 12, 0, tzinfo=<iso8601.iso8601.Utc ...>)
 >>>
-
 """
 
 from datetime import datetime, timedelta, tzinfo
@@ -97,6 +96,10 @@ def parse_date(datestring, default_timezone=UTC):
         groups["fraction"] = 0
     else:
         groups["fraction"] = int(float("0.%s" % groups["fraction"]) * 1e6)
-    return datetime(int(groups["year"]), int(groups["month"]), int(groups["day"]),
-        int(groups["hour"]), int(groups["minute"]), int(groups["second"]),
-        int(groups["fraction"]), tz)
+    return datetime(int(groups["year"] if "year" in groups else 0), 
+                    int(groups["month"] if "month" in groups else 1), 
+                    int(groups["day"] if "day" in groups else 1),
+                    int(groups["hour"] if "hour" in groups else 0), 
+                    int(groups["minute"] if "minute" in groups else 0), 
+                    int(groups["second"] if "second" in groups else 0),
+                    int(groups["fraction"]), tz)

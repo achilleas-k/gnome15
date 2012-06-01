@@ -79,7 +79,7 @@ class EventHandler(pyinotify.ProcessEvent):
         self._notify(event)
 
 notifier = pyinotify.ThreadedNotifier(watch_manager, EventHandler())
-notifier.name = "PyInotify"
+notifier.name = "AccountsPyInotify"
 notifier.setDaemon(True)
 notifier.start()
 

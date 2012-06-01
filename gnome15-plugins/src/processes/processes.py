@@ -121,6 +121,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
             self._matches.append(self.bamf_matcher.connect_to_signal("ViewClosed", self._view_closed))
             
     def deactivate(self):
+        self._cancel_timer()
         g15plugin.G15MenuPlugin.deactivate(self)
         for m in self._matches:
             m.remove()
@@ -286,6 +287,9 @@ class G15Processes(g15plugin.G15MenuPlugin):
         return item
         
     def _do_reload_menu(self):
+        if not self.activated:
+            return
+        
         this_items = {}        
         if self._mode == "applications":
             if self.bamf_matcher != None:            

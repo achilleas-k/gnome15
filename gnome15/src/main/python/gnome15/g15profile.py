@@ -93,7 +93,7 @@ class EventHandler(pyinotify.ProcessEvent):
         self._notify(event)
 
 notifier = pyinotify.ThreadedNotifier(wm, EventHandler())
-notifier.name = "PyInotify"
+notifier.name = "ProfilePyInotify"
 notifier.setDaemon(True)
 notifier.start()
 wdd = wm.add_watch(conf_dir, mask, rec=True)
@@ -435,7 +435,7 @@ class G15Macro:
         """
         if not self.type in [ MACRO_MOUSE, MACRO_KEYBOARD, MACRO_JOYSTICK, MACRO_DIGITAL_JOYSTICK ]:
             raise Exception("Macro of type %s, is not a type that maps to a uinput code." % self.type)
-        return g15uinput.capabilities[self.macro] if self.macro in g15uinput.capabilities else 0
+        return g15uinput.capabilities[self.macro][1] if self.macro in g15uinput.capabilities else 0
     
     def set_keys(self, keys):
         """
@@ -1004,8 +1004,8 @@ class G15Profile():
         self.window_name = self.parser.get("DEFAULT", "window_name").strip() if self.parser.has_option("DEFAULT", "window_name") else ""
         self.models = self.parser.get("DEFAULT", "models").strip().split(",") if self.parser.has_option("DEFAULT", "models") else [ self.device.model_id ]
         self.plugins_mode = self.parser.get("DEFAULT", "plugins_mode").strip() if self.parser.has_option("DEFAULT", "plugins_mode") else ALL_PLUGINS
-        self.selected_plugins = self.parser.get("LAUNCH", "selected_plugins").strip().split(",") \
-            if self.parser.has_option("LAUNCH", "selected_plugins") else [ ]
+        self.selected_plugins = self.parser.get("DEFAULT", "selected_plugins").strip().split(",") \
+            if self.parser.has_option("DEFAULT", "selected_plugins") else [ ]
         
         self.activate_on_focus = self.parser.getboolean("DEFAULT", "activate_on_focus") if self.parser.has_option("DEFAULT", "activate_on_focus") else False
         self.send_delays = self.parser.getboolean("DEFAULT", "send_delays") if self.parser.has_option("DEFAULT", "send_delays") else False

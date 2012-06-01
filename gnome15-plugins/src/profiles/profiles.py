@@ -43,8 +43,14 @@ g15devices.g19_action_keys[SELECT_PROFILE] = g15actions.ActionBinding(SELECT_PRO
 # Plugin details - All of these must be provided
 id="profiles"
 name=_("Profile Selector")
-description=_("Allows selection of the currently active profile. You may also \
-lock profiles.")
+description=_("Allows selection of the currently active profile. You may also \n\
+lock a profile to the device it is running on, preventing\n\
+changes triggered by active window changes and other\n\
+automatic profile selection methods.\n\n\
+You may also use this plugin to set the window title that\n\
+activates the current profile by making the required\n\
+window foreground, and the pressing the key bound to\n\
+'Select current window as activator' (see below).")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2012 Brett Smith")
 site="http://www.gnome15.org/"
@@ -120,30 +126,32 @@ class G15Profiles(g15plugin.G15MenuPlugin):
         
     def deactivate(self): 
         g15plugin.G15MenuPlugin.deactivate(self)
+        g15profile.profile_listeners.remove(self._stored_profiles_changed)
         self.screen.key_handler.action_listeners.remove(self)
         for h in self._notify_handles:
             self.gconf_client.notify_remove(h)
         
     def action_performed(self, binding):
-        if binding.action == g15driver.VIEW:
-            active = g15profile.get_active_profile(self.screen.device)
-            if active.id == self.menu.selected.profile.id:
-                g15profile.set_locked(self.screen.device, not g15profile.is_locked(self.screen.device))
-            else:
-                if g15profile.is_locked(self.screen.device):
-                    g15profile.set_locked(self.screen.device, False)
-                self.menu.selected.profile.make_active()
-                g15profile.set_locked(self.screen.device, True)
-            return True
-        elif binding.action == g15driver.CLEAR:
-            profile = self.menu.selected.profile
-            if self.screen.service.active_application_name is not None:
-                self._configure_profile_with_window_name(profile, self.screen.service.active_application_name)
-                profile.save()
-            elif self.screen.service.active_window_title is not None:
-                self._configure_profile_with_window_name(profile, self.screen.service.active_window_title)
-                profile.save()
-            return True
+        if self.page != None and self.page.is_visible():
+            if binding.action == g15driver.VIEW:
+                active = g15profile.get_active_profile(self.screen.device)
+                if active.id == self.menu.selected.profile.id:
+                    g15profile.set_locked(self.screen.device, not g15profile.is_locked(self.screen.device))
+                else:
+                    if g15profile.is_locked(self.screen.device):
+                        g15profile.set_locked(self.screen.device, False)
+                    self.menu.selected.profile.make_active()
+                    g15profile.set_locked(self.screen.device, True)
+                return True
+            elif binding.action == g15driver.CLEAR:
+                profile = self.menu.selected.profile
+                if self.screen.service.active_application_name is not None:
+                    self._configure_profile_with_window_name(profile, self.screen.service.active_application_name)
+                    profile.save()
+                elif self.screen.service.active_window_title is not None:
+                    self._configure_profile_with_window_name(profile, self.screen.service.active_window_title)
+                    profile.save()
+                return True
                 
                 
     def show_menu(self):

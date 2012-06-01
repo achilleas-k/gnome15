@@ -154,11 +154,10 @@ class G15KeyHandler():
     """
         
     def _reload_active_macros(self):
-        self.__normal_held_macros = self._get_all_macros(mapped_to_key = False, state = g15driver.KEY_STATE_HELD)
-         
-        macro_keys = []
-        self.__normal_macros = self._get_all_macros(mapped_to_key = False, macro_keys = macro_keys)
-        self.__uinput_macros = self._get_all_macros(mapped_to_key = True, macro_keys = macro_keys)
+        self.__normal_held_macros = []
+        self.__normal_macros = []
+        self.__uinput_macros = []
+        self._build_macros()
         
     def _do_key_received(self, keys, state_id):
         """
@@ -180,7 +179,7 @@ class G15KeyHandler():
             return  
         
         """
-        Deal with each key seperately, this keeps it simpler
+        Deal with each key separately, this keeps it simpler
         """
         for key in keys:
         
@@ -402,6 +401,34 @@ class G15KeyHandler():
             if profile is not None:
                 self._get_all_macros(profile, macro_list, macro_keys, mapped_to_key, state)
         return macro_list
+    
+    def _build_macros(self, profile = None, macro_keys = None, held_macro_keys = None):
+        if profile is None:
+            profile = g15profile.get_active_profile(self.__screen.device)
+        if macro_keys is None:
+            macro_keys = []
+        if held_macro_keys is None:
+            held_macro_keys = []
+            
+        bank = self.__screen.get_memory_bank()
+        for m in profile.macros[g15driver.KEY_STATE_UP][bank - 1]:
+            if not m.key_list_key in macro_keys:
+                if m.is_uinput():
+                    self.__uinput_macros.append(m)
+                else:
+                    self.__normal_macros.append(m)
+                macro_keys.append(m.key_list_key)
+                
+        for m in profile.macros[g15driver.KEY_STATE_HELD][bank - 1]:
+            if not m.key_list_key in held_macro_keys:
+                if not m.is_uinput():
+                    self.__normal_held_macros.append(m)
+                held_macro_keys.append(m.key_list_key)
+                
+        if profile.base_profile is not None:
+            profile = g15profile.get_profile(self.__screen.device, profile.base_profile)
+            if profile is not None:
+                self._build_macros(profile, macro_keys, held_macro_keys)
                 
     def _check_key_state(self, new_state_id, key_state):
         """
@@ -427,7 +454,6 @@ class G15KeyHandler():
         return True
         
     def _send_uinput_keypress(self, macro, uc, uinput_repeat = False):
-        print "Sending: %d - %s" % ( uc, macro.name )
         g15uinput.locks[macro.type].acquire()
         try:
             if uinput_repeat:

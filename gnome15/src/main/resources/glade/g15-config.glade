@@ -454,12 +454,12 @@
   </object>
   <object class="GtkListStore" id="EnabledProfilePluginsModel">
     <columns>
-      <!-- column-name EnabledProfilePluginId -->
-      <column type="gchararray"/>
-      <!-- column-name EnabledProfilePluginName -->
-      <column type="gchararray"/>
       <!-- column-name EnabledProfilePluginEnabled -->
       <column type="gboolean"/>
+      <!-- column-name EnabledProfilePluginName -->
+      <column type="gchararray"/>
+      <!-- column-name EnabledProfilePluginId -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkDialog" id="GlobalOptionsDialog">
@@ -601,6 +601,7 @@
                                     <child>
                                       <object class="GtkCellRendererToggle" id="GlobalPluginEnabledRenderer"/>
                                       <attributes>
+                                        <attribute name="sensitive">1</attribute>
                                         <attribute name="active">0</attribute>
                                       </attributes>
                                     </child>
@@ -612,7 +613,8 @@
                                     <child>
                                       <object class="GtkCellRendererText" id="cellrenderertext4x"/>
                                       <attributes>
-                                        <attribute name="text">1</attribute>
+                                        <attribute name="sensitive">1</attribute>
+                                        <attribute name="text">2</attribute>
                                       </attributes>
                                     </child>
                                   </object>
@@ -801,6 +803,8 @@
   <object class="GtkListStore" id="GlobalPluginModel">
     <columns>
       <!-- column-name PluginEnabled -->
+      <column type="gboolean"/>
+      <!-- column-name PluginAvailable -->
       <column type="gboolean"/>
       <!-- column-name PluginName -->
       <column type="gchararray"/>
@@ -2338,9 +2342,9 @@ g15-launch matches the following pattern</property>
                                                       <object class="GtkTreeViewColumn" id="treeviewcolumn2">
                                                         <property name="title" translatable="yes">Enabled</property>
                                                         <child>
-                                                          <object class="GtkCellRendererToggle" id="cellrenderertoggle1"/>
+                                                          <object class="GtkCellRendererToggle" id="EnabledProfilePluginsRenderer"/>
                                                           <attributes>
-                                                            <attribute name="active">2</attribute>
+                                                            <attribute name="active">0</attribute>
                                                           </attributes>
                                                         </child>
                                                       </object>

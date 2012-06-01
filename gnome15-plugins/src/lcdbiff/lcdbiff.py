@@ -30,7 +30,6 @@ import os
 import pwd
 import gtk
 import traceback
-import gnomekeyring as gk
 import re
 from poplib import POP3_SSL
 from poplib import POP3
@@ -339,19 +338,17 @@ class G15Biff(g15plugin.G15MenuPlugin):
 
     def __init__(self, gconf_client, gconf_key, screen):
         g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, ["mail-inbox"], id, "Email")
-        self.refresh_timer = None        
-        self.checkers = { PROTO_POP3 : POP3Checker(), PROTO_IMAP: IMAPChecker() }
+        self.refresh_timer = None       
 
     def activate(self):
-        gk.is_available()
-        gk.list_keyring_names_sync()
         self.total_count = 0
         self.items = []
         self.attention = False
         self.thumb_icon = None
         self.index = 0
         self.light_control = None
-        self.account_manager = g15accounts.G15AccountManager(CONFIG_PATH, CONFIG_ITEM_NAME)
+        self.account_manager = g15accounts.G15AccountManager(CONFIG_PATH, CONFIG_ITEM_NAME) 
+        self.checkers = { PROTO_POP3 : POP3Checker(self.account_manager), PROTO_IMAP: IMAPChecker(self.account_manager) }
         if self.screen.driver.get_bpp() > 0:
             g15plugin.G15MenuPlugin.activate(self)
         self.update_time_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/update_time", self._update_time_changed)

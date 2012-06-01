@@ -152,15 +152,20 @@ class G15MenuPlugin():
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
         self.session_bus = dbus.SessionBus()
-        self._icon_path = g15util.get_icon_path(menu_title_icon)
         self._title = title
+        self.set_icon(menu_title_icon)
+        
+    def set_icon(self, icon):
+        self._icon_path = g15util.get_icon_path(icon)
         self.thumb_icon = g15util.load_surface_from_file(self._icon_path)
 
-    def activate(self):        
+    def activate(self): 
+        self.activated = True       
         self.reload_theme() 
         self.show_menu()
     
     def deactivate(self):
+        self.activated = False
         if self.page != None:
             self.hide_menu()
 
@@ -197,7 +202,9 @@ class G15MenuPlugin():
         """      
         self.page = self.create_page()
         self.menu = self.create_menu()
+        self.menu.focusable = True
         self.page.on_deleted = self.page_deleted
+        self.menu.set_focused(True)
         self.page.add_child(self.menu)
         self.page.add_child(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
         self.load_menu_items()
