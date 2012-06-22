@@ -27,6 +27,7 @@ import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
+import gnome15.g15plugin as g15plugin
 import datetime
 import gtk
 import pango
@@ -84,7 +85,22 @@ def _changed(widget, key, gconf_client):
     '''
     gconf_client.set_bool(key, widget.get_active())
 
-class G15Clock():
+class G15Clock(g15plugin.G15Plugin):
+    '''
+    You would normally want to extend at least g15plugin.G15Plugin as it
+    provides basic plugin functions. 
+    
+    There are also further specialisations, such as g15plugin.G15PagePlugin
+    for plugins that have display a page, or g15plugin.G15MenuPlugin for
+    menu like plugins, or g15plugin.G15RefreshingPlugin for plugins that
+    refresh their view based on a timer.
+    
+    This example uses the most basic type to demonstrate how plugins are put
+    together, but it could easily use G15RefreshingPlugin and cut out a lot
+    of code.
+    
+    '''
+    
     
     ''' 
     ******************************************************************
@@ -94,19 +110,22 @@ class G15Clock():
     '''
     
     def __init__(self, gconf_key, gconf_client, screen):
-        self.screen = screen
+        g15plugin.G15Plugin.__init__(self, gconf_client, gconf_key, screen)
         self.hidden = False
-        self.gconf_client = gconf_client
-        self.gconf_key = gconf_key
         self.page = None
     
     def activate(self):
-        
         '''
         The activate function is invoked when gnome15 starts up, or the plugin is re-enabled
-        after it has been disabled
+        after it has been disabled. When extending any of the provided base plugin classes,
+        you nearly always want to call the function in the supoer class as well
         '''
+        g15plugin.G15Plugin.activate(self)
         
+
+        '''
+        Load our configuration
+        '''        
         self.timer = None
         self._load_configuration()
         
@@ -157,16 +176,14 @@ class G15Clock():
         self._schedule_redraw()
         
         '''
-        We want to be notified when the plugin configuration changed, so watch for gconf events
+        We want to be notified when the plugin configuration changed, so watch for gconf events.
+        The watch function is used, as this will automatically track the monitor handles
+        and clean them up when the plugin is deactivated
         '''        
-        self.notify_handle = self.gconf_client.notify_add(self.gconf_key, self._config_changed);
+        self.watch(None, self._config_changed);
     
     def deactivate(self):
-        
-        '''
-        Stop being notified about configuration changes
-        '''        
-        self.gconf_client.notify_remove(self.notify_handle);
+        g15plugin.G15Plugin.deactivate(self)
         
         '''
         Stop updating
@@ -290,6 +307,9 @@ class G15Clock():
         self._schedule_redraw()
         
     def _schedule_redraw(self):
+        if not self.active:
+            return
+        
         '''
         Determine when to schedule the next redraw for. 
         '''        

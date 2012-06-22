@@ -49,7 +49,6 @@ DEVICE_IF_NAME="org.gnome15.Device"
 # Logging
 import logging
 logger = logging.getLogger("dbus")
-logger.setLevel(logging.DEBUG)
     
 class AbstractG15DBUSService(dbus.service.Object):
     
@@ -129,6 +128,17 @@ class G15DBUSDebugService(dbus.service.Object):
                 print "%s" % str(r[:min(20, len(r))])
             else:
                 print "%s" % str(r)
+        
+    @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
+    def SetDebugLevel(self, log_level):
+        levels = {'debug': logging.DEBUG,
+          'info': logging.INFO,
+          'warning': logging.WARNING,
+          'error': logging.ERROR,
+          'critical': logging.CRITICAL}
+        logger = logging.getLogger()
+        level = levels.get(log_level.lower(), logging.NOTSET)
+        logger.setLevel(level = level)
         
     @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
     def Referrers(self, typename):

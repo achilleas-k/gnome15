@@ -197,7 +197,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
         self._setup_gstreamer()
         self.screen.key_handler.action_listeners.append(self) 
         def on_delete():
-            self._pipeline.set_state(gst.STATE_NULL)
+            gobject.idle_add(self._pipeline.set_state, gst.STATE_NULL)
             self.screen.key_handler.action_listeners.remove(self)
             self.screen.painters.remove(self.background_painter)
             self._plugin.show_menu()

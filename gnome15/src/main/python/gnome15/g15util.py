@@ -742,7 +742,8 @@ def get_icon_path(icon = None, size = 128, warning = True, include_missing = Tru
         if include_missing and not icon in [ "image-missing", "gtk-missing-image" ]:
             return get_icon_path(["image-missing", "gtk-missing-image"], size, warning)
     else:
-        icon = gtk_icon_theme.lookup_icon(icon, size, 0)
+        if icon != None:
+            icon = gtk_icon_theme.lookup_icon(icon, size, 0)
         if icon != None:
             if icon.get_filename() == None and warning:
                 logger.warning("Found icon %s (%d), but no filename was available" % ( o_icon, size ))

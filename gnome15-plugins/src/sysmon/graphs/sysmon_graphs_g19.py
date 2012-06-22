@@ -102,7 +102,7 @@ class G15MemGraph(G15Graph):
         
     def create_plot(self, graph_surface):
         y_labels = []
-        max_y = self.plugin.total
+        max_y = self.plugin.max_total_mem
         for x in range(0, int(max_y), int(max_y / 4)):
             y_labels.append("%-4d" % int( float(x) / 1024.0 / 1024.0 ) )
         series_color, fill_color = self.get_colors()

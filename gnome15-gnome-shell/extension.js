@@ -1,3 +1,32 @@
+// +-----------------------------------------------------------------------------+
+// | GPL                                                                         |
+// +-----------------------------------------------------------------------------+
+// | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+// |                                                                             |
+// | This program is free software; you can redistribute it and/or               |
+// | modify it under the terms of the GNU General Public License                 |
+// | as published by the Free Software Foundation; either version 2              |
+// | of the License, or (at your option) any later version.                      |
+// |                                                                             |
+// | This program is distributed in the hope that it will be useful,             |
+// | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
+// | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
+// | GNU General Public License for more details.                                |
+// |                                                                             |
+// | You should have received a copy of the GNU General Public License           |
+// | along with this program; if not, write to the Free Software                 |
+// | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
+// +-----------------------------------------------------------------------------+
+
+/*
+ * Gnome15 - The Logitech Keyboard Manager for Linux
+ *
+ * This GNOME Shell extension allows control of all supported and connected
+ * Logitech devices from the shell's top panel. A menu button is added for
+ * each device, providing options to enable/disable the device, enable/disable
+ * screen cycling, and make a particular page the currently visible one.
+ */
+
 const St = imports.gi.St;
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
@@ -6,6 +35,7 @@ const Lang = imports.lang;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const GLib = imports.gi.GLib;
+const Clutter = imports.gi.Clutter;
 
 let currNotification, gnome15System, devices;
 
@@ -89,6 +119,20 @@ const Gnome15ScreenInterface = {
 		name : 'SetCyclingEnabled',
 		inSignature : 'b',
 		outSignature : ''
+	}, {
+		name : 'Cycle',
+		/* No idea why, but this signature is actually 'n', but this causes
+		 * an exception when calling with JavaScript integer. 
+		 */ 
+		inSignature : 'i',
+		outSignature : ''
+	}, {
+		name : 'CycleKeyboard',
+		/* No idea why, but this signature is actually 'n', but this causes
+		 * an exception when calling with JavaScript integer. 
+		 */ 
+		inSignature : 'i',
+		outSignature : ''
 	} ],
 	signals : [ {
 		name : 'PageCreated',
@@ -171,6 +215,15 @@ const Gnome15PageInterface = {
 	} ]
 };
 
+/**
+ * Instances of this class are responsible for managing a single device.
+ * A single button is created and added to the top panel, various attributes
+ * about the device attached are read, and if the device currently has
+ * a screen (i.e. is enabled), the initial page list is loaded. 
+ * 
+ * Signals are also setup to watch for the scren being enable / disabled
+ * externally.
+ */
 const DeviceItem = new Lang.Class({
     Name: 'DeviceItem',
 	_init : function(key) {
@@ -197,7 +250,7 @@ const DeviceItem = new Lang.Class({
 	
 	_addButton: function(key, modelFullName, modelId, screen) {
 		let hasScreen = screen != null && screen.length > 0;
-		this._gnome15Button = new AppMenu(key, modelId, modelFullName, hasScreen);
+		this._gnome15Button = new DeviceButton(key, modelId, modelFullName, hasScreen);
 		Main.panel._rightBox.insert_child_at_index(this._gnome15Button.actor, 1);
 		Main.panel._rightBox.child_set(this._gnome15Button.actor, {
 			y_fill : true
@@ -215,6 +268,11 @@ const DeviceItem = new Lang.Class({
 		}
 	},
 	
+	/**
+	 * Removes the signals that are being watched for this device and 
+	 * mark the button so that the enabled switch is turned off when
+	 * the menu is reset 
+	 */
 	_cleanUp: function() {
 		if(this._gnome15Button._screen != null) {
 			for(let key in this._buttonSignals) {
@@ -225,6 +283,11 @@ const DeviceItem = new Lang.Class({
 		}
 	},
 	
+	/**
+	 * Callback that receives the full list of pages currently showing on
+	 * this device and adds them to the button. It then starts watching for
+	 * new pages appearing, or pages being deleted and acts accordingly.
+	 */
 	_getPages: function(screen) {
 		this._cleanUp();
 		this._gnome15Button._screen = _createScreen(screen);
@@ -250,11 +313,18 @@ const DeviceItem = new Lang.Class({
 		
 	},
 	
+	/**
+	 * Called as a result of the service disappearing or the extension being
+	 * disabled. The button is removed from the top panel.
+	 */
 	close : function(pages) {
 		this._gnome15Button.destroy();
 	}
 });
 
+/**
+ * A switch menu item that allows a single device to be enabled or disabled.
+ */
 const EnableDisableMenuItem = new Lang.Class({
     Name: 'EnableDisableMenuItem',
     Extends: PopupMenu.PopupSwitchMenuItem,
@@ -277,6 +347,10 @@ const EnableDisableMenuItem = new Lang.Class({
 	},
 });
 
+/**
+ * A switch menu item that allows automatic page cycling to be enabled or
+ * disabled.
+ */
 const CyclePagesMenuItem = new Lang.Class({
     Name: 'CyclePagesMenuItem',
     Extends: PopupMenu.PopupSwitchMenuItem,
@@ -293,11 +367,15 @@ const CyclePagesMenuItem = new Lang.Class({
 	},
 });
 
-const AppMenuItem = new Lang.Class({
-    Name: 'AppMenuItem',
+/**
+ * A menu item that represents a single page on a single device. Activating
+ * this item causes the page to be displayed. 
+ */
+const PageMenuItem = new Lang.Class({
+    Name: 'PageMenuItem',
     Extends: PopupMenu.PopupBaseMenuItem,
 
-	_init : function(lblText, lblId, appMenu, page_proxy) {
+	_init : function(lblText, lblId, page_proxy) {
 		this.parent();
 		this.label = new St.Label({
 			text : lblText
@@ -306,7 +384,6 @@ const AppMenuItem = new Lang.Class({
 		this._pageProxy = page_proxy;
 		this._text = lblText;
 		this._idTxt = lblId;
-		this._appMenu = appMenu;
 	},
 
 	activate : function(event) {
@@ -315,6 +392,10 @@ const AppMenuItem = new Lang.Class({
 	},
 });
 
+/**
+ * A menu item that that activates g15-config. It will open with provided
+ * device UID open (via the -d option of g15-config). 
+ */
 const PreferencesMenuItem = new Lang.Class({
     Name: 'PreferencesMenuItem',
     Extends: PopupMenu.PopupMenuItem,
@@ -325,81 +406,138 @@ const PreferencesMenuItem = new Lang.Class({
 	},
 
 	activate : function(event) {
-        GLib.spawn_command_line_async("g15-config -d " + this._deviceUid);
+        GLib.spawn_command_line_async('g15-config -d ' + this._deviceUid);
         this.parent(event);
 	},
 });
 
-const AppMenu = new Lang.Class({
-    Name: 'AppMenu',
+/**
+ * Shell top panel "System Status Button" that represents a single Gnome15
+ * device.  
+ */
+const DeviceButton = new Lang.Class({
+    Name: 'DeviceButton',
     Extends: PanelMenu.SystemStatusButton,
 
-	_init : function(devicePath, model_id, model_name) {
+	_init : function(devicePath, modelId, modelName) {
+		this._deviceUid = devicePath.substring(devicePath.lastIndexOf('/') + 1);
 		this._itemMap = {};
-		this.parent('logitech-' + model_id);
+		this.parent('logitech-' + modelId);
 		this._cyclingEnabled = false;
 		this._devicePath = devicePath;
-		this._item_list = new Array();
-		this._model_id = model_id;
-		this._model_name = model_name;
+		this._itemList = new Array();
+		this._modelId = modelId;
+		this._modelName = modelName;
 		this._screen = null;
         this._iconActor.add_style_class_name('device-icon');
         this._iconActor.set_icon_size(24);
         this._iconActor.add_style_class_name('device-button');
+        
+        // Mouse whell events
+        this.actor.connect('scroll-event', Lang.bind(this, this._onScrollEvent));
 	},
 	
+	/**
+	 * Set whether cycling is enabled for this device
+	 * 
+	 * @param cycle enable cycling
+	 */
 	setCyclingEnabled: function(cycle) {
 		this._cyclingEnabled = cycle;
 		this.reset();
 	},
-	
+
+	/**
+	 * Remove the menu item for a page given it's path.
+	 * 
+	 * @param pagePath path of page
+	 */
 	deletePage: function(pagePath) {
-		let idx = this._item_list.indexOf(pagePath);
+		let idx = this._itemList.indexOf(pagePath);
 		if(idx > 0) {
-			this._item_list.splice(idx, 1);
+			this._itemList.splice(idx, 1);
 		}
 		this._itemMap[pagePath].destroy();
 		delete this._itemMap[pagePath];
 	},
 
+	/**
+	 * Clear all pages from this menu.
+	 */
 	clearPages : function() {
-		this._item_list = new Array();
+		this._itemList = new Array();
 		this.reset();
 	},
 
-	handleEvent : function(eventId) {
-		_showGlobalText(eventId);
-//		if ("AppMenuRefresh" == eventId) {
-//			gnome15System.GetMenuRemote('Refresh', _refreshScreenIdList);
-//		}
-	},
-
+	/**
+	 * Add a new page to the menu given it's path.
+	 * 
+	 * @param pagePath page of page to add
+	 */
 	addPage : function(pagePath) {
-		this._item_list.push(pagePath);
+		this._itemList.push(pagePath);
 		this._addPage(pagePath);
 	},
 
+	/**
+	 * Rebuild the entire menu. 
+	 */
 	reset : function() {
 		this.menu.removeAll();
-		this.menu.addMenuItem(new EnableDisableMenuItem(this._devicePath, this._model_name, this._screen));
+		this.menu.addMenuItem(new EnableDisableMenuItem(this._devicePath, this._modelName, this._screen));
 		this.menu.addMenuItem(new CyclePagesMenuItem(this._cyclingEnabled, this._screen));
-		this.menu.addMenuItem(new PreferencesMenuItem());
+		this.menu.addMenuItem(new PreferencesMenuItem(this._deviceUid));
 		this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-		for (let key in this._item_list) {
-			this._addPage(this._item_list[key]);
+		for (let key in this._itemList) {
+			this._addPage(this._itemList[key]);
 		}
 	},
 	
+	/**
+	 * Add the menu items for a single page given it's page. Various attributes
+	 * about the page are read via dbus and the menu item constructed and
+	 * added to the menu compent.
+	 * 
+	 * @param pagePath page of page.
+	 */
 	_addPage : function(pagePath) {
 		let Gnome15PageProxy = DBus.makeProxyClass(Gnome15PageInterface);
 		let pageProxy = new Gnome15PageProxy(DBus.session, 'org.gnome15.Gnome15', pagePath);
 		pageProxy.GetTitleRemote(Lang.bind(this, function(title) {
-			let item = new AppMenuItem(title, title, this, pageProxy);
+			let item = new PageMenuItem(title, title, pageProxy);
 			this._itemMap[pagePath] = item;
 			this.menu.addMenuItem(item);
 		}));
-	}
+	},
+	
+	/**
+	 * Handle mouse wheel events by cycling pages.
+	 * 
+	 * @param actor source of event
+	 * @param event event
+	 */
+	_onScrollEvent: function(actor, event) {
+        let direction = event.get_scroll_direction();
+        if(this._screen != null) {
+	        if (direction == Clutter.ScrollDirection.DOWN) {
+	        	this._screen.CycleRemote(-1);
+	        }
+	        else if (direction == Clutter.ScrollDirection.UP) {
+	        	this._screen.CycleRemote(1);
+	        }
+	        if (direction == Clutter.ScrollDirection.LEFT) {
+	        	this._screen.CycleKeyboardRemote(-1);
+	        }
+	        else if (direction == Clutter.ScrollDirection.RIGHT) {
+	        	this._screen.CycleKeyboardRemote(1);
+	        }
+        }
+    },
 });
+
+/*
+ * GNOME Shell Extension API functions
+ */
 
 function init() {
 	devices = {}
@@ -414,10 +552,14 @@ function init() {
 	gnome15System.connect("Started", _onDesktopServiceStarted);
 	gnome15System.connect("Stopping", _onDesktopServiceStopping);
 
-//	this.enable();
 }
 
 function enable() {
+	DBus.session.watch_name('org.gnome15.Gnome15',
+	                       false, // do not launch a name-owner if none exists
+	                       _onDesktopServiceAppeared,
+	                       _onDesktopServiceVanished);
+
 	gnome15System.GetDevicesRemote(_refreshDeviceList);
 }
 
@@ -427,75 +569,88 @@ function disable() {
 	}
 }
 
+/*
+ * Private functions
+ */
+
+/**
+ * Callback invoked when the DBus name owner changes (added). We don't actually care
+ * about this one as we load pages on other signals
+ */
+function _onDesktopServiceAppeared() {
+}
+
+/**
+ * Callback invoked when the DBus name owner changes (removed). This occurs
+ * when the service disappears, evens when it dies unexpectedly. 
+ */
+function _onDesktopServiceVanished() {
+	_onDesktopServiceStopping();
+}
+
+/**
+ * Callback invoked when the Gnome15 service starts. We get the initial device
+ * list at this point. 
+ */
 function _onDesktopServiceStarted() {
 	gnome15System.GetDevicesRemote(_refreshDeviceList);
 }
 
+/**
+ * Invoked when the Gnome15 desktop service starts shutting down (as a result
+ * of user selectint "Stop Service" most probably).
+ */
 function _onDesktopServiceStopping() {
 	for(let key in devices) {
         _deviceRemoved(key)
 	}
 }
 
+/**
+ * Callback from GetDevicesRemote that reads the returned device list and
+ * creates a button for each one.
+ */
 function _refreshDeviceList(msg) {
 	for (let key in msg) {
 		_deviceAdded(msg[key])
 	}
 }
 
+/**
+ * Gnome15 doesn't yet send DBus events when devices are hot-plugged, but it
+ * soon will and this function will add new device when they appear.
+ */
 function _deviceAdded(key) {
 	devices[key] = new DeviceItem(key)
 }
 
+/**
+ * Gnome15 doesn't yet send DBus events when devices are hot-plugged, but it
+ * soon will and this function will add new device when they are removed.
+ */
 function _deviceRemoved(key) {
 	devices[key].close()
 	delete devices[key]
 }
 
-// CallBack from the StatusChanged event
-function _statusChanged(object, msg) {
-}
-
-// Method to show a status message to the user, usable anywhere in this script.
-function _showGlobalText(label) {
-	_hideGlobalText();
-	// Add the notification message to the desktop
-	currNotification = new St.Label({
-		style_class : 'helloworld-label',
-		text : label
-	});
-	Main.uiGroup.add_actor(currNotification);
-	currNotification.opacity = 255;
-
-	// Place the message in the center of the screen
-	let monitor = Main.layoutManager.primaryMonitor;
-	currNotification.set_position(Math.floor(monitor.width / 2
-			- currNotification.width / 2), Math.floor(monitor.height / 2
-			- currNotification.height / 2));
-
-	// Add a transition to remove the message shortly after it appears
-	Tweener.addTween(currNotification, {
-		opacity : 0,
-		time : 3.0,
-		transition : 'easeOutQuad',
-		onComplete : _hideGlobalText
-	});
-}
-
-// Callback to remove the notification message after the transition
-function _hideGlobalText() {
-	if(currNotification) {
-		Main.uiGroup.remove_actor(currNotification);
-	}
-	currNotification = null;
-}
-
+/**
+ * Utility for creating a org.gnome15.Screen instance given it's path.
+ * 
+ * @param path
+ * @returns {Gnome15ScreenProxy}
+ */
 function _createScreen(path) {
 	let Gnome15ScreenProxy = DBus.makeProxyClass(Gnome15ScreenInterface);
 	return new Gnome15ScreenProxy(DBus.session,
 			'org.gnome15.Gnome15', path);
 }
 
+/**
+ * Utility for creating an org.gnome15.Device instance given it's path.
+ * 
+ * @param path
+ * @returns {Gnome15DeviceProxy}
+ */
 function _createDevice(path) {
 	let Gnome15DeviceProxy = DBus.makeProxyClass(Gnome15DeviceInterface);
 	return new Gnome15DeviceProxy(DBus.session,

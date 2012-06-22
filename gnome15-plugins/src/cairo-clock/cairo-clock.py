@@ -27,6 +27,7 @@ import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver 
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
+import gnome15.g15plugin as g15plugin
 import datetime
 from threading import Timer
 import time
@@ -127,46 +128,54 @@ class G15CairoClockPreferences():
         dialog.hide()
         
     
-class G15CairoClock():
+class G15CairoClock(g15plugin.G15RefreshingPlugin):
     
     def __init__(self, gconf_key, gconf_client, screen):
-        self.screen = screen
-        self.gconf_client = gconf_client
-        self.gconf_key = gconf_key
+        g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, [ "cairo-clock", "clock", "gnome-panel-clock", "time", "xfce4-clock", "rclock" ], id, name)
         self.revert_timer = None
-        self.timer = None
         self.display_date = False
-        self.display_seconds = False
+        self.display_seconds = False        
+        self.only_refresh_when_visible = False
     
     def activate(self): 
+        self._load_surfaces()     
         self.panel_text = g15text.new_text(self.screen)
         self.time_text = g15text.new_text(self.screen)
-        self.notify_handler = self.gconf_client.notify_add(self.gconf_key, self.config_changed);   
-        self._load_surfaces()         
-        self.page = g15theme.G15Page(name, self.screen, painter = self._paint, priority=g15screen.PRI_NORMAL, 
-                                        thumbnail_painter = self._paint_thumbnail, panel_painter = self._paint_panel,
-                                        title = name, originating_plugin = self)
-        self.screen.add_page(self.page)
-        self._refresh()
-    
-    def deactivate(self):
-        self._cancel_refresh()
-        self.gconf_client.notify_remove(self.notify_handler)
-        g15screen.run_on_redraw(self.screen.del_page, self.page)
-        self.page = None
+        g15plugin.G15RefreshingPlugin.activate(self)
+        self.watch(None, self.config_changed)
+        self.do_refresh()
         
-    def destroy(self):
+    def create_theme(self):
+        # Painting is done using cairo and cairo-clock themes, no need for a theme
+        return None
+            
+    def config_changed(self, client, connection_id, entry, args):
+        self._load_surfaces()
+        self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
+        self.do_refresh()
+        
+    def refresh(self):
         pass
+        
+    def get_next_tick(self):
+        now = datetime.datetime.now()
+        
+        if self.second_sweep:
+            next_tick = now + datetime.timedelta(0, 0.1)
+        elif self.display_seconds:
+            next_tick = now + datetime.timedelta(0, 1.0)
+            next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, int(next_tick.second))
+        else:
+            next_tick = now + datetime.timedelta(0, 60.0)
+            next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, 0)
+            
+        return g15util.total_seconds( next_tick - now )    
+    
     
     '''
     Private
     '''
     
-    def _cancel_refresh(self):
-        if self.timer != None:
-            self.timer.cancel()
-            self.timer = None
-        
     def _load_surfaces(self):
         self.display_date = g15util.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
         self.display_seconds = g15util.get_bool_or_default(self.gconf_client, "%s/display_seconds" % self.gconf_key, True)
@@ -231,34 +240,7 @@ class G15CairoClock():
                 context.paint()
                 list.append(((img_surface.get_width(), img_surface.get_height()), surface))
         return list
-        
-    def config_changed(self, client, connection_id, entry, args):
-        self._load_surfaces()
-        self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
-        self._cancel_refresh()
-        self._refresh()
-        
-    def _schedule_refresh(self):
-        if self.page == None:
-            return
-        
-        now = datetime.datetime.now()
-        
-        if self.second_sweep:
-            next_tick = now + datetime.timedelta(0, 0.1)
-        elif self.display_seconds:
-            next_tick = now + datetime.timedelta(0, 1.0)
-            next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, int(next_tick.second))
-        else:
-            next_tick = now + datetime.timedelta(0, 60.0)
-            next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, 0)
-        delay = g15util.total_seconds( next_tick - now )    
-        self.timer = g15util.schedule("CairoRefresh", delay, self._refresh)
     
-    def _refresh(self):
-        self.screen.redraw(self.page)
-        self._schedule_refresh()
-        
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         scale = allocated_size / self.height
         canvas.scale(scale, scale)

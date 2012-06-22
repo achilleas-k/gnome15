@@ -392,26 +392,6 @@ class Component():
     def get_child_count(self):
         return len(self._children)
         
-        
-#    def set_children(self, children):
-#        self.get_tree_lock().acquire()
-#        try:
-#            to_remove = list(set(self._children) - set(children))
-#            to_add = list(set(children) - set(self._children))
-#            for c in to_add:
-#                c.configure(self)
-#                self.notify_add(c)
-#            for c in to_remove:
-#                c.notify_remove()
-#                if c.theme:
-#                    c.theme._component_removed()
-#            self._children = children
-#            self.child_map = {}
-#            for c in self._children:
-#                self.child_map[c.id] = c
-#        finally:
-#            self.get_tree_lock().release()
-            
     def set_children(self, children):
         g15screen.check_on_redraw()
         self.get_tree_lock().acquire()
@@ -540,8 +520,20 @@ class Component():
             if self.theme:
                 canvas.save()   
                 properties = self.get_theme_properties()
+                
+                # Add some common properties
                 if self.get_root().focused_component is not None:
                     properties['%s_focused' % self.get_root().focused_component.id ] = "true"
+                
+                screen = self.get_screen()
+                if screen:
+                    states = screen.key_handler.get_key_states()
+                    for k in states:
+                        ks = states[k]
+                        if ks.state_id == g15driver.KEY_STATE_DOWN:
+                            properties['key_%s' % k ] = True
+                
+                    
                 self.paint_theme(canvas, properties, self.get_theme_attributes())
                 canvas.restore()
                 

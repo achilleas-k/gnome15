@@ -493,11 +493,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/sysmon/graphs/${cpu_icon}"
        xlink:href="${cpu_icon}"
-       y="836.36218"
-       x="20"
-       id="image3130"
+       height="24"
        width="24"
-       height="24" />
+       id="image3130"
+       x="20"
+       y="836.36218" />
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans Bold"
@@ -513,9 +513,9 @@
        style="opacity:0.98999999;fill:#ff0000;fill-opacity:0;stroke:none"
        id="cpu"
        width="240"
-       height="59.999996"
+       height="56"
        x="70"
-       y="812.36218"
+       y="818.36218"
        rx="12"
        ry="11.999999"
        class="graph" />
@@ -533,18 +533,18 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/sysmon/graphs/${net_icon}"
        xlink:href="${net_icon}"
-       height="24"
-       width="24"
-       id="image3130-6"
+       y="900.17566"
        x="20.746178"
-       y="900.17566" />
+       id="image3130-6"
+       width="24"
+       height="24" />
     <rect
        style="opacity:0.98999999;fill:#ff0000;fill-opacity:0;stroke:none"
        id="net"
        width="240"
-       height="59.999996"
+       height="56"
        x="70"
-       y="886.36218"
+       y="888.36218"
        rx="12"
        ry="11.999999"
        class="graph" />
@@ -584,11 +584,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/sysmon/graphs/${mem_icon}"
        xlink:href="${mem_icon}"
-       height="24"
-       width="24"
-       id="image3130-3"
+       y="976.36218"
        x="20"
-       y="976.36218" />
+       id="image3130-3"
+       width="24"
+       height="24" />
     <rect
        style="fill:#696969;fill-opacity:0.50196078;stroke:none"
        id="rect3925-0-6"
@@ -635,9 +635,9 @@
        style="opacity:0.98999999;fill:#ff0000;fill-opacity:0;stroke:none"
        id="mem"
        width="240"
-       height="59.999996"
+       height="56"
        x="70"
-       y="952.36218"
+       y="958.36218"
        rx="12"
        ry="11.999999"
        class="graph" />

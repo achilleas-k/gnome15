@@ -114,6 +114,7 @@ class G15PagePlugin(G15Plugin):
         self.hidden = False
         self._icon_path = g15util.get_icon_path(icon)
         self._title = title
+        self.page = None
         self.thumb_icon = g15util.load_surface_from_file(self._icon_path)
         
     def activate(self):
@@ -124,19 +125,17 @@ class G15PagePlugin(G15Plugin):
         self.screen.redraw(self.page)
                
     def deactivate(self):
-        G15Plugin.deactivate(self)
         if self.page is not None:
             self.screen.del_page(self.page)
+            self.page = None
+        G15Plugin.deactivate(self)
         
     def create_page(self):
         return g15theme.G15Page(self.page_id, self.screen, 
-                                     title = self._title, theme = g15theme.G15Theme(self),
+                                     title = self._title, theme = self.create_theme(),
                                      thumbnail_painter = self._paint_thumbnail,
+                                     painter = self._paint,
                                      originating_plugin = self)
-    
-    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if self.page != None and self.thumb_icon != None and self.screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
         
     def populate_page(self):
         """
@@ -161,6 +160,22 @@ class G15PagePlugin(G15Plugin):
         properties["title"] = self._title
         properties["alt_title"] = ""
         return properties
+    
+    def reload_theme(self):
+        """
+        Reload the current theme
+        """
+        self.page.set_theme(self.create_theme())
+    
+    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
+        if self.page != None and self.thumb_icon != None and self.screen.driver.get_bpp() == 16:
+            return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+    
+    def _paint_panel(self, canvas, allocated_size, horizontal):
+        pass
+    
+    def _paint(self, canvas):
+        pass
         
 class G15RefreshingPlugin(G15PagePlugin):
     
@@ -187,11 +202,14 @@ class G15RefreshingPlugin(G15PagePlugin):
         self.session_bus = dbus.SessionBus()
         self.timer = None
         self.schedule_on_gobject = False
+        self.only_refresh_when_visible = True
     
     def create_page(self):
         return g15theme.G15Page(self.page_id, self.screen, on_shown=self._on_shown, on_hidden=self._on_hidden, \
-                                     title = self._title, theme = g15theme.G15Theme(self),
+                                     title = self._title, theme = self.create_theme(),
                                      thumbnail_painter = self._paint_thumbnail,
+                                     painter = self._paint,
+                                     panel_painter = self._paint_panel,
                                      theme_properties_callback = self.get_theme_properties,
                                      originating_plugin = self)
     
@@ -208,7 +226,7 @@ class G15RefreshingPlugin(G15PagePlugin):
         Sub-classes should implement and perform the recurring actions. There is no need to 
         to redraw the page, it is done automatically.
         """        
-        raise Exception("Not implemented")
+        pass
     
     def get_next_tick(self):
         """
@@ -229,10 +247,12 @@ class G15RefreshingPlugin(G15PagePlugin):
     '''
         
     def _on_shown(self):
-        self._reschedule_refresh()
+        if self.only_refresh_when_visible:
+            self._reschedule_refresh()
             
     def _on_hidden(self):
-        self._reschedule_refresh()
+        if self.only_refresh_when_visible:
+            self._reschedule_refresh()
             
     def _reschedule_refresh(self):
         self._cancel_refresh()
@@ -247,7 +267,7 @@ class G15RefreshingPlugin(G15PagePlugin):
             self.timer = None
         
     def _schedule_refresh(self):
-        if self.screen.is_visible(self.page):
+        if not self.only_refresh_when_visible or self.screen.is_visible(self.page):
             if self.schedule_on_gobject:
                 self.timer = gobject.timeout_add(int(self.get_next_tick() * 1000), self._refresh)
             else:

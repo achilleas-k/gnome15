@@ -26,10 +26,10 @@ import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
+import gnome15.g15plugin as g15plugin
 import gnome15.g15text as g15text
 import datetime
 import pango
-import os
 import timer
 
 import preferences as g15preferences
@@ -45,11 +45,15 @@ site="http://www.gnome15.org/"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 actions={ 
-         g15driver.PREVIOUS_SELECTION : _("Toggle selected timer\n(or toggle timer 1)"), 
-         g15driver.NEXT_SELECTION : _("Reset selected timer\n(or reset timer 1)"),
-         g15driver.NEXT_PAGE : _("Toggle timer 2 (G19 only)"),
-         g15driver.PREVIOUS_PAGE : _("Reset timer 2 (G19 only)"),
+         g15driver.PREVIOUS_SELECTION : _("Toggle selected timer"), 
+         g15driver.NEXT_SELECTION : _("Reset selected timer"),
          g15driver.VIEW : _("Switch between timers")
+         }
+actions_g19={ 
+         g15driver.PREVIOUS_SELECTION : _("Toggle timer 1"), 
+         g15driver.NEXT_SELECTION : _("Reset timer 1"),
+         g15driver.NEXT_PAGE : _("Toggle timer 2"),
+         g15driver.PREVIOUS_PAGE : _("Reset timer 2")
          }
 
 
@@ -65,63 +69,67 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     preferences.run()
 
 
-class G15Stopwatch():
+class G15Stopwatch(g15plugin.G15RefreshingPlugin):
 
     def __init__(self, gconf_key, gconf_client, screen):
-        self._screen = screen
-        self._gconf_client = gconf_client
-        self._gconf_key = gconf_key
+        g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, [ "cairo-clock", "clock", "gnome-panel-clock", "xfce4-clock", "rclock" ], id, name)
         self._active_timer = None
         self._message = None
-        self._page = None
         self._priority = g15screen.PRI_NORMAL
 
     def activate(self):
         self._timer = None
-        self._text = g15text.new_text(self._screen)
+        self._text = g15text.new_text(self.screen)
         self._notify_timer = None
         self._timer1 = timer.G15Timer()
         self._timer1.on_finish = self._on_finish
         self._timer2 = timer.G15Timer()
         self._timer2.on_finish = self._on_finish
         self._load_configuration()
+        
+        g15plugin.G15RefreshingPlugin.activate(self)
 
-        self._reload_theme()
+        self.screen.key_handler.action_listeners.append(self)
+        self.watch(None, self._config_changed)
 
-        self._page = g15theme.G15Page(id, self._screen, thumbnail_painter = self.paint_thumbnail, \
-                                     priority = self._priority, \
-                                     title = name, theme = self.theme, theme_properties_callback = self._get_properties,
-                                     originating_plugin = self)
-        if self._screen.driver.get_bpp() == 16:
+    def deactivate(self):
+        if self._timer1.is_running():
+            self._timer1.toggle()
+        if self._timer2.is_running():
+            self._timer2.toggle()
+        self.screen.key_handler.action_listeners.remove(self)
+        g15plugin.G15RefreshingPlugin.deactivate(self)
+
+    def destroy(self):
+        pass
+    
+    def create_page(self):
+        page = g15plugin.G15RefreshingPlugin.create_page(self)
+        if self.screen.driver.get_bpp() != 16:
             """
             Don't show on the panel for G15, there just isn't enough room
             Long term, this will be configurable per plugin
             """
-            self._page.panel_painter = self.paint_thumbnail
-        self._screen.add_page(self._page)
-        self._screen.redraw(self._page)
-        self._screen.key_handler.action_listeners.append(self)
-        self._schedule_redraw()
-        self._notify_handle = self._gconf_client.notify_add(self._gconf_key, self._config_changed);
-
-    def deactivate(self):
-        self._gconf_client.notify_remove(self._notify_handle);
-        self._screen.key_handler.action_listeners.remove(self)
-        self._cancel_refresh()
-        self._screen.del_page(self._page)
-
-    def destroy(self):
-        pass
+            page.panel_painter = None
+        return page
+    
+    def create_theme(self):
+        variant = None
+        if self._timer1.get_enabled() and self._timer2.get_enabled():
+            variant = "two_timers"
+        elif self._timer1.get_enabled() or self._timer2.get_enabled():
+            variant = "one_timer"
+        return g15theme.G15Theme(self, variant)
 
     def action_performed(self, binding):
-        if self._page and self._page.is_visible():
+        if self.page and self.page.is_visible():
             # G19 we make use of more keys
-            if self._screen.driver.get_model_name() == g15driver.MODEL_G19:                
+            if self.screen.driver.get_model_name() == g15driver.MODEL_G19:                
                 if self._timer1.get_enabled():
                     if binding.action == g15driver.PREVIOUS_SELECTION:
                         self._timer1.toggle()                        
                         self._check_page_priority()
-                        self._redraw()
+                        self._refresh()
                     elif binding.action == g15driver.NEXT_SELECTION:
                         self._timer1.reset()
                                     
@@ -129,7 +137,7 @@ class G15Stopwatch():
                     if binding.action == g15driver.PREVIOUS_PAGE:
                         self._timer2.toggle()                        
                         self._check_page_priority()
-                        self._redraw()
+                        self._refresh()
                     elif binding.action == g15driver.NEXT_PAGE:
                         self._timer2.reset()
             else:
@@ -139,33 +147,56 @@ class G15Stopwatch():
                         self._active_timer = self._timer2
                     else:
                         self._active_timer = self._timer1
-                    self._redraw()
+                    self._refresh()
                 
                 if self._active_timer:
                     if binding.action == g15driver.PREVIOUS_SELECTION:
                         self._active_timer.toggle()                        
                         self._check_page_priority()
-                        self._redraw()
+                        self._refresh()
                     elif binding.action == g15driver.NEXT_SELECTION:
                         self._active_timer.reset()                        
                         self._check_page_priority()
-                        self._redraw()
+                        self._refresh()
+                        
+    def get_next_tick(self):
+        return g15util.total_seconds( datetime.timedelta( seconds = 1 ))
+    
+    def get_theme_properties(self):
+        properties = { }
+        if self._timer1.get_enabled() and self._timer2.get_enabled():
+            properties["timer1_label"] = self._timer1.label
+            properties["timer1"] = self._format_time_delta(self._timer1.value())
+            if self._active_timer == self._timer1:
+                properties["timer1_active"] = True
+                properties["timer2_active"] = False
+            else:
+                properties["timer1_active"] = False
+                properties["timer2_active"] = True
+            properties["timer2_label"] = self._timer2.label
+            properties["timer2"] = self._format_time_delta(self._timer2.value())
+        elif self._timer1.get_enabled():
+            properties["timer_label"] = self._timer1.label
+            properties["timer"] = self._format_time_delta(self._timer1.value())
+        elif self._timer2.get_enabled():
+            properties["timer_label"] = self._timer2.label
+            properties["timer"] = self._format_time_delta(self._timer2.value())
 
-    '''
-    Paint the thumbnail. You are given the MAXIMUM amount of space that is allocated for
-    the thumbnail, and you must return the amount of space actually take up. Thumbnails
-    can be used for example by the panel plugin, or the menu plugin. If you want to
-    support monochrome devices such as the G15, you will have to take into account
-    the amount of space you have (i.e. 6 pixels high maximum and limited width)
-    ''' 
-    def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if not self._page or self._screen.is_visible(self._page):
+        return properties
+    
+    def _paint_panel(self, canvas, allocated_size, horizontal):
+        return self._paint_thumbnail(canvas, allocated_size, horizontal)
+
+    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
+        if not self.page or self.screen.is_visible(self.page):
             return
         if not (self._timer1.get_enabled() or self._timer2.get_enabled()):
             return
-        properties = self._get_properties()
+        if not (self._timer1.is_running() or self._timer2.is_running()):
+            return
+        properties = self.get_theme_properties()
         # Don't display the date or seconds on mono displays, not enough room as it is
-        if self._screen.driver.get_bpp() == 1:
+        if self.screen.driver.get_bpp() == 1:
             if self._timer1.get_enabled() and self._timer2.get_enabled():
                 text = "%s %s" % ( properties["timer1"], properties["timer2"] ) 
             else:
@@ -189,7 +220,7 @@ class G15Stopwatch():
         self._text.set_attributes(text, align = pango.ALIGN_CENTER, font_desc = font_name, font_absolute_size = font_size * pango.SCALE / factor)
         x, y, width, height = self._text.measure()
         if horizontal:
-            if self._screen.driver.get_bpp() == 1:
+            if self.screen.driver.get_bpp() == 1:
                 y = 0
             else:
                 y = (allocated_size / 2) - height / 2
@@ -210,22 +241,22 @@ class G15Stopwatch():
 
     def _config_changed(self, client, connection_id, entry, args):
         self._load_configuration()
-        self._reload_theme()
-        self._screen.set_priority(self._page, g15screen.PRI_HIGH, revert_after = 3.0)
+        self.reload_theme()
+        self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
         
     def _get_or_default(self, key, default_value):
-        v = self._gconf_client.get(key)
+        v = self.gconf_client.get(key)
         return v.get_int() if v != None else default_value
         
     def _load_timer(self, timer_object, number):        
-        timer_object.set_enabled(self._gconf_client.get_bool(self._gconf_key + "/timer%d_enabled"  % number) or False)
-        timer_object.label = self._gconf_client.get_string(self._gconf_key + "/timer%d_label" % number) or ""
-        if self._gconf_client.get_bool(self._gconf_key + "/timer%d_mode_countdown" % number):
+        timer_object.set_enabled(self.gconf_client.get_bool(self.gconf_key + "/timer%d_enabled"  % number) or False)
+        timer_object.label = self.gconf_client.get_string(self.gconf_key + "/timer%d_label" % number) or ""
+        if self.gconf_client.get_bool(self.gconf_key + "/timer%d_mode_countdown" % number):
             timer_object.mode = timer.G15Timer.TIMER_MODE_COUNTDOWN
-            timer_object.initial_value = datetime.timedelta(hours = self._get_or_default(self._gconf_key + "/timer%d_hours" % number, 0), \
-                                                     minutes = self._get_or_default(self._gconf_key + "/timer%d_minutes" % number, 5), \
-                                                     seconds = self._get_or_default(self._gconf_key + "/timer%d_seconds" % number, 0))
-            timer_object.loop = self._gconf_client.get_bool(self._gconf_key + "/timer%d_loop" % number )
+            timer_object.initial_value = datetime.timedelta(hours = self._get_or_default(self.gconf_key + "/timer%d_hours" % number, 0), \
+                                                     minutes = self._get_or_default(self.gconf_key + "/timer%d_minutes" % number, 5), \
+                                                     seconds = self._get_or_default(self.gconf_key + "/timer%d_seconds" % number, 0))
+            timer_object.loop = self.gconf_client.get_bool(self.gconf_key + "/timer%d_loop" % number )
         else:
             timer_object.mode = timer.G15Timer.TIMER_MODE_STOPWATCH
             timer_object.initial_value = datetime.timedelta(0, 0, 0)
@@ -248,56 +279,10 @@ class G15Stopwatch():
         self._check_page_priority()
             
     def _check_page_priority(self):
-        self._priority = g15screen.PRI_EXCLUSIVE if self._is_any_timer_active() and g15util.get_bool_or_default(self._gconf_client, "%s/keep_page_visible" % self._gconf_key, True) \
+        self._priority = g15screen.PRI_EXCLUSIVE if self._is_any_timer_active() and g15util.get_bool_or_default(self.gconf_client, "%s/keep_page_visible" % self.gconf_key, True) \
                                                 else g15screen.PRI_NORMAL
-        if self._page:
-            self._page.set_priority(self._priority)
-
-    def _redraw(self):
-        self._screen.redraw(self._page) 
-        self._schedule_redraw()
-
-    def _cancel_refresh(self):
-        if self._timer != None:
-            self._timer.cancel()
-            self._timer = None
-
-    def _schedule_redraw(self):
-        self._cancel_refresh()
-        delay = g15util.total_seconds( datetime.timedelta( seconds = 1 ))
-        self._timer = g15util.schedule("StopwatchRedraw", delay, self._redraw)
-
-    def _reload_theme(self):        
-        variant = None
-        if self._timer1.get_enabled() and self._timer2.get_enabled():
-            variant = "two_timers"
-        elif self._timer1.get_enabled() or self._timer2.get_enabled():
-            variant = "one_timer"
-        self.theme = g15theme.G15Theme(self, variant)
-        if self._page != None:
-            self._page.set_theme(self.theme)
-
-    def _get_properties(self):
-        properties = { }
-        if self._timer1.get_enabled() and self._timer2.get_enabled():
-            properties["timer1_label"] = self._timer1.label
-            properties["timer1"] = self._format_time_delta(self._timer1.value())
-            if self._active_timer == self._timer1:
-                properties["timer1_active"] = True
-                properties["timer2_active"] = False
-            else:
-                properties["timer1_active"] = False
-                properties["timer2_active"] = True
-            properties["timer2_label"] = self._timer2.label
-            properties["timer2"] = self._format_time_delta(self._timer2.value())
-        elif self._timer1.get_enabled():
-            properties["timer_label"] = self._timer1.label
-            properties["timer"] = self._format_time_delta(self._timer1.value())
-        elif self._timer2.get_enabled():
-            properties["timer_label"] = self._timer2.label
-            properties["timer"] = self._format_time_delta(self._timer2.value())
-
-        return properties
+        if self.page:
+            self.page.set_priority(self._priority)
 
     def _format_time_delta(self, td): 
         hours = td.seconds // 3600 

@@ -21,7 +21,6 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("sysmon", modfile = __file__).ugettext
 
-import gnome15.g15theme as g15theme 
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -48,7 +47,7 @@ unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODE
 
 # Various constants
 GRAPH_SIZE = 50
-
+CPU_ICONS = [ "utilities-system-monitor","gnome-cpu-frequency-applet", "computer" ]
  
 ''' 
 This plugin displays system statistics
@@ -106,26 +105,18 @@ class CPU():
             return 100 - (val  * 100.00 / sum_l)
         return 0
         
-class G15SysMon(g15plugin.G15Plugin):
+class G15SysMon(g15plugin.G15RefreshingPlugin):
     """
     Plugin implementation
     """    
     def __init__(self, gconf_key, gconf_client, screen):
-        g15plugin.G15Plugin.__init__(self, gconf_client, gconf_key, screen)
-        self.hidden = False
-        self.gconf_client = gconf_client
-        self.gconf_key = gconf_key
-        self.timer = None
+        g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, CPU_ICONS, id, name)
     
     def activate(self):
-        g15plugin.G15Plugin.activate(self)
-        
         self._net_icon = g15util.get_icon_path([ "network-transmit-receive", 
                                                 "gnome-fs-network" ], 
                                                self.screen.height)
-        self._cpu_icon = g15util.get_icon_path( [ "utilities-system-monitor", 
-                                                 "gnome-cpu-frequency-applet", 
-                                                 "computer" ],  
+        self._cpu_icon = g15util.get_icon_path( CPU_ICONS,  
                                                self.screen.height)
         self._mem_icon = g15util.get_icon_path( [ "media-memory", 
                                                  "media-flash" ],  
@@ -134,7 +125,6 @@ class G15SysMon(g15plugin.G15Plugin):
         
         self.variant = 0
         self.graphs = {}
-        self.active = True
         self.last_time_list = None
         self.last_times_list = []
         self.last_time = 0
@@ -153,7 +143,7 @@ class G15SysMon(g15plugin.G15Plugin):
             self.selected_cpu = self.cpu_data[0]
 
         # Net
-        ifs, self.net_list = self._get_net_stats()
+        _, self.net_list = self._get_net_stats()
         net = self.gconf_client.get_string(self.gconf_key + "/net")
         if net and (net in self.net_list):
             self.net_no = self.net_list.index(net)
@@ -168,6 +158,7 @@ class G15SysMon(g15plugin.G15Plugin):
         self.recv_history =  [0] * GRAPH_SIZE 
         
         # Memory
+        self.max_total_mem = 0
         self.total = 1.0
         self.cached = 0
         self.free = 0
@@ -175,30 +166,19 @@ class G15SysMon(g15plugin.G15Plugin):
         self.cached_history = [0] * GRAPH_SIZE
         self.used_history =  [0] * GRAPH_SIZE 
         
-        # Initial stats load and create the page 
-        self.page = g15theme.G15Page(id, self.screen, 
-                                     title = name, 
-                                     thumbnail_painter = self._paint_thumbnail,
-                                     theme = self.create_theme(),
-                                     originating_plugin = self)
-        
-        self._get_stats()
-        self._build_properties()
-        self.screen.add_page(self.page)
-        self.screen.key_handler.action_listeners.append(self)
-        self.screen.redraw(self.page)
+        g15plugin.G15RefreshingPlugin.activate(self)
         self._set_panel()
-        self.watch("show_cpu_on_panel", self._set_panel)
+        self.watch(None, self.reload_theme)
+        self.screen.key_handler.action_listeners.append(self)
+        
+    def reload_theme(self):
+        g15plugin.G15RefreshingPlugin.reload_theme(self)
+        self._set_panel()
     
     def deactivate(self):
-        g15plugin.G15Plugin.deactivate(self)
+        g15plugin.G15RefreshingPlugin.deactivate(self)
         self.screen.key_handler.action_listeners.remove(self)
-        self.screen.del_page(self.page)
-        self._cancel_refresh()
         
-    def destroy(self):
-        pass
-
     def action_performed(self, binding):
         if self.page and self.page.is_visible():
             if binding.action == g15driver.PREVIOUS_SELECTION:
@@ -218,30 +198,8 @@ class G15SysMon(g15plugin.G15Plugin):
                 self.gconf_client.set_string(self.gconf_key + "/net", self.net_list[self.net_no])
                 self._reschedule_refresh()
                 return True
-    
-    ''' Private
-    '''
-            
-    def _set_panel(self, client = None, connection_id = None, entry = None, args = None):        
-        self.page.panel_painter = self._paint_panel if g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/show_cpu_on_panel", True) else None
-        self._reschedule_refresh()
-            
-    def _reschedule_refresh(self):
-        self._cancel_refresh()
-        self._schedule_refresh()
         
-    def _cancel_refresh(self):
-        if self.timer != None:
-            self.timer.cancel()
-            self.timer = None
-        
-    def _schedule_refresh(self):
-        if self.screen.is_visible(self.page):
-            self.timer = g15util.schedule("SysmonRedraw", 1.0, self._refresh)
-        elif self.page.panel_painter is not None:
-            self.timer = g15util.schedule("SysmonRedraw", 1.0, self._refresh_panel_only)
-        
-    def _get_stats(self):
+    def refresh(self):
         
         # Current net status   
         this_net_list, self.net_list = self._get_net_stats()
@@ -298,11 +256,12 @@ class G15SysMon(g15plugin.G15Plugin):
         '''
         
         self.total = float(mem.total)
+        self.max_total_mem = max(self.max_total_mem, self.total)
         self.free = float(mem.free)
         self.used = self.total - self.free
         self.cached = float(mem.cached)
         self.noncached = self.total - self.free - self.cached
-        self.used_history.append(self.used)
+        self.used_history.append(self.used + self.cached)
         while len(self.used_history) > GRAPH_SIZE:
             del self.used_history[0]
         self.cached_history.append(self.cached)
@@ -310,8 +269,23 @@ class G15SysMon(g15plugin.G15Plugin):
             del self.cached_history[0]
         
         self.last_time = now
+    
+    ''' Private
+    '''
             
-    def _build_properties(self): 
+    def _set_panel(self, client = None, connection_id = None, entry = None, args = None):        
+        self.page.panel_painter = self._paint_panel if g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/show_cpu_on_panel", True) else None
+        
+    def _refresh(self):
+        if self.page is not None:
+            self.refresh()
+            if self.screen.is_visible(self.page):
+                self.screen.redraw(self.page)
+            elif self.page.panel_painter is not None:
+                self.screen.redraw(redraw_content = False)
+            self._schedule_refresh()
+            
+    def get_theme_properties(self): 
         
         properties = {}
         properties["cpu_pc"] = "%3d" % self.selected_cpu.pc
@@ -360,7 +334,7 @@ class G15SysMon(g15plugin.G15Plugin):
         properties["net_no"] = self.net_list[self.net_no].upper()
         properties["next_net_no"] =  self.net_list[self.net_no + 1].upper() if self.net_no < ( len(self.net_list) - 1) else self.net_list[0].upper()
         
-        self.page.theme_properties = properties
+        return properties
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None and self._thumb_icon != None and self.screen.driver.get_bpp() == 16:
@@ -402,19 +376,7 @@ class G15SysMon(g15plugin.G15Plugin):
                 
             canvas.restore()
             
-            return 4 + total_width            
-        
-    def _refresh_panel_only(self):
-        self._get_stats()
-        self._build_properties()
-        self.screen.redraw(redraw_content = False)
-        self._schedule_refresh()    
-        
-    def _refresh(self):
-        self._get_stats()
-        self._build_properties()
-        self.screen.redraw(self.page)
-        self._schedule_refresh()  
+            return 4 + total_width  
     
     def _get_net_stats(self):
         ifs = { }
@@ -425,28 +387,29 @@ class G15SysMon(g15plugin.G15Plugin):
         nets.insert(0, "Net")
         return ifs, nets
 
-    '''
-    Returns a 4 element list containing the amount of time the CPU has 
-    spent performing the different types of work
     
-    0 user
-    1 nice
-    2 system
-    3 idle
-    
-    Values are in USER_HZ or Jiffies
-    ''' 
     def _get_time_list(self, cpu):
+        '''
+        Returns a 4 element list containing the amount of time the CPU has 
+        spent performing the different types of work
+        
+        0 user
+        1 nice
+        2 system
+        3 idle
+        
+        Values are in USER_HZ or Jiffies
+        ''' 
         if cpu.number == -1:
             cpu_times = gtop.cpu()
         else:
             cpu_times = gtop.cpu().cpus[cpu.number]
         return [cpu_times.user, cpu_times.nice, cpu_times.sys, cpu_times.idle]
 
-    def _get_net_total(self, list):
+    def _get_net_total(self, net_list):
         totals = (0, 0)
-        for l in list:
-            card = list[l]
+        for l in net_list:
+            card = net_list[l]
             totals = (totals[0] + card[0], totals[1])
             totals = (totals[0], totals[1] + card[1])
         return totals

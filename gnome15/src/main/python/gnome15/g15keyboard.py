@@ -97,6 +97,10 @@ class G15KeyHandler():
         self.__notify_handles = []
         self.__key_states = {}
         
+    def get_key_states(self):
+        # Get the current state of the keys
+        return self.__key_states
+        
     def start(self):
         """
         Start handling keys
