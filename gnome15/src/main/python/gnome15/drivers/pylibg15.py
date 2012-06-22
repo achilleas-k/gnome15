@@ -34,13 +34,7 @@ G510_STANDARD_KEYBOARD_INTERFACE = 0x0
 
 # Error codes
 G15_NO_ERROR = 0
-G15_ERROR_OPENING_USB_DEVICE = 1
-G15_ERROR_WRITING_PIXMAP = 2
-G15_ERROR_TIMEOUT = 3
-G15_ERROR_READING_USB_DEVICE = 4
-G15_ERROR_TRY_AGAIN = 5
-G15_ERROR_WRITING_BUFFER = 6
-G15_ERROR_UNSUPPORTED = 7
+G15_ERROR_NODEV = -19
 
 # Debug levels
 G15_LOG_INFO = 1
@@ -53,6 +47,7 @@ class KeyboardReceiveThread(Thread):
         self.name = "KeyboardReceiveThread"
         self.callback = callback
         self.on_exit = None
+        self.on_unplug = None
         
     def deactivate(self):
         if self._run:
@@ -76,6 +71,11 @@ class KeyboardReceiveThread(Thread):
                     else:
                         code = pressed_keys.value
                     self.callback(code, ext_code)
+                elif err == G15_ERROR_NODEV:
+                    # Device unplugged
+                    self._run = False
+                    if self.on_unplug is not None:
+                        self.on_unplug()
         finally:
             if self.on_exit is not None:
                 self.on_exit()

@@ -128,7 +128,7 @@ class G15OffscreenWindow(g15theme.Component):
     def paint(self, canvas):
         g15theme.Component.paint(self, canvas)
         if self.window is not None:
-            self.window.paint(canvas)
+            gobject.idle_add(self.window.paint, canvas)
             
         
     """

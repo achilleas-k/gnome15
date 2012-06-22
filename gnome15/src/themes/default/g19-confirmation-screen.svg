@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19-confirmation-screen.svg">
   <defs
      id="defs4">
@@ -157,11 +157,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/themes/default/${icon}"
        xlink:href="${icon}"
-       id="image4256"
-       x="294.54773"
-       y="795.11218"
+       height="24.999987"
        width="24.999987"
-       height="24.999987" />
+       y="795.11218"
+       x="294.54773"
+       id="image4256" />
     <text
        xml:space="preserve"
        style="font-size:28px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
@@ -185,19 +185,6 @@
        rx="6"
        ry="6"
        class="listView" />
-    <text
-       xml:space="preserve"
-       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="173.29773"
-       y="849.50281"
-       id="text_text"
-       sodipodi:linespacing="125%"
-       clip-path="url(#clipPath3017)"
-       title="vertical-wrap"><tspan
-         sodipodi:role="line"
-         id="tspan3006"
-         x="173.29773"
-         y="849.50281">${text}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:22px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
@@ -251,5 +238,26 @@
        id="rect3791-8"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccc" />
+    <rect
+       style="opacity:0.98999999;fill-opacity:0.53881273;stroke:none"
+       id="text"
+       width="300"
+       height="130"
+       x="10"
+       y="50"
+       transform="translate(9.5477353,786.11217)"
+       class="textbox" />
+    <text
+       xml:space="preserve"
+       style="font-size:18px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;text-anchor:middle;text-align:center"
+       x="53.800713"
+       y="65"
+       id="text_text"
+       sodipodi:linespacing="125%"
+       transform="translate(-0.4522647,784.11217)"><tspan
+         sodipodi:role="line"
+         id="tspan3016"
+         x="20.714287"
+         y="65">${text}</tspan></text>
   </g>
 </svg>

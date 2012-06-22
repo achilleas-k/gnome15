@@ -199,7 +199,7 @@ def is_passive_plugin(plugin_module):
         pass 
     return False
  
-def get_actions(plugin_module):
+def get_actions(plugin_module, device):
     """
     Get a dictionary of all the "Actions" this plugin uses. The key is
     the action ID, and the value of a textual description of what the action
@@ -207,11 +207,21 @@ def get_actions(plugin_module):
     
     Keyword arguments:
     plugin_module -- plugin module instance
+    device        -- device the plugins are for
     """
+    
+    # First look for actions for the specific device
+    if device is not None:
+        try:
+            return getattr(plugin_module, 'actions_%s' % device.model_id)
+        except AttributeError: 
+            pass 
+    
     try :
         return plugin_module.actions
     except AttributeError: 
         pass 
+    
     return {}
 
 
@@ -244,7 +254,8 @@ for plugindir in all_plugin_directories:
     try :
         for mod in ([__import__(fname) for fname in pluginfiles]):
             imported_plugins.append(mod)
-            actions = get_actions(mod)
+            # TODO - we need to be registering actions for a particular device
+            actions = get_actions(mod, None)
             for a in actions:
                 if not a in g15actions.actions:
                     g15actions.actions.append(a)
@@ -320,7 +331,7 @@ class G15Plugins():
         module_id -- plugin module ID to search for
         """
         return module_id in self.module_map
-        
+    
     def get_plugin(self, module_id):
         """
         Get the plugin instance given the plugin module's ID

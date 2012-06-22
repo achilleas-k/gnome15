@@ -1,12 +1,10 @@
 themedir = $(datadir)/gnome15/plugins/cal/default
 theme_DATA = default.svg \
 	default-cell.svg \
-	default-event.svg \
+	default-menu-entry.svg \
 	g19.svg \
 	g19-cell.svg \
-	g19-event.svg \
-	g19-menu-entry.svg \
-	bell.gif
+	g19-menu-entry.svg
 
 EXTRA_DIST =  			\
 	$(theme_DATA)

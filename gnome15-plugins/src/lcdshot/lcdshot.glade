@@ -2,6 +2,13 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
+  <object class="GtkAdjustment" id="FPSModel">
+    <property name="lower">1</property>
+    <property name="upper">100</property>
+    <property name="value">10</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
   <object class="GtkFileFilter" id="ImageFilter"/>
   <object class="GtkDialog" id="LCDShotDialog">
     <property name="width_request">460</property>
@@ -18,34 +25,92 @@
         <property name="can_focus">False</property>
         <property name="spacing">2</property>
         <child>
-          <object class="GtkVBox" id="vbox1">
+          <object class="GtkTable" id="table1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="spacing">4</property>
+            <property name="n_rows">3</property>
+            <property name="n_columns">2</property>
+            <property name="row_spacing">4</property>
             <child>
-              <object class="GtkHBox" id="hbox1">
+              <object class="GtkLabel" id="FileChooserLabel">
+                <property name="width_request">100</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="spacing">4</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">Folder</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label3">
+                <property name="width_request">100</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">Mode</property>
+              </object>
+              <packing>
+                <property name="top_attach">1</property>
+                <property name="bottom_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkFileChooserButton" id="FileChooserButton">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="action">select-folder</property>
+                <property name="title" translatable="yes">Choose A Destination Folder For The LCD Shots</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="right_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="Mode">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="model">ModeModel</property>
                 <child>
-                  <object class="GtkLabel" id="FileChooserLabel">
+                  <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                  <attributes>
+                    <attribute name="text">1</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="right_attach">2</property>
+                <property name="top_attach">1</property>
+                <property name="bottom_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHBox" id="hbox3">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkLabel" id="label2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="xalign">0</property>
-                    <property name="label" translatable="yes">Folder</property>
+                    <property name="label" translatable="yes">Frames per second</property>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
                     <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkFileChooserButton" id="FileChooserButton">
+                  <object class="GtkSpinButton" id="FPS">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="action">select-folder</property>
-                    <property name="title" translatable="yes">Choose A Destination Folder For The LCD Shots</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">•</property>
+                    <property name="invisible_char_set">True</property>
+                    <property name="primary_icon_activatable">False</property>
+                    <property name="secondary_icon_activatable">False</property>
+                    <property name="primary_icon_sensitive">True</property>
+                    <property name="secondary_icon_sensitive">True</property>
+                    <property name="adjustment">FPSModel</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -55,15 +120,15 @@
                 </child>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
+                <property name="right_attach">2</property>
+                <property name="top_attach">2</property>
+                <property name="bottom_attach">3</property>
               </packing>
             </child>
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="fill">False</property>
+            <property name="fill">True</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -101,26 +166,21 @@
       <action-widget response="0">button9</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkListStore" id="StyleModel">
+  <object class="GtkListStore" id="ModeModel">
     <columns>
-      <!-- column-name Style -->
+      <!-- column-name ModeId -->
+      <column type="gchararray"/>
+      <!-- column-name ModeName -->
       <column type="gchararray"/>
     </columns>
     <data>
       <row>
-        <col id="0" translatable="yes">zoom</col>
+        <col id="0" translatable="yes">still</col>
+        <col id="1" translatable="yes">Still</col>
       </row>
       <row>
-        <col id="0" translatable="yes">tile</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">center</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">scale</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">stretch</col>
+        <col id="0" translatable="yes">video</col>
+        <col id="1" translatable="yes">Video</col>
       </row>
     </data>
   </object>

@@ -7,6 +7,14 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
+  <object class="GtkListStore" id="AudioSourceModel">
+    <columns>
+      <!-- column-name AudioSourceIndex -->
+      <column type="gint"/>
+      <!-- column-name AudioSourceName -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
   <object class="GtkAdjustment" id="BarHeightAdjustment">
     <property name="upper">240</property>
     <property name="step_increment">1</property>
@@ -35,7 +43,6 @@
     <property name="page_increment">10</property>
   </object>
   <object class="GtkDialog" id="ImpulseDialog">
-    <property name="width_request">320</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Impulse Preferences</property>
@@ -57,42 +64,29 @@
               <object class="GtkHBox" id="hbox3">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <child>
-                  <object class="GtkLabel" id="label6">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="xalign">0</property>
-                    <property name="label" translatable="yes">Audio Source</property>
-                  </object>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkSpinButton" id="AudioSourceSpinner">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="invisible_char">●</property>
-                    <property name="invisible_char_set">True</property>
-                    <property name="primary_icon_activatable">False</property>
-                    <property name="secondary_icon_activatable">False</property>
-                    <property name="primary_icon_sensitive">True</property>
-                    <property name="secondary_icon_sensitive">True</property>
-                    <property name="adjustment">AudioSourceAdjustment</property>
-                  </object>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
               </object>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="AudioSource">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="model">AudioSourceModel</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext3"/>
+                  <attributes>
+                    <attribute name="text">1</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
               </packing>
             </child>
             <child>
@@ -171,6 +165,7 @@
                 </child>
                 <child>
                   <object class="GtkLabel" id="label3">
+                    <property name="width_request">114</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="xalign">0</property>
@@ -183,6 +178,7 @@
                 </child>
                 <child>
                   <object class="GtkLabel" id="label4">
+                    <property name="width_request">114</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="xalign">0</property>
@@ -197,6 +193,7 @@
                 </child>
                 <child>
                   <object class="GtkColorButton" id="Color1">
+                    <property name="width_request">64</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -214,6 +211,7 @@
                 </child>
                 <child>
                   <object class="GtkColorButton" id="Color2">
+                    <property name="width_request">64</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -231,6 +229,7 @@
                 </child>
                 <child>
                   <object class="GtkLabel" id="label2">
+                    <property name="width_request">114</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="xalign">0</property>
@@ -243,6 +242,7 @@
                 </child>
                 <child>
                   <object class="GtkLabel" id="label10">
+                    <property name="width_request">114</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="xalign">0</property>
@@ -257,6 +257,7 @@
                 </child>
                 <child>
                   <object class="GtkSpinButton" id="BarsSpinner">
+                    <property name="width_request">64</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="invisible_char">●</property>
@@ -278,6 +279,7 @@
                 </child>
                 <child>
                   <object class="GtkSpinButton" id="RowsSpinner">
+                    <property name="width_request">64</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="invisible_char">●</property>
@@ -299,6 +301,7 @@
                 </child>
                 <child>
                   <object class="GtkLabel" id="label7">
+                    <property name="width_request">114</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="xalign">0</property>
@@ -311,6 +314,7 @@
                 </child>
                 <child>
                   <object class="GtkLabel" id="label9">
+                    <property name="width_request">114</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="xalign">0</property>
@@ -325,6 +329,7 @@
                 </child>
                 <child>
                   <object class="GtkSpinButton" id="BarWidthSpinner">
+                    <property name="width_request">64</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="invisible_char">●</property>
@@ -346,6 +351,7 @@
                 </child>
                 <child>
                   <object class="GtkSpinButton" id="BarHeightSpinner">
+                    <property name="width_request">64</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="invisible_char">●</property>
@@ -367,6 +373,7 @@
                 </child>
                 <child>
                   <object class="GtkSpinButton" id="SpacingSpinner">
+                    <property name="width_request">64</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="invisible_char">●</property>
@@ -387,6 +394,7 @@
                 </child>
                 <child>
                   <object class="GtkLabel" id="label8">
+                    <property name="width_request">114</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="xalign">0</property>
@@ -409,7 +417,7 @@
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="padding">8</property>
-                <property name="position">1</property>
+                <property name="position">2</property>
               </packing>
             </child>
           </object>

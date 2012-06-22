@@ -26,6 +26,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
+import gnome15.g15plugin as g15plugin
 import gnome15.g15devices as g15devices
 import gnome15.g15actions as g15actions
 import dbus
@@ -58,7 +59,7 @@ g15devices.g19_action_keys[PLAY_TRACK] = g15actions.ActionBinding(PLAY_TRACK, [ 
 
 # Plugin details - All of these must be provided
 id="mpris"
-name=_("Media Player")
+name=_("Now Playing")
 description=_("Displays information about currently playing media. Requires \
 a player that supports the MPRIS (version 1 or 2) specification. This \
 includes Rhythmbox, Banshee (with a plugin), Audacious, VLC and others. \
@@ -80,11 +81,11 @@ actions={
 mpris_blacklist = [ "org.mpris.xbmc" ]
 
 def create(gconf_key, gconf_client, screen):
-    return G15MPRIS(gconf_client, screen)
+    return G15MPRIS(gconf_client,gconf_key, screen)
 
 class AbstractMPRISPlayer():
     
-    def __init__(self, gconf_client, screen, players, interface_name, session_bus, title):
+    def __init__(self, gconf_client, screen, players, interface_name, session_bus, title, theme):
         logger.info("Starting player %s" % interface_name)
         self.stopped = False
         self.elapsed = 0
@@ -100,14 +101,14 @@ class AbstractMPRISPlayer():
         self.playing_uri = None
         self.playback_started = 0
         self.start_elapsed = 0
-        self.gconf_client = gconf_client     
-        self.theme = g15theme.G15Theme(self)
+        self.gconf_client = gconf_client   
         self.cover_image = None
         self.thumb_image = None
         self.cover_uri = None
         self.song_properties = {}
         self.status = "Stopped"      
         self.redraw_timer = None  
+        self.theme = theme
         
     def action_performed(self, binding):
         if binding.action == NEXT_TRACK:
@@ -191,7 +192,8 @@ class AbstractMPRISPlayer():
             self.page = g15theme.G15Page("MPRIS%s" % self.title, self.screen, on_shown=self.on_shown, \
                                          on_hidden=self.on_hidden, theme_properties_callback = self._get_properties, \
                                          panel_painter = self.paint_panel, thumbnail_painter = self.paint_thumbnail, \
-                                         theme = self.theme, title = self.title)
+                                         theme = self.theme, title = self.title,
+                                         originating_plugin = self)
             self.screen.add_page(self.page)
             self.screen.redraw(self.page)
         else:
@@ -363,11 +365,11 @@ class AbstractMPRISPlayer():
     
 class MPRIS1Player(AbstractMPRISPlayer):
     
-    def __init__(self, gconf_client, screen, players, bus_name, session_bus):
+    def __init__(self, gconf_client, screen, players, bus_name, session_bus, theme):
         self.timer = None
         root_obj = session_bus.get_object(bus_name, '/')                    
         root = dbus.Interface(root_obj, 'org.freedesktop.MediaPlayer')
-        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, bus_name, session_bus, root.Identity())
+        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, bus_name, session_bus, root.Identity(), theme)
         
         # There is no seek / position changed event in MPRIS1, so we poll        
         player_obj = session_bus.get_object(bus_name, '/Player')
@@ -469,7 +471,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
 
 class MPRIS2Player(AbstractMPRISPlayer):
     
-    def __init__(self, gconf_client, screen, players, bus_name, session_bus):
+    def __init__(self, gconf_client, screen, players, bus_name, session_bus, theme):
         self.last_properties = None
         self.tracks = []
         
@@ -493,7 +495,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
             logger.info("No TrackList interface")     
         
         # Configure the initial state 
-        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, bus_name, session_bus, props["Identity"] if "Identity" in props else "MPRIS2")
+        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, bus_name, session_bus, props["Identity"] if "Identity" in props else "MPRIS2", theme)
         
         session_bus.add_signal_receiver(self.properties_changed_handler, dbus_interface = "org.freedesktop.DBus.Properties", signal_name = "PropertiesChanged") 
         session_bus.add_signal_receiver(self.seeked, dbus_interface = "org.mpris.MediaPlayer2.Player", signal_name = "Seeked")
@@ -668,16 +670,15 @@ class MPRIS2Player(AbstractMPRISPlayer):
         self.reset_elapsed()
         self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0 if self.status == "Playing" else 5.0, self.update_track)
             
-class G15MPRIS():
+class G15MPRIS(g15plugin.G15Plugin):
     
-    def __init__(self, gconf_client, screen):
-        self.screen = screen;
-        self.gconf_client = gconf_client
-        self.active = False
+    def __init__(self, gconf_client, gconf_key, screen):
+        g15plugin.G15Plugin.__init__(self, gconf_client, gconf_key, screen)
         self.session_bus = None
-        self.players = {}
 
     def activate(self):
+        self.players = {}
+        g15plugin.G15Plugin.activate(self)
         if self.session_bus == None:
             self.session_bus = dbus.SessionBus()
             self.session_bus.call_on_disconnection(self._dbus_disconnected)
@@ -692,6 +693,7 @@ class G15MPRIS():
                                      signal_name='NameOwnerChanged')  
     
     def deactivate(self):
+        g15plugin.G15Plugin.deactivate(self)
         self.screen.key_handler.action_listeners.remove(self)
         for key in self.players.keys():
             self.players[key].stop()
@@ -722,14 +724,14 @@ class G15MPRIS():
             if new_owner == "" and name in self.players:
                 self.players[name].stop()
             elif old_owner == "" and not name in self.players:
-                self.players[name] = MPRIS2Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
+                self.players[name] = MPRIS2Player(self.gconf_client, self.screen, self.players, name, self.session_bus, self.create_theme())
         elif name.startswith("org.mpris."):
             logger.info("MPRIS1 Name owner changed for %s from %s to %s", name, old_owner, new_owner)
             if new_owner == "" and name in self.players:
                 self.players[name].stop()
             elif old_owner == "" and not name in self.players:
                 if not name in mpris_blacklist:
-                    self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
+                    self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus, self.create_theme())
                 else:
                     logger.info("%s is a blacklisted player, ignoring" % name)
         
@@ -740,10 +742,10 @@ class G15MPRIS():
             if not name in mpris_blacklist:
                 # MPRIS 2
                 if not name in self.players and name.startswith("org.mpris.MediaPlayer2"):
-                    self.players[name] = MPRIS2Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
+                    self.players[name] = MPRIS2Player(self.gconf_client, self.screen, self.players, name, self.session_bus, self.create_theme())
                 # MPRIS 1
                 elif not name in self.players and name.startswith("org.mpris."):
-                    self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus)
+                    self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus, self.create_theme())
             
     def _dbus_disconnected(self, connection):
         logger.debug("DBUS Disconnected")

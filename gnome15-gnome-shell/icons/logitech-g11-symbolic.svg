@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg7384"
+   height="16"
+   width="16"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="logitech-g110-symbolic.svg">
+  <defs
+     id="defs10" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1440"
+     inkscape:window-height="998"
+     id="namedview8"
+     showgrid="false"
+     inkscape:zoom="14.75"
+     inkscape:cx="-11.412465"
+     inkscape:cy="8.2254677"
+     inkscape:window-x="2076"
+     inkscape:window-y="8"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg7384" />
+  <metadata
+     id="metadata90">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Gnome Symbolic Icon Theme</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <title
+     id="title9167">Gnome Symbolic Icon Theme</title>
+  <path
+     style="fill:#bebebe;fill-opacity:1;stroke:none"
+     d="M 2 1 C 0.892 1 0 1.892 0 3 L 0 13 C 0 14.108 0.892 15 2 15 L 14 15 C 15.108 15 16 14.108 16 13 L 16 3 C 16 1.892 15.108 1 14 1 L 2 1 z M 4.75 6.125 C 5.2832002 6.1250044 5.7011685 6.2441449 6 6.46875 C 6.3007773 6.6914101 6.4765583 7.0117223 6.5625 7.40625 L 5.71875 7.5625 C 5.6581998 7.3515657 5.5429655 7.1835971 5.375 7.0625 C 5.2089815 6.9394567 4.9999973 6.8750036 4.75 6.875 C 4.3710917 6.8750036 4.0683576 7.0097691 3.84375 7.25 C 3.6210925 7.4902374 3.4999988 7.8398464 3.5 8.3125 C 3.4999988 8.8222673 3.6171862 9.2128919 3.84375 9.46875 C 4.0703108 9.722657 4.3515605 9.8437507 4.71875 9.84375 C 4.900388 9.8437507 5.0996066 9.8203132 5.28125 9.75 C 5.4648406 9.6777352 5.6191373 9.5703134 5.75 9.46875 L 5.75 8.9375 L 4.75 8.9375 L 4.75 8.21875 L 6.625 8.21875 L 6.625 9.90625 C 6.4433553 10.082032 6.1894493 10.240235 5.84375 10.375 C 5.4999968 10.507812 5.1347628 10.59375 4.78125 10.59375 C 4.3320292 10.59375 3.9589827 10.5 3.625 10.3125 C 3.2910147 10.123047 3.042968 9.84961 2.875 9.5 C 2.7070309 9.1484389 2.5937497 8.7558611 2.59375 8.34375 C 2.5937497 7.896487 2.6874996 7.5039093 2.875 7.15625 C 3.0624992 6.8085975 3.3574208 6.5293008 3.71875 6.34375 C 3.994139 6.2011762 4.3398417 6.1250044 4.75 6.125 z M 8.6875 6.1875 L 9.34375 6.1875 L 9.34375 10.5 L 8.53125 10.5 L 8.53125 7.40625 C 8.2304675 7.6875028 7.8769522 7.896487 7.46875 8.03125 L 7.46875 7.28125 C 7.6835931 7.2109408 7.904296 7.0703159 8.15625 6.875 C 8.4082017 6.6777382 8.5937484 6.4492228 8.6875 6.1875 z M 11.6875 6.1875 L 12.34375 6.1875 L 12.34375 10.5 L 11.53125 10.5 L 11.53125 7.40625 C 11.230468 7.6875028 10.876952 7.896487 10.46875 8.03125 L 10.46875 7.28125 C 10.683593 7.2109408 10.904296 7.0703159 11.15625 6.875 C 11.408202 6.6777382 11.593748 6.4492228 11.6875 6.1875 z "
+     id="rect2983" />
+</svg>

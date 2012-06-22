@@ -29,6 +29,7 @@ import os
 
 COLORS_REDBLUE = [(0, 0, 0, 1), (255, 0, 0, 1), (255, 0, 255, 1), (0, 0, 255, 1)  ]
 COLORS_FULL = [(0, 0, 0, 1), (255, 0, 0, 1), (0, 255, 0, 1), (0, 0, 255, 1), (255, 255, 0, 1), (0, 255, 255, 1), (255, 0, 255, 1), (255, 255, 255, 1)  ]
+COLORS_NAMES = ["Black", "Red", "Green", "Blue", "Yellow", "Cyan", "Indigo", "White" ]
 
 CELL_HEIGHT = 12
 CELL_WIDTH = 24

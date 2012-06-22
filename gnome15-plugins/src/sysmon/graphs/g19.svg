@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.2 r9819"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19.svg">
   <defs
      id="defs4">
@@ -478,7 +478,7 @@
        width="240"
        height="59.999981"
        x="70"
-       y="882.36218"
+       y="886.36218"
        rx="12"
        ry="12.000001" />
     <rect
@@ -487,13 +487,13 @@
        width="240"
        height="59.999977"
        x="70"
-       y="812.36218"
+       y="816.36218"
        rx="12"
        ry="12.000001" />
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/sysmon/graphs/${cpu_icon}"
        xlink:href="${cpu_icon}"
-       y="832.36218"
+       y="836.36218"
        x="20"
        id="image3130"
        width="24"
@@ -502,13 +502,13 @@
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans Bold"
        x="31.708126"
-       y="823.86975"
+       y="827.86975"
        id="text3157"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3159"
          x="31.708126"
-         y="823.86975">${cpu_no}</tspan></text>
+         y="827.86975">${cpu_no}</tspan></text>
     <rect
        style="opacity:0.98999999;fill:#ff0000;fill-opacity:0;stroke:none"
        id="cpu"
@@ -523,13 +523,13 @@
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="33.368164"
-       y="864.36218"
+       y="868.36218"
        id="text3158"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3160"
          x="33.368164"
-         y="864.36218">${cpu_pc}%</tspan></text>
+         y="868.36218">${cpu_pc}%</tspan></text>
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/sysmon/graphs/${net_icon}"
        xlink:href="${net_icon}"
@@ -537,14 +537,14 @@
        width="24"
        id="image3130-6"
        x="20.746178"
-       y="896.17566" />
+       y="900.17566" />
     <rect
        style="opacity:0.98999999;fill:#ff0000;fill-opacity:0;stroke:none"
        id="net"
        width="240"
        height="59.999996"
        x="70"
-       y="882.36218"
+       y="886.36218"
        rx="12"
        ry="11.999999"
        class="graph" />
@@ -552,35 +552,35 @@
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="35.048431"
-       y="941.28729"
+       y="945.28729"
        id="text3930"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3932"
          x="35.048431"
-         y="941.28729">${net_recv_mbps} Mbps</tspan></text>
+         y="945.28729">${net_recv_mbps} Mbps</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="34.595306"
-       y="929.28729"
+       y="933.28729"
        id="text3930-7"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3932-0"
          x="34.595306"
-         y="929.28729">${net_send_mbps} Mbps</tspan></text>
+         y="933.28729">${net_send_mbps} Mbps</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans Bold"
        x="32.70813"
-       y="891.86981"
+       y="895.86981"
        id="text3157-0"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3159-7"
          x="32.70813"
-         y="891.86981">${net_no}</tspan></text>
+         y="895.86981">${net_no}</tspan></text>
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/sysmon/graphs/${mem_icon}"
        xlink:href="${mem_icon}"
@@ -588,48 +588,48 @@
        width="24"
        id="image3130-3"
        x="20"
-       y="972.36218" />
+       y="976.36218" />
     <rect
        style="fill:#696969;fill-opacity:0.50196078;stroke:none"
        id="rect3925-0-6"
        width="240"
        height="59.999981"
        x="70"
-       y="952.36218"
+       y="956.36218"
        rx="12"
        ry="12.000001" />
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans Bold"
        x="32.70813"
-       y="965.86981"
+       y="969.86981"
        id="text3157-0-8"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3159-7-9"
          x="32.70813"
-         y="965.86981">_(Mem)</tspan></text>
+         y="969.86981">_(Mem)</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:109.00000334%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="36.108398"
-       y="1006.3622"
+       y="1010.3622"
        id="text3930-76"
        sodipodi:linespacing="109%"><tspan
          sodipodi:role="line"
          x="36.108398"
-         y="1006.3622"
+         y="1010.3622"
          id="tspan3976">${mem_noncached_gb} GB of</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:109.00000334%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="30"
-       y="1016.3622"
+       y="1020.3622"
        id="text3930-76-8"
        sodipodi:linespacing="109%"><tspan
          sodipodi:role="line"
          x="30"
-         y="1016.3622"
+         y="1020.3622"
          id="tspan3976-0">${mem_total_gb} GB</tspan></text>
     <rect
        style="opacity:0.98999999;fill:#ff0000;fill-opacity:0;stroke:none"

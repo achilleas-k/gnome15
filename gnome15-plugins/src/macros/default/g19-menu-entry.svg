@@ -10,11 +10,11 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="272"
+   width="315"
    height="22"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19-menu-entry.svg"
    style="display:inline">
   <defs
@@ -324,14 +324,14 @@
     </clipPath>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3078">
+       id="clipPath3048">
       <rect
-         y="792"
-         x="102.45226"
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3050"
+         width="216.54773"
          height="15"
-         width="175"
-         id="rect3080"
-         style="fill:#ff0000;fill-opacity:1;stroke:none" />
+         x="102.45226"
+         y="792" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -350,8 +350,8 @@
      borderlayer="false"
      inkscape:window-width="1255"
      inkscape:window-height="932"
-     inkscape:window-x="1976"
-     inkscape:window-y="44"
+     inkscape:window-x="539"
+     inkscape:window-y="60"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -387,11 +387,11 @@
     <rect
        style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5-4-5"
-       width="272"
+       width="315"
        height="22.999977"
        x="9"
        y="789"
-       rx="6"
+       rx="6.9485292"
        ry="6" />
   </g>
   <g
@@ -407,7 +407,7 @@
        y="804.2821"
        id="text2999-0-9"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath3078)"><tspan
+       clip-path="url(#clipPath3048)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-1"
          x="106.00391"
@@ -415,35 +415,35 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/macros/default/${icon1}"
        xlink:href="${icon1}"
-       title="item_icon"
-       style="display:inline"
-       id="item_icon-3-9-6"
-       width="25"
-       height="19"
-       x="11.547737"
+       class="embedded_image"
        y="791.11218"
-       class="embedded_image" />
+       x="11.547737"
+       height="19"
+       width="25"
+       id="item_icon-3-9-6"
+       style="display:inline"
+       title="item_icon" />
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/macros/default/${icon2}"
        xlink:href="${icon2}"
-       title="item_icon"
-       style="display:inline"
-       id="item_icon-3-9-6-1"
-       width="25"
-       height="19"
-       x="43.547737"
+       class="embedded_image"
        y="791.11218"
-       class="embedded_image" />
+       x="43.547737"
+       height="19"
+       width="25"
+       id="item_icon-3-9-6-1"
+       style="display:inline"
+       title="item_icon" />
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/macros/default/${icon3}"
        xlink:href="${icon3}"
-       title="item_icon"
-       style="display:inline"
-       id="item_icon-3-9-6-15"
-       width="25"
-       height="19"
-       x="75.547737"
+       class="embedded_image"
        y="791.11218"
-       class="embedded_image" />
+       x="75.547737"
+       height="19"
+       width="25"
+       id="item_icon-3-9-6-15"
+       style="display:inline"
+       title="item_icon" />
   </g>
 </svg>

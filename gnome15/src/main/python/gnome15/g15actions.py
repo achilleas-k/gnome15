@@ -61,10 +61,14 @@ actions = [
 
 class ActionBinding():
     """
-    Create when an action is invoked and contains the keys that activated
+    Created when an action is invoked and contains the keys that activated
     the action (if any), the state they were in and the action ID
     """
     def __init__(self, action, keys, state):
         self.action = action
         self.state = state
         self.keys = keys
+        
+    def __cmp__(self, other):
+        f = cmp(self.keys, other.keys)
+        return f if f != 0 else cmp(self.state, other.state)

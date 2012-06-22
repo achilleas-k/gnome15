@@ -1,5 +1,6 @@
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
+import gnome15.g15util as g15util
 import cairoplot
 import cairo
 
@@ -15,6 +16,15 @@ class G15Graph(g15theme.Component):
     def __init__(self, component_id, plugin):
         g15theme.Component.__init__(self, component_id)
         self.plugin = plugin
+
+    def get_colors(self):
+        series_colors = None
+        fill_colors = None
+        if self.plugin.screen.driver.get_control_for_hint(g15driver.HINT_HIGHLIGHT): 
+            highlight_color = self.plugin.screen.driver.get_color_as_ratios(g15driver.HINT_HIGHLIGHT, (255, 0, 0 ))
+            series_colors = (highlight_color[0],highlight_color[1],highlight_color[2], 1.0)
+            fill_colors = (highlight_color[0],highlight_color[1],highlight_color[2], 0.50)
+        return series_colors, fill_colors
         
     def create_plot(self, graph_surface):
         raise Exception("Not implemented")
@@ -46,14 +56,18 @@ class G15CPUGraph(G15Graph):
         G15Graph.__init__(self, component_id, plugin)
         
     def create_plot(self, graph_surface):
-        return cairoplot.DotLinePlot( graph_surface, self.plugin.selected_cpu.history, 
-                                      self.view_bounds[2], 
-                                      self.view_bounds[3], 
-                                      background = None,
-                                      axis = False, grid = False, 
-                                      x_labels = [],
-                                      y_labels = ["%-6d" % 0, "%-6d" % 50, "%-6d" % 100],
-                                      y_bounds = (0, 100))
+        series_colors, fill_colors = self.get_colors()
+        return cairoplot.AreaPlot(graph_surface, self.plugin.selected_cpu.history, 
+                                 self.view_bounds[2], 
+                                 self.view_bounds[3], 
+                                 background = None,
+                                 grid = False, 
+                                 x_labels = [],
+                                 y_labels = ["%-6d" % 0, "%-6d" % 50, "%-6d" % 100],
+                                 y_bounds = (0, 100),
+                                 series_colors = [ series_colors ],
+                                 fill_colors = [ fill_colors ])
+
 
 class G15NetGraph(G15Graph):
     
@@ -65,14 +79,19 @@ class G15NetGraph(G15Graph):
         max_y = max(max(self.plugin.max_send, self.plugin.max_recv), 102400)
         for x in range(0, int(max_y), int(max_y / 4)):
             y_labels.append("%-3.2f" % ( float(x) / 102400.0 ) )
-        return cairoplot.DotLinePlot( graph_surface, [ self.plugin.send_history, self.plugin.recv_history ], 
+        series_color, fill_color = self.get_colors()
+        alt_series_color = g15util.get_alt_color(series_color)
+        alt_fill_color = g15util.get_alt_color(fill_color)
+        return cairoplot.AreaPlot( graph_surface, [ self.plugin.send_history, self.plugin.recv_history ], 
                                       self.view_bounds[2], 
                                       self.view_bounds[3], 
                                       background = None,
-                                      axis = False, grid = False, 
+                                      grid = False, 
                                       x_labels = [],
                                       y_labels = y_labels,
-                                      y_bounds = (0, max_y ) )
+                                      y_bounds = (0, max_y ),
+                                      series_colors = [ series_color, alt_series_color ],
+                                      fill_colors = [ fill_color, alt_fill_color ]  )
 
 class G15MemGraph(G15Graph):
     """
@@ -86,11 +105,16 @@ class G15MemGraph(G15Graph):
         max_y = self.plugin.total
         for x in range(0, int(max_y), int(max_y / 4)):
             y_labels.append("%-4d" % int( float(x) / 1024.0 / 1024.0 ) )
-        return cairoplot.DotLinePlot( graph_surface, [ self.plugin.used_history, self.plugin.cached_history ], 
+        series_color, fill_color = self.get_colors()
+        alt_series_color = g15util.get_alt_color(series_color)
+        alt_fill_color = g15util.get_alt_color(fill_color)
+        return cairoplot.AreaPlot( graph_surface, [ self.plugin.used_history, self.plugin.cached_history ], 
                                       self.view_bounds[2], 
                                       self.view_bounds[3], 
                                       background = None,
-                                      axis = False, grid = False, 
+                                      grid = False, 
                                       x_labels = [],
                                       y_labels = y_labels,
-                                      y_bounds = (0, max_y ) )
+                                      y_bounds = (0, max_y ),
+                                      series_colors = [ series_color, alt_series_color ],
+                                      fill_colors = [ fill_color, alt_fill_color ]  )

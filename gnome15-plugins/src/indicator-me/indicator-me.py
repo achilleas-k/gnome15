@@ -40,6 +40,13 @@ from dbus.exceptions import DBusException
 import logging
 logger = logging.getLogger("indicator-me")
 
+# Only works on Ubuntu. Doesn't work on later versions of Ubuntu
+if not "Ubuntu" == g15util.get_lsb_distributor():
+    raise Exception("Indicator Me only works on Ubuntu")
+elif g15util.get_lsb_release() > 11.04:
+    raise Exception("Indicator Me only works on Ubuntu up to version 11.04")
+
+
 # Plugin details - All of these must be provided
 id="indicator-me"
 name=_("Indicator Me")
@@ -170,17 +177,19 @@ class G15IndicatorMe():
         self._menu_page = g15theme.G15Page(_("Indicator Me Status"), self._screen, priority = g15screen.PRI_NORMAL, \
                                            on_shown = self._on_menu_page_show, title = self._get_status_text(), theme = self._menu_theme,
                                            theme_properties_callback = self._get_menu_properties,
-                                           thumbnail_painter = self._paint_popup_thumbnail)
+                                           thumbnail_painter = self._paint_popup_thumbnail,
+                                           originating_plugin = self)
         self._popup_page = g15theme.G15Page(_("Indicator Me Popup"), self._screen, priority = g15screen.PRI_INVISIBLE, \
                                             panel_painter = self._paint_popup_thumbnail, theme = self._popup_theme,
-                                            theme_properties_callback = self._get_popup_properties)
+                                            theme_properties_callback = self._get_popup_properties,
+                                            originating_plugin = self)
         self._screen.add_page(self._menu_page)
         self._screen.add_page(self._popup_page)
         
         # Create the menu
         self._menu = g15theme.DBusMenu(self._me_menu)
         self._menu_page.add_child(self._menu)
-        self._menu_page.add_child(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
+        self._menu_page.add_child(g15theme.MenuScrollbar("viewScrollbar", self._menu))
         self._screen.redraw(self._menu_page)
         
     def _on_menu_page_show(self):

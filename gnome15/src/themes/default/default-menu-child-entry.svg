@@ -7,60 +7,39 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="160"
-   height="6"
+   height="7"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.0 r9654"
-   sodipodi:docname="default-menu-entry.svg">
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="default-menu-child-entry.svg"
+   style="display:inline">
   <defs
      id="defs4">
-    <filter
-       id="filter3967"
-       inkscape:label="Drop shadow"
-       width="1.5"
-       height="1.5"
-       x="-0.25"
-       y="-0.25"
-       color-interpolation-filters="sRGB">
-      <feGaussianBlur
-         id="feGaussianBlur3969"
-         in="SourceAlpha"
-         stdDeviation="4"
-         result="blur" />
-      <feColorMatrix
-         id="feColorMatrix3971"
-         result="bluralpha"
-         type="matrix"
-         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 " />
-      <feOffset
-         id="feOffset3973"
-         in="bluralpha"
-         dx="0.9"
-         dy="0.9"
-         result="offsetBlur" />
-      <feMerge
-         id="feMerge3975">
-        <feMergeNode
-           id="feMergeNode3977"
-           in="offsetBlur" />
-        <feMergeNode
-           id="feMergeNode3979"
-           in="SourceGraphic" />
-      </feMerge>
-    </filter>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath2999">
+       id="clipPath3012">
       <rect
-         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-         id="rect3001"
-         width="205"
-         height="21.999977"
-         x="104.54774"
-         y="784.11218" />
+         style="fill:#ff0000;stroke:none"
+         id="rect3014"
+         width="96"
+         height="7"
+         x="12"
+         y="-1" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3017">
+      <rect
+         style="fill:#ff0000;stroke:none"
+         id="rect3019"
+         width="96"
+         height="7"
+         x="6"
+         y="-1" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -70,22 +49,22 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.959798"
-     inkscape:cx="90.646408"
-     inkscape:cy="18.752521"
+     inkscape:zoom="6"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="layer2"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2017"
-     inkscape:window-y="42"
+     inkscape:window-x="371"
+     inkscape:window-y="60"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
-     fit-margin-bottom="0">
+     fit-margin-bottom="0"
+     inkscape:cx="8e+01"
+     inkscape:cy="-4">
     <inkscape:grid
        type="xygrid"
        id="grid3986"
@@ -107,45 +86,138 @@
     </rdf:RDF>
   </metadata>
   <g
-     inkscape:label="Layer 1"
+     inkscape:label="Deselected"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-9.5477352,-805.11218)">
+     title="del item_selected"
+     transform="translate(0,1)"
+     style="display:inline">
     <text
        xml:space="preserve"
-       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="9.0496883"
-       y="809.69714"
+       x="5.5019531"
+       y="4.5849609"
        id="text2997"
+       class="shadow"
+       title="del item_selected"
+       clip-path="url(#clipPath3017)"
+       style="font-size:6px;font-family:Sans"
+       transform="translate(6,0)"><tspan
+         sodipodi:role="line"
+         id="tspan2999"
+         x="5.5019531"
+         y="4.5849609">${item_name} </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:end;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:end;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
+       x="144.2207"
+       y="4.5849609"
+       id="text2997-33"
        sodipodi:linespacing="125%"
        class="shadow"
        title="del item_selected"><tspan
          sodipodi:role="line"
-         id="tspan2999"
-         x="9.0496883"
-         y="809.69714">${item_name} </tspan></text>
+         id="tspan2999-8"
+         x="146.13086"
+         y="4.5849609">${item_alt} </tspan></text>
     <g
-       id="g3787"
-       title="del !item_selected"
-       transform="matrix(0.84423489,0,0,1,1.4096257,0)">
+       id="g3024"
+       title="del !item_radio"
+       transform="translate(6,0)">
+      <path
+         title="del !item_radio_selected"
+         id="rect3006"
+         transform="translate(0,-1)"
+         d="M 0,2 0,5 3,5 3,2 0,2 z M 1,3 2,3 2,4 1,4 1,3 z"
+         style="fill-opacity:1;stroke:none"
+         inkscape:connector-curvature="0" />
       <rect
-         y="805.11218"
-         x="9.5477352"
-         height="6"
-         width="160"
-         id="rect3017"
-         style="fill:#000000;fill-opacity:0.9901962;stroke:none" />
-      <text
-         sodipodi:linespacing="125%"
-         id="text2997-3"
-         y="809.69714"
-         x="9.0496883"
-         style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-         xml:space="preserve"><tspan
-           y="809.69714"
-           x="9.0496883"
-           id="tspan2999-1"
-           sodipodi:role="line">${item_name} </tspan></text>
+         title="del item_radio_selected"
+         y="2"
+         x="1"
+         height="1"
+         width="1"
+         id="rect3022"
+         style="fill:#000000;fill-opacity:1;stroke:none" />
     </g>
+    <image
+       class="embedded_image"
+       y="-1"
+       x="144"
+       height="7"
+       width="8"
+       id="item_icon-3-9-6-7-2"
+       style="display:inline"
+       xlink:href="/home/tanktarta/dummy.png"
+       sodipodi:absref="/home/tanktarta/dummy.png"
+       title="item_alt_icon" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Selected"
+     style="display:inline"
+     title="del !item_selected"
+     transform="translate(0,1)">
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:none"
+       id="rect3017"
+       width="153"
+       height="7"
+       x="0"
+       y="-1" />
+    <text
+       xml:space="preserve"
+       x="11.501953"
+       y="4.438684"
+       id="text2997-3"
+       clip-path="url(#clipPath3012)"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ffffff;font-family:Sans;-inkscape-font-specification:Sans"><tspan
+         sodipodi:role="line"
+         id="tspan2999-1"
+         x="11.501953"
+         y="4.438684">${item_name} </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;text-anchor:end;fill:#ffffff;font-family:Sans;-inkscape-font-specification:Sans"
+       x="144.2207"
+       y="4.5849609"
+       id="text2997-33-1"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan2999-8-2"
+         x="146.13086"
+         y="4.5849609">${item_alt} </tspan></text>
+    <g
+       style="display:inline"
+       id="g3024-7"
+       title="del !item_radio"
+       transform="translate(6,0)">
+      <path
+         title="del !item_radio_selected"
+         inkscape:connector-curvature="0"
+         id="rect3006-4"
+         transform="translate(0,-1)"
+         d="M 0,2 0,5 3,5 3,2 0,2 z M 1,3 2,3 2,4 1,4 1,3 z"
+         style="fill:#ffffff;fill-opacity:1;stroke:none" />
+      <rect
+         title="del item_radio_selected"
+         y="2"
+         x="1"
+         height="1"
+         width="1"
+         id="rect3022-8"
+         style="fill:#ffffff;fill-opacity:1;stroke:none" />
+    </g>
+    <image
+       class="embedded_image"
+       y="-1"
+       x="144"
+       height="7"
+       width="8"
+       id="item_icon-3-9-6-7"
+       style="display:inline"
+       xlink:href="/home/tanktarta/dummy.png"
+       sodipodi:absref="/home/tanktarta/dummy.png"
+       title="item_alt_icon" />
   </g>
 </svg>

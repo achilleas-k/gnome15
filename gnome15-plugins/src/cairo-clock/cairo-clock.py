@@ -145,7 +145,7 @@ class G15CairoClock():
         self._load_surfaces()         
         self.page = g15theme.G15Page(name, self.screen, painter = self._paint, priority=g15screen.PRI_NORMAL, 
                                         thumbnail_painter = self._paint_thumbnail, panel_painter = self._paint_panel,
-                                        title = name)
+                                        title = name, originating_plugin = self)
         self.screen.add_page(self.page)
         self._refresh()
     

@@ -176,9 +176,10 @@ class G15FeedPage(g15theme.G15Page):
         self._menu = g15theme.Menu("menu")
         g15theme.G15Page.__init__(self, "Feed " + str(plugin._page_serial), self._screen,
                                      thumbnail_painter=self._paint_thumbnail,
-                                     theme=g15theme.G15Theme(self, "menu-screen"), theme_properties_callback=self._get_theme_properties)
+                                     theme=g15theme.G15Theme(self, "menu-screen"), theme_properties_callback=self._get_theme_properties,
+                                     originating_plugin = plugin)
         self.add_child(self._menu)
-        self.add_child(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
+        self.add_child(g15theme.MenuScrollbar("viewScrollbar", self._menu))
         plugin._page_serial += 1
         self._reload() 
         self._screen.add_page(self)

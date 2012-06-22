@@ -37,6 +37,10 @@ import gnome15.dbusmenu as dbusmenu
 
 from lxml import etree
 
+# Only works in Unity
+if not "XDG_CURRENT_DESKTOP" in os.environ or os.environ["XDG_CURRENT_DESKTOP"] != "Unity":
+    raise Exception("Only works in Ubuntu Unity desktop")
+
 # Plugin details - All of these must be provided
 id="indicator-messages"
 name=_("Indicator Messages")
@@ -187,8 +191,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
             self.screen.redraw()
             
     def _menu_changed(self, menu = None, property = None, value = None):
-        
-        self.menu.menu_changed(menu, property, value)
+#        self._messages_menu.menu_changed(menu, property, value)
         self._popup()
         
     def _check_status(self):

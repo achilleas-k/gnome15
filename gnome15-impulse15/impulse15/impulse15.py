@@ -22,6 +22,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util  
 import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
+import gobject
 import gtk
 import os
 import sys
@@ -50,13 +51,28 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     
     dialog = widget_tree.get_object("ImpulseDialog")
     dialog.set_transient_for(parent)
+    
+    # Set up the audio source model  
+    audio_source_model = widget_tree.get_object("AudioSourceModel")
+    status, output = g15util.execute_for_output("pacmd list-sources")
+    if status == 0 and len(output) > 0:
+        i = 0
+        for line in output.split("\n"):
+            line = line.strip()
+            if line.startswith("index: "):
+                i = int(line[7:])
+            elif line.startswith("device.description = "):
+                audio_source_model.append((i, line[22:-1]))
+    else:
+        for i in range(0, 9):
+            audio_source_model.append((i, "Source %d" % i))
 
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/disco", "Disco", False, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/animate_mkeys", "AnimateMKeys", False, widget_tree)
     g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/mode", "ModeCombo", "spectrum", widget_tree)
     g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/paint", "PaintCombo", "screen", widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bars", "BarsSpinner", 16, widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/audio_source", "AudioSourceSpinner", 0, widget_tree)
+    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/audio_source", "AudioSource", 0, widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_width", "BarWidthSpinner", 16, widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/spacing", "SpacingSpinner", 0, widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/rows", "RowsSpinner", 16, widget_tree)
@@ -68,7 +84,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     
     if driver.get_bpp() == 0:
         widget_tree.get_object("LCDTable").set_visible(False)
-        
+
     
     dialog.run()
     dialog.hide() 
@@ -301,7 +317,7 @@ class G15Impulse():
     def _load_config(self):
         logger.info("Reloading configuration")
         self.audio_source_index = self.gconf_client.get_int(self.gconf_key + "/audio_source")
-        self.set_audio_source()
+        gobject.idle_add(self.set_audio_source)
         self.mode = self.gconf_client.get_string(self.gconf_key + "/mode")
         self.disco = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/disco", False)
         self.refresh_interval = 1.0 / g15util.get_float_or_default(self.gconf_client, self.gconf_key + "/frame_rate", 25.0)
@@ -339,7 +355,7 @@ class G15Impulse():
             self._clear_painter()
             if paint == "screen":
                 if self.page == None:
-                    self.page = g15theme.G15Page(id, self.screen, title = name, painter = self.painter.paint, on_shown = self.on_shown, on_hidden = self.on_hidden)
+                    self.page = g15theme.G15Page(id, self.screen, title = name, painter = self.painter.paint, on_shown = self.on_shown, on_hidden = self.on_hidden, originating_plugin = self)
                     self.screen.add_page(self.page)
                 else:
                     self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)

@@ -9,11 +9,11 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="13"
+   width="12"
    height="6"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="default-cell.svg">
   <defs
      id="defs4">
@@ -66,8 +66,8 @@
      borderlayer="false"
      inkscape:window-width="1265"
      inkscape:window-height="824"
-     inkscape:window-x="2565"
-     inkscape:window-y="176"
+     inkscape:window-x="332"
+     inkscape:window-y="174"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -102,7 +102,7 @@
     <rect
        style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.99999976;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:0.99999976, 0.99999976;stroke-dashoffset:0"
        id="rect3818-5"
-       width="12"
+       width="11"
        height="5"
        x="7"
        y="815.875"
@@ -111,7 +111,7 @@
     <rect
        style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.99999976;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect3818"
-       width="12"
+       width="11"
        height="5"
        x="7"
        y="816"

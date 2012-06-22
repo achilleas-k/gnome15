@@ -27,6 +27,7 @@ import cal
 import gtk
 import os
 import datetime
+import calendar
 import gdata.calendar.data
 import gdata.calendar.client
 import gdata.acl.data
@@ -95,7 +96,12 @@ class GoogleEvent(cal.CalendarEvent):
         cal.CalendarEvent.__init__(self)
         self.start_date = iso8601.parse_date(when.start)
         if when.end:
-            self.end_date = iso8601.parse_date(when.end)
+            # Cal plugin dates are inclusive, but googles seem to be exclusive
+            d = iso8601.parse_date(when.end)
+            if d.hour == 0 and d.minute == 0 and d.second == 0:
+                d = d - datetime.timedelta(0, 1)
+                
+            self.end_date = d
         else:
             self.end_date = datetime.datetime(self.start_date.year,self.start_date.month,self.start_date.day, 23, 59, 0)
             
@@ -105,9 +111,6 @@ class GoogleEvent(cal.CalendarEvent):
         self.alarm = len(when.reminder) > 0
         self.alt_icon = os.path.join(os.path.dirname(__file__), "icon.png")
         
-    def _parse_date(self, date_str):
-        return calendar.timegm(time.strptime(date_str.split(".")[0]+"UTC", "%Y-%m-%dT%H:%M:%S%Z"))
-    
     def activate(self):
         logger.info("xdg-open '%s'" % self.link)
         subprocess.Popen(['xdg-open', self.link])
@@ -138,23 +141,26 @@ class GoogleCalendarBackend(cal.CalendarBackend):
     def _retrieve_events(self, now, password):
         event_days = {}
         self.cal_client.ClientLogin(self.account.get_property("username", ""), password, self.cal_client.source)
-        self.account_manager.store_password(self.account, password, "www.google.com", None) 
+        self.account_manager.store_password(self.account, password, "www.google.com", None)
+        start_date = datetime.date(now.year, now.month, 1)
+        end_date = datetime.date(now.year, now.month, calendar.monthrange(now.year, now.month)[1])
         feeds = self.cal_client.GetAllCalendarsFeed()
+        
         for i, a_calendar in zip(xrange(len(feeds.entry)), feeds.entry):
-            logger.info('Loading calendar %s' % a_calendar.title.text)
-            color = a_calendar.color
-            feed = self.cal_client.GetCalendarEventFeed(a_calendar.content.src)
+            query = gdata.calendar.client.CalendarEventQuery(start_min=start_date, start_max=end_date)
+            logger.info("Retrieving events from %s to %s" % (str(start_date), str(end_date)))
+            feed = self.cal_client.GetCalendarEventFeed(a_calendar.content.src, q = query)
+            
+            # TODO - Color doesn't seem to work 
+            color = None
+            
             for i, an_event in zip(xrange(len(feed.entry)), feed.entry):
-                logger.info('Adding event %s' % an_event.title.text)
+                logger.info('Adding event %s (%s)' % ( an_event.title.text, str(an_event.when) ) )
                 
                 """
                 An event may have multiple times. cal doesn't support multiple times, so we add multiple events instead
                 """
                 for a_when in an_event.when:
-                    
-                    print '\t\tStart time: %s' % (a_when.start,)
-                    print '\t\tEnd time:   %s' % (a_when.end,)
-                
                     self.check_and_add(GoogleEvent(a_when, an_event, color, a_calendar.content.src), now, event_days)
                 
         return event_days

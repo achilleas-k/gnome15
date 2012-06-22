@@ -90,7 +90,8 @@ class G15Stopwatch():
 
         self._page = g15theme.G15Page(id, self._screen, thumbnail_painter = self.paint_thumbnail, \
                                      priority = self._priority, \
-                                     title = name, theme = self.theme, theme_properties_callback = self._get_properties)
+                                     title = name, theme = self.theme, theme_properties_callback = self._get_properties,
+                                     originating_plugin = self)
         if self._screen.driver.get_bpp() == 16:
             """
             Don't show on the panel for G15, there just isn't enough room

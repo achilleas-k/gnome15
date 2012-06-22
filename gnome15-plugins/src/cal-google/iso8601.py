@@ -99,7 +99,7 @@ def parse_date(datestring, default_timezone=UTC):
     return datetime(int(groups["year"] if "year" in groups else 0), 
                     int(groups["month"] if "month" in groups else 1), 
                     int(groups["day"] if "day" in groups else 1),
-                    int(groups["hour"] if "hour" in groups else 0), 
-                    int(groups["minute"] if "minute" in groups else 0), 
-                    int(groups["second"] if "second" in groups else 0),
-                    int(groups["fraction"]), tz)
+                    int(groups["hour"] if "hour" in groups and groups["hour"] is not None else 0), 
+                    int(groups["minute"] if "minute" in groups and groups["minute"] is not None  else 0), 
+                    int(groups["second"] if "second" in groups and groups["second"] is not None else 0),
+                    int(groups["fraction"] if "fraction" in groups and groups["fraction"] is not None else 0), tz)

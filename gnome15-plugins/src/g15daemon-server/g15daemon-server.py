@@ -136,7 +136,7 @@ class G15DaemonClient(asyncore.dispatcher):
         self.plugin.join(self)
         self.handshake = False
                 
-        self.page = g15theme.G15Page("G15Daemon%d" % self.plugin.screen_index, plugin.screen, painter = self._paint, on_shown = self._on_shown, on_hidden = self._on_hidden)
+        self.page = g15theme.G15Page("G15Daemon%d" % self.plugin.screen_index, plugin.screen, painter = self._paint, on_shown = self._on_shown, on_hidden = self._on_hidden, originating_plugin = self)
         self.page.set_title(_("G15Daemon Screen %d") % self.plugin.screen_index)
         self.plugin.screen.add_page(self.page)
         self.plugin.screen_index += 1

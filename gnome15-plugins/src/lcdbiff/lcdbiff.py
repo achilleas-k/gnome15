@@ -93,6 +93,10 @@ class Checker():
     def __init__(self, account_manager):
         self.account_manager = account_manager
     
+    def get_username(self, account):
+        username = account.get_property("username", "")
+        return username if username != "" else CURRENT_USERNAME
+    
     def get_hostname(self, account):
         hostname = account.get_property("server", "")
         pre, _, _ = hostname.partition(":")
@@ -189,7 +193,7 @@ class IMAPChecker(Checker):
                         if j == 0:
                             imap.login(username, password)
                         else:
-                            imap.authenticate(username, password)                         
+                            imap.login_cram_md5(username, password)                         
                         self.save_password(account, password, default_port) 
                         status = imap.status(folder, "(UNSEEN)")
                         unread  = int(re.search("UNSEEN (\d+)", status[1][0]).group(1))      
@@ -242,7 +246,7 @@ class G15BiffOptions(g15accounts.G15AccountOptions):
         
     def _username_changed(self, widget):
         self.account.properties["username"] = widget.get_text()
-        self.account_manager.save()
+        self.account_ui.save_accounts()
         
 '''
 POP3 configuration UI
@@ -250,23 +254,23 @@ POP3 configuration UI
 class G15BiffPOP3Options(G15BiffOptions):
     
 
-    def __init__(self, account, account_manager):
-        G15BiffOptions.__init__(self, account, account_manager)
+    def __init__(self, account, account_ui):
+        G15BiffOptions.__init__(self, account, account_ui)
     
 '''
 IMAP configuration UI. Adds the additional Folder widget
 '''
 class G15BiffIMAPOptions(G15BiffOptions):
       
-    def __init__(self, account, account_manager):
-        G15BiffOptions.__init__(self, account, account_manager)
+    def __init__(self, account, account_ui):
+        G15BiffOptions.__init__(self, account, account_ui)
         folder = self.widget_tree.get_object("Folder")
         folder.connect("changed", self._folder_changed)
         folder.set_text(self.account.properties["folder"] if "folder" in self.account.properties else "INBOX")
         
     def _folder_changed(self, widget):
         self.account.properties["folder"] = widget.get_text()
-        self.account_manager.save()
+        self.account_ui.save_accounts()
         
 '''
 Configuration UI
@@ -289,9 +293,9 @@ class G15BiffPreferences(g15accounts.G15AccountPreferences):
         
     def create_options_for_type(self, account, account_type):
         if account_type == PROTO_POP3:
-            return G15BiffPOP3Options(account, self.account_mgr)
+            return G15BiffPOP3Options(account, self)
         else:
-            return G15BiffIMAPOptions(account, self.account_mgr)
+            return G15BiffIMAPOptions(account, self)
             
    
 '''
@@ -299,14 +303,15 @@ Account menu item
 '''
  
 class MailItem(g15theme.MenuItem):
-    def __init__(self, component_id, gconf_client, account):
+    def __init__(self, component_id, gconf_client, account, plugin):
         g15theme.MenuItem.__init__(self, component_id)
         self.account = account
         self.count = 0
         self.gconf_client = gconf_client
-        self.icon_path = g15util.get_icon_path("indicator-messages")
         self.status = "Unknown"
         self.error = None
+        self.plugin = plugin
+        self.refreshing = False
         
     def get_theme_properties(self):        
         item_properties = g15theme.MenuItem.get_theme_properties(self)       
@@ -319,7 +324,29 @@ class MailItem(g15theme.MenuItem):
             else:
                 item_properties["item_alt"] = _("None")
         item_properties["item_type"] = ""
-        item_properties["item_icon"] =  g15util.load_surface_from_file(self.icon_path)
+        
+        if self.refreshing:
+            if self.plugin.screen.driver.get_bpp() == 1:
+                item_properties["item_icon"] =  os.path.join(os.path.dirname(__file__), "mono-mail-refresh.gif")
+            else:
+                item_properties["item_icon"] =  g15util.get_icon_path(["view-refresh", "stock_refresh", "gtk-refresh", "view-refresh-symbolic"])
+        elif self.error is not None:            
+            if self.plugin.screen.driver.get_bpp() == 1:
+                item_properties["item_icon"] = os.path.join(os.path.dirname(__file__), "mono-mail-error.gif")
+            else:
+                item_properties["item_icon"] =  g15util.get_icon_path("new-messages-red")
+        else:
+            if self.count > 0:
+                if self.plugin.screen.driver.get_bpp() == 1:
+                    item_properties["item_icon"] = os.path.join(os.path.dirname(__file__), "mono-mail-new.gif")
+                else:                        
+                    item_properties["item_icon"] =  g15util.get_icon_path("indicator-messages-new")
+            else:
+                if self.plugin.screen.driver.get_bpp() == 1:
+                    item_properties["item_icon"] = ""
+                else:
+                    item_properties["item_icon"] =  g15util.get_icon_path("indicator-messages")
+        
         return item_properties
     
     def activate(self):
@@ -347,7 +374,8 @@ class G15Biff(g15plugin.G15MenuPlugin):
         self.thumb_icon = None
         self.index = 0
         self.light_control = None
-        self.account_manager = g15accounts.G15AccountManager(CONFIG_PATH, CONFIG_ITEM_NAME) 
+        self.account_manager = g15accounts.G15AccountManager(CONFIG_PATH, CONFIG_ITEM_NAME)
+        self.account_manager.add_change_listener(self)
         self.checkers = { PROTO_POP3 : POP3Checker(self.account_manager), PROTO_IMAP: IMAPChecker(self.account_manager) }
         if self.screen.driver.get_bpp() > 0:
             g15plugin.G15MenuPlugin.activate(self)
@@ -375,7 +403,7 @@ class G15Biff(g15plugin.G15MenuPlugin):
         self.account_manager.load()
         i = 0
         for account in self.account_manager.accounts:
-            items.append(MailItem("mailitem-%d" % i, self.gconf_client, account))
+            items.append(MailItem("mailitem-%d" % i, self.gconf_client, account, self))
             i += 1
         if self.screen.driver.get_bpp() != 0:
             self.menu.selected = items[0] if len(items) > 0 else None
@@ -395,26 +423,27 @@ class G15Biff(g15plugin.G15MenuPlugin):
         self.refresh_timer = g15util.queue("lcdbiff-%s" % self.screen.device.uid, "MailRefreshTimer", time, self.refresh)
         
     def refresh(self):
-        self._reload_menu()
-        self.total_count = 0
-        self.total_errors = 0
+        t_count = 0
+        t_errors = 0
         for item in self.items:
             try :
+                item.refreshing = True
+                self.page.redraw()
                 status = self._check_account(item.account)
                 item.count  = status[0]
-                self.total_count += item.count
-                if item.count > 0:
-                    item.icon_path =  g15util.get_icon_path("indicator-messages-new")
-                else:
-                    item.icon_path =  g15util.get_icon_path("indicator-messages")
+                t_count += item.count
                 item.error = None
+                item.refreshing = False
             except Exception as e:
-                self.total_errors += 1
+                item.refreshing = False
+                t_errors += 1
                 item.error = e
                 item.count = 0
-                item.icon_path =  g15util.get_icon_path("new-messages-red")
                 if logger.level < logging.WARN and logger.level != logging.NOTSET:
                     traceback.print_exc()
+                
+        self.total_count = t_count
+        self.total_errors = t_errors
         
         if self.total_errors > 0:
             self._stop_blink()
@@ -447,6 +476,10 @@ class G15Biff(g15plugin.G15MenuPlugin):
     '''
     Private
     '''
+    def _accounts_changed(self, account_manager):
+        self._reload_menu()
+        self.schedule_refresh()
+        
     def _check_account(self, account):
         return self.checkers[account.type].check(account)
         

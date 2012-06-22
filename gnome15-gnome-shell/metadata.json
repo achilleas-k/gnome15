@@ -1,0 +1,10 @@
+{
+	"shell-version": [
+		"3.4"
+	], 
+	"uuid": "gnome15-shell-extension@gnome15.org", 
+	"name": "Logitech Keyboard", 
+	"description": "Gnome extension Gnome15, the Logitech keyboard manager, with the panel",
+	"url": "http://www.gnome15.org",
+	"extension-id": "gnome15-shell-extension"
+}

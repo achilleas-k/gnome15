@@ -231,7 +231,8 @@ class G15Volume():
         if page == None:
             if self._screen.driver.get_bpp() != 0:
                 page = g15theme.G15Page(id, self._screen, priority=g15screen.PRI_HIGH, title="Volume", theme = g15theme.G15Theme(self), \
-                                        theme_properties_callback = self._get_theme_properties)
+                                        theme_properties_callback = self._get_theme_properties,
+                                        originating_plugin = self)
                 self._screen.delete_after(3.0, page)
                 self._screen.add_page(page)
         else:

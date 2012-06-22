@@ -20,6 +20,7 @@
 
 
 import gnome15.g15locale as g15locale
+import gnome15.g15devices as g15devices
 _ = g15locale.get_translation("gnome15").ugettext
 
 """
@@ -279,6 +280,7 @@ class G15Screen():
         self.mkey = 1
         self.temp_acquired_controls = {}
         self.key_handler = g15keyboard.G15KeyHandler(self)
+        self.glass_pane = g15theme.Component("glasspane")
         
         if not self._load_driver():
             raise Exception("Driver failed to load") 
@@ -294,6 +296,9 @@ class G15Screen():
         splash                  -- splash callback
         startup                 -- True when this change is the result of startup
         """
+        if self.device is None:
+            return False
+        
         found = False
         if self.defeat_profile_change < 1 and not g15profile.is_locked(self.device):
             choose_profile = None
@@ -496,7 +501,8 @@ class G15Screen():
     
     def new_page(self, painter=None, priority=PRI_NORMAL, on_shown=None, on_hidden=None, on_deleted=None,
                  id="Unknown", thumbnail_painter=None, panel_painter=None, title=None, \
-                 theme_properties_callback=None, theme_attributes_callback=None):
+                 theme_properties_callback=None, theme_attributes_callback=None,
+                 originating_plugin = None):
         logger.warning("DEPRECATED call to G15Screen.new_page, use G15Screen.add_page instead")
         
         """
@@ -530,7 +536,8 @@ class G15Screen():
                     
             page = g15theme.G15Page(id, self, painter, priority, on_shown, on_hidden, on_deleted, \
                            thumbnail_painter, panel_painter, theme_properties_callback, \
-                           theme_attributes_callback)
+                           theme_attributes_callback,
+                           originating_plugin = originating_plugin)
             self.pages.append(page)   
             for l in self.screen_change_listeners:                
                 g15util.call_if_exists(l, "new_page", page)
@@ -1114,6 +1121,14 @@ class G15Screen():
                 logger.debug("Desktop session not active, will not connect to driver")
                 return
         
+            # With a G510, it's possible the keyboard is now in audio mode, so
+            # the device we use has changed
+            new_device = g15devices.get_device(self.device.uid)
+            if new_device is not None and self.device.usb_id != new_device.usb_id:
+                logger.info("Device changed, probably a G510 switching to or from audio mode")
+                self.device = new_device
+                self.driver = None
+            
             if self.driver == None:
                 if not self._load_driver():
                     raise
@@ -1275,6 +1290,12 @@ class G15Screen():
                 canvas.set_source_surface(self.content_surface)
                 canvas.paint()
                 canvas.restore()
+                
+            """
+            Glass pane (components a bit like foreground painters in that
+            they paint over the top of pages
+            """
+            self.glass_pane.paint(canvas)
 
             # Foreground painters                
             for painter in painters:

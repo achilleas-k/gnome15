@@ -333,17 +333,21 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
     
     def __init__(self, gconf_key, gconf_client, screen):
         g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, [ "system" ], id, name, 5.0)
+        self.schedule_on_gobject = True
+        self._sensors_changed_handle = None
+        self._menu = None
         
     def activate(self):
         gobject.idle_add(self._do_activate)
         
-    def _do_activate(self):
+    def _do_activate(self):  
+        self._sensors_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/sensors", self._sensors_changed)
         self.sensor_sources = get_sensor_sources()
         self.sensor_dict = {}        
-        g15plugin.G15RefreshingPlugin.activate(self)        
-        self._sensors_changed_handle = self.gconf_client.notify_add(self.gconf_key + "/sensors", self._sensors_changed)
+        g15plugin.G15RefreshingPlugin.activate(self)      
     
     def populate_page(self):
+        self._menu = g15theme.Menu("menu")
         g15plugin.G15RefreshingPlugin.populate_page(self)
         
         enabled_sensors = []
@@ -353,7 +357,6 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
                 if g15util.get_bool_or_default(self.gconf_client, "%s/enabled" % (sense_key), True):
                     enabled_sensors.append(s)
                     
-        self.menu = g15theme.Menu("menu")
               
         # If there are no sensors enabled, display the 'none' variant
         # which shows a message
@@ -362,14 +365,12 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
         else:      
             self.page.theme.set_variant(None)
             def menu_selected():
-                self.page.theme.set_variant(VARIANT_NAMES[self.menu.selected.sensor.sense_type])
-                self.refresh()
-                self.page.redraw()
+                self.page.theme.set_variant(VARIANT_NAMES[self._menu.selected.sensor.sense_type])
                 
-            self.menu.on_selected = menu_selected
-            self.page.add_child(self.menu)
-            self.page.theme.svg_processor = self._process_svg        
-            self.page.add_child(g15theme.Scrollbar("viewScrollbar", self.menu.get_scroll_values))
+            self._menu.on_selected = menu_selected
+            self.page.add_child(self._menu)
+            self.page.theme.svg_processor = self._process_svg 
+            self.page.add_child(g15theme.MenuScrollbar("viewScrollbar", self._menu))       
             i = 0
             for s in enabled_sensors:                
                 if s.sense_type in TYPE_NAMES:
@@ -377,24 +378,24 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
                     sense_label = g15util.get_string_or_default(self.gconf_client, "%s/label" % (sense_key), s.name) 
                     menu_item = SensorMenuItem("menuitem-%d" % i, s, sense_label)
                     self.sensor_dict[s.name] = menu_item
-                    self.menu.add_child(menu_item)
+                    self._menu.add_child(menu_item)
                     
                     # If this is the first child, change the theme variant
-                    if self.menu.get_child_count() == 1: 
+                    if self._menu.get_child_count() == 1: 
                         self.page.theme.set_variant(VARIANT_NAMES[menu_item.sensor.sense_type])
                     
                     i += 1
-            
+                    
     
     def deactivate(self):
         for c in self.sensor_sources:
             c.stop()
         g15plugin.G15RefreshingPlugin.deactivate(self)
-        self.gconf_client.notify_remove(self._sensors_changed_handle)
+        if self._sensors_changed_handle is not None:
+            self.gconf_client.notify_remove(self._sensors_changed_handle)
         
     def refresh(self):
         self._get_stats()
-        self._build_properties()
     
     def get_next_tick(self):
         return g15util.get_float_or_default(self.gconf_client, "%s/interval" % self.gconf_key, 5.0)
@@ -409,10 +410,10 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
         
     def _process_svg(self, document, properties, attributes):
         root = document.getroot()
-        if self.menu.selected is not None:
-            needle = self.page.theme.get_element("needle")
-            needle_center = self.page.theme.get_element("needle_center")
-            val = float(self.menu.selected.sensor.value)
+        if self._menu.selected is not None:
+            needle = self.page.theme.get_element("needle", root = root)
+            needle_center = self.page.theme.get_element("needle_center", root = root)
+            val = float(self._menu.selected.sensor.value)
             
             """
             The title contains the bounds for the gauge, in the format
@@ -444,7 +445,6 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
             degr = lower_deg
             degr += rot_degrees
             
-            
             """
             This is a bit weak. It doesn't take transformations into account,
             so care is needed in the SVG.            
@@ -462,15 +462,14 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
                     else:
                         logger.debug("Sensor %s on %s is %f" % ( s.name, c.name, s.value ))
                     
-    def _build_properties(self): 
-        self.page.mark_dirty()
-        properties = {}
-        if self.menu.selected is not None:
-            properties["sensor"] = self.menu.selected.sensor.name
-            if self.menu.selected.sensor.sense_type == FAN:        
-                properties["rpm"] = "%4d" % float(self.menu.selected.sensor.value)
-            elif self.menu.selected.sensor.sense_type == VOLTAGE:        
-                properties["voltage"] = "%.2f" % float(self.menu.selected.sensor.value)
+    def get_theme_properties(self): 
+        properties = g15plugin.G15RefreshingPlugin.get_theme_properties(self) 
+        if self._menu.selected is not None:
+            properties["sensor"] = self._menu.selected.sensor.name
+            if self._menu.selected.sensor.sense_type == FAN:        
+                properties["rpm"] = "%4d" % float(self._menu.selected.sensor.value)
+            elif self._menu.selected.sensor.sense_type == VOLTAGE:        
+                properties["voltage"] = "%.2f" % float(self._menu.selected.sensor.value)
             else:        
-                properties["temp_c"] = "%.2f C" % float(self.menu.selected.sensor.value)
-        self.page.theme_properties = properties
+                properties["temp_c"] = "%.2f C" % float(self._menu.selected.sensor.value)
+        return properties

@@ -1,0 +1,4 @@
+[theme]
+name=Buddies Only
+description=Displays only buddies
+supported_models=g19,g13,g15,g15v2,g510

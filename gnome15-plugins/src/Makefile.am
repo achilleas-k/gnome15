@@ -10,9 +10,6 @@ endif
 if ENABLE_PROCESSES_PLUGIN
     MAYBE_PROCESSES = processes
 endif
-if ENABLE_WEBCAM_PLUGIN
-    MAYBE_WEBCAM = webcam
-endif
 if ENABLE_CAL_PLUGIN
     MAYBE_CAL = cal
 endif
@@ -68,8 +65,8 @@ endif
 if ENABLE_PANEL_PLUGIN
     MAYBE_PANEL = panel
 endif
-if ENABLE_VIDEOPLAYER_PLUGIN
-    MAYBE_VIDEOPLAYER = videoplayer
+if ENABLE_MEDIAPLAYER_PLUGIN
+    MAYBE_MEDIAPLAYER = mediaplayer
 endif
 if ENABLE_G15DAEMON_SERVER_PLUGIN
     MAYBE_G15DAEMON_SERVER = g15daemon-server
@@ -108,19 +105,19 @@ if ENABLE_VOIP_PLUGIN
     MAYBE_VOIP = voip
 endif
 if ENABLE_VOIP_TEAMSPEAK3_PLUGIN
-    MAYBE_VOIP = voip-teamspeak3
+    MAYBE_VOIP_TEAMSPEAK3 = voip-teamspeak3
 endif
 if ENABLE_GOOGLE_ANALYTICS_PLUGIN
     MAYBE_GOOGLE_ANALYTICS = google-analytics
 endif
 
 SUBDIRS = $(MAYBE_BACKGROUND) $(MAYBE_CAIRO_CLOCK) $(MAYBE_CLOCK) $(MAYBE_FX) $(MAYBE_MACRO_RECORDER) $(MAYBE_MACROS) $(MAYBE_MOUNTS) \
-	$(MAYBE_NOTIFY_LCD) $(MAYBE_IM) $(MAYBE_WEATHER) $(MAYBE_MPRIS) $(MAYBE_MENU) $(MAYBE_PANEL) $(MAYBE_VIDEOPLAYER) $(MAYBE_G15DAEMON_SERVER) \
+	$(MAYBE_NOTIFY_LCD) $(MAYBE_IM) $(MAYBE_WEATHER) $(MAYBE_MPRIS) $(MAYBE_MENU) $(MAYBE_PANEL) $(MAYBE_MEDIAPLAYER) $(MAYBE_G15DAEMON_SERVER) \
 	$(MAYBE_STOPWATCH) $(MAYBE_SCREENSAVER) $(MAYBE_INDICATOR_ME) $(MAYBE_INDICATOR_MESSAGES) $(MAYBE_PROFILES) \
-	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_WEBCAM) $(MAYBE_CAL) $(MAYBE_CAL_EVOLUTION) $(MAYBE_CAL_GOOGLE) $(MAYBE_LCDBIFF) $(MAYBE_SENSE) \
-	$(MAYBE_LCDSHOT) $(MAYBE_TWEAK) $(MAYBE_LENS) $(MAYBE_TAILS) $(MAYBE_DISPLAY) $(ENABLE_VOIP_PLUGIN) $(ENABLE_VOIP_TEAMSPEAK3_PLUGIN) \
-	$(MAYBE_GOOGLE_ANALYTICS_PLUGIN)
+	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_CAL) $(MAYBE_CAL_EVOLUTION) $(MAYBE_CAL_GOOGLE) $(MAYBE_LCDBIFF) $(MAYBE_SENSE) \
+	$(MAYBE_LCDSHOT) $(MAYBE_TWEAK) $(MAYBE_LENS) $(MAYBE_TAILS) $(MAYBE_DISPLAY) $(MAYBE_VOIP) $(MAYBE_VOIP_TEAMSPEAK3) \
+	$(MAYBE_GOOGLE_ANALYTICS)
 	
-DIST_SUBDIRS = background cairo-clock clock fx macro-recorder macros mounts notify-lcd im weather mpris menu panel videoplayer g15daemon-server stopwatch \
-	profiles sysmon volume rss processes webcam screensaver cal cal-evolution cal-google lcdbiff indicator-me indicator-messages sense lcdshot tweak lens tails display \
+DIST_SUBDIRS = background cairo-clock clock fx macro-recorder macros mounts notify-lcd im weather mpris menu panel mediaplayer g15daemon-server stopwatch \
+	profiles sysmon volume rss processes screensaver cal cal-evolution cal-google lcdbiff indicator-me indicator-messages sense lcdshot tweak lens tails display \
 	voip voip-teamspeak3 google-analytics

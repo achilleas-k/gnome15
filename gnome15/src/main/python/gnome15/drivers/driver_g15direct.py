@@ -130,33 +130,9 @@ controls = {
   g15driver.MODEL_G15_V2 :      [ mkeys_control, backlight_control, lcd_backlight_control, invert_control ],
   g15driver.MODEL_G13 :         [ mkeys_control, color_backlight_control, invert_control ],
   g15driver.MODEL_G510 :        [ mkeys_control, color_backlight_control, invert_control ],
-  g15driver.MODEL_G510_AUDIO :  [ mkeys_control, color_backlight_control, invert_control ],
   g15driver.MODEL_Z10 :         [ backlight_control, lcd_backlight_control, invert_control ],
   g15driver.MODEL_G110 :        [ mkeys_control, red_blue_backlight_control ],
             }   
-
-G15_LCD = 1
-G15_KEYS = 2
-G15_DEVICE_IS_SHARED = 4
-G15_DEVICE_5BYTE_RETURN = 8
-G15_DEVICE_G13 = 16
-G15_DEVICE_G510 = 32
-G15_KEY_READ_LENGTH = 9
-G510_STANDARD_KEYBOARD_INTERFACE = 0x0
-
-# Error codes
-G15_NO_ERROR = 0
-G15_ERROR_OPENING_USB_DEVICE = 1
-G15_ERROR_WRITING_PIXMAP = 2
-G15_ERROR_TIMEOUT = 3
-G15_ERROR_READING_USB_DEVICE = 4
-G15_ERROR_TRY_AGAIN = 5
-G15_ERROR_WRITING_BUFFER = 6
-G15_ERROR_UNSUPPORTED = 7
-
-# Debug levels
-G15_LOG_INFO = 1
-G15_LOG_WARN = 0
 
 # Default offsets
 ANALOGUE_OFFSET = 20
@@ -176,22 +152,26 @@ def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
     widget_tree.set_translation_domain("driver_g15direct")
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15direct.glade"))  
-    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)  
-    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
-    widget_tree.get_object("JoyModeCombo").set_sensitive(device.model_id == g15driver.MODEL_G13)
-    widget_tree.get_object("JoyModeLabel").set_sensitive(device.model_id == g15driver.MODEL_G13)
-
-    # We have separate offset values for digital / analogue, so swap between them based on configuration 
-    offset_widget = widget_tree.get_object("Offset")    
-    set_offset_depending_on_mode(None, gconf_client, device, offset_widget)
-    widget_tree.get_object("JoyModeCombo").connect("changed", set_offset_depending_on_mode, gconf_client, device, offset_widget)
-    def spinner_changed(widget):
-        mode = gconf_client.get_string("/apps/gnome15/%s/joymode" % device.uid)
-        if mode in [ "joystick", "mouse"]:
-            gconf_client.set_int("/apps/gnome15/%s/analogue_offset" % device.uid, int(widget.get_value()))
-        else:
-            gconf_client.set_int("/apps/gnome15/%s/digital_offset" % device.uid, int(widget.get_value()))
-    offset_widget.connect("value-changed", spinner_changed)
+    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
+    if not device.model_id == g15driver.MODEL_G13:
+        widget_tree.get_object("JoyModeCombo").destroy()
+        widget_tree.get_object("JoyModeLabel").destroy()
+        widget_tree.get_object("Offset").destroy()
+        widget_tree.get_object("OffsetLabel").destroy()
+        widget_tree.get_object("OffsetDescription").destroy()
+    else:  
+        g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
+        # We have separate offset values for digital / analogue, so swap between them based on configuration 
+        offset_widget = widget_tree.get_object("Offset")    
+        set_offset_depending_on_mode(None, gconf_client, device, offset_widget)
+        widget_tree.get_object("JoyModeCombo").connect("changed", set_offset_depending_on_mode, gconf_client, device, offset_widget)
+        def spinner_changed(widget):
+            mode = gconf_client.get_string("/apps/gnome15/%s/joymode" % device.uid)
+            if mode in [ "joystick", "mouse"]:
+                gconf_client.set_int("/apps/gnome15/%s/analogue_offset" % device.uid, int(widget.get_value()))
+            else:
+                gconf_client.set_int("/apps/gnome15/%s/digital_offset" % device.uid, int(widget.get_value()))
+        offset_widget.connect("value-changed", spinner_changed)
     
     return widget_tree.get_object("DriverComponent")
 
@@ -264,7 +244,7 @@ class Driver(g15driver.AbstractDriver):
     def get_model_names(self):
         return [ g15driver.MODEL_G11, g15driver.MODEL_G15_V1, \
                 g15driver.MODEL_G15_V2, g15driver.MODEL_G110, \
-                g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO, \
+                g15driver.MODEL_G510, \
                 g15driver.MODEL_G13 ]
     
     def get_model_name(self):
@@ -294,7 +274,7 @@ class Driver(g15driver.AbstractDriver):
 #            pylibg15.set_debug(pylibg15.G15_LOG_INFO)
         pylibg15.set_debug(pylibg15.G15_LOG_INFO)
         err = pylibg15.init(False, self.device.controls_usb_id[0], self.device.controls_usb_id[1])
-        if err != G15_NO_ERROR:
+        if err != pylibg15.G15_NO_ERROR:
             raise g15exceptions.NotConnectedException("libg15 returned error %d " % err)
         logger.info("Initialised pylibg15")
         self.connected = True
@@ -346,6 +326,7 @@ class Driver(g15driver.AbstractDriver):
         self.callback = callback
         self.last_keys = None
         self.thread = pylibg15.grab_keyboard(self._handle_key_event)
+        self.thread.on_unplug = self._keyboard_unplugged
         
     def is_connected(self):
         return self.connected 
@@ -418,6 +399,10 @@ class Driver(g15driver.AbstractDriver):
     """
     Private
     """
+    def _keyboard_unplugged(self):
+        logger.info("Keyboard has been unplugged.")
+        self.disconnect()
+        
     def _get_g510_multimedia_keys(self, code):
         keys = []
         code &= ~(1<<28)
@@ -426,15 +411,21 @@ class Driver(g15driver.AbstractDriver):
         elif code & 1 << 1 != 0:
             keys.append(g15uinput.KEY_STOP)
         elif code & 1 << 2 != 0:
-            keys.append(g15uinput.KEY_NEXTSONG)
-        elif code & 1 << 3 != 0:
             keys.append(g15uinput.KEY_PREVIOUSSONG)
+        elif code & 1 << 3 != 0:
+            keys.append(g15uinput.KEY_NEXTSONG)
         elif code & 1 << 4 != 0:
             keys.append(g15uinput.KEY_MUTE)
         elif code & 1 << 5 != 0:
             keys.append(g15uinput.KEY_VOLUMEUP)
         elif code & 1 << 6 != 0:
             keys.append(g15uinput.KEY_VOLUMEDOWN)
+        elif code & 1 << 7 != 0:
+            # Hmm .. whats the proper mute key? There doesn't appear to be 
+            # a headset mute, perhaps we should expose as a macro key
+            keys.append(g15uinput.KEY_SOUND)
+        elif code & 1 << 8 != 0:
+            keys.append(g15uinput.KEY_MICMUTE)
         return keys  
     
     def _convert_ext_g15daemon_code(self, code):
@@ -459,8 +450,7 @@ class Driver(g15driver.AbstractDriver):
             logger.debug("Key code %d" % code)
             
         this_keys = [] if ext_code != 0 else self._convert_from_g15daemon_code(code)
-        if ext_code > 0 and self.get_model_name() in \
-            [ g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO ]:
+        if ext_code > 0 and self.get_model_name() == g15driver.MODEL_G510:
             this_keys += self._get_g510_multimedia_keys(ext_code)
         elif ext_code > 0:
             this_keys += self._convert_ext_g15daemon_code(ext_code)
@@ -493,13 +483,23 @@ class Driver(g15driver.AbstractDriver):
             if self.last_keys is None or not k in self.last_keys:
                 down.append(k)
                 
+                """
+                This is a work around for the G510. Sometimes the key up 
+                events are lost, leaving keys stuck down in Gnome15. Instead,
+                we just react on key down and ignore the key up if one
+                actually occurs. 
+                """
+                # Work around for the G510 and the volume wheel missing key up events and audio input events
+                if isinstance(k, tuple) and self.get_model_name() == g15driver.MODEL_G510:
+                    up.append(k)
+                    this_keys.remove(k)
+                
         if self.last_keys is not None:
             for k in self.last_keys:
-                if not k in this_keys and not k in down:
+                if not k in this_keys and not k in down and not k in up:
                     up.append(k)
                     
-        if ( ext_code > 0 ) and self.get_model_name() \
-            in [ g15driver.MODEL_G510, g15driver.MODEL_G510_AUDIO ]:
+        if ( ext_code > 0 ) and self.get_model_name() == g15driver.MODEL_G510:
             self._do_macro_keys(self._filter_macro_keys(down), self._filter_macro_keys(up))
             self._do_uinput_keys(self._filter_uinput_keys(down), self._filter_uinput_keys(up))
         else:
@@ -533,12 +533,11 @@ class Driver(g15driver.AbstractDriver):
     def _filter_uinput_keys(self, keys):     
         m = []
         for c in keys:
-            if isinstance(c, int):
+            if isinstance(c, tuple):
                 m.append(c)
         return m
         
     def _emit_macro_keys(self, this_keys, pos, low_val, high_val):
-        print "Pos: %s   High: %d   Low: %d" % (str(pos), high_val, low_val)
         if pos[0] < low_val:
             this_keys.append(g15driver.G_KEY_LEFT)                    
         elif pos[0] > high_val:

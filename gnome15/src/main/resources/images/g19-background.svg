@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19-background.svg">
   <defs
      id="defs4">
@@ -437,7 +437,7 @@
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
-     inkscape:window-width="1327"
+     inkscape:window-width="1465"
      inkscape:window-height="862"
      inkscape:window-x="88"
      inkscape:window-y="37"
@@ -502,30 +502,31 @@
        inkscape:connector-curvature="0" />
     <text
        xml:space="preserve"
-       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#ff0000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans;filter:url(#filter3865)"
-       x="110"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#ff0000;fill-opacity:1;stroke:none;filter:url(#filter3865);font-family:Sans;-inkscape-font-specification:Sans"
+       x="100"
        y="886.36218"
        id="text3057"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3059"
-         x="110"
-         y="886.36218">Gnome15</tspan></text>
+         x="100"
+         y="886.36218"
+         style="font-weight:bold;-inkscape-font-specification:Sans Bold">Gnome15</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Liberation Sans;filter:url(#filter3901)"
+       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;filter:url(#filter3901);font-family:Liberation Sans;-inkscape-font-specification:Liberation Sans"
        x="210"
        y="902.36218"
        id="text3061"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3063"
-         x="210"
-         y="902.36218">Gnome integration for the Logitech</tspan><tspan
+         x="211.66406"
+         y="902.36218">Linux Desktop integration for the </tspan><tspan
          sodipodi:role="line"
          x="210"
          y="917.36218"
-         id="tspan3065">G15 and G19 keyboards</tspan></text>
+         id="tspan3065">Logitech G-Series</tspan></text>
     <rect
        style="fill:#ff0000;fill-opacity:1;stroke:none;filter:url(#filter3909)"
        id="progress_progress"
@@ -533,7 +534,9 @@
        height="20"
        x="60"
        y="972.36218"
-       class="progress" />
+       class="progress"
+       ry="6"
+       rx="6" />
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#f5f5f5;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans;filter:url(#filter3919)"
@@ -546,13 +549,15 @@
          x="167.5703"
          y="1035.2194">Version ${version}</tspan></text>
     <rect
-       style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-opacity:1;filter:url(#filter3927)"
+       style="fill:none;stroke:#ffffff;stroke-opacity:1;filter:url(#filter3927)"
        id="rect3925"
        width="220"
        height="40"
        x="50"
        y="150"
-       transform="translate(0,812.36218)" />
+       transform="translate(0,812.36218)"
+       ry="6"
+       rx="6" />
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;filter:url(#filter3076);enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"

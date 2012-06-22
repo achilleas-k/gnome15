@@ -10,11 +10,11 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="320"
-   height="22"
+   width="313"
+   height="20"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19-menu-child-entry.svg"
    style="display:inline">
   <defs
@@ -55,32 +55,10 @@
     </filter>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath2999">
-      <rect
-         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-         id="rect3001"
-         width="205"
-         height="21.999977"
-         x="104.54774"
-         y="784.11218" />
-    </clipPath>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
        id="clipPath2999-3">
       <rect
          style="fill:#000000;fill-opacity:0.50196078;stroke:none"
          id="rect3001-3"
-         width="205"
-         height="21.999977"
-         x="104.54774"
-         y="784.11218" />
-    </clipPath>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
-       id="clipPath2999-5">
-      <rect
-         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-         id="rect3001-8"
          width="205"
          height="21.999977"
          x="104.54774"
@@ -140,6 +118,28 @@
          x="104.54774"
          y="784.11218" />
     </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3068">
+      <rect
+         y="788.28217"
+         x="104.54774"
+         height="14.999981"
+         width="142.67633"
+         id="rect3070"
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3073">
+      <rect
+         y="787.8764"
+         x="104.54774"
+         height="14.999981"
+         width="138.58942"
+         id="rect3075"
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -148,17 +148,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.979899"
-     inkscape:cx="181.07364"
-     inkscape:cy="-41.999069"
+     inkscape:zoom="3.959798"
+     inkscape:cx="163.35977"
+     inkscape:cy="11.128454"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1-5"
+     inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="526"
-     inkscape:window-y="82"
+     inkscape:window-x="2058"
+     inkscape:window-y="75"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -188,35 +188,35 @@
      inkscape:label="Deselected Label"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-9.5477352,-789.11216)"
+     transform="translate(-9.5477352,-791.11216)"
      style="display:inline"
      title="del item_selected">
     <rect
        style="fill:#696969;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5-4"
-       width="260"
+       width="298"
        height="18"
        x="24.547735"
-       y="789.11212"
-       rx="4.9523811"
+       y="791.11212"
+       rx="5.6761909"
        ry="6.0000129" />
     <text
        xml:space="preserve"
-       style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       style="font-size:11px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="107.22406"
        y="798.28217"
        id="text2999"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath2999)"
-       transform="translate(-39.875395,2)"><tspan
+       clip-path="url(#clipPath3073)"
+       transform="translate(-43.589411,5.2357565)"><tspan
          sodipodi:role="line"
          id="tspan3001"
          x="107.22406"
          y="798.28217">${item_name}</tspan></text>
     <image
        class="embedded_image"
-       y="791.11218"
-       x="49.547737"
+       y="793.11218"
+       x="29.547735"
        height="13.999998"
        width="13.999998"
        id="item_icon-3"
@@ -232,47 +232,69 @@
        id="text2999-0-5"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999-5-09)"
-       transform="translate(82.219183,2.999916)"><tspan
+       transform="translate(82.219183,4.9999163)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-8"
          x="176.15961"
          y="798.28217">${item_alt}</tspan></text>
+    <g
+       style="display:inline"
+       id="g3813-5"
+       transform="matrix(0.99481865,0,0,0.99481865,1.6069504,30.939697)"
+       title="del !item_radio">
+      <path
+         inkscape:connector-curvature="0"
+         id="path3038-6"
+         d="m 50.200893,767.14732 c -3.328502,0 -6.03125,2.70275 -6.03125,6.03125 0,3.32851 2.702748,6.03125 6.03125,6.03125 3.328502,0 6.03125,-2.70274 6.03125,-6.03125 0,-3.3285 -2.702748,-6.03125 -6.03125,-6.03125 z m 0.0625,2.15625 c 2.16969,0 3.90625,1.76781 3.90625,3.9375 0,2.16969 -1.73656,3.90625 -3.90625,3.90625 -2.16969,0 -3.9375,-1.73656 -3.9375,-3.90625 0,-2.16969 1.76781,-3.9375 3.9375,-3.9375 z"
+         style="fill-opacity:1;stroke:none" />
+      <path
+         title="del !item_radio_selected"
+         transform="translate(25.339286,782.01786)"
+         d="m 28,-8.8482141 c 0,1.691372 -1.371128,3.0625 -3.0625,3.0625 -1.691372,0 -3.0625,-1.371128 -3.0625,-3.0625 0,-1.6913719 1.371128,-3.0624999 3.0625,-3.0624999 1.691372,0 3.0625,1.371128 3.0625,3.0624999 z"
+         sodipodi:ry="3.0625"
+         sodipodi:rx="3.0625"
+         sodipodi:cy="-8.8482141"
+         sodipodi:cx="24.9375"
+         id="path3811-1"
+         style="fill-opacity:1;stroke:none"
+         sodipodi:type="arc" />
+    </g>
   </g>
   <g
      inkscape:label="Selected Layer"
      inkscape:groupmode="layer"
      id="layer1-5"
-     transform="translate(-9.5477352,-789.11216)"
+     transform="translate(-9.5477352,-791.11216)"
      style="display:inline"
      title="del !item_selected">
     <rect
        style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5-4-5"
-       width="260"
-       height="17.999977"
+       width="298"
+       height="18"
        x="24.547735"
-       y="789.11218"
-       rx="4.9523811"
-       ry="6" />
+       y="791.11218"
+       rx="5.6761909"
+       ry="6.0000076" />
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/themes/default/dummy.png"
        xlink:href="dummy.png"
        id="item_item-2"
        title="item_icon"
        class="embedded_image"
-       y="777.54773"
-       x="24.547735"
-       height="41"
-       width="41" />
+       y="793.11218"
+       x="29.547735"
+       height="14"
+       width="14" />
     <text
        xml:space="preserve"
-       style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       style="font-size:11px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
        x="107.22406"
        y="798.28217"
        id="text2999-0"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath2999-5)"
-       transform="translate(-39.875395,1.9999163)"><tspan
+       clip-path="url(#clipPath3068)"
+       transform="translate(-43.589411,5.2357565)"><tspan
          sodipodi:role="line"
          id="tspan3001-7"
          x="107.22406"
@@ -285,10 +307,32 @@
        id="text2999-0-1"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999-5-0)"
-       transform="matrix(1.0000023,0,0,1,82.218838,2.9999163)"><tspan
+       transform="matrix(1.0000023,0,0,1,82.218838,4.9999166)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-9"
          x="176.15961"
          y="798.28217">${item_alt}</tspan></text>
+    <g
+       style="display:inline"
+       id="g3813-5-0"
+       transform="matrix(0.99481865,0,0,0.99481865,1.6069506,30.939699)"
+       title="del !item_radio">
+      <path
+         inkscape:connector-curvature="0"
+         id="path3038-6-4"
+         d="m 50.200893,767.14732 c -3.328502,0 -6.03125,2.70275 -6.03125,6.03125 0,3.32851 2.702748,6.03125 6.03125,6.03125 3.328502,0 6.03125,-2.70274 6.03125,-6.03125 0,-3.3285 -2.702748,-6.03125 -6.03125,-6.03125 z m 0.0625,2.15625 c 2.16969,0 3.90625,1.76781 3.90625,3.9375 0,2.16969 -1.73656,3.90625 -3.90625,3.90625 -2.16969,0 -3.9375,-1.73656 -3.9375,-3.90625 0,-2.16969 1.76781,-3.9375 3.9375,-3.9375 z"
+         style="fill-opacity:1;stroke:none" />
+      <path
+         title="del !item_radio_selected"
+         transform="translate(25.339286,782.01786)"
+         d="m 28,-8.8482141 c 0,1.691372 -1.371128,3.0625 -3.0625,3.0625 -1.691372,0 -3.0625,-1.371128 -3.0625,-3.0625 0,-1.6913719 1.371128,-3.0624999 3.0625,-3.0624999 1.691372,0 3.0625,1.371128 3.0625,3.0624999 z"
+         sodipodi:ry="3.0625"
+         sodipodi:rx="3.0625"
+         sodipodi:cy="-8.8482141"
+         sodipodi:cx="24.9375"
+         id="path3811-1-0"
+         style="fill-opacity:1;stroke:none"
+         sodipodi:type="arc" />
+    </g>
   </g>
 </svg>

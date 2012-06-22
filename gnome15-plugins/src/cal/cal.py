@@ -36,7 +36,7 @@ import calendar
 import logging
 logger = logging.getLogger("cal")
 
- 
+# Plugin data
 id="cal"
 name=_("Calendar")
 description=_("Provides basic support for calendars. To make this\n\
@@ -47,13 +47,24 @@ copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
 actions={ 
-         g15driver.PREVIOUS_SELECTION : _("Previous day/Event"), 
-         g15driver.NEXT_SELECTION : _("Next day/Event"), 
-         g15driver.VIEW : _("Toggle between calendar\nand events"),
-         g15driver.NEXT_PAGE : _("Next week"),
-         g15driver.PREVIOUS_PAGE : _("Previous week")
-         }
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
+     g15driver.PREVIOUS_SELECTION : _("Previous day/Event"), 
+     g15driver.NEXT_SELECTION : _("Next day/Event"), 
+     g15driver.VIEW : _("Return to today"),
+     g15driver.CLEAR : _("Toggle calendar/events"),
+     g15driver.NEXT_PAGE : _("Next week"),
+     g15driver.PREVIOUS_PAGE : _("Previous week")
+}
+actions_g19={ 
+     g15driver.PREVIOUS_PAGE : _("Previous day/Event"), 
+     g15driver.NEXT_PAGE : _("Next day/Event"), 
+     g15driver.VIEW : _("Return to today"),
+     g15driver.CLEAR : _("Toggle calendar/events"),
+     g15driver.NEXT_SELECTION : _("Next week"),
+     g15driver.PREVIOUS_SELECTION : _("Previous week")
+}
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, \
+                      g15driver.MODEL_MX5500, g15driver.MODEL_G930, \
+                      g15driver.MODEL_G35 ]
 
 # How often refresh from the evolution calendar. This can be a slow process, so not too often
 REFRESH_INTERVAL = 15 * 60
@@ -130,25 +141,50 @@ class CalendarBackend():
     
 class EventMenuItem(g15theme.MenuItem):
     
-    def __init__(self,  event, component_id):
+    def __init__(self, plugin, event, component_id):
         g15theme.MenuItem.__init__(self, component_id)
         self.event = event
+        self.plugin = plugin
     
     def get_default_theme_dir(self):
         return os.path.join(os.path.dirname(__file__), "default")
-        
+    
     def get_theme_properties(self):        
         item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self.event.summary
-        item_properties["item_alt"] = "%s-%s" % ( self.event.start_date.strftime("%H:%M"), self.event.end_date.strftime("%H:%M")) 
-        if self.event.alarm:            
-            item_properties["item_icon"] = g15util.get_icon_path([ "stock_alarm", "alarm-clock", "alarm-timer", "dialog-warning" ])
+        
+        start_str = self.event.start_date.strftime("%H:%M")
+        end_str = self.event.end_date.strftime("%H:%M")
+        
+        if not self._same_day(self.event.start_date, self.event.end_date):
+            if not self._same_day(self.plugin._calendar_date, self.event.end_date):
+                end_str = _(self.event.end_date.strftime("%m/%d"))
+            if not self._same_day(self.plugin._calendar_date, self.event.start_date):
+                start_str = _(self.event.start_date.strftime("%m/%d"))
+        
+        
+        if self._same_day(self.event.start_date, self.event.end_date) and \
+           self.event.start_date.hour == 0 and self.event.start_date.minute == 0 and \
+           self.event.end_date.hour == 23 and self.event.end_date.minute == 59:
+            item_properties["item_alt"] = _("All Day")
+        else:
+            item_properties["item_alt"] = "%s-%s" % ( start_str, end_str)
+            
+        item_properties["item_alarm"] = self.event.alarm  
+        if self.event.alarm:          
+            if self.get_screen().device.bpp > 1:  
+                item_properties["item_icon"] = g15util.get_icon_path([ "stock_alarm", "alarm-clock", "alarm-timer", "dialog-warning" ])
+            else:  
+                item_properties["item_icon"] = os.path.join(os.path.dirname(__file__), 'bell.gif')
         if self.event.alt_icon:
             item_properties["alt_icon"] = self.event.alt_icon
         return item_properties
     
     def activate(self):
         self.event.activate()
+    
+    def _same_day(self, date1, date2):
+        return date1.day == date2.day and date1.month == date2.month and date1.year == date2.year
     
 class Cell(g15theme.Component):
     def __init__(self, day, now, event, component_id):
@@ -213,7 +249,8 @@ class G15Cal():
         self._gconf_client = gconf_client
         self._gconf_key = gconf_key
         self._timer = None
-        self._thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["calendar", "evolution-calendar", "office-calendar", "stock_calendar" ]))
+        self._icon_path = g15util.get_icon_path(["calendar", "evolution-calendar", "office-calendar", "stock_calendar" ])
+        self._thumb_icon = g15util.load_surface_from_file(self._icon_path)
         
     def activate(self):
         self._active = True
@@ -233,13 +270,16 @@ class G15Cal():
         # Menu
         self._menu = g15theme.Menu("menu")
         self._menu.focusable = True
+        self._menu.focused_component = True
         
         # Page
         self._page = g15theme.G15Page(name, self._screen, on_shown = self._on_shown, \
                                      on_hidden = self._on_hidden, theme_properties_callback = self._get_properties,
-                                     thumbnail_painter = self._paint_thumbnail)
-        self._page.set_title("Evolution Calendar")
+                                     thumbnail_painter = self._paint_thumbnail, 
+                                     originating_plugin = self)
+        self._page.set_title(_("Calendar"))
         self._page.set_theme(self._theme)
+        self._page.focused_component = self._calendar
         self._screen.key_handler.action_listeners.append(self)
         self._calendar.set_focused(True)
         gobject.idle_add(self._first_load)
@@ -258,41 +298,51 @@ class G15Cal():
     def action_performed(self, binding):
         if self._page and self._page.is_visible():
             if self._calendar.is_focused():
-                if binding.action == g15driver.PREVIOUS_PAGE:
+                if ( binding.action == g15driver.PREVIOUS_PAGE and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
+                   ( binding.action == g15driver.PREVIOUS_SELECTION and self._screen.device.model_id != g15driver.MODEL_G19 ):
                     self._adjust_calendar_date(-1)
-                elif binding.action == g15driver.NEXT_PAGE:
+                    return True
+                elif ( binding.action == g15driver.NEXT_PAGE and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
+                     ( binding.action == g15driver.NEXT_SELECTION and self._screen.device.model_id != g15driver.MODEL_G19 ):
                     self._adjust_calendar_date(1)
-                elif binding.action == g15driver.PREVIOUS_SELECTION:
+                    return True
+                elif ( binding.action == g15driver.PREVIOUS_SELECTION and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
+                     ( binding.action == g15driver.PREVIOUS_PAGE and self._screen.device.model_id != g15driver.MODEL_G19 ):
                     self._adjust_calendar_date(-7)
-                elif binding.action == g15driver.NEXT_SELECTION:
+                    return True
+                elif ( binding.action == g15driver.NEXT_SELECTION and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
+                     ( binding.action == g15driver.NEXT_PAGE and self._screen.device.model_id != g15driver.MODEL_G19 ):
                     self._adjust_calendar_date(7)
-                elif binding.action == g15driver.CLEAR:
+                    return True
+                elif binding.action == g15driver.VIEW:
                     self._calendar_date = None
-                    self._loaded_minute =- -1
-                    g15screen.run_on_redraw(self._rebuild_components, self._get_calendar_date())
-            if binding.action == g15driver.VIEW:
+                    self._adjust_calendar_date(0)
+                    return True
+            if binding.action == g15driver.CLEAR:
                 self._page.next_focus()
+                return True
     
     """
     Private
     """
     
     def _accounts_changed(self, account_manager):
-        print "Calendar accounts changed"
         self._loaded = 0
         self._redraw()
                     
     def _adjust_calendar_date(self, amount):
-        if self._calendar_date == None:
-            self._calendar_date = datetime.datetime.now()
-        self._calendar_date = self._calendar_date + datetime.timedelta(amount)
-        g15screen.run_on_redraw(self._rebuild_components, self._calendar_date)
+        o_date = self._get_calendar_date()
+        self._calendar_date = o_date + datetime.timedelta(amount)
+        if amount == 0 or o_date.month != self._calendar_date.month or o_date.year != self._calendar_date.year:
+            self._load_month_events(self._calendar_date)
+        else:            
+            g15screen.run_on_redraw(self._rebuild_components, self._calendar_date)
         
     def _first_load(self):
         self._load_month_events(datetime.datetime.now())
         self._page.add_child(self._menu)
         self._page.add_child(self._calendar)
-        self._page.add_child(g15theme.Scrollbar("viewScrollbar", self._menu.get_scroll_values))
+        self._page.add_child(g15theme.MenuScrollbar("viewScrollbar", self._menu))
         self._screen.add_page(self._page)
         self._redraw()
     
@@ -304,6 +354,8 @@ class G15Cal():
         now = datetime.datetime.now()
         calendar_date = self._get_calendar_date()
         properties = {}
+        properties["icon"] = self._icon_path 
+        properties["title"] = _('Calendar') 
         properties["time_24"] = now.strftime("%H:%M") 
         properties["full_time_24"] = now.strftime("%H:%M:%S") 
         properties["time_12"] = now.strftime("%I:%M %p") 
@@ -330,8 +382,10 @@ class G15Cal():
         properties["cal_locale_date"] = calendar_date.strftime("%x")
         if self._event_days is None or not str(calendar_date.day) in self._event_days:
             properties["message"] = "No events"
+            properties["events"] = False
         else:
             properties["events"] = True
+            properties["message"] = ""
         return properties
     
     def _load_month_events(self, now):
@@ -363,7 +417,7 @@ class G15Cal():
             events = self._event_days[str(now.day)]
             i = 0
             for event in events:
-                self._menu.add_child(EventMenuItem(event, "menuItem-%d" % i))
+                self._menu.add_child(EventMenuItem(self, event, "menuItem-%d" % i))
                 i += 1
             
         # Add the date cell components
@@ -377,6 +431,7 @@ class G15Cal():
             self._calendar.add_child(Cell(day, now, event, "cell-%d" % i))
             i += 1
             
+        self._page.mark_dirty()
         self._page.redraw()
         
     def _schedule_redraw(self):
@@ -397,8 +452,6 @@ class G15Cal():
     def _on_hidden(self):
         if self._timer != None:
             self._timer.cancel()
-        self._calendar_date = None
-        self._loaded_minute = -1
         
     def _redraw(self):
         t = time.time()
@@ -411,7 +464,7 @@ class G15Cal():
             self._schedule_redraw()
             
     def _redraw_now(self):
-        self._load_month_events(datetime.datetime.now())
+        self._load_month_events(self._get_calendar_date())
         self._screen.redraw(self._page)
         self._schedule_redraw()
     

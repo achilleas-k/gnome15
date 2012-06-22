@@ -302,7 +302,8 @@ class G15MacroRecorder():
             if self._page == None:
                 self._page = g15theme.G15Page(id, self._screen, priority=g15screen.PRI_EXCLUSIVE,\
                                               title = name, theme_properties_callback = self._get_theme_properties, \
-                                              theme = self._theme)
+                                              theme = self._theme,
+                                              originating_plugin = self)
                 self._screen.add_page(self._page)
         self.icon = "media-record"
         self._message = None

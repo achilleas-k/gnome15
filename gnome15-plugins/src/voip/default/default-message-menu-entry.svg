@@ -178,6 +178,6 @@
          sodipodi:role="line"
          id="tspan2999-1"
          x="1.5837526"
-         y="4.438684">${line} </tspan></text>
+         y="4.438684">${sender} - ${line} </tspan></text>
   </g>
 </svg>

@@ -129,6 +129,7 @@ class JobScheduler():
     def stop_queue(self, queue_name):
         if queue_name in self.queues:
             self.queues[queue_name].stop()
+            del self.queues[queue_name]
     
     def execute(self, queue_name, name, function, *args):
         if logger.isEnabledFor(logging.DEBUG):

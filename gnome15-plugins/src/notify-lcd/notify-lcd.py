@@ -52,7 +52,6 @@ from dbus.exceptions import NameExistsException
 import logging
 logger = logging.getLogger("notify")
 
-
 # Plugin details - All of these must be provided
 id="notify-lcd"
 name=_("Notify")
@@ -128,6 +127,8 @@ class G15Message():
     def __init__(self, id, icon, summary, body, timeout, actions, hints):
         self.id  = id
         self.set_details(icon, summary, body, timeout, actions, hints)
+        self.original_body = body
+        self.original_summary = summary
     
     def set_details(self, icon, summary, body, timeout, actions, hints):
         self.icon = icon
@@ -306,9 +307,7 @@ class G15NotifyLCD():
             
     def msg_cb(self, bus, msg):
         # Only interested in method calls
-        print "DBUS: %s, %s" % (str(bus), str(msg))
         if isinstance(msg, dbus.lowlevel.MethodCallMessage):
-            print "   imc"
             if msg.get_member() == "Notify":
                 self.notify(*msg.get_args_list())
             
@@ -368,23 +367,20 @@ class G15NotifyLCD():
                     body = g15util.strip_tags(body) 
                 if summary:
                     summary  = g15util.strip_tags(summary)
+
+                if id != 0 and not id in self._message_map:
+                    if len(self._message_queue) > 0:
+                        new_id = self._message_queue[0].id
+                        logger.warn("Got request to replace message %d, but we do not know about it. Just replacing visible message %d" % (id, new_id))
+                        id = new_id
+                    else:
+                        id = 0
                 
                 # If a message with this ID is already queued, replace it's details
-                if id in self._message_map:
-                    logger.debug("Message %s is already in queue, replacing its details" % str(id))
-                    message = self._message_map[id]
-                    message.set_details(icon, summary, body, timeout, actions, hints) 
-                    
-                    # If this message is the visible one, then reset the timer
-                    if message == self._message_queue[0]:
-                        logger.debug("It is the visible message")
-                        self._start_timer(message)
-                    else:            
-                        if self._page != None:
-                            self._screen.redraw(self._page)
-                else:
-                    # Otherwise queue a new message
+                if id == 0:
+                    # Queue a new message
                     logger.debug("Queuing new message")
+                    id = self.id
                     message = G15Message(self.id, icon, summary, body, timeout, actions, hints)
                     self._message_queue.append(message)
                     self._message_map[self.id] = message                
@@ -396,9 +392,22 @@ class G15NotifyLCD():
                         logger.debug("More than one message in queue, just redrawing")                           
                         if self._page != None:
                             self._screen.redraw(self._page)
+                else:
+                    if id in self._message_map:
+                        logger.debug("Message %s is already in queue, replacing its details" % str(id))
+                        message = self._message_map[id]
+                        message.set_details(icon, summary, body, timeout, actions, hints) 
+                        
+                        # If this message is the visible one, then reset the timer
+                        if message == self._message_queue[0]:
+                            logger.debug("It is the visible message")
+                            self._start_timer(message)
+                        else:            
+                            if self._page != None:
+                                self._screen.redraw(self._page)
                             
-                logger.info("Notify message has ID of %s" % str(message.id))
-                return message.id                         
+                logger.info("Notify message has ID of %s" % str(id))
+                return id                         
         except Exception as blah:
             traceback.print_exc()
     
@@ -518,7 +527,8 @@ class G15NotifyLCD():
                     logger.debug("Creating notification message page")
                     self._page = g15theme.G15Page(id, self._screen, priority=g15screen.PRI_HIGH, title = name, \
                                                   theme_properties_callback = self._get_theme_properties, \
-                                                  theme = g15theme.G15Theme(self, self._last_variant))
+                                                  theme = g15theme.G15Theme(self, self._last_variant),
+                                                  originating_plugin = self)
                     self._page.on_deleted = self._page_deleted
                     self._screen.add_page(self._page)
             else:

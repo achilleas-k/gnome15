@@ -3,6 +3,7 @@
 	<name>gnome15</name>
 	<comment></comment>
 	<projects>
+		<project>cairoplot</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

@@ -99,6 +99,14 @@ if pglobals.dev:
 '''
 Executing stuff
 '''
+    
+def execute_for_output(cmd):
+    pipe = os.popen('{ ' + cmd + '; } 2>/dev/null', 'r')
+    text = pipe.read()
+    sts = pipe.close()
+    if sts is None: sts = 0
+    if text[-1:] == '\n': text = text[:-1]
+    return sts, text
 
 def run_script(script, args = None, background = True):
     a = ""
@@ -172,6 +180,12 @@ def rgb_to_string(rgb):
     else:
         return "%d,%d,%d" % rgb
     
+def get_alt_color(color):
+    if color[0] == color[1] == color[2]:
+        return (1.0-color[0], 1.0-color[1], 1.0-color[2], color[3])
+    else:
+        return (color[1],color[2],color[0],color[3])
+    
 def color_to_rgb(color):         
     i = ( color.red >> 8, color.green >> 8, color.blue >> 8 )
     return ( i[0],i[1],i[2] )
@@ -181,7 +195,10 @@ def to_rgb(string_rgb, default = None):
         return default
     rgb = string_rgb.split(",")
     return (int(rgb[0]), int(rgb[1]), int(rgb[2]))
-        
+      
+def to_pixel(rgb):
+    return ( rgb[0] << 24 ) + ( rgb[1] << 16 ) + ( rgb[2] < 8 ) + 0  
+      
 def to_color(rgb):
     return gtk.gdk.Color(rgb[0] <<8, rgb[1] <<8,rgb[2] <<8)
     
@@ -354,10 +371,29 @@ def is_gobject_thread():
 
 def set_gobject_thread():
     gobject_thread[0] = threading.currentThread()
+    
+'''
+Distribution / version
+'''
+def get_lsb_release():
+    ret, r = get_command_output('lsb_release -rs')
+    return float(r) if ret == 0 else 0
+
+def get_lsb_distributor():
+    ret, r = get_command_output('lsb_release -is')
+    return r if ret == 0 else "Unknown"
 
 '''
 General utilities
 '''
+    
+def get_command_output( cmd):
+    pipe = os.popen('{ ' + cmd + '; } 2>/dev/null', 'r')
+    text = pipe.read()
+    sts = pipe.close()
+    if sts is None: sts = 0
+    if text[-1:] == '\n': text = text[:-1]
+    return sts, text
     
 def module_exists(module_name):
     try:

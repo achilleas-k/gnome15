@@ -1,0 +1,4 @@
+[theme]
+name=Default
+description=Displays buddies, messages and avatar (when supported)
+supported_models=g19,g13,g15,g15v2,g510

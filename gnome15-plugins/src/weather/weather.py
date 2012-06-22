@@ -117,7 +117,8 @@ class G15Weather():
         self._text = g15text.new_text(self._screen)
         self._page = g15theme.G15Page(id, self._screen, thumbnail_painter = self._paint_thumbnail,
                                         panel_painter = self._paint_thumbnail, \
-                                        theme = g15theme.G15Theme(self))
+                                        theme = g15theme.G15Theme(self),
+                                        originating_plugin = self)
         self._get_weather()
         self._screen.add_page(self._page)
         self._notify_handle = self._gconf_client.notify_add(self._gconf_key, self._loc_changed, None)

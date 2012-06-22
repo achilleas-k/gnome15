@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19.svg">
   <defs
      id="defs4">
@@ -349,11 +349,11 @@
       <image
          sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/mpris/default/${icon}"
          xlink:href="${icon}"
-         height="256"
-         width="256"
-         transform="matrix(0.4765625,0,0,0.4765625,18,832.36218)"
+         style="fill:#696969"
          id="image3050"
-         style="fill:#696969" />
+         transform="matrix(0.4765625,0,0,0.4765625,18,832.36218)"
+         width="256"
+         height="256" />
     </g>
     <g
        id="g3987"
@@ -372,11 +372,11 @@
       <image
          sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/mpris/default/${vol_icon}"
          xlink:href="${vol_icon}"
-         id="image3050-6"
-         transform="matrix(0.15625,0,0,0.15625,260,832.36218)"
-         width="256"
+         style="fill:#696969"
          height="256"
-         style="fill:#696969" />
+         width="256"
+         transform="matrix(0.15625,0,0,0.15625,260,832.36218)"
+         id="image3050-6" />
     </g>
     <rect
        style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
@@ -426,25 +426,27 @@
          y="113.57143">${artist}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:16px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans;"
+       style="font-size:16px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
        x="42.696846"
        y="170"
        id="text3870"
        sodipodi:linespacing="125%"
        transform="translate(116.94769,822.36218)"
-       clip-path="url(#clipPath3047)"><tspan
+       clip-path="url(#clipPath3047)"
+       class="shadow"><tspan
          sodipodi:role="line"
          id="tspan3872"
          x="42.696846"
          y="170">${title}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:9px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans;"
+       style="font-size:9px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
        x="19.108955"
        y="170"
        id="text3870-1"
        sodipodi:linespacing="125%"
-       transform="translate(109.30315,836.36218)"><tspan
+       transform="translate(109.30315,836.36218)"
+       class="shadow"><tspan
          sodipodi:role="line"
          id="tspan3872-1"
          x="19.108955"

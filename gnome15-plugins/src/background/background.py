@@ -67,6 +67,7 @@ class G15BackgroundPreferences():
         widget_tree.get_object("UseDesktop").connect("toggled", self.set_available, widget_tree)
         widget_tree.get_object("UseFile").connect("toggled", self.set_available, widget_tree)
         g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_profile_override", "AllowProfileOverride", True, widget_tree)
+        g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/brightness", "BrightnessAdjustment", 50, widget_tree)
         
         # Currently, only GNOME is supported for getting the desktop background
         if not "gnome" == g15util.get_desktop():
@@ -118,16 +119,24 @@ class G15BackgroundPreferences():
         
 class G15BackgroundPainter(g15screen.Painter):
     
-    def __init__(self):
+    def __init__(self, screen):
         g15screen.Painter.__init__(self, g15screen.BACKGROUND_PAINTER, -9999)
         self.background_image = None
+        self.brightness = 0
+        self._screen = screen
         
     def paint(self, canvas):
         if self.background_image != None:
             canvas.set_source_surface(self.background_image, 0.0, 0.0)
             canvas.paint()
-        
-        
+            if self.brightness > 0:
+                canvas.set_source_rgba(1.0, 1.0, 1.0, ( self.brightness / 100.0 ))
+            else:
+                canvas.set_source_rgba(0.0, 0.0, 0.0, ( abs(self.brightness) / 100.0 ))
+            size = self._screen.device.lcd_size
+            canvas.rectangle(0,0,size[0],size[1])
+            canvas.fill()
+            
 class G15Background():
     
     def __init__(self, gconf_key, gconf_client, screen):
@@ -143,11 +152,12 @@ class G15Background():
         self.this_image = None
         self.current_style = None
         self.notify_handlers = []
-        self.painter = G15BackgroundPainter()
+        self.painter = G15BackgroundPainter(self.screen)
         self.screen.painters.append(self.painter)
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/path", self.config_changed))
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/type", self.config_changed))
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/style", self.config_changed))
+        self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/brightness", self.config_changed))
         self.notify_handlers.append(self.gconf_client.notify_add("/apps/gnome15/%s/active_profile" % self.screen.device.uid, self._active_profile_changed))
         self.gnome_dconf_settings = None 
         
@@ -295,5 +305,6 @@ class G15Background():
             else:
                 self.painter.background_image = None
                 
+        self.painter.brightness = self.gconf_client.get_int(self.gconf_key + "/brightness")
                 
         self.screen.redraw()

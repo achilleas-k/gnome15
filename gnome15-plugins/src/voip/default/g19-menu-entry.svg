@@ -10,8 +10,8 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="272"
-   height="28"
+   width="202"
+   height="24"
    id="svg2"
    version="1.2"
    inkscape:version="0.48.3.1 r9886"
@@ -164,25 +164,27 @@
     </clipPath>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3799">
+       id="clipPath3035">
       <rect
-         y="786.00006"
-         x="103.67242"
-         height="15"
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3037"
          width="143.54773"
-         id="rect3801"
-         style="fill:#ff0000;fill-opacity:1;stroke:none" />
+         height="15"
+         x="103.67242"
+         y="786.00006"
+         transform="matrix(0.71388312,0,0,1,29.662428,0)" />
     </clipPath>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3831">
+       id="clipPath3040">
       <rect
-         y="788.00006"
-         x="103.67242"
-         height="15"
+         style="fill:#ff0000;fill-opacity:1;stroke:none;display:inline"
+         id="rect3042"
          width="144.28572"
-         id="rect3834"
-         style="fill:#ff0000;fill-opacity:1;stroke:none;display:inline" />
+         height="15"
+         x="103.67242"
+         y="788.00006"
+         transform="matrix(0.7128713,0,0,1,29.767326,0)" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -196,13 +198,13 @@
      inkscape:cx="123.75394"
      inkscape:cy="17.467187"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1-5-7"
+     inkscape:current-layer="layer1-5"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1255"
      inkscape:window-height="940"
-     inkscape:window-x="298"
-     inkscape:window-y="85"
+     inkscape:window-x="354"
+     inkscape:window-y="62"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -234,17 +236,17 @@
      inkscape:label="Selected Layer"
      inkscape:groupmode="layer"
      id="layer1-5"
-     transform="translate(-9,-783)"
+     transform="translate(-9,-787)"
      title="del !item_selected"
      style="display:inline">
     <rect
        style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5-4-5"
-       width="272"
+       width="202"
        height="22.999977"
        x="9"
-       y="783"
-       rx="6"
+       y="787"
+       rx="5.9999995"
        ry="6" />
     <text
        xml:space="preserve"
@@ -253,8 +255,8 @@
        y="798.28217"
        id="text2999-0"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath3831)"
-       transform="translate(-63.220154,-8.3652344e-5)"><tspan
+       clip-path="url(#clipPath3040)"
+       transform="translate(-68.220154,3.9999043)"><tspan
          sodipodi:role="line"
          id="tspan3001-7"
          x="107.22406"
@@ -267,15 +269,15 @@
        id="text2999-0-1"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999-5-0)"
-       transform="matrix(1.0000023,0,0,1,61.82929,-8.3652344e-5)"><tspan
+       transform="matrix(1.0000023,0,0,1,-10.718444,3.9999043)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-9"
          x="176.15961"
          y="798.28217">${item_alt}</tspan></text>
     <image
        class="embedded_image"
-       y="785"
-       x="19"
+       y="789"
+       x="14"
        height="19"
        width="19"
        id="item_icon-3-9"
@@ -288,8 +290,8 @@
        id="item_icon-3-9-6-5-3-2"
        width="19"
        height="19"
-       x="237"
-       y="785"
+       x="167"
+       y="789"
        xlink:href="/home/tanktarta/${item_input_muted_icon}"
        sodipodi:absref="/home/tanktarta/${item_input_mute_icon}"
        class="embedded_image" />
@@ -298,15 +300,15 @@
        id="item_icon-3-9-6-5-5"
        width="19"
        height="19"
-       x="258"
-       y="785"
+       x="188"
+       y="789"
        xlink:href="/home/tanktarta/${item_output_muted_icon}"
        sodipodi:absref="/home/tanktarta/${item_output_mute_icon}"
        class="embedded_image" />
     <image
        class="embedded_image"
-       y="795"
-       x="30"
+       y="799"
+       x="25"
        height="10"
        width="10"
        id="item_icon-3-9-6-1"
@@ -319,27 +321,17 @@
      inkscape:label="Deselected Layer"
      inkscape:groupmode="layer"
      id="layer1-5-7"
-     transform="translate(-9,-783)"
+     transform="translate(-9,-787)"
      title="del item_selected"
      style="display:inline">
     <rect
-       style="fill:#808080;fill-opacity:0.50196078;stroke:none;display:inline"
-       id="rect3000-5-4-5-4-4"
-       width="272"
-       height="22.999977"
-       x="9"
-       y="783"
-       rx="6"
-       ry="6"
-       title="del item_enabled" />
-    <rect
        style="fill:#808080;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5-4-5-4"
-       width="272"
+       width="202"
        height="22.999977"
-       x="9"
-       y="783"
-       rx="6"
+       x="9.000001"
+       y="787"
+       rx="6.000001"
        ry="6" />
     <text
        xml:space="preserve"
@@ -348,8 +340,8 @@
        y="798.28217"
        id="text2999-0-9"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath3799)"
-       transform="translate(-63.220154,-8.3652344e-5)"><tspan
+       clip-path="url(#clipPath3035)"
+       transform="translate(-68.220154,3.9999043)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-1"
          x="107.22406"
@@ -362,15 +354,15 @@
        id="text2999-0-1-7"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999-5-0-7)"
-       transform="matrix(1.0000023,0,0,1,61.82929,-8.3652344e-5)"><tspan
+       transform="matrix(1.0000023,0,0,1,-10.718444,3.9999043)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-9-0"
          x="176.15961"
          y="798.28217">${item_alt}</tspan></text>
     <image
        class="embedded_image"
-       y="785"
-       x="19"
+       y="789"
+       x="14"
        height="19"
        width="19"
        id="item_icon-3-9-6"
@@ -379,29 +371,29 @@
        sodipodi:absref="/home/tanktarta/dummy.png"
        title="item_icon" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-sandbox-plugins/src/ts3/default/${item_input_muted_icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/voip/default/${item_input_muted_icon}"
        xlink:href="${item_input_muted_icon}"
-       title="item_input_muted_icon"
+       class="embedded_image"
+       y="789"
+       x="167"
+       height="19"
+       width="19"
        id="item_icon-3-9-6-5-3"
-       width="19"
-       height="19"
-       x="237"
-       y="785"
-       class="embedded_image" />
+       title="item_input_muted_icon" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-sandbox-plugins/src/ts3/default/${item_output_muted_icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/voip/default/${item_output_muted_icon}"
        xlink:href="${item_output_muted_icon}"
-       title="item_output_muted_icon"
-       id="item_icon-3-9-6-5"
-       width="19"
+       class="embedded_image"
+       y="789"
+       x="188"
        height="19"
-       x="258"
-       y="785"
-       class="embedded_image" />
+       width="19"
+       id="item_icon-3-9-6-5"
+       title="item_output_muted_icon" />
     <image
        class="embedded_image"
-       y="795"
-       x="30"
+       y="799"
+       x="25"
        height="10"
        width="10"
        id="item_icon-3-9-6-3"

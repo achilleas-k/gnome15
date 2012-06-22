@@ -80,9 +80,6 @@ class ResolutionMenuItem(g15theme.MenuItem):
         item_properties["item_alt"] = ""
         return item_properties
     
-    def on_configure(self):        
-        self.set_theme(g15theme.G15Theme(self.parent.get_theme().dir, "menu-entry" if self.group else "menu-child-entry"))
-    
     def activate(self):
         os.system("xrandr -s %sx%s -r %s" % (self.size[0], self.size[1], self.refresh_rate ))
         self._plugin._reload_menu()

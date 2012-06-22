@@ -158,6 +158,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.active_application_name = None
         self.active_window_title = None
         self.ignore_next_sigint = False
+        self.debug_svg = False
                 
         # Expose Gnome15 functions via DBus
         logger.debug("Starting the DBUS service")
@@ -306,7 +307,7 @@ class G15Service(g15desktop.G15AbstractService):
                         time.sleep(float(val) / 1000.0 if not macro.profile.fixed_delays else macro.profile.delay_amount)
                 elif op == "press":
                     if i > 0:
-                        self._release_delay()
+                        self._release_delay(macro)
                     self.send_string(val, True)
                     self._press_delay(macro)
                 elif op == "release":
@@ -669,6 +670,10 @@ class G15Service(g15desktop.G15AbstractService):
         if len(self.screens) == 1:
             if th[0].error is not None:
                 raise th[0].error
+                
+        if self.start_in_threads:
+            for t in th:
+                t.join()
                 
         self.starting_up = False
         for listener in self.service_listeners:

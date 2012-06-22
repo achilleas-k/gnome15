@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.2 r9819"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19-menu-screen.svg">
   <defs
      id="defs4">
@@ -85,16 +85,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="45.892856"
-     inkscape:cy="134.31407"
+     inkscape:cx="138.26794"
+     inkscape:cy="109.15415"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="181"
-     inkscape:window-y="84"
+     inkscape:window-x="626"
+     inkscape:window-y="85"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -128,32 +128,29 @@
     <rect
        style="fill:#696969;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5"
-       width="220"
-       height="85"
-       x="14.547735"
-       y="791.11218"
-       rx="9.8775492"
-       ry="29.142868"
-       transform="matrix(1.2727273,0,0,0.41176458,-8.9675645,460.36021)" />
+       width="275"
+       height="34.999989"
+       x="11.547735"
+       y="788.11218"
+       rx="8"
+       ry="8" />
     <rect
        style="fill:#696969;fill-opacity:0.50196078;stroke:none"
        id="rect3000"
-       width="85"
-       height="85"
-       x="239.54773"
-       y="791.11218"
-       rx="29.142859"
-       ry="29.142874"
-       transform="matrix(0.41176467,0,0,0.41176449,195.91045,460.36027)" />
+       width="35"
+       height="35"
+       x="288.54773"
+       y="788.11218"
+       rx="7.9999995"
+       ry="8" />
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/tails/default/${icon}"
        xlink:href="${icon}"
-       id="image4256"
-       x="249.54773"
-       y="801.11218"
-       width="64"
-       height="65.999985"
-       transform="matrix(0.37499987,0,0,0.37878803,206.96738,487.66046)" />
+       height="25.000004"
+       width="23.999992"
+       y="793.11218"
+       x="294.54773"
+       id="image4256" />
     <text
        xml:space="preserve"
        style="font-size:18px;font-style:normal;font-weight:normal;text-align:start;line-height:100%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans"
@@ -162,7 +159,7 @@
        id="text4017"
        sodipodi:linespacing="100%"
        clip-path="url(#clipPath3009)"
-       transform="translate(-8,-22)"><tspan
+       transform="translate(-6.0000056,-20.000001)"><tspan
          sodipodi:role="line"
          id="tspan4019"
          x="23.692986"
@@ -175,55 +172,18 @@
        id="text3786"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath3015)"
-       transform="translate(-8,-34)"><tspan
+       transform="translate(-6.0000056,-32.000001)"><tspan
          sodipodi:role="line"
          id="tspan3788"
          x="25.225405"
          y="850.28473">${subtitle}</tspan></text>
     <rect
-       style="fill:#696969;fill-opacity:0.50196078;stroke:none"
-       id="rect3000-6"
-       width="35.000004"
-       height="140.00003"
-       x="289.54773"
-       y="881.11218"
-       rx="12"
-       ry="8.3999987"
-       transform="matrix(1,0,0,1.4285716,5.0000058,-432.61972)" />
-    <g
-       id="viewScrollbar"
-       class="scrollbar"
-       transform="matrix(1,0,0,1.027027,5.0000058,-27.597606)">
-      <rect
-         ry="2.8406875"
-         rx="5.4705882"
-         y="886.11218"
-         x="304.54773"
-         height="130.00002"
-         width="5.0000038"
-         id="rect3000-6-4"
-         style="fill:#696969;fill-opacity:0.50196078;stroke:none"
-         class="track"
-         transform="matrix(1,0,0,1.423077,0,-424.8937)" />
-      <rect
-         ry="5.597331"
-         rx="5.4705882"
-         y="888.11218"
-         x="294.54773"
-         height="30"
-         width="25"
-         id="rect3017"
-         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
-         class="knob"
-         transform="translate(0,-42)" />
-    </g>
-    <rect
        style="fill:none;stroke:none"
        id="menu"
-       width="280.00003"
-       height="199.99992"
-       x="9.5477352"
-       y="826.11218"
+       width="312"
+       height="200"
+       x="11.547735"
+       y="824.11218"
        clip-path="none"
        class="listView" />
     <text
@@ -238,5 +198,37 @@
          id="tspan3008"
          x="89.64286"
          y="126.42857">${message}</tspan></text>
+    <g
+       id="viewScrollbar"
+       class="scrollbar"
+       transform="translate(325.54774,825.11217)">
+      <rect
+         style="fill:#696969;fill-opacity:0.50196078;stroke:none"
+         id="rect3000-6"
+         width="4"
+         height="200"
+         rx="3.1342714"
+         ry="1.9870105"
+         x="0"
+         y="0" />
+      <rect
+         height="196"
+         width="2"
+         id="rect3000-6-4"
+         class="track"
+         x="1"
+         y="2"
+         style="opacity:0.2;fill:#ff0000;fill-opacity:1" />
+      <rect
+         ry="8.0115614"
+         rx="5.8333349"
+         height="30"
+         width="4"
+         id="rect3017"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+         class="knob"
+         x="0"
+         y="0" />
+    </g>
   </g>
 </svg>

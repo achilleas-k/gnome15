@@ -10,8 +10,8 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="110"
-   height="56"
+   width="131"
+   height="43"
    id="svg2"
    version="1.2"
    inkscape:version="0.48.3.1 r9886"
@@ -214,21 +214,21 @@
        x2="250"
        y1="857.36218"
        x1="80.000015"
-       gradientTransform="matrix(0.6117648,0,0,0.69999995,-36.941189,165.34653)"
+       gradientTransform="matrix(0.73529423,0,0,0.69999995,-46.823546,175.34653)"
        gradientUnits="userSpaceOnUse"
        id="linearGradient4277"
        xlink:href="#linearGradient3812-6-8-5"
        inkscape:collect="always" />
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3916">
+       id="clipPath3033">
       <rect
-         y="769"
-         x="12"
+         style="fill:#ff0000;fill-opacity:1;stroke:none"
+         id="rect3035"
+         width="132"
          height="17"
-         width="104"
-         id="rect3918"
-         style="fill:#ff0000;fill-opacity:1;stroke:none" />
+         x="12"
+         y="769" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -238,17 +238,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8"
-     inkscape:cx="62.837791"
-     inkscape:cy="21.236491"
+     inkscape:zoom="5.6"
+     inkscape:cx="74.348175"
+     inkscape:cy="23.985412"
      inkscape:document-units="px"
      inkscape:current-layer="layer1-5-7"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1255"
      inkscape:window-height="940"
-     inkscape:window-x="459"
-     inkscape:window-y="78"
+     inkscape:window-x="455"
+     inkscape:window-y="35"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -278,17 +278,17 @@
      inkscape:label="Deselected Layer"
      inkscape:groupmode="layer"
      id="layer1-5-7"
-     transform="translate(-9,-755)"
+     transform="translate(-9,-768)"
      style="display:inline">
     <rect
        style="opacity:0.5;fill:#ff0000;fill-opacity:1"
        id="rect3070"
-       width="110"
-       height="55"
+       width="131"
+       height="43"
        x="9"
-       y="756"
-       rx="8"
-       ry="8"
+       y="768"
+       rx="4.7636366"
+       ry="4"
        title="del !item_selected" />
     <text
        xml:space="preserve"
@@ -297,8 +297,8 @@
        y="782.2821"
        id="text2999-0-9"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath3916)"
-       transform="translate(0,-2)"><tspan
+       clip-path="url(#clipPath3033)"
+       transform="translate(0,9.4161377)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-1"
          x="10.932479"
@@ -311,43 +311,43 @@
        id="text2999-0-1-7"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999-5-0-7)"
-       transform="matrix(1.0000023,0,0,1,-58.363261,-4.112244)"><tspan
+       transform="matrix(1.0000023,0,0,1,-35.718444,7.8877563)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-9-0"
          x="176.15961"
          y="798.28217">${item_alt}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
-       x="183.80023"
+       style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
+       x="107.22406"
        y="798.28217"
        id="text2999-0-1-7-4"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999-5-0-7-1)"
-       transform="matrix(1.0000023,0,0,1,-66.648975,9.530613)"><tspan
+       transform="matrix(0.99999776,0,0,1,-67.219911,7.8877563)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-9-0-5"
-         x="183.80023"
+         x="107.22406"
          y="798.28217">${item_alt2}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:10px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill-opacity:1;stroke:none;font-family:Sans"
        x="12.928543"
-       y="806.92847"
+       y="805.8584"
        id="text3892"
        sodipodi:linespacing="125%"
        title="del !item_alt2"><tspan
          sodipodi:role="line"
          id="tspan3894"
          x="12.928543"
-         y="806.92847">Max</tspan></text>
+         y="805.8584">Max</tspan></text>
     <rect
        class="progress"
        style="fill:url(#linearGradient4277);fill-opacity:1;stroke:none"
        id="temp_percent_progress"
-       width="104"
+       width="125"
        height="7"
        x="12"
-       y="762" />
+       y="772" />
   </g>
 </svg>

@@ -49,6 +49,7 @@ DEVICE_IF_NAME="org.gnome15.Device"
 # Logging
 import logging
 logger = logging.getLogger("dbus")
+logger.setLevel(logging.DEBUG)
     
 class AbstractG15DBUSService(dbus.service.Object):
     
@@ -72,8 +73,7 @@ class AbstractG15DBUSService(dbus.service.Object):
                     gobject.idle_add(self.KeysPressed, p)
                 return True
             
-    @dbus.service.method(SCREEN_IF_NAME, in_signature='b')
-    def set_receive_actions(self, enabled):
+    def _set_receive_actions(self, enabled):
         if enabled and self in self._screen.key_handler.action_listeners:
             raise Exception("Already receiving actions")
         elif not enabled and not self in self._screen.key_handler.action_listeners:
@@ -94,6 +94,10 @@ class G15DBUSDebugService(dbus.service.Object):
         logger.info("Collecting garbage")
         gc.collect()
         logger.info("Collected garbage")
+        
+    @dbus.service.method(DEBUG_IF_NAME)
+    def ToggleDebugSVG(self):
+        g15theme.DEBUG_SVG = not g15theme.DEBUG_SVG
         
     @dbus.service.method(DEBUG_IF_NAME)
     def MostCommonTypes(self):
@@ -158,11 +162,19 @@ class G15DBUSDeviceService(AbstractG15DBUSService):
         AbstractG15DBUSService.__init__(self, dbus_service._bus_name, "%s/%s" % ( DEVICE_NAME, device.uid ) )
         self._dbus_service = dbus_service
         self._service = dbus_service._service
-        self._device = device    
+        self._device = device  
+    
+    @dbus.service.signal(DEVICE_IF_NAME, signature='s')
+    def ScreenAdded(self, screen_name):
+        pass
+    
+    @dbus.service.signal(DEVICE_IF_NAME, signature='s')
+    def ScreenRemoved(self, screen_name):
+        pass  
         
     @dbus.service.method(DEVICE_IF_NAME, in_signature='b')
     def SetReceiveActions(self, enabled):
-        self.set_receive_actions(enabled)
+        self._set_receive_actions(enabled)
         
     @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='s')
     def GetScreen(self):
@@ -183,6 +195,10 @@ class G15DBUSDeviceService(AbstractG15DBUSService):
     @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='s')
     def GetModelFullName(self):
         return self._device.model_fullname
+        
+    @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='s')
+    def GetModelId(self):
+        return self._device.model_id
         
     @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='s')
     def GetUID(self):
@@ -223,8 +239,11 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         self._screen = screen
         self._screen.add_screen_change_listener(self)
         self._screen.key_handler.key_handlers.append(self)
+        self._notify_handles = []
         self._dbus_pages = {}
         self._clients = {}
+        
+        self._notify_handles.append(self._screen.conf_client.notify_add("/apps/gnome15/%s/cycle_screens" % self._screen.device.uid, self._cycle_screens_option_changed))
         
     '''
     screen change listener and action listener
@@ -277,7 +296,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         logger.debug("Sent title changed signal for %s" % page.id)
     
     def deleting_page(self, page):
-        logger.debug("Sending page deleted signal for %s" % page.id)
+        logger.debug("Sending page deleting signal for %s" % page.id)
         
         for client_bus_name in self._clients:
             client = self._clients[client_bus_name]
@@ -303,7 +322,6 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         else:
             logger.warning("DBUS Page %s was deleted, but it never existed. Huh? %s" % ( page.id, str(self._dbus_pages) ))
         logger.debug("Sent page deleted signal for %s" % page.id)
-        self._screen.remove_screen_change_listener(self)
             
     """
     DBUS Functions
@@ -350,6 +368,14 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         page.set_title(title)
         self._get_client(sender).pages.append(page)
         return self.GetPageForID(page_id)
+            
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='b')
+    def IsCyclingEnabled(self):
+        return g15util.get_bool_or_default(self._service.conf_client, "/apps/gnome15/%s/cycle_screens" % self._screen.device.uid, True);
+            
+    @dbus.service.method(SCREEN_IF_NAME, in_signature='b', out_signature='')
+    def SetCyclingEnabled(self, enabled):
+        self._service.conf_client.set_bool("/apps/gnome15/%s/cycle_screens" % self._screen.device.uid, enabled);
             
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='b')
     def IsReceiveActions(self):
@@ -441,7 +467,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         
     @dbus.service.method(SCREEN_IF_NAME, in_signature='b')
     def SetReceiveActions(self, enabled):
-        self.set_receive_actions(enabled)
+        self._set_receive_actions(enabled)
     
     """
     DBUS Signals
@@ -497,11 +523,21 @@ class G15DBUSScreenService(AbstractG15DBUSService):
                     
     @dbus.service.signal(SCREEN_IF_NAME, signature='s')
     def Action(self, binding):
+        pass   
+                    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='b')
+    def CyclingChanged(self, cycle):
         pass    
     
     """
     Private
     """
+    def _removing(self):
+        for h in self._notify_handles:
+            self._service.conf_client.notify_remove(h)
+        
+    def _cycle_screens_option_changed(self, client, connection_id, entry, args):
+        self.CyclingChanged(entry.value.get_bool())
     
     def _get_dimmable_controls(self):
         controls = []
@@ -608,7 +644,7 @@ class G15DBUSPageService(AbstractG15DBUSService):
         self._timer = None        
         self._page.key_handlers.append(self)
             
-    @dbus.service.method(SCREEN_IF_NAME, in_signature='b')
+    @dbus.service.method(PAGE_IF_NAME, in_signature='b')
     def SetReceiveActions(self, enabled):
         if enabled and self in self._screen_service._screen.action_listeners:
             raise Exception("Already receiving actions")
@@ -619,7 +655,7 @@ class G15DBUSPageService(AbstractG15DBUSService):
         else:
             self._screen_service._screen.action_listeners.remove(self)
             
-    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='b')
+    @dbus.service.method(PAGE_IF_NAME, in_signature='', out_signature='b')
     def GetReceiveActions(self):
         return self in self._screen_service._screen.action_listeners
     
@@ -639,7 +675,7 @@ class G15DBUSPageService(AbstractG15DBUSService):
     def IsVisible(self):
         return self._page.is_visible()
             
-    @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='b')
+    @dbus.service.method(PAGE_IF_NAME, in_signature='', out_signature='b')
     def IsReceiveActions(self):
         return self in self._screen.key_handler.action_listeners
     
@@ -756,7 +792,7 @@ class G15DBUSPageService(AbstractG15DBUSService):
     def KeysReleased(self, keys):
         pass
                     
-    @dbus.service.signal(SCREEN_IF_NAME, signature='s')
+    @dbus.service.signal(PAGE_IF_NAME, signature='s')
     def Action(self, binding):
         pass    
             
@@ -796,9 +832,11 @@ class G15DBUSService(AbstractG15DBUSService):
         logger.debug("DBUS service ready")
         self._dbus_screens = {}
         self._dbus_devices = []
+        self._dbus_device_map = {}
         for device in g15devices.find_all_devices():
             dbus_device = G15DBUSDeviceService(self, device)
             self._dbus_devices.append(dbus_device)
+            self._dbus_device_map[device.uid] = dbus_device
             
         self._bus.add_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
@@ -826,17 +864,25 @@ class G15DBUSService(AbstractG15DBUSService):
         screen_service = G15DBUSScreenService(self, screen)
         self._dbus_screens[screen.device.uid] = screen_service
         gobject.idle_add(self.ScreenAdded, "%s/%s" % ( SCREEN_NAME, screen.device.uid ))
+        dbus_device = self._dbus_device_map[screen.device.uid]
+        gobject.idle_add(dbus_device.ScreenAdded, "%s/%s" % ( SCREEN_NAME, screen.device.uid ))
         
     def screen_removed(self, screen):
         logger.debug("Screen removed for %s" % screen.device.model_id)
+        gobject.idle_add(self.ScreenRemoved, "%s/%s" % ( SCREEN_NAME, screen.device.uid ))
+        dbus_device = self._dbus_device_map[screen.device.uid]
+        gobject.idle_add(dbus_device.ScreenRemoved, "%s/%s" % ( SCREEN_NAME, screen.device.uid ))
+        gobject.idle_add(self._do_screen_removed, screen);
+        
+    def _do_screen_removed(self, screen):
         try:
             screen_service = self._dbus_screens[screen.device.uid]
+            screen_service._removing()
             screen_service.remove_from_connection()
         except:
-            # May happen on shutdow
+            # May happen on shutdown
             pass  
         del self._dbus_screens[screen.device.uid]
-        gobject.idle_add(self.ScreenRemoved, "%s/%s" % ( SCREEN_NAME, screen.device.uid ))
         
     def service_stopping(self):
         logger.debug("Sending stopping down signal")
@@ -874,11 +920,11 @@ class G15DBUSService(AbstractG15DBUSService):
     def Started(self):
         pass
     
-    @dbus.service.signal(IF_NAME)
+    @dbus.service.signal(IF_NAME, signature='s')
     def ScreenAdded(self, screen_name):
         pass
     
-    @dbus.service.signal(IF_NAME)
+    @dbus.service.signal(IF_NAME, signature='s')
     def ScreenRemoved(self, screen_name):
         pass
     

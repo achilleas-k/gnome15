@@ -134,7 +134,8 @@ class G15Clock():
         self.page = g15theme.G15Page("Clock", self.screen, 
                                      theme_properties_callback = self._get_properties,
                                      thumbnail_painter = self.paint_thumbnail, panel_painter = self.paint_thumbnail,
-                                     theme = self.theme)
+                                     theme = self.theme,
+                                     originating_plugin = self)
         self.page.title = "Simple Clock"
         
         '''

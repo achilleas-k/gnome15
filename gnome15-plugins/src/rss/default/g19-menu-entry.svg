@@ -9,11 +9,11 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="320"
+   width="313"
    height="28"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19-menu-entry.svg">
   <defs
      id="defs4">
@@ -53,14 +53,14 @@
     </filter>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3005">
+       id="clipPath2999">
       <rect
-         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-         id="rect3007"
-         width="197"
-         height="21.999977"
+         y="784.11218"
          x="104.54774"
-         y="784.11218" />
+         height="21.999977"
+         width="242"
+         id="rect3001"
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -79,8 +79,8 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2426"
-     inkscape:window-y="83"
+     inkscape:window-x="441"
+     inkscape:window-y="50"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -114,21 +114,21 @@
     <rect
        style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5-4"
-       width="270"
+       width="313"
        height="24.999979"
        x="9.5477352"
        y="783.11218"
-       rx="6"
+       rx="6.9555554"
        ry="6"
        title="del !item_selected" />
     <rect
        style="fill:#696969;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5"
-       width="270"
+       width="313"
        height="24.999979"
        x="9.5477352"
        y="783.11218"
-       rx="6"
+       rx="6.9555554"
        ry="6"
        title="del selected" />
     <text
@@ -138,7 +138,7 @@
        y="798.28217"
        id="text2999"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath3005)"
+       clip-path="url(#clipPath2999)"
        transform="translate(-22,1)"><tspan
          sodipodi:role="line"
          id="tspan3001"
@@ -147,7 +147,7 @@
          transform="translate(-3.6724186,0)">${ent_title}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:10.10914039999999936px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
+       style="font-size:10.1091404px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Bold"
        x="17.616716"
        y="673.33795"
        id="text2999-4"

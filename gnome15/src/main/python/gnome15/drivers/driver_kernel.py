@@ -419,7 +419,6 @@ K_KEYMAPS = {
                                    
                                    },
              }
-K_KEYMAPS[g15driver.MODEL_G510_AUDIO] = K_KEYMAPS[g15driver.MODEL_G510] 
 
 class DeviceInfo:
     def __init__(self, leds, controls, key_map, led_prefix, keydev_pattern, sink_pattern = None, mm_pattern = None):
@@ -439,7 +438,6 @@ device_info = {
                g15driver.MODEL_G13: DeviceInfo(["red:m1", "red:m2", "red:m3", "red:mr" ], g13_controls, g13_key_map, "g13", r"_G13-event-mouse"),
                g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g110_controls, g110_key_map, "g110", r"usb-LOGITECH_G110_G-keys-event-if.*", r"usb-LOGITECH_G110_G-keys-event-kbd.*"),
                g15driver.MODEL_G510: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g13_controls, g510_key_map, "g510", r"G510_Gaming_Keyboard.*event-if.*", r"G510_Gaming_Keyboard.*event.*kbd.*"),
-               g15driver.MODEL_G510_AUDIO: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g13_controls, g510_key_map, "g510", r"G510_Gaming_Keyboard.*event-if.*", r"G510_Gaming_Keyboard.*event.*kbd.*")
                }
         
 

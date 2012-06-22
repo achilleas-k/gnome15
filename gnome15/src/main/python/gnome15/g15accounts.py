@@ -467,6 +467,7 @@ class G15AccountPreferences():
             self.account_mgr.accounts.remove(acc)
             self.save_accounts()
         self._reload_model()
+        self._load_options_for_type()
         
     def _type_changed(self, widget):      
         sel = self._get_selected_type()      

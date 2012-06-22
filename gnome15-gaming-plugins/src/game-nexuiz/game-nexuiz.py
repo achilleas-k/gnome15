@@ -54,7 +54,8 @@ class GameNexuiz():
         self._reload_theme()
         self._page = g15theme.G15Page("Nexuiz", self._screen, 
                                      theme_properties_callback = self._get_properties,
-                                     theme = self._theme)
+                                     theme = self._theme, 
+                                     originating_plugin = self)
         self._page.title = "Nexuiz"
         self._screen.add_page(self._page)
         self._redraw()

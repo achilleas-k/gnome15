@@ -229,17 +229,22 @@ AC_ARG_ENABLE([stopwatch],
 	[stopwatch_plugin=yes])
 AM_CONDITIONAL([ENABLE_STOPWATCH_PLUGIN], [test x$stopwatch_plugin = xyes])
 
-dnl Videoplayer plugin
-AC_ARG_ENABLE([videoplayer],
-	[AS_HELP_STRING([--enable-videoplayer],
-		[Enable Videoplayer plugin. Requires mplayer])],
+dnl Media Player plugin
+
+AX_PYTHON_MODULE(gst, [])
+AS_IF([test "x${HAVE_PYMOD_GST}" = "xyes"],
+	  [have_gst=yes],
+	  [have_gst=no])
+AC_ARG_ENABLE([mediaplayer],
+	[AS_HELP_STRING([--enable-mediaplayer],
+		[Enable Media Player plugin. Requires GStreamer])],
 	[case "${enableval}" in
- 				yes)	videoplayer_plugin=yes ;;
- 				no)		videoplayer_plugin=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-videoplayer]) ;;
+ 				yes)	mediaplayer_plugin=yes ;;
+ 				no)		mediaplayer_plugin=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-mediaplayer]) ;;
  	esac],
-	[videoplayer_plugin=yes])
-AM_CONDITIONAL([ENABLE_VIDEOPLAYER_PLUGIN], [test x$videoplayer_plugin = xyes])
+	[mediaplayer_plugin=${have_gst}])
+AM_CONDITIONAL([ENABLE_MEDIAPLAYER_PLUGIN], [test x$mediaplayer_plugin = xyes])
 
 dnl Weather plugin
 AC_ARG_ENABLE([weather],
@@ -371,22 +376,6 @@ AC_ARG_ENABLE([processes],
 	[processes_plugin=${have_gtop}])
 AM_CONDITIONAL([ENABLE_PROCESSES_PLUGIN], [test x$processes_plugin = xyes])
 
-dnl Webcam
-AX_PYTHON_MODULE(opencv, [])
-AS_IF([test "x${HAVE_PYMOD_OPENCV}" = "xyes"],
-	  [have_opencv=yes],
-	  [have_opencv=no])
-AC_ARG_ENABLE([webcam],
-	[AS_HELP_STRING([--enable-webcam],
-		[Enable Webcam plugin. Requires python OpenCV])],
-	[case "${enableval}" in
- 				yes)	webcam_plugin=yes ;;
- 				no)		webcam_plugin=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-webcam]) ;;
- 	esac],
-	[webcam_plugin=${have_opencv}])
-AM_CONDITIONAL([ENABLE_WEBCAM_PLUGIN], [test x$webcam_plugin = xyes])
-
 dnl Calendar plugin (base)
 AC_ARG_ENABLE([cal],
 	[AS_HELP_STRING([--enable-cal],
@@ -413,12 +402,12 @@ AC_ARG_ENABLE([cal-evolution],
  				no)		cal_evolution_plugin=no ;;
  				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-cal-evolution]) ;;
  	esac],
-	[cal_evolution_plugin=${have_calendar_modules}])
+	[cal_evolution_plugin=${have_calendar_evolution_modules}])
 AM_CONDITIONAL([ENABLE_CAL_EVOLUTION_PLUGIN], [test x$cal_evolution_plugin = xyes])
 
 dnl Google Calendar plugin
-AX_PYTHON_MODULE(gdata.calendar.data, [])
-AS_IF([test "x${HAVE_PYMOD_GDATA_CALENDAR_DATA}" = "xyes" ],
+AX_PYTHON_MODULE(gdata.calendar, [])
+AS_IF([test "x${HAVE_PYMOD_GDATA_CALENDAR}" = "xyes" ],
 	  [have_calendar_google_modules=yes],
 	  [have_calendar_google_modules=no])
 AC_ARG_ENABLE([cal-google],
@@ -434,16 +423,17 @@ AM_CONDITIONAL([ENABLE_CAL_GOOGLE_PLUGIN], [test x$cal_google_plugin = xyes])
 
 dnl Google Analytics plugin
 AX_PYTHON_MODULE(gdata.analytics, [])
-AS_IF([test "x${HAVE_PYMOD_GDATA_ANALYTICS}" = "xyes" ],
+AX_PYTHON_MODULE(cairoplot, [])
+AS_IF([test "x${HAVE_PYMOD_GDATA_ANALYTICS}" = "xyes" -a "x${HAVE_PYMOD_CAIROPLOT}" = "xyes" ],
 	  [have_google_analytics_modules=yes],
 	  [have_google_analytics_modules=no])
 AC_ARG_ENABLE([google-analytics],
 	[AS_HELP_STRING([--enable-google-analytics],
-		[Enable Google Analytics plugin. Requires python gdata])],
+		[Enable Google Analytics plugin. Requires python gdata and cairoplot])],
 	[case "${enableval}" in
  				yes)	google_analytics_plugin=yes ;;
- 				no)		google_analytics_plugin=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-google-analytics]) ;;
+ 				no)	google_analytics_plugin=no ;;
+ 				*)	AC_MSG_ERROR([bad value ${enableval} for --enable-google-analytics]) ;;
  	esac],
 	[google_analytics_plugin=${have_google_analytics_modules}])
 AM_CONDITIONAL([ENABLE_GOOGLE_ANALYTICS_PLUGIN], [test x$google_analytics_plugin = xyes])
@@ -556,6 +546,7 @@ src/cal/default/Makefile
 src/cal-evolution/Makefile
 src/cal-google/Makefile
 src/lcdbiff/Makefile
+src/lcdbiff/default/Makefile
 src/background/Makefile
 src/cairo-clock/Makefile
 src/cairo-clock/g15/Makefile
@@ -574,19 +565,16 @@ src/macros/Makefile
 src/macros/default/Makefile
 src/mpris/Makefile
 src/mpris/default/Makefile
+src/mpris/bigcover/Makefile
 src/mounts/Makefile
 src/mounts/default/Makefile
 src/menu/Makefile
 src/panel/Makefile
 src/profiles/Makefile
-src/profiles/default/Makefile
 src/processes/Makefile
-src/processes/default/Makefile
 src/im/Makefile
-src/im/default/Makefile
 src/lens/Makefile
 src/indicator-me/Makefile
-src/indicator-me/default/Makefile
 src/indicator-messages/Makefile
 src/lcdshot/Makefile
 src/notify-lcd/Makefile
@@ -595,8 +583,8 @@ src/screensaver/Makefile
 src/screensaver/default/Makefile
 src/stopwatch/Makefile
 src/stopwatch/default/Makefile
-src/sense/default/Makefile
 src/sense/Makefile
+src/sense/default/Makefile
 src/sysmon/Makefile
 src/sysmon/default/Makefile
 src/sysmon/graphs/Makefile
@@ -606,21 +594,18 @@ src/sysmon/dials/Makefile
 src/tweak/Makefile
 src/volume/Makefile
 src/volume/default/Makefile
-src/videoplayer/Makefile
-src/videoplayer/default/Makefile
+src/mediaplayer/Makefile
+src/mediaplayer/default/Makefile
 src/weather/Makefile
 src/weather/default/Makefile
-src/webcam/Makefile
-src/webcam/default/Makefile
 src/tails/Makefile
 src/tails/tailer/Makefile
 src/tails/default/Makefile
 src/display/Makefile
-src/display/default/Makefile
 src/voip/Makefile
 src/voip/default/Makefile
 src/voip-teamspeak3/Makefile
-src/voip-teamspeak3/teamspeak3/Makefile
+src/voip-teamspeak3/ts3/Makefile
 src/google-analytics/Makefile
 src/google-analytics/default/Makefile
 ])
@@ -642,10 +627,6 @@ AS_IF([test "x$processes_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("sysmon                      - ")
 AS_IF([test "x$sysmon_plugin" = "xyes" ],
-     [AS_ECHO("Enabled")],
-     [AS_ECHO("Disabled")])
-AS_ECHO_N("webcam                      - ")
-AS_IF([test "x$webcam_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("cal                         - ")
@@ -748,8 +729,8 @@ AS_ECHO_N("tweak                       - ")
 AS_IF([test "x$tweak_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
-AS_ECHO_N("videoplayer                 - ")
-AS_IF([test "x$videoplayer_plugin" = "xyes" ],
+AS_ECHO_N("mediaplayer                 - ")
+AS_IF([test "x$mediaplayer_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("weather                     - ")

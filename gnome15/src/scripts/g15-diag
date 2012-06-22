@@ -26,10 +26,14 @@ used by the kernel driver support to set the brightness of keyboard lights (the 
 files of which require root access, as they are in /sys). 
 """
 
-
 import sys
 import os
 import glib
+
+# Allow running from local path
+path = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(__file__)), "..","main", "python"))
+if os.path.exists(path):
+    sys.path.insert(0, path) 
 
 # Logging
 import logging

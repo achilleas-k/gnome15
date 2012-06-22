@@ -156,7 +156,8 @@ class G15ScreenSaver():
                 self._reload_theme()
                 self._page = g15theme.G15Page(id, self._screen, priority = g15screen.PRI_EXCLUSIVE, \
                                               title = name, theme = self._theme,
-                                              theme_properties_callback = self._get_theme_properties)
+                                              theme_properties_callback = self._get_theme_properties,
+                                              originating_plugin = self)
                 self._page.key_handlers.append(self)
                 self._screen.add_page(self._page)
                 self._screen.redraw(self._page)

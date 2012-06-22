@@ -80,14 +80,20 @@ class G15ConfigService(dbus.service.Object):
     called and the runtime exited.
     """
     
-    def __init__(self, bus, window):
-        bus_name = dbus.service.BusName(BUS_NAME, bus=bus, replace_existing=False, allow_replacement=False, do_not_queue=True)
+    def __init__(self, config):
+        self._config = config
+        bus_name = dbus.service.BusName(BUS_NAME, bus=config.session_bus, replace_existing=False, allow_replacement=False, do_not_queue=True)
         dbus.service.Object.__init__(self, bus_name, NAME)
-        self.window = window
         
     @dbus.service.method(IF_NAME, in_signature='', out_signature='')
     def Present(self):
-        self.window.present()
+        self._config.main_window.present()
+        
+    @dbus.service.method(IF_NAME, in_signature='s', out_signature='')
+    def PresentWithDeviceUID(self, device_uid):
+        self._config._default_device_name = device_uid
+        self._config._load_devices()
+        self._config.main_window.present()
         
 class G15GlobalConfig:
     
@@ -202,9 +208,9 @@ class G15Config:
     
     adjusting = False
 
-    def __init__(self, parent_window=None, service=None):
+    def __init__(self, parent_window=None, service=None, options=None):
         self.parent_window = parent_window
-        
+        self._options = options
         self._controls_visible = False
         self.profile_save_timer = None
         self._signal_handles = []
@@ -234,12 +240,19 @@ class G15Config:
         # Make sure there is only one g15config running
         self.session_bus = dbus.SessionBus()
         try :
-            G15ConfigService(self.session_bus, self.main_window)
+            G15ConfigService(self)
         except dbus.exceptions.NameExistsException as e:
-            self.session_bus.get_object(BUS_NAME, NAME).Present()
+            if self._options is not None and self._options.device_uid != "":
+                self.session_bus.get_object(BUS_NAME, NAME).PresentWithDeviceUID(self._options.device_uid)
+            else:
+                self.session_bus.get_object(BUS_NAME, NAME).Present()
             self.session_bus.close()
             g15profile.notifier.stop()
             sys.exit()
+            
+        # Get the initially selected device
+        self._default_device_name = self.conf_client.get_string("/apps/gnome15/config_device_name") \
+            if self._options is None or self._options.device_uid == "" else self._options.device_uid
 
         # Widgets
         self.site_label = self.widget_tree.get_object("SiteLabel")
@@ -313,6 +326,7 @@ class G15Config:
         self.macros_tab_label = self.widget_tree.get_object("MacrosTabLabel")
         self.keyboard_tab = self.widget_tree.get_object("KeyboardTab")
         self.plugins_tab = self.widget_tree.get_object("PluginsTab")
+        self.profile_plugins_tab = self.widget_tree.get_object("ProfilePluginsTab")
         self.driver_box = self.widget_tree.get_object("DriverBox")
         self.parent_profile_box = self.widget_tree.get_object("ParentProfileBox")
         self.parent_profile_label = self.widget_tree.get_object("ParentProfileLabel")
@@ -789,10 +803,8 @@ class G15Config:
                 if plugin_theme is None:
                     plugin_theme = "default"
                 for i, t in enumerate(themes):
-                    print "%d = %s" % (i, t.theme_id)
                     self.theme_model.append([t.theme_id,t.name])
                     if t.theme_id == plugin_theme:
-                        print " yup!"
                         self.theme_combo.set_active(i)
                 self.theme_label.set_visible(True)
                 self.theme_combo.set_visible(True)
@@ -805,15 +817,16 @@ class G15Config:
         # List the keys that are required for each action
         for c in self.key_table.get_children():
             self.key_table.remove(c)
-        actions = g15pluginmanager.get_actions(plugin)
+        actions = g15pluginmanager.get_actions(plugin, self.selected_device)
         rows = len(actions) 
         if  rows > 0:
             self.key_table.set_property("n-rows", rows)         
         row = 0
-        active_profile = g15profile.get_active_profile(self.driver.device)
+        active_profile = g15profile.get_active_profile(self.driver.device) if self.driver is not None else None
         if active_profile is None:
             logger.warning("No active profile found. It's possible the profile no longer exists, or is supplied with a plugin that cannot be found.")
         else:
+            bindings = []
             for action_id in actions:
                 # First try the active profile to see if the action has been re-mapped
                 action_binding = None
@@ -824,38 +837,46 @@ class G15Config:
                         device_info = g15devices.get_device_info(self.driver.get_model_name())                
                         if action_id in device_info.action_keys:
                             action_binding = device_info.action_keys[action_id]
+                            break
+                    else:
+                        break
                 
                 if action_binding is not None:
-                    # If hold
-                    label = gtk.Label("")
-                    label.set_size_request(40, -1)
-                    if action_binding.state == g15driver.KEY_STATE_HELD:
-                        label.set_text(_("<b>Hold</b>"))
-                        label.set_use_markup(True)
-                    label.set_alignment(0.0, 0.5)
-                    self.key_table.attach(label, 0, 1, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2);
-                    label.show()
-                    
-                    # Keys
-                    keys = gtk.HBox(spacing = 4)
-                    for k in action_binding.keys:
-                        fname = os.path.abspath("%s/key-%s.png" % (g15globals.image_dir, k))
-                        pixbuf = gtk.gdk.pixbuf_new_from_file(fname)
-                        pixbuf = pixbuf.scale_simple(22, 14, gtk.gdk.INTERP_BILINEAR)
-                        img = gtk.image_new_from_pixbuf(pixbuf)
-                        img.show()
-                        keys.add(img)
-                    keys.show()
-                    self.key_table.attach(keys, 1, 2, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
-                    
-                    # Text
-                    label = gtk.Label(actions[action_id])
-                    label.set_alignment(0.0, 0.5)
-                    label.show()
-                    self.key_table.attach(label, 2, 3, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
-                    row += 1
+                    bindings.append(action_binding)
                 else:
                     logger.warning("Plugin %s requires an action that is not available (%s)" % ( plugin.id, action_id))
+                    
+            bindings = sorted(bindings)
+                    
+            for action_binding in bindings:
+                # If hold
+                label = gtk.Label("")
+                label.set_size_request(40, -1)
+                if action_binding.state == g15driver.KEY_STATE_HELD:
+                    label.set_text(_("<b>Hold</b>"))
+                    label.set_use_markup(True)
+                label.set_alignment(0.0, 0.5)
+                self.key_table.attach(label, 0, 1, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2);
+                label.show()
+                
+                # Keys
+                keys = gtk.HBox(spacing = 4)
+                for k in action_binding.keys:
+                    fname = os.path.abspath("%s/key-%s.png" % (g15globals.image_dir, k))
+                    pixbuf = gtk.gdk.pixbuf_new_from_file(fname)
+                    pixbuf = pixbuf.scale_simple(22, 14, gtk.gdk.INTERP_BILINEAR)
+                    img = gtk.image_new_from_pixbuf(pixbuf)
+                    img.show()
+                    keys.add(img)
+                keys.show()
+                self.key_table.attach(keys, 1, 2, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
+                
+                # Text
+                label = gtk.Label(actions[action_binding.action])
+                label.set_alignment(0.0, 0.5)
+                label.show()
+                self.key_table.attach(label, 2, 3, row, row + 1,  xoptions = gtk.FILL, xpadding = 4, ypadding = 2)
+                row += 1
                     
             
         if row > 0:
@@ -1038,6 +1059,7 @@ class G15Config:
     def _set_tab_status(self):
         self.keyboard_tab.set_visible(self._controls_visible)
         self.plugins_tab.set_visible(len(self.plugin_model) > 0)
+        self.profile_plugins_tab.set_visible(len(self.plugin_model) > 0)
             
     def _driver_options_changed(self):
         self._add_controls()
@@ -1487,7 +1509,7 @@ class G15Config:
         self.device_model.clear()
         self.selected_device = None
         self.devices = g15devices.find_all_devices()
-        previous_sel_device_name = self.conf_client.get_string("/apps/gnome15/config_device_name")
+        previous_sel_device_name = self._default_device_name  
         sel_device_name = None
         idx = 0
         for device in self.devices:

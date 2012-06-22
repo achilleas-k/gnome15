@@ -10,11 +10,11 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="272"
-   height="28"
+   width="315"
+   height="25"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19-menu-entry.svg"
    style="display:inline">
   <defs
@@ -400,17 +400,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="11.2"
-     inkscape:cx="233.17511"
-     inkscape:cy="8.4147132"
+     inkscape:zoom="2.8"
+     inkscape:cx="145.06479"
+     inkscape:cy="-72.61743"
      inkscape:document-units="px"
      inkscape:current-layer="layer1-5"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1255"
      inkscape:window-height="940"
-     inkscape:window-x="2161"
-     inkscape:window-y="68"
+     inkscape:window-x="485"
+     inkscape:window-y="59"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -440,17 +440,17 @@
      inkscape:label="Selected Layer"
      inkscape:groupmode="layer"
      id="layer1-5"
-     transform="translate(-9,-783)"
+     transform="translate(-9,-786)"
      title="del !item_selected"
      style="display:inline">
     <rect
        style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5-4-5"
-       width="272"
+       width="315"
        height="22.999977"
        x="9"
-       y="783"
-       rx="6"
+       y="786"
+       rx="6.9485292"
        ry="6" />
     <text
        xml:space="preserve"
@@ -460,13 +460,13 @@
        id="text2999-0"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath3215)"
-       transform="translate(-54.672419,-8.3652344e-5)"><tspan
+       transform="translate(-62.672419,2.9999392)"><tspan
          sodipodi:role="line"
          id="tspan3001-7"
          x="107.22406"
          y="798.28217">${item_name}</tspan></text>
     <g
-       transform="matrix(1.0042195,0,0,1,-1.6666498,0.19848633)"
+       transform="matrix(1.0042195,0,0,1,42.33335,3.1985092)"
        style="display:inline"
        id="g3055-5"
        title="del !sel_disk_usage">
@@ -501,7 +501,7 @@
     </g>
     <image
        class="embedded_image"
-       y="785.11218"
+       y="788.11218"
        x="19.547737"
        height="19"
        width="19"
@@ -515,17 +515,17 @@
      inkscape:label="Deselected Layer"
      inkscape:groupmode="layer"
      id="layer1-5-7"
-     transform="translate(-9,-783)"
+     transform="translate(-9,-786)"
      title="del item_selected"
      style="display:inline">
     <rect
        style="fill:#808080;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5-4-5-4"
-       width="272"
+       width="315"
        height="22.999977"
        x="9"
-       y="783"
-       rx="6"
+       y="786"
+       rx="6.9485292"
        ry="6" />
     <text
        xml:space="preserve"
@@ -535,7 +535,7 @@
        id="text2999-0-9"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath3210)"
-       transform="translate(-54.672419,-8.3652344e-5)"><tspan
+       transform="translate(-62.672419,2.9999392)"><tspan
          sodipodi:role="line"
          id="tspan3001-7-1"
          x="107.22406"
@@ -543,7 +543,7 @@
     <g
        id="g3055"
        title="del !disk_usage"
-       transform="translate(-1.2857056,0.48425293)">
+       transform="translate(42.714294,3.4842758)">
       <rect
          y="784.51575"
          x="192.28571"
@@ -575,7 +575,7 @@
     </g>
     <image
        class="embedded_image"
-       y="785.11218"
+       y="788.11218"
        x="19.547737"
        height="19"
        width="19"

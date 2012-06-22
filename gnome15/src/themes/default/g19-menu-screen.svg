@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="g19-menu-screen.svg">
   <defs
      id="defs4">
@@ -63,17 +63,6 @@
          x="24.547735"
          y="836.11218" />
     </clipPath>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
-       id="clipPath3005">
-      <rect
-         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
-         id="rect3008"
-         width="263.52289"
-         height="31.815086"
-         x="24.690418"
-         y="799.46527" />
-    </clipPath>
     <filter
        id="filter3010"
        inkscape:label="Drop shadow"
@@ -107,6 +96,17 @@
            in="SourceGraphic" />
       </feMerge>
     </filter>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3016">
+      <rect
+         y="799.46527"
+         x="24.690418"
+         height="31.815086"
+         width="266.54031"
+         id="rect3018"
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -116,16 +116,16 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="89.821411"
-     inkscape:cy="141.01064"
+     inkscape:cx="105.55852"
+     inkscape:cy="111.45202"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="336"
-     inkscape:window-y="90"
+     inkscape:window-x="269"
+     inkscape:window-y="53"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -159,27 +159,27 @@
     <rect
        style="fill:#696969;fill-opacity:0.50196078;stroke:none"
        id="rect3000-5"
-       width="272"
+       width="275"
        height="34.999989"
-       x="12.547735"
-       y="790.11218"
-       rx="6"
+       x="11.547735"
+       y="788.11218"
+       rx="6.0661764"
        ry="6" />
     <rect
        style="fill:#696969;fill-opacity:0.50196078;stroke:none"
        id="rect3000"
-       width="35.000008"
+       width="35"
        height="35.000008"
        x="289.54773"
-       y="790.11218"
-       rx="4"
+       y="788.11218"
+       rx="3.999999"
        ry="4" />
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15/src/themes/default/${icon}"
        xlink:href="${icon}"
        height="24.999987"
        width="24.999987"
-       y="795.11218"
+       y="793.11218"
        x="294.54773"
        id="image4256" />
     <text
@@ -189,65 +189,74 @@
        y="824.32098"
        id="text4017"
        sodipodi:linespacing="125%"
-       transform="matrix(0.99422109,0,0,1.0058125,-7,-13)"
-       clip-path="url(#clipPath3005)"><tspan
+       transform="matrix(0.99422109,0,0,1.0058125,-7.9999991,-15.999994)"
+       clip-path="url(#clipPath3016)"><tspan
          sodipodi:role="line"
          id="tspan4019"
          x="23.692986"
          y="824.32098">${title}</tspan></text>
     <rect
-       style="fill:#696969;fill-opacity:0.50196078;stroke:none"
-       id="rect3000-6"
-       width="35.000008"
-       height="191.00003"
-       x="289.54773"
-       y="830.11218"
-       rx="4"
-       ry="4" />
-    <g
-       id="viewScrollbar"
-       class="scrollbar">
-      <rect
-         ry="3.9999995"
-         rx="4"
-         y="836.11218"
-         x="304.54773"
-         height="179.99998"
-         width="5.0000038"
-         id="rect3000-6-4"
-         style="fill:#696969;fill-opacity:0.50196078;stroke:none"
-         class="track" />
-      <rect
-         ry="4"
-         rx="4"
-         y="836.11218"
-         x="294.54773"
-         height="30"
-         width="25"
-         id="rect3017"
-         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
-         class="knob" />
-    </g>
-    <rect
        style="fill:none;stroke:none;display:inline"
        id="menu"
-       width="272"
-       height="189.9998"
-       x="12.547735"
-       y="831.11218"
-       rx="6"
-       ry="6"
+       width="313"
+       height="198"
+       x="11.547735"
+       y="826.11218"
+       rx="6.9044118"
+       ry="6.2526379"
        class="listView" />
     <text
        xml:space="preserve"
-       style="font-size:12px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;font-family:Sans;filter:url(#filter3010);"
-       x="277.96988"
-       y="810.54077"
-       id="text3004"
+       style="font-size:12px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="215"
+       y="23.928572"
+       id="text3013"
+       sodipodi:linespacing="125%"
+       transform="translate(9.5477353,786.11217)"><tspan
+         sodipodi:role="line"
+         id="tspan3015" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;font-family:Sans"
+       x="283.54132"
+       y="808.82648"
+       id="text3017"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
-         id="tspan3006"
-         x="277.96988"
-         y="810.54077">${alt_title}</tspan></text>
+         id="tspan3019"
+         x="283.54132"
+         y="808.82648">${alt_title}</tspan></text>
+    <g
+       id="viewScrollbar"
+       class="scrollbar"
+       transform="translate(325.54774,826.11217)">
+      <rect
+         style="fill:#696969;fill-opacity:0.50196078;stroke:none"
+         id="rect3000-6"
+         width="4"
+         height="200"
+         rx="3.1342714"
+         ry="1.9870105"
+         x="0"
+         y="0" />
+      <rect
+         height="196"
+         width="2"
+         id="rect3000-6-4"
+         class="track"
+         x="1"
+         y="2"
+         style="opacity:0.2;fill:#ff0000;fill-opacity:1" />
+      <rect
+         ry="8.0115614"
+         rx="5.8333349"
+         height="30"
+         width="4"
+         id="rect3017"
+         style="fill:#ff0000;fill-opacity:0.50196078;stroke:none"
+         class="knob"
+         x="0"
+         y="0" />
+    </g>
   </g>
 </svg>

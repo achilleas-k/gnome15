@@ -24,6 +24,7 @@ _ = g15locale.get_translation("sysmon", modfile = __file__).ugettext
 import gnome15.g15theme as g15theme 
 import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
+import gnome15.g15plugin as g15plugin
 import time
 import gtop
 import gtk
@@ -105,19 +106,20 @@ class CPU():
             return 100 - (val  * 100.00 / sum_l)
         return 0
         
-class G15SysMon():
+class G15SysMon(g15plugin.G15Plugin):
     """
     Plugin implementation
     """    
     def __init__(self, gconf_key, gconf_client, screen):
-        self.screen = screen
-        self.notify_handlers = []
+        g15plugin.G15Plugin.__init__(self, gconf_client, gconf_key, screen)
         self.hidden = False
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
         self.timer = None
     
     def activate(self):
+        g15plugin.G15Plugin.activate(self)
+        
         self._net_icon = g15util.get_icon_path([ "network-transmit-receive", 
                                                 "gnome-fs-network" ], 
                                                self.screen.height)
@@ -176,28 +178,23 @@ class G15SysMon():
         # Initial stats load and create the page 
         self.page = g15theme.G15Page(id, self.screen, 
                                      title = name, 
-                                     thumbnail_painter = self._paint_thumbnail)
-        self._create_theme() 
+                                     thumbnail_painter = self._paint_thumbnail,
+                                     theme = self.create_theme(),
+                                     originating_plugin = self)
         
         self._get_stats()
         self._build_properties()
         self.screen.add_page(self.page)
         self.screen.key_handler.action_listeners.append(self)
         self.screen.redraw(self.page)
-        
         self._set_panel()
-        
-        # Watch for theme changes
-        # TODO - This should be generic, as should theme loading really
-        self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/theme", self._reactivate))
-        self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/show_cpu_on_panel", self._set_panel))
+        self.watch("show_cpu_on_panel", self._set_panel)
     
     def deactivate(self):
+        g15plugin.G15Plugin.deactivate(self)
         self.screen.key_handler.action_listeners.remove(self)
         self.screen.del_page(self.page)
         self._cancel_refresh()
-        for h in self.notify_handlers:
-            self.gconf_client.notify_remove(h);
         
     def destroy(self):
         pass
@@ -228,22 +225,6 @@ class G15SysMon():
     def _set_panel(self, client = None, connection_id = None, entry = None, args = None):        
         self.page.panel_painter = self._paint_panel if g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/show_cpu_on_panel", True) else None
         self._reschedule_refresh()
-            
-    def _reactivate(self, client, connection_id, entry, args):
-        self.deactivate()
-        self.activate()
-            
-    def _create_theme(self):
-        theme = self.gconf_client.get_string("%s/theme" % self.gconf_key)
-        new_theme = None
-        if theme:
-            theme_def = g15theme.get_theme(theme, sys.modules[self.__module__])
-            if theme_def:
-                new_theme = g15theme.G15Theme(theme_def)
-        if not new_theme:
-            new_theme = g15theme.G15Theme(self)
-        new_theme.plugin = self
-        self.page.set_theme(new_theme)
             
     def _reschedule_refresh(self):
         self._cancel_refresh()

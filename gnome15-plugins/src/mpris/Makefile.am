@@ -1,4 +1,4 @@
-SUBDIRS = default
+SUBDIRS = default bigcover
 plugindir = $(datadir)/gnome15/plugins/mpris
 plugin_DATA = mpris.py
 

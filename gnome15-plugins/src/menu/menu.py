@@ -88,8 +88,8 @@ class G15Menu(g15plugin.G15MenuPlugin):
         g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, [ "gnome-main-menu" ], id, name)
     
     def activate(self):
-        self.page = None   
-        self.delete_timer = None     
+        self.delete_timer = None  
+        g15plugin.G15MenuPlugin.activate(self)
         self.reload_theme()
         self.listener = MenuScreenChangeListener(self)
         self.screen.add_screen_change_listener(self.listener)

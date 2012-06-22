@@ -35,9 +35,9 @@ import logging
 logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
-id = "g930"
-name = _("G930/G35 Driver")
-description = _("Simple driver that supports the keys on the G930 and G35 headphones. ")
+id = "g510"
+name = _("G510 Driver")
+description = _("Simple driver that supports the keys on the G510. ")
 has_preferences = True
 
 
@@ -155,7 +155,7 @@ class MultiMediaDevice(AbstractInputDevice):
 class Driver(g15driver.AbstractDriver):
 
     def __init__(self, device, on_close=None):
-        g15driver.AbstractDriver.__init__(self, "g930")
+        g15driver.AbstractDriver.__init__(self, "g510")
         self.notify_handles = []
         self.on_close = on_close
         self.key_thread = None
@@ -182,7 +182,7 @@ class Driver(g15driver.AbstractDriver):
         return [ g15driver.MODEL_G930, g15driver.MODEL_G35 ]
             
     def get_name(self):
-        return "Gnome15 G930/G35 Driver"
+        return "Gnome15 G510 Driver"
     
     def get_model_name(self):
         return self.device.model_id if self.device != None else None

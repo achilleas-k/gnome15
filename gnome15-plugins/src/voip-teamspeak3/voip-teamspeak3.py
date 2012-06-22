@@ -23,12 +23,18 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("voip-teamspeak3", modfile = __file__).ugettext
 
 import gnome15.g15driver as g15driver
-import teamspeak3
+import gnome15.g15util as g15util
+import ts3
 import traceback
 from threading import Thread
 from threading import Lock
+from threading import RLock
+from threading import Semaphore
 import voip
 import os
+import base64
+import socket
+import errno
 
 # Plugin details 
 id="voip-teamspeak3"
@@ -56,104 +62,198 @@ Calendar Back-end module functions
 def create_backend():
     return Teamspeak3Backend()
 
+def find_avatar(server_unique_identifier, client_unique_identifier):
+    decoded = ""
+    for c in base64.b64decode(client_unique_identifier):
+        decoded += chr(((ord(c) & 0xf0) >> 4) + 97)
+        decoded += chr((ord(c) & 0x0f) + 97)
+    return os.path.expanduser("~/.ts3client/cache/%s/clients/avatar_%s" % (base64.b64encode(server_unique_identifier), decoded))
+
 """
 Teamspeak3 backend
 """
 
-class Teamspeak3Backend(voip.VoipBackend):
+class Teamspeak3BuddyMenuItem(voip.BuddyMenuItem):
     
-    class ReplyThread(Thread):
-        def __init__(self, backend):
-            Thread.__init__(self)
-            self.setDaemon(True)
-            self.setName('TS3ReplyThread')
-            self.stay_running = True
-            self._backend = backend
-            
-        def run(self):
-            try:
-                while self.stay_running:
-                    messages = self._backend._client.get_messages()
-                    for message in messages:
-                        if not message.is_response() and message.command == 'notifyclientupdated':
-                            self._backend._parse_notifyclientupdated(message)
-                        elif message.is_response() and message.origination.command == 'whoami':
-                            self._backend._parse_whoami(message)
-                        elif message.is_response() and message.origination.command == 'clientlist':
-                            self._backend._parse_clientlist_reply(message)
-                        elif message.is_response() and message.origination.command == 'clientvariable':
-                            self._backend._parse_clientvariable_reply(message)
-                        elif not message.is_response() and message.command == 'notifytextmessage':
-                            self._backend._parse_notifytextmessage_reply(message)
-                        elif not message.is_response() and message.command == 'notifytalkstatuschange':
-                            self._backend._parse_notifytalkstatuschange_reply(message)
-                            
-            except teamspeak3.TeamspeakConnectionTelnetEOF:
-                # Disconnected
-                traceback.print_exc()
-                self._backend._disconnected()
+    def __init__(self, db_id, clid, nickname, channel, client_type, plugin):
+        voip.BuddyMenuItem.__init__(self, "client-%s" % clid, nickname, channel, plugin)
+        self.db_id = db_id
+        self.clid = clid
+        self.client_type = client_type
+        self.avatar = None
+        self.uid = None
+        
+    def set_uid(self, server_uid, uid):
+        self.uid = uid 
+        self.avatar = find_avatar(server_uid, uid)
+        
+class Teamspeak3ServerMenuItem(voip.ChannelMenuItem):
+    
+    def __init__(self, schandlerid, name, backend):
+        voip.ChannelMenuItem.__init__(self, "server-%s" % schandlerid, name, backend, icon=g15util.get_icon_path(['server', 'redhat-server', 'network-server', 'redhat-network-server', 'gnome-fs-server' ], include_missing=False))
+        self.schandlerid = schandlerid
+        self.activatable = False
+        self.radio = False
+        
+class Teamspeak3ChannelMenuItem(voip.ChannelMenuItem):
+    
+    def __init__(self, schandlerid, cid, name, order, backend):
+        voip.ChannelMenuItem.__init__(self, "channel-%s-%d" % (cid, schandlerid), name, backend)
+        self.group = False
+        self.cid = cid
+        self.order = order
+        self._backend = backend
+        self.schandlerid = schandlerid
+        
+    def on_activate(self):
+        if self._backend._client.schandlerid != self.schandlerid:
+            self._backend._client.change_server(self.schandlerid)
+        self._backend.set_current_channel(self)
+        return True
+        
+class Teamspeak3Backend(voip.VoipBackend):
     
     def __init__(self):
         voip.VoipBackend.__init__(self)
-        self._lock = Lock()
-        self._buddies = []
+        self._buddies = None
         self._buddy_map = {}
+        self._channels = None
+        self._channels_map = {}
         self._me = None
         self._clid = None
+        self._server_uid = None
         self._client = None
+        self._current_channel = None
+    
+    def get_talking(self):
+        if self._buddies is not None:
+            for d in self._buddies:
+                if d.talking:
+                    return d
+                
+    def set_current_channel(self, channel_item):
+        try:
+            reply = self._client.send_command(ts3.Command(
+                    'clientmove',              
+                    clid=self._clid,
+                    cid=channel_item.cid
+                ))
+
+        except ts3.TS3CommandException as e:
+            traceback.print_exc()
+    
+    def get_current_channel(self):
+        if self._current_channel is None:
+            if self._channels is None:
+                self.get_channels()
+                
+            reply = self._client.send_command(
+                        ts3.Command(
+                                'channelconnectinfo'
+                            ))
+            if 'path' in reply.args:
+                cn = reply.args['path']
+                for c in self._channels:
+                    if c.name == cn:
+                        self._current_channel = c
+            
+        return self._current_channel
     
     def get_buddies(self):
-        
-        # Get the basic details  
-        self._lock.acquire()     
-        self._client.send_command(
-                    teamspeak3.Command(
-                            'clientlist'
-                        ))
-        self._lock.acquire()
-        self._lock.release()
-        
-        # Fill in the blanks
-        for clid in self._buddy_map:
-            command = teamspeak3.Command(
-                    'clientvariable',              
-                    clid=clid,
-                    client_input_muted=None,
-                    client_output_muted=None,
-                    client_away=None,
-                    client_away_message=None
-                )
-            self._lock.acquire()     
-            self._client.send_command(command)
-            self._lock.acquire()
-            self._lock.release()
-        
+        if self._buddies == None:
+            self._buddy_map = {}
+            # Get the basic details  
+            reply = self._client.send_command(
+                        ts3.Command(
+                                'clientlist -away -voice -uid'
+                            ))
+            self._parse_clientlist_reply(reply)
+            
         return self._buddies
+    
+    def get_channels(self):
+        if self._channels == None:
+            self._channel_map = {}
+            self._channels = []
+
+            reply = self._client.send_command(ts3.Command(
+                    'serverconnectionhandlerlist'))
+            
+            for r in reply.responses if isinstance(reply, ts3.message.MultipartMessage) else [ reply ]:
+                s = int(r.args['schandlerid'])
+                reply = self._client.send_command(ts3.Command(
+                        'use', schandlerid = s))
+
+                # Get the server IP and port
+                try:
+                    reply = self._client.send_command(ts3.Command(
+                            'serverconnectinfo'))
+                    ip = reply.args['ip']
+                    port = int(reply.args['port'])
+     
+                    # A menu item for the server                
+                    item = Teamspeak3ServerMenuItem(s, "%s:%d" % (ip, port), self)
+                    self._channels.append(item)
+                    
+                    reply = self._client.send_command(
+                                ts3.Command(
+                                        'channellist'
+                                    ))
+                    self._parse_channellist_reply(reply, s)
+                except ts3.TS3CommandException:
+                    traceback.print_exc()
+                    
+        
+            # Switch back to the selected server connection
+            reply = self._client.send_command(ts3.Command(
+                    'use', schandlerid = self._client.schandlerid))
+            
+        return self._channels
+    
+    def get_name(self):
+        return _("Teamspeak3")
     
     def start(self, plugin):
         self._plugin = plugin
-        self._thread = self.ReplyThread(self)
-        self._client = teamspeak3.Client()
-        self._thread.start()
-        self._client.subscribe()
+        self._client = ts3.TS3()
         
-        # Although python-teamspeak calls whoami, it doesn't store the clid.
-        # Neither do we get the chance to add our listener, so we must send a
-        # second whoami to find out our own clid 
-        command = teamspeak3.Command(
-                'whoami',
-            )
-        self._client.send_command(command)
+        # Connect to ClientQuery plugin
+        try :
+            self._client.start()
+        except socket.error, v:
+            self._client = None
+            error_code = v[0]
+            if error_code == errno.ECONNREFUSED:
+                return False
+            raise v
+        
+        # Get initial buddy lists, channel lists and other stuff 
+        try:        
+            self._get_clid()
+            self._get_server_uid()
+            self.get_channels()
+            self.get_current_channel()
+            self.get_buddies()
+            self._client.subscribe(self._handle_message, "any", self._handle_error)
+            
+            return True
+        except ts3.TS3CommandException as e:
+            self._client.close()
+            self._client = None
+            if e.code == 1794:
+                # Not connected to server
+                return False
+            else:
+                raise e
+        except Exception as e:
+            self._client.close()
+            self._client = None
+            raise e
+        
+    def is_connected(self):
+        return self._client is not None
     
     def stop(self): 
-        self._thread.stay_running = False
-        
-        """
-        This seems to send a signal (SIGTERM) to g15-desktop-service as well, causing
-        it to think it needs to shutdown. I think this is because teamspeak3 uses
-        sub-processes
-        """ 
-        self._plugin.screen.service.ignore_next_sigint = True
         if self._client is not None:
             self._client.close()
             self._client = None
@@ -164,68 +264,241 @@ class Teamspeak3Backend(voip.VoipBackend):
     def get_icon(self):
         return os.path.join(os.path.dirname(__file__), "logo.png")
     
+    def kick(self, buddy):
+        reply = self._client.send_command(ts3.Command(
+            'clientkick', clid = buddy.clid, reasonid = 5, reasonmsg = 'No reason given'))
+        logger.info("Kicked %s (%s)" % (buddy.nickname, buddy.clid) )
+    
+    def ban(self, buddy):
+        if buddy.uid is None:
+            raise Exception("UID is not known")        
+        reply = self._client.send_command(ts3.Command(
+            'banadd', banreason = 'No reason given', uid = buddy.uid))
+        logger.info("Banned %s (%s)" % (buddy.nickname, buddy.uid) )
+        
+    def away(self):
+        reply = self._client.send_command(ts3.Command(
+                    'clientupdate',              
+                    client_away=1
+                ))
+    
+    def online(self):
+        reply = self._client.send_command(ts3.Command(
+                    'clientupdate',              
+                    client_away=0
+                ))
+    
+    def set_audio_input(self, mute):
+        reply = self._client.send_command(ts3.Command(
+                    'clientupdate',              
+                    client_input_muted=1 if mute else 0
+                ))
+    
+    def set_audio_output(self, mute):
+        reply = self._client.send_command(ts3.Command(
+                    'clientupdate',              
+                    client_output_muted=1 if mute else 0
+                ))
+    
     """
     Private
     """
+    def _handle_error(self, error):
+        if isinstance(error, EOFError):
+            self._disconnected()
+        else:
+            logger.warn("Teamspeak3 error. %s" % str(error))
+        
+    def _handle_message(self, message):
+        try:
+            if message.command == 'notifyclientupdated':
+                self._parse_notifyclientupdated(message)
+                self._do_redraw()
+            elif message.command == 'notifyclientpermlist':
+                self._parse_notifyclientpermlist_reply(message)
+            elif message.command == 'notifytextmessage':
+                self._parse_notifytextmessage_reply(message)
+            elif message.command == 'notifytalkstatuschange':
+                self._parse_notifytalkstatuschange_reply(message)
+            elif message.command == 'notifyclientchannelgroupchanged':
+                self._parse_notifyclientchannelgroupchanged_reply(message)
+            elif message.command == 'notifycliententerview':
+                self._parse_notifycliententerview_reply(message)
+            elif message.command == 'notifyclientleftview':
+                self._parse_notifyclientleftview_reply(message)
+            elif message.command == 'notifyconnectstatuschange':
+                self._parse_notifyconnectstatuschange_reply(message)
+            elif message.command == 'notifychannelcreated':
+                self._parse_notifychannelcreated_reply(message)
+            elif message.command == 'notifychanneledited':
+                self._parse_notifychanneledited_reply(message)
+            elif message.command == 'notifychanneldeleted':
+                self._parse_notifychanneldeleted_reply(message)
+            elif message.command == 'notifycurrentserverconnectionchanged':
+                self._parse_notifycurrentserverconnectionchanged_reply(message)
+                
+                
+                
+                
+        except:
+            logger.error("Possible corrupt reply.")
+            traceback.print_exc()
+                
     def _disconnected(self):
         self._plugin._disconnected()
         
-    def _parse_clientvariable_reply(self, message):
-        self._parse_notifyclientupdated(message)        
-        self._lock.release()
+    def _create_channel_item(self, message, schandlerid):
+        item = Teamspeak3ChannelMenuItem(schandlerid, int(message.args['cid']), 
+                                   message.args['channel_name'],
+                                   int(message.args['channel_order']), self)
+        if 'channel_topic' in message.args:
+            item.topic = message.args['channel_topic']
+        return item
+        
+    def _create_menu_item(self, message, channel = None):
+        return Teamspeak3BuddyMenuItem(int(message.args['client_database_id']), 
+                                   int(message.args['clid']), 
+                                   message.args['client_nickname'],
+                                   channel,
+                                   int(message.args['client_type']),
+                                   self._plugin)
+        
+    def _get_clid(self):
+        reply = self._client.send_command(ts3.Command(
+            'whoami', virtualserver_unique_identifier=None
+        ))
+        self._clid = int(reply.args['clid'])
+        logger.info("Your CLID is %d" % self._clid)
+    
+    def _get_server_uid(self):
+        reply = self._client.send_command(ts3.Command(
+            'servervariable', virtualserver_unique_identifier=None
+            
+        ))
+        self._server_uid = reply.args['virtualserver_unique_identifier']
+        
+    def _do_redraw(self):
+        self._plugin.redraw()
+        
+    def _update_item_from_message(self, item, message):
+        if 'client_input_muted' in message.args:
+            item.input_muted = message.args['client_input_muted'] == '1'
+        if 'client_output_muted' in message.args:
+            item.output_muted = message.args['client_output_muted'] == '1'
+        if 'client_away' in message.args:
+            item.away = message.args['client_away'] == '1'
+        if 'client_away_message' in message.args:
+            a = message.args['client_away_message']
+            if a and len(a) > 0: 
+                item.away = a
+        if 'client_unique_identifier' in message.args:
+            item.set_uid(self._server_uid, message.args['client_unique_identifier'])
+            
+    def _my_channel_changed(self):
+        self._current_channel = None
+        self.get_current_channel()
+        self._buddies = None
+        self._plugin.reload_buddies()
+            
+    """
+    Reply handlers
+    """
+    def _parse_notifycurrentserverconnectionchanged_reply(self, message):
+        self._client.change_server(int(message.args['schandlerid']))
+        self._my_channel_changed()
+    
+    def _parse_notifychanneledited_reply(self, message):
+        item = self._channel_map[int(message.args['cid'])]
+        if 'channel_topic' in message.args:
+            item.topic = message.args['channel_topic']
+        if 'channel_name' in message.args:
+            if self._current_channel is not None and item.name == self._current_channel:
+                self._current_channel = None 
+            item.name = message.args['channel_name']
+            if self._current_channel is None:
+                self.get_current_channel()
+        self._plugin.channel_updated(item)
+        
+    def _parse_notifyclientpermlist_reply(self, message):
+        pass
+        
+    def _parse_notifychanneldeleted_reply(self, message):
+        item = self._channel_map[int(message.args['cid'])]
+        self._channels.remove(item)
+        del self._channel_map[item.cid]
+        self._plugin.channel_removed(item)
+        
+    def _parse_notifychannelcreated_reply(self, message):
+        item = self._create_channel_item(message, self._client.schandlerid)
+        self._channels.append(item)
+        self._channel_map[item.cid] = item
+        self._plugin.new_channel(item)
+    
+    def _parse_notifyconnectstatuschange_reply(self, message):
+        status = message.args['status']
+        if status == "disconnected":
+            logger.info("Disconnected from server. Stopping client")
+            self.stop()
+        
+    def _parse_notifyclientleftview_reply(self, message):
+        clid = int(message.args['clid'])
+        if clid in self._buddy_map:
+            item = self._buddy_map[clid]
+            self._buddies.remove(item)
+            del self._buddy_map[clid]
+            self._plugin.buddy_left(item)
+            self._do_redraw()
+        else:
+            logger.warning("Client left that we knew nothing about yet (%d)" % clid)
+        
+    def _parse_notifycliententerview_reply(self, message):
+        reply= self._client.send_command(ts3.Command(
+                        'clientvariable',              
+                        clid=message.args['clid']
+                    ))
+        item = self._create_menu_item(message, None)
+        item.channel = self._channel_map[int(message.args['ctid'])]
+        self._buddies.append(item)
+        self._buddy_map[item.clid] = item
+        self._update_item_from_message(item, message)
+        c = self._plugin.new_buddy(item)
+        
+    def _parse_notifyclientchannelgroupchanged_reply(self, message):
+        if int(message.args['clid']) == self._clid:
+            self._my_channel_changed()
+        else:
+            buddy_id = int(message.args['clid'])
+            buddy = self._buddy_map[buddy_id]
+            new_channel_id = int(message.args['cid'])
+            new_channel = self._channel_map[new_channel_id]
+            old_channel = buddy.channel
+            buddy.channel = new_channel
+            self._plugin.moved_channels(buddy, old_channel, new_channel)
         
     def _parse_clientlist_reply(self, message):
         items = []
         item_map = {}
-        
-        #
-        # NOTE: python-teamspeak doesn't return a list when there is only one client, report to author
-        #
-        for r in message.responses if isinstance(message, teamspeak3.message.MultipartMessage) else [ message ]:
-            clid = r.args['clid']
-            item = voip.BuddyMenuItem(int(r.args['client_database_id']), 
-                                       int(clid), 
-                                       r.args['client_nickname'],
-                                       int(r.args['client_type']))
+        for r in message.responses if isinstance(message, ts3.message.MultipartMessage) else [ message ]:
+            ch = self._channel_map[int(r.args['cid'])]
+            item = self._create_menu_item(r, ch)
+            self._update_item_from_message(item, r)
             items.append(item)
-            item_map[clid] = item
-            if clid == self._clid:
+            item_map[item.clid] = item
+            if item.clid == self._clid:
                 self._me = item
         self._buddies = items    
         self._buddy_map = item_map    
-        self._lock.release()
-        
-    def _parse_whoami(self, message):
-        self._clid = message.args['clid']
-        logger.info("Your CLID is %s" % self._clid)
+
+    def _parse_channellist_reply(self, message, schandlerid):
+        for r in message.responses if isinstance(message, ts3.message.MultipartMessage) else [ message ]:
+            item = self._create_channel_item(r, schandlerid)
+            self._channels.append(item)
+            self._channel_map[item.cid] = item
         
     def _parse_notifyclientupdated(self, message):
-        if 'client_input_muted' in message.args:
-            item = self._buddy_map[message.args['clid']]
-            item.input_muted = message.args['client_input_muted'] == '1'
-            item.mark_dirty()
-            self._plugin.page.mark_dirty()
-            self._plugin.page.redraw()
-        if 'client_output_muted' in message.args:
-            item = self._buddy_map[message.args['clid']]
-            item.output_muted = message.args['client_output_muted'] == '1'
-            item.mark_dirty()
-            self._plugin.page.mark_dirty()
-            self._plugin.page.redraw()
-        if 'client_away' in message.args:
-            item = self._buddy_map[message.args['clid']]
-            item.away = message.args['client_away'] == '1'
-            item.mark_dirty()
-            self._plugin.page.mark_dirty()
-            self._plugin.page.redraw()
-        if 'client_away_message' in message.args:
-            item = self._buddy_map[message.args['clid']]
-            a = message.args['client_away_message']
-            if a and len(a) > 0: 
-                item.away = a
-                item.mark_dirty()
-                self._plugin.page.mark_dirty()
-                self._plugin.page.redraw()
+        item = self._buddy_map[int(message.args['clid'])]
+        self._update_item_from_message(item, message)
+        item.mark_dirty()
             
     def _parse_notifytextmessage_reply(self, message):
         if 'invokername' in message.args and 'msg' in message.args:
@@ -234,11 +507,13 @@ class Teamspeak3Backend(voip.VoipBackend):
             logger.warn("Got text messsage I didn't understand. %s" % str(message))
             
     def _parse_notifytalkstatuschange_reply(self, message):
-        item = self._buddy_map[message.args['clid']]
-        item.talking = message.args['status'] == '1'
-        item.mark_dirty()
-                   
-        self._plugin.page.mark_dirty()
-        self._plugin.page.redraw()
-        self._plugin._popup()
-        
+        clid = int(message.args['clid'])
+        if clid in self._buddy_map:
+            item = self._buddy_map[clid]
+            item.talking = message.args['status'] == '1'
+            item.mark_dirty()
+            if not self._plugin.menu.is_focused():
+                self._plugin.menu.selected = item     
+                self._plugin.menu.centre_on_selected()
+            
+            self._plugin.talking_status_changed(self.get_talking())

@@ -287,7 +287,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
         return item
         
     def _do_reload_menu(self):
-        if not self.activated:
+        if not self.active:
             return
         
         this_items = {}        

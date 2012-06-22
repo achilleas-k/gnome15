@@ -1,11 +1,6 @@
 themedir = $(datadir)/gnome15/plugins/google-analytics/default
 theme_DATA = default.svg \
-	default-cell.svg \
-	default-event.svg \
-	g19.svg \
-	g19-cell.svg \
-	g19-event.svg \
-	bell.gif
+	g19.svg
 
 EXTRA_DIST =  			\
 	$(theme_DATA)

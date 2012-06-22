@@ -81,12 +81,23 @@ class ProfileMenuItem(g15theme.MenuItem):
         self._plugin = plugin
         
     def get_theme_properties(self):
+        locked = self.profile.is_active() and g15profile.is_locked(self._plugin.screen.device)
+        
+        if self.get_screen().device.bpp > 1:
+            locked_icon = g15util.get_icon_path(["locked","gdu-encrypted-lock", 
+                                                 "status_lock", "stock_lock" ]) 
+        else:
+            if self.parent.selected == self:
+                locked_icon = os.path.join(os.path.dirname(__file__), 'bw-locked-inverted.gif')
+            else:
+                locked_icon = os.path.join(os.path.dirname(__file__), 'bw-locked.gif')
+        
         item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self.profile.name
         item_properties["item_radio"] = True
         item_properties["item_radio_selected"] = self.profile.is_active()
         item_properties["item_icon"] = g15util.load_surface_from_file(self.profile.get_profile_icon_path(16), self.theme.bounds[3])
-        item_properties["item_locked"] = self.profile.is_active() and g15profile.is_locked(self._plugin.screen.device)
+        item_properties["item_alt_icon"] = locked_icon if locked else "" 
         item_properties["item_alt"] = ""
         return item_properties
     

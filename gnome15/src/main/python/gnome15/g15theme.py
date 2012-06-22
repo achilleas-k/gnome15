@@ -68,6 +68,7 @@ from threading import RLock
 import ConfigParser
 
 BASE_PX=18.0
+DEBUG_SVG=False
 
 # The color in SVG theme files that by default gets replaced with the current 'highlight' color
 DEFAULT_HIGHLIGHT_COLOR="#ff0000"
@@ -267,6 +268,12 @@ class Component():
         self.do_clip = False
         self.allow_scrolling = None
         self.showing = True
+        self.activatable = False
+        self.scrollbar = None
+        
+    def set_scrollbar(self, scrollbar):
+        self.scrollbar = scrollbar
+        scrollbar.viewport = self
         
     def is_enabled(self):
         return self.enabled
@@ -288,16 +295,27 @@ class Component():
     def set_showing(self, showing):
         self.showing = showing
         
+    def get_showing_count(self):
+        i = 0
+        for c in self._children:
+            if c.is_showing():
+                i += 1
+        return i
+        
     def is_focused(self):
         return self.get_root().focused_component == self
     
     def set_focused_component(self, component):
-        self.focused_component = component
+        self.focused_component = component        
         
     def set_focused(self, focused):
         if not self.focusable:
             raise Exception("%s is not focusable" % self.id)
-        self.get_root().set_focused_component(self)
+        if focused:
+            self.get_root().set_focused_component(self)
+        elif self.get_root().focused == self:
+            self.get_root().set_focused_component(None)
+            self.get_root().next_focus()
         
     def set_theme(self, theme):
         self.theme = theme
@@ -311,6 +329,8 @@ class Component():
             self.theme.mark_dirty()
         for c in self.get_children():
             c.mark_dirty()
+            if c.scrollbar is not None:
+                c.scrollbar.mark_dirty()
         
     def get_allow_scrolling(self):
         c = self
@@ -427,6 +447,7 @@ class Component():
                 self._children.append(child)
             else:
                 self._children.insert(index, child)
+            self.mark_dirty()
             self.notify_add(child)
         finally:
             self.get_tree_lock().release()
@@ -467,7 +488,7 @@ class Component():
         g15screen.check_on_redraw()
         if not self.parent:
             raise Exception("Not added to a parent.")
-        self.parent.remove(self)
+        self.parent.remove_child(self)
         
     def configure(self, parent):
         self.parent = parent
@@ -578,10 +599,12 @@ class Component():
 class G15Page(Component):
     def __init__(self, page_id, screen, painter = None, priority = g15screen.PRI_NORMAL, on_shown=None, on_hidden=None, on_deleted=None, \
                  thumbnail_painter = None, panel_painter = None, theme_properties_callback = None, \
-                 theme_attributes_callback = None, theme = None, title = None):
+                 theme_attributes_callback = None, theme = None, title = None,
+                 originating_plugin = None):
         Component.__init__(self, page_id)
         self.title = title if title else self.id
         self.time = time.time()
+        self.originating_plugin = originating_plugin 
         self.thumbnail_painter = thumbnail_painter
         self.panel_painter = panel_painter
         self.on_shown = on_shown
@@ -624,10 +647,10 @@ class G15Page(Component):
         if not self.focused_component and component.focusable:
             self.next_focus(False)  
             
-    def redraw(self):
+    def redraw(self, queue = True):
         screen = self.get_screen()
         if screen:
-            screen.redraw(self)
+            screen.redraw(self, queue)
             
     def next_focus(self, redraw = True):
         focus_list = self._add_to_focus_list(self, [])
@@ -855,26 +878,35 @@ class G15Page(Component):
 
 class Scrollbar(Component):
     
-    def __init__(self, id, values_callback):
+    def __init__(self, id, values_callback = None):
         Component.__init__(self, id)
         self.values_callback = values_callback
         
     def on_configure(self):
-        pass
+        Component.on_configure(self)
+        self._configure_track_and_bounds(self.get_theme(), self.get_theme().get_element(self.id))
         
-    def draw(self, theme, element):
+    def _configure_track_and_bounds(self, theme, element):
         max_s, view_size, position = self.values_callback()
-        knob = element.xpath('//svg:*[@class=\'knob\']',namespaces=theme.nsmap)[0]
-        track = element.xpath('//svg:*[@class=\'track\']',namespaces=theme.nsmap)[0]
+        knob = element.xpath('svg:*[@class=\'knob\']',namespaces=theme.nsmap)[0]
+        track = element.xpath('svg:*[@class=\'track\']',namespaces=theme.nsmap)[0]
         track_bounds = g15util.get_bounds(track)
         knob_bounds = g15util.get_bounds(knob)
         scale = max(1.0, max_s / view_size)
         knob.set("y", str( int( knob_bounds[1] + ( position / max(scale, 0.01) ) ) ) )
         knob.set("height", str(int(track_bounds[3] / max(scale, 0.01) )))
+        # TODO - don't destroy current styles
+        if scale == 1:
+            element.set("style", "visibility: hidden;")
+        else:
+            element.set("style", "")
         
+    def draw(self, theme, element):
+        self._configure_track_and_bounds(theme, element)
+
 class Menu(Component):
-    def __init__(self, id):
-        Component.__init__(self, id)
+    def __init__(self, component_id):
+        Component.__init__(self, component_id)
         self.selected = None
         self.on_selected = None
         self.on_move = None
@@ -882,6 +914,10 @@ class Menu(Component):
         self.do_clip = True
         self.layout_manager = GridLayoutManager(1)
         self.scroll_timer = None
+        
+    def set_scrollbar(self, scrollbar):
+        scrollbar.values_callback = self.get_scroll_values
+        Component.set_scrollbar(self, scrollbar)
         
     def select_last_item(self):
         c = self.get_child_count()
@@ -942,7 +978,8 @@ class Menu(Component):
         y = 0
         c = self.get_children()
         for r in range(0, self._get_selected_index()):
-            y += self.get_item_height(c[r], True)
+            if c[r].is_showing():
+                y += self.get_item_height(c[r], True)
         self.base = max(0, y - ( self.view_bounds[3] / 2 ))
         self._recalc_scroll_values()
         self.get_root().redraw()
@@ -961,6 +998,7 @@ class Menu(Component):
         g15screen.check_on_redraw()
         self.get_tree_lock().acquire()
         try:    
+            
             self.select_first()                 
             
             # Get the Y position of the selected item
@@ -1088,6 +1126,7 @@ class Menu(Component):
         for item in self.get_children():
             if item.is_showing():
                 max_val += self.get_item_height(item, True)
+                
         self.scroll_values = max(max_val, self.view_bounds[3]), self.view_bounds[3], self.base
     
     def _check_selected(self):
@@ -1139,7 +1178,7 @@ class Menu(Component):
                                 else:
                                     self.i = first_enabled
                             c = self.get_child(self.i)
-                            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing():
+                            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing() and c.activatable:
                                 break
             finally:
                 self._do_selected()
@@ -1149,14 +1188,14 @@ class Menu(Component):
     def _get_first_enabled(self):
         for ci in range(0, self.get_child_count()):
             c = self.get_child(ci)
-            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing():
+            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing() and c.activatable:
                 return ci
         return -1
             
     def _get_last_enabled(self):
         for ci in range(self.get_child_count() - 1, 0, -1):
             c = self.get_child(ci)
-            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing():
+            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing() and c.activatable:
                 return ci
         return -1
                 
@@ -1190,24 +1229,38 @@ class Menu(Component):
                                 else:
                                     self.i = self._get_last_enabled()
                             c = self.get_child(self.i)
-                            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing():
+                            if not isinstance(c, MenuSeparator) and c.is_enabled() and c.is_showing() and c.activatable:
                                 break
             finally:
                 self._do_selected()
         finally:
             self.get_tree_lock().release()
+
+class MenuScrollbar(Scrollbar):
+    def __init__(self, id, menu):
+        Scrollbar.__init__(self, id)
+        menu.set_scrollbar(self)
         
 class MenuItem(Component):
-    def __init__(self, id="menu-entry", group = True):
-        Component.__init__(self, id)
+    def __init__(self, component_id="menu-entry", group = True, name = None, alt = "", activate = None, icon = None, activatable = True):
+        Component.__init__(self, component_id)
         self.group = group
+        self.name = name if name is not None else component_id
+        self.alt = alt
+        if activate is not None:
+            self.activate = activate
+        self.icon = icon
+        self.activatable = activatable
         
     def on_configure(self):        
         self.set_theme(G15Theme(self.parent.get_theme().dir, "menu-entry" if self.group else "menu-child-entry"))
         
     def get_theme_properties(self):     
         return {
-            "item_selected" : self.parent is not None and self == self.parent.selected
+            "item_selected" : self.parent is not None and self == self.parent.selected,
+            "item_name" : self.name,
+            "item_alt" : self.alt,
+            "item_icon": self.icon
                            }
         
     def get_allow_scrolling(self):
@@ -1355,18 +1408,18 @@ class ConfirmationScreen(G15Page):
             self.callback(self.arg)  
                 
 class G15Theme():    
-    def __init__(self, dir, variant = None, svg_text = None, prefix = None, auto_dirty = True, translation = None):
+    def __init__(self, dir_path, variant = None, svg_text = None, prefix = None, auto_dirty = True, translation = None):
         self.translation = translation
         self.plugin = None
-        if isinstance(dir, ThemeDefinition):
-            self.dir = dir.directory
-            self.translation = dir.translation
-            self.plugin_module = dir.plugin_module
-        elif isinstance(dir, str):
-            self.dir = dir
+        if isinstance(dir_path, ThemeDefinition):
+            self.dir = dir_path.directory
+            self.translation = dir_path.translation
+            self.plugin_module = dir_path.plugin_module
+        elif isinstance(dir_path, str):
+            self.dir = dir_path
         elif dir is not None:
-            self.plugin = dir
-            self.dir = os.path.join(os.path.dirname(sys.modules[dir.__module__].__file__), "default")
+            self.plugin = dir_path
+            self.dir = os.path.join(os.path.dirname(sys.modules[dir_path.__module__].__file__), "default")
         else:
             self.dir = None
         self.document = None       
@@ -1378,7 +1431,7 @@ class G15Theme():
         self.prefix = prefix
         self.render_lock = RLock()
         self.scroll_timer = None
-        self.dirty = False
+        self.dirty = True
         self.component = None
         self.auto_dirty = auto_dirty
         self.render = None
@@ -1396,6 +1449,7 @@ class G15Theme():
     def set_variant(self, variant):     
         self.variant = variant
         self._set_component(self.component)
+        self.mark_dirty()
         
     def clear_scroll(self):
         for s in self.scroll_state:
@@ -1409,7 +1463,7 @@ class G15Theme():
             if self.page is not None:
                 self.page.on_shown_listeners.remove(self._page_visibility_changed)
                 self.page.on_hidden_listeners.remove(self._page_visibility_changed)
-            self.page = page
+            self.page = page if isinstance(page, G15Page) else None
             if self.page is not None:
                 self.page.on_shown_listeners.append(self._page_visibility_changed)
                 self.page.on_hidden_listeners.append(self._page_visibility_changed)
@@ -1838,9 +1892,13 @@ class G15Theme():
             if clip_path_node is not None:
                 
                 t_span_node = self.get_element_by_tag("tspan", root = element)
+                if t_span_node is None:
+                    # Doesn't have t_span
+                    t_span_node = element
+                
                 t_span_text = t_span_node.text
                 if not t_span_text:
-                    raise Exception("Text node had clip path, but no tspan->text could be found")
+                    raise Exception("Text node had clip path, but no text/tspan->text could be found")
                 
                 clip_path_rect_node = self.get_element_by_tag("rect", clip_path_node)
                 if clip_path_rect_node is None:
@@ -1871,7 +1929,7 @@ class G15Theme():
         # a class attribute of 'textbox' and the ID must be the property key that it 
         # will contain. The next should be the text element (which defines style etc)
         # and must have an id attribute of <propertyKey>_text. The text layer is
-        # then rendered by after the SVG using Pango.
+        # then rendered after the SVG using Pango.
         for element in root.xpath('//svg:rect[@class=\'textbox\']',namespaces=self.nsmap):
             id = element.get("id")
             logger.warning("DEPRECATED Text box with ID %s in %s" % (id, self.dir))
@@ -1982,6 +2040,10 @@ class G15Theme():
         svg = rsvg.Handle()
         try :
             svg.write(xml)
+            if DEBUG_SVG:
+                print "------------------------------------------------------"
+                print xml
+                print "------------------------------------------------------"
         except:
             traceback.print_exc(file=sys.stderr)
         try :
@@ -2108,11 +2170,13 @@ class G15Theme():
             for x in range(-1, 2):
                 for y in range(-1, 2):
                     if x != 0 or y != 0:
-                        shadowed_id = element.get("id") + "_" + str(idx)
+                        element_id = element.get("id")
+                        shadowed_id = element_id + "_" + str(idx) if element_id else None
                         
                         # Copy the element itself
                         shadowed = deepcopy(element)                        
-                        shadowed.set("id", shadowed_id)
+                        if shadowed_id:
+                            shadowed.set("id", shadowed_id)
                         for bound_element in shadowed.iter():
                             bound_element.set("x", str(bounds[0] + x))
                             bound_element.set("y", str(bounds[1] + y))                        

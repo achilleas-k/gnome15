@@ -20,97 +20,102 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
-import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
-import gnome15.g15globals as g15globals
-import subprocess
-import time
+import gnome15.g15driver as g15driver
+import gnome15.g15util as g15util
+import gnome15.g15gtk  as g15gtk
 import os
-import sys
 import gtk
-import gconf
-import cairo
-import traceback
-import webkit
 import gobject
+import webkit
 
 # Plugin details - All of these must be provided
 id="browser"
 name="Browser"
-description="Adds an HTML browser using pywebkitgtk"
+description="Mozilla based browser." 
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
 has_preferences=False
+supported_models = [ g15driver.MODEL_G19 ]
 
 def create(gconf_key, gconf_client, screen):
-    return G15Browser(gconf_client, gconf_key, screen)
-
+    return G15WebkitBrowser(gconf_client, gconf_key, screen)
 
 class BrowserPage(webkit.WebView):
 
     def __init__(self):
         webkit.WebView.__init__(self)
         settings = self.get_settings()
-#        settings.set_property("enable-developer-extras", True)
+        settings.set_property("enable-developer-extras", True)
 
         # scale other content besides from text as well
         self.set_full_content_zoom(True)
-        
-class BrowserWindow(gtk.ScrolledWindow):
-    
-    def __init__(self, plugin):
-        self.plugin = plugin
-        self.screen = self.plugin.screen
-        self.image = None
-        gtk.ScrolledWindow.__init__(self)
-        self.props.hscrollbar_policy = gtk.POLICY_AUTOMATIC
-        self.props.vscrollbar_policy = gtk.POLICY_AUTOMATIC
-        self.browser = BrowserPage()
-        self.browser.connect('resource-request-starting', self.resource_cb)
-        self.add(self.browser)
-        self.show_all()        
-        self.browser.load_uri("http://www.youtube.com/")
-        
-    def load_status(self, view, frame, resource, request, response):
-        print "Load status",request.get_uri()
 
-    def resource_cb(self, view, frame, resource, request, response):
-        print "Request",request.get_uri()
-    
-class G15Browser():
+class G15WebkitBrowser():
     
     def __init__(self, gconf_client, gconf_key, screen):
         self.screen = screen
-        self.hidden = False
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
-        self.pixbuf = None
     
     def activate(self):
-        self.offscreen_window = None
-        self.page = self.screen.new_page(self.paint, id="Browser", priority = g15screen.PRI_NORMAL)
-        self.screen.redraw(self.page)
+        if self.screen.driver.get_model_name() != g15driver.MODEL_G19:
+            raise Exception("Webkit plugin only works on G19")
+        self.page = g15theme.G15Page(id, self.screen, theme_properties_callback = self._get_theme_properties, priority = g15screen.PRI_LOW, title = name, theme = g15theme.G15Theme(self),
+                                     originating_plugin = self)
+        self.window = g15gtk.G15OffscreenWindow("offscreenWindow")
+        self.page.add_child(self.window)
         gobject.idle_add(self._create_offscreen_window)
-        
-    def _create_offscreen_window(self):
-        self.browser_window = BrowserWindow(self)        
-        self.offscreen_window = g15gtk.G15Window(self.screen, self.page, 0, 0, self.screen.width, self.screen.height)
-        self.offscreen_window.content.add(self.browser_window)
-        self.offscreen_window.show_all()
-        self.screen.redraw(self.page)
-        
+    
     def deactivate(self):
-        self.screen.del_page(self.page)
+        if self.page != None:
+            self.screen.del_page(self.page)
+            self.page = None
         
     def destroy(self):
         pass
+        
+    def handle_key(self, keys, state, post):
+        if not post and state == g15driver.KEY_STATE_UP: 
+            if g15driver.G_KEY_UP in keys:
+                gobject.idle_add(self._scroll_up) 
+            elif g15driver.G_KEY_DOWN in keys:
+                gobject.idle_add(self._scroll_down)
+        
+    '''
+    Private
+    '''
     
-    def paint(self, canvas):
-        if self.offscreen_window != None:
-            pixbuf = self.offscreen_window.get_as_pixbuf()
-            image = g15util.pixbuf_to_surface(pixbuf)
-            canvas.set_source_surface(image)
-            canvas.paint()
+    def _get_theme_properties(self):
+        return {
+                      "url" : "www.somewhere.com",
+                      "icon" : g15util.get_icon_path("system-config-display")
+                      }
+        
+    def _scroll_up(self):
+        print "Scroll up"
+        adj = self.scroller.get_vadjustment()
+        adj.set_value(adj.get_value() - adj.get_page_increment())
+        print "Val is now", adj.get_value(), "page increment", adj.get_page_increment(), "upper", adj.get_upper()
+        self.screen.redraw(self.page)
+    
+    def _scroll_down(self):
+        print "Scroll down"
+        adj = self.scroller.get_vadjustment()
+        adj.set_value(adj.get_value() + adj.get_page_increment())
+        print "Val is now", adj.get_value(), "page increment", adj.get_page_increment(), "upper", adj.get_upper()
+        self.screen.redraw(self.page)
+    
+    def _create_offscreen_window(self):
+        scrolled_window = gtk.ScrolledWindow()
+        scrolled_window.props.hscrollbar_policy = gtk.POLICY_AUTOMATIC
+        scrolled_window.props.vscrollbar_policy = gtk.POLICY_AUTOMATIC
+        view = BrowserPage()
+        scrolled_window.add(view)
+        scrolled_window.show_all()
+        view.load_uri("http://www.google.com")
+        self.window.set_content(scrolled_window)
+        self.screen.add_page(self.page)
+        self.screen.redraw(self.page)

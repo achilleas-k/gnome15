@@ -59,9 +59,9 @@ logger = logging.getLogger("im")
 # Plugin details - All of these must be provided
 id="im"
 name=_("Instant Messenger")
-description=_("Integrates with a number of instant messengers, showing \
-            buddy lists and messages on your LCD. Currently supports all \
-            clients that use the Telepathy framework.")
+description=_("Integrates with a number of instant messengers, showing \n\
+buddy lists and messages on your LCD. Currently supports all \n\
+clients that use the Telepathy framework.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2011 Brett Smith")
 site="http://www.gnome15.org/"
@@ -282,7 +282,7 @@ def compare_contacts(a, b):
     elif ( b is None and a is  None ):
         val = 0
     else:
-        val = cmp(a.presence[0], a.presence[0])
+        val = cmp(a.presence[0], b.presence[0])
         if val == 0:
             val = cmp(a.alias, b.alias)
         
