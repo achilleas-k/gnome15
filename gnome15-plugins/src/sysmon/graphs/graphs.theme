@@ -1,4 +1,7 @@
 [theme]
 name=Graphs
 description=Displays system status as a number graphs.
+#unsupported_models=g110,g11,mx5500,g930,g35
+# CairoPlot doesn't handle tiny graphs well at all. Disabled other models
+# until this is fixed
 supported_models=g19

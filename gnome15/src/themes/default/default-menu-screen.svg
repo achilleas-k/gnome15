@@ -60,7 +60,7 @@
     </g>
     <text
        style="font-size:8px;font-family:Fixed;text-anchor:end;text-align:end;"
-       x="160"
+       x="100"
        y="6"
        class="shadow">${alt_title}</text>
   </g>

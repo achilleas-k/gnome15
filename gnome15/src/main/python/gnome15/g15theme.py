@@ -1022,15 +1022,22 @@ class Menu(Component):
                     
             if new_base != self.base:
                 # Stop all of the children from scrolling horizontally while we scroll vertically
-                if new_base < self.base:
-                    self.base -= max(1, int(( self.base - new_base ) / 3))
+                if self.get_screen().service.animated_menus:
+                    if new_base < self.base:
+                        self.base -= max(1, int(( self.base - new_base ) / 3))
+                    else:
+                        self.base += max(1, int(( new_base - self.base ) / 3))
                 else:
-                    self.base += max(1, int(( new_base - self.base ) / 3))
+                    self.base = new_base
+                
                 self.get_root().mark_dirty()
                 self._recalc_scroll_values()
                 if self.scroll_timer is not None:
                     self.scroll_timer.cancel()
-                self.scroll_timer = g15util.schedule("ScrollTo", self.get_screen().service.animation_delay, self.get_root().redraw)
+                if self.get_screen().service.animated_menus:
+                    self.scroll_timer = g15util.schedule("ScrollTo", self.get_screen().service.animation_delay, self.get_root().redraw)
+                else:
+                    self.get_root().redraw()
             
             Component.paint(self, canvas)
         finally:

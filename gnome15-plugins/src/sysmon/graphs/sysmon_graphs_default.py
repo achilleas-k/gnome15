@@ -24,13 +24,12 @@ class G15Graph(g15theme.Component):
         self.plugin = plugin
 
     def get_colors(self):
-        series_colors = None
-        fill_colors = None
-        if self.plugin.screen.driver.get_control_for_hint(g15driver.HINT_HIGHLIGHT): 
+        if self.plugin.screen.driver.get_bpp() == 1:
+            return (0.0,0.0,0.0,1.0), (0.0,0.0,0.0,1.0)
+        elif self.plugin.screen.driver.get_control_for_hint(g15driver.HINT_HIGHLIGHT): 
             highlight_color = self.plugin.screen.driver.get_color_as_ratios(g15driver.HINT_HIGHLIGHT, (255, 0, 0 ))
-            series_colors = (highlight_color[0],highlight_color[1],highlight_color[2], 1.0)
-            fill_colors = (highlight_color[0],highlight_color[1],highlight_color[2], 0.50)
-        return series_colors, fill_colors
+            return (highlight_color[0],highlight_color[1],highlight_color[2], 1.0), \
+                   (highlight_color[0],highlight_color[1],highlight_color[2], 0.50)
         
     def create_plot(self, graph_surface):
         raise Exception("Not implemented")
@@ -42,11 +41,17 @@ class G15Graph(g15theme.Component):
                                                int(self.view_bounds[2]), 
                                                int(self.view_bounds[3]))
             plot =  self.create_plot(graph_surface)
-            plot.line_width = 2.0
-            plot.line_color = self.plugin.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, (255, 255, 255))
-            plot.label_color = self.plugin.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, (255, 255, 255))
+            
+            if self.plugin.screen.driver.get_bpp() == 1:
+                plot.line_color = (1.0,1.0,1.0)
+                plot.line_width = 1.0
+                plot.display_labels = False
+            else:
+                plot.line_width = 2.0
+                plot.bounding_box = False
+                plot.line_color = self.plugin.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, (255, 255, 255))
+                plot.label_color = self.plugin.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, (255, 255, 255))
             plot.shadow = True
-            plot.bounding_box = False
             plot.render()
             plot.commit()
             
@@ -85,9 +90,13 @@ class G15NetGraph(G15Graph):
         max_y = max(max(self.plugin.max_send, self.plugin.max_recv), 102400)
         for x in range(0, int(max_y), int(max_y / 4)):
             y_labels.append("%-3.2f" % ( float(x) / 102400.0 ) )
-        series_color, fill_color = self.get_colors()
-        alt_series_color = g15util.get_alt_color(series_color)
-        alt_fill_color = g15util.get_alt_color(fill_color)
+        series_color, fill_color = self.get_colors()            
+        if self.plugin.screen.driver.get_bpp() == 1:
+            alt_series_color = (1.0,1.0,1.0,1.0)
+            alt_fill_color = (1.0,1.0,1.0,1.0)
+        else:
+            alt_series_color = g15util.get_alt_color(series_color)
+            alt_fill_color = g15util.get_alt_color(fill_color)
         return cairoplot.AreaPlot( graph_surface, [ self.plugin.send_history, self.plugin.recv_history ], 
                                       self.view_bounds[2], 
                                       self.view_bounds[3], 
@@ -112,8 +121,13 @@ class G15MemGraph(G15Graph):
         for x in range(0, int(max_y), int(max_y / 4)):
             y_labels.append("%-4d" % int( float(x) / 1024.0 / 1024.0 ) )
         series_color, fill_color = self.get_colors()
-        alt_series_color = g15util.get_alt_color(series_color)
-        alt_fill_color = g15util.get_alt_color(fill_color)
+        
+        if self.plugin.screen.driver.get_bpp() == 1:
+            alt_series_color = (1.0,1.0,1.0,1.0)
+            alt_fill_color = (1.0,1.0,1.0,1.0)
+        else:
+            alt_series_color = g15util.get_alt_color(series_color)
+            alt_fill_color = g15util.get_alt_color(fill_color)
         return cairoplot.AreaPlot( graph_surface, [ self.plugin.used_history, self.plugin.cached_history ], 
                                       self.view_bounds[2], 
                                       self.view_bounds[3], 
