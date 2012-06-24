@@ -45,8 +45,9 @@ logger = logging.getLogger("mediaplayer")
 id = "mediaplayer"
 name = _("Media Player")
 description = _("GStreamer based media player and webcam viewer.\n\
-Supports audio and video from either DVDs, files or webcams.\n\
-The 'goom' visualisation is displayed on the LCD for audio files.")
+Supports audio and video from either DVDs, files, webcams or\n\
+pulse sources. The visualisation is displayed on the LCD for audio\n\
+sources.")
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://localhost"
@@ -197,7 +198,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
         self._setup_gstreamer()
         self.screen.key_handler.action_listeners.append(self) 
         def on_delete():
-            gobject.idle_add(self._pipeline.set_state, gst.STATE_NULL)
+            self._pipeline.set_state(gst.STATE_NULL)
             self.screen.key_handler.action_listeners.remove(self)
             self.screen.painters.remove(self.background_painter)
             self._plugin.show_menu()
@@ -283,15 +284,15 @@ class G15MediaPlayerPage(g15theme.G15Page):
         t = message.type
         if t == gst.MESSAGE_EOS:
             self._pipeline.set_state(gst.STATE_NULL)
-            print "EOS"
             self._show_sidebar()
         elif t == gst.MESSAGE_ERROR:
             err, debug = message.parse_error()
-            print "Error: %s" % err, debug
             self._pipeline.set_state(gst.STATE_NULL)
             self._show_sidebar()
                 
     def _redraw_cb(self, unused_thsink, timestamp):
+        if not self._plugin.active:
+            return
         buf = self._video_sink.data
         width = self._video_sink.width
         height = self._video_sink.height
@@ -373,7 +374,6 @@ class G15MediaPlayerPage(g15theme.G15Page):
     def _play(self):
         self._lock.acquire()
         try:   
-            print "State: %s" % str(self._pipeline.get_state())
             if self._is_playing():
                 self._pipeline.set_state(gst.STATE_PAUSED)
                 self._show_sidebar()
@@ -397,7 +397,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
             self._lock.release()
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if self._thumb_icon != None and self._screen.driver.get_bpp() == 16:
+        if self._surface != None and self._screen.driver.get_bpp() == 16:
             return g15util.paint_thumbnail_image(allocated_size, self._surface, canvas)
 
 

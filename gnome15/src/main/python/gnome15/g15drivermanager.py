@@ -18,9 +18,20 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+'''
+This module is responsible for loading the available hardware drivers, and
+choosing the best one to use. 
+
+The best driver is always used when no driver is yet configured, other the 
+configured driver is always used if possible. If it is not available,
+or no longer supports the model for the associated device, then it will revert
+back to using the best driver.
+
+The "best driver" is simply the first driver that supports the associated
+device. 
+'''
 
 import os
-import gconf
 import logging
 logger = logging.getLogger("driver")
 
@@ -39,57 +50,31 @@ for d in driverfiles:
         logger.warning("Failed to load driver. %s" % str(e))
     
 
-
-#driverfiles = [fname[:-3] for fname in os.listdir(drivers_dir) if fname.endswith(".py") and fname.startswith("driver_")]
-#driver_mods = __import__("gnome15.drivers", fromlist=list(driverfiles))
-#for d in driverfiles:
-#    try :
-#        mod = getattr(driver_mods, d)
-#        imported_drivers[d] = mod
-#    except Exception as e:
-#        logger.warning("Failed to load driver. %s" % str(e))
-        
-def get_driver_mod(id):
+def get_driver_mod(driver_id):
     '''
     Get a driver module given it's ID.
     
     Keyword arguments:
-    id    --    driver ID
+    driver_id    --    driver ID
     '''
     for driver_mod in imported_drivers.values():
-        if driver_mod.id == id:
+        if driver_mod.id == driver_id:
             return driver_mod
-        
-def get_configured_driver(device, force_config = False):
-    '''
-    Get the configured driver, starting the setup dialog if no driver is set, or
-    if configuration is force
-    '''
-
-    driver_name = gconf.client_get_default().get_string("/apps/gnome15/%s/driver" % device.uid)
-    if driver_name != None and driver_name != "" and not ( "driver_" + driver_name ) in imported_drivers:
-        force_config = True
-    if driver_name == None or driver_name == "" or force_config:
-        setup = g15setup.G15Setup(None, True, driver_name == None or driver_name == "")
-        driver_name = setup.setup()
-    return driver_name if driver_name != None and driver_name != "" else None
-
-def get_best_driver(conf_client, device, on_close = None):
-    for driver_mod_key in imported_drivers:
-        driver_mod = imported_drivers[driver_mod_key]
-        driver = driver_mod.Driver(device, on_close = on_close)
-        if device.model_id in driver.get_model_names():
-#            driver.set_controls_from_configuration(conf_client)
-            return driver
     
 def get_driver(conf_client, device, on_close = None):
     '''
-    Called by clients to create the configured driver
+    Called by clients to create the configured driver. If the configured
+    driver is not available, it will fallback to using the "best driver".
+    
+    Keyword arguments:
+    conf_client        -- configuration client
+    device             -- device to find driver for
+    on_close -- callback passed to driver that is executed when the driver closes.
     '''
     driver_name = conf_client.get_string("/apps/gnome15/%s/driver" % device.uid)
     if not driver_name:
         # If no driver has yet been configured, always use the best driver
-        driver = get_best_driver(conf_client, device, on_close)
+        driver = _get_best_driver(device, on_close)
         if driver == None:
             raise Exception(_("No drivers support the model %s") % device.model_id)
             
@@ -98,19 +83,37 @@ def get_driver(conf_client, device, on_close = None):
     
     driver_mod_key = "driver_" + driver_name
     if not driver_mod_key in imported_drivers:
-        raise Exception(_("Driver %s is not available. Do you have to appropriate package installed?") % driver_name)
-    driver_mod = imported_drivers[driver_mod_key]
-    driver = driver_mod.Driver(device, on_close = on_close)
+        # If the previous driver is no longer installed, get the best remaining driver
+        driver = _get_best_driver(device, on_close)
+        if driver == None:        
+            raise Exception(_("Driver %s is not available. Do you have to appropriate package installed?") % driver_name)
+        else:            
+            logger.info("Configured driver %s is not available, using %s instead" % ( driver_mod_key, driver.get_name()))
+    else:
+        driver = imported_drivers[driver_mod_key].Driver(device, on_close = on_close)
     
     if not device.model_id in driver.get_model_names():
         # If the configured driver is now incorrect for the device model, just use the best driver
         # If no driver has yet been configured, always use the best driver
-        driver = get_best_driver(conf_client, device, on_close)
+        driver = _get_best_driver(device, on_close)
         if driver == None:
             raise Exception(_("No drivers support the model %s") % device.model_id)
         logger.warning("Ignoring configured driver %s, as the model is not supported by it. Looking for best driver" % driver)
         return driver
     else:
         # Configured driver is OK to use    
-#        driver.set_controls_from_configuration(conf_client)
         return driver
+    
+def _get_best_driver(device, on_close = None):
+    '''
+    Get the "best driver" available. This will be the first driver that
+    supports the provided device.
+    
+    Keyword arguments:
+    device -- device to find driver for
+    on_close -- callback passed to driver that is executed when the driver closes.
+    '''
+    for driver_mod_key in imported_drivers:
+        driver = imported_drivers[driver_mod_key].Driver(device, on_close = on_close)
+        if device.model_id in driver.get_model_names():
+            return driver

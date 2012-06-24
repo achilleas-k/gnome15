@@ -266,6 +266,7 @@ class Control():
         """
         Configure this control's value from it's gconf entry for the provided device 
         
+        Keyword arguments:
         device         device the control is associated with
         conf_client    configuration client instance
         """

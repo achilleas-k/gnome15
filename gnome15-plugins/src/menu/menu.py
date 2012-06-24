@@ -171,7 +171,7 @@ class MenuScreenChangeListener(g15screen.ScreenChangeAdapter):
     def new_page(self, page):
         if self.plugin.page != None and page != self.plugin.page and page.priority > g15screen.PRI_INVISIBLE:
             items = self.plugin.menu.get_children()
-            item = MenuItem(page, self, "menuitem-%s" % page.id )
+            item = MenuItem(page, self.plugin, "menuitem-%s" % page.id )
             self.plugin._load_item_icon(item)
             items.append(item)
             items = sorted(items, key=lambda item: item._item_page.title)            

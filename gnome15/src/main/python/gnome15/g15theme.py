@@ -318,6 +318,8 @@ class Component():
             self.get_root().next_focus()
         
     def set_theme(self, theme):
+        if self.theme is not None:
+            self.theme._set_component(None)
         self.theme = theme
         theme._set_component(self)
         self.view_bounds = theme.bounds
@@ -1450,60 +1452,82 @@ class G15Theme():
     def _set_component(self, component):
         self.render_lock.acquire()
         try:
-            self.component = component
-            page = component.get_root()
-            if self.page is not None:
-                self.page.on_shown_listeners.remove(self._page_visibility_changed)
-                self.page.on_hidden_listeners.remove(self._page_visibility_changed)
-            self.page = page if isinstance(page, G15Page) else None
-            if self.page is not None:
-                self.page.on_shown_listeners.append(self._page_visibility_changed)
-                self.page.on_hidden_listeners.append(self._page_visibility_changed)
-                
-            self.screen = self.page.get_screen()
-            self.text = g15text.new_text(self.screen)       
-            self.driver = self.screen.driver
-            if self.dir != None:
-                self.theme_name = os.path.basename(self.dir)
-                prefix_path = self.prefix if self.prefix != None else os.path.basename(os.path.dirname(self.dir)).replace("-", "_")+ "_" + self.theme_name + "_"
-                
-                # The theme may have a python portion
-                module_name = self.get_path_for_variant(self.dir, self.variant, "py", fatal = False, prefix = prefix_path)
-                module = None
-                if module_name != None:
-                    if not dir in sys.path:
-                        sys.path.insert(0, self.dir)
-                    module = __import__(os.path.basename(module_name)[:-3])
-                    self.instance = module
-                    
-                path = self.get_path_for_variant(self.dir, self.variant, "svg")
-                
-                # Load translation for this variant
-                actual_variant = os.path.splitext(os.path.basename(path))[0]
-                self.translation = g15locale.get_translation(actual_variant, self.dir)
-                
-                self.document = etree.parse(path)
-                
-                    
-                # Give the python portion of the theme chance to initialize
+            if self.component is not None and component is None:
+                # Give the python portion of the theme chance to de-initialize
                 if self.instance != None:            
                     try :
-                        getattr(self.instance, "create")
+                        getattr(self.instance, "destroy")
                         try :
-                            self.instance.create(self)
+                            self.instance.destroy(self)
                         except:
                             traceback.print_exc(file=sys.stderr)
                     except AttributeError:                
                         # Doesn't exist
                         pass
-                        
-            elif self.svg_text != None:
-                self.document = etree.ElementTree(etree.fromstring(self.svg_text))
-            else:
-                raise Exception("Must either supply theme directory or SVG text")
                 
-            self.process_svg()
-            self.bounds = g15util.get_bounds(self.document.getroot())
+            
+            self.component = component
+            page = component.get_root() if component is not None else None
+            
+            if self.page is not None:
+                self.page.on_shown_listeners.remove(self._page_visibility_changed)
+                self.page.on_hidden_listeners.remove(self._page_visibility_changed)
+            self.page = page if page is not None and isinstance(page, G15Page) else None
+            if self.page is not None:
+                self.page.on_shown_listeners.append(self._page_visibility_changed)
+                self.page.on_hidden_listeners.append(self._page_visibility_changed)
+                
+            if self.page is None:
+                self.document = None
+                self.screen = None
+                self.text = None
+                self.driver = None
+                self.bounds = None
+            else:
+                self.screen = self.page.get_screen()
+                self.text = g15text.new_text(self.screen)
+                self.driver = self.screen.driver
+                if self.dir != None:
+                    self.theme_name = os.path.basename(self.dir)
+                    prefix_path = self.prefix if self.prefix != None else os.path.basename(os.path.dirname(self.dir)).replace("-", "_")+ "_" + self.theme_name + "_"
+                    
+                    # The theme may have a python portion
+                    module_name = self.get_path_for_variant(self.dir, self.variant, "py", fatal = False, prefix = prefix_path)
+                    module = None
+                    if module_name != None:
+                        if not dir in sys.path:
+                            sys.path.insert(0, self.dir)
+                        module = __import__(os.path.basename(module_name)[:-3])
+                        self.instance = module
+                        
+                    path = self.get_path_for_variant(self.dir, self.variant, "svg")
+                    
+                    # Load translation for this variant
+                    actual_variant = os.path.splitext(os.path.basename(path))[0]
+                    self.translation = g15locale.get_translation(actual_variant, self.dir)
+                    
+                    self.document = etree.parse(path)
+                    
+                        
+                    # Give the python portion of the theme chance to initialize
+                    if self.instance != None:            
+                        try :
+                            getattr(self.instance, "create")
+                            try :
+                                self.instance.create(self)
+                            except:
+                                traceback.print_exc(file=sys.stderr)
+                        except AttributeError:                
+                            # Doesn't exist
+                            pass
+                            
+                elif self.svg_text != None:
+                    self.document = etree.ElementTree(etree.fromstring(self.svg_text))
+                else:
+                    raise Exception("Must either supply theme directory or SVG text")
+                    
+                self.process_svg()
+                self.bounds = g15util.get_bounds(self.document.getroot())
         finally:
             self.render_lock.release()
         

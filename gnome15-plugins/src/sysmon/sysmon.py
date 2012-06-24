@@ -111,6 +111,7 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
     """    
     def __init__(self, gconf_key, gconf_client, screen):
         g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, CPU_ICONS, id, name)
+        self.only_refresh_when_visible = False
     
     def activate(self):
         self._net_icon = g15util.get_icon_path([ "network-transmit-receive", 
@@ -168,8 +169,11 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         
         g15plugin.G15RefreshingPlugin.activate(self)
         self._set_panel()
-        self.watch(None, self.reload_theme)
+        self.watch(None, self._config_changed)
         self.screen.key_handler.action_listeners.append(self)
+        
+        # Start refreshing
+        self.do_refresh()
         
     def reload_theme(self):
         g15plugin.G15RefreshingPlugin.reload_theme(self)
@@ -272,16 +276,20 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
     
     ''' Private
     '''
+    def _config_changed(self, client, connection_id, entry, args):
+        self.reload_theme()
+        self._reschedule_refresh()
             
     def _set_panel(self, client = None, connection_id = None, entry = None, args = None):        
         self.page.panel_painter = self._paint_panel if g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/show_cpu_on_panel", True) else None
         
     def _refresh(self):
         if self.page is not None:
-            self.refresh()
             if self.screen.is_visible(self.page):
+                self.refresh()
                 self.screen.redraw(self.page)
             elif self.page.panel_painter is not None:
+                self.refresh()
                 self.screen.redraw(redraw_content = False)
             self._schedule_refresh()
             

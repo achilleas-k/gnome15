@@ -216,7 +216,7 @@ class G15DBUSDeviceService(AbstractG15DBUSService):
         
     @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='s')
     def GetUsbID(self):
-        return "%s:%s" % ( hex(self._device.usb_id[0]), hex(self._device.usb_id[1]) )
+        return "%s:%s" % ( hex(self._device.controls_usb_id[0]), hex(self._device.controls_usb_id[1]) )
         
     @dbus.service.method(DEVICE_IF_NAME, in_signature='', out_signature='u')
     def GetBPP(self):
@@ -406,7 +406,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='ssss')
     def GetDeviceInformation(self):
         device = self._screen.device
-        return ( device.uid, device.model_id, "%s:%s" % ( hex(device.usb_id[0]),hex(device.usb_id[1]) ), device.model_fullname )
+        return ( device.uid, device.model_id, "%s:%s" % ( hex(device.controls_usb_id[0]),hex(device.controls_usb_id[1]) ), device.model_fullname )
     
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='ssnnn')
     def GetDriverInformation(self):

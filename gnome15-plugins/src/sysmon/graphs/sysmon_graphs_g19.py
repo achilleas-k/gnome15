@@ -11,6 +11,12 @@ def create(theme):
     page.add_child(G15NetGraph("net", plugin))
     page.add_child(G15MemGraph("mem", plugin))
     
+def destroy(theme):
+    page = theme.component
+    page.remove_child(page.get_child_by_id("cpu"))
+    page.remove_child(page.get_child_by_id("net"))
+    page.remove_child(page.get_child_by_id("mem"))
+    
 class G15Graph(g15theme.Component):
     
     def __init__(self, component_id, plugin):

@@ -87,7 +87,6 @@ class CairoSurfaceThumbnailSink(gst.BaseSink):
         return gst.FLOW_OK
  
     def do_preroll(self, buf):
-        print "Pre-roll"
         return self.do_render(buf)
 
 gobject.type_register(CairoSurfaceThumbnailSink)

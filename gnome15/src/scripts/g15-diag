@@ -90,7 +90,7 @@ def list_devices():
     for device in g15devices.find_all_devices():
         print "UID: %s" % device.uid
         print "\tModel: %s" % device.model_id
-        print "\tUSB ID: 0x%0.4x:0x%0.4x" % ( device.usb_id[0], device.usb_id[1] )
+        print "\tUSB ID: 0x%0.4x:0x%0.4x" % ( device.controls_usb_id[0], device.controls_usb_id[1] )
         print "\tLCD BPP: %d" % ( device.bpp )
         print "\tLCD Size: %s" % ( str(device.lcd_size) )
         driver, reconfigured = get_driver(device)

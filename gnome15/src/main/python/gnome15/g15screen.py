@@ -1124,7 +1124,7 @@ class G15Screen():
             # With a G510, it's possible the keyboard is now in audio mode, so
             # the device we use has changed
             new_device = g15devices.get_device(self.device.uid)
-            if new_device is not None and self.device.usb_id != new_device.usb_id:
+            if new_device is not None and self.device.controls_usb_id != new_device.controls_usb_id:
                 logger.info("Device changed, probably a G510 switching to or from audio mode")
                 self.device = new_device
                 self.driver = None

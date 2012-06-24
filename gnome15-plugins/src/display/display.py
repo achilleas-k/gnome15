@@ -116,7 +116,7 @@ class G15XRandR(g15plugin.G15MenuPlugin):
                     size = self._parse_size(arr[0])
                     for a in range(1, len(arr)):
                         word = arr[a]
-                        refresh_rate = float(word[:-1]) if word.endswith("*") else float(word) 
+                        refresh_rate = float(''.join( c for c in word if  c not in '*+' ))
                         item = ResolutionMenuItem(i, size, refresh_rate, self, "profile-%d-%s" % ( i, refresh_rate ) )      
                         item.current = word.endswith("*")
                         items.append(item)
