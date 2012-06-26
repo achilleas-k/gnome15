@@ -30,8 +30,9 @@ def module_exists(module_name):
         return True
 
 # This must be done first for the Lens plugin to work
-if module_exists("gi.repository"):
-	from gi.repository import GLib, GObject, Gio
+# Commented out as it causes warnings on the console
+#if module_exists("gi.repository"):
+#	from gi.repository import GLib, GObject, Gio
 
 import sys
 import os

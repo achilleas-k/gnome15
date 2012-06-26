@@ -18,9 +18,13 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
 
+import time
 from ctypes import *
 from threading import Thread
 libg15 = cdll.LoadLibrary("libg15.so.1")
+
+# Default kKey read timeout. Too low and keys will be missed (very obvious in a VM)
+KEY_READ_TIMEOUT = 100
 
 G15_LCD = 1
 G15_KEYS = 2
@@ -41,13 +45,14 @@ G15_LOG_INFO = 1
 G15_LOG_WARN = 0
 
 class KeyboardReceiveThread(Thread):
-    def __init__(self, callback):
+    def __init__(self, callback, key_read_timeout):
         Thread.__init__(self)
         self._run = True
         self.name = "KeyboardReceiveThread"
         self.callback = callback
         self.on_exit = None
         self.on_unplug = None
+        self.key_read_timeout = key_read_timeout
         
     def deactivate(self):
         if self._run:
@@ -57,7 +62,7 @@ class KeyboardReceiveThread(Thread):
         pressed_keys = c_int(0)
         try:
             while self._run:
-                err = libg15.getPressedKeys(byref(pressed_keys), 10)
+                err = libg15.getPressedKeys(byref(pressed_keys), self.key_read_timeout)
                 code = 0
                 ext_code = 0
                 if err == G15_NO_ERROR:
@@ -65,7 +70,7 @@ class KeyboardReceiveThread(Thread):
                     if key_ext: 
                         ext_code = pressed_keys.value
                         ext_code &= ~(1<<28)
-                        err = libg15.getPressedKeys(byref(pressed_keys), 10)
+                        err = libg15.getPressedKeys(byref(pressed_keys), self.key_read_timeout)
                         if err == G15_NO_ERROR:
                             code = pressed_keys.value
                     else:
@@ -76,6 +81,7 @@ class KeyboardReceiveThread(Thread):
                     self._run = False
                     if self.on_unplug is not None:
                         self.on_unplug()
+                time.sleep(0)
         finally:
             if self.on_exit is not None:
                 self.on_exit()
@@ -98,7 +104,7 @@ def is_ext_key(code):
     """
     return code & (1<<28) != 0
     
-def grab_keyboard(callback):
+def grab_keyboard(callback, key_read_timeout = KEY_READ_TIMEOUT):
     """
     Start polling for keyboard events. Device must be initialised. The thread
     returned can be stopped by calling deactivate().
@@ -109,8 +115,9 @@ def grab_keyboard(callback):
     
     Keyword arguments:
     callback        -- function to call on key event
+    key_read_timeout -- timeout for reading key presses. too low and keys will be missed
     """
-    t = KeyboardReceiveThread(callback)
+    t = KeyboardReceiveThread(callback, key_read_timeout)
     t.start()
     return t
     

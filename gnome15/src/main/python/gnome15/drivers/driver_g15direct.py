@@ -324,8 +324,8 @@ class Driver(g15driver.AbstractDriver):
         
     def grab_keyboard(self, callback):
         self.callback = callback
-        self.last_keys = None
-        self.thread = pylibg15.grab_keyboard(self._handle_key_event)
+        self.last_keys = None        
+        self.thread = pylibg15.grab_keyboard(self._handle_key_event, g15util.get_int_or_default(self.conf_client, "/apps/gnome15/usb_key_read_timeout", 100))
         self.thread.on_unplug = self._keyboard_unplugged
         
     def is_connected(self):

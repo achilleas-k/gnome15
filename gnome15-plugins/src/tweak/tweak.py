@@ -48,6 +48,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/animation_delay", "AnimationDelayAdjustment", 100, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/animated_menus", "AnimatedMenus", True, widget_tree)
     g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/key_hold_duration", "KeyHoldDurationAdjustment", 2000, widget_tree)
+    g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/usb_key_read_timeout", "UsbKeyReadTimeoutAdjustment", 100, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/use_xtest", "UseXTest", True, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/disable_svg_glow", "DisableSVGGlow", False, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/fade_screen_on_close", "FadeScreenOnClose", True, widget_tree)
