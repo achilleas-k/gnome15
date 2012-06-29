@@ -42,10 +42,10 @@ from dbus.exceptions import DBusException
 logger = logging.getLogger("mpris")
 
 # Custom actions
-NEXT_TRACK = "next-track"
-PREV_TRACK = "previous-track"
-PLAY_TRACK = "play-track"
-STOP_TRACK = "stop-track"
+NEXT_TRACK = "mpris-next-track"
+PREV_TRACK = "mpris-previous-track"
+PLAY_TRACK = "mpris-play-track"
+STOP_TRACK = "mpris-stop-track"
 
 # Register the action with all supported models
 g15devices.g15_action_keys[NEXT_TRACK] = g15actions.ActionBinding(NEXT_TRACK, [ g15driver.G_KEY_NEXT ], g15driver.KEY_STATE_UP)

@@ -270,9 +270,8 @@ class Driver(g15driver.AbstractDriver):
             self.timeout = e.get_int()
         
         logger.info("Initialising pylibg15, looking for %s:%s" % ( hex(self.device.controls_usb_id[0]), hex(self.device.controls_usb_id[1]) ))
-#        if logger.level < logging.WARN and logger.level != logging.NOTSET:
-#            pylibg15.set_debug(pylibg15.G15_LOG_INFO)
-        pylibg15.set_debug(pylibg15.G15_LOG_INFO)
+        if logger.level < logging.WARN and logger.level != logging.NOTSET:
+            pylibg15.set_debug(pylibg15.G15_LOG_INFO)
         err = pylibg15.init(False, self.device.controls_usb_id[0], self.device.controls_usb_id[1])
         if err != pylibg15.G15_NO_ERROR:
             raise g15exceptions.NotConnectedException("libg15 returned error %d " % err)

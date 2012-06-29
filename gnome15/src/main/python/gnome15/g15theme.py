@@ -534,8 +534,9 @@ class Component():
                         ks = states[k]
                         if ks.state_id == g15driver.KEY_STATE_DOWN:
                             properties['key_%s' % k ] = True
+                        elif ks.state_id == g15driver.KEY_STATE_HELD:
+                            properties['key_%s_held' % k ] = True
                 
-                    
                 self.paint_theme(canvas, properties, self.get_theme_attributes())
                 canvas.restore()
                 
@@ -1796,12 +1797,12 @@ class G15Theme():
                 args = title.split(" ")
                 if args[0] == "del":
                     var = args[1]
-                    set = True
+                    condition = True
                     if var.startswith("!"):
                         var = var[1:]
-                        set = False
-                    if ( set and var in properties and properties[var] != "" and properties[var] != False ) or \
-                        ( not set and ( not var in properties or properties[var] == "" or properties[var] == False ) ):
+                        condition = False
+                    if ( condition and var in properties and properties[var] != "" and properties[var] != False ) or \
+                        ( not condition and ( not var in properties or properties[var] == "" or properties[var] == False ) ):
                         element.getparent().remove(element)
     
     def _set_progress_bars(self, root, properties):

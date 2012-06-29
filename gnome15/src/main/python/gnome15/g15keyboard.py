@@ -179,52 +179,61 @@ class G15KeyHandler():
         that want to take over key handling, such as screensaver which 
         disables all keys while it is active.
         """ 
-        if self._handle_key(keys, state_id, post=False):
-            return  
-        
-        """
-        Deal with each key separately, this keeps it simpler
-        """
-        for key in keys:
-        
-            """
-            Now set up the macro key state. This is where we decide what macros
-            and actions to activate.
-            """
-            if self._configure_key_state(key, state_id):
-                        
-                """
-                Do uinput macros first. These are treated slightly differently, because
-                a press of the Macro key equals a "press" of the virtual key,
-                a release of the Macro key equals a "release" of the virtual key etc.  
-                """
-                self._handle_uinput_macros()
-                
-                """
-                Now the ordinary macros, processed on key_up
-                """
-                self._handle_normal_macros()
-                
-                """
-                Now the actions
-                """
-                self._handle_actions()
+        try:
+            if self._handle_key(keys, state_id, post=False):
+                return  
             
-        """
-        Now do the legacy 'post' handling.
-        """
-        if not self._handle_key(keys, state_id, post=True):
-            pass
+            """
+            Deal with each key separately, this keeps it simpler
+            """
+            for key in keys:
+            
+                """
+                Now set up the macro key state. This is where we decide what macros
+                and actions to activate.
+                """
+                if self._configure_key_state(key, state_id):
+                            
+                    """
+                    Do uinput macros first. These are treated slightly differently, because
+                    a press of the Macro key equals a "press" of the virtual key,
+                    a release of the Macro key equals a "release" of the virtual key etc.  
+                    """
+                    self._handle_uinput_macros()
+                    
+                    """
+                    Now the ordinary macros, processed on key_up
+                    """
+                    self._handle_normal_macros()
+                    
+                    """
+                    Now the actions
+                    """
+                    self._handle_actions()
                 
-        """
-        When ALL keys are UP, clear out the state 
-        """
-        up = 0
-        for k, v in self.__key_states.items():
-            if v.state_id == g15driver.KEY_STATE_UP:
-                up += 1
-        if up > 0 and up == len(self.__key_states):
-            self.__key_states = {}
+            """
+            Now do the legacy 'post' handling.
+            """
+            if not self._handle_key(keys, state_id, post=True):
+                pass
+                    
+            """
+            When ALL keys are UP, clear out the state 
+            """
+            up = 0
+            for k, v in self.__key_states.items():
+                if v.state_id == g15driver.KEY_STATE_UP:
+                    up += 1
+            if up > 0 and up == len(self.__key_states):
+                self.__key_states = {}
+        finally:
+            """
+            Always redraw the current page on key presses
+            """
+            page = self.__screen.get_visible_page()
+            if page:
+                page.mark_dirty()
+                page.redraw()
             
     def _handle_actions(self):
         """

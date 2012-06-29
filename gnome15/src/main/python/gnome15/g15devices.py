@@ -91,7 +91,7 @@ g15_action_keys = { g15driver.NEXT_SELECTION: g15actions.ActionBinding(g15driver
                     g15driver.PREVIOUS_SELECTION: g15actions.ActionBinding(g15driver.PREVIOUS_SELECTION, [ g15driver.G_KEY_L3 ], g15driver.KEY_STATE_UP),
                     g15driver.SELECT: g15actions.ActionBinding(g15driver.SELECT, [ g15driver.G_KEY_L5 ], g15driver.KEY_STATE_UP),
                     g15driver.MENU: g15actions.ActionBinding(g15driver.MENU, [ g15driver.G_KEY_L1 ], g15driver.KEY_STATE_UP),
-                    g15driver.CLEAR: g15actions.ActionBinding(g15driver.CLEAR, [ g15driver.G_KEY_L5 ], g15driver.KEY_STATE_HELD),
+                    g15driver.CLEAR: g15actions.ActionBinding(g15driver.CLEAR, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_HELD),
                     g15driver.VIEW: g15actions.ActionBinding(g15driver.VIEW, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_UP),
                     g15driver.NEXT_PAGE: g15actions.ActionBinding(g15driver.NEXT_PAGE, [ g15driver.G_KEY_L4 ], g15driver.KEY_STATE_HELD),
                     g15driver.PREVIOUS_PAGE: g15actions.ActionBinding(g15driver.PREVIOUS_PAGE, [ g15driver.G_KEY_L3 ], g15driver.KEY_STATE_HELD),

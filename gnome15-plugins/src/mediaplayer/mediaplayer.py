@@ -26,7 +26,10 @@ import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15screen as g15screen
+import gnome15.g15devices as g15devices
+import gnome15.g15actions as g15actions
 import gnome15.lcdsink as lcdsink
+import gnome15.g15globals as g15globals
 import gtk
 import os
 import gst
@@ -35,11 +38,43 @@ import array
 import gobject
 import gio
 import mimetypes
+import dbus
 
 from threading import Lock
  
 import logging
 logger = logging.getLogger("mediaplayer")
+
+# Detect whether we will be able to grab multimedia keys
+session_bus = dbus.SessionBus()
+can_grab_media_keys = False
+try:
+    dbus.Interface(session_bus.get_object('org.g.SettingsDaemon',
+                        '/org/gnome/SettingsDaemon'), 'org.gnome.SettingsDaemon')
+    can_grab_media_keys = True
+except dbus.DBusException:
+    dbus.Interface(session_bus.get_object('org.gnome.SettingsDaemon',
+                        '/org/gnome/SettingsDaemon/MediaKeys'),
+                        'org.gnome.SettingsDaemon.MediaKeys')
+    can_grab_media_keys = True
+
+# Register the custom actions
+
+NEXT_TRACK = "mediaplayer-next-track"
+PREV_TRACK = "mediaplayer-previous-track"
+PLAY_TRACK = "mediaplayer-play-track"
+STOP_TRACK = "mediaplayer-stop-track"
+
+# Register the action with all supported models
+g15devices.g15_action_keys[NEXT_TRACK] = g15actions.ActionBinding(NEXT_TRACK, [ g15driver.G_KEY_NEXT ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[NEXT_TRACK] = g15actions.ActionBinding(NEXT_TRACK, [ g15driver.G_KEY_NEXT ], g15driver.KEY_STATE_UP)
+g15devices.g15_action_keys[PREV_TRACK] = g15actions.ActionBinding(PREV_TRACK, [ g15driver.G_KEY_PREV ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[PREV_TRACK] = g15actions.ActionBinding(PREV_TRACK, [ g15driver.G_KEY_PREV ], g15driver.KEY_STATE_UP)
+g15devices.g15_action_keys[STOP_TRACK] = g15actions.ActionBinding(STOP_TRACK, [ g15driver.G_KEY_STOP ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[STOP_TRACK] = g15actions.ActionBinding(STOP_TRACK, [ g15driver.G_KEY_STOP ], g15driver.KEY_STATE_UP)
+g15devices.g15_action_keys[PLAY_TRACK] = g15actions.ActionBinding(PLAY_TRACK, [ g15driver.G_KEY_PLAY ], g15driver.KEY_STATE_UP)
+g15devices.g19_action_keys[PLAY_TRACK] = g15actions.ActionBinding(PLAY_TRACK, [ g15driver.G_KEY_PLAY ], g15driver.KEY_STATE_UP)
+
 
 # Plugin details - All of these must be provided
 id = "mediaplayer"
@@ -53,20 +88,30 @@ copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://localhost"
 has_preferences = False
 unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35, g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
-actions={ 
-         g15driver.PREVIOUS_SELECTION : _("Skip Backward"), 
-         g15driver.NEXT_SELECTION : _("Skip Forward"),
-         g15driver.SELECT : _("Play/Pause"),
-         g15driver.CLEAR : _("Stop"),
-         g15driver.VIEW : _("Change aspect")
-         }
-actions_g19={ 
-         g15driver.PREVIOUS_PAGE : _("Skip Backward"), 
-         g15driver.NEXT_PAGE : _("Skip Forward"),
-         g15driver.SELECT : _("Play/Pause"),
-         g15driver.CLEAR : _("Stop"),
-         g15driver.VIEW : _("Change aspect")
-         }
+
+if can_grab_media_keys:
+    actions={ 
+             PREV_TRACK : _("Skip Backward"), 
+             NEXT_TRACK : _("Skip Forward"),
+             PLAY_TRACK : _("Play/Pause"),
+             STOP_TRACK : _("Stop"),
+             g15driver.VIEW : _("Change aspect")
+             }
+else:
+    actions={ 
+             g15driver.PREVIOUS_SELECTION : _("Skip Backward"), 
+             g15driver.NEXT_SELECTION : _("Skip Forward"),
+             g15driver.SELECT : _("Play/Pause"),
+             g15driver.CLEAR : _("Stop"),
+             g15driver.VIEW : _("Change aspect")
+             }
+    actions_g19={ 
+             g15driver.PREVIOUS_PAGE : _("Skip Backward"), 
+             g15driver.NEXT_PAGE : _("Skip Forward"),
+             g15driver.SELECT : _("Play/Pause"),
+             g15driver.CLEAR : _("Stop"),
+             g15driver.VIEW : _("Change aspect")
+             }
 
 
 icon_path = g15util.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player" ])
@@ -181,7 +226,10 @@ class G15MediaPlayerPage(g15theme.G15Page):
     """
     
     def __init__(self, screen, source, plugin):
-        g15theme.G15Page.__init__(self, "videopage-%s" % source.name, screen, priority = g15screen.PRI_NORMAL, title = source.name, theme = g15theme.G15Theme(self), thumbnail_painter = self._paint_thumbnail, originating_plugin = plugin)
+        g15theme.G15Page.__init__(self, "videopage-%s" % source.name, screen, \
+                                  priority = g15screen.PRI_NORMAL, \
+                                  title = source.name, \
+                                  theme = g15theme.G15Theme(self, variant = 'mediakeys' if plugin._grabbed_keys else None), thumbnail_painter = self._paint_thumbnail, originating_plugin = plugin)
         self._sidebar_offset = 0
         self._source = source
         self._muted = False
@@ -194,6 +242,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
         self._aspect = self._full_screen
         self._active = True
         self._frame_index = 1
+        self._last_seconds = -1
         self._thumb_icon = g15util.load_surface_from_file(icon_path)
         self._setup_gstreamer()
         self.screen.key_handler.action_listeners.append(self) 
@@ -202,6 +251,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
             self.screen.key_handler.action_listeners.remove(self)
             self.screen.painters.remove(self.background_painter)
             self._plugin.show_menu()
+            self._plugin._release_multimedia_keys()
         self.on_deleted = on_delete
         self.background_painter = G15VideoPainter(self)
         self.screen.painters.append(self.background_painter)
@@ -221,67 +271,98 @@ class G15MediaPlayerPage(g15theme.G15Page):
         self._connect_signals()
     
     def action_performed(self, binding):
-        if self.is_visible():
-            if binding.action == g15driver.SELECT:
-                gobject.idle_add(self._play)
-            elif ( binding.action == g15driver.PREVIOUS_PAGE and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
-                 ( binding.action == g15driver.PREVIOUS_SELECTION and self._screen.device.model_id != g15driver.MODEL_G19 ):
-                gobject.idle_add(self._rew)
-            elif ( binding.action == g15driver.NEXT_PAGE and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
-                 ( binding.action == g15driver.NEXT_SELECTION and self._screen.device.model_id != g15driver.MODEL_G19 ):
-                gobject.idle_add(self._fwd)
-            elif binding.action == g15driver.VIEW:
-                gobject.idle_add(self._change_aspect)
-            elif binding.action == g15driver.CLEAR:
-                gobject.idle_add(self._stop)
-            else:
-                return False
+        # The custom actions which can be activated outside of visible page
+        if binding.action == PLAY_TRACK:
+            gobject.idle_add(self._play)
             return True
+        elif binding.action == NEXT_TRACK:
+            gobject.idle_add(self._fwd)
+            return True
+        elif binding.action == PREV_TRACK:
+            gobject.idle_add(self._rew)
+            return True
+        elif binding.action == STOP_TRACK:
+            gobject.idle_add(self._stop)
+            return True
+        
+        if self.is_visible():
+            if can_grab_media_keys:
+                # Default when media keys are available
+                if binding.action == g15driver.VIEW:
+                    gobject.idle_add(self._change_aspect)
+                    return True
+            else:
+                # Default when media keys are not available
+                if binding.action == g15driver.SELECT:
+                    gobject.idle_add(self._play)
+                elif ( binding.action == g15driver.PREVIOUS_PAGE and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
+                     ( binding.action == g15driver.PREVIOUS_SELECTION and self._screen.device.model_id != g15driver.MODEL_G19 ):
+                    gobject.idle_add(self._rew)
+                elif ( binding.action == g15driver.NEXT_PAGE and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
+                     ( binding.action == g15driver.NEXT_SELECTION and self._screen.device.model_id != g15driver.MODEL_G19 ):
+                    gobject.idle_add(self._fwd)
+                elif binding.action == g15driver.VIEW:
+                    gobject.idle_add(self._change_aspect)
+                elif binding.action == g15driver.CLEAR:
+                    gobject.idle_add(self._stop)
+                else:
+                    return False
+                return True
 
             
     def get_theme_properties(self):
-        properties = g15theme.G15Page.get_theme_properties(self)
+        properties = {}
         properties["aspect"] = "%d:%d" % self._aspect
+        try:
+            progress_pc, progress, duration = self._get_track_progress()
+        except:
+            progress_pc, progress, duration = 0,(0,0,0),(0,0,0)
+            
+        if self._last_seconds != progress[2]:
+            self.mark_dirty()
+        self._last_seconds = progress[2]
+                    
+        if self._plugin._mm_key is not None:
+            properties["key_%s" % self._plugin._mm_key] = True
+                    
+        properties["track_progress_pc"] = str(progress_pc)
+        properties["track_progress"] = "%02d:%02d.%02d" % progress
+        properties["track_duration"] = "%02d:%02d.%02d" % duration
+        properties["track_name"] = "%s" % self._source.name
+            
         properties["play_pause"] = _("Pause") if self._is_playing() else _("Play")
         return properties
     
     def paint_theme(self, canvas, properties, attributes):
-        canvas.save()        
-        if self._sidebar_offset < 0 and self._sidebar_offset > -(self.theme.bounds[2]):
-            self._sidebar_offset -= 5
-            
-        canvas.translate(self._sidebar_offset, 0)
         g15theme.G15Page.paint_theme(self, canvas, properties, attributes)
-        canvas.restore()
     
     def paint(self, canvas):
         self._paint_video_image(canvas)
+        canvas.save()        
+        if self._sidebar_offset < 0 and self._sidebar_offset > -(self.theme.bounds[2]):
+            self._sidebar_offset -= 5
+        canvas.translate(self._sidebar_offset, 0)
         g15theme.G15Page.paint(self, canvas)
+        canvas.restore()
         if self._sidebar_offset < 0 and self._sidebar_offset > -(self.theme.bounds[2]):
             g15util.schedule("RepaintVideoOverly", 0.1, self.redraw)
                 
     """
     GStreamer callbacks
     """
-    def _connect_signals(self):
-        # Watch signals coming from the bus
-        bus = self._pipeline.get_bus()
-        bus.add_signal_watch()
-        bus.enable_sync_message_emission()
-        bus.connect("message", self._on_message)
-        bus.connect("sync-message::element", self._on_sync_message)
-        self._source.connect_signals()
     
     def _on_sync_message(self, bus, message):
         if message.structure is None:
             return
         message_name = message.structure.get_name()
+        logger.debug("Sync. %s" % message)
     
     def _on_message(self, bus, message):
         """
         Handle changes in the playing state.
         """
         t = message.type
+        logger.debug("Message. %s" % message)
         if t == gst.MESSAGE_EOS:
             self._pipeline.set_state(gst.STATE_NULL)
             self._show_sidebar()
@@ -317,6 +398,35 @@ class G15MediaPlayerPage(g15theme.G15Page):
     '''
     Private
     '''
+    def _get_track_progress(self):
+        raw_pos = self._pipeline.query_position(gst.FORMAT_TIME, None)[0]
+        raw_dur = self._pipeline.query_duration(gst.FORMAT_TIME, None)[0]
+        pos = self._convert_time(int(raw_pos))
+        if raw_dur < 0:
+            return 100, pos, (0,0,0)
+        dur = self._convert_time(int(raw_dur))
+        pc = float(raw_pos) / float(raw_dur)
+        return int(pc * 100), pos, dur
+    
+    def _connect_signals(self):
+        # Watch signals coming from the bus
+        bus = self._pipeline.get_bus()
+        bus.add_signal_watch()
+        bus.enable_sync_message_emission()
+        bus.connect("message", self._on_message)
+        bus.connect("sync-message::element", self._on_sync_message)
+        self._source.connect_signals()
+    
+    def _convert_time(self, time):
+        time = time / 1000000000
+        mins = time % 3600
+        time = time - mins
+        secs = mins % 60
+        mins = mins - secs
+        hours = int(time / 3600)
+        mins = int(mins / 60)
+        secs = int(secs)
+        return hours,mins,secs
         
     def _paint_video_image(self, canvas):
         size = self._screen.driver.get_size()
@@ -338,9 +448,13 @@ class G15MediaPlayerPage(g15theme.G15Page):
             self.redraw()
         else:    
             self._sidebar_offset = 0 
-            if self._hide_timer != None:
-                self._hide_timer.cancel()
+            self._cancel_hide()
             self._hide_timer = g15util.schedule("HideSidebar", after, self._hide_sidebar)
+            
+    def _cancel_hide(self):
+        if self._hide_timer != None:
+            self._hide_timer.cancel()
+            self._hide_timer = None
         
     def _change_aspect(self):
         if self._aspect == (16, 9):
@@ -352,18 +466,25 @@ class G15MediaPlayerPage(g15theme.G15Page):
             self._aspect = self._full_screen
         else:
             self._aspect = (16, 9)
-        self._show_sidebar()        
-        self._hide_sidebar(3.0)
+        if self._sidebar_offset != 0:
+            self._show_sidebar()
+            self._hide_sidebar(3.0)
     
     def _rew(self):
         pos_int = self._pipeline.query_position(gst.FORMAT_TIME, None)[0]
         seek_ns = pos_int - (10 * 1000000000)
         self._pipeline.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, seek_ns)
+        if self._sidebar_offset != 0:
+            self._show_sidebar()
+            self._hide_sidebar(3.0)
         
     def _fwd(self):
         pos_int = self._pipeline.query_position(gst.FORMAT_TIME, None)[0]
         seek_ns = pos_int + (10 * 1000000000)
         self._pipeline.seek_simple(gst.FORMAT_TIME, gst.SEEK_FLAG_FLUSH, seek_ns)
+        if self._sidebar_offset != 0:
+            self._show_sidebar()
+            self._hide_sidebar(3.0)
     
     def _is_paused(self):
         return gst.STATE_PAUSED == self._pipeline.get_state()[1]
@@ -376,6 +497,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
         try:   
             if self._is_playing():
                 self._pipeline.set_state(gst.STATE_PAUSED)
+                self._cancel_hide()
                 self._show_sidebar()
             else:
                 self._pipeline.set_state(gst.STATE_PLAYING)
@@ -652,6 +774,14 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
     def __init__(self, gconf_client, gconf_key, screen):
         g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, icon_path, id, name)
         self.player_pages = []
+        self._grabbed_keys = None
+        self._settings = None
+        self._app_name = None 
+        self._mm_key = None
+        self._mm_key_timer = None
+        
+    def activate(self):
+        g15plugin.G15MenuPlugin.activate(self)
     
     def load_menu_items(self):
         items = []
@@ -755,13 +885,68 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
                 self._open_source(G15AudioFileSource(os.path.basename(path), path, get_visualisation(self)))
             else:
                 self._open_source(G15VideoFileSource(os.path.basename(path), path))
+                
+    def _grab_multimedia_keys(self):
+        try:
+            if self._grabbed_keys is not None:
+                raise Exception("Already grabbed")
+            self._app_name = "%s-%s" % ( g15globals.name, name)
+            def _on_key(app, key):
+                if app == self._app_name:
+                    self._mm_key = None
+                    if key == "Play":
+                        self._mm_key = g15driver.G_KEY_PLAY
+                        self._player_page._play()
+                    elif key == "Stop":
+                        self._mm_key = g15driver.G_KEY_STOP
+                        self._player_page._stop()
+                    elif key == "Next":
+                        self._mm_key = g15driver.G_KEY_NEXT
+                        self._player_page._fwd()
+                    elif key == "Previous":
+                        self._mm_key = g15driver.G_KEY_PREV
+                        self._player_page._rew()
+                    else:
+                        logger.warn("Unsupported media key %s" % key)
+                    if self._mm_key_timer is not None:
+                        self._mm_key_timer.cancel()
+                        self._mm_key_timer = None
+                    self._mm_key_timer = g15util.schedule("CancelMMKey", 1.0, self._clear_mm_key)
+
+            try:
+                self._settings = dbus.Interface(session_bus.get_object('org.g.SettingsDaemon',
+                                    '/org/gnome/SettingsDaemon'), 'org.gnome.SettingsDaemon')
+                self._settings.GrabMediaPlayerKeys(self._app_name, 0)
+                self._grabbed_keys = self._settings.connect_to_signal('MediaPlayerKeyPressed', _on_key)
+            except dbus.DBusException:
+                self._settings = dbus.Interface(session_bus.get_object('org.gnome.SettingsDaemon',
+                                    '/org/gnome/SettingsDaemon/MediaKeys'),
+                                    'org.gnome.SettingsDaemon.MediaKeys')
+                self._settings.GrabMediaPlayerKeys(self._app_name, 0)
+                self._grabbed_keys = self._settings.connect_to_signal('MediaPlayerKeyPressed', _on_key)
+               
+            logger.info("Grabbed multimedia keys")
+        except dbus.DBusException, error:
+            logger.warn("Could not grab multi-media keys. %s" % error)
             
+    def _clear_mm_key(self):
+        self._mm_key = None
+        self.screen.redraw()
+        
+    def _release_multimedia_keys(self):
+        if self._grabbed_keys:
+            self._settings.ReleaseMediaPlayerKeys(self._app_name)
+            session_bus.remove_signal_receiver(self._grabbed_keys)
+            self._grabbed_keys = None
+         
     def _open_source(self, source):
-        page = G15MediaPlayerPage(self.screen, source, self)
-        self.player_pages.append(page)
-        self.screen.add_page(page)
-        self.screen.redraw(page)
-        gobject.idle_add(page._play)
+        if can_grab_media_keys:
+            self._grab_multimedia_keys()
+        self._player_page = G15MediaPlayerPage(self.screen, source, self)
+        self.player_pages.append(self._player_page)
+        self.screen.add_page(self._player_page)
+        self.screen.redraw(self._player_page)
+        gobject.idle_add(self._player_page._play)
              
     def _reload_menu(self):
         self.load_menu_items()
