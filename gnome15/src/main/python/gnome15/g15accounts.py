@@ -48,13 +48,6 @@ Functions
 Configure monitoring of account files. This allows plugins to get notified
 when accounts they are using change
 """
-    
-     
-'''
-Watch for changes in macro configuration directory.
-Observers can add a callback function to profile_listeners
-to be informed when macro profiles change
-'''
 account_listeners = []
 
 watch_manager = pyinotify.WatchManager()
@@ -201,12 +194,10 @@ class G15AccountManager(G15Keyring):
         self.listeners = {}
         
     def add_change_listener(self, listener):
-        print "Watching now %s" % os.path.dirname(self._conf_file)
         wdd = watch_manager.add_watch(os.path.dirname(self._conf_file), mask, rec=True)
         self.listeners[listener] = wdd
         def a(event):
             if event.pathname == self._conf_file:
-                print "Acc mgr: %s" % str(event)
                 listener(self)
         wdd['change_listener'] = a
         account_listeners.append(a)

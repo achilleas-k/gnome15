@@ -35,9 +35,9 @@ import logging
 logger = logging.getLogger("driver")
 
 # Driver information (used by driver selection UI)
-id = "g510"
-name = _("G510 Driver")
-description = _("Simple driver that supports the keys on the G510. ")
+id = "g930"
+name = _("G930 Driver")
+description = _("Simple driver that supports the keys on the G930/G35 headset. ")
 has_preferences = True
 
 
@@ -182,7 +182,7 @@ class Driver(g15driver.AbstractDriver):
         return [ g15driver.MODEL_G930, g15driver.MODEL_G35 ]
             
     def get_name(self):
-        return "Gnome15 G510 Driver"
+        return "Gnome15 G930/G35 Driver"
     
     def get_model_name(self):
         return self.device.model_id if self.device != None else None
