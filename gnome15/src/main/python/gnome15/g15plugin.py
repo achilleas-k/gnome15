@@ -267,7 +267,7 @@ class G15RefreshingPlugin(G15PagePlugin):
             self.timer = None
         
     def _schedule_refresh(self):
-        if not self.only_refresh_when_visible or self.screen.is_visible(self.page):
+        if self.page and ( not self.only_refresh_when_visible or self.screen.is_visible(self.page) ):
             if self.schedule_on_gobject:
                 self.timer = gobject.timeout_add(int(self.get_next_tick() * 1000), self._refresh)
             else:

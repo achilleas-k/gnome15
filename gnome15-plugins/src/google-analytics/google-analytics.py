@@ -267,14 +267,15 @@ class G15GoogleAnalytics():
             self._timer.cancel()
             
     def _do_refresh(self):
-        self._load_site_data()
-        self._page.redraw()
-        self._schedule_refresh(get_update_time(self._gconf_client, self._gconf_key) * 60.0) 
-        selected = g15util.get_string_or_default(self._gconf_client, "%s/selected_site" % self._gconf_key, None)
-        if selected:
-            for m in self._menu.get_children():
-                if m.id == selected:
-                    self._menu.set_selected_item(m)
+        if self._page:
+            self._load_site_data()
+            self._page.redraw()
+            self._schedule_refresh(get_update_time(self._gconf_client, self._gconf_key) * 60.0) 
+            selected = g15util.get_string_or_default(self._gconf_client, "%s/selected_site" % self._gconf_key, None)
+            if selected:
+                for m in self._menu.get_children():
+                    if m.id == selected:
+                        self._menu.set_selected_item(m)
         
     def _schedule_refresh(self, time):
         self._timer = g15util.schedule("AnalyticsRedraw", time, self._do_refresh)

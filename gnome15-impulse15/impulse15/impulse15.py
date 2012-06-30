@@ -41,6 +41,18 @@ site="https://launchpad.net/impulse.bzr"
 unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 has_preferences=True
 
+def get_source_index(source_name):
+    status, output = g15util.execute_for_output("pacmd list-sources")
+    if status == 0 and len(output) > 0:
+        i = 0
+        for line in output.split("\n"):
+            line = line.strip()
+            if line.startswith("index: "):
+                i = int(line[7:])
+            elif line.startswith("name: <%s" % source_name):
+                return i
+    logger.warn("Audio source %s not found, default to first source" % source_name)
+    return 0
 
 def create(gconf_key, gconf_client, screen):
     return G15Impulse(gconf_key, gconf_client, screen) 
@@ -55,24 +67,28 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     # Set up the audio source model  
     audio_source_model = widget_tree.get_object("AudioSourceModel")
     status, output = g15util.execute_for_output("pacmd list-sources")
+    source_name = "0"
     if status == 0 and len(output) > 0:
         i = 0
         for line in output.split("\n"):
             line = line.strip()
             if line.startswith("index: "):
                 i = int(line[7:])
+                source_name = str(i)
+            elif line.startswith("name: "):
+                source_name = line[7:-1]
             elif line.startswith("device.description = "):
-                audio_source_model.append((i, line[22:-1]))
+                audio_source_model.append((source_name, line[22:-1]))
     else:
         for i in range(0, 9):
-            audio_source_model.append((i, "Source %d" % i))
+            audio_source_model.append((str(i), "Source %d" % i))
 
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/disco", "Disco", False, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/animate_mkeys", "AnimateMKeys", False, widget_tree)
     g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/mode", "ModeCombo", "spectrum", widget_tree)
     g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/paint", "PaintCombo", "screen", widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bars", "BarsSpinner", 16, widget_tree)
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/audio_source", "AudioSource", 0, widget_tree)
+    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/audio_source_name", "AudioSource", source_name, widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_width", "BarWidthSpinner", 16, widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/spacing", "SpacingSpinner", 0, widget_tree)
     g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/rows", "RowsSpinner", 16, widget_tree)
@@ -316,7 +332,7 @@ class G15Impulse():
     
     def _load_config(self):
         logger.info("Reloading configuration")
-        self.audio_source_index = self.gconf_client.get_int(self.gconf_key + "/audio_source")
+        self.audio_source_index = get_source_index(self.gconf_client.get_string(self.gconf_key + "/audio_source_name"))
         gobject.idle_add(self.set_audio_source)
         self.mode = self.gconf_client.get_string(self.gconf_key + "/mode")
         self.disco = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/disco", False)

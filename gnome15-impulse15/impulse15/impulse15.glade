@@ -10,7 +10,7 @@
   <object class="GtkListStore" id="AudioSourceModel">
     <columns>
       <!-- column-name AudioSourceIndex -->
-      <column type="gint"/>
+      <column type="gchararray"/>
       <!-- column-name AudioSourceName -->
       <column type="gchararray"/>
     </columns>
