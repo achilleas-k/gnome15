@@ -332,10 +332,10 @@ class G15Weather():
             theme_icon = [ "%s-night" % theme_icon, theme_icon ]
             
         if theme_icon != None:
-            icon_path = g15util.get_icon_path(theme_icon, warning = False)
+            icon_path = g15util.get_icon_path(theme_icon, warning = False, include_missing = False)
             if icon_path == None and ( now.hour > 18 or now.hour < 4):
                 # Try the day icons
-                icon_path = g15util.get_icon_path(theme_icon[:len(theme_icon) - 6])
+                icon_path = g15util.get_icon_path(theme_icon[:len(theme_icon) - 6], include_missing = False)
                 
             if icon_path != None:
                 return icon_path
