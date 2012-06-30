@@ -221,7 +221,7 @@ const Gnome15PageInterface = {
  * about the device attached are read, and if the device currently has
  * a screen (i.e. is enabled), the initial page list is loaded. 
  * 
- * Signals are also setup to watch for the scren being enable / disabled
+ * Signals are also setup to watch for the screen being enable / disabled
  * externally.
  */
 const DeviceItem = new Lang.Class({
@@ -456,9 +456,9 @@ const DeviceButton = new Lang.Class({
 		let idx = this._itemList.indexOf(pagePath);
 		if(idx > 0) {
 			this._itemList.splice(idx, 1);
+			this._itemMap[pagePath].destroy();
+			delete this._itemMap[pagePath];
 		}
-		this._itemMap[pagePath].destroy();
-		delete this._itemMap[pagePath];
 	},
 
 	/**

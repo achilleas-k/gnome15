@@ -257,7 +257,7 @@ class G15RSS():
         self._schedule_refresh() 
         self._update_time_changed_handle = self._gconf_client.notify_add(self._gconf_key + "/update_time", self._update_time_changed)
         self._urls_changed_handle = self._gconf_client.notify_add(self._gconf_key + "/urls", self._urls_changed)
-        self._load_feeds()
+        g15util.schedule("LoadFeeds", 0, self._load_feeds)
     
     def deactivate(self):
         self._cancel_refresh()

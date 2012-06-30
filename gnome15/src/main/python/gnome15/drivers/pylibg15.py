@@ -62,17 +62,22 @@ class KeyboardReceiveThread(Thread):
         pressed_keys = c_int(0)
         try:
             while self._run:
-                err = libg15.getPressedKeys(byref(pressed_keys), self.key_read_timeout)
+                err = libg15.getPressedKeys(byref(pressed_keys), 10)
                 code = 0
                 ext_code = 0
                 if err == G15_NO_ERROR:
                     key_ext = is_ext_key(pressed_keys.value)
-                    if key_ext: 
+                    if key_ext:
                         ext_code = pressed_keys.value
                         ext_code &= ~(1<<28)
-                        err = libg15.getPressedKeys(byref(pressed_keys), self.key_read_timeout)
+                        err = libg15.getPressedKeys(byref(pressed_keys), 10)
                         if err == G15_NO_ERROR:
                             code = pressed_keys.value
+                        elif err == G15_ERROR_NODEV:
+                            # Device unplugged
+                            self._run = False
+                            if self.on_unplug is not None:
+                                self.on_unplug()
                     else:
                         code = pressed_keys.value
                     self.callback(code, ext_code)
@@ -81,11 +86,44 @@ class KeyboardReceiveThread(Thread):
                     self._run = False
                     if self.on_unplug is not None:
                         self.on_unplug()
-                time.sleep(0)
         finally:
             if self.on_exit is not None:
                 self.on_exit()
             self._run = True
+            
+#        pressed_keys = c_int(0)
+#        try:
+#            while self._run:
+#                err = libg15.getPressedKeys(byref(pressed_keys), self.key_read_timeout)
+#                code = 0
+#                ext_code = 0
+#                if err == G15_NO_ERROR:
+#                    print "No err"
+#                    key_ext = is_ext_key(pressed_keys.value)
+#                    print "Key ext %s" % key_ext
+#                    if key_ext: 
+#                        ext_code = pressed_keys.value
+#                        print "Ext %s" % ext_code
+#                        ext_code &= ~(1<<28)
+#                        err = libg15.getPressedKeys(byref(pressed_keys), self.key_read_timeout)
+#                        print "Err2 %s" % err
+#                        if err == G15_NO_ERROR:
+#                            print "No err2"
+#                            code = pressed_keys.value
+#                            print "Orig code %s" % code
+#                    else:
+#                        code = pressed_keys.value
+#                    self.callback(code, ext_code)
+#                elif err == G15_ERROR_NODEV:
+#                    # Device unplugged
+#                    self._run = False
+#                    if self.on_unplug is not None:
+#                        self.on_unplug()
+#                time.sleep(0)
+#        finally:
+#            if self.on_exit is not None:
+#                self.on_exit()
+#            self._run = True
 
 class libg15_devices_t(Structure):
     _fields_ = [ ("name", c_char_p),

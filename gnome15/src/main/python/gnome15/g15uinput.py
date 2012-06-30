@@ -91,15 +91,6 @@ JS_MOVEMENT = {
 for k in JS_MOVEMENT:
     capabilities[k] = JS_MOVEMENT[k]
     
-"""
-Dictionary to look up full codes given just input code
-"""
-codes = {}
-for k in capabilities:
-    code = capabilities[k]
-    if isinstance(code, tuple):
-        codes[code[1]] = code
-    
 def are_calibration_tools_available():
     """
     Test for the existence of calibration tools 'jstest-gtk' and 'jscal'.
@@ -246,7 +237,7 @@ def emit(target, code, value, syn=True):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("UINPUT mouse event at %s, code = %s, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
             code = ( EV_REL, code )            
-        elif ( target == JOYSTICK or target == DIGITAL_JOYSTICK ) and code in [ JS_LEFT,JS_RIGHT,JS_UP,JS_DOWN ]:
+        elif ( target == JOYSTICK or target == DIGITAL_JOYSTICK ):
             if code == JS_LEFT:
                 value = 0 if value > 0 else 128
                 code = ABS_X
@@ -259,12 +250,11 @@ def emit(target, code, value, syn=True):
             elif code == JS_DOWN:
                 value = 255 if value > 0 else 128
                 code = ABS_Y
-        elif ( target == JOYSTICK or target == DIGITAL_JOYSTICK ) and code in [ uinput.ABS_X[1], uinput.ABS_Y[1] ]:
+            code = (EV_ABS, code)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("UINPUT joystick event at %s, code = %s, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
-            code = ( EV_ABS, code )
         else: 
-            code = codes[code]
+            code = ( EV_KEY, code )
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("UINPUT uinput keyboard event at %s, code = %s, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
     
