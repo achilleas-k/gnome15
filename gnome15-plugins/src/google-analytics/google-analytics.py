@@ -241,12 +241,7 @@ class G15GoogleAnalytics():
         self._page.add_child(self._menu)
         self._page.add_child(g15theme.MenuScrollbar("viewScrollbar", self._menu))
         self._screen.add_page(self._page)
-        self._schedule_refresh()
-        selected = g15util.get_string_or_default(self._gconf_client, "%s/selected_site" % self._gconf_key, None)
-        if selected:
-            for m in self._menu.get_children():
-                if m.id == selected:
-                    self._menu.set_selected_item(m)
+        self._schedule_refresh(0)
         
     def deactivate(self):
         self._account_manager.remove_change_listener(self._accounts_changed)
@@ -271,15 +266,22 @@ class G15GoogleAnalytics():
         if self._timer != None:
             self._timer.cancel()
             
-    def _schedule_refresh(self):
+    def _do_refresh(self):
         self._load_site_data()
         self._page.redraw()
-        time = get_update_time(self._gconf_client, self._gconf_key) * 60.0        
-        self._timer = g15util.schedule("AnalyticsRedraw", time, self._schedule_refresh)
+        self._schedule_refresh(get_update_time(self._gconf_client, self._gconf_key) * 60.0) 
+        selected = g15util.get_string_or_default(self._gconf_client, "%s/selected_site" % self._gconf_key, None)
+        if selected:
+            for m in self._menu.get_children():
+                if m.id == selected:
+                    self._menu.set_selected_item(m)
+        
+    def _schedule_refresh(self, time):
+        self._timer = g15util.schedule("AnalyticsRedraw", time, self._do_refresh)
     
     def _accounts_changed(self, account_manager):        
         self._cancel_refresh()
-        self._schedule_refresh()
+        self._do_refresh()
                     
     def _get_properties(self):
         properties = {}

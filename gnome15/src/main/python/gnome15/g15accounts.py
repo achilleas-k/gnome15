@@ -197,6 +197,7 @@ class G15AccountManager(G15Keyring):
         wdd = watch_manager.add_watch(os.path.dirname(self._conf_file), mask, rec=True)
         self.listeners[listener] = wdd
         def a(event):
+            self.load()
             if event.pathname == self._conf_file:
                 listener(self)
         wdd['change_listener'] = a
@@ -210,7 +211,7 @@ class G15AccountManager(G15Keyring):
             watch_manager.rm_watch(wdd[k])
             
     def load(self):
-        self.accounts = []
+        accounts = []
         if not os.path.exists(self._conf_file):
             dir_path = os.path.dirname(self._conf_file)
             if not os.path.exists(dir_path):
@@ -221,7 +222,9 @@ class G15AccountManager(G15Keyring):
                 acc = G15Account(element.get("name"), element.get("type"))
                 for property_element in element:
                     acc.properties[property_element.get("name")] = property_element.get("value") 
-                self.accounts.append(acc)
+                accounts.append(acc)
+                
+        self.accounts = accounts
                 
     
     def by_name(self, name):

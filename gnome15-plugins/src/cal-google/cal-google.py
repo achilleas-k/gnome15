@@ -31,9 +31,11 @@ import calendar
 import gdata.calendar.data
 import gdata.calendar.client
 import gdata.acl.data
+import gdata.service
 import iso8601
 import traceback
 import subprocess
+import socket
 
 # Logging
 import logging
@@ -126,6 +128,9 @@ class GoogleCalendarBackend(cal.CalendarBackend):
     def get_events(self, now):
         self.cal_client = gdata.calendar.client.CalendarClient(source='%s-%s' % ( g15globals.name, g15globals.version ) )
         
+        # Reload the account
+        self.account = self.account_manager.by_name(self.account.name)
+        
         for i in range(0, 3):
             for j in range(0, 2):
                 password = self.account_manager.retrieve_password(self.account, "www.google.com", None, i > 0)
@@ -134,8 +139,10 @@ class GoogleCalendarBackend(cal.CalendarBackend):
                 
                 try :
                     return self._retrieve_events(now, password)
-                except Exception:
-                    traceback.print_exc()   
+                except gdata.client.BadAuthentication:
+                    pass
+                
+        raise Exception(_("Authentication attempted too many times"))  
         
         
     def _retrieve_events(self, now, password):

@@ -513,18 +513,20 @@ class G15Plugins():
             instance = None
             if plugin_id in self.module_map:
                 instance = self.module_map[plugin_id]
-            if now_enabled and instance == None:
-                instance = self._create_instance(plugin, self._get_plugin_key(plugin_id))
-                self.started.append(instance)
-                if self.is_in_active_state() == True:
-                    self._activate_instance(instance)
-            elif not now_enabled and instance != None:
-                if instance in self.activated:
-                    self._deactivate_instance(instance)
-                if instance in self.started:
-                    self.started.remove(instance)
-                del self.module_map[plugin_id]
-                instance.destroy()
+                                
+            if not is_passive_plugin(plugin):
+                if now_enabled and instance == None:
+                    instance = self._create_instance(plugin, self._get_plugin_key(plugin_id))
+                    self.started.append(instance)
+                    if self.is_in_active_state() == True:
+                        self._activate_instance(instance)
+                elif not now_enabled and instance != None:
+                    if instance in self.activated:
+                        self._deactivate_instance(instance)
+                    if instance in self.started:
+                        self.started.remove(instance)
+                    del self.module_map[plugin_id]
+                    instance.destroy()
         finally:
             self.lock.release()
             

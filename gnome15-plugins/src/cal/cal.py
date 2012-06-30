@@ -31,6 +31,7 @@ import time
 import os
 import gobject
 import calendar
+import traceback
 
 # Logging
 import logging
@@ -262,7 +263,6 @@ class G15Cal():
         
         # Backend
         self._account_manager = g15accounts.G15AccountManager(CONFIG_PATH, CONFIG_ITEM_NAME)
-        self._account_manager.add_change_listener(self._accounts_changed)
         
         # Calendar
         self._calendar = Calendar()
@@ -280,9 +280,18 @@ class G15Cal():
         self._page.set_title(_("Calendar"))
         self._page.set_theme(self._theme)
         self._page.focused_component = self._calendar
-        self._screen.key_handler.action_listeners.append(self)
         self._calendar.set_focused(True)
-        gobject.idle_add(self._first_load)
+        
+        # List for account changes        
+        self._account_manager.add_change_listener(self._accounts_changed)
+        self._screen.key_handler.action_listeners.append(self)
+        
+        # Run first load in thread
+        self._page.add_child(self._menu)
+        self._page.add_child(self._calendar)
+        self._page.add_child(g15theme.MenuScrollbar("viewScrollbar", self._menu))
+        self._screen.add_page(self._page)
+        g15util.schedule("CalendarFirstLoad", 0, self._redraw)
         
     def deactivate(self):
         self._account_manager.remove_change_listener(self._accounts_changed)
@@ -338,14 +347,6 @@ class G15Cal():
         else:            
             g15screen.run_on_redraw(self._rebuild_components, self._calendar_date)
         
-    def _first_load(self):
-        self._load_month_events(datetime.datetime.now())
-        self._page.add_child(self._menu)
-        self._page.add_child(self._calendar)
-        self._page.add_child(g15theme.MenuScrollbar("viewScrollbar", self._menu))
-        self._screen.add_page(self._page)
-        self._redraw()
-    
     def _get_calendar_date(self):
         now = datetime.datetime.now()
         return self._calendar_date if self._calendar_date is not None else now
@@ -397,16 +398,23 @@ class G15Cal():
             
         # Get all the events for this month
         for acc in self._account_manager.accounts:
-            backend = get_backend(acc.type)
-            if backend is None:
-                logger.warn("Could not find a calendar backend for %s" % acc.name)
-            else:
-                backend_events = backend.create_backend(acc, self._account_manager).get_events(now)
-                if backend_events is None:
-                    logger.warning("Calendar returned no events, skipping")
+            try:
+                backend = get_backend(acc.type)
+                if backend is None:
+                    logger.warn("Could not find a calendar backend for %s" % acc.name)
                 else:
-                    self._event_days = dict(self._event_days.items() + \
-                                            backend_events.items())
+                    backend_events = backend.create_backend(acc, self._account_manager).get_events(now)
+                    if backend_events is None:
+                        logger.warning("Calendar returned no events, skipping")
+                    else:
+                        self._event_days = dict(self._event_days.items() + \
+                                                backend_events.items())
+            except Exception as e:
+                if logger.level == logger.debug:
+                    logger.warn("Failed to load events for account %s.")
+                    traceback.print_exc()   
+                else:
+                    logger.warn("Failed to load events for account %s. %s" % (acc.name, e))
                     
         g15screen.run_on_redraw(self._rebuild_components, now)
         self._page.mark_dirty()
@@ -456,14 +464,14 @@ class G15Cal():
     def _redraw(self):
         t = time.time()
         if t > self._loaded + REFRESH_INTERVAL:
-            self._loaded = t                        
-            gobject.idle_add(self._redraw_now)
+            self._loaded = t    
+            self._reload_events_now()
         else:
             self._page.mark_dirty()
             self._screen.redraw(self._page)
             self._schedule_redraw()
             
-    def _redraw_now(self):
+    def _reload_events_now(self):
         self._load_month_events(self._get_calendar_date())
         self._screen.redraw(self._page)
         self._schedule_redraw()

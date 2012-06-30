@@ -28,6 +28,7 @@ _ = g15locale.get_translation("cal-evolution", modfile = __file__).ugettext
 import cal
 import gtk
 import os
+from threading import Lock
  
 """
 Plugin definition
@@ -83,19 +84,32 @@ class EvolutionBackend(cal.CalendarBackend):
     
     def __init__(self):
         cal.CalendarBackend.__init__(self)
+        self._lock = Lock()
         
     def get_events(self, now):
+        # Has to run in gobject thread
+        if g15util.is_gobject_thread():
+            return self._do_get_events(now)            
+        else:
+            self._lock.acquire()
+            gobject.idle_add(self._do_get_events, now, True)
+            self._lock.acquire()
+            self._lock.release()
         
-        import evolution.ecal
-        import vobject
-        
+    def _do_get_events(self, now, release_lock = False):
         event_days = {}
-        
-        # Get all the events for this month
-        for i in evolution.ecal.list_calendars():
-            ecal = evolution.ecal.open_calendar_source(i[1], evolution.ecal.CAL_SOURCE_TYPE_EVENT)
-            for i in ecal.get_all_objects():
-                parsed_event = vobject.readOne(i.get_as_string())
-                self.check_and_add(EvolutionEvent(parsed_event), now, event_days)
+        try:
+            import evolution.ecal
+            import vobject
+            
+            # Get all the events for this month
+            for i in evolution.ecal.list_calendars():
+                ecal = evolution.ecal.open_calendar_source(i[1], evolution.ecal.CAL_SOURCE_TYPE_EVENT)
+                for i in ecal.get_all_objects():
+                    parsed_event = vobject.readOne(i.get_as_string())
+                    self.check_and_add(EvolutionEvent(parsed_event), now, event_days)
+        finally:
+            if release_lock:
+                self._lock.release()
                         
         return event_days
