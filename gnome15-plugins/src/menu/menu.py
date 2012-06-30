@@ -86,6 +86,7 @@ class G15Menu(g15plugin.G15MenuPlugin):
     
     def __init__(self, gconf_client, gconf_key, screen):
         g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, [ "gnome-main-menu" ], id, name)
+        self._show_on_activate = False
     
     def activate(self):
         self.delete_timer = None  
