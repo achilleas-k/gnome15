@@ -76,7 +76,6 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     location.set_text(get_location(gconf_client, gconf_key))
     location.connect("changed", changed, location, gconf_key + "/location", gconf_client)
     
-    
     update = widget_tree.get_object("UpdateAdjustment")
     update.set_value(gconf_client.get_int(gconf_key + "/update"))
     update.connect("value-changed", value_changed, location, gconf_key + "/update", gconf_client)
@@ -84,6 +83,8 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     unit = widget_tree.get_object("UnitCombo")
     unit.set_active(gconf_client.get_int(gconf_key + "/units"))
     unit.connect("changed", unit_changed, location, gconf_key + "/units", gconf_client)
+    
+    g15util.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, widget_tree)
     
     dialog.run()
     dialog.hide()
@@ -112,6 +113,7 @@ class G15Weather():
         self._page = None
         self._change_timer = None
         self._timer = None
+        self._loc = None
         
     def activate(self):
         self._text = g15text.new_text(self._screen)
@@ -162,6 +164,10 @@ class G15Weather():
         self._timer = g15util.schedule("WeatherRefreshTimer", val * 60.0, self._refresh)
         
     def _loc_changed(self, client, connection_id, entry, args):
+        # Redraw so icon option is immediate
+        self._build_weather_properties()
+        self._page.redraw()
+        
         # Only actually go and refresh after the value hasn't changed for a few seconds
         self._cancel_change_timer()            
         self._cancel_timer()
@@ -169,83 +175,85 @@ class G15Weather():
         self._change_timer.name = "WeatherLocationChangeTimer"
         self._change_timer.setDaemon(True)
         self._change_timer.start()
-        
         # And now start the main timer
         self._refresh_after_interval()
     
     def _get_weather(self):
-        properties = {}
-        attributes = {}
         try :
-            loc = get_location(self._gconf_client, self._gconf_key)
-            self._weather = pywapi.get_weather_from_google(loc,  hl = ''  )
-            
-            properties["location"] = loc
-            current = self._weather['current_conditions']
-            
-            if len(current) == 0:
-                properties["message"] = _("No weather data for location:-\n%s") % loc
-            else:                                            
-                properties["message"] = ""
-                t_icon = self._translate_icon(current['icon'])
-                if t_icon != None:
-                    attributes["icon"] = g15util.load_surface_from_file(t_icon)
-                    properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])
-                else:
-                    logger.warning("No translated weather icon for %s" % current['icon'])
-                mono_thumb = self._get_mono_thumb_icon(current['icon'])        
-                if mono_thumb != None:
-                    attributes["mono_thumb_icon"] = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
-                properties["condition"] = current['condition']
-                
-                properties["temp_c"] = "%3.1f°C" % float(current['temp_c'])
-                properties["temp_f"] = "%3.1f°F" % float(current['temp_f'])
-                properties["temp_k"] = "%3.1f°K" % ( float(current['temp_c']) + 273.15 )
-                
-                units = self._gconf_client.get_int(self._gconf_key + "/units")
-                if units == CELSIUS:                 
-                    properties["temp"] = properties["temp_c"]              
-                    properties["temp_short"] = "%2.0f°" % float(current['temp_c'])
-                elif units == FARANHEIT:                
-                    properties["temp"] = properties["temp_f"]              
-                    properties["temp_short"] = "%2.0f°" % float(current['temp_f'])
-                else:                
-                    properties["temp"] = properties["temp_k"]
-                    properties["temp_short"] = "%2.0f°" % ( float(current['temp_c']) + 273.15 )
-                    
-                y = 1
-                for forecast in self._weather['forecasts']:        
-                    properties["condition" + str(y)] = forecast['condition']
-                    lo_f = float(forecast['low'])
-                    lo_c = ( ( lo_f - 32 ) / 9 ) * 5
-                    lo_k = lo_c + 273.15
-                    hi_f = float(forecast['high'])
-                    hi_c = ( ( lo_f - 32 ) / 9 ) * 5
-                    hi_k = lo_c + 273.15
-                    
-                    if units == CELSIUS:                 
-                        properties["hi" + str(y)] = "%3.0f°C" % hi_c
-                        properties["lo" + str(y)] = "%3.0f°C" % lo_c
-                    elif units == FARANHEIT:                         
-                        properties["hi" + str(y)] = "%3.0f°F" % hi_f
-                        properties["lo" + str(y)] = "%3.0f°F" % lo_f
-                    else:                                  
-                        properties["hi" + str(y)] = "%3.0f°K" % hi_k
-                        properties["lo" + str(y)] = "%3.0f°K" % lo_k
-
-                    properties["day" + str(y)] = forecast['day_of_week']
-                    properties["day_letter" + str(y)] = forecast['day_of_week'][:1]
-                    properties["icon" + str(y)] = self._translate_icon(forecast['icon'])
-                    y += 1
-            
-            self._page.theme_properties = properties
-            self._page.theme_attributes = attributes
+            self._loc = get_location(self._gconf_client, self._gconf_key)
+            self._weather = pywapi.get_weather_from_google(self._loc,  hl = ''  )
+            self._build_weather_properties()
         except Exception as e:
             print e
             self._weather = None
             if self._page:
                 self._page.theme_properties = {}
                 self._page.theme_attributes = {}
+        
+    def _build_weather_properties(self):
+        properties = {}
+        attributes = {}
+            
+        properties["location"] = self._loc
+        current = self._weather['current_conditions']
+        
+        if len(current) == 0:
+            properties["message"] = _("No weather data for location:-\n%s") % self._loc
+        else:                                            
+            properties["message"] = ""
+            t_icon = self._translate_icon(current['icon'])
+            if t_icon != None:
+                attributes["icon"] = g15util.load_surface_from_file(t_icon)
+                properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])
+            else:
+                logger.warning("No translated weather icon for %s" % current['icon'])
+            mono_thumb = self._get_mono_thumb_icon(current['icon'])        
+            if mono_thumb != None:
+                attributes["mono_thumb_icon"] = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
+            properties["condition"] = current['condition']
+            
+            properties["temp_c"] = "%3.1f°C" % float(current['temp_c'])
+            properties["temp_f"] = "%3.1f°F" % float(current['temp_f'])
+            properties["temp_k"] = "%3.1f°K" % ( float(current['temp_c']) + 273.15 )
+            
+            units = self._gconf_client.get_int(self._gconf_key + "/units")
+            if units == CELSIUS:                 
+                properties["temp"] = properties["temp_c"]              
+                properties["temp_short"] = "%2.0f°" % float(current['temp_c'])
+            elif units == FARANHEIT:                
+                properties["temp"] = properties["temp_f"]              
+                properties["temp_short"] = "%2.0f°" % float(current['temp_f'])
+            else:                
+                properties["temp"] = properties["temp_k"]
+                properties["temp_short"] = "%2.0f°" % ( float(current['temp_c']) + 273.15 )
+                
+            y = 1
+            for forecast in self._weather['forecasts']:        
+                properties["condition" + str(y)] = forecast['condition']
+                lo_f = float(forecast['low'])
+                lo_c = ( ( lo_f - 32 ) / 9 ) * 5
+                lo_k = lo_c + 273.15
+                hi_f = float(forecast['high'])
+                hi_c = ( ( lo_f - 32 ) / 9 ) * 5
+                hi_k = lo_c + 273.15
+                
+                if units == CELSIUS:                 
+                    properties["hi" + str(y)] = "%3.0f°C" % hi_c
+                    properties["lo" + str(y)] = "%3.0f°C" % lo_c
+                elif units == FARANHEIT:                         
+                    properties["hi" + str(y)] = "%3.0f°F" % hi_f
+                    properties["lo" + str(y)] = "%3.0f°F" % lo_f
+                else:                                  
+                    properties["hi" + str(y)] = "%3.0f°K" % hi_k
+                    properties["lo" + str(y)] = "%3.0f°K" % lo_k
+
+                properties["day" + str(y)] = forecast['day_of_week']
+                properties["day_letter" + str(y)] = forecast['day_of_week'][:1]
+                properties["icon" + str(y)] = self._translate_icon(forecast['icon'])
+                y += 1
+        
+        self._page.theme_properties = properties
+        self._page.theme_attributes = attributes
         
     def _get_mono_thumb_icon(self, icon):
         if icon == None or icon == "":
@@ -294,30 +302,30 @@ class G15Weather():
             return None
         else:
             base_icon= self._get_base_icon(icon)
-            
-            if base_icon in [ "chanceofrain", "scatteredshowers" ]:
-                theme_icon = "weather-showers-scattered"
-            elif base_icon in [ "sunny", "haze" ]: 
-                theme_icon = "weather-clear"
-            elif base_icon == "mostlysunny":
-                theme_icon = "weather-few-clouds"
-            elif base_icon == "partlycloudy":
-                theme_icon = "weather-clouds"
-            elif base_icon in [ "mostlycloudy", "cloudy" ]:
-                theme_icon = "weather-overcast"
-            elif base_icon == "rain":
-                theme_icon = "weather-showers"
-            elif base_icon in [ "mist", "fog" ]:
-                theme_icon = "weather-fog"
-            elif base_icon in [ "chanceofsnow", "sleet", "flurries"]:
-                theme_icon = "weather-snow"
-            elif base_icon in [ "storm", "chanceofstorm" ]:
-                # TODO is this too extreme?
-                theme_icon = "weather-severe-alert"
-            elif base_icon in [ "thunderstorm", "chanceoftstorm" ]:
-                # TODO is this right?
-                theme_icon = "weather-storm"
-            
+            if g15util.get_bool_or_default(self._gconf_client, "%s/use_theme_icons" % self._gconf_key, True):
+                if base_icon in [ "chanceofrain", "scatteredshowers" ]:
+                    theme_icon = "weather-showers-scattered"
+                elif base_icon in [ "sunny", "haze" ]: 
+                    theme_icon = "weather-clear"
+                elif base_icon == "mostlysunny":
+                    theme_icon = "weather-few-clouds"
+                elif base_icon == "partlycloudy":
+                    theme_icon = "weather-clouds"
+                elif base_icon in [ "mostlycloudy", "cloudy" ]:
+                    theme_icon = "weather-overcast"
+                elif base_icon == "rain":
+                    theme_icon = "weather-showers"
+                elif base_icon in [ "mist", "fog" ]:
+                    theme_icon = "weather-fog"
+                elif base_icon in [ "chanceofsnow", "sleet", "flurries"]:
+                    theme_icon = "weather-snow"
+                elif base_icon in [ "storm", "chanceofstorm" ]:
+                    # TODO is this too extreme?
+                    theme_icon = "weather-severe-alert"
+                elif base_icon in [ "thunderstorm", "chanceoftstorm" ]:
+                    # TODO is this right?
+                    theme_icon = "weather-storm"
+                
         now = datetime.datetime.now()
         # TODO dusk / dawn based on locale / time of year - probably hard? 
         if theme_icon != None and ( now.hour > 18 or now.hour < 4):
