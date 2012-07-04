@@ -1680,13 +1680,13 @@ class G15Theme():
                self.render.properties.values() != properties.values() or self.render.attributes.values() != attributes.values():
                 self.dirty = True
         
-        self.text.set_canvas(canvas)
-        
         if self.render == None or self.dirty:
             self.render_lock.acquire()
             
             if self.document is None:
                 raise Exception("No document available! Paint called before component finished initialising")
+            
+            self.text.set_canvas(canvas)
             
             try:
                 document = deepcopy(self.document)

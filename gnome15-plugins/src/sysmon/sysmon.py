@@ -169,7 +169,7 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         
         g15plugin.G15RefreshingPlugin.activate(self)
         self._set_panel()
-        self.watch(None, self._config_changed)
+        self.watch(["show_cpu_on_panel","theme"], self._config_changed)
         self.screen.key_handler.action_listeners.append(self)
         
         # Start refreshing
@@ -192,7 +192,7 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
                     idx = 0                
                 self.gconf_client.set_string(self.gconf_key + "/cpu", self.cpu_data[idx].name)
                 self.selected_cpu = self.cpu_data[idx]
-                self._reschedule_refresh()
+                self.do_refresh()
                 return True
             elif binding.action == g15driver.NEXT_SELECTION:
                 self.net_no += 1
@@ -200,7 +200,7 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
                     self.net_no = 0
                     
                 self.gconf_client.set_string(self.gconf_key + "/net", self.net_list[self.net_no])
-                self._reschedule_refresh()
+                self.do_refresh()
                 return True
         
     def refresh(self):

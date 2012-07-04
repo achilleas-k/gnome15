@@ -72,6 +72,10 @@ class G15Plugin():
         key            - sub-key (or None to monitor everything)
         callback       - function to call on change
         """
+        if isinstance(key, list):
+            for k in key:
+                self.watch(k, callback)
+            return
         k = "%s/%s" % (self.gconf_key, key) if key is not None else self.gconf_key
         self.__notify_handlers.append(self.gconf_client.notify_add(k, callback))
         

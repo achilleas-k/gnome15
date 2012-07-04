@@ -35,6 +35,7 @@ import g15util
 import g15driver
 import g15actions
 import g15uinput
+import g15screen
 
 import logging
 logger = logging.getLogger("keyboard")
@@ -232,7 +233,6 @@ class G15KeyHandler():
             """
             page = self.__screen.get_visible_page()
             if page:
-                page.mark_dirty()
                 page.redraw()
             
     def _handle_actions(self):
@@ -634,6 +634,9 @@ class G15KeyHandler():
         return False
     
     def _action_performed(self, binding):
+        g15screen.run_on_redraw(self._do_action_performed, binding)
+    
+    def _do_action_performed(self, binding):
         logger.info("Invoking action '%s'" % binding.action)
         for l in self.action_listeners:  
             if l.action_performed(binding):
