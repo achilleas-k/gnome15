@@ -297,7 +297,7 @@ const DeviceItem = new Lang.Class({
 		        this._gnome15Button.addPage(pages[key]);
 			}
 			this._gnome15Button._screen.IsCyclingEnabledRemote(Lang.bind(this, function(cyclingEnabled) {
-				this._gnome15Button._cyclingEnabled = cyclingEnabled;
+				this._gnome15Button.setCyclingEnabled(cyclingEnabled);
 				this._buttonSignals.push(this._gnome15Button._screen.connect("PageCreated", Lang.bind(this, function(src, pagePath, title) {
 					this._gnome15Button.addPage(pagePath);
 				})));
