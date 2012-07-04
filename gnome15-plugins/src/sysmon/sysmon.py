@@ -64,7 +64,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/show_cpu_on_panel", "ShowCPUUsageOnPanel", True, widget_tree)
     dialog.run()
     dialog.hide()
-        
+    
 class CPU():
     
     def __init__(self, number):
