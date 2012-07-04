@@ -65,6 +65,73 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     dialog.run()
     dialog.hide()
     
+class Net():
+    
+    def __init__(self, net_no, name):
+        self.net_no = net_no
+        self.name = name 
+        self.recv_bps = 0.0
+        self.send_bps = 0.0
+        self.last_net_list = None
+        self.max_send = 0.0001  
+        self.max_recv = 0.0001
+        self.send_history = [0] * GRAPH_SIZE
+        self.recv_history =  [0] * GRAPH_SIZE
+        self.last_net_list = None
+        self.last_time = 0
+        
+    def new_data(self, this_net_list):
+        now = time.time() 
+            
+        '''
+        Net
+        '''
+     
+        self.recv_bps = 0.0
+        self.send_bps = 0.0
+
+        if self.last_net_list != None:
+            time_taken = now - self.last_time        
+            if self.net_no == 0:
+                this_total = self._get_net_total(this_net_list)
+                last_total = self._get_net_total(self.last_net_list)            
+            else:
+                this_total = self._get_net(this_net_list[self.name])
+                last_total = self._get_net(self.last_net_list[self.name])
+                    
+            # How many bps
+            self.recv_bps = (this_total[0] - last_total[0]) / time_taken
+            self.send_bps = (this_total[1] - last_total[1]) / time_taken
+            
+        # Adjust the maximums if necessary
+        if self.recv_bps > self.max_recv:
+            self.max_recv = self.recv_bps
+        if self.send_bps > self.max_send:
+            self.max_send = self.send_bps
+                        
+        # History
+        self.send_history.append(self.recv_bps)
+        while len(self.send_history) > GRAPH_SIZE:
+            del self.send_history[0]
+        self.recv_history.append(self.send_bps)
+        while len(self.recv_history) > GRAPH_SIZE:
+            del self.recv_history[0]
+            
+        self.last_net_list = this_net_list 
+        self.last_time = now
+    
+    def _get_net(self, card):
+        totals = (card[0], card[1])
+        return totals  
+
+    def _get_net_total(self, net_list):
+        totals = (0, 0)
+        for l in net_list:
+            card = net_list[l]
+            totals = (totals[0] + card[0], totals[1])
+            totals = (totals[0], totals[1] + card[1])
+        return totals       
+    
 class CPU():
     
     def __init__(self, number):
@@ -129,9 +196,9 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         self.last_time_list = None
         self.last_times_list = []
         self.last_time = 0
-        self.selected_cpu = None
         
         # CPU
+        self.selected_cpu = None
         self.cpu_no = 0  
         self.cpu_data = []  
         selected_cpu_name = self.gconf_client.get_string(self.gconf_key + "/cpu")
@@ -144,19 +211,19 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
             self.selected_cpu = self.cpu_data[0]
 
         # Net
+        self.selected_net = None
         _, self.net_list = self._get_net_stats()
-        net = self.gconf_client.get_string(self.gconf_key + "/net")
-        if net and (net in self.net_list):
-            self.net_no = self.net_list.index(net)
-        else:
-            self.net_no = 0
-        self.recv_bps = 0.0
-        self.send_bps = 0.0
-        self.last_net_list = None
-        self.max_send = 1   
-        self.max_recv = 1
-        self.send_history = [0] * GRAPH_SIZE
-        self.recv_history =  [0] * GRAPH_SIZE 
+        net_name = self.gconf_client.get_string(self.gconf_key + "/net")
+        self.net_data = []
+        for idx, n in enumerate(self.net_list):
+            net = Net(idx, n)
+            self.net_data.append(net)
+            if net.name == net_name:
+                self.selected_net = net
+            
+        if self.selected_net is None and len(self.net_data) > 0:
+            self.selected_net = self.net_data[0] 
+            
         
         # Memory
         self.max_total_mem = 0
@@ -195,20 +262,17 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
                 self.do_refresh()
                 return True
             elif binding.action == g15driver.NEXT_SELECTION:
-                self.net_no += 1
-                if self.net_no == len(self.net_list):
-                    self.net_no = 0
-                    
-                self.gconf_client.set_string(self.gconf_key + "/net", self.net_list[self.net_no])
-                self.do_refresh()
-                return True
+                if self.selected_net is not None:
+                    idx = self.net_data.index(self.selected_net)
+                    idx += 1
+                    if idx >= len(self.net_data):
+                        idx = 0                
+                    self.gconf_client.set_string(self.gconf_key + "/net", self.net_data[idx].name)
+                    self.selected_net = self.net_data[idx]
+                    self.do_refresh()
+                    return True
         
     def refresh(self):
-        
-        # Current net status   
-        this_net_list, self.net_list = self._get_net_stats()
-        if self.net_no > ( len (self.net_list) - 1):
-            self.net_no = 0
             
         # Memory
         mem = self._get_mem_info()
@@ -223,37 +287,11 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         '''
         Net
         '''
-     
-        self.recv_bps = 0.0
-        self.send_bps = 0.0
-
-        if self.last_net_list != None:
-            time_taken = now - self.last_time        
-            if self.net_no == 0:
-                this_total = self._get_net_total(this_net_list)
-                last_total = self._get_net_total(self.last_net_list)            
-            else:
-                this_total = self._get_net(this_net_list[self.net_list[self.net_no]])
-                last_total = self._get_net(self.last_net_list[self.net_list[self.net_no]])
-                    
-            # How many bps
-            self.recv_bps = (this_total[0] - last_total[0]) / time_taken
-            self.send_bps = (this_total[1] - last_total[1]) / time_taken
-            
-        # Adjust the maximums if necessary
-        if self.recv_bps > self.max_recv:
-            self.max_recv = self.recv_bps
-        if self.send_bps > self.max_send:
-            self.max_send = self.send_bps
-                        
-        # History
-        self.send_history.append(self.recv_bps)
-        while len(self.send_history) > GRAPH_SIZE:
-            del self.send_history[0]
-        self.recv_history.append(self.send_bps)
-        while len(self.recv_history) > GRAPH_SIZE:
-            del self.recv_history[0]
-        self.last_net_list = this_net_list
+        
+        # Current net status   
+        this_net_list, self.net_list = self._get_net_stats()
+        for n in self.net_data:
+            n.new_data(this_net_list)
         
         '''
         Memory
@@ -320,10 +358,17 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         properties["mem_cached_pc"] = int(self.cached * 100.0 / self.total)
         properties["mem_noncached_pc"] = int(self.noncached * 100.0 / self.total)
         
-        properties["net_recv_pc"] = int(self.recv_bps * 100.0 / self.max_recv)
-        properties["net_send_pc"] = int(self.send_bps * 100.0 / self.max_send)
-        properties["net_recv_mbps"] = "%.2f" % (self.recv_bps / 1024 / 1024)
-        properties["net_send_mbps"] = "%.2f" % (self.send_bps / 1024 / 1024)
+        if self.selected_net is not None:
+            properties["net_recv_pc"] = int(self.selected_net.recv_bps * 100.0 / self.selected_net.max_recv)
+            properties["net_send_pc"] = int(self.selected_net.send_bps * 100.0 / self.selected_net.max_send)
+            properties["net_recv_mbps"] = "%.2f" % (self.selected_net.recv_bps / 1024 / 1024)
+            properties["net_send_mbps"] = "%.2f" % (self.selected_net.send_bps / 1024 / 1024)
+            properties["net_no"] = self.selected_net.name.upper()
+            idx = self.net_data.index(self.selected_net)
+            properties["next_net_no"] =  self.net_list[idx + 1].upper() if idx < ( len(self.net_list) - 1) else self.net_list[0].upper()
+        else:
+            for c in ["net_recv_pc","net_send_pc","net_recv_mbps","net_send_mbps"]:
+                properties[c] = ""
         
         # TODO we should ship some more appropriate default icons
         properties["net_icon"] = self._net_icon
@@ -339,8 +384,6 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         idx = self.cpu_data.index(self.selected_cpu)
         properties["next_cpu_no"] =  self.cpu_data[idx + 1].name.upper() if idx < ( len(self.cpu_data) - 1) else self.cpu_data[0].name.upper()
         
-        properties["net_no"] = self.net_list[self.net_no].upper()
-        properties["next_net_no"] =  self.net_list[self.net_no + 1].upper() if self.net_no < ( len(self.net_list) - 1) else self.net_list[0].upper()
         
         return properties
     
@@ -413,18 +456,6 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         else:
             cpu_times = gtop.cpu().cpus[cpu.number]
         return [cpu_times.user, cpu_times.nice, cpu_times.sys, cpu_times.idle]
-
-    def _get_net_total(self, net_list):
-        totals = (0, 0)
-        for l in net_list:
-            card = net_list[l]
-            totals = (totals[0] + card[0], totals[1])
-            totals = (totals[0], totals[1] + card[1])
-        return totals
-    
-    def _get_net(self, card):
-        totals = (card[0], card[1])
-        return totals
     
     def _get_mem_info(self):
         return gtop.mem()

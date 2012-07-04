@@ -87,7 +87,7 @@ class G15NetGraph(G15Graph):
         
     def create_plot(self, graph_surface):
         y_labels = []
-        max_y = max(max(self.plugin.max_send, self.plugin.max_recv), 102400)
+        max_y = max(max(self.plugin.selected_net.max_send, self.plugin.selected_net.max_recv), 102400)
         for x in range(0, int(max_y), int(max_y / 4)):
             y_labels.append("%-3.2f" % ( float(x) / 102400.0 ) )
         series_color, fill_color = self.get_colors()            
@@ -97,7 +97,7 @@ class G15NetGraph(G15Graph):
         else:
             alt_series_color = g15util.get_alt_color(series_color)
             alt_fill_color = g15util.get_alt_color(fill_color)
-        return cairoplot.AreaPlot( graph_surface, [ self.plugin.send_history, self.plugin.recv_history ], 
+        return cairoplot.AreaPlot( graph_surface, [ self.plugin.selected_net.send_history, self.plugin.selected_net.recv_history ], 
                                       self.view_bounds[2], 
                                       self.view_bounds[3], 
                                       background = None,
