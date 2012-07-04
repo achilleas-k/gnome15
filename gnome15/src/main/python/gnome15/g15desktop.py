@@ -492,6 +492,21 @@ def get_desktop():
         if i in evars:
             return "lxde"
         
+def is_shell_extension_installed(extension):
+    """
+    Get whether a GNOME Shell extension is installed.
+    
+    Keyword arguments:
+    extension        --    extension name
+    """
+    
+    # 
+    # TODO - Bit crap, how can we be sure this is the prefix?
+    # 
+    prefix = "/usr/share"
+    return os.path.exists("%s/gnome-shell/extensions/%s" % (prefix, extension)) or \
+        os.path.exists(os.path.expanduser("~/.local/share/gnome-shell/extensions/%s" % extension)) 
+        
 def is_gnome_shell_extension_enabled(extension):
     """
     Get whether a GNOME Shell extension is enabled. This uses the

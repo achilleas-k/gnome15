@@ -560,7 +560,11 @@ function enable() {
 	                       _onDesktopServiceAppeared,
 	                       _onDesktopServiceVanished);
 
-	gnome15System.GetDevicesRemote(_refreshDeviceList);
+	gnome15System.IsStartedRemote(Lang.bind(this, function(started) {
+		if(started) {
+			gnome15System.GetDevicesRemote(_refreshDeviceList);	
+		}
+	}));
 }
 
 function disable() {

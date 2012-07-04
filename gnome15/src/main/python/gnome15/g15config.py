@@ -135,11 +135,12 @@ class G15GlobalConfig:
         global_plugin_enabled_renderer.connect("toggled", self._toggle_plugin)
         
         # Service options
-        gnome_shell = g15desktop.get_desktop() == "gnome-shell"        
+        gnome_shell = g15desktop.get_desktop() == "gnome-shell"
+        shell_extension_installed = g15desktop.is_shell_extension_installed("gnome15-shell-extension@gnome15.org")      
         only_show_indicator_on_error.set_visible(g15desktop.is_desktop_application_installed("g15-indicator") and not gnome_shell)
         start_indicator_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-indicator") and not gnome_shell)
         start_system_tray_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-systemtray") and not gnome_shell)
-        enable_gnome_shell_extension.set_visible(gnome_shell)
+        enable_gnome_shell_extension.set_visible(gnome_shell and shell_extension_installed)
         start_desktop_service_on_login.set_active(g15desktop.is_autostart_application("gnome15"))
         start_indicator_on_login.set_active(g15desktop.is_autostart_application("g15-indicator"))
         start_system_tray_on_login.set_active(g15desktop.is_autostart_application("g15-systemtray"))
