@@ -145,17 +145,21 @@ class JobScheduler():
             return traceback.extract_stack()[:-5]
     
     def queue(self, queue_name, name, interval, function, *args):
-        
         if not hasattr(function, "__call__"):
             raise Exception("Not a function")
         if logger.isEnabledFor(logging.DEBUG):
             logging.debug("Queueing %s on %s for execution in %f" % ( name, queue_name, interval ) )
         if not queue_name in self.queues:
             self.queues[queue_name] = JobQueue(name=queue_name)
-        timer = GTimer(self, self.queues[queue_name], name, interval, function, self._get_stack(), *args)
-        if logger.isEnabledFor(logging.DEBUG):
-            logging.debug("Queued %s" % name)
-        return timer
+        
+        if interval == 0:
+            # Optimisation, if this is un-timed, avoid putting on main loop
+            self.queues[queue_name].run(self._get_stack(), function, *args)
+        else:
+            timer = GTimer(self, self.queues[queue_name], name, interval, function, self._get_stack(), *args)
+            if logger.isEnabledFor(logging.DEBUG):
+                logging.debug("Queued %s" % name)
+            return timer
 
 
 class JobQueue():

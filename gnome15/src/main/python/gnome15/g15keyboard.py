@@ -137,7 +137,7 @@ class G15KeyHandler():
         keys            --    list of keys to process
         state_id           -- key state ID (g15driver.KEY_STATE_UP, _DOWN and _HELD)
         """
-        g15util.queue(self.queue_name, "KeyReceived", 0, self._do_key_received, keys, state_id)
+        g15util.execute(self.queue_name, "KeyReceived", self._do_key_received, keys, state_id)
             
     def memory_bank_changed(self, bank):
         self._reload_active_macros()
