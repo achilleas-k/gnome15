@@ -109,5 +109,9 @@ if __name__ == "__main__":
     except:
         pass
     
+    if g15desktop.get_desktop() == "gnome-shell":
+        sys.stderr.write("Indicator is not supported in GNOME Shell, use the GNOME Shell extension instead")
+        sys.exit(1)
+    
     G15Indicator().start_service()   
     gtk.main()

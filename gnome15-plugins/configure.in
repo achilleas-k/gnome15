@@ -260,22 +260,6 @@ AM_CONDITIONAL([ENABLE_WEATHER_PLUGIN], [test x$weather_plugin = xyes])
 
 dnl Plugins that have additional dependencies
 
-dnl Unity Lens Plugin (Ubuntu only)
-AX_PYTHON_MODULE(gi.repository.Unity, [])
-AS_IF([test "x${HAVE_PYMOD_GI_REPOSITORY_UNITY}" = "xyes"],
-	  [have_unity=yes],
-	  [have_unity=no])
-AC_ARG_ENABLE([lens],
-	[AS_HELP_STRING([--enable-lens],
-		[Enable Unity Lens plugin.])],
-	[case "${enableval}" in
- 				yes)	lens_plugin=yes ;;
- 				no)		lens_plugin=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-lens]) ;;
- 	esac],
-	[lens_plugin=no])
-AM_CONDITIONAL([ENABLE_LENS_PLUGIN], [test x$lens_plugin = xyes])
-
 dnl Indicator Me Plugin (enable by default when appindicator module is installed, suggesting Ubuntu)
 AX_PYTHON_MODULE(appindicator, [])
 AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
@@ -291,18 +275,6 @@ AC_ARG_ENABLE([indicator-me],
  	esac],
 	[indicator_me_plugin=${have_indicator}])
 AM_CONDITIONAL([ENABLE_INDICATOR_ME_PLUGIN], [test x$indicator_me_plugin = xyes])
-
-dnl Unity Lens (enable by default when appindicator module is installed, suggesting Ubuntu)
-AC_ARG_ENABLE([lens],
-	[AS_HELP_STRING([--enable-lens],
-		[Enable Unity Lens.])],
-	[case "${enableval}" in
- 				yes)	lens_plugin=yes ;;
- 				no)		lens_plugin=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-lens]) ;;
- 	esac],
-	[lens_plugin=${have_indicator}])
-AM_CONDITIONAL([ENABLE_LENS_PLUGIN], [test x$lens_plugin = xyes])
 
 dnl Indicator Messages Plugin (enable by default when appindicator module is installed, suggesting Ubuntu)
 AC_ARG_ENABLE([indicator-messages],
@@ -573,7 +545,6 @@ src/panel/Makefile
 src/profiles/Makefile
 src/processes/Makefile
 src/im/Makefile
-src/lens/Makefile
 src/indicator-me/Makefile
 src/indicator-messages/Makefile
 src/lcdshot/Makefile
@@ -671,10 +642,6 @@ AS_IF([test "x$im_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("indicator-me                - ")
 AS_IF([test "x$indicator_me_plugin" = "xyes" ],
-     [AS_ECHO("Enabled")],
-     [AS_ECHO("Disabled")])
-AS_ECHO_N("lens                        - ")
-AS_IF([test "x$lens_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("indicator-messages          - ")

@@ -25,6 +25,7 @@ import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
 import gnome15.g15profile as g15profile
+import gnome15.g15desktop as g15desktop
 import cairo
 import gtk
 import os
@@ -70,7 +71,7 @@ class G15BackgroundPreferences():
         g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/brightness", "BrightnessAdjustment", 50, widget_tree)
         
         # Currently, only GNOME is supported for getting the desktop background
-        if not "gnome" == g15util.get_desktop():
+        if g15desktop.get_desktop() in [ "gnome", "gnome-shell" ]:
             widget_tree.get_object("UseFile").set_active(True)
         
         # The file chooser
@@ -162,7 +163,7 @@ class G15Background():
         self.gnome_dconf_settings = None 
         
         # Monitor desktop specific configuration for wallpaper changes
-        if "gnome" == g15util.get_desktop():
+        if g15desktop.get_desktop() in [ "gnome", "gnome-shell" ]:
             self.notify_handlers.append(self.gconf_client.notify_add("/desktop/gnome/background/picture_filename", self.config_changed))
             try:
                 from gi.repository import Gio
@@ -221,8 +222,8 @@ class G15Background():
         
         if self.bg_img == None and  bg_type == "desktop":
             # Get the current background the desktop is using if possible
-            desktop_env = g15util.get_desktop()
-            if "gnome" == desktop_env:
+            desktop_env = g15desktop.get_desktop()
+            if desktop_env in [ "gnome", "gnome-shell" ]:
                 if self.gnome_dconf_settings is not None:
                     self.bg_img = self.gnome_dconf_settings.get_string("picture-uri")
                 else:

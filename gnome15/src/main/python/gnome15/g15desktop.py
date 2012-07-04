@@ -33,6 +33,7 @@ import sys
 import pygtk
 pygtk.require('2.0')
 import gtk
+import gio
 import gconf
 import gobject
 import shutil
@@ -446,6 +447,88 @@ def set_autostart_application(application_name, enabled):
         desktop_entry.set("X-GNOME-Autostart-enabled", "false")
         desktop_entry.set("Hidden", "false")
         desktop_entry.write()
+
+def get_desktop():
+    '''
+    Utility function to get the name of the current desktop environment. The list
+    of detectable desktop environments is not complete, but hopefully this will
+    improve over time. Currently no attempt is made to determine the version of
+    the desktop in use.
+    
+    Will return :-
+    
+    gnome          GNOME Desktop
+    gnome-shell    GNOME Shell Desktop 
+    kde            KDE 
+    [None]         No known desktop  
+    '''
+    
+    evars = os.environ
+    
+    # GNOME Shell
+    if "DESKTOP_SESSION" in evars:
+        if evars["DESKTOP_SESSION"] == "gnome-shell":
+            return "gnome-shell"
+    
+    # XDG_CURRENT_DESKTOP
+    dt = { "LXDE" : "lxde", "GNOME" : "gnome"}
+    if "XDG_CURRENT_DESKTOP" in evars:
+        val = evars["XDG_CURRENT_DESKTOP"]
+        if val in dt:
+            return dt[val]
+    
+    # Environment variables that suggest the use of GNOME
+    for i in [ "GNOME_DESKTOP_SESSION_ID", "GNOME_KEYRING_CONTROL" ]:
+        if i in evars:
+            return "gnome"
+    
+    # Environment variables that suggest the use of KDE
+    for i in [ "KDE_FULL_SESSION", "KDE_SESSION_VERSION", "KDE_SESSION_UID" ]:
+        if i in evars:
+            return "kde"
+    
+    # Environment variables that suggest the use of LXDE
+    for i in [ "_LXSESSION_PID" ]:
+        if i in evars:
+            return "lxde"
+        
+def is_gnome_shell_extension_enabled(extension):
+    """
+    Get whether a GNOME Shell extension is enabled. This uses the
+    gsettings command. Python GSettings bindings (GObject introspected ones)
+    are not used, as well already use PyGTK and the two don't mix
+    
+    Keyword arguments:
+    extension        --    extension name
+    """
+    status, text = g15util.execute_for_output("gsettings get org.gnome.shell enabled-extensions")
+    if status == 0:
+        return extension in eval(text)
+        
+def set_gnome_shell_extension_enabled(extension, enabled):
+    """
+    Enable or disable a GNOME Shell extension is enabled. This uses the
+    gsettings command. Python GSettings bindings (GObject introspected ones)
+    are not used, as well already use PyGTK and the two don't mix
+    
+    Keyword arguments:
+    extension        --    extension name
+    enabled          --    enabled
+    """
+    status, text = g15util.execute_for_output("gsettings get org.gnome.shell enabled-extensions")
+    if status == 0:
+        extensions = eval(text)
+        contains = extension in extensions
+        if contains and not enabled:
+            extensions.remove(extension)
+        elif not contains and enabled:
+            extensions.append(extension)
+        s = ""
+        for c in extensions:
+            if len(s) >0:
+                s += ","
+            s += "'%s'" % c
+        status, text = g15util.execute_for_output("gsettings set org.gnome.shell enabled-extensions \"[%s]\"" % s)
     
 class G15AbstractService(Thread):
     

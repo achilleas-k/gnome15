@@ -134,6 +134,10 @@ if __name__ == "__main__":
     except:
         pass
     
+    if g15desktop.get_desktop() == "gnome-shell":
+        sys.stderr.write("System Tray is not supported in GNOME Shell, use the GNOME Shell extension instead")
+        sys.exit(1)
+    
     tray = G15SystemTray()
     tray.start_service()
     gtk.main()

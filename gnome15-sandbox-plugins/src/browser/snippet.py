@@ -20,17 +20,20 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
+import gnome15.g15theme as g15theme
+import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
+import gnome15.g15util as g15util
 import gnome15.g15gtk  as g15gtk
-import gnome15.g15plugin  as g15plugin
+import os
 import gtk
 import gobject
-import webkit
+import gtkhtml2
 
 # Plugin details - All of these must be provided
-id="webkitbrowser"
-name="Webkit Browser"
-description="Webkit based browser." 
+id="browser"
+name="Browser"
+description="Mozilla based browser." 
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright="Copyright (C)2010 Brett Smith"
 site="http://www.gnome15.org/"
@@ -40,61 +43,67 @@ supported_models = [ g15driver.MODEL_G19 ]
 def create(gconf_key, gconf_client, screen):
     return G15WebkitBrowser(gconf_client, gconf_key, screen)
 
-class G15WebkitBrowser(g15plugin.G15PagePlugin):
+class G15WebkitBrowser():
     
     def __init__(self, gconf_client, gconf_key, screen):
-        g15plugin.G15PagePlugin.__init__(self, gconf_client, gconf_key, screen, \
-            [ "browser", "gnome-web-browser", "web-browser", "www-browser", \
-             "redhat-web-browser", "internet-web-browser" ], id, name)
-        self.add_page_on_activate = False
+        self.screen = screen
+        self.gconf_client = gconf_client
+        self.gconf_key = gconf_key
     
-    def populate_page(self):
-        g15plugin.G15PagePlugin.populate_page(self)
+    def activate(self):
+        if self.screen.driver.get_model_name() != g15driver.MODEL_G19:
+            raise Exception("Webkit plugin only works on G19")
+        self.page = g15theme.G15Page(id, self.screen, theme_properties_callback = self._get_theme_properties, priority = g15screen.PRI_LOW, title = name, theme = g15theme.G15Theme(self),
+                                     originating_plugin = self)
         self.window = g15gtk.G15OffscreenWindow("offscreenWindow")
         self.page.add_child(self.window)
-        gobject.idle_add(self._create_browser)
-
-    def activate(self):
-        g15plugin.G15PagePlugin.activate(self)
-        self.screen.key_handler.action_listeners.append(self) 
+        gobject.idle_add(self._create_offscreen_window)
     
     def deactivate(self):
-        g15plugin.G15PagePlugin.deactivate(self)
-        self.screen.key_handler.action_listeners.remove(self)
+        if self.page != None:
+            self.screen.del_page(self.page)
+            self.page = None
         
-    def action_performed(self, binding):
-        if self.page is not None and self.page.is_visible(): 
-            if binding.action == g15driver.PREVIOUS_PAGE:
-                gobject.idle_add(self._scroll_up)
-                return True
-            elif binding.action == g15driver.NEXT_PAGE:
+    def destroy(self):
+        pass
+        
+    def handle_key(self, keys, state, post):
+        if not post and state == g15driver.KEY_STATE_UP: 
+            if g15driver.G_KEY_UP in keys:
+                gobject.idle_add(self._scroll_up) 
+            elif g15driver.G_KEY_DOWN in keys:
                 gobject.idle_add(self._scroll_down)
-                return True
         
     '''
     Private
     '''
     
-    def get_theme_properties(self):
-        return dict(g15plugin.G15PagePlugin.get_theme_properties(self).items() + {
-            "url" : "www.somewhere.com"
-        }.items())
+    def _get_theme_properties(self):
+        return {
+                      "url" : "www.somewhere.com",
+                      "icon" : g15util.get_icon_path("system-config-display")
+                      }
         
     def _scroll_up(self):
+        print "Scroll up"
         adj = self.scroller.get_vadjustment()
         adj.set_value(adj.get_value() - adj.get_page_increment())
+        print "Val is now", adj.get_value(), "page increment", adj.get_page_increment(), "upper", adj.get_upper()
         self.screen.redraw(self.page)
     
     def _scroll_down(self):
+        print "Scroll down"
         adj = self.scroller.get_vadjustment()
         adj.set_value(adj.get_value() + adj.get_page_increment())
+        print "Val is now", adj.get_value(), "page increment", adj.get_page_increment(), "upper", adj.get_upper()
         self.screen.redraw(self.page)
     
-    def _create_browser(self):
-        view = webkit.WebView()
+    def _create_offscreen_window(self):
+        self.view = gtkhtml2.View()
+        self.document = gtkhtml2.Document()
+        self.view.set_document(self.document)
         self.scroller = gtk.ScrolledWindow()
-        self.scroller.add(view)    
-        view.open("http://www.youtube.com")
+        self.scroller.add(self.view)        
         self.window.set_content(self.scroller)
         self.screen.add_page(self.page)
         self.screen.redraw(self.page)

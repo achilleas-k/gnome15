@@ -643,49 +643,6 @@ def pixbuf_to_surface(pixbuf, size = None):
     gdk_context.paint()
     gdk_context.scale(1 / scale, 1 / scale)
     return surface
-
-
-'''
-Desktop utilities
-'''
-
-def get_desktop():
-    '''
-    Utility function to get the name of the current desktop environment. The list
-    of detectable desktop environments is not complete, but hopefully this will
-    improve over time. Currently no attempt is made to determine the version of
-    the desktop in use.
-    
-    Will return :-
-    
-    gnome    GNOME Desktop
-    kde      KDE 
-    [None]   No known desktop  
-    '''
-    
-    vars = os.environ
-    
-    # XDG_CURRENT_DESKTOP
-    dt = { "LXDE" : "lxde", "GNOME" : "gnome"}
-    if "XDG_CURRENT_DESKTOP" in vars:
-        val = vars["XDG_CURRENT_DESKTOP"]
-        if val in dt:
-            return dt[val]
-    
-    # Environment variables that suggest the use of GNOME
-    for i in [ "GNOME_DESKTOP_SESSION_ID", "GNOME_KEYRING_CONTROL" ]:
-        if i in vars:
-            return "gnome"
-    
-    # Environment variables that suggest the use of KDE
-    for i in [ "KDE_FULL_SESSION", "KDE_SESSION_VERSION", "KDE_SESSION_UID" ]:
-        if i in vars:
-            return "kde"
-    
-    # Environment variables that suggest the use of LXDE
-    for i in [ "_LXSESSION_PID" ]:
-        if i in vars:
-            return "lxde"
      
     
 '''

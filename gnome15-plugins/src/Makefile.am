@@ -92,9 +92,6 @@ endif
 if ENABLE_TWEAK_PLUGIN
     MAYBE_TWEAK = tweak
 endif
-if ENABLE_LENS_PLUGIN
-    MAYBE_LENS = lens
-endif
 if ENABLE_TAILS_PLUGIN
     MAYBE_TAILS = tails
 endif
@@ -115,9 +112,9 @@ SUBDIRS = $(MAYBE_BACKGROUND) $(MAYBE_CAIRO_CLOCK) $(MAYBE_CLOCK) $(MAYBE_FX) $(
 	$(MAYBE_NOTIFY_LCD) $(MAYBE_IM) $(MAYBE_WEATHER) $(MAYBE_MPRIS) $(MAYBE_MENU) $(MAYBE_PANEL) $(MAYBE_MEDIAPLAYER) $(MAYBE_G15DAEMON_SERVER) \
 	$(MAYBE_STOPWATCH) $(MAYBE_SCREENSAVER) $(MAYBE_INDICATOR_ME) $(MAYBE_INDICATOR_MESSAGES) $(MAYBE_PROFILES) \
 	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_CAL) $(MAYBE_CAL_EVOLUTION) $(MAYBE_CAL_GOOGLE) $(MAYBE_LCDBIFF) $(MAYBE_SENSE) \
-	$(MAYBE_LCDSHOT) $(MAYBE_TWEAK) $(MAYBE_LENS) $(MAYBE_TAILS) $(MAYBE_DISPLAY) $(MAYBE_VOIP) $(MAYBE_VOIP_TEAMSPEAK3) \
+	$(MAYBE_LCDSHOT) $(MAYBE_TWEAK) $(MAYBE_TAILS) $(MAYBE_DISPLAY) $(MAYBE_VOIP) $(MAYBE_VOIP_TEAMSPEAK3) \
 	$(MAYBE_GOOGLE_ANALYTICS)
 	
 DIST_SUBDIRS = background cairo-clock clock fx macro-recorder macros mounts notify-lcd im weather mpris menu panel mediaplayer g15daemon-server stopwatch \
-	profiles sysmon volume rss processes screensaver cal cal-evolution cal-google lcdbiff indicator-me indicator-messages sense lcdshot tweak lens tails display \
+	profiles sysmon volume rss processes screensaver cal cal-evolution cal-google lcdbiff indicator-me indicator-messages sense lcdshot tweak tails display \
 	voip voip-teamspeak3 google-analytics

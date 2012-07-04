@@ -116,13 +116,15 @@ class G15PagePlugin(G15Plugin):
         self._title = title
         self.page = None
         self.thumb_icon = g15util.load_surface_from_file(self._icon_path)
+        self.add_page_on_activate = True
         
     def activate(self):
         G15Plugin.activate(self)
         self.page = self.create_page()
         self.populate_page()
-        self.screen.add_page(self.page)
-        self.screen.redraw(self.page)
+        if self.add_page_on_activate:
+            self.screen.add_page(self.page)
+            self.screen.redraw(self.page)
                
     def deactivate(self):
         if self.page is not None:
@@ -134,6 +136,7 @@ class G15PagePlugin(G15Plugin):
         return g15theme.G15Page(self.page_id, self.screen, 
                                      title = self._title, theme = self.create_theme(),
                                      thumbnail_painter = self._paint_thumbnail,
+                                     theme_properties_callback = self.get_theme_properties,
                                      painter = self._paint,
                                      originating_plugin = self)
         

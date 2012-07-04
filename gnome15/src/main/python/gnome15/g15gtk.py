@@ -26,6 +26,7 @@ import gobject
 import g15driver as g15driver
 import g15util as g15util
 from threading import Lock
+from threading import Semaphore
 import g15theme
 import g15screen
 import cairo
@@ -58,7 +59,7 @@ def create_cairo_font_face_for_file (filename, faceindex=0, loadoptions=0):
         # initialize freetype
         _ft_lib = ctypes.c_void_p ()
         if FT_Err_Ok != _freetype_so.FT_Init_FreeType (ctypes.byref (_ft_lib)):
-          raise "Error initialising FreeType library."
+            raise "Error initialising FreeType library."
 
         class PycairoContext(ctypes.Structure):
             _fields_ = [("PyObject_HEAD", ctypes.c_byte * object.__basicsize__),
@@ -93,8 +94,8 @@ def create_cairo_font_face_for_file (filename, faceindex=0, loadoptions=0):
 
 class G15OffscreenWindow(g15theme.Component):
     
-    def __init__(self, id):
-        g15theme.Component.__init__(self, id)
+    def __init__(self, component_id):
+        g15theme.Component.__init__(self, component_id)
         self.window = None
         self.content = None
         
@@ -115,7 +116,7 @@ class G15OffscreenWindow(g15theme.Component):
     def action_performed(self, binding):
         if self.is_visible():
             if binding.action == g15driver.NEXT_SELECTION:
-               gobject.idle_add(self.window.focus_next)
+                gobject.idle_add(self.window.focus_next)
             elif binding.action == g15driver.PREVIOUS_SELECTION:
                 gobject.idle_add(self.window.focus_previous)
             if binding.action == g15driver.NEXT_PAGE:
@@ -128,7 +129,7 @@ class G15OffscreenWindow(g15theme.Component):
     def paint(self, canvas):
         g15theme.Component.paint(self, canvas)
         if self.window is not None:
-            gobject.idle_add(self.window.paint, canvas)
+            self.window.paint(canvas)
             
         
     """
@@ -136,16 +137,14 @@ class G15OffscreenWindow(g15theme.Component):
     """
             
     def _do_set_content(self):
-        self.window.content.add(self.content)
-        self.window.show_all()
+        self.window.set_content(self.content)
         
     def _create_window(self):     
         screen = self.get_screen()   
         window = G15Window(screen, self.get_root(), self.view_bounds[0], self.view_bounds[1], \
                            self.view_bounds[2], self.view_bounds[3])
         if self.content is not None:
-            window.content.add(self.content)
-            window.show_all()
+            self.window.set_content(self.content)
         self.window = window
         screen.redraw(self.get_root())
         
@@ -154,6 +153,7 @@ class G15Window(gtk.OffscreenWindow):
     def __init__(self, screen, page, area_x, area_y, area_width, area_height):
         gtk.OffscreenWindow.__init__(self)
         self.pixbuf = None
+        self.scroller = None
         self.screen = screen
         self.page = page
         self.lock = None      
@@ -164,28 +164,31 @@ class G15Window(gtk.OffscreenWindow):
         self.surface = None
         self.content = gtk.EventBox()
         self.set_app_paintable(True)
-#        self.set_double_buffered(False)
-#        self.content.set_double_buffered(False)
         self.content.set_app_paintable(True)        
         self.connect("screen-changed", self.screen_changed)
         self.content.connect("expose-event", self._transparent_expose)
         self.content.set_size_request(self.area_width, self.area_height)
         self.add(self.content)
         self.connect("damage_event", self._damage)
-#        self.content.window.set_composited(True)
         self.connect("expose_event", self._expose)
         self.screen_changed(None, None)
-#        self.set_opacity(0.5)
+        self.lock = Semaphore()
+        
+    def set_content(self, content):
+        self.content.add(content)
+        self.show_all()
+        
+        # If the content window is a scroller, we send focus events to it
+        # moving the scroller position to the focussed component
+        if isinstance(content, gtk.ScrolledWindow):
+            self.scroller = content
         
     def paint(self, canvas):
-        print "Painting offscreen window"
+        if g15util.is_gobject_thread():
+            raise Exception("Painting on mainloop")
         self.start_for_capture()
-#        self._transparent_expose(self.content)
-#        self.content.queue_draw()
-#        while gtk.events_pending():
-#            gtk.main_iteration(False)        
         gobject.idle_add(self._do_capture)
-        self.wait_for_capture()
+        self.lock.acquire()
         canvas.save()
         canvas.translate(self.area_x, self.area_y)
         canvas.set_source_surface(self.surface)
@@ -194,11 +197,13 @@ class G15Window(gtk.OffscreenWindow):
             
     def focus_next(self):
         self.content.get_toplevel().child_focus(gtk.DIR_TAB_FORWARD)
+        self.scroll_to_focussed()
         self.screen.redraw(self.page)
         
     def focus_previous(self):
         self.content.get_toplevel().child_focus(gtk.DIR_TAB_BACKWARD)
         self.screen.redraw(self.page)
+        self.scroll_to_focussed()
         
     def change_widget(self, amount = None, reverse = False):
         focussed = self.get_focus()
@@ -212,15 +217,20 @@ class G15Window(gtk.OffscreenWindow):
                     adj.set_value(adj.get_value() - ps)
                 else:
                     adj.set_value(adj.get_value() + ps)
-                self._do_capture()
                 self.screen.redraw(self.page)
         
     def show_all(self):
         gtk.OffscreenWindow.show_all(self)
-#        if self.content.window != None:
-#            self.content.window.set_composited(True)
-#        self.content.window.set_composited(True)
-#        self.set_opacity(0.5)
+        
+    def scroll_to_focussed(self):
+        if self.scroller is not None:
+            hadj = self.scroller.get_hadjustment()
+            vadj = self.scroller.get_vadjustment()
+            x, y = self.get_focus().translate_coordinates(self.scroller.get_children()[0], 0, 0)
+            max_x = hadj.upper - hadj.page_size
+            max_y = vadj.upper - vadj.page_size
+            hadj.set_value(min(x, max_x))
+            vadj.set_value(min(y, max_y))
 
     def screen_changed(self, widget, old_screen=None):
         global supports_alpha
@@ -270,17 +280,11 @@ class G15Window(gtk.OffscreenWindow):
         self.lock = Lock()
         self.lock.acquire()
     
-    def wait_for_capture(self):
-        self.lock.acquire()
-        self.lock.release()
-        self.lock = None
-        
     def _do_capture(self):
         self.content.window.invalidate_rect((0,0,self.area_width,self.area_height), True)
         self.content.window.process_updates(True)
         pixbuf = gtk.gdk.Pixbuf( gtk.gdk.COLORSPACE_RGB, False, 8, self.area_width, self.area_height)
         pixbuf.get_from_drawable(self.content.window, self.content.get_colormap(), 0, 0, 0, 0, self.area_width, self.area_height)
         self.surface = g15util.pixbuf_to_surface(pixbuf)
-        self.pixbuf = pixbuf
-        if self.lock != None:
-            self.lock.release()
+        self.pixbuf = pixbuf        
+        self.lock.release()

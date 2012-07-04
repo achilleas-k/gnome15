@@ -102,10 +102,12 @@ class G15GlobalConfig:
         self.conf_client = conf_client
         self.selected_id = None
         
+        only_show_indicator_on_error = self.widget_tree.get_object("OnlyShowIndicatorOnError")
         start_desktop_service_on_login = self.widget_tree.get_object("StartDesktopServiceOnLogin")
         start_indicator_on_login = self.widget_tree.get_object("StartIndicatorOnLogin")
         start_system_tray_on_login = self.widget_tree.get_object("StartSystemTrayOnLogin")
         global_plugin_enabled_renderer = self.widget_tree.get_object("GlobalPluginEnabledRenderer")
+        enable_gnome_shell_extension = self.widget_tree.get_object("EnableGnomeShellExtension")
         
         notify_h = self.conf_client.notify_add("/apps/gnome15/global/plugins", self._plugins_changed)
                
@@ -113,8 +115,7 @@ class G15GlobalConfig:
         self.global_plugin_model = self.widget_tree.get_object("GlobalPluginModel")
         self.global_plugin_tree = self.widget_tree.get_object("GlobalPluginTree")        
         self.global_plugin_tree.connect("cursor-changed", self._select_plugin)
-        
-        self.widget_tree.get_object("OnlyShowIndicatorOnError").set_visible(g15desktop.is_desktop_application_installed("g15-indicator"))
+
         
         # Plugins
         self._load_plugins()
@@ -130,14 +131,20 @@ class G15GlobalConfig:
         start_desktop_service_on_login.connect("toggled", self._change_desktop_service, "gnome15")
         start_indicator_on_login.connect("toggled", self._change_desktop_service, "g15-indicator")
         start_system_tray_on_login.connect("toggled", self._change_desktop_service, "g15-systemtray")
+        enable_gnome_shell_extension.connect("toggled", self._change_gnome_shell_extension)
         global_plugin_enabled_renderer.connect("toggled", self._toggle_plugin)
         
         # Service options
-        start_indicator_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-indicator"))
-        start_system_tray_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-systemtray"))
+        gnome_shell = g15desktop.get_desktop() == "gnome-shell"        
+        only_show_indicator_on_error.set_visible(g15desktop.is_desktop_application_installed("g15-indicator") and not gnome_shell)
+        start_indicator_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-indicator") and not gnome_shell)
+        start_system_tray_on_login.set_visible(g15desktop.is_desktop_application_installed("g15-systemtray") and not gnome_shell)
+        enable_gnome_shell_extension.set_visible(gnome_shell)
         start_desktop_service_on_login.set_active(g15desktop.is_autostart_application("gnome15"))
         start_indicator_on_login.set_active(g15desktop.is_autostart_application("g15-indicator"))
         start_system_tray_on_login.set_active(g15desktop.is_autostart_application("g15-systemtray"))
+        enable_gnome_shell_extension.set_active(g15desktop.is_gnome_shell_extension_enabled("gnome15-shell-extension@gnome15.org"))
+        
         self.dialog.set_transient_for(parent)
         self.dialog.run()
         self.dialog.hide()
@@ -188,6 +195,9 @@ class G15GlobalConfig:
         
     def _plugins_changed(self, client, connection_id, entry, args):
         self._load_plugins()
+        
+    def _change_gnome_shell_extension(self, widget):
+        g15desktop.set_gnome_shell_extension_enabled("gnome15-shell-extension@gnome15.org", widget.get_active())
         
     def _change_desktop_service(self, widget, application_name):
         g15desktop.set_autostart_application(application_name, widget.get_active())

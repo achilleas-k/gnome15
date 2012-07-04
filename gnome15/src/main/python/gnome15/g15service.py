@@ -48,7 +48,7 @@ import gtk.gdk
  
 # Used for getting logout  / shutdown signals
 master_client = None
-if "gnome" == g15util.get_desktop():
+if g15desktop.get_desktop() in [ "gnome", "gnome-shell" ]:
     try:
         import gnome.ui
         master_client = gnome.ui.master_client()
