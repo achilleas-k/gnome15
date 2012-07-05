@@ -629,6 +629,7 @@ class G15Page(Component):
         self.screen = screen
         self.scroll_lock = RLock()
         self.focused_component = None
+        self.text_handler = g15text.new_text(screen)
         if theme:
             self.set_theme(theme)
             
@@ -754,7 +755,8 @@ class G15Page(Component):
         else:
             self.back_context.stroke()
         
-    def paint(self, canvas):
+    def paint(self, canvas):    
+        self.text_handler.set_canvas(canvas)
         if self.painter != None:
             self.painter(canvas)
             
@@ -1741,8 +1743,9 @@ class G15Theme():
                 self.dirty = False
             finally:
                 self.render_lock.release()
+        else:
+            self.text.set_canvas(canvas)
             
-                        
         self._render_document(canvas, self.render)
         return self.render.document
             

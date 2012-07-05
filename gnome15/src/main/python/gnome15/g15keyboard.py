@@ -231,9 +231,7 @@ class G15KeyHandler():
             """
             Always redraw the current page on key presses
             """
-            page = self.__screen.get_visible_page()
-            if page:
-                page.redraw()
+            self.__screen.redraw()
             
     def _handle_actions(self):
         """
@@ -634,7 +632,7 @@ class G15KeyHandler():
         return False
     
     def _action_performed(self, binding):
-        g15screen.run_on_redraw(self._do_action_performed, binding)
+        g15util.schedule("Action", 0, self._do_action_performed, binding)
     
     def _do_action_performed(self, binding):
         logger.info("Invoking action '%s'" % binding.action)
