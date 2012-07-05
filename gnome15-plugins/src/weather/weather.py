@@ -167,6 +167,7 @@ class G15Weather():
         # Redraw so icon option is immediate
         self._build_weather_properties()
         self._page.redraw()
+        self._screen.set_priority(self._page, g15screen.PRI_HIGH, revert_after = 6.0)
         
         # Only actually go and refresh after the value hasn't changed for a few seconds
         self._cancel_change_timer()            
@@ -341,10 +342,8 @@ class G15Weather():
                 return icon_path
              
         if icon.startswith("http"):
-            logger.warning("Having to resort to using Google weather image %s. This may hang up the LCD for a bit" % icon)
             return icon
         else:
-            logger.warning("Having to resort to using Google weather image http://www.google.com%s. This may hang up the LCD for a bit" % icon)
             return "http://www.google.com" + icon
         
     def _get_base_icon(self, icon):
