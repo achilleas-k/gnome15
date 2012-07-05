@@ -49,6 +49,7 @@ DEVICE_IF_NAME="org.gnome15.Device"
 # Logging
 import logging
 logger = logging.getLogger("dbus")
+logger.setLevel(logging.DEBUG)
     
 class AbstractG15DBUSService(dbus.service.Object):
     
@@ -955,7 +956,8 @@ class G15DBUSService(AbstractG15DBUSService):
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='b')
     def IsStarted(self):
-        return not self._service.starting_up and not not self._service.shutting_down 
+        started = not self._service.starting_up and not self._service.shutting_down
+        return started 
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='b')
     def IsStopping(self):

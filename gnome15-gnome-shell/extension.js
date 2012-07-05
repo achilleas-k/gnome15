@@ -560,11 +560,7 @@ function enable() {
 	                       _onDesktopServiceAppeared,
 	                       _onDesktopServiceVanished);
 
-	gnome15System.IsStartedRemote(Lang.bind(this, function(started) {
-		if(started) {
-			gnome15System.GetDevicesRemote(_refreshDeviceList);	
-		}
-	}));
+	gnome15System.IsStartedRemote(_onStarted);
 }
 
 function disable() {
@@ -607,6 +603,15 @@ function _onDesktopServiceStarted() {
 function _onDesktopServiceStopping() {
 	for(let key in devices) {
         _deviceRemoved(key)
+	}
+}
+
+/**
+ * Callback from IsStarted called during initialisation.
+ */
+function _onStarted(started) {
+	if(started) {
+		gnome15System.GetDevicesRemote(_refreshDeviceList);
 	}
 }
 
