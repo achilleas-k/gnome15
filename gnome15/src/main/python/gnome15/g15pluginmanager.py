@@ -156,6 +156,20 @@ def get_supported_models(plugin_module):
         pass        
     return supported_models
 
+def is_needs_network(plugin_module):
+    """
+    Get if the provided plugin_module instance requires the network to be available.
+    If the plugin doesn't declare this, it is assumed to be False
+    
+    Keyword arguments:
+    plugin_module -- plugin module instance
+    """
+    try :
+        return plugin_module.needs_network
+    except AttributeError: 
+        pass 
+    return False
+
 def is_default_enabled(plugin_module):
     """
     Get if the provided plugin_module instance should be enabled by default.
@@ -275,7 +289,7 @@ class G15Plugins():
     In total there will be n+1 instances of this, where n is the number of
     connected and enabled devices.
     """
-    def __init__(self, screen, service=None):
+    def __init__(self, screen, service=None, network_manager = None):
         """
         Create a new plugin manager either for the provided device (screen),
         or globally (when screen is None)
@@ -284,6 +298,7 @@ class G15Plugins():
         screen -- screen this plugin managed is attached to, or None for global plugins
         service -- the service this plugin manager is managed by
         """
+        self.network_manager = network_manager
         self.lock = threading.RLock()
         self.screen = screen
         self.service = service if service is not None else screen.service
@@ -344,7 +359,7 @@ class G15Plugins():
     
     def start(self):
         """
-        Start all plugins that currently enabled.
+        Start all plugins that are currently enabled.
         """
         self.lock.acquire()
         try : 
@@ -361,18 +376,24 @@ class G15Plugins():
                     self.conf_client.notify_add(key, self._plugin_changed)
                     if (self.screen is None and is_global_plugin(mod)) or \
                        (self.screen is not None and not is_global_plugin(mod)):
+                        
+                        # If first use, set the default enabled state
                         if self.conf_client.get(key) == None:
                             self.conf_client.set_bool(key, is_default_enabled(mod))
-                        if self.conf_client.get_bool(key):
-                            if not is_passive_plugin(mod):
-                                try :
-                                    instance = self._create_instance(mod, plugin_dir_key)
-                                    if self.screen is None or self.screen.driver.get_model_name() in get_supported_models(mod):
-                                        self.started.append(instance)
-                                except Exception as e:
-                                    self.conf_client.set_bool(key, False)
-                                    logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
-                                    traceback.print_exc(file=sys.stderr)
+                            
+                        # Only actually activate if the plugin is not passive and the network
+                        # is in the right state
+                        
+                        if self.conf_client.get_bool(key) and \
+                          not is_passive_plugin(mod):
+                            try :
+                                instance = self._create_instance(mod, plugin_dir_key)
+                                if self.screen is None or self.screen.driver.get_model_name() in get_supported_models(mod):
+                                    self.started.append(instance)
+                            except Exception as e:
+                                self.conf_client.set_bool(key, False)
+                                logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
+                                traceback.print_exc(file=sys.stderr)
             self.state = STARTED
         except Exception as a:
             self.state = UNINITIALISED
@@ -426,7 +447,15 @@ class G15Plugins():
                 idx = 0
                 for plugin in plugin if isinstance(plugin, list) else self.started:
                     mod = self.plugin_map[plugin]
-                    self._activate_instance(plugin, callback, idx)
+                    
+                    # Only actually activate if the plugin is not passive and the network
+                    # is in the right state
+                        
+                    needs_net = is_needs_network(mod)
+                    if not needs_net or ( needs_net and \
+                            self.network_manager.is_network_available() ):
+                        self._activate_instance(plugin, callback, idx)
+                        
                     idx += 1           
                 self.state = ACTIVATED
             except Exception as e:           
@@ -505,11 +534,18 @@ class G15Plugins():
                 
     def _plugin_changed(self, client, connection_id, entry, args):
         self.lock.acquire()
+        self.screen._check_active_plugins()
         try : 
             path = entry.key.split("/")
             plugin_id = path[5]
             now_enabled = entry.value.get_bool()
             plugin = get_module_for_id(plugin_id)
+            
+            # Check network state, and prevent enable if not in right state
+            needs_net = is_needs_network(plugin)
+            if now_enabled and needs_net and not self.network_manager.is_network_available():
+                now_enabled = False 
+            
             instance = None
             if plugin_id in self.module_map:
                 instance = self.module_map[plugin_id]

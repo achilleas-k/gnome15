@@ -31,6 +31,7 @@ import g15dbus
 import g15devices
 import g15desktop
 import g15uinput
+import g15network
 import traceback
 import gconf
 import g15util
@@ -593,9 +594,12 @@ class G15Service(g15desktop.G15AbstractService):
         self._join_all(t)
         
     def _do_start_service(self):
+        # Network manager
+        self.network_manager = g15network.NetworkManager(self)
+        
         # Global plugins        
         self.session_active = True        
-        self.global_plugins = g15pluginmanager.G15Plugins(None, self)
+        self.global_plugins = g15pluginmanager.G15Plugins(None, self, network_manager = self.network_manager)
         self.global_plugins.start()
         
         for listener in self.service_listeners:
@@ -681,14 +685,14 @@ class G15Service(g15desktop.G15AbstractService):
         for listener in self.service_listeners:
             listener.service_started_up()
         self.started = True
-            
+        
         gobject.idle_add(self._monitor_session)
         
     def _join_all(self, threads, timeout = 30):
         for t in threads:
             t.join(timeout)
             
-    def _monitor_session(self):
+    def _monitor_session(self):        
         # Monitor active session (we shut down the driver when becoming inactive)
         try :
             logger.info("Connecting to system bus") 

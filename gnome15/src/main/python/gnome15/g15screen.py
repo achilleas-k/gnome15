@@ -21,6 +21,7 @@
 
 import gnome15.g15locale as g15locale
 import gnome15.g15devices as g15devices
+#from gnome15 import g15pluginmanager
 _ = g15locale.get_translation("gnome15").ugettext
 
 """
@@ -271,7 +272,7 @@ class G15Screen():
         self._started_plugins = False
         self.stopping = False
         self.reconnect_timer = None
-        self.plugins = self.plugin_manager_module.G15Plugins(self)
+        self.plugins = self.plugin_manager_module.G15Plugins(self, network_manager = service.network_manager)
         self.pages = []
         self.memory_bank_color_control = None
         self.acquired_controls = {}
@@ -355,9 +356,15 @@ class G15Screen():
         
         g15profile.profile_listeners.append(self._profile_changed)
         
+        # Start watching for network changes
+        self.service.network_manager.listeners.append(self._network_state_change)
+        
     def stop(self, quickly=False):  
         logger.info("Stopping screen for %s" % self.device.uid)
         self.stopping = True
+        
+        # Stop watching for network changes
+        self.service.network_manager.listeners.remove(self._network_state_change)
         
         # Clean up key handler
         self.key_handler.action_listeners.remove(self)
@@ -818,6 +825,9 @@ class G15Screen():
         
         if self.driver and self.driver.is_connected():
             self.set_memory_bank(1)
+            
+    def _network_state_change(self, new_state):
+        g15util.schedule("ProfileChange", 1.0, self._check_active_plugins)
                 
     def _profile_changed(self, profile_id, device_uid):
         self.set_color_for_mkey()        
@@ -965,8 +975,39 @@ class G15Screen():
             self.driver = None
             return False
         
+    def _should_deactivate(self, profile, mod):
+        import g15pluginmanager
+        """
+        Determine if a plugin should be deactivated based on the current profile
+        and the state of the network
+        
+        Keyword arguments:
+        profile            -- profile to check
+        mod                -- plugin module
+        """
+        return profile.plugins_mode == g15profile.NO_PLUGINS or \
+             ( profile.plugins_mode == g15profile.SELECTED_PLUGINS and not mod.id in profile.selected_plugins) or \
+             ( g15pluginmanager.is_needs_network(mod) and not self.service.network_manager.is_network_available())
+        
+    def _should_activate(self, profile, mod):
+        import g15pluginmanager
+        """
+        Determine if a plugin should be activated based on the current profile
+        and the state of the network
+        
+        Keyword arguments:
+        profile            -- profile to check
+        mod                -- plugin module
+        """
+        needs_net = g15pluginmanager.is_needs_network(mod)
+        print "Activate&&&   Mod: %s Needs_net: %s state: %s" % (mod.id, needs_net, self.service.network_manager.is_network_available())
+        return ( profile.plugins_mode == g15profile.ALL_PLUGINS or \
+             ( profile.plugins_mode == g15profile.SELECTED_PLUGINS and mod.id in profile.selected_plugins) ) and \
+             ( not needs_net or ( needs_net and self.service.network_manager.is_network_available() ) )
+        
     def _check_active_plugins(self, splash=None, startup=False):
                 
+        print "*** CHECKING ACTIVE PLUGINS"
         to_activate = []   
         choose_profile = g15profile.get_active_profile(self.device)
         
@@ -981,8 +1022,7 @@ class G15Screen():
             l = []
             for plugin in self.plugins.activated:
                 mod = self.plugins.plugin_map[plugin]
-                if choose_profile.plugins_mode == g15profile.NO_PLUGINS or \
-                   ( choose_profile.plugins_mode == g15profile.SELECTED_PLUGINS and not mod.id in choose_profile.selected_plugins):
+                if self._should_deactivate(choose_profile, mod):
                     l.append(plugin)
             for plugin in l:
                 self.plugins.deactivate(plugin=plugin)
@@ -990,8 +1030,7 @@ class G15Screen():
         for plugin in self.plugins.started:
             if not plugin in self.plugins.activated:
                 mod = self.plugins.plugin_map[plugin]
-                if choose_profile.plugins_mode == g15profile.ALL_PLUGINS or \
-                   ( choose_profile.plugins_mode == g15profile.SELECTED_PLUGINS and mod.id in choose_profile.selected_plugins):
+                if self._should_activate(choose_profile, mod):
                     to_activate.append(plugin)
 
         """

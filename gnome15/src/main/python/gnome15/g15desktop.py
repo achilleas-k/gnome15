@@ -518,7 +518,12 @@ def is_gnome_shell_extension_enabled(extension):
     """
     status, text = g15util.execute_for_output("gsettings get org.gnome.shell enabled-extensions")
     if status == 0:
-        return extension in eval(text)
+        try:
+            return extension in eval(text)
+        except Exception as e:
+            logger.debug("Failed testing if extension is enabled. %s" % e)
+            
+    return False
         
 def set_gnome_shell_extension_enabled(extension, enabled):
     """
@@ -532,7 +537,10 @@ def set_gnome_shell_extension_enabled(extension, enabled):
     """
     status, text = g15util.execute_for_output("gsettings get org.gnome.shell enabled-extensions")
     if status == 0:
-        extensions = eval(text)
+        try:
+            extensions = eval(text)
+        except:
+            pass
         contains = extension in extensions
         if contains and not enabled:
             extensions.remove(extension)
@@ -543,7 +551,10 @@ def set_gnome_shell_extension_enabled(extension, enabled):
             if len(s) >0:
                 s += ","
             s += "'%s'" % c
-        status, text = g15util.execute_for_output("gsettings set org.gnome.shell enabled-extensions \"[%s]\"" % s)
+        try:
+            status, text = g15util.execute_for_output("gsettings set org.gnome.shell enabled-extensions \"[%s]\"" % s)
+        except Exception as e:
+            logger.debug("Failed to set extension enabled. %s" % e)
     
 class G15AbstractService(Thread):
     

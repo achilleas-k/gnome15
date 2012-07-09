@@ -51,6 +51,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=True
+needs_network=True
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Previous site"), 
          g15driver.NEXT_SELECTION : _("Next site"), 

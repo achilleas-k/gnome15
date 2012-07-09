@@ -30,6 +30,7 @@ import gnome15.g15screen as g15screen
 import gio
 import gtk
 import os.path
+import gobject
 
 # Logging
 import logging
@@ -189,6 +190,9 @@ class G15Places(g15plugin.G15MenuPlugin):
         self.screen.key_handler.action_listeners.append(self)
         
         # Get the initial list of volumes and mounts
+        gobject.idle_add(self._do_activate)
+        
+    def _do_activate(self):
         self.volume_monitor = gio.VolumeMonitor()
         for mount in self.volume_monitor.get_mounts():
             self._add_mount(mount)

@@ -293,7 +293,11 @@ class G15Cal():
         self._screen.add_page(self._page)
         g15util.schedule("CalendarFirstLoad", 0, self._redraw)
         
+        # Listen for changes in the network state
+        self._screen.service.network_manager.listeners.append(self._network_state_changed)
+        
     def deactivate(self):
+        self._screen.service.network_manager.listeners.append(self._network_state_changed)
         self._account_manager.remove_change_listener(self._accounts_changed)
         self._screen.key_handler.action_listeners.remove(self)
         if self._timer != None:
@@ -334,6 +338,9 @@ class G15Cal():
     """
     Private
     """
+    def _network_state_changed(self, state):
+        self._loaded = 0
+        self._redraw()
     
     def _accounts_changed(self, account_manager):
         self._loaded = 0
@@ -403,12 +410,18 @@ class G15Cal():
                 if backend is None:
                     logger.warn("Could not find a calendar backend for %s" % acc.name)
                 else:
-                    backend_events = backend.create_backend(acc, self._account_manager).get_events(now)
-                    if backend_events is None:
-                        logger.warning("Calendar returned no events, skipping")
+                    # Backends may specify if they need a network or not, so check the state
+                    import gnome15.g15pluginmanager as g15pluginmanager
+                    needs_net = g15pluginmanager.is_needs_network(backend)
+                    if not needs_net or ( needs_net and self._screen.service.network_manager.is_network_available() ):
+                        backend_events = backend.create_backend(acc, self._account_manager).get_events(now)
+                        if backend_events is None:
+                            logger.warning("Calendar returned no events, skipping")
+                        else:
+                            self._event_days = dict(self._event_days.items() + \
+                                                    backend_events.items())
                     else:
-                        self._event_days = dict(self._event_days.items() + \
-                                                backend_events.items())
+                        logger.warn("Skipping backend %s because it requires the network, and the network is not availabe" % acc.type)
             except Exception as e:
                 if logger.level == logger.debug:
                     logger.warn("Failed to load events for account %s.")

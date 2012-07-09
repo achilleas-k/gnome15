@@ -52,6 +52,7 @@ copyright=_("Copyright (C)2012 Brett Smith")
 site="http://www.gnome15.org/"
 has_preferences=False
 passive=True
+needs_network=True
 global_plugin=True
 requires="cal"
 unsupported_models=cal.unsupported_models
