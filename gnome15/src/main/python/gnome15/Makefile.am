@@ -13,6 +13,7 @@ gnome15_PYTHON = 		\
 	g15gtk.py \
 	g15driver.py \
 	g15notify.py \
+	g15network.py \
 	g15drivermanager.py \
 	g15globals.py \
 	g15plugin.py \
