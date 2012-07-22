@@ -465,9 +465,9 @@ def get_desktop():
     
     evars = os.environ
     
-    # GNOME Shell
-    if "DESKTOP_SESSION" in evars:
-        if evars["DESKTOP_SESSION"] == "gnome-shell":
+    # GNOME Shell (need a better way)
+    if ( "DESKTOP_SESSION" in evars and evars["DESKTOP_SESSION"] == "gnome-shell" ) or \
+       ( "GJS_DEBUG_OUTPUT" in evars ):
             return "gnome-shell"
     
     # XDG_CURRENT_DESKTOP
