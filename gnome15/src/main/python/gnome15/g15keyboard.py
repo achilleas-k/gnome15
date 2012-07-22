@@ -632,10 +632,12 @@ class G15KeyHandler():
         return False
     
     def _action_performed(self, binding):
-        g15util.schedule("Action", 0, self._do_action_performed, binding)
-    
-    def _do_action_performed(self, binding):
         logger.info("Invoking action '%s'" % binding.action)
+        
+        if binding.action == g15actions.CANCEL_MACRO:
+            self.__screen.service.cancel_running_macro()
+            return True
+        
         for l in self.action_listeners:  
             if l.action_performed(binding):
                 return True

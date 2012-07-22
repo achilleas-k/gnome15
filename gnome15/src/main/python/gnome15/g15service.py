@@ -68,6 +68,7 @@ g15upgrade.upgrade()
 NAME = "Gnome15"
 VERSION = g15globals.version
 SERVICE_QUEUE = "serviceQueue"
+MACRO_HANDLER_QUEUE = "macroHandler"
 
 special_X_keysyms = {
     ' ' : "space",
@@ -160,6 +161,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.active_window_title = None
         self.ignore_next_sigint = False
         self.debug_svg = False
+        self._cancel_current_macro = False
                 
         # Expose Gnome15 functions via DBus
         logger.debug("Starting the DBUS service")
@@ -225,6 +227,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.shutting_down = True
         self.global_plugins.destroy()
         self.stop(quickly)
+        g15util.stop_queue(MACRO_HANDLER_QUEUE)
         g15util.stop_queue(SERVICE_QUEUE)   
         logger.info("Stopping all schedulers")
         g15util.stop_all_schedulers()
@@ -236,7 +239,20 @@ class G15Service(g15desktop.G15AbstractService):
         self.dbus_service.stop()
         
     def handle_macro(self, macro):
+        """
+        We want to return control immediately after asking for a macro
+        to be handled, but we only ever want one macro running at a time. 
+        This means the macro action is put on it's own queue. This also 
+        allows long running macros to be cancelled
+        
+        Keyword arguments:
+        macro            -- macro to handle
+        """        
+        g15util.queue(MACRO_HANDLER_QUEUE, "HandleMacro", 0, self._do_handle_macro, macro)
+        
+    def _do_handle_macro(self, macro):
         # Get the latest focused window if not using XTest
+        self._cancel_current_macro = False
         self.init_xtest()
         if self.virtual_keyboard is None and ( not self.use_x_test or not self.x_test_available ):
             self.window = self.local_dpy.get_input_focus()._data["focus"]; 
@@ -248,6 +264,13 @@ class G15Service(g15desktop.G15AbstractService):
             self.send_simple_macro(macro)
         else:
             self.send_macro(macro)
+            
+    def cancel_running_macro(self):
+        """
+        Cancel the currently running macro script if any. This script may
+        not immediately be cancelled if there are un-interuptable tasks running.  
+        """
+        self._cancel_current_macro = True
         
     def send_simple_macro(self, macro):
         logger.debug("Simple macro '%s'" % macro.macro)
@@ -258,6 +281,9 @@ class G15Service(g15desktop.G15AbstractService):
         release_delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
                         
         for c in macro.macro:
+            if self._cancel_current_macro:
+                logger.warning("Macro cancelled.")
+                break
             if c == '\\' and not esc:
                 esc = True
             else:                     
@@ -297,40 +323,66 @@ class G15Service(g15desktop.G15AbstractService):
         
     def send_macro(self, macro):
         macros = macro.macro.split("\n")
-        i = 0
-        for macro_text in macros:
+        
+        # First parse to get where the labels are
+        labels = {}
+        for l in range(0, len(macros)):
+            line = macros[l]
+            if line.startswith(":"):
+                labels[line[1:].lower()] = l
+        
+        l = -1
+        down = 0
+        while True:
+            if down == 0 and self._cancel_current_macro:
+                logger.warning("Macro cancelled")
+                break
+            l += 1
+            if l == len(macros):
+                break
+            macro_text = macros[l]
             split = macro_text.split(" ")
             op = split[0].lower()
             if len(split) > 1:
                 val = split[1]
-                if op == "delay":
-                    if macro.profile.send_delays and not macro.profile.fixed_delays:
-                        time.sleep(float(val) / 1000.0 if not macro.profile.fixed_delays else macro.profile.delay_amount)
+                if op == "goto":
+                    val = val.lower()
+                    if val in labels:
+                        l = labels[val]
+                    else:
+                        logger.warning("Unknown goto label %s in macro script. Ignoring")  
+                elif op == "delay":
+                    if not self._cancel_current_macro:
+                        time.sleep(float(val) / 1000.0)
                 elif op == "press":
-                    if i > 0:
-                        self._release_delay(macro)
                     self.send_string(val, True)
-                    self._press_delay(macro)
+                    down += 1
                 elif op == "release":
                     self.send_string(val, False)
+                    down -= 1
                 elif op == "upress":
-                    if i > 0:
-                        self._release_delay()
                     if len(split) < 3:                        
                         logger.error("Invalid operation in macro script. '%s'" % macro_text)
                     else:
+                        down += 1
                         self._send_uinput(split[2], val, 1)
                 elif op == "urelease":
                     if len(split) < 3:                        
                         logger.error("Invalid operation in macro script. '%s'" % macro_text)
                     else:
+                        down -= 1
                         self._send_uinput(split[2], val, 0)
+                elif op.startswith(":") or op.startswith("#"):
+                    # Ignore label / comment
+                    pass
                 else:
                     logger.error("Invalid operation in macro script. '%s'" % macro_text)
                 
-                i += 1
             else:
-                if len(split) > 0:
+                if op.startswith(":") or op.startswith("#"):
+                    # Ignore label / comment
+                    pass
+                elif len(split) > 0:
                     logger.error("Insufficient arguments in macro script. '%s'" % macro_text)
 
     def _send_uinput(self, target, val, state):
@@ -339,18 +391,6 @@ class G15Service(g15desktop.G15AbstractService):
         else:                        
             logger.error("Unknown uinput key %s." % val)
 
-    def _press_delay(self, macro):
-        delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.press_delay) / 1000.0 )
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Press delay of %f" % delay) 
-        time.sleep(delay)
-        
-    def _release_delay(self, macro):
-        delay = 0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Release delay of %f" % delay) 
-        time.sleep(delay)
-    
     def get_keysym(self, ch) :
         keysym = Xlib.XK.string_to_keysym(ch)
         if keysym == 0 :

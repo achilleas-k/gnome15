@@ -1000,14 +1000,12 @@ class G15Screen():
         mod                -- plugin module
         """
         needs_net = g15pluginmanager.is_needs_network(mod)
-        print "Activate&&&   Mod: %s Needs_net: %s state: %s" % (mod.id, needs_net, self.service.network_manager.is_network_available())
         return ( profile.plugins_mode == g15profile.ALL_PLUGINS or \
              ( profile.plugins_mode == g15profile.SELECTED_PLUGINS and mod.id in profile.selected_plugins) ) and \
              ( not needs_net or ( needs_net and self.service.network_manager.is_network_available() ) )
         
     def _check_active_plugins(self, splash=None, startup=False):
                 
-        print "*** CHECKING ACTIVE PLUGINS"
         to_activate = []   
         choose_profile = g15profile.get_active_profile(self.device)
         

@@ -35,6 +35,7 @@ NEXT_SCREEN = "next-screen"
 PREVIOUS_SCREEN = "previous-screen"
 NEXT_BACKLIGHT = "next-backlight"
 PREVIOUS_BACKLIGHT = "previous-backlight"
+CANCEL_MACRO = "cancel-macro"
 
 """
 Global the plugins and other subsystems may add new actions too. The list
@@ -55,7 +56,8 @@ actions = [
         NEXT_SCREEN,
         PREVIOUS_SCREEN,
         NEXT_BACKLIGHT,
-        PREVIOUS_BACKLIGHT
+        PREVIOUS_BACKLIGHT,
+        CANCEL_MACRO
         ]
 
 
