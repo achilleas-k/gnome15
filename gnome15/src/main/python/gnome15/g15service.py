@@ -44,6 +44,7 @@ import time
 import dbus
 import signal
 import g15pluginmanager
+import g15actions
 from threading import Thread
 import gtk.gdk
  
@@ -237,6 +238,11 @@ class G15Service(g15desktop.G15AbstractService):
         self.loop.quit() 
         logger.info("Stopping DBus service")
         self.dbus_service.stop()
+        
+    def action_performed(self, binding):
+        if binding.action == g15actions.CANCEL_MACRO:
+            self.cancel_running_macro()
+            return True 
         
     def handle_macro(self, macro):
         """

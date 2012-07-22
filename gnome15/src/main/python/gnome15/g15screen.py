@@ -338,6 +338,7 @@ class G15Screen():
         # Start handling keys
         self.key_handler.start()
         self.key_handler.action_listeners.append(self)
+        self.key_handler.action_listeners.append(self.service)
         self.key_handler.key_handlers.append(self)
         
         # This is just here for backwards compatibility and may be removed at some point
@@ -368,6 +369,7 @@ class G15Screen():
         
         # Clean up key handler
         self.key_handler.action_listeners.remove(self)
+        self.key_handler.action_listeners.remove(self.service)
         self.key_handler.key_handlers.remove(self)
         self.key_handler.stop()
         
