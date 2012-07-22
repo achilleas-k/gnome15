@@ -406,7 +406,6 @@ class G15AccountPreferences():
             self._save_timer = g15util.schedule("SaveAccounts", 2, self._do_save_accounts)
         
     def _do_save_accounts(self):        
-        print "Saving accounts"
         self.account_mgr.save()
         
     def _update_time_changed(self, widget):

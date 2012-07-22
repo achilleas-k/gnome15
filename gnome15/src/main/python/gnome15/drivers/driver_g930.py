@@ -142,7 +142,6 @@ class MultiMediaDevice(AbstractInputDevice):
         AbstractInputDevice.__init__(self, callback, g930_key_map, *args, **kwargs)
         
     def receive(self, event):
-        print "%s" % str(event)
         if event.etype == S.EV_KEY:
             state = g15driver.KEY_STATE_DOWN if event.evalue == 1 else g15driver.KEY_STATE_UP
             if event.evalue != 2:

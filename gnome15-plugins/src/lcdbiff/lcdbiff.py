@@ -355,7 +355,6 @@ class MailItem(g15theme.MenuItem):
         logger.info("Running email client %s" % email_client)
         if email_client != None:
             call_str = "%s &" % email_client.replace("%s", "").replace("%U", "mailto:")
-            print str(call_str)
             os.system(call_str)
          
 '''

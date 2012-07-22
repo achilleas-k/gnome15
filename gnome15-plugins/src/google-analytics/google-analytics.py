@@ -355,7 +355,6 @@ class G15GoogleAnalytics():
                     'metrics': 'ga:visits,ga:newVisits,ga:pageviews,ga:pageviewsPerVisit,ga:avgTimeOnSite,ga:visitBounceRate,ga:percentNewVisits'})
             
             feed = self._client.GetDataFeed(data_query)                
-            print "%s" % (feed.data_source[0])
             aggregates = feed.aggregates
             for m in aggregates.metric:
                 item.aggregates[m.name] = m.value

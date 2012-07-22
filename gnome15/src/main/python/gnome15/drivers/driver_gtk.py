@@ -246,7 +246,6 @@ class Driver(g15driver.AbstractDriver):
             if control == self.get_control_for_hint(g15driver.HINT_MKEYS):
                 self._do_set_mkey_lights()
             elif control == self.get_control_for_hint(g15driver.HINT_DIMMABLE):
-                traceback.print_exc(file=sys.stderr)
                 if isinstance(control.value, int):
                     v = ( 65535 / control.upper ) * control.value
                     self.event_box.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(v, v, v))

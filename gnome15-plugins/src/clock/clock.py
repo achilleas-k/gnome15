@@ -293,6 +293,14 @@ class G15Clock(g15plugin.G15Plugin):
         '''
         self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 3.0)
         
+        
+        '''
+        Schedule a redraw as well
+        '''
+        if self.timer is not None:
+            self.timer.cancel()
+        self._redraw()
+        
     def _load_configuration(self):
         self.display_date = self.gconf_client.get_bool(self.gconf_key + "/display_date")
         self.display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")

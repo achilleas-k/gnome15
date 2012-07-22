@@ -896,7 +896,7 @@ class G15Config:
             self.key_frame.set_visible(False)
             
     def _macro_profile_dropped(self, widget, context, x, y, selection, info, timestamp):       
-        print '\n'.join([str(t) for t in context.targets])
+#        print '\n'.join([str(t) for t in context.targets])
         return True     
 
     def _set_cycle_seconds_value_from_configuration(self):
