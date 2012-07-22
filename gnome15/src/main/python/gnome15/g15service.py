@@ -608,9 +608,14 @@ class G15Service(g15desktop.G15AbstractService):
         # UINPUT
         try:
             g15uinput.open_devices()
+        except OSError as (errno, strerror):
+            if errno == 13:
+                raise Exception("Failed to open uinput devices. Do you have the uinput module loaded (try modprobe uinput), and are the permissions of /dev/uinput correct?  If you have just installed Gnome15 for the first time, you may need to simply reboot. %s" % strerror)
+            else:
+                raise
         except IOError as (errno, strerror):
             if errno == 13:
-                raise Exception("Failed to open uinput devices. Do you have the uinput module loaded (try modprobe uinput), and are the permissions of /dev/uinput correct? %s" % strerror)
+                raise Exception("Failed to open uinput devices. Do you have the uinput module loaded (try modprobe uinput), and are the permissions of /dev/uinput correct? If you have just installed Gnome15 for the first time, you may need to simply reboot. %s" % strerror)
             else:
                 raise
         
