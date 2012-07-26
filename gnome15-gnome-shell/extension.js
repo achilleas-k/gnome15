@@ -430,7 +430,7 @@ const DeviceButton = new Lang.Class({
 		this._modelName = modelName;
 		this._screen = null;
         this._iconActor.add_style_class_name('device-icon');
-        this._iconActor.set_icon_size(24);
+        this._iconActor.set_icon_size(20);
         this._iconActor.add_style_class_name('device-button');
         
         // Mouse whell events

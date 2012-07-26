@@ -83,7 +83,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="129.43724"
+     inkscape:cx="68.365811"
      inkscape:cy="134.31407"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -92,7 +92,7 @@
      inkscape:window-width="1429"
      inkscape:window-height="940"
      inkscape:window-x="253"
-     inkscape:window-y="96"
+     inkscape:window-y="88"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -144,11 +144,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/rss/default/${icon}"
        xlink:href="${icon}"
-       id="image4256"
-       x="249.54773"
-       y="798.11218"
+       height="65.999985"
        width="64"
-       height="65.999985" />
+       y="798.11218"
+       x="249.54773"
+       id="image4256" />
     <text
        xml:space="preserve"
        style="font-size:24px;font-style:normal;font-weight:normal;text-align:start;line-height:100%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans"
@@ -229,5 +229,17 @@
          x="0"
          y="0" />
     </g>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Sans;"
+       x="169.54773"
+       y="956.11218"
+       id="text3008"
+       sodipodi:linespacing="125%"
+       title="del !no_news"><tspan
+         sodipodi:role="line"
+         id="tspan3010"
+         x="169.54773"
+         y="956.11218">There are no news items in this feed</tspan></text>
   </g>
 </svg>

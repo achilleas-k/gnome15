@@ -333,9 +333,11 @@ class G15Service(g15desktop.G15AbstractService):
         # First parse to get where the labels are
         labels = {}
         for l in range(0, len(macros)):
-            line = macros[l]
-            if line.startswith(":"):
-                labels[line[1:].lower()] = l
+            macro_text = macros[l]
+            split = macro_text.split(" ")
+            op = split[0].lower()
+            if op == "label" and len(op) > 1:
+                labels[split[1].lower()] = l
         
         l = -1
         down = 0
@@ -358,11 +360,14 @@ class G15Service(g15desktop.G15AbstractService):
                     else:
                         logger.warning("Unknown goto label %s in macro script. Ignoring")  
                 elif op == "delay":
-                    if not self._cancel_current_macro:
-                        time.sleep(float(val) / 1000.0)
+                    if not self._cancel_current_macro and macro.profile.send_delays and not macro.profile.fixed_delays:
+                        time.sleep(float(val) / 1000.0 if not macro.profile.fixed_delays else macro.profile.delay_amount)
                 elif op == "press":
+                    if down > 0:
+                        self._release_delay(macro)
                     self.send_string(val, True)
                     down += 1
+                    self._press_delay(macro)
                 elif op == "release":
                     self.send_string(val, False)
                     down -= 1
@@ -370,27 +375,39 @@ class G15Service(g15desktop.G15AbstractService):
                     if len(split) < 3:                        
                         logger.error("Invalid operation in macro script. '%s'" % macro_text)
                     else:
+                        if down > 0:
+                            self._release_delay()
                         down += 1
                         self._send_uinput(split[2], val, 1)
+                        self._press_delay(macro)
                 elif op == "urelease":
                     if len(split) < 3:                        
                         logger.error("Invalid operation in macro script. '%s'" % macro_text)
                     else:
                         down -= 1
                         self._send_uinput(split[2], val, 0)
-                elif op.startswith(":") or op.startswith("#"):
+                elif op == "label":
                     # Ignore label / comment
                     pass
                 else:
                     logger.error("Invalid operation in macro script. '%s'" % macro_text)
                 
             else:
-                if op.startswith(":") or op.startswith("#"):
-                    # Ignore label / comment
-                    pass
-                elif len(split) > 0:
+                if len(split) > 0:
                     logger.error("Insufficient arguments in macro script. '%s'" % macro_text)
 
+    def _press_delay(self, macro):
+        delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.press_delay) / 1000.0 )
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Press delay of %f" % delay) 
+        time.sleep(delay)
+        
+    def _release_delay(self, macro):
+        delay = 0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Release delay of %f" % delay) 
+        time.sleep(delay)
+        
     def _send_uinput(self, target, val, state):
         if val in g15uinput.capabilities:
             g15uinput.emit(target, g15uinput.capabilities[val], state, True)

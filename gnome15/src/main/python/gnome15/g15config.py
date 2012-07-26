@@ -1433,9 +1433,7 @@ class G15Config:
         macro_editor = g15macroeditor.G15MacroEditor(self.main_window)
         macro_editor.set_driver(self.driver)
         macro_editor.set_macro(macro)
-        dialog = macro_editor.window
-        dialog.run()
-        dialog.hide()
+        macro_editor.run()
         
     def _remove_macro(self, widget):
         memory = self._get_memory_number()

@@ -203,7 +203,7 @@ class G15MacroRecorder():
                 keysym = local_dpy.keycode_to_keysym(event.detail, 0)
                 if not keysym:
                     logger.debug("Recorded %s" % event.detail)  
-                    self._record_key(event, event.detail)                    
+                    self._record_key_callback(event, event.detail)                    
                 else:
                     logger.debug("Keysym = %s" % str(keysym))
                     s = self._lookup_keysym(keysym)

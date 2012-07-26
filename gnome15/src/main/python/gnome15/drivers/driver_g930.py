@@ -22,6 +22,7 @@ import pyinputevent.scancodes as S
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15globals as g15globals
+import gnome15.g15uinput as g15uinput
 import gconf
 import fcntl
 import os
@@ -138,8 +139,9 @@ class AbstractInputDevice(SimpleDevice):
 SimpleDevice implementation for handling multi-media keys. 
 '''
 class MultiMediaDevice(AbstractInputDevice):
-    def __init__(self, callback, *args, **kwargs):
+    def __init__(self, grab_multimedia, callback, *args, **kwargs):
         AbstractInputDevice.__init__(self, callback, g930_key_map, *args, **kwargs)
+        self._grab_multimedia = grab_multimedia
         
     def receive(self, event):
         if event.etype == S.EV_KEY:
@@ -148,6 +150,22 @@ class MultiMediaDevice(AbstractInputDevice):
                 self._event(event.ecode, state)
         elif event.etype == 0:
             return
+        elif event.etype == 4 and event.evalue == 786666:
+            # Volume down on G930
+            if self._grab_multimedia:
+                self._event(S.KEY_VOLUMEDOWN, g15driver.KEY_STATE_DOWN)
+                self._event(S.KEY_VOLUMEDOWN, g15driver.KEY_STATE_UP)
+            else:
+                g15uinput.emit(g15uinput.KEYBOARD, g15uinput.KEY_VOLUMEDOWN, 1, True)
+                g15uinput.emit(g15uinput.KEYBOARD, g15uinput.KEY_VOLUMEDOWN, 0, True)
+        elif event.etype == 4 and event.evalue == 786665:
+            # Volume down on G930
+            if self._grab_multimedia:
+                self._event(S.KEY_VOLUMEUP, g15driver.KEY_STATE_DOWN)
+                self._event(S.KEY_VOLUMEUP, g15driver.KEY_STATE_UP)
+            else:
+                g15uinput.emit(g15uinput.KEYBOARD, g15uinput.KEY_VOLUMEUP, 1, True)
+                g15uinput.emit(g15uinput.KEYBOARD, g15uinput.KEY_VOLUMEUP, 0, True)
         else:
             logger.warning("Unhandled event: %s" % str(event))
 
@@ -242,7 +260,7 @@ class Driver(g15driver.AbstractDriver):
         self.key_thread = KeyboardReceiveThread(self.device)
         for devpath in self.mm_devices:
             logger.info("Adding input multi-media device %s" % devpath)
-            self.key_thread.devices.append(MultiMediaDevice(callback, devpath, devpath))
+            self.key_thread.devices.append(MultiMediaDevice(self.grab_multimedia, callback, devpath, devpath))
             
         self.key_thread.start()
         

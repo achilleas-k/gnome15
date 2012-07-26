@@ -19,6 +19,7 @@ gnome15_PYTHON = 		\
 	g15plugin.py \
 	g15locale.py \
 	g15keyboard.py \
+	g15keyio.py \
 	g15pluginmanager.py \
 	g15profile.py \
 	g15exceptions.py \

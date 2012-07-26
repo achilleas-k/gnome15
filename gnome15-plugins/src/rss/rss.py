@@ -131,9 +131,19 @@ class G15RSSPreferences():
             self._gconf_client.set_list(self._gconf_key + "/urls", gconf.VALUE_STRING, urls)   
         
 class G15FeedsMenuItem(g15theme.MenuItem):
-    def __init__(self, id, entry):
-        g15theme.MenuItem.__init__(self, id)
+    def __init__(self, component_id, entry):
+        g15theme.MenuItem.__init__(self, component_id)
         self.entry = entry
+        if "icon" in self.entry:
+            self.icon = self.entry["icon"]
+        elif "image" in self.entry:
+            img = self.entry["image"]
+            if "url" in img:
+                self.icon = img["url"]
+            elif "link" in img:
+                self.icon = img["link"]
+        else:
+            self.icon = None
         
     def on_configure(self):
         self.set_theme(g15theme.G15Theme(self.parent.get_theme().dir, "menu-entry"))
@@ -172,12 +182,15 @@ class G15FeedPage(g15theme.G15Page):
         self._screen = plugin._screen
         self._icon_surface = None
         self._icon_embedded = None
+        self._selected_icon_embedded = None
         self.url = url
         self.index = -1
         self._menu = g15theme.Menu("menu")
+        self._menu.on_selected = self._on_selected
         g15theme.G15Page.__init__(self, "Feed " + str(plugin._page_serial), self._screen,
                                      thumbnail_painter=self._paint_thumbnail,
-                                     theme=g15theme.G15Theme(self, "menu-screen"), theme_properties_callback=self._get_theme_properties,
+                                     theme=g15theme.G15Theme(self, "menu-screen"), 
+                                     theme_properties_callback=self._get_theme_properties,
                                      originating_plugin = plugin)
         self.add_child(self._menu)
         self.add_child(g15theme.MenuScrollbar("viewScrollbar", self._menu))
@@ -189,6 +202,14 @@ class G15FeedPage(g15theme.G15Page):
     """
     Private
     """
+    def _on_selected(self):
+        self._selected_icon_embedded = None
+        if self._menu.selected is not None and self._menu.selected.icon is not None:
+            try :
+                icon_surface = g15util.load_surface_from_file(self._menu.selected.icon)
+                self._selected_icon_embedded = g15util.get_embedded_image_url(icon_surface)
+            except:
+                logger.warning("Failed to get icon %s" % str(self._menu.selected.icon))
         
     def _reload(self):
         self.feed = feedparser.parse(self.url)
@@ -201,6 +222,11 @@ class G15FeedPage(g15theme.G15Page):
                 icon = img["url"]
             elif "link" in img:
                 icon = img["link"]
+                
+        title = self.feed["feed"]["title"] if "title" in self.feed["feed"] else self.url
+        if icon is None and title.endswith("- Twitter Search"):
+            title = title[:-16]
+            icon = g15util.get_icon_path("gnome15")
         if icon is None:
             icon = g15util.get_icon_path(["application-rss+xml","gnome-mime-application-rss+xml"], self._screen.height)
             
@@ -216,7 +242,7 @@ class G15FeedPage(g15theme.G15Page):
                 logger.warning("Failed to get icon %s" % str(icon))
                 self._icon_surface = None
                 self._icon_embedded = None
-        self.set_title(self.feed["feed"]["title"] if "title" in self.feed["feed"] else self.url)
+        self.set_title(title)
         self._subtitle = self.feed["feed"]["subtitle"] if "subtitle" in self.feed["feed"] else ""
         self._menu.remove_all_children()
         i = 0
@@ -227,8 +253,12 @@ class G15FeedPage(g15theme.G15Page):
     def _get_theme_properties(self):
         properties = {}
         properties["title"] = self.title
-        properties["icon"] = self._icon_embedded
+        if self._selected_icon_embedded is not None:
+            properties["icon"] = self._selected_icon_embedded
+        else:
+            properties["icon"] = self._icon_embedded
         properties["subtitle"] = self._subtitle
+        properties["no_news"] = self._menu.get_child_count() == 0
         properties["alt_title"] = ""
         try:
             update_time = self.feed.updated
