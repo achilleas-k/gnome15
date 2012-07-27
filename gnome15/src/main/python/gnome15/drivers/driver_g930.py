@@ -151,19 +151,13 @@ class MultiMediaDevice(AbstractInputDevice):
         elif event.etype == 0:
             return
         elif event.etype == 4 and event.evalue == 786666:
-            # Volume down on G930
-            if self._grab_multimedia:
-                self._event(S.KEY_VOLUMEDOWN, g15driver.KEY_STATE_DOWN)
-                self._event(S.KEY_VOLUMEDOWN, g15driver.KEY_STATE_UP)
-            else:
+            # Hack for Volume down on G930
+            if not self._grab_multimedia:
                 g15uinput.emit(g15uinput.KEYBOARD, g15uinput.KEY_VOLUMEDOWN, 1, True)
                 g15uinput.emit(g15uinput.KEYBOARD, g15uinput.KEY_VOLUMEDOWN, 0, True)
         elif event.etype == 4 and event.evalue == 786665:
-            # Volume down on G930
-            if self._grab_multimedia:
-                self._event(S.KEY_VOLUMEUP, g15driver.KEY_STATE_DOWN)
-                self._event(S.KEY_VOLUMEUP, g15driver.KEY_STATE_UP)
-            else:
+            # Hack for Volume down on G930
+            if not self._grab_multimedia:
                 g15uinput.emit(g15uinput.KEYBOARD, g15uinput.KEY_VOLUMEUP, 1, True)
                 g15uinput.emit(g15uinput.KEYBOARD, g15uinput.KEY_VOLUMEUP, 0, True)
         else:

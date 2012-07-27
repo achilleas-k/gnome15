@@ -977,7 +977,7 @@ class G15MacroScriptEditor():
     
     def _on_output_delays_changed(self, widget):
         self.__recorder.output_delays = widget.get_active()
-        self.__gconf_client.set_bool("/apps/gnome15/record_delays", self.__recorder.output_delays)
+        self.__gconf_client.set_bool("/apps/gnome15/script_editor/record_delays", self.__recorder.output_delays)
         
     def _on_record(self, widget):
         self.__recorder.clear()
