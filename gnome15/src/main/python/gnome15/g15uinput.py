@@ -28,6 +28,7 @@ import uinput
 import g15util
 import os
 import subprocess
+import ConfigParser
 from uinput.ev import *
 from threading import RLock
 from gnome15 import g15globals
@@ -91,6 +92,34 @@ JS_MOVEMENT = {
 for k in JS_MOVEMENT:
     capabilities[k] = JS_MOVEMENT[k]
     
+"""
+Load the X Keysym to UInput map 
+"""
+__keysym_map = {}
+__keysym_map_path = "%s/keysym-to-uinput" % g15globals.ukeys_dir
+if os.path.exists(__keysym_map_path):
+    f = open(__keysym_map_path, "r")
+    b = []
+    for line in f.readlines():
+        line = line.strip()
+        if not line == "" and not line.startswith("#"):
+            arr = line.split("=")
+            if len(arr) > 1:
+                __keysym_map[arr[0].lower()] = arr[1]
+else:
+    logger.warning("Could not find keysym to uinput map %s" % __keysym_map_path)
+    
+def get_keysym_to_uinput_mapping(keysym):
+    """
+    Get the mapping exists for the provided keysym. This is case insensitive.
+    
+    Keyword arguments:
+    keysym        -- X keysym
+    """
+    if keysym.lower() in __keysym_map:
+        return __keysym_map[keysym.lower()]
+    logger.warning("Failed to translate X keysym %s to UInput code. You can add a mapping by editing %s. Please also report this on the Gnome15 project forums." % ( keysym, __keysym_map_path ))
+
 def are_calibration_tools_available():
     """
     Test for the existence of calibration tools 'jstest-gtk' and 'jscal'.

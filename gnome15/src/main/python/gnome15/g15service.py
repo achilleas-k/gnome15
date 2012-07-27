@@ -376,7 +376,7 @@ class G15Service(g15desktop.G15AbstractService):
                         logger.error("Invalid operation in macro script. '%s'" % macro_text)
                     else:
                         if down > 0:
-                            self._release_delay()
+                            self._release_delay(macro)
                         down += 1
                         self._send_uinput(split[2], val, 1)
                         self._press_delay(macro)

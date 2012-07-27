@@ -626,7 +626,9 @@ class G15MacroEditor():
         
 OP_ICONS = { 'delay' : 'gtk-media-pause',
             'press' : 'gtk-go-down',
+            'upress' : 'gtk-go-down',
             'release' : 'gtk-go-up',
+            'urelease' : 'gtk-go-up',
             'execute' : 'gtk-execute',
             'label' : 'gtk-underline',
             'goto' : [ 'stock_media-prev','media-skip-backward','gtk-media-previous' ] }
@@ -662,6 +664,7 @@ class G15MacroScriptEditor():
         self.__output_delays.set_active(g15util.get_bool_or_default(self.__gconf_client, "/apps/gnome15/script_editor/record_delays", True))
         self.__emit_uinput.set_active(g15util.get_bool_or_default(self.__gconf_client, "/apps/gnome15/script_editor/emit_uinput", False))
         self.__recorder.output_delays = self.__output_delays.get_active()
+        self.__recorder.emit_uinput = self.__emit_uinput.get_active()
         
     def set_macro(self, macro):
         self.__editing_macro = macro
@@ -676,7 +679,7 @@ class G15MacroScriptEditor():
             split = macro_text.split(" ")
             op = split[0].lower()
             if len(split) > 1:
-                val = split[1]                
+                val = " ".join(split[1:])                
                 if op in OP_ICONS:
                     icon = OP_ICONS[op]
                     icon_path = g15util.get_icon_path(icon, 24)
@@ -703,11 +706,11 @@ class G15MacroScriptEditor():
         
         pressed = {}
         for _,val,op,_ in self.__script_model:
-            if op == "press":
+            if op == "press" or op == "upress":
                 if val in pressed:
                     return "More than one key press of <b>%s</b> before a release" % val
                 pressed[val] = True
-            elif op == "release":
+            elif op == "release" or op == "urelease":
                 if not val in pressed:
                     return "Release of <b>%s</b> before it was pressed" % val
                 del pressed[val]
@@ -861,8 +864,8 @@ class G15MacroScriptEditor():
         return len(t)
     
     def _on_emit_uinput_toggled(self, widget):
-        self._load_key_presses()
-        self.__gconf_client.set_bool("/apps/gnome15/emit_uinput", widget.get_active())
+        self.__recorder.emit_uinput = widget.get_active()
+        self.__gconf_client.set_bool("/apps/gnome15/script_editor/emit_uinput", widget.get_active())
     
     def _on_deselect_all(self, widget):
         self.__script_tree.get_selection().unselect_all()
@@ -989,13 +992,9 @@ class G15MacroScriptEditor():
             i = self._get_insert_index()
             for op, value in self.__recorder.script:
                 if len(self.__recorder.script) > 0:
-                    if self.__emit_uinput.get_active():
-                        # Translate UInput
-                        pass
-                    else: 
-                        macro_text = "%s %s" % ( self._format_op(op), value) 
-                        self.__macros.insert(i, macro_text)
-                        i += 1 
+                    macro_text = "%s %s" % ( self._format_op(op), value) 
+                    self.__macros.insert(i, macro_text)
+                    i += 1 
             self._rebuild_model()
     
     def _on_add_delay(self, widget):        
@@ -1027,13 +1026,13 @@ class G15MacroScriptEditor():
         self._rebuild_model()
         
     def _on_select_all_key_operations(self, widget):
-        self._select_by_op([ "press", "release" ]) 
+        self._select_by_op([ "press", "release", "upress", "urelease" ]) 
         
     def _on_select_all_key_presses(self, widget):
-        self._select_by_op("press")
+        self._select_by_op(["press", "upress" ])
         
     def _on_select_all_key_releases(self, widget):
-        self._select_by_op("release")
+        self._select_by_op(["release", "urelease"])
         
     def _on_select_all_commands(self, widget):
         self._select_by_op("execute")

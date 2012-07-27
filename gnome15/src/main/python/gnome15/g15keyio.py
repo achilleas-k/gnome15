@@ -17,6 +17,7 @@
 #        | along with this program; if not, write to the Free Software                 |
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
+from gnome15 import g15globals
 
 
 """
@@ -25,6 +26,7 @@ or XTEST as well as injecting such keys
 """  
 
 import gnome15.g15locale as g15locale
+import gnome15.g15uinput as g15uinput
 _ = g15locale.get_translation("macro-recorder", modfile = __file__).ugettext
 
 import time
@@ -92,6 +94,7 @@ class G15KeyRecorder():
         self.on_stop = None
         self.single_key = False
         self.output_delays = True
+        self.emit_uinput = False
         
     def clear(self):
         del self.script[:]
@@ -153,7 +156,19 @@ class G15KeyRecorder():
             if self.output_delays:
                 self.script.append(["Delay", str(int(delay * 1000))])
             self._key_down = now
-        pr = event.type == X.KeyPress and "Press" or "Release"
+
+        if self.emit_uinput:            
+            pr = event.type == X.KeyPress and "UPress" or "URelease"
+            keyname =  g15uinput.get_keysym_to_uinput_mapping(keyname)  + " " + g15uinput.KEYBOARD
+            if keyname:
+                for c in keyname.split(","):
+                    self._add_key(pr, event, c)
+        else:
+            pr = event.type == X.KeyPress and "Press" or "Release"
+            self._add_key(pr, event, keyname)
+            
+
+    def _add_key(self, pr, event, keyname):            
         keydown = self._key_state[keyname] if keyname in self._key_state else None
         if keydown is None:
             if event.type == X.KeyPress:
