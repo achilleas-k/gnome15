@@ -239,6 +239,7 @@ class G15Config:
         self.state = STOPPED
         self.driver = None
         self.selected_device = None
+        self._last_no_devices = -1
         
         # Load main Glade file
         g15locale.get_translation("g15-config")
@@ -322,6 +323,7 @@ class G15Config:
         self.device_model = self.widget_tree.get_object("DeviceModel")
         self.device_view = self.widget_tree.get_object("DeviceView")
         self.main_pane = self.widget_tree.get_object("MainPane")
+        self.main_parent = self.widget_tree.get_object("MainParent")
         self.device_title = self.widget_tree.get_object("DeviceTitle")
         self.device_enabled = self.widget_tree.get_object("DeviceEnabled")
         self.tabs = self.widget_tree.get_object("Tabs")
@@ -1528,6 +1530,7 @@ class G15Config:
         previous_sel_device_name = self._default_device_name  
         sel_device_name = None
         idx = 0
+        print len(self.devices),"DEVICES"
         for device in self.devices:
             if device.model_id == 'virtual':
                 icon_file = g15util.get_icon_path(["preferences-system-window", "preferences-system-windows", "gnome-window-manager", "window_fullscreen"])
@@ -1543,14 +1546,13 @@ class G15Config:
             sel_device_name = self.devices[0].uid
             self.device_view.select_path((0,))
             
-        if idx == 1:
-            main_parent = self.main_pane.get_parent() 
-            main_parent.remove(self.main_pane)
-            self.main_vbox.reparent(main_parent)
-            self.widget_tree.get_object("DeviceDetails").set_visible(False)
-            self.device_title.set_visible(False)
-            self.device_enabled.set_visible(False)
-            self.device_enabled.set_active(True)
+        if idx != self._last_no_devices:
+            if idx == 1:
+                self.widget_tree.get_object("MainScrolledWindow").set_visible(False)
+                self.widget_tree.get_object("DeviceDetails").set_visible(False)
+            else:
+                self.widget_tree.get_object("MainScrolledWindow").set_visible(True)
+                self.widget_tree.get_object("DeviceDetails").set_visible(True)
             
         
     def _load_profile_list(self):

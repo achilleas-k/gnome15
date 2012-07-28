@@ -843,6 +843,22 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="ProfileModel">
+    <columns>
+      <!-- column-name Profile -->
+      <column type="gchararray"/>
+      <!-- column-name Weight -->
+      <column type="gint"/>
+      <!-- column-name Id -->
+      <column type="gchararray"/>
+      <!-- column-name Editable -->
+      <column type="gboolean"/>
+      <!-- column-name Enabled -->
+      <column type="gboolean"/>
+      <!-- column-name Locked -->
+      <column type="GdkPixbuf"/>
+    </columns>
+  </object>
   <object class="GtkDialog" id="MainWindow">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -850,7 +866,7 @@
     <property name="window_position">center</property>
     <property name="type_hint">normal</property>
     <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox1">
+      <object class="GtkVBox" id="MainParent">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="spacing">2</property>
@@ -919,7 +935,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <child>
-              <object class="GtkScrolledWindow" id="scrolledwindow6">
+              <object class="GtkScrolledWindow" id="MainScrolledWindow">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hscrollbar_policy">never</property>
@@ -3223,22 +3239,6 @@ choose another name.</property>
     <action-widgets>
       <action-widget response="0">button5</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkListStore" id="ProfileModel">
-    <columns>
-      <!-- column-name Profile -->
-      <column type="gchararray"/>
-      <!-- column-name Weight -->
-      <column type="gint"/>
-      <!-- column-name Id -->
-      <column type="gchararray"/>
-      <!-- column-name Editable -->
-      <column type="gboolean"/>
-      <!-- column-name Enabled -->
-      <column type="gboolean"/>
-      <!-- column-name Locked -->
-      <column type="GdkPixbuf"/>
-    </columns>
   </object>
   <object class="GtkListStore" id="ProfilePluginsModeModel">
     <columns>
