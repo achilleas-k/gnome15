@@ -30,8 +30,6 @@ import ImageMath
 import logging
 logger = logging.getLogger("driver") 
 
-raise Exception("Blah")
-
 # Driver information (used by driver selection UI)
 id="gtk"
 name=_("GTK Virtual Keyboard Driver")

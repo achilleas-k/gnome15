@@ -1530,7 +1530,6 @@ class G15Config:
         previous_sel_device_name = self._default_device_name  
         sel_device_name = None
         idx = 0
-        print len(self.devices),"DEVICES"
         for device in self.devices:
             if device.model_id == 'virtual':
                 icon_file = g15util.get_icon_path(["preferences-system-window", "preferences-system-windows", "gnome-window-manager", "window_fullscreen"])
