@@ -310,49 +310,9 @@ class Driver(g15driver.AbstractDriver):
     def get_model_name(self):
         return self.device.model_id
     
-    def on_disconnect(self):
-        if not self.is_connected():
-            raise Exception("Already disconnected")
-        self.conf_client.notify_remove(self.notify_handle)
-        self.connected = False
-        if self.dispatcher != None:
-            self.dispatcher.running = False
-        self.socket.close()
-        self.socket = None
-        self.dispatcher = None
-        if self.on_close != None:
-            self.on_close(self)
     
     def is_connected(self):
         return self.connected
-        
-    def reconnect(self):
-        if self.is_connected():
-            self.disconnect()
-        self.connect()
-        
-    def connect(self):
-        if self.is_connected():
-            raise Exception("Already connected")
-        
-        
-        port = 15550
-        e = self.conf_client.get("/apps/gnome15/%s/g15daemon_port" % self.device.uid)
-        if e:
-            port = e.get_int()
-        
-        map = {}
-            
-        self.socket  = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.settimeout(5.0)
-        self.socket.connect(("127.0.0.1", port))
-        
-        self.dispatcher = G15Dispatcher(map, self.socket)
-        self.async = G15Async(map).start()   
-        self.dispatcher.wait_for_handshake()  
-        self.connected = True
-        
-        self.notify_handle = self.conf_client.notify_add("/apps/gnome15/%s/g15daemon_port" % self.device.uid, self.config_changed, None)
         
     def config_changed(self, client, connection_id, entry, args):
         if self.change_timer != None:
@@ -418,3 +378,35 @@ class Driver(g15driver.AbstractDriver):
                     self.disconnect()
         finally:
             self.lock.release()
+            
+    def _on_disconnect(self):
+        if not self.is_connected():
+            raise Exception("Already disconnected")
+        self.conf_client.notify_remove(self.notify_handle)
+        self.connected = False
+        if self.dispatcher != None:
+            self.dispatcher.running = False
+        self.socket.close()
+        self.socket = None
+        self.dispatcher = None
+        if self.on_close != None:
+            self.on_close(self)
+            
+    def _on_connect(self):        
+        port = 15550
+        e = self.conf_client.get("/apps/gnome15/%s/g15daemon_port" % self.device.uid)
+        if e:
+            port = e.get_int()
+        
+        map = {}
+            
+        self.socket  = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.settimeout(5.0)
+        self.socket.connect(("127.0.0.1", port))
+        
+        self.dispatcher = G15Dispatcher(map, self.socket)
+        self.async = G15Async(map).start()   
+        self.dispatcher.wait_for_handshake()  
+        self.connected = True
+        
+        self.notify_handle = self.conf_client.notify_add("/apps/gnome15/%s/g15daemon_port" % self.device.uid, self.config_changed, None)

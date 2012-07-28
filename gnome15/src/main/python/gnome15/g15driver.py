@@ -183,7 +183,7 @@ seq_no = 0
                         
 def zeroize(val):
     """
-    Zero-ize a control value (will be used for the fully off value). The type
+    Zeroise a control value (will be used for the fully off value). The type
     returned will be the same as the type provided
     
     Keyword arguments:
@@ -485,6 +485,7 @@ class AbstractDriver(object):
         seq_no += 1
         self.seq = seq_no
         self.disconnecting = False
+        self.connecting = False
         self.all_off_on_disconnect = True
         self.allow_multiple = True
         self._reset_state()
@@ -571,88 +572,116 @@ class AbstractDriver(object):
                     elif isinstance(c.value, tuple):
                         c.value = (0, 0, 0)
                     self.update_control(c)
-            self.on_disconnect()
+            self._on_disconnect()
         finally:
             self.disconnecting = False
             self._reset_state()
     
+    def _on_disconnect(self):
+        """
+        For subclasses to implemented disconnection logic
+        """
+        raise NotImplementedError( "Not implemented" )
     
-    """
-    Start the driver
-    """
     def connect(self):
+        """
+        Start the driver
+        """
+        if self.is_connected():
+            raise Exception("Already connected")
+        logger.info("Connecting driver %s" % self.get_name())
+        self.connecting = True
+        try:
+            self._on_connect()
+        finally:
+            self.connecting = False
+            
+    def _on_connect(self):
         raise NotImplementedError( "Not implemented" )
     
-    """
-    For subclasses to implemented disconnection logic
-    """
-    def on_disconnect(self):
-        raise NotImplementedError( "Not implemented" )
-    
-    """
-    Get if driver is connected
-    """
     def is_connected(self):
-        raise NotImplementedError( "Not implemented" )
-    
-    """
-    Get the name of the driver
-    """
-    def get_name(self):
-        raise NotImplementedError( "Not implemented" )
-    
-    """
-    Get a list of the model names this driver supports
-    """
-    def get_model_names(self):
-        raise NotImplementedError( "Not implemented" )
-    
-    """
-    Get the model name that this driver is connected to
-    """
-    def get_model_name(self):
+        """
+        Get if driver is connected
+        """
         raise NotImplementedError( "Not implemented" )
         
-    """
-    Get the size of the screen. Returns a tuple of (width, height)
-    """
+    def reconnect(self):
+        """
+        Disconnected (if connected), then reconnect
+        """
+        if self.is_connected():
+            self.disconnect()
+        self.connect()
+    
+
+    def get_name(self):
+        """
+        Get the name of the driver
+        """
+        raise NotImplementedError( "Not implemented" )
+    
+    
+    def get_model_names(self):
+        """
+        Get a list of the model names this driver supports
+        """
+        raise NotImplementedError( "Not implemented" )
+    
+    
+    def get_model_name(self):
+        """
+        Get the model name that this driver is connected to
+        """
+        raise NotImplementedError( "Not implemented" )
+        
+    
     def get_size(self):
+        """
+        Get the size of the screen. Returns a tuple of (width, height)
+        """
         raise NotImplementedError( "Not implemented" )
     
-    """
-    Get the grid the extra keys available on this keyboard. This is currently only a hint for the Gtk driver
-    """
     def get_key_layout(self):
+        """
+        Get the grid the extra keys available on this keyboard. This is currently only a hint for the Gtk driver
+        """
         raise NotImplementedError( "Not implemented" )
     
-    """
-    Get the bits per pixel. 1 would be monochrome
-    """
+
     def get_bpp(self):
+        """
+        Get the bits per pixel. 1 would be monochrome
+        """
         raise NotImplementedError( "Not implemented")
     
-    """
-    Get the all of the controls available. This would include things such as LCD contrast, LCD brightness,
-    keyboard colour, keyboard backlight etc
-    """
+    
     def get_controls(self):
+        """
+        Get the all of the controls available. This would include things such as LCD contrast, LCD brightness,
+        keyboard colour, keyboard backlight etc
+        """
         raise NotImplementedError( "Not implemented")
     
-    """
-    Repaint the screen. 
-    """
+    
     def paint(self, image):
+        """
+        Repaint the screen. 
+        """
         raise NotImplementedError( "Not implemented" )
     
-    """
-    Synchronize a control with the keyboard. For example, if the control was for the
-    keyboard colour, the keyboard colour would actually change when this function
-    is invoked
     
-    Subclasses should not override this function, instead they should implement
-    on_update_control()
-    """
     def update_control(self, control):
+        """
+        Synchronize a control with the keyboard. For example, if the control was for the
+        keyboard colour, the keyboard colour would actually change when this function
+        is invoked
+        
+        Subclasses should not override this function, instead they should implement
+        on_update_control()
+        
+        Keyword arguments:
+        control        -- control to update
+        """
         if self.check_control(control):
             for l in self.control_update_listeners:
                 l.control_updated(control)
@@ -670,21 +699,26 @@ class AbstractDriver(object):
         raise NotImplementedError( "Not implemented" )
                 
         
-    """
-    Start receiving events when the additional keys (G keys, L keys and M keys)
-    are pressed and released. The provided callback will be invoked with two
-    arguments, the first being the key code (see the constants G_KEY_xx)
-    and the second being the key state (KEY_STATE_DOWN or KEY_STATE_UP). 
-    """    
+        
     def grab_keyboard(self, callback):
+        """
+        Start receiving events when the additional keys (G keys, L keys and M keys)
+        are pressed and released. The provided callback will be invoked with two
+        arguments, the first being the key code (see the constants G_KEY_xx)
+        and the second being the key state (KEY_STATE_DOWN or KEY_STATE_UP).
+        
+        Keyword arguments:
+        callback    --    invoked when keys are pressed
+        """
         raise NotImplementedError( "Not implemented" )
     
-    """
-    Give the driver a chance to alter a theme's SVG. This has been introduced to work
-    around a problem of Inkscape (the recommended 'IDE' for designing themes),
-    does not saving bitmap font names
-    """
+    
     def process_svg(self, document):
+        """
+        Give the driver a chance to alter a theme's SVG. This has been introduced to work
+        around a problem of Inkscape (the recommended 'IDE' for designing themes),
+        does not saving bitmap font names
+        """
         raise NotImplementedError( "Not implemented" )
     
     def get_mkey_lights(self):

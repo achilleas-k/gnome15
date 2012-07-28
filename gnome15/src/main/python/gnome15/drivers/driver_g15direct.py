@@ -62,7 +62,7 @@ description=_("For use with the G15 based devices only, this driver communicates
 has_preferences=True
 
 
-
+DEBUG_LIBG15=True
 KEY_MAP = {
         g15driver.G_KEY_G1  : 1<<0,
         g15driver.G_KEY_G2  : 1<<1,
@@ -253,77 +253,6 @@ class Driver(g15driver.AbstractDriver):
     def get_model_name(self):
         return self.device.model_id
         
-    def connect(self):  
-        if self.is_connected():
-            raise Exception("Already connected")
-          
-        self.thread = None  
-        self.callback = None
-        self.notify_handles = [] 
-                
-        # Create an empty string buffer for use with monochrome LCD
-        self.empty_buf = ""
-        for i in range(0, 861):
-            self.empty_buf += chr(0)
-        
-        # TODO Enable UINPUT if multimedia key support is required?
-        self.timeout = 10000
-        e = self.conf_client.get("/apps/gnome15/%s/timeout" % self.device.uid)
-        if e:
-            self.timeout = e.get_int()
-        
-        logger.info("Initialising pylibg15, looking for %s:%s" % ( hex(self.device.controls_usb_id[0]), hex(self.device.controls_usb_id[1]) ))
-        if logger.level < logging.WARN and logger.level != logging.NOTSET:
-            pylibg15.set_debug(pylibg15.G15_LOG_INFO)
-        err = pylibg15.init(False, self.device.controls_usb_id[0], self.device.controls_usb_id[1])
-        if err != pylibg15.G15_NO_ERROR:
-            raise g15exceptions.NotConnectedException("libg15 returned error %d " % err)
-        logger.info("Initialised pylibg15")
-        self.connected = True
-
-        for control in self.get_controls():
-            self._do_update_control(control)
-        
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/joymode" % self.device.uid, self._config_changed, None))
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/timeout" % self.device.uid, self._config_changed, None))
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/digital_offset" % self.device.uid, self._config_changed, None))
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/analogue_offset" % self.device.uid, self._config_changed, None))
-        
-        self._load_configuration()
-        
-    def _load_configuration(self):
-        self.joy_mode = self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
-        self.digital_calibration = g15util.get_int_or_default(self.conf_client, "/apps/gnome15/%s/digital_offset" % self.device.uid, 63)
-        self.analogue_calibration = g15util.get_int_or_default(self.conf_client, "/apps/gnome15/%s/analogue_offset" % self.device.uid, 20)
-            
-    def _config_changed(self, client, connection_id, entry, args):
-        self._load_configuration()
-            
-    def on_disconnect(self):  
-        if self.is_connected():
-            for h in self.notify_handles:
-                self.conf_client.notify_remove(h)
-            logger.info("Exiting pylibg15")
-            self.connected = False
-            if self.thread is not None:
-                self.thread.on_exit = pylibg15.exit
-                self.thread.deactivate()
-            else:
-                pylibg15.exit()
-            if self.on_close != None:
-                self.on_close(self)
-        else:
-            raise Exception("Not connected")
-        
-    def reconnect(self):
-        if self.is_connected():
-            self.disconnect()
-        self.connect()
-        
-    def on_receive_error(self, exception):
-        if self.is_connected():
-            self.disconnect()
-        
     def grab_keyboard(self, callback):
         self.callback = callback
         self.last_keys = None        
@@ -401,6 +330,66 @@ class Driver(g15driver.AbstractDriver):
     """
     Private
     """
+        
+    def _on_connect(self):  
+        self.thread = None  
+        self.callback = None
+        self.notify_handles = [] 
+                
+        # Create an empty string buffer for use with monochrome LCD
+        self.empty_buf = ""
+        for _ in range(0, 861):
+            self.empty_buf += chr(0)
+        
+        # TODO Enable UINPUT if multimedia key support is required?
+        self.timeout = 10000
+        e = self.conf_client.get("/apps/gnome15/%s/timeout" % self.device.uid)
+        if e:
+            self.timeout = e.get_int()
+        
+        logger.info("Initialising pylibg15, looking for %s:%s" % ( hex(self.device.controls_usb_id[0]), hex(self.device.controls_usb_id[1]) ))
+        if DEBUG_LIBG15 or ( logger.level < logging.WARN and logger.level != logging.NOTSET ):
+            pylibg15.set_debug(pylibg15.G15_LOG_INFO)
+        err = pylibg15.init(False, self.device.controls_usb_id[0], self.device.controls_usb_id[1])
+        if err != pylibg15.G15_NO_ERROR:
+            raise g15exceptions.NotConnectedException("libg15 returned error %d " % err)
+        logger.info("Initialised pylibg15")
+        self.connected = True
+
+        for control in self.get_controls():
+            self._do_update_control(control)
+        
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/joymode" % self.device.uid, self._config_changed, None))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/timeout" % self.device.uid, self._config_changed, None))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/digital_offset" % self.device.uid, self._config_changed, None))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/analogue_offset" % self.device.uid, self._config_changed, None))
+        
+        self._load_configuration()
+        
+    def _load_configuration(self):
+        self.joy_mode = self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
+        self.digital_calibration = g15util.get_int_or_default(self.conf_client, "/apps/gnome15/%s/digital_offset" % self.device.uid, 63)
+        self.analogue_calibration = g15util.get_int_or_default(self.conf_client, "/apps/gnome15/%s/analogue_offset" % self.device.uid, 20)
+            
+    def _config_changed(self, client, connection_id, entry, args):
+        self._load_configuration()
+            
+    def _on_disconnect(self):  
+        if self.is_connected():
+            for h in self.notify_handles:
+                self.conf_client.notify_remove(h)
+            logger.info("Exiting pylibg15")
+            self.connected = False
+            if self.thread is not None:
+                self.thread.on_exit = pylibg15.exit
+                self.thread.deactivate()
+            else:
+                pylibg15.exit()
+            if self.on_close != None:
+                self.on_close(self)
+        else:
+            raise Exception("Not connected")
+        
     def _keyboard_unplugged(self):
         logger.info("Keyboard has been unplugged.")
         self.disconnect()

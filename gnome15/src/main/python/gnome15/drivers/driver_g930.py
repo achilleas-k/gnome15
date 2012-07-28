@@ -179,13 +179,6 @@ class Driver(g15driver.AbstractDriver):
     def get_antialias(self):  
         return cairo.ANTIALIAS_NONE
         
-    def on_disconnect(self):
-        if not self.is_connected():
-            raise Exception("Not connected")
-        self._stop_receiving_keys()
-        if self.on_close != None:
-            g15util.schedule("Close", 0, self.on_close, self)
-        
     def is_connected(self):
         return self.connected
     
@@ -198,12 +191,6 @@ class Driver(g15driver.AbstractDriver):
     def get_model_name(self):
         return self.device.model_id if self.device != None else None
     
-    def simulate_key(self, widget, key, state):
-        if self.callback != None:
-            keys = []
-            keys.append(key)
-            self.callback(keys, state)
-    
     def get_action_keys(self):
         return self.device.action_keys
         
@@ -215,16 +202,6 @@ class Driver(g15driver.AbstractDriver):
             return l
         else:
             return self.device.key_layout
-        
-    def connect(self):
-        if self.is_connected():
-            raise Exception("Already connected")
-        self.notify_handles = []
-        self._init_driver()
-        if not self.device:
-            raise usb.USBError("No supported logitech headphones found on USB bus")
-        if self.device == None:
-            raise usb.USBError("WARNING: Found no " + self.model + " Logitech headphone, Giving up")
         
     def _load_configuration(self):
         self.grab_multimedia = self.conf_client.get_bool("/apps/gnome15/%s/grab_multimedia" % self.device.uid)
@@ -261,6 +238,20 @@ class Driver(g15driver.AbstractDriver):
     '''
     Private
     '''
+    def _on_disconnect(self):
+        if not self.is_connected():
+            raise Exception("Not connected")
+        self._stop_receiving_keys()
+        if self.on_close != None:
+            g15util.schedule("Close", 0, self.on_close, self)
+            
+    def _on_connect(self):
+        self.notify_handles = []
+        self._init_driver()
+        if not self.device:
+            raise usb.USBError("No supported logitech headphones found on USB bus")
+        if self.device == None:
+            raise usb.USBError("WARNING: Found no " + self.model + " Logitech headphone, Giving up")
         
     def _reload_and_reconnect(self):
         self._load_configuration()

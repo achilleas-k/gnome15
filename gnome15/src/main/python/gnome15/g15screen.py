@@ -1194,6 +1194,7 @@ class G15Screen():
                     # Look for other screens using the same driver
                     for s in self.service.screens:
                         if s.driver is not None and self.driver != s.driver and \
+                         ( s.driver.is_connected() or s.driver.connecting ) and \
                            s.driver.get_name() == self.driver.get_name():
                             raise NotConnectedException("Driver %s only allows one device at a time" % s.driver.get_name())
                 

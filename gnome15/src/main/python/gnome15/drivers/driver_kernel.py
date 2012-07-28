@@ -850,17 +850,6 @@ class Driver(g15driver.AbstractDriver):
         else:
             return cairo.ANTIALIAS_NONE
         
-    def on_disconnect(self):
-        if not self.is_connected():
-            raise Exception("Not connected")
-        self._stop_receiving_keys()
-        if self.fb is not None:
-            self.fb.__del__()
-            self.fb = None
-        if self.on_close != None:
-            g15util.schedule("Close", 0, self.on_close, self)
-        self.system_service = None
-        
     def is_connected(self):
         return self.system_service != None
     
@@ -872,12 +861,6 @@ class Driver(g15driver.AbstractDriver):
     
     def get_model_name(self):
         return self.device.model_id if self.device != None else None
-    
-    def simulate_key(self, widget, key, state):
-        if self.callback != None:
-            keys = []
-            keys.append(key)
-            self.callback(keys, state)
     
     def get_action_keys(self):
         return self.device.action_keys
@@ -900,54 +883,6 @@ class Driver(g15driver.AbstractDriver):
             return l
         else:
             return self.device.key_layout
-        
-    def connect(self):
-        if self.is_connected():
-            raise Exception("Already connected")
-        
-        self.notify_handles = []
-        # Check hardware again
-        self._init_driver()
-
-        # Sanity check        
-        if not self.device:
-            raise usb.USBError("No supported logitech keyboards found on USB bus")
-        if self.device == None:
-            raise usb.USBError("WARNING: Found no " + self.model + " Logitech keyboard, Giving up")
-        
-        # If there is no LCD for this device, don't open the framebuffer
-        if self.device.bpp != 0:
-            if self.fb_mode == None or self.device_name == None:
-                raise usb.USBError("No matching framebuffer device found")
-            if self.fb_mode != self.framebuffer_mode:
-                raise usb.USBError("Unexpected framebuffer mode %s, expected %s for device %s" % (self.fb_mode, self.framebuffer_mode, self.device_name))
-            
-            # Open framebuffer
-            logger.info("Using framebuffer %s"  % self.device_name)
-            self.fb = fb.fb_device(self.device_name)
-            if logger.isEnabledFor(logging.DEBUG):
-                self.fb.dump()
-            self.var_info = self.fb.get_var_info()
-                    
-            # Create an empty string buffer for use with monochrome LCD
-            self.empty_buf = ""
-            for i in range(0, self.fb.get_fixed_info().smem_len):
-                self.empty_buf += chr(0)
-            
-        # Connect to DBUS        
-        system_bus = dbus.SystemBus()
-        try:
-            system_service_object = system_bus.get_object('org.gnome15.SystemService', '/org/gnome15/SystemService')
-        except dbus.DBusException:
-            raise Exception("Failed to connect to Gnome15 system service. Is g15-system-service running (as root). \
-It should be launched automatically if Gnome15 is installed correctly.")          
-        self.system_service = dbus.Interface(system_service_object, 'org.gnome15.SystemService')    
-        
-        # Centre the joystick by default
-        if self.joy_mode in [ g15uinput.JOYSTICK, g15uinput.DIGITAL_JOYSTICK ]:
-            g15uinput.emit(self.joy_mode, g15uinput.ABS_X, 128, False)
-            g15uinput.emit(self.joy_mode, g15uinput.ABS_Y, 128, False)
-            g15uinput.syn(self.joy_mode)
                    
     def _load_configuration(self):
         self.joy_mode = self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
@@ -1138,6 +1073,62 @@ It should be launched automatically if Gnome15 is installed correctly.")
     '''
     Private
     '''
+        
+    def _on_connect(self):
+        self.notify_handles = []
+        # Check hardware again
+        self._init_driver()
+
+        # Sanity check        
+        if not self.device:
+            raise usb.USBError("No supported logitech keyboards found on USB bus")
+        if self.device == None:
+            raise usb.USBError("WARNING: Found no " + self.model + " Logitech keyboard, Giving up")
+        
+        # If there is no LCD for this device, don't open the framebuffer
+        if self.device.bpp != 0:
+            if self.fb_mode == None or self.device_name == None:
+                raise usb.USBError("No matching framebuffer device found")
+            if self.fb_mode != self.framebuffer_mode:
+                raise usb.USBError("Unexpected framebuffer mode %s, expected %s for device %s" % (self.fb_mode, self.framebuffer_mode, self.device_name))
+            
+            # Open framebuffer
+            logger.info("Using framebuffer %s"  % self.device_name)
+            self.fb = fb.fb_device(self.device_name)
+            if logger.isEnabledFor(logging.DEBUG):
+                self.fb.dump()
+            self.var_info = self.fb.get_var_info()
+                    
+            # Create an empty string buffer for use with monochrome LCD
+            self.empty_buf = ""
+            for i in range(0, self.fb.get_fixed_info().smem_len):
+                self.empty_buf += chr(0)
+            
+        # Connect to DBUS        
+        system_bus = dbus.SystemBus()
+        try:
+            system_service_object = system_bus.get_object('org.gnome15.SystemService', '/org/gnome15/SystemService')
+        except dbus.DBusException:
+            raise Exception("Failed to connect to Gnome15 system service. Is g15-system-service running (as root). \
+It should be launched automatically if Gnome15 is installed correctly.")          
+        self.system_service = dbus.Interface(system_service_object, 'org.gnome15.SystemService')    
+        
+        # Centre the joystick by default
+        if self.joy_mode in [ g15uinput.JOYSTICK, g15uinput.DIGITAL_JOYSTICK ]:
+            g15uinput.emit(self.joy_mode, g15uinput.ABS_X, 128, False)
+            g15uinput.emit(self.joy_mode, g15uinput.ABS_Y, 128, False)
+            g15uinput.syn(self.joy_mode)
+        
+    def _on_disconnect(self):
+        if not self.is_connected():
+            raise Exception("Not connected")
+        self._stop_receiving_keys()
+        if self.fb is not None:
+            self.fb.__del__()
+            self.fb = None
+        if self.on_close != None:
+            g15util.schedule("Close", 0, self.on_close, self)
+        self.system_service = None
         
     def _reload_and_reconnect(self):
         self._load_configuration()

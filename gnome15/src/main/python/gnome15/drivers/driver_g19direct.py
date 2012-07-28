@@ -169,59 +169,6 @@ class Driver(g15driver.AbstractDriver):
     def get_model_name(self):
         return self.device.model_id
         
-    def connect(self):          
-        if self.is_connected():
-            raise Exception("Already connected")
-        
-        # Detect what version of pyusb we are using
-        pyusb = self._get_usb_lib_version()
-        
-        self.callback = None
-        
-        reset = self.conf_client.get_bool("/apps/gnome15/%s/reset_usb" % self.device.uid)
-        timeout = 10000
-        reset_wait = 0
-        e = self.conf_client.get("/apps/gnome15/%s/timeout" % self.device.uid)
-        if e:
-            timeout = e.get_int()
-        e = self.conf_client.get("/apps/gnome15/%s/reset_wait" % self.device.uid)
-        if e:
-            reset_wait = e.get_int()
-        if reset and pyusb == 1:
-            logger.warning("Using pyusb 1.0. Resetting device causes crash in this version, no reset will be done")
-            reset = False
-        
-        try:
-            self.lg19 = G19(reset, False, timeout, reset_wait)
-            self.connected = True
-        except usb.USBError as e:
-            logger.error("Failed to connect. %s" % str(e))
-            raise g15exceptions.NotConnectedException()
-        
-        # Start listening for keys
-        self.lg19.add_input_processor(self)  
-
-        for control in self.get_controls():
-            self._do_update_control(control)
-            
-    def on_disconnect(self):  
-        if self.is_connected():  
-            self.lg19.stop_event_handling()
-            self.connected = False
-            if self.on_close != None:
-                self.on_close(self)
-        else:
-            raise Exception("Not connected")
-        
-    def reconnect(self):
-        if self.is_connected():
-            self.disconnect()
-        self.connect()
-        
-    def on_receive_error(self, exception):
-        if self.is_connected():
-            self.disconnect()
-        
     def grab_keyboard(self, callback):    
         self.callback = callback    
         self.lg19.start_event_handling()
@@ -273,7 +220,7 @@ class Driver(g15driver.AbstractDriver):
                 self.lg19.send_frame(buf)
             except usb.USBError as e:
                 traceback.print_exc(file=sys.stderr)
-                self.on_receive_error(e)
+                self._on_receive_error(e)
     
     def process_input(self, event):
         if self.callback == None:
@@ -301,6 +248,51 @@ class Driver(g15driver.AbstractDriver):
     """
     Private
     """
+    def _on_connect(self):          
+        # Detect what version of pyusb we are using
+        pyusb = self._get_usb_lib_version()
+        
+        self.callback = None
+        
+        reset = self.conf_client.get_bool("/apps/gnome15/%s/reset_usb" % self.device.uid)
+        timeout = 10000
+        reset_wait = 0
+        e = self.conf_client.get("/apps/gnome15/%s/timeout" % self.device.uid)
+        if e:
+            timeout = e.get_int()
+        e = self.conf_client.get("/apps/gnome15/%s/reset_wait" % self.device.uid)
+        if e:
+            reset_wait = e.get_int()
+        if reset and pyusb == 1:
+            logger.warning("Using pyusb 1.0. Resetting device causes crash in this version, no reset will be done")
+            reset = False
+        
+        try:
+            self.lg19 = G19(reset, False, timeout, reset_wait)
+            self.connected = True
+        except usb.USBError as e:
+            logger.error("Failed to connect. %s" % str(e))
+            raise g15exceptions.NotConnectedException()
+        
+        # Start listening for keys
+        self.lg19.add_input_processor(self)  
+
+        for control in self.get_controls():
+            self._do_update_control(control)
+          
+    def _on_disconnect(self):  
+        if self.is_connected():  
+            self.lg19.stop_event_handling()
+            self.connected = False
+            if self.on_close != None:
+                self.on_close(self)
+        else:
+            raise Exception("Not connected")
+          
+    def _on_receive_error(self, exception):
+        if self.is_connected():
+            self.disconnect()
+            
     def _get_usb_lib_version(self):
         try:
             import usb.core
@@ -332,7 +324,7 @@ class Driver(g15driver.AbstractDriver):
                 self._set_mkey_lights(control.value)
         except usb.USBError as e:
             traceback.print_exc(file=sys.stderr)
-            self.on_receive_error(e)
+            self._on_receive_error(e)
             
     def _rgb_to_uint16(self, r, g, b):
         rBits = r * 32 / 255

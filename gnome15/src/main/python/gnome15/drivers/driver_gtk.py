@@ -25,9 +25,6 @@ import gtk.gdk
 import gobject
 import cairo
 
-import traceback
-import sys
-
 import Image
 import ImageMath
 import logging
@@ -106,9 +103,6 @@ class Driver(g15driver.AbstractDriver):
         self.notify_handle = self.conf_client.notify_add("/apps/gnome15/%s/gtk_mode" % self.device.uid, self.config_changed)
         self._init_driver()
         
-    def __del__(self):
-        self.conf_client.notify_remove(self.notify_handle)
-        
     def get_antialias(self):        
         if self.mode == g15driver.MODEL_G19:
             return cairo.ANTIALIAS_DEFAULT
@@ -119,15 +113,6 @@ class Driver(g15driver.AbstractDriver):
         self._init_driver()
         if self.on_driver_options_change:
             self.on_driver_options_change()
-        
-    def on_disconnect(self):
-        logger.info("Disconnecting GTK driver")
-        if not self.is_connected():
-            raise Exception("Not connected")
-        self.connected = False
-        if self.on_close != None:
-            self.on_close(self, retry=False)
-        gobject.idle_add(self._close_window)
         
     def is_connected(self):
         return self.connected
@@ -143,12 +128,6 @@ class Driver(g15driver.AbstractDriver):
     
     def get_action_keys(self):
         return self.action_keys
-    
-    def simulate_key(self, widget, key, state):
-        if self.callback != None:
-            keys = []
-            keys.append(key)
-            self.callback(keys, state)
         
     def get_key_layout(self):
         return self.key_layout
@@ -162,14 +141,6 @@ class Driver(g15driver.AbstractDriver):
             return 1
         else:
             return 3
-        
-    def connect(self):
-        logger.info("Connecting GTK driver")
-        if self.is_connected():
-            raise Exception("Already connected")
-        self._init_driver()
-        logger.info("Starting GTK driver")
-        gobject.idle_add(self._init_ui)
     
     def get_size(self):
         return self.lcd_size
@@ -240,6 +211,25 @@ class Driver(g15driver.AbstractDriver):
     '''
     Private
     '''
+    def _on_connect(self):
+        self._init_driver()
+        logger.info("Starting GTK driver")
+        gobject.idle_add(self._init_ui)
+        
+    def _on_disconnect(self):
+        logger.info("Disconnecting GTK driver")
+        if not self.is_connected():
+            raise Exception("Not connected")
+        self.connected = False
+        if self.on_close != None:
+            self.on_close(self, retry=False)
+        gobject.idle_add(self._close_window)
+        
+    def _simulate_key(self, widget, key, state):
+        if self.callback != None:
+            keys = []
+            keys.append(key)
+            self.callback(keys, state)
         
     def _do_update_control(self, control):
         if self.connected:   
@@ -255,8 +245,6 @@ class Driver(g15driver.AbstractDriver):
     def _window_closed(self, window, evt):
         if self.main_window != None:
             self.conf_client.set_bool("/apps/gnome15/%s/enabled" % self.device.uid, False)
-#            if self.on_close != None:
-#                self.on_close(self, retry=False)
 
     def _do_set_mkey_lights(self):
         c = self.get_control_for_hint(g15driver.HINT_MKEYS)
@@ -347,8 +335,8 @@ class Driver(g15driver.AbstractDriver):
             for key in row:
                 key_text = " ".join(g15util.get_key_names(list(key)))
                 g_button = gtk.Button(key_text)
-                g_button.connect("pressed", self.simulate_key, key, g15driver.KEY_STATE_DOWN)
-                g_button.connect("released", self.simulate_key, key, g15driver.KEY_STATE_UP)
+                g_button.connect("pressed", self._simulate_key, key, g15driver.KEY_STATE_DOWN)
+                g_button.connect("released", self._simulate_key, key, g15driver.KEY_STATE_UP)
                 hbox.add(g_button)
                 self.buttons[key] = g_button
             rows.add(hbox)
@@ -375,6 +363,9 @@ class Driver(g15driver.AbstractDriver):
         logger.info("Initialised GTK UI")
         self.connected = True
         logger.info("Connected")
+        
+    def __del__(self):
+        self.conf_client.notify_remove(self.notify_handle)
         
 class VirtualLCD(gtk.DrawingArea):
 

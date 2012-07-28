@@ -204,24 +204,6 @@ class Driver(g15driver.AbstractDriver):
     def get_model_name(self):
         return self.device.model_id
         
-    def connect(self):          
-        if self.is_connected():
-            raise Exception("Already connected")
-        
-        port = DEFAULT_PORT
-        e = self.conf_client.get("/apps/gnome15/%s/g19d_port" % self.device.uid)
-        if e:
-            port = e.get_int()
-        
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(30.0)
-        s.connect(("127.0.0.1", port))
-        self.socket = s
-        for control in self.get_controls():
-            self._do_update_control(control)
-        
-        self.notify_handle = self.conf_client.notify_add("/apps/gnome15/%s/g19d_port" % self.device.uid, self.config_changed, None)
-        
     def config_changed(self, client, connection_id, entry, args):
         if self.change_timer != None:
             self.change_timer.cancel()
@@ -233,51 +215,17 @@ class Driver(g15driver.AbstractDriver):
             logger.info("Reconnecting")
             self.disconnect()
             self.connect()
-            
-    def on_disconnect(self):  
-        if self.is_connected():  
-            if self.thread != None:
-                self.thread.running = False
-                self.thread = None
-            self.socket.close()
-            self.socket = None
-            if self.on_close != None:
-                self.on_close(self)
-        else:
-            raise Exception("Not connected")
-        
-    def reconnect(self):
-        if self.is_connected():
-            self.disconnect()
-        self.connect()
-        
-    def on_receive_error(self, exception):
-        if self.is_connected():
-            self.disconnect()
         
     def grab_keyboard(self, callback):
         if self.thread == None:
-            self.thread = EventReceive(self.socket, callback, self.on_receive_error)
+            self.thread = EventReceive(self.socket, callback, self._on_receive_error)
             self.thread.start()
         else:
             raise Exception("Already grabbing keyboard")
-        self.write_out("GK")
+        self._write_out("GK")
         
     def is_connected(self):
-        return self.socket != None 
-    
-    def write_out(self, buf):         
-        self.lock.acquire()
-        try :
-            if not self.is_connected():
-                raise NotConnectedException()
-            self.socket.sendall(buf)
-        except Exception:
-            if self.is_connected():
-                self.disconnect()
-            raise
-        finally:
-            self.lock.release()
+        return self.socket != None
         
     def paint(self, img):     
         if not self.is_connected():
@@ -310,7 +258,7 @@ class Driver(g15driver.AbstractDriver):
                 r = ord(data[i + 2])
                 g = ord(data[i + 1])
                 b = ord(data[i + 0])
-                file_str.write(self.rgb_to_uint16(r, g, b))                
+                file_str.write(self._rgb_to_uint16(r, g, b))                
             buf = file_str.getvalue()
         else:   
             buf = str(back_surface.get_data())     
@@ -320,9 +268,38 @@ class Driver(g15driver.AbstractDriver):
         if len(buf) != expected_size:
             logger.warning("Invalid buffer size, expected %d, got %d" % ( expected_size, len(buf) ) )
         else:
-            self.write_out("I" + str(buf))
+            self._write_out("I" + str(buf))
+    
+    """
+    Private
+    """ 
             
-    def rgb_to_uint16(self, r, g, b):
+    def _on_disconnect(self):  
+        if self.is_connected():  
+            if self.thread != None:
+                self.thread.running = False
+                self.thread = None
+            self.socket.close()
+            self.socket = None
+            if self.on_close != None:
+                self.on_close(self)
+        else:
+            raise Exception("Not connected")
+    
+    def _write_out(self, buf):         
+        self.lock.acquire()
+        try :
+            if not self.is_connected():
+                raise NotConnectedException()
+            self.socket.sendall(buf)
+        except Exception:
+            if self.is_connected():
+                self.disconnect()
+            raise
+        finally:
+            self.lock.release()
+            
+    def _rgb_to_uint16(self, r, g, b):
         rBits = r * 32 / 255
         gBits = g * 64 / 255
         bBits = b * 32 / 255
@@ -335,14 +312,29 @@ class Driver(g15driver.AbstractDriver):
         valueL = (gBits << 5) | bBits
 
         return chr(valueL & 0xff) + chr(valueH & 0xff)
+        
+    def _on_connect(self):          
+        port = DEFAULT_PORT
+        e = self.conf_client.get("/apps/gnome15/%s/g19d_port" % self.device.uid)
+        if e:
+            port = e.get_int()
+        
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(30.0)
+        s.connect(("127.0.0.1", port))
+        self.socket = s
+        for control in self.get_controls():
+            self._do_update_control(control)
+        
+        self.notify_handle = self.conf_client.notify_add("/apps/gnome15/%s/g19d_port" % self.device.uid, self.config_changed, None)
     
     def _do_update_control(self, control):
         if control == keyboard_backlight_control: 
-            self.write_out("B" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
+            self._write_out("B" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
         elif control == default_keyboard_backlight_control: 
-            self.write_out("C" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
+            self._write_out("C" + chr(control.value[0]) + chr(control.value[1]) + chr(control.value[2]));
         elif control == lcd_brightness_control:
-            self.write_out("L" + chr(control.value) );
+            self._write_out("L" + chr(control.value) );
         elif control == mkeys_control:
             self._set_mkey_lights(control.value)
         
@@ -356,5 +348,8 @@ class Driver(g15driver.AbstractDriver):
             val += 0x20
         if lights & g15driver.MKEY_LIGHT_MR != 0:
             val += 0x10
-        self.write_out("M" + chr(val))
+        self._write_out("M" + chr(val))
             
+    def _on_receive_error(self, exception):
+        if self.is_connected():
+            self.disconnect()
