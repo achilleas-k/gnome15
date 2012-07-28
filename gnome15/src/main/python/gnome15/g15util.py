@@ -963,3 +963,15 @@ html_escape_table = {
 
 def html_escape(text):
     return "".join(html_escape_table.get(c,c) for c in text)
+
+"""
+Property type files
+"""
+
+def parse_as_properties(properties_string):
+    d = {}
+    for l in properties_string.split("\n"):
+        a = l.split("=")
+        if len(a) > 1:
+            d[a[0]] = a[1]
+    return d

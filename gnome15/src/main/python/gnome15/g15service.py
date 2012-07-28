@@ -141,6 +141,7 @@ class StartThread(Thread):
 class G15Service(g15desktop.G15AbstractService):
     
     def __init__(self, service_host, no_trap=False):
+        self.exit_on_no_devices = False
         self.active_plugins = {}
         self.session_active = True
         self.service_host = service_host
@@ -155,7 +156,6 @@ class G15Service(g15desktop.G15AbstractService):
         self.x_test_available = None
         self.notify_handles = []
         self.font_faces = {}
-        self.devices = g15devices.find_all_devices()
         self.stopping = False
         self.window_title_listener = None
         self.active_application_name = None
@@ -163,6 +163,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.ignore_next_sigint = False
         self.debug_svg = False
         self._cancel_current_macro = False
+        self.devices = g15devices.find_all_devices()
                 
         # Expose Gnome15 functions via DBus
         logger.debug("Starting the DBUS service")
@@ -175,6 +176,9 @@ class G15Service(g15desktop.G15AbstractService):
             
         g15desktop.G15AbstractService.__init__(self)
         self.name = "DesktopService"
+        
+       
+        
         
     def start_service(self):
         try:
@@ -193,6 +197,8 @@ class G15Service(g15desktop.G15AbstractService):
         
     def stop(self, quickly = False):
         if self.started:
+            g15devices.device_added_listeners.remove(self._devices_changed)
+            g15devices.device_removed_listeners.remove(self._devices_changed)
             g15uinput.close_devices()
             self.global_plugins.deactivate()
             self.stopping = True
@@ -657,6 +663,7 @@ class G15Service(g15desktop.G15AbstractService):
         self._join_all(t)
         
     def _do_start_service(self):
+    
         # Network manager
         self.network_manager = g15network.NetworkManager(self)
         
@@ -687,18 +694,24 @@ class G15Service(g15desktop.G15AbstractService):
         # Create a screen for each device        
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
         logger.info("Looking for devices")
-        devices = g15devices.find_all_devices()
-        if len(devices) == 0:
-            logger.error("No devices found. Gnome15 will now exit")
-            self.shutdown()
-            return
+        if len(self.devices) == 0:
+            if g15devices.have_udev and not self.exit_on_no_devices:
+                logger.error("No devices found yet, waiting for some to appear")
+            else:
+                logger.error("No devices found. Gnome15 will now exit")
+                self.shutdown()
+                return
         else:
+            # Create the default profile for all devices
+            for device in self.devices:
+                g15profile.create_default(device)
+            
             # If there is a single device, it is enabled by default
-            if len(devices) == 1:
-                self.conf_client.set_bool("/apps/gnome15/%s/enabled" % devices[0].uid, True)
+            if len(self.devices) == 1:
+                self.conf_client.set_bool("/apps/gnome15/%s/enabled" % self.devices[0].uid, True)
                 
             errors = 0
-            for device in devices:
+            for device in self.devices:
                 val = self.conf_client.get("/apps/gnome15/%s/enabled" % device.uid)
                 h = self.conf_client.notify_add("/apps/gnome15/%s/enabled" % device.uid, self._device_enabled_configuration_changed, device)
                 self.notify_handles.append(h)
@@ -755,6 +768,10 @@ class G15Service(g15desktop.G15AbstractService):
         self.started = True
         
         gobject.idle_add(self._monitor_session)
+        
+        # Watch for devices changing
+        g15devices.device_added_listeners.append(self._devices_changed)
+        g15devices.device_removed_listeners.append(self._devices_changed)
         
     def _join_all(self, threads, timeout = 30):
         for t in threads:
@@ -912,12 +929,15 @@ class G15Service(g15desktop.G15AbstractService):
             # If there is a single device, stop the service as well
             if len(self.devices) == 1:
                 self.shutdown(False)
+                
+    def _devices_changed(self, device = None):        
+        self.devices = g15devices.find_all_devices()
+        self._check_state_of_all_devices()
             
     def _get_screen_for_device(self, device):
         for screen in self.screens:
             if screen.device.uid == device.uid:
                 return screen
-        
         
     def __del__(self):
         for screen in self.screens:

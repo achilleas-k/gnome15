@@ -500,7 +500,11 @@ class G15Config:
             self._disconnect()
         self.session_bus.add_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
-                                     signal_name='NameOwnerChanged')  
+                                     signal_name='NameOwnerChanged')
+        
+        # Watch for new devices (if pyudev is installed)
+        g15devices.device_added_listeners.append(self._devices_changed)
+        g15devices.device_removed_listeners.append(self._devices_changed) 
         
     def run(self):
         ''' Set up everything and display the window
@@ -522,6 +526,8 @@ class G15Config:
     '''
     Private
     '''
+    def _devices_changed(self, device = None):
+        self._load_devices()
         
     def _name_owner_changed(self, name, old_owner, new_owner):
         if name == "org.gnome15.Gnome15":

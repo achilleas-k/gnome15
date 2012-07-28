@@ -859,12 +859,30 @@ class G15DBUSService(AbstractG15DBUSService):
             dbus_device = G15DBUSDeviceService(self, device)
             self._dbus_devices.append(dbus_device)
             self._dbus_device_map[device.uid] = dbus_device
+        g15devices.device_added_listeners.append(self._device_added)
+        g15devices.device_removed_listeners.append(self._device_removed)
             
         self._bus.add_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
-                                     signal_name='NameOwnerChanged')  
+                                     signal_name='NameOwnerChanged')
+        
+    def _device_removed(self, device):
+        if device.uid in self._dbus_device_map:
+            dbus_device = self._dbus_device_map[device.uid]
+            self._dbus_devices.remove(dbus_device)
+            del self._dbus_device_map[device.uid]
+            self._silently_remove_from_connector(dbus_device)
+        else:
+            logger.warn("DBUS service did not know about a device for some reason (%s)" % device.uid)
+        
+    def _device_added(self, device):
+        dbus_device = G15DBUSDeviceService(self, device)
+        self._dbus_devices.append(dbus_device)
+        self._dbus_device_map[device.uid] = dbus_device
         
     def stop(self):   
+        g15devices.device_added_listeners.remove(self._device_added)
+        g15devices.device_removed_listeners.remove(self._device_removed)
         for dbus_device in self._dbus_devices:
             self._silently_remove_from_connector(dbus_device)
         for screen in self._dbus_screens:

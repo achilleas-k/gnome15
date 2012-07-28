@@ -70,7 +70,7 @@ def check_service_status(session_dbus):
     except:
         return False
 
-def start_service(no_trap=False): 
+def start_service(options): 
     if module_exists("setproctitle"):
         import setproctitle
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
@@ -81,7 +81,8 @@ def start_service(no_trap=False):
     # Start the loop    
     try :
         import gnome15.g15service as g15service
-        service = g15service.G15Service(None, no_trap=no_trap)
+        service = g15service.G15Service(None, no_trap=options.no_trap)
+        service.exit_on_no_devices = options.exit_on_no_devices
         g15service.logger.setLevel(logger.level) 
         service.start_loop()
     except dbus.exceptions.NameExistsException:
@@ -97,6 +98,8 @@ if __name__ == "__main__":
         default=False, help="Run desktop service in foreground.")
     parser.add_option("-n", "--notrap", action="store_true", dest="no_trap",
         default=False, help="Do not try to trap signals.")
+    parser.add_option("-x", "--exit", action="store_true", dest="exit_on_no_devices",
+        default=False, help="Exit immediately if there are no devices.")
     (options, args) = parser.parse_args()
     
     level = logging.NOTSET
@@ -123,4 +126,4 @@ if __name__ == "__main__":
             print "Gnome15 desktop service already running"
         else:
             if options.foreground or ( not options.foreground and os.fork() == 0 ):
-                start_service(options.no_trap)
+                start_service(options)

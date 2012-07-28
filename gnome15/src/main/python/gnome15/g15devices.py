@@ -24,7 +24,12 @@ _ = g15locale.get_translation("gnome15").ugettext
 import usb
 import g15driver
 import g15actions
+import g15util
 import g15drivermanager
+
+# Logging
+import logging
+logger = logging.getLogger("service")
  
 '''
 Keyboard layouts 
@@ -169,7 +174,8 @@ mx5500_action_keys = { g15driver.NEXT_SELECTION: g15actions.ActionBinding(g15dri
 
 # Registered Logitech models
 device_list = { }
-device_by_usb_id = {}
+device_by_usb_id = { }
+__cached_devices = []
 
 class DeviceInfo():
     """
@@ -222,6 +228,9 @@ class DeviceInfo():
         for row in self.key_layout:
             for key in row:
                 self.all_keys.append(key)
+                
+    def matches(self, usb_id):
+        return usb_id in self.controls_usb_id_list
         
     def __repr__(self):
         return "DeviceInfo [%s/%s] model: %s (%s). Has a %d BPP screen of %dx%d. " %  \
@@ -289,10 +298,16 @@ def get_device(uid):
             return d
     
 def find_all_devices():
+    global __cached_devices
+        
     """
     Get a list of Device objects, one for each supported device that is plugged in.
     There may be more than one device of the same type.
     """
+    
+    # If we have pydev, we can cache the devices
+    if have_udev and len(__cached_devices) != 0:
+        return __cached_devices
     
     device_map = {}
     
@@ -340,6 +355,10 @@ def find_all_devices():
     if g15drivermanager.get_driver_mod("gtk"): 
         devices.append(Device(None, None, None, 0, device_list['virtual']))
     
+    # If we have pydev, we can cache the devices
+    if have_udev:
+        __cached_devices += devices
+    
     return devices
 
 def find_device(models):
@@ -347,7 +366,12 @@ def find_device(models):
         for model in models:
             if lg_model.model_name == model:
                 return lg_model
-
+            
+def _get_cached_device_by_usb_id(usb_id):
+    for c in __cached_devices:
+        if c.usb_id == usb_id:
+            return c
+            
 """
 Register all supported models
 """
@@ -368,6 +392,59 @@ DeviceInfo(g15driver.MODEL_G35,         (0x046d, 0xa15),        None,           
 
 # When I get hold of an MX5500, I will add Bluetooth detection as well
 DeviceInfo(g15driver.MODEL_MX5500,      (0x0000, 0x0000),   (0x0000, 0x0000),   mx5500_key_layout,  1,  ( 136,    32 ), False,  _("Logitech MX5500"),                           mx5500_action_keys)
+
+# If we have pyudev, we can monitor for devices being plugged in and unplugged
+have_udev = False
+device_added_listeners = []
+device_removed_listeners = []
+try:
+    import pyudev.glib
+    context = pyudev.Context()
+    monitor = pyudev.Monitor.from_netlink(context)
+    def device_added(observer, device):
+        if "uevent" in device.attributes:
+            uevent = g15util.parse_as_properties(device.attributes["uevent"])
+            if "PRODUCT" in uevent:
+                if "subsystem" in device.attributes and device.attributes["subsystem"] == "usb":
+                    major,minor,_ = uevent["PRODUCT"].split("/")
+                else:
+                    _,major,minor,_ = uevent["PRODUCT"].split("/")
+                for c in device_list:
+                    device_info = device_list[c]
+                    usb_id = (int(major, 16), int(minor, 16))
+                    if device_info.matches(usb_id):
+                        if not _get_cached_device_by_usb_id(usb_id):
+                            del __cached_devices[:]
+                            find_all_devices()
+                            for r in reversed(__cached_devices):
+                                if r.usb_id == usb_id:
+                                    for l in device_added_listeners:
+                                        l(r)
+                                    break
+                        break
+                            
+    def device_removed(observer, device):
+        current_devices = list(__cached_devices)
+        del __cached_devices[:]
+        new_devices = find_all_devices()
+        for d in current_devices:
+            found = False
+            for e in new_devices:
+                if e.uid == d.uid:
+                    found = True
+                    break
+            if not found:
+                for l in device_removed_listeners:
+                    l(d)
+                
+    observer = pyudev.glib.GUDevMonitorObserver(monitor)
+    observer.connect('device-added', device_added)
+    observer.connect('device-removed', device_removed)
+    have_udev = True
+    monitor.start()
+except:
+    logger.info("Failed to get PyUDev context, hot plugging support not available")
+
 
 if __name__ == "__main__":
     for device in find_all_devices():

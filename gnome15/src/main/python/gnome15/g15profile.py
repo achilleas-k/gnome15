@@ -1122,7 +1122,3 @@ class G15Profile():
         for e in excluded:
             if e == macro:
                 return True
-        
-# Create the default for all devices
-for device in g15devices.find_all_devices():
-    create_default(device)
