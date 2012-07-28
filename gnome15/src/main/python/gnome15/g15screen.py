@@ -145,6 +145,16 @@ class ScreenChangeAdapter():
         """
         pass
     
+    def driver_connection_failed(self, driver):
+        """
+        Called when the underlying driver connection fails.
+        
+        Keyword arguments:
+        driver        -- driver that connected
+        exception     -- exception
+        """
+        pass
+    
     def deleting_page(self, page):
         """
         Called when a page is about to be removed from screen
@@ -363,6 +373,11 @@ class G15Screen():
     def stop(self, quickly=False):  
         logger.info("Stopping screen for %s" % self.device.uid)
         self.stopping = True
+        
+        # Stop attempting reconnection
+        if self.reconnect_timer is not None:
+            self.reconnect_timer.cancel()
+        
         
         # Stop watching for network changes
         if self._network_state_change in self.service.network_manager.listeners:
@@ -948,6 +963,8 @@ class G15Screen():
         self.last_error = exception
         self.request_attention(str(exception))
         self.resched_cycle()   
+        for listener in self.screen_change_listeners:
+            g15util.call_if_exists(listener, "driver_connection_failed", self.driver, exception)
         self.driver = None     
         if self.should_reconnect(exception):
             if logger.isEnabledFor(logging.DEBUG):
@@ -1008,6 +1025,9 @@ class G15Screen():
              ( not needs_net or ( needs_net and self.service.network_manager.is_network_available() ) )
         
     def _check_active_plugins(self, splash=None, startup=False):
+        if self.driver is None or not self.driver.is_connected():
+            logger.info("Ignoring change in plugin state, not connected")
+            return
                 
         to_activate = []   
         choose_profile = g15profile.get_active_profile(self.device)

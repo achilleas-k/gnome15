@@ -278,6 +278,11 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         gobject.idle_add(self.Connected, driver.get_name())
         logger.debug("Sent driver connected signal")
             
+    def driver_connection_failed(self, driver, exception):
+        logger.debug("Sending driver connection failed signal")
+        gobject.idle_add(self.ConnectionFailed, driver.get_name(), str(exception))
+        logger.debug("Sent driver connection failed signal")
+            
     def driver_disconnected(self, driver):
         logger.debug("Sending driver disconnected signal")
         gobject.idle_add(self.Disconnected, driver.get_name())
@@ -492,6 +497,10 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     
     @dbus.service.signal(SCREEN_IF_NAME, signature='s')
     def Connected(self, driver_name):
+        pass
+    
+    @dbus.service.signal(SCREEN_IF_NAME, signature='ss')
+    def ConnectionFailed(self, driver_name, exception_text):
         pass
             
     @dbus.service.signal(SCREEN_IF_NAME, signature='u')

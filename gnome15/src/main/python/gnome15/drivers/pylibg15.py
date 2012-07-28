@@ -38,6 +38,9 @@ G510_STANDARD_KEYBOARD_INTERFACE = 0x0
 
 # Error codes
 G15_NO_ERROR = 0
+G15_ERROR_READING_USB_DEVICE=4
+G15_TRY_AGAIN = 5
+G15_ERROR_NOENT = -2
 G15_ERROR_NODEV = -19
 
 # Debug levels
@@ -45,7 +48,7 @@ G15_LOG_INFO = 1
 G15_LOG_WARN = 0
 
 class KeyboardReceiveThread(Thread):
-    def __init__(self, callback, key_read_timeout):
+    def __init__(self, callback, key_read_timeout, on_error):
         Thread.__init__(self)
         self._run = True
         self.name = "KeyboardReceiveThread"
@@ -53,6 +56,7 @@ class KeyboardReceiveThread(Thread):
         self.on_exit = None
         self.on_unplug = None
         self.key_read_timeout = key_read_timeout
+        self.on_error = on_error
         
     def deactivate(self):
         if self._run:
@@ -73,19 +77,33 @@ class KeyboardReceiveThread(Thread):
                         err = libg15.getPressedKeys(byref(pressed_keys), 10)
                         if err == G15_NO_ERROR:
                             code = pressed_keys.value
+                        elif err in [ G15_TRY_AGAIN, G15_ERROR_READING_USB_DEVICE ] :
+                            continue
                         elif err == G15_ERROR_NODEV:
                             # Device unplugged
                             self._run = False
                             if self.on_unplug is not None:
                                 self.on_unplug()
+                        else:
+                            if  self.on_error is not None:
+                                self.on_error(err)
+                            break
                     else:
                         code = pressed_keys.value
+                        
                     self.callback(code, ext_code)
+                elif err in [ G15_TRY_AGAIN, G15_ERROR_READING_USB_DEVICE ] :
+                    continue
                 elif err == G15_ERROR_NODEV:
                     # Device unplugged
                     self._run = False
                     if self.on_unplug is not None:
                         self.on_unplug()
+                else:
+                    if  self.on_error is not None:
+                        self.on_error(err)
+                    break
+                    
         finally:
             if self.on_exit is not None:
                 self.on_exit()
@@ -108,7 +126,7 @@ def is_ext_key(code):
     """
     return code & (1<<28) != 0
     
-def grab_keyboard(callback, key_read_timeout = KEY_READ_TIMEOUT):
+def grab_keyboard(callback, key_read_timeout = KEY_READ_TIMEOUT, on_error = None):
     """
     Start polling for keyboard events. Device must be initialised. The thread
     returned can be stopped by calling deactivate().
@@ -121,7 +139,7 @@ def grab_keyboard(callback, key_read_timeout = KEY_READ_TIMEOUT):
     callback        -- function to call on key event
     key_read_timeout -- timeout for reading key presses. too low and keys will be missed
     """
-    t = KeyboardReceiveThread(callback, key_read_timeout)
+    t = KeyboardReceiveThread(callback, key_read_timeout, on_error)
     t.start()
     return t
     

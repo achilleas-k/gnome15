@@ -62,7 +62,7 @@ description=_("For use with the G15 based devices only, this driver communicates
 has_preferences=True
 
 
-DEBUG_LIBG15=True
+DEBUG_LIBG15="DEBUG_LIBG15" in os.environ
 KEY_MAP = {
         g15driver.G_KEY_G1  : 1<<0,
         g15driver.G_KEY_G2  : 1<<1,
@@ -256,7 +256,9 @@ class Driver(g15driver.AbstractDriver):
     def grab_keyboard(self, callback):
         self.callback = callback
         self.last_keys = None        
-        self.thread = pylibg15.grab_keyboard(self._handle_key_event, g15util.get_int_or_default(self.conf_client, "/apps/gnome15/usb_key_read_timeout", 100))
+        self.thread = pylibg15.grab_keyboard(self._handle_key_event, \
+                g15util.get_int_or_default(self.conf_client, "/apps/gnome15/usb_key_read_timeout", 100),
+                self._on_error)
         self.thread.on_unplug = self._keyboard_unplugged
         
     def is_connected(self):
@@ -330,6 +332,9 @@ class Driver(g15driver.AbstractDriver):
     """
     Private
     """
+    def _on_error(self, code):
+        logger.info("Disconnected due to error %d" % code)
+        self.disconnect()
         
     def _on_connect(self):  
         self.thread = None  

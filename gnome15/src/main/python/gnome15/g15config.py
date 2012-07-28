@@ -601,7 +601,8 @@ class G15Config:
         self._signal_handles.append(self.session_bus.add_signal_receiver(self._stopped, dbus_interface="org.gnome15.Service", signal_name='Stopped'))  
         self._signal_handles.append(self.session_bus.add_signal_receiver(self._screen_added, dbus_interface="org.gnome15.Service", signal_name='ScreenAdded'))  
         self._signal_handles.append(self.session_bus.add_signal_receiver(self._screen_removed, dbus_interface="org.gnome15.Service", signal_name='ScreenRemoved'))
-        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Screen", signal_name='Connected'))  
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Screen", signal_name='Connected'))
+        self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Screen", signal_name='ConnectionFailed'))    
         self._signal_handles.append(self.session_bus.add_signal_receiver(self._status_change, dbus_interface="org.gnome15.Screen", signal_name='Disconnected'))
         self.connected = True
         self._do_status_change()
@@ -618,7 +619,7 @@ class G15Config:
             del self.screen_services[screen_name]
         self._do_status_change()
         
-    def _status_change(self, arg1 = None, arg2 = None):
+    def _status_change(self, arg1 = None, arg2 = None, arg3 = None):
         gobject.idle_add(self._do_status_change)
         
     def _do_status_change(self):
