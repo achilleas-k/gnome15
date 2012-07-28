@@ -486,6 +486,7 @@ class AbstractDriver(object):
         self.seq = seq_no
         self.disconnecting = False
         self.all_off_on_disconnect = True
+        self.allow_multiple = True
         self._reset_state()
         
     def has_memory_bank(self):

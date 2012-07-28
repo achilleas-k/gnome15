@@ -365,7 +365,8 @@ class G15Screen():
         self.stopping = True
         
         # Stop watching for network changes
-        self.service.network_manager.listeners.remove(self._network_state_change)
+        if self._network_state_change in self.service.network_manager.listeners:
+            self.service.network_manager.listeners.remove(self._network_state_change)
         
         # Clean up key handler
         self.key_handler.action_listeners.remove(self)
@@ -1188,6 +1189,14 @@ class G15Screen():
                 return
                             
             try :
+                
+                if not self.driver.allow_multiple:
+                    # Look for other screens using the same driver
+                    for s in self.service.screens:
+                        if s.driver is not None and self.driver != s.driver and \
+                           s.driver.get_name() == self.driver.get_name():
+                            raise NotConnectedException("Driver %s only allows one device at a time" % s.driver.get_name())
+                
                 self.acquired_controls = {}
                 self.driver.zeroize_all_controls()
                 self.driver.connect()
@@ -1208,7 +1217,7 @@ class G15Screen():
                 self.activate_profile()
                 self.last_error = None
                 for listener in self.screen_change_listeners:
-                    g15util.call_if_exists(listener, "driver_sconnected", self.driver)
+                    g15util.call_if_exists(listener, "driver_connected", self.driver)
                              
                 self.complete_loading()
 

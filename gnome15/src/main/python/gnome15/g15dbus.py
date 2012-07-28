@@ -461,7 +461,10 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='s')
     def GetLastError(self):
-        return str(self._screen.get_last_error())
+        err = self._screen.get_last_error()
+        if err is None:
+            return ""
+        return str(err)
     
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='')
     def ClearPopup(self):

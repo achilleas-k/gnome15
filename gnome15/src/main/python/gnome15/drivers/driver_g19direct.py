@@ -174,11 +174,7 @@ class Driver(g15driver.AbstractDriver):
             raise Exception("Already connected")
         
         # Detect what version of pyusb we are using
-        pyusb = 1
-        try:
-            import usb.core
-        except:
-            pyusb = 0
+        pyusb = self._get_usb_lib_version()
         
         self.callback = None
         
@@ -305,6 +301,12 @@ class Driver(g15driver.AbstractDriver):
     """
     Private
     """
+    def _get_usb_lib_version(self):
+        try:
+            import usb.core
+            return 1
+        except:
+            return 0
         
     def _set_mkey_lights(self, lights):
         val = 0

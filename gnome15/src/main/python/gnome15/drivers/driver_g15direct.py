@@ -199,6 +199,9 @@ class Driver(g15driver.AbstractDriver):
         self.connected = False
         self.conf_client = gconf.client_get_default()
         self.last_keys = None
+        
+        # We can only have one instance of this driver active in a single runtime
+        self.allow_multiple = False
     
     def get_antialias(self):
         return cairo.ANTIALIAS_NONE

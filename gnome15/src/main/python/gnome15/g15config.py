@@ -650,7 +650,7 @@ class G15Config:
             
             logger.debug("Found %d of %d connected" % (connected, len(self.screen_services)))
             screen_count = len(self.screen_services)
-            if connected != screen_count:
+            if connected != screen_count and first_error is not None and first_error != "":
                 if len(self.screen_services) == 1:
                     self._show_message(gtk.MESSAGE_WARNING, _("The Gnome15 desktop service is running, but failed to connect " + \
                                       "to the keyboard driver. The error message given was <b>%s</b>") % first_error, False)
