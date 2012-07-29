@@ -244,7 +244,7 @@ class G15Service(g15desktop.G15AbstractService):
         for listener in self.service_listeners:
             listener.service_stopped()
         logger.info("Quiting loop")
-        self.loop.quit() 
+        self.loop.quit()
         logger.info("Stopping DBus service")
         self.dbus_service.stop()
         

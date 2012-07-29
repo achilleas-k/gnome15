@@ -242,9 +242,11 @@ const DeviceItem = new Lang.Class({
 				let uid = msg;
 				gnome15Device.GetScreenRemote(Lang.bind(this, function(msg) {
 					gnome15Device.connect("ScreenAdded", Lang.bind(this, function(src, screenPath) {
+						global.log("Screen added " + screenPath);
 						this._getPages(screenPath);
 					}));
 					gnome15Device.connect("ScreenRemoved", Lang.bind(this, function(src, screenPath) {
+						global.log("Screen removed " + screenPath);
 						this._cleanUp();
 						this._gnome15Button.clearPages();
 					}));
@@ -573,7 +575,7 @@ function enable() {
 
 function disable() {
 	for(let key in devices) {
-        _deviceRemoved(key);
+        _deviceRemoved(devices, key);
 	}
 }
 
@@ -593,6 +595,7 @@ function _onDesktopServiceAppeared() {
  * when the service disappears, even when it dies unexpectedly. 
  */
 function _onDesktopServiceVanished() {
+	global.log("Desktop service vanished");
 	_onDesktopServiceStopping();
 }
 
@@ -601,6 +604,7 @@ function _onDesktopServiceVanished() {
  * list at this point. 
  */
 function _onDesktopServiceStarted() {
+	global.log("Desktop service started");
 	gnome15System.GetDevicesRemote(_refreshDeviceList);
 }
 
@@ -609,8 +613,9 @@ function _onDesktopServiceStarted() {
  * of user selecting "Stop Service" most probably).
  */
 function _onDesktopServiceStopping() {
+	global.log("Desktop service stopping");
 	for(let key in devices) {
-        _deviceRemoved(key);
+        _deviceRemoved(devices, key);
 	}
 }
 

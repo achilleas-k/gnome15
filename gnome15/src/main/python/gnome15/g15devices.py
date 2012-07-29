@@ -403,10 +403,11 @@ DeviceInfo(g15driver.MODEL_MX5500,      (0x0000, 0x0000),   (0x0000, 0x0000),   
 have_udev = False
 device_added_listeners = []
 device_removed_listeners = []
+
 try:
     import pyudev.glib
-    context = pyudev.Context()
-    monitor = pyudev.Monitor.from_netlink(context)
+    __context = pyudev.Context()
+    __monitor = pyudev.Monitor.from_netlink(__context)
     def device_added(observer, device):
         if "uevent" in device.attributes:
             uevent = g15util.parse_as_properties(device.attributes["uevent"])
@@ -443,11 +444,11 @@ try:
                 for l in device_removed_listeners:
                     l(d)
                 
-    observer = pyudev.glib.GUDevMonitorObserver(monitor)
-    observer.connect('device-added', device_added)
-    observer.connect('device-removed', device_removed)
+    __observer = pyudev.glib.GUDevMonitorObserver(__monitor)
+    __observer.connect('device-added', device_added)
+    __observer.connect('device-removed', device_removed)
     have_udev = True
-    monitor.start()
+    __monitor.start()
 except:
     logger.info("Failed to get PyUDev context, hot plugging support not available")
 
