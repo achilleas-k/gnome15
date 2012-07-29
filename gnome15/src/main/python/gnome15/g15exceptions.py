@@ -24,4 +24,8 @@ _ = g15locale.get_translation("gnome15").ugettext
 class NotConnectedException(Exception):
     def __init__(self, message = _("Failed to connect.")):
         Exception.__init__(self, message)
+        
+class RetryException(Exception):
+    def __init__(self, message = _("Retry.")):
+        Exception.__init__(self, message)
     

@@ -68,6 +68,7 @@ import sys
 import logging
 from threading import RLock
 from g15exceptions import NotConnectedException
+from g15exceptions import RetryException
 logger = logging.getLogger("screen")
 
 """
@@ -693,6 +694,8 @@ class G15Screen():
         return self.last_error
             
     def should_reconnect(self, exception):
+        if isinstance(exception, RetryException):
+            return True
         if g15devices.have_udev:
             return False
         return isinstance(exception, NotConnectedException) or (len(exception.args) == 2 and isinstance(exception.args[0], int) and exception.args[0] in [ 111, 104 ])
@@ -1173,7 +1176,7 @@ class G15Screen():
         self.fader = Fader(self, stay_faded=stay_faded, duration=duration, step=step).run()
         
     def attempt_connection(self, delay=0.0):
-        logger.info("Attempting connection" if delay == 0 else "Attempting connection in %f" % delay)
+        logger.debug("Attempting connection" if delay == 0 else "Attempting connection in %f" % delay)
         self.connection_lock.acquire()
         try :     
             if self.reconnect_timer is not None:
@@ -1218,7 +1221,7 @@ class G15Screen():
                         if s.driver is not None and self.driver != s.driver and \
                          ( s.driver.is_connected() or s.driver.connecting ) and \
                            s.driver.get_name() == self.driver.get_name():
-                            raise NotConnectedException("Driver %s only allows one device at a time" % s.driver.get_name())
+                            raise RetryException("Driver %s only allows one device at a time" % s.driver.get_name())
                 
                 self.acquired_controls = {}
                 self.driver.zeroize_all_controls()
@@ -1250,7 +1253,7 @@ class G15Screen():
         finally:
             self.connection_lock.release()
             
-        logger.info("Connection for %s is complete." % self.device.uid)
+        logger.debug("Connection for %s is complete." % self.device.uid)
         
     def clear_canvas(self, canvas):
         """

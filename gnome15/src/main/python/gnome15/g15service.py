@@ -912,7 +912,6 @@ class G15Service(g15desktop.G15AbstractService):
     def _check_device_state(self, device, quickly = False):
         enabled = device in self.devices and g15devices.is_enabled(self.conf_client, device) and self.session_active
         screen = self._get_screen_for_device(device)
-        logger.info("EN device %s = %s = %s" % (device.uid, str(enabled), str(screen)))
         if enabled and not screen:
             logger.info("Enabling device %s" % device.uid)
             # Enable screen
@@ -930,7 +929,7 @@ class G15Service(g15desktop.G15AbstractService):
             logger.info("Disabled device %s" % device.uid)
             
             # If there is a single device, stop the service as well
-            if len(self.devices) == 1:
+            if len(self.devices) == 0 and ( not g15devices.have_udev or self.exit_on_no_devices ):
                 self.shutdown(False)
                 
     def _device_added(self, device):        
