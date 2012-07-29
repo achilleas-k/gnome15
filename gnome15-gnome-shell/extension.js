@@ -86,6 +86,12 @@ const Gnome15ServiceInterface = {
 		name : 'ScreenRemoved',
 		inSignature : 's'
 	},{
+		name : 'DeviceAdded',
+		inSignature : 's'
+	},{
+		name : 'DeviceRemoved',
+		inSignature : 's'
+	},{
 		name : 'Started'
 	},{
 		name : 'Starting'
@@ -551,6 +557,8 @@ function init() {
 
 	gnome15System.connect("Started", _onDesktopServiceStarted);
 	gnome15System.connect("Stopping", _onDesktopServiceStopping);
+	gnome15System.connect("DeviceAdded", _deviceAdded);
+	gnome15System.connect("DeviceRemoved", _deviceRemoved);
 
 }
 
@@ -565,7 +573,7 @@ function enable() {
 
 function disable() {
 	for(let key in devices) {
-        _deviceRemoved(key)
+        _deviceRemoved(key);
 	}
 }
 
@@ -582,7 +590,7 @@ function _onDesktopServiceAppeared() {
 
 /**
  * Callback invoked when the DBus name owner changes (removed). This occurs
- * when the service disappears, evens when it dies unexpectedly. 
+ * when the service disappears, even when it dies unexpectedly. 
  */
 function _onDesktopServiceVanished() {
 	_onDesktopServiceStopping();
@@ -598,11 +606,11 @@ function _onDesktopServiceStarted() {
 
 /**
  * Invoked when the Gnome15 desktop service starts shutting down (as a result
- * of user selectint "Stop Service" most probably).
+ * of user selecting "Stop Service" most probably).
  */
 function _onDesktopServiceStopping() {
 	for(let key in devices) {
-        _deviceRemoved(key)
+        _deviceRemoved(key);
 	}
 }
 
@@ -621,25 +629,33 @@ function _onStarted(started) {
  */
 function _refreshDeviceList(msg) {
 	for (let key in msg) {
-		_deviceAdded(msg[key])
+		_deviceAdded(msg, msg[key]);
 	}
 }
 
 /**
  * Gnome15 doesn't yet send DBus events when devices are hot-plugged, but it
  * soon will and this function will add new device when they appear.
+ * 
+ * @param source device source (may be null)
+ * @param key device DBUS object path
  */
-function _deviceAdded(key) {
-	devices[key] = new DeviceItem(key)
+function _deviceAdded(source, key) {
+	global.log("Added device " + key);
+	devices[key] = new DeviceItem(key);
 }
 
 /**
  * Gnome15 doesn't yet send DBus events when devices are hot-plugged, but it
  * soon will and this function will add new device when they are removed.
+ * 
+ * @param source device source (may be null)
+ * @param key device DBUS object path
  */
-function _deviceRemoved(key) {
-	devices[key].close()
-	delete devices[key]
+function _deviceRemoved(source, key) {
+	global.log("Removed device " + key);
+	devices[key].close();
+	delete devices[key];
 }
 
 /**

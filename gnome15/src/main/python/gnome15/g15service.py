@@ -197,8 +197,8 @@ class G15Service(g15desktop.G15AbstractService):
         
     def stop(self, quickly = False):
         if self.started:
-            g15devices.device_added_listeners.remove(self._devices_changed)
-            g15devices.device_removed_listeners.remove(self._devices_changed)
+            g15devices.device_added_listeners.remove(self._device_added)
+            g15devices.device_removed_listeners.remove(self._device_removed)
             g15uinput.close_devices()
             self.global_plugins.deactivate()
             self.stopping = True
@@ -770,8 +770,8 @@ class G15Service(g15desktop.G15AbstractService):
         gobject.idle_add(self._monitor_session)
         
         # Watch for devices changing
-        g15devices.device_added_listeners.append(self._devices_changed)
-        g15devices.device_removed_listeners.append(self._devices_changed)
+        g15devices.device_added_listeners.append(self._device_added)
+        g15devices.device_removed_listeners.append(self._device_removed)
         
     def _join_all(self, threads, timeout = 30):
         for t in threads:
@@ -907,7 +907,7 @@ class G15Service(g15desktop.G15AbstractService):
         g15util.queue(SERVICE_QUEUE, "deviceStateChanged", 0, self._check_device_state, device)
         
     def _check_device_state(self, device, quickly = False):
-        enabled = g15devices.is_enabled(self.conf_client, device) and self.session_active
+        enabled = device in self.devices and g15devices.is_enabled(self.conf_client, device) and self.session_active
         screen = self._get_screen_for_device(device)
         logger.info("EN device %s = %s = %s" % (device.uid, str(enabled), str(screen)))
         if enabled and not screen:
@@ -930,9 +930,13 @@ class G15Service(g15desktop.G15AbstractService):
             if len(self.devices) == 1:
                 self.shutdown(False)
                 
-    def _devices_changed(self, device = None):        
+    def _device_added(self, device):        
         self.devices = g15devices.find_all_devices()
-        self._check_state_of_all_devices()
+        self._check_device_state(device)
+                
+    def _device_removed(self, device):        
+        self.devices = g15devices.find_all_devices()
+        self._check_device_state(device)
             
     def _get_screen_for_device(self, device):
         for screen in self.screens:

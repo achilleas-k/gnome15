@@ -871,6 +871,8 @@ class G15DBUSService(AbstractG15DBUSService):
             dbus_device = self._dbus_device_map[device.uid]
             self._dbus_devices.remove(dbus_device)
             del self._dbus_device_map[device.uid]
+            logger.info("Removed DBUS device %s/%s" % ( DEVICE_NAME, device.uid ))
+            self.DeviceRemoved("%s/%s" % ( DEVICE_NAME, device.uid ))
             self._silently_remove_from_connector(dbus_device)
         else:
             logger.warn("DBUS service did not know about a device for some reason (%s)" % device.uid)
@@ -879,6 +881,8 @@ class G15DBUSService(AbstractG15DBUSService):
         dbus_device = G15DBUSDeviceService(self, device)
         self._dbus_devices.append(dbus_device)
         self._dbus_device_map[device.uid] = dbus_device
+        logger.info("Added DBUS device %s/%s" % ( DEVICE_NAME, device.uid ))
+        self.DeviceAdded("%s/%s" % ( DEVICE_NAME, device.uid ))
         
     def stop(self):   
         g15devices.device_added_listeners.remove(self._device_added)
@@ -910,9 +914,10 @@ class G15DBUSService(AbstractG15DBUSService):
     def screen_removed(self, screen):
         logger.debug("Screen removed for %s" % screen.device.model_id)
         gobject.idle_add(self.ScreenRemoved, "%s/%s" % ( SCREEN_NAME, screen.device.uid ))
-        dbus_device = self._dbus_device_map[screen.device.uid]
-        gobject.idle_add(dbus_device.ScreenRemoved, "%s/%s" % ( SCREEN_NAME, screen.device.uid ))
-        gobject.idle_add(self._do_screen_removed, screen);
+        if screen.device.uid in self._dbus_device_map:
+            dbus_device = self._dbus_device_map[screen.device.uid]
+            gobject.idle_add(dbus_device.ScreenRemoved, "%s/%s" % ( SCREEN_NAME, screen.device.uid ))
+        gobject.idle_add(self._do_screen_removed, screen)
         
     def _do_screen_removed(self, screen):
         try:
@@ -966,6 +971,14 @@ class G15DBUSService(AbstractG15DBUSService):
     
     @dbus.service.signal(IF_NAME, signature='s')
     def ScreenRemoved(self, screen_name):
+        pass
+    
+    @dbus.service.signal(IF_NAME, signature='s')
+    def DeviceAdded(self, device_name):
+        pass
+    
+    @dbus.service.signal(IF_NAME, signature='s')
+    def DeviceRemoved(self, device_name):
         pass
     
     '''
