@@ -841,7 +841,13 @@ class G15DesktopComponent():
         screen = G15Screen(screen_path, device_model_fullname, device_uid)        
         self.screens[screen_path] = screen
         if remote_screen.IsAttentionRequested():
-            screen.message = remote_screen.GetMessage()                                
+            screen.message = remote_screen.GetMessage()
+        
+    def _device_added(self, screen_path):
+        self.rebuild_desktop_component()
+        
+    def _device_removed(self, screen_path):
+        self.rebuild_desktop_component()                                
         
     def _connect(self):
         logger.debug("Connecting")
@@ -865,6 +871,8 @@ class G15DesktopComponent():
             self.lock.release()
         
         # Listen for events
+        self.session_bus.add_signal_receiver(self._device_added, dbus_interface = "org.gnome15.Service", signal_name = "DeviceAdded")
+        self.session_bus.add_signal_receiver(self._device_removed, dbus_interface = "org.gnome15.Service", signal_name = "DeviceRemoved")
         self.session_bus.add_signal_receiver(self._add_screen, dbus_interface = "org.gnome15.Service", signal_name = "ScreenAdded")
         self.session_bus.add_signal_receiver(self._remove_screen, dbus_interface = "org.gnome15.Service", signal_name = "ScreenRemoved")
         self.session_bus.add_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Screen", signal_name = "PageCreated",  path_keyword = 'path')
@@ -877,9 +885,11 @@ class G15DesktopComponent():
         self.rebuild_desktop_component()
         
     def _disconnect(self):
-        logger.debug("Disconnecting")               
-        self.session_bus.remove_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Service", signal_name = "ScreenAdded")
-        self.session_bus.remove_signal_receiver(self._page_title_changed, dbus_interface = "org.gnome15.Service", signal_name = "ScreenRemoved")
+        logger.debug("Disconnecting")                  
+        self.session_bus.remove_signal_receiver(self._device_added, dbus_interface = "org.gnome15.Service", signal_name = "DeviceAdded")
+        self.session_bus.remove_signal_receiver(self._device_removed, dbus_interface = "org.gnome15.Service", signal_name = "DeviceRemoved")
+        self.session_bus.remove_signal_receiver(self._add_screen, dbus_interface = "org.gnome15.Service", signal_name = "ScreenAdded")
+        self.session_bus.remove_signal_receiver(self._remove_screen, dbus_interface = "org.gnome15.Service", signal_name = "ScreenRemoved")
         self.session_bus.remove_signal_receiver(self._page_created, dbus_interface = "org.gnome15.Screen", signal_name = "PageCreated")
         self.session_bus.remove_signal_receiver(self._page_title_changed, dbus_interface = "org.gnome15.Screen", signal_name = "PageTitleChanged")
         self.session_bus.remove_signal_receiver(self._page_deleting, dbus_interface = "org.gnome15.Screen", signal_name = "PageDeleting")

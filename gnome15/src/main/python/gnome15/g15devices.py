@@ -263,6 +263,12 @@ class Device():
     def get_key_index(self, key):
         if key in self.all_keys:
             self.all_keys.index(key)
+            
+    def __hash__(self):
+        return self.ui.__hash()
+    
+    def __eq__(self, o):
+        return self.uid == o.uid
         
     def __repr__(self):
         return "Device [%s] %s model: %s (%s) on USB ID %s:%s. Has a %d BPP screen of %dx%d. " %  \

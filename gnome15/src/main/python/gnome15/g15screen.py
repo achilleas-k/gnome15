@@ -693,6 +693,8 @@ class G15Screen():
         return self.last_error
             
     def should_reconnect(self, exception):
+        if g15devices.have_udev:
+            return False
         return isinstance(exception, NotConnectedException) or (len(exception.args) == 2 and isinstance(exception.args[0], int) and exception.args[0] in [ 111, 104 ])
             
     def complete_loading(self):              

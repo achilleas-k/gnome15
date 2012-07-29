@@ -155,6 +155,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.use_x_test = None
         self.x_test_available = None
         self.notify_handles = []
+        self.device_notify_handles = {}
         self.font_faces = {}
         self.stopping = False
         self.window_title_listener = None
@@ -206,6 +207,8 @@ class G15Service(g15desktop.G15AbstractService):
             try :
                 for h in self.notify_handles:
                     self.conf_client.notify_remove(h)
+                for h in self.device_notify_handles:
+                    self.conf_client.notify_remove(self.device_notify_handles[h])
                 try :
                     logger.info("Stopping profile change notification")
                     g15profile.notifier.stop()
@@ -714,7 +717,7 @@ class G15Service(g15desktop.G15AbstractService):
             for device in self.devices:
                 val = self.conf_client.get("/apps/gnome15/%s/enabled" % device.uid)
                 h = self.conf_client.notify_add("/apps/gnome15/%s/enabled" % device.uid, self._device_enabled_configuration_changed, device)
-                self.notify_handles.append(h)
+                self.device_notify_handles[device.uid] = h
                 if ( val == None and device.model_id != "virtual" ) or ( val is not None and val.get_bool() ):
                     screen = self._add_screen(device)
                     if not screen:
@@ -933,10 +936,13 @@ class G15Service(g15desktop.G15AbstractService):
     def _device_added(self, device):        
         self.devices = g15devices.find_all_devices()
         self._check_device_state(device)
+        self.device_notify_handles[device.uid] = self.conf_client.notify_add("/apps/gnome15/%s/enabled" % device.uid, self._device_enabled_configuration_changed, device) 
                 
     def _device_removed(self, device):        
         self.devices = g15devices.find_all_devices()
         self._check_device_state(device)
+        self.conf_client.notify_remove(self.device_notify_handles[device.uid])
+        del self.device_notify_handles[device.uid]
             
     def _get_screen_for_device(self, device):
         for screen in self.screens:
