@@ -70,15 +70,14 @@ class KeyboardReceiveThread(Thread):
                 code = 0
                 ext_code = 0
                 if err == G15_NO_ERROR:
-                    key_ext = is_ext_key(pressed_keys.value)
-                    if key_ext:
-                        ext_code = pressed_keys.value
+                    if is_ext_key(pressed_keys.value):
+                        ext_code = int(pressed_keys.value)
                         ext_code &= ~(1<<28)
                         err = libg15.getPressedKeys(byref(pressed_keys), 10)
                         if err == G15_NO_ERROR:
                             code = pressed_keys.value
-                        elif err in [ G15_TRY_AGAIN, G15_ERROR_READING_USB_DEVICE ] :
-                            continue
+                        elif err in [ G15_TRY_AGAIN, G15_ERROR_READING_USB_DEVICE ]:
+                            pass
                         elif err == G15_ERROR_NODEV:
                             # Device unplugged
                             self._run = False

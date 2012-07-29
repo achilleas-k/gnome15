@@ -445,13 +445,13 @@ class Driver(g15driver.AbstractDriver):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Key code %d" % code)
             
-        this_keys = [] if ext_code != 0 else self._convert_from_g15daemon_code(code)
+        this_keys = [] if code == 0 else self._convert_from_g15daemon_code(code)
         if ext_code > 0 and self.get_model_name() == g15driver.MODEL_G510:
             this_keys += self._get_g510_multimedia_keys(ext_code)
         elif ext_code > 0:
             this_keys += self._convert_ext_g15daemon_code(ext_code)
         
-        if self.get_model_name() == g15driver.MODEL_G13:
+        if self.get_model_name() == g15driver.MODEL_G13 and self.has_joystick_key(this_keys):
             c = self.analogue_calibration if self.joy_mode in [ "joystick", "mouse" ] else self.digital_calibration
             
             low_val = 128 - c
@@ -502,6 +502,12 @@ class Driver(g15driver.AbstractDriver):
             self._do_macro_keys(down, up)
         
         self.last_keys = this_keys
+        
+    def has_joystick_key(self, keys):
+        for k in keys:
+            if k in [ g15driver.G_KEY_JOY, g15driver.G_KEY_JOY_CENTER, \
+                      g15driver.G_KEY_JOY_DOWN, g15driver.G_KEY_JOY_LEFT ]:
+                return True 
         
     def _do_uinput_keys(self, down, up):
         if len(down) > 0:
