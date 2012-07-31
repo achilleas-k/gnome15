@@ -770,9 +770,7 @@ class G15Config:
                     if self.selected_device.model_id in driver.get_model_names():
                         self.driver_model.append((driver_mod.id, driver_mod.name))
                 except Exception as e:
-                    logger.error("Failed to load driver. %s" % str(e))
-                    # No point in continually displaying this error
-                    del g15drivermanager.imported_drivers[driver_mod_key]
+                    logger.info("Failed to load driver. %s" % str(e))
             
         self.driver_combo.set_sensitive(len(self.driver_model) > 1)
         self._set_driver_from_configuration()
@@ -1132,6 +1130,8 @@ class G15Config:
         sel_items = self.device_view.get_selected_items()
         sel_idx = sel_items[0][0] if len(sel_items) > 0 else -1
         self.selected_device = self.devices[sel_idx] if sel_idx > -1 else None
+        if self.selected_device:
+            self._load_drivers()
         self._remove_notify_handles()
         self.device_title.set_text(self.selected_device.model_fullname if self.selected_device else "")
         self._set_enabled_value_from_configuration()
@@ -1154,8 +1154,6 @@ class G15Config:
         self._load_plugins()
         self._load_macro_state()
         self._load_windows()
-        if self.selected_device:
-            self._load_drivers()
         self._do_status_change()
         self._set_tab_status()
         

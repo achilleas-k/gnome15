@@ -28,7 +28,6 @@ import uinput
 import g15util
 import os
 import subprocess
-import ConfigParser
 from uinput.ev import *
 from threading import RLock
 from gnome15 import g15globals
@@ -111,7 +110,7 @@ else:
     
 def get_keysym_to_uinput_mapping(keysym):
     """
-    Get the mapping exists for the provided keysym. This is case insensitive.
+    Get the mapping for the provided keysym. This is case insensitive.
     
     Keyword arguments:
     keysym        -- X keysym
@@ -124,7 +123,7 @@ def are_calibration_tools_available():
     """
     Test for the existence of calibration tools 'jstest-gtk' and 'jscal'.
     """
-    return os.system("which jstest-gtk >/dev/null") == 0 and os.system("which jscal >/dev/null") == 0
+    return os.system("which jstest-gtk >/dev/null 2>&1") == 0 and os.system("which jscal >/dev/null 2>&1") == 0
     
 def open_devices():
     """
@@ -358,8 +357,8 @@ def __check_devices():
                 load_calibration(device_type)
                 emit(device_type, ABS_X, 128, False)
                 emit(device_type, ABS_Y, 128, False)
+                syn(device_type)
             else:
                 emit(device_type, 0, 0)
                 emit(device_type, 0, 1)
-            
             

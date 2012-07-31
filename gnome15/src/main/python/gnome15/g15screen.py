@@ -385,9 +385,12 @@ class G15Screen():
             self.service.network_manager.listeners.remove(self._network_state_change)
         
         # Clean up key handler
-        self.key_handler.action_listeners.remove(self)
-        self.key_handler.action_listeners.remove(self.service)
-        self.key_handler.key_handlers.remove(self)
+        if self in self.key_handler.action_listeners:
+            self.key_handler.action_listeners.remove(self)
+        if self.service in self.key_handler.action_listeners:
+            self.key_handler.action_listeners.remove(self.service)
+        if self in self.key_handler.key_handlers:
+            self.key_handler.key_handlers.remove(self)
         self.key_handler.stop()
         
         # Stop listening for profile changes
@@ -698,7 +701,7 @@ class G15Screen():
             return True
         if g15devices.have_udev:
             return False
-        return isinstance(exception, NotConnectedException) or (len(exception.args) == 2 and isinstance(exception.args[0], int) and exception.args[0] in [ 111, 104 ])
+        return isinstance(exception, NotConnectedException)
             
     def complete_loading(self):              
         try :           
@@ -968,9 +971,10 @@ class G15Screen():
         self.last_error = exception
         self.request_attention(str(exception))
         self.resched_cycle()   
-        for listener in self.screen_change_listeners:
-            g15util.call_if_exists(listener, "driver_connection_failed", self.driver, exception)
-        self.driver = None     
+        if self.driver is not None:
+            for listener in self.screen_change_listeners:            
+                g15util.call_if_exists(listener, "driver_connection_failed", self.driver, exception)
+            self.driver = None     
         if self.should_reconnect(exception):
             if logger.isEnabledFor(logging.DEBUG):
                 traceback.print_exc(file=sys.stderr)

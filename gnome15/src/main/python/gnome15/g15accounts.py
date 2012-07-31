@@ -192,23 +192,26 @@ class G15AccountManager(G15Keyring):
         self.item_name = item_name
         self.load()
         self.listeners = {}
+        self.listener_functions = {}
         
     def add_change_listener(self, listener):
-        wdd = watch_manager.add_watch(os.path.dirname(self._conf_file), mask, rec=True)
-        self.listeners[listener] = wdd
+        self.listeners[listener] = watch_manager.add_watch(os.path.dirname(self._conf_file), mask, rec=True)
         def a(event):
             self.load()
             if event.pathname == self._conf_file:
                 listener(self)
-        wdd['change_listener'] = a
+        self.listener_functions[listener] = a
         account_listeners.append(a)
         
     def remove_change_listener(self, listener):
         wdd = self.listeners[listener]
-        account_listeners.remove(wdd['change_listener'])
-        del wdd['change_listener']
+        account_listeners.remove(self.listener_functions[listener])
+        del self.listener_functions[listener]
         for k in wdd:
-            watch_manager.rm_watch(wdd[k])
+            try:
+                watch_manager.rm_watch(wdd[k],quiet = False)
+            except:
+                pass
             
     def load(self):
         accounts = []
@@ -256,9 +259,6 @@ class G15AccountManager(G15Keyring):
         finally :
             fh.close()
             
-    def __del__(self):        
-        watch_manager.rm_watch(self.wdd)
-
 class G15Account():
     """
     A single account. An account has two main attributes,

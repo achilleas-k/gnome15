@@ -117,7 +117,10 @@ class fb_device():
         os.close(self.device_file)
     
     def __del__(self):
-        self.close()
+        try:
+            self.close()
+        except:
+            pass
     
     def get_screen_size(self):
         # fb_sys_write() in linux kernel 2.6.36 relies on this value

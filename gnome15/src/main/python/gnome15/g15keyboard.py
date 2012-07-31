@@ -120,7 +120,8 @@ class G15KeyHandler():
         """  
         logger.info("Stopping key handler for %s" % self.__screen.device.uid)
         g15util.stop_queue(self.queue_name)
-        self.__screen.screen_change_listeners.remove(self)
+        if self in self.__screen.screen_change_listeners:
+            self.__screen.screen_change_listeners.remove(self)
         if self._profile_changed in g15profile.profile_listeners:
             g15profile.profile_listeners.remove(self._profile_changed)
         for h in self.__notify_handles:

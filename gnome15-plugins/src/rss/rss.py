@@ -24,6 +24,7 @@ _ = g15locale.get_translation("rss", modfile = __file__).ugettext
 import gnome15.g15util as g15util
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
+import gnome15.g15desktop as g15desktop
 import subprocess
 import time
 import os
@@ -169,8 +170,7 @@ class G15FeedsMenuItem(g15theme.MenuItem):
         return element_properties 
     
     def activate(self):
-        logger.info("xdg-open '%s'" % self.entry.link)
-        subprocess.Popen(['xdg-open', self.entry.link])
+        g15desktop.browse(self.entry.link)
         return True
         
 class G15FeedPage(g15theme.G15Page):

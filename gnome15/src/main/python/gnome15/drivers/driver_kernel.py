@@ -1148,15 +1148,15 @@ It should be launched automatically if Gnome15 is installed correctly.")
             "directory and the keyboard model you use.")
     
     def _stop_receiving_keys(self):
-        if self.key_thread != None:
-            self.key_thread.deactivate()
-            self.key_thread = None
-            
+        if self.key_thread != None:            
             # Configure the keymap
             logger.info("Resetting keymap settings back to the way they were")
             self.system_service.SetKeymapSwitching(self.device.uid, self.keymap_switching)
             self.system_service.SetKeymapIndex(self.device.uid, self.keymap_index)        
             self.system_service.SetKeymap(self.device.uid, self.current_keymap)
+            
+            self.key_thread.deactivate()
+            self.key_thread = None
             
     def _do_write_to_led(self, name, value):
         if not self.system_service:

@@ -54,17 +54,6 @@ AC_ARG_ENABLE([g19direct-driver],
 	[g19direct_driver=${pylibg19}])
 AM_CONDITIONAL([ENABLE_DRIVER_G19DIRECT], [test x$g19direct_driver = xyes])
 
-AC_ARG_ENABLE([g19-driver],
-	[AS_HELP_STRING([--enable-g19-driver],
-		[Enable G19 driver support (requires the G19D daemon). Now deprecated, try the kernel or g19direct driver first])],
-	[case "${enableval}" in
- 				yes)	g19_driver=yes ;;
- 				no)		g19_driver=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-g19-driver]) ;;
- 	esac],
-	[g19_driver=no])
-AM_CONDITIONAL([ENABLE_DRIVER_G19], [test x$g19_driver = xyes])
-
 AC_ARG_ENABLE([g930-driver],
 	[AS_HELP_STRING([--enable-g930-driver],
 		[Enable G930 headset driver support])],
@@ -285,10 +274,6 @@ AS_ECHO("Drivers")
 AS_ECHO("-------")
 AS_ECHO_N("driver_g15direct (libg15)   - ")
 AS_IF([test "x$g15direct_driver" = "xyes" ],
-     [AS_ECHO("Enabled")],
-     [AS_ECHO("Disabled")])
-AS_ECHO_N("driver_g19 (g19d)           - ")
-AS_IF([test "x$g19_driver" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("driver_g930                 - ")

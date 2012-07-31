@@ -268,7 +268,7 @@ class Device():
         return self.ui.__hash()
     
     def __eq__(self, o):
-        return self.uid == o.uid
+        return o is not None and self.uid == o.uid
         
     def __repr__(self):
         return "Device [%s] %s model: %s (%s) on USB ID %s:%s. Has a %d BPP screen of %dx%d. " %  \

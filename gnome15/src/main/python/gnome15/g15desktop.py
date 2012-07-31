@@ -33,7 +33,7 @@ import sys
 import pygtk
 pygtk.require('2.0')
 import gtk
-import gio
+import subprocess
 import gconf
 import gobject
 import shutil
@@ -57,6 +57,9 @@ from threading import Thread
 icon_theme = gtk.icon_theme_get_default()
 if g15globals.dev:
     icon_theme.prepend_search_path(g15globals.icons_dir)
+
+# Private     
+__browsers = { }
     
 """
 Some constants
@@ -555,6 +558,53 @@ def set_gnome_shell_extension_enabled(extension, enabled):
             status, text = g15util.execute_for_output("gsettings set org.gnome.shell enabled-extensions \"[%s]\"" % s)
         except Exception as e:
             logger.debug("Failed to set extension enabled. %s" % e)
+            
+def browse(url):
+    """
+    Open the configured browser
+    
+    Keyword arguments:
+    url        -- URL
+    """
+    b = g15util.get_string_or_default(gconf.client_get_default(), \
+                                      "/apps/gnome15/browser", "default")
+    if not b in __browsers and not b == "default":
+        logger.warning("Could not find browser %s, falling back to default" % b)
+        b = "default"
+    if not b in __browsers:
+        raise Exception("Could not find browser %s" % b)
+    __browsers[b].browse(url)
+
+def add_browser(browser):
+    """
+    Register a new browser. The object must extend G15Browser
+    
+    Keyword arguments:
+    browser        -- browser object.
+    """
+    if browser.browser_id in __browsers:
+        raise Exception("Browser already registered")
+    if not isinstance(browser, G15Browser):
+        raise Exception("Not a G15Browser instance")
+    __browsers[browser.browser_id] = browser
+        
+class G15Browser():
+    def __init__(self, browser_id, name):
+        self.name = name
+        self.browser_id = browser_id
+    
+    def browse(self, url):
+        raise Exception("Not implemented")
+
+class G15DefaultBrowser(G15Browser):
+    def __init__(self):
+        G15Browser.__init__(self, "default", _("Default system browser"))
+    
+    def browse(self, url):
+        logger.info("xdg-open '%s'" % url)
+        subprocess.Popen(['xdg-open', url])
+        
+add_browser(G15DefaultBrowser())
     
 class G15AbstractService(Thread):
     
