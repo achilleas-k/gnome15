@@ -20,6 +20,7 @@ THIS HAS TURNED INTO A DUMPING GROUND AND NEEDS REFACTORING
 import g15globals as pglobals
 import gtk.gdk
 import os
+import gobject
 import re
 import cairo
 import math
@@ -353,6 +354,13 @@ def execute(queue_name, job_name, function, *args):
 
 def schedule(job_name, interval, function, *args):
     return scheduler.schedule(job_name, interval, function, *args)
+
+def run_on_gobject(function, *args):
+    if is_gobject_thread():
+        return False
+    else:
+        gobject.idle_add(function, *args)
+        return True
 
 def stop_queue(queue_name):
     scheduler.stop_queue(queue_name)

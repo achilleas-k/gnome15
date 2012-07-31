@@ -980,7 +980,6 @@ class G15Screen():
                 traceback.print_exc(file=sys.stderr)
             self.attempt_connection(5.0)
         else:
-            traceback.print_exc(file=sys.stderr)
             return True
                 
     def _reload_driver(self):

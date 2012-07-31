@@ -230,7 +230,7 @@ class DeviceInfo():
                 self.all_keys.append(key)
                 
     def matches(self, usb_id):
-        return usb_id in self.controls_usb_id_list
+        return usb_id in self.controls_usb_id_list or usb_id in self.usb_id_list
         
     def __repr__(self):
         return "DeviceInfo [%s/%s] model: %s (%s). Has a %d BPP screen of %dx%d. " %  \
@@ -303,7 +303,7 @@ def get_device(uid):
         if d.uid == uid:
             return d
     
-def find_all_devices():
+def find_all_devices(do_cache = True):
     global __cached_devices
         
     """
@@ -312,7 +312,7 @@ def find_all_devices():
     """
     
     # If we have pydev, we can cache the devices
-    if have_udev and len(__cached_devices) != 0:
+    if do_cache and have_udev and len(__cached_devices) != 0:
         return __cached_devices
     
     device_map = {}
@@ -362,9 +362,9 @@ def find_all_devices():
         devices.append(Device(None, None, None, 0, device_list['virtual']))
     
     # If we have pydev, we can cache the devices
-    if have_udev:
+    if have_udev and do_cache:
         __cached_devices += devices
-    
+        
     return devices
 
 def find_device(models):
@@ -403,56 +403,59 @@ DeviceInfo(g15driver.MODEL_MX5500,      (0x0000, 0x0000),   (0x0000, 0x0000),   
 have_udev = False
 device_added_listeners = []
 device_removed_listeners = []
+    
+def __device_added(observer, device):
+    if "uevent" in device.attributes:
+        uevent = g15util.parse_as_properties(device.attributes["uevent"])
+        if "PRODUCT" in uevent:
+            if "subsystem" in device.attributes and device.attributes["subsystem"] == "usb":
+                major,minor,_ = uevent["PRODUCT"].split("/")
+            else:
+                _,major,minor,_ = uevent["PRODUCT"].split("/")
+            for c in device_list:
+                device_info = device_list[c]
+                usb_id = (int(major, 16), int(minor, 16))
+                if device_info.matches(usb_id):
+                    if not _get_cached_device_by_usb_id(usb_id):
+                        del __cached_devices[:]
+                        find_all_devices()
+                        for r in reversed(__cached_devices):
+                            if r.usb_id == usb_id:
+                                logger.info("Added device %s" % r)
+                                for l in device_added_listeners:
+                                    l(r)
+                                break
+                    break
+                        
+def __device_removed(observer, device):
+    current_devices = list(__cached_devices)
+    new_devices = find_all_devices(do_cache = False)
+    found = False
+    for d in current_devices:
+        for e in new_devices:
+            if e.uid == d.uid:
+                found = True
+                break
+        if not found:
+            if d in __cached_devices:
+                __cached_devices.remove(d)
+            for l in device_removed_listeners:
+                l(d)
+            break
 
 try:
     import pyudev.glib
     __context = pyudev.Context()
     __monitor = pyudev.Monitor.from_netlink(__context)
-    def device_added(observer, device):
-        if "uevent" in device.attributes:
-            uevent = g15util.parse_as_properties(device.attributes["uevent"])
-            if "PRODUCT" in uevent:
-                if "subsystem" in device.attributes and device.attributes["subsystem"] == "usb":
-                    major,minor,_ = uevent["PRODUCT"].split("/")
-                else:
-                    _,major,minor,_ = uevent["PRODUCT"].split("/")
-                for c in device_list:
-                    device_info = device_list[c]
-                    usb_id = (int(major, 16), int(minor, 16))
-                    if device_info.matches(usb_id):
-                        if not _get_cached_device_by_usb_id(usb_id):
-                            del __cached_devices[:]
-                            find_all_devices()
-                            for r in reversed(__cached_devices):
-                                if r.usb_id == usb_id:
-                                    for l in device_added_listeners:
-                                        l(r)
-                                    break
-                        break
-                            
-    def device_removed(observer, device):
-        current_devices = list(__cached_devices)
-        del __cached_devices[:]
-        new_devices = find_all_devices()
-        for d in current_devices:
-            found = False
-            for e in new_devices:
-                if e.uid == d.uid:
-                    found = True
-                    break
-            if not found:
-                for l in device_removed_listeners:
-                    l(d)
-                
     __observer = pyudev.glib.GUDevMonitorObserver(__monitor)
-    __observer.connect('device-added', device_added)
-    __observer.connect('device-removed', device_removed)
+    __observer.connect('device-added', __device_added)
+    __observer.connect('device-removed', __device_removed)
+    find_all_devices()
     have_udev = True
     __monitor.start()
 except:
     logger.info("Failed to get PyUDev context, hot plugging support not available")
-
-
+    
 if __name__ == "__main__":
     for device in find_all_devices():
         print str(device)

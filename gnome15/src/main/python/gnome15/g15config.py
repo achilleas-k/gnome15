@@ -544,6 +544,7 @@ class G15Config:
     def _remove_notify_handles(self):
         for h in self.notify_handles:
             self.conf_client.notify_remove(h)
+        self.notify_handles = []
             
     def _stop_service(self, event = None):
         self.gnome15_service.Stop(reply_handler = self._general_dbus_reply, error_handler = self._general_dbus_error)
@@ -1129,7 +1130,7 @@ class G15Config:
     def _load_device(self):
         sel_items = self.device_view.get_selected_items()
         sel_idx = sel_items[0][0] if len(sel_items) > 0 else -1
-        self.selected_device = self.devices[sel_idx] if sel_idx > -1 else None
+        self.selected_device = self.devices[sel_idx] if sel_idx > -1 and sel_idx < len(self.devices) else None
         if self.selected_device:
             self._load_drivers()
         self._remove_notify_handles()
@@ -1826,7 +1827,7 @@ class G15Config:
         self.memory_bank_vbox.add(self.widget_tree.get_object("MemoryBanks"))
         
         # Slider and Color controls            
-        table = gtk.Table(rows = len(driver_controls), columns = 2)
+        table = gtk.Table(rows = max(1, len(driver_controls)), columns = 2)
         table.set_row_spacings(4)
         row = 0
         for control in driver_controls:
