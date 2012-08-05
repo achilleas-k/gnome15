@@ -178,9 +178,6 @@ class G15Service(g15desktop.G15AbstractService):
         g15desktop.G15AbstractService.__init__(self)
         self.name = "DesktopService"
         
-       
-        
-        
     def start_service(self):
         try:
             self._do_start_service()
@@ -822,19 +819,24 @@ class G15Service(g15desktop.G15AbstractService):
             logger.warning("GNOME session manager not available, will not detect logout signal for clean shutdown. %s" % str(e))
             
     def _sm_query_end_session(self, flags):
-        logger.info("Querying for end session")
-        self._sm_client_dbus_will_quit(True, "Gnome15 Shutting Down")
-        g15util.execute(SERVICE_QUEUE, "SessionEnd", self.stop)
+        if self._is_monitor_session():
+            logger.info("Querying for end session")
+            self._sm_client_dbus_will_quit(True, "")
         
     def _sm_cancel_end_session(self):
-        logger.info("Cancelled session end, starting up again")
-        self.session_active = True
-        g15util.execute(SERVICE_QUEUE, "CancelSessionEnd", self.start_service)
+        if self._is_monitor_session():
+            if not self.session_active:
+                logger.info("Cancelled session end, starting up again")
+                self.session_active = True
+                self.start_service()
+            else:
+                logger.info("Cancelled session end, but we haven't started shutdown yet")
         
     def _sm_end_session(self, flags):
-        self._sm_client_dbus_will_quit(True, "Gnome15 Shutting Down")
-        logger.info("Ending session")
-        g15util.execute(SERVICE_QUEUE, "SessionEnd", self.stop)
+        if self._is_monitor_session():
+            logger.info("Ending session")
+            self.stop()
+            self._sm_client_dbus_will_quit(True, "")
     
     def _sm_client_dbus_will_quit(self, can_quit=True, reason=""):
         self.session_manager_client_object.EndSessionResponse(can_quit,reason)
@@ -842,10 +844,13 @@ class G15Service(g15desktop.G15AbstractService):
     def _sm_stop(self):        
         logger.info("Shutdown quickly")
         self.shutdown(True)
+        
+    def _is_monitor_session(self):
+        return g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/monitor_desktop_session", True)
             
     def _active_session_changed(self, object_path):        
         logger.debug("Adding seat %s" % object_path)
-        if g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/monitor_desktop_session", True):
+        if self._is_monitor_session():
             self.session_active = object_path == self.this_session_path
             if self.session_active:
                 logger.info("g15-desktop service is running on the active session")

@@ -304,9 +304,12 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         if g15util.run_on_gobject(self.page_changed, page):
             return
         logger.debug("Sending page changed signal for %s" % page.id)
-        dbus_page = self._dbus_pages[page.id]
-        self.PageChanged(dbus_page._bus_name)
-        logger.debug("Sent page changed signal for %s" % page.id)
+        if page.id in self._dbus_pages:
+            dbus_page = self._dbus_pages[page.id]
+            self.PageChanged(dbus_page._bus_name)
+            logger.debug("Sent page changed signal for %s" % page.id)
+        else:
+            logger.warn("Got page_changed event when no such page (%s) exists" % page.id)
         
     def new_page(self, page): 
         if g15util.run_on_gobject(self.new_page, page):
