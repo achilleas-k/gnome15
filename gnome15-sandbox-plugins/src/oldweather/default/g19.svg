@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="320"
+   height="240"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.0 r9654"
+   sodipodi:docname="g19.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.8"
+     inkscape:cx="-23.805802"
+     inkscape:cy="96.291158"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     borderlayer="false"
+     inkscape:window-width="1914"
+     inkscape:window-height="1008"
+     inkscape:window-x="0"
+     inkscape:window-y="1"
+     inkscape:window-maximized="1"
+     inkscape:snap-global="false"
+     showguides="false">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3986"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Weather Layer"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-812.36218)"
+     style="display:inline"
+     title="del message">
+    <g
+       id="g3022"
+       transform="matrix(0.79187571,0,0,0.79187571,64.081848,171.76321)"
+       style="fill:#696969">
+      <rect
+         transform="matrix(0.78095238,0,0,0.81034483,72.904761,151.31006)"
+         ry="18.70055"
+         rx="19.404377"
+         y="837.36218"
+         x="160"
+         height="145"
+         width="150"
+         id="rect2985-2"
+         style="fill:#696969;fill-opacity:0.49760766;stroke:#000000;stroke-width:1.43587196;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0" />
+      <image
+         sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15/src/plugins/weather/default/${icon}"
+         xlink:href="${icon}"
+         height="128"
+         width="128"
+         transform="matrix(0.76502736,0,0,0.76502736,77.56829,191.18342)"
+         id="image4256"
+         x="169.28572"
+         y="847.36218"
+         style="fill:#696969" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:37.67722702px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill-opacity:1;stroke:none;font-family:Arial Black;-inkscape-font-specification:'Arial Black,'"
+       x="9.2553492"
+       y="776.06525"
+       id="text4014"
+       sodipodi:linespacing="125%"
+       transform="matrix(0.90586212,0,0,1.1039208,0,16)"><tspan
+         sodipodi:role="line"
+         id="tspan4016"
+         x="9.2553492"
+         y="776.06525">${condition}</tspan></text>
+    <rect
+       style="fill:#595959;fill-opacity:0.49760766;stroke:#000000;stroke-width:0.99999994;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0"
+       id="rect3023"
+       width="85"
+       height="99.99987"
+       x="5.0000005"
+       y="952.36224"
+       rx="11.000001"
+       ry="11"
+       transform="translate(-0.71428571,-16.928571)" />
+    <text
+       xml:space="preserve"
+       style="font-size:17.26413727px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="37.040577"
+       y="1041.8206"
+       id="text4014-6-0"
+       sodipodi:linespacing="125%"
+       transform="matrix(1.0576884,0,0,0.94545804,-0.71428571,-28.928571)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4"
+         x="37.040577"
+         y="1041.8206">${day1}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.9224844px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="360.82608"
+       y="855.74609"
+       id="text4014-6-0-9"
+       sodipodi:linespacing="125%"
+       transform="matrix(0.8702247,0,0,1.1491285,-0.71428571,-28.928571)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-4"
+         x="360.82608"
+         y="855.74609">${lo1} - ${hi1}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="99.273094"
+       y="1042.2062"
+       id="text4014-6-0-5"
+       sodipodi:linespacing="125%"
+       transform="matrix(1.0576884,0,0,1.0560293,-0.71428571,-144.99046)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-2"
+         x="99.273094"
+         y="1042.2062">${condition1}</tspan></text>
+    <image
+       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15/src/plugins/weather/default/${icon1}"
+       xlink:href="${icon1}"
+       transform="translate(-0.71428571,-28.928571)"
+       id="image4256-9"
+       x="15.000005"
+       y="970.36218"
+       width="20"
+       height="20" />
+    <text
+       xml:space="preserve"
+       style="font-size:17.26413727px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="37.040573"
+       y="1065.0897"
+       id="text4014-6-0-1"
+       sodipodi:linespacing="125%"
+       transform="matrix(1.0576884,0,0,0.94545804,-0.71427779,-27.928619)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-6"
+         x="37.040573"
+         y="1065.0897">${day2}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.9224844px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="360.82608"
+       y="874.89111"
+       id="text4014-6-0-9-0"
+       sodipodi:linespacing="125%"
+       transform="matrix(0.8702247,0,0,1.1491285,-0.71427779,-27.928619)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-4-9"
+         x="360.82608"
+         y="874.89111">${lo2} - ${hi2}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="99.273087"
+       y="1065.4753"
+       id="text4014-6-0-5-1"
+       sodipodi:linespacing="125%"
+       transform="matrix(1.0576884,0,0,1.1666005,-0.71427779,-264.05533)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-2-2"
+         x="99.273087"
+         y="1065.4753">${condition2}</tspan></text>
+    <image
+       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15/src/plugins/weather/default/${icon2}"
+       xlink:href="${icon2}"
+       transform="translate(-0.71427779,-27.928619)"
+       height="20"
+       width="20"
+       y="992.36218"
+       x="15"
+       id="image4256-9-4" />
+    <text
+       xml:space="preserve"
+       style="font-size:17.26413727px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="37.040569"
+       y="1089.4166"
+       id="text4014-6-0-90"
+       sodipodi:linespacing="125%"
+       transform="matrix(1.0576884,0,0,0.94545804,-0.71428571,-26.928571)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-1"
+         x="37.040569"
+         y="1089.4166">${day3}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.9224844px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="360.82605"
+       y="894.90631"
+       id="text4014-6-0-9-4"
+       sodipodi:linespacing="125%"
+       transform="matrix(0.8702247,0,0,1.1491285,-0.71428571,-26.928571)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-4-4"
+         x="360.82605"
+         y="894.90631">${lo3} - ${hi3}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="99.273087"
+       y="1089.8022"
+       id="text4014-6-0-5-3"
+       sodipodi:linespacing="125%"
+       transform="matrix(1.0576884,0,0,1.1666005,-0.71428571,-268.435)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-2-25"
+         x="99.273087"
+         y="1089.8022">${condition3}</tspan></text>
+    <image
+       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15/src/plugins/weather/default/${icon3}"
+       xlink:href="${icon3}"
+       transform="translate(-0.71428571,-26.928571)"
+       height="20"
+       width="20"
+       y="1015.3622"
+       x="15"
+       id="image4256-9-1" />
+    <text
+       xml:space="preserve"
+       style="font-size:17.26413727px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="37.040569"
+       y="1112.6857"
+       id="text4014-6-0-3"
+       sodipodi:linespacing="125%"
+       transform="matrix(1.0576884,0,0,0.94545804,-0.71428571,-24.928571)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-26"
+         x="37.040569"
+         y="1112.6857">${day4}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.9224844px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="360.82605"
+       y="914.05115"
+       id="text4014-6-0-9-06"
+       sodipodi:linespacing="125%"
+       transform="matrix(0.8702247,0,0,1.1491285,-0.71428571,-24.928571)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-4-96"
+         x="360.82605"
+         y="914.05115">${lo4} - ${hi4}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="99.273087"
+       y="1113.0713"
+       id="text4014-6-0-5-8"
+       sodipodi:linespacing="125%"
+       transform="matrix(1.0576884,0,0,1.1389577,-0.71428571,-240.3921)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-2-0"
+         x="99.273087"
+         y="1113.0713">${condition4}</tspan></text>
+    <image
+       sodipodi:absref="/home/tanktarta/Documents/Workspaces/Gnome/gnome15/gnome15/src/plugins/weather/default/${icon4}"
+       xlink:href="${icon4}"
+       transform="translate(-0.71428571,-24.928571)"
+       height="20"
+       width="20"
+       y="1037.3622"
+       x="15"
+       id="image4256-9-8" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="-7.6987991"
+       y="83.928574"
+       id="text3030"
+       sodipodi:linespacing="125%"
+       transform="matrix(2.6125333,0,0,2.6125333,26.879764,687.94062)"><tspan
+         sodipodi:role="line"
+         id="tspan3032"
+         x="-7.6987991"
+         y="83.928574">${temp}</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Message Layer"
+     style="display:inline"
+     title="del !message">
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed;"
+       x="166.50531"
+       y="115"
+       id="text3020"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3022"
+         x="166.50531"
+         y="115">${message}</tspan></text>
+  </g>
+</svg>

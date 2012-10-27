@@ -34,8 +34,8 @@
      borderlayer="false"
      inkscape:window-width="1127"
      inkscape:window-height="898"
-     inkscape:window-x="1973"
-     inkscape:window-y="41"
+     inkscape:window-x="2355"
+     inkscape:window-y="51"
      inkscape:window-maximized="0"
      inkscape:snap-global="false"
      showguides="false">
@@ -81,7 +81,7 @@
          id="rect2985-2"
          style="fill:#696969;fill-opacity:0.49760766;stroke:#000000;stroke-width:1.43587196;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0" />
       <image
-         sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/weather/default/${icon}"
+         sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/weather/forecasts/${icon}"
          xlink:href="${icon}"
          height="128"
          width="128"
@@ -146,43 +146,6 @@
     <text
        xml:space="preserve"
        style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
-       x="54.693317"
-       y="827.367"
-       id="text4014-6-0-9-47-9"
-       sodipodi:linespacing="125%"
-       transform="scale(0.8702247,1.1491285)"
-       title="del !wind"><tspan
-         sodipodi:role="line"
-         id="tspan4016-4-4-4-8-8"
-         x="54.693317"
-         y="827.367">Wind:</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
-       x="122.94373"
-       y="844.72345"
-       id="text4014-6-0-9-47-9-2"
-       sodipodi:linespacing="125%"
-       transform="scale(0.8702247,1.1491285)"><tspan
-         sodipodi:role="line"
-         id="tspan4016-4-4-4-8-8-5"
-         x="122.94373"
-         y="844.72345">${humidity}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
-       x="122.94373"
-       y="862.32111"
-       id="text4014-6-0-9-47-9-2-6"
-       sodipodi:linespacing="125%"
-       transform="scale(0.8702247,1.1491285)"><tspan
-         sodipodi:role="line"
-         id="tspan4016-4-4-4-8-8-5-7"
-         x="122.94373"
-         y="862.32111">${pressure}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
        x="90.836517"
        y="909.00891"
        id="text4014-6-0-9-47-9-4"
@@ -205,44 +168,6 @@
          id="tspan3022-8"
          x="8.1417437"
          y="910.48547">${location} @ ${time} </tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
-       x="122.94373"
-       y="827.6673"
-       id="text4014-6-0-9-47-9-1"
-       sodipodi:linespacing="125%"
-       transform="scale(0.8702247,1.1491285)"><tspan
-         sodipodi:role="line"
-         id="tspan4016-4-4-4-8-8-0"
-         x="122.94373"
-         y="827.6673">${wind}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
-       x="53.784138"
-       y="845.20551"
-       id="text4014-6-0-9-47-9-6"
-       sodipodi:linespacing="125%"
-       transform="scale(0.8702247,1.1491285)"
-       title="del !humidity"><tspan
-         sodipodi:role="line"
-         id="tspan4016-4-4-4-8-8-16"
-         x="53.784138"
-         y="845.20551">Humidity:</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
-       x="53.784138"
-       y="862.35596"
-       id="text4014-6-0-9-47-9-6-0"
-       sodipodi:linespacing="125%"
-       transform="scale(0.8702247,1.1491285)"
-       title="del !pressure"><tspan
-         sodipodi:role="line"
-         id="tspan4016-4-4-4-8-8-16-0"
-         x="53.784138"
-         y="862.35596">Pressure:</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
@@ -284,31 +209,153 @@
          x="235.71587"
          y="908.63153"
          style="font-weight:bold;-inkscape-font-specification:Sans Bold">Sunset at </tspan></text>
+    <rect
+       style="fill:#595959;fill-opacity:0.49760766;stroke:#000000;stroke-width:0.99999994;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0;display:inline"
+       id="rect3023"
+       width="85"
+       height="54.543007"
+       x="2.6184609"
+       y="972.9502"
+       rx="11.000001"
+       ry="11" />
+    <text
+       xml:space="preserve"
+       style="font-size:17.26413726999999909px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans;font-stretch:normal;font-variant:normal"
+       x="34.788929"
+       y="1050.9039"
+       id="text4014-6-0"
+       sodipodi:linespacing="125%"
+       transform="scale(1.0576884,0.94545804)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4"
+         x="34.788929"
+         y="1050.9039">${day1}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.92248440000000009px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans;font-stretch:normal;font-variant:normal"
+       x="358.08939"
+       y="863.21954"
+       id="text4014-6-0-9"
+       sodipodi:linespacing="125%"
+       transform="scale(0.8702247,1.1491285)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-4"
+         x="358.08939"
+         y="863.21954">${lo1} - ${hi1}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14.79601955000000046px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans;font-stretch:normal;font-variant:normal"
+       x="102.53794"
+       y="993.90613"
+       id="text4014-6-0-5"
+       sodipodi:linespacing="125%"
+       transform="scale(1.0007852,0.99921541)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-2"
+         x="102.53794"
+         y="993.90613">${condition1}</tspan></text>
+    <image
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/weather/forecasts/${icon1}"
+       xlink:href="${icon1}"
+       style="display:inline"
+       id="image4256-9"
+       x="12.618464"
+       y="978.95013"
+       width="20"
+       height="20" />
+    <text
+       xml:space="preserve"
+       style="font-size:17.26413726999999909px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans;font-stretch:normal;font-variant:normal"
+       x="34.788933"
+       y="1075.2307"
+       id="text4014-6-0-1"
+       sodipodi:linespacing="125%"
+       transform="scale(1.0576884,0.94545804)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-6"
+         x="34.788933"
+         y="1075.2307">${day2}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10.92248440000000009px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans;font-stretch:normal;font-variant:normal"
+       x="358.08939"
+       y="883.23474"
+       id="text4014-6-0-9-0"
+       sodipodi:linespacing="125%"
+       transform="scale(0.8702247,1.1491285)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-4-9"
+         x="358.08939"
+         y="883.23474">${lo2} - ${hi2}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:15.55134583000000070px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans;font-stretch:normal;font-variant:normal"
+       x="107.77244"
+       y="967.836"
+       id="text4014-6-0-5-1"
+       sodipodi:linespacing="125%"
+       transform="scale(0.95217719,1.0502247)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-2-2"
+         x="107.77244"
+         y="967.836">${condition2}</tspan></text>
+    <image
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/weather/forecasts/${icon2}"
+       xlink:href="${icon2}"
+       style="display:inline"
+       height="20"
+       width="20"
+       y="1001.9501"
+       x="12.618468"
+       id="image4256-9-4" />
     <text
        xml:space="preserve"
        style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
-       x="123.21021"
-       y="880.83411"
+       x="4.5835333"
+       y="821.0918"
+       id="text4014-6-0-9-47-9-1"
+       sodipodi:linespacing="125%"
+       transform="scale(0.8702247,1.1491285)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-4-8-8-0"
+         x="4.5835333"
+         y="821.0918">${wind}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
+       x="4.5835333"
+       y="838.91034"
+       id="text4014-6-0-9-47-9-2"
+       sodipodi:linespacing="125%"
+       transform="scale(0.8702247,1.1491285)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-4-8-8-5"
+         x="4.5835333"
+         y="838.91034">${humidity}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
+       x="362.48926"
+       y="826.91309"
+       id="text4014-6-0-9-47-9-2-6"
+       sodipodi:linespacing="125%"
+       transform="scale(0.8702247,1.1491285)"><tspan
+         sodipodi:role="line"
+         id="tspan4016-4-4-4-8-8-5-7"
+         x="362.48926"
+         y="826.91309">${pressure}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
+       x="362.21451"
+       y="844.05469"
        id="text4014-6-0-9-47-9-2-6-4"
        sodipodi:linespacing="125%"
        transform="scale(0.8702247,1.1491285)"><tspan
          sodipodi:role="line"
          id="tspan4016-4-4-4-8-8-5-7-0"
-         x="123.21021"
-         y="880.83411">${visibility}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;display:inline;font-family:Sans;-inkscape-font-specification:Sans"
-       x="54.050835"
-       y="880.86896"
-       id="text4014-6-0-9-47-9-6-0-6"
-       sodipodi:linespacing="125%"
-       transform="scale(0.8702247,1.1491285)"
-       title="del !visibility"><tspan
-         sodipodi:role="line"
-         id="tspan4016-4-4-4-8-8-16-0-4"
-         x="54.050835"
-         y="880.86896">Visibility:</tspan></text>
+         x="362.21451"
+         y="844.05469">${visibility}</tspan></text>
   </g>
   <g
      inkscape:groupmode="layer"

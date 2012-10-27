@@ -1,4 +1,4 @@
-SUBDIRS = default
+SUBDIRS = default forecasts
 plugindir = $(datadir)/gnome15/plugins/weather
 plugin_DATA = weather.py \
 	pywapi.py \

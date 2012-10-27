@@ -249,7 +249,7 @@ AM_CONDITIONAL([ENABLE_MEDIAPLAYER_PLUGIN], [test x$mediaplayer_plugin = xyes])
 dnl Weather plugin
 AC_ARG_ENABLE([weather],
 	[AS_HELP_STRING([--enable-weather],
-		[Enable Weather plugin. Uses unofficial Google API to retrieve weather data])],
+		[Enable Weather plugin. Requires additional backend plugin such as weather-noaa])],
 	[case "${enableval}" in
  				yes)	weather_plugin=yes ;;
  				no)		weather_plugin=no ;;
@@ -257,6 +257,26 @@ AC_ARG_ENABLE([weather],
  	esac],
 	[weather_plugin=yes])
 AM_CONDITIONAL([ENABLE_WEATHER_PLUGIN], [test x$weather_plugin = xyes])
+AC_ARG_ENABLE([weather-noaa],
+	[AS_HELP_STRING([--enable-weather-noaa],
+		[Enable NOAA support for the Weather plugin.])],
+	[case "${enableval}" in
+ 				yes)	weather_noaa_plugin=yes ;;
+ 				no)		weather_noaa_plugin=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-weather-noaa]) ;;
+ 	esac],
+	[weather_noaa_plugin=yes])
+AM_CONDITIONAL([ENABLE_WEATHER_NOAA_PLUGIN], [test x$weather_noaa_plugin = xyes])
+AC_ARG_ENABLE([weather-yahoo],
+	[AS_HELP_STRING([--enable-weather-yahoo],
+		[Enable Yahoo support for the Weather plugin.])],
+	[case "${enableval}" in
+ 				yes)	weather_yahoo_plugin=yes ;;
+ 				no)		weather_yahoo_plugin=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-weather-yahoo]) ;;
+ 	esac],
+	[weather_yahoo_plugin=yes])
+AM_CONDITIONAL([ENABLE_WEATHER_YAHOO_PLUGIN], [test x$weather_yahoo_plugin = xyes])
 
 dnl Plugins that have additional dependencies
 
@@ -569,6 +589,9 @@ src/mediaplayer/Makefile
 src/mediaplayer/default/Makefile
 src/weather/Makefile
 src/weather/default/Makefile
+src/weather/forecasts/Makefile
+src/weather-noaa/Makefile
+src/weather-yahoo/Makefile
 src/tails/Makefile
 src/tails/tailer/Makefile
 src/tails/default/Makefile
@@ -702,6 +725,14 @@ AS_IF([test "x$mediaplayer_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("weather                     - ")
 AS_IF([test "x$weather_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("weather-noaa                - ")
+AS_IF([test "x$weather_noaa_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("weather-yahoo               - ")
+AS_IF([test "x$weather_yahoo_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("sense                       - ")

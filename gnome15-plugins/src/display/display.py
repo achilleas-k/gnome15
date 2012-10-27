@@ -32,6 +32,8 @@ import os
 import re
 logger = logging.getLogger("xrandr")
 
+ICONS = [ "display", "gnome-display-properties", "system-config-display", "video-display", "xfce4-display", "display-capplet" ]
+
 # Custom actions
 SELECT_PROFILE = "select-profile"
 
@@ -91,7 +93,7 @@ XRANDR plugin class
 class G15XRandR(g15plugin.G15MenuPlugin):
     
     def __init__(self, gconf_client, gconf_key, screen):
-        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, [ "display", "gnome-display-properties", "system-config-display", "video-display", "xfce4-display", "display-capplet" ], id, _("Display"))
+        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, ICONS, id, _("Display"))
     
     def activate(self):
         self._timer = None
@@ -106,23 +108,31 @@ class G15XRandR(g15plugin.G15MenuPlugin):
         self._cancel_timer()
         items = []
         i = 0
+        print "**************************************"
         status, output = self._get_status_output("xrandr")
         if status == 0:
             old_active = self._current_active
             new_active = None
             for line in output.split('\n'):
+                arr = re.findall(r'\S+', line)
+                print line
                 if line.startswith("  "):
-                    arr = re.findall(r'\S+', line)
                     size = self._parse_size(arr[0])
                     for a in range(1, len(arr)):
                         word = arr[a]
-                        refresh_rate = float(''.join( c for c in word if  c not in '*+' ))
-                        item = ResolutionMenuItem(i, size, refresh_rate, self, "profile-%d-%s" % ( i, refresh_rate ) )      
-                        item.current = word.endswith("*")
-                        items.append(item)
-                        if item.current:
-                            new_active = item
+                        refresh_string = ''.join( c for c in word if  c not in '*+' )
+                        if len(refresh_string) > 0:
+                            refresh_rate = float(refresh_string)
+                            item = ResolutionMenuItem(i, size, refresh_rate, self, "profile-%d-%s" % ( i, refresh_rate ) )      
+                            item.current = "*" in word
+                            items.append(item)
+                            if item.current:
+                                new_active = item
                     i += 1
+                elif "connected" in line:
+                    print "****DEVICE",arr[0]
+                    item = g15theme.MenuItem("display-%s" % arr[0], True, arr[0], activatable=False, icon = g15util.get_icon_path(ICONS))
+                    items.append(item)
                     
             if old_active is None or ( new_active is not None and new_active.id != old_active.id ):
                 self.menu.set_children(items)

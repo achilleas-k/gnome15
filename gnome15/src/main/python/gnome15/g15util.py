@@ -261,6 +261,10 @@ def boolean_conf_value_change(client, connection_id, entry, args):
     widget, key = args
     widget.set_active( entry.get_value().get_bool())
     
+def text_conf_value_change(client, connection_id, entry, args):
+    widget, key = args
+    widget.set_text( entry.get_value().get_string())
+    
 def radio_conf_value_change(client, connection_id, entry, args):
     widget, key, gconf_value = args
     str_value = entry.get_value().get_string()
@@ -276,6 +280,17 @@ def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_va
     widget.connect("toggled", checkbox_changed, gconf_key, gconf_client)
     if watch_changes:
         return gconf_client.notify_add(gconf_key, boolean_conf_value_change,( widget, gconf_key ));
+    
+def configure_text_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, watch_changes = False):
+    widget = widget_tree.get_object(widget_id)
+    entry = gconf_client.get(gconf_key)
+    if entry != None:
+        widget.set_text(entry.get_string())
+    else:
+        widget.set_text(default_value)
+    widget.connect("changed", text_changed, gconf_key, gconf_client)
+    if watch_changes:
+        return gconf_client.notify_add(gconf_key, text_conf_value_change,( widget, gconf_key ));
         
 def configure_radio_from_gconf(gconf_client, gconf_key, widget_ids , gconf_values, default_value, widget_tree, watch_changes = False):
     entry = gconf_client.get(gconf_key)
@@ -313,6 +328,9 @@ def adjustment_changed(adjustment, key, gconf_client, integer = True):
     
 def checkbox_changed(widget, key, gconf_client):
     gconf_client.set_bool(key, widget.get_active())
+    
+def text_changed(widget, key, gconf_client):
+    gconf_client.set_string(key, widget.get_text())
     
 def radio_changed(widget, key, gconf_client, gconf_value):
     gconf_client.set_string(key, gconf_value)
@@ -394,6 +412,12 @@ def get_lsb_distributor():
 '''
 General utilities
 '''
+def append_if_exists( el, key, val, formatter = "%s"):   
+    if key in el and el[key] is not None and len(str(el[key])) > 0:
+        if len(val) > 0:
+            val += ","            
+        val += formatter % el[key]
+    return val
     
 def get_command_output( cmd):
     pipe = os.popen('{ ' + cmd + '; } 2>/dev/null', 'r')

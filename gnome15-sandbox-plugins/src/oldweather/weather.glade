@@ -2,14 +2,6 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkListStore" id="SourcesModel">
-    <columns>
-      <!-- column-name SourceID -->
-      <column type="gchararray"/>
-      <!-- column-name SourceName -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkListStore" id="Units">
     <columns>
       <!-- column-name gchararray1 -->
@@ -34,7 +26,7 @@
     <property name="page_increment">1</property>
   </object>
   <object class="GtkDialog" id="WeatherDialog">
-    <property name="width_request">450</property>
+    <property name="width_request">320</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Weather Preferences</property>
@@ -95,31 +87,56 @@
                       <object class="GtkVBox" id="vbox2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="spacing">4</property>
                         <child>
-                          <object class="GtkComboBox" id="Source">
+                          <object class="GtkLabel" id="label2">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="model">SourcesModel</property>
-                            <child>
-                              <object class="GtkCellRendererText" id="cellrenderertext2"/>
-                              <attributes>
-                                <attribute name="text">1</attribute>
-                              </attributes>
-                            </child>
+                            <property name="xalign">0</property>
+                            <property name="label" translatable="yes">Enter your location. This may be a town and
+or country name. such as &lt;b&gt;London, England &lt;/b&gt;,
+a zip or post code, or a longitude and latitude 
+such as &lt;b&gt;30670000,104019996&lt;/b&gt;.</property>
+                            <property name="use_markup">True</property>
+                            <property name="wrap">True</property>
                           </object>
                           <packing>
                             <property name="expand">True</property>
                             <property name="fill">True</property>
+                            <property name="padding">8</property>
                             <property name="position">0</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkVBox" id="PlaceHolder">
+                          <object class="GtkHBox" id="hbox1">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
-                              <placeholder/>
+                              <object class="GtkLabel" id="label7">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Location:</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="Location">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="invisible_char">●</property>
+                                <property name="primary_icon_activatable">False</property>
+                                <property name="secondary_icon_activatable">False</property>
+                                <property name="primary_icon_sensitive">True</property>
+                                <property name="secondary_icon_sensitive">True</property>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
                             </child>
                           </object>
                           <packing>
@@ -136,7 +153,7 @@
                   <object class="GtkLabel" id="label1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Source&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">&lt;b&gt;Location&lt;/b&gt;</property>
                     <property name="use_markup">True</property>
                   </object>
                 </child>

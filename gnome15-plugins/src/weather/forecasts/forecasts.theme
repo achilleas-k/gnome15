@@ -1,0 +1,4 @@
+[theme]
+name=Forecasts
+description=Displays a two day forecast when available
+unsupported_models=g110,g11,mx5500,g930,g35

@@ -141,6 +141,7 @@ class G15PagePlugin(G15Plugin):
                                      title = self._title, theme = self.create_theme(),
                                      thumbnail_painter = self._paint_thumbnail,
                                      theme_properties_callback = self.get_theme_properties,
+                                     theme_properties_attributes = self.get_theme_attributes,
                                      painter = self._paint,
                                      originating_plugin = self)
         
@@ -283,7 +284,7 @@ class G15RefreshingPlugin(G15PagePlugin):
     def _refresh(self):
         self.refresh()
         self.screen.redraw(self.page)
-        self._schedule_refresh()  
+        self._reschedule_refresh()  
     
 class G15MenuPlugin(G15Plugin):
     '''

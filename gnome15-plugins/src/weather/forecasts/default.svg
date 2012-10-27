@@ -29,28 +29,6 @@
          x="0"
          y="1076.027" />
     </clipPath>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
-       id="clipPath3833-2">
-      <rect
-         style="opacity:0.5;fill:#ff4500;fill-opacity:1"
-         id="rect3835-6"
-         width="62.057159"
-         height="9.2817659"
-         x="0"
-         y="1076.027" />
-    </clipPath>
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
-       id="clipPath3833-2-7">
-      <rect
-         style="opacity:0.5;fill:#ff4500;fill-opacity:1"
-         id="rect3835-6-7"
-         width="62.057159"
-         height="9.2817659"
-         x="0"
-         y="1076.027" />
-    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -60,7 +38,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
-     inkscape:cx="82.849888"
+     inkscape:cx="107.48884"
      inkscape:cy="30.922569"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -68,8 +46,8 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="1973"
-     inkscape:window-y="21"
+     inkscape:window-x="157"
+     inkscape:window-y="42"
      inkscape:window-maximized="0"
      inkscape:snap-global="false">
     <inkscape:grid
@@ -100,13 +78,92 @@
      style="display:inline"
      title="del message">
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/weather/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/weather/forecasts/${icon}"
        xlink:href="${icon}"
        id="image3051"
        width="43"
        height="43"
        x="0"
        y="1009.4643" />
+    <rect
+       style="fill:#000000;fill-opacity:1"
+       id="rect3026"
+       width="9"
+       height="20"
+       x="56"
+       y="1017.3622" />
+    <text
+       xml:space="preserve"
+       style="font-size:7.99999952px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="66.748032"
+       y="912.51501"
+       id="text3849"
+       sodipodi:linespacing="125%"
+       transform="scale(0.890048,1.1235349)"><tspan
+         sodipodi:role="line"
+         id="tspan3851"
+         x="66.748032"
+         y="912.51501">${day_letter1}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8.00000477px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="74.612717"
+       y="912.20758"
+       id="text3849-8"
+       sodipodi:linespacing="125%"
+       transform="scale(0.89004864,1.1235341)"><tspan
+         sodipodi:role="line"
+         id="tspan3851-9"
+         x="74.612717"
+         y="912.20758">${condition1}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="180.29941"
+       y="912.74939"
+       id="text3849-7"
+       sodipodi:linespacing="125%"
+       transform="scale(0.890048,1.1235349)"><tspan
+         sodipodi:role="line"
+         id="tspan3851-3"
+         x="180.29941"
+         y="912.74939">${hi1}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:7.99999952px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="66.748032"
+       y="920.52539"
+       id="text3849-79"
+       sodipodi:linespacing="125%"
+       transform="scale(0.890048,1.1235349)"><tspan
+         sodipodi:role="line"
+         id="tspan3851-5"
+         x="66.748032"
+         y="920.52539">${day_letter2}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8.00000477px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="74.612717"
+       y="920.21802"
+       id="text3849-8-2"
+       sodipodi:linespacing="125%"
+       transform="scale(0.89004864,1.1235341)"><tspan
+         sodipodi:role="line"
+         id="tspan3851-9-8"
+         x="74.612717"
+         y="920.21802">${condition2}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="180.29941"
+       y="920.75977"
+       id="text3849-7-9"
+       sodipodi:linespacing="125%"
+       transform="scale(0.890048,1.1235349)"><tspan
+         sodipodi:role="line"
+         id="tspan3851-3-2"
+         x="180.29941"
+         y="920.75977">${hi2}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.5;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
@@ -148,84 +205,26 @@
          style="font-size:8.00002384px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;stroke:none;font-family:Sans;-inkscape-font-specification:Sans">${condition}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="59.214844"
-       y="1032.6981"
-       id="text3102"
-       sodipodi:linespacing="125%"
-       title="del !humidity"><tspan
+       style="font-size:6px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="108.26758"
+       y="1043.0575"
+       id="text3048"
+       sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
-         id="tspan3104"
-         x="59.214844"
-         y="1032.6981">Hum:${humidity}</tspan></text>
+         id="tspan3050"
+         x="108.26758"
+         y="1043.0575">${wind}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:7.99998808px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Sans"
-       x="159.21103"
-       y="1032.6967"
-       id="text3102-6"
-       sodipodi:linespacing="125%"
-       transform="scale(0.99999851,1.0000015)"
-       title="del !pressure"><tspan
+       style="font-size:6px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="113.4015"
+       y="1050.6981"
+       id="text3052"
+       sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
-         id="tspan3104-8"
-         x="159.21103"
-         y="1032.6967">${pressure}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="57.734375"
-       y="1023.0575"
-       id="text3127"
-       sodipodi:linespacing="125%"
-       title="del !wind"><tspan
-         sodipodi:role="line"
-         id="tspan3129"
-         x="57.734375"
-         y="1023.0575">Wnd:${wind}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="58.9375"
-       y="1041.6981"
-       id="text3131"
-       sodipodi:linespacing="125%"
-       title="del !visibility"><tspan
-         sodipodi:role="line"
-         id="tspan3133"
-         x="58.9375"
-         y="1041.6981">Vis:${visibility}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="161.08203"
-       y="1050.4755"
-       id="text3135"
-       sodipodi:linespacing="125%"
-       title="del !sunset_time"><tspan
-         sodipodi:role="line"
-         id="tspan3137"
-         x="161.08203"
-         y="1050.4755">Set ${sunset_time}</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Sans"
-       x="59.214844"
-       y="1050.4755"
-       id="text3135-6"
-       sodipodi:linespacing="125%"
-       title="del !sunrise_time"><tspan
-         sodipodi:role="line"
-         id="tspan3137-6"
-         x="59.214844"
-         y="1050.4755">Rise ${sunrise_time}</tspan></text>
-    <rect
-       style="fill-opacity:1;stroke:none"
-       id="rect3160"
-       width="1"
-       height="43"
-       x="57"
-       y="1009.3622" />
+         id="tspan3054"
+         x="113.4015"
+         y="1050.6981">${humidity} ${pressure} ${visibility}</tspan></text>
   </g>
   <g
      inkscape:groupmode="layer"
@@ -236,13 +235,13 @@
     <text
        xml:space="preserve"
        style="font-size:7.99999762px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="82.960945"
+       x="78.960945"
        y="21.33593"
        id="text3013"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan3015"
-         x="82.960945"
+         x="78.960945"
          y="21.33593">${message}</tspan></text>
   </g>
 </svg>

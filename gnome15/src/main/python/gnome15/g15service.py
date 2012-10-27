@@ -835,8 +835,10 @@ class G15Service(g15desktop.G15AbstractService):
     def _sm_end_session(self, flags):
         if self._is_monitor_session():
             logger.info("Ending session")
-            self.stop()
-            self._sm_client_dbus_will_quit(True, "")
+            def e():
+                self.stop()
+                self._sm_client_dbus_will_quit(True, "")
+            g15util.queue(SERVICE_QUEUE, "endSession", 0.0, e)
     
     def _sm_client_dbus_will_quit(self, can_quit=True, reason=""):
         self.session_manager_client_object.EndSessionResponse(can_quit,reason)

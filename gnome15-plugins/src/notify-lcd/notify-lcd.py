@@ -76,7 +76,7 @@ IF_NAME="org.freedesktop.Notifications"
 BUS_NAME="/org/freedesktop/Notifications"
 
 # Match string to use for passive mode
-PASSIVE_MATCH_STRING="type='method_call',path='/org/freedesktop/Notifications',interface='org.freedesktop.Notifications',member='Notify'"
+PASSIVE_MATCH_STRING="eavesdrop='true',type='method_call',interface='org.freedesktop.Notifications',member='Notify'"
 
 # List of processes to try and kill so the notification DBUS server can be replaced
 OTHER_NOTIFY_DAEMON_PROCESS_NAMES = [ 'notify-osd', 'notification-daemon', 'knotify4' ]
@@ -299,12 +299,12 @@ class G15NotifyLCD():
 #            
         if not self._service:
             # Just monitor raw DBUS events
-            self._bus.add_match_string_non_blocking(PASSIVE_MATCH_STRING)
+            self._bus.add_match_string(PASSIVE_MATCH_STRING)
             self._bus.add_message_filter(self.msg_cb)
             
         self._screen.key_handler.action_listeners.append(self)
         self._notify_handle = self._gconf_client.notify_add(self._gconf_key, self._configuration_changed)
-            
+        
     def msg_cb(self, bus, msg):
         # Only interested in method calls
         if isinstance(msg, dbus.lowlevel.MethodCallMessage):

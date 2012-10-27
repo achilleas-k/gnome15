@@ -155,17 +155,25 @@ class G15FeedsMenuItem(g15theme.MenuItem):
         element_properties["ent_link"] = self.entry.link
         if g15util.attr_exists(self.entry, "description"):
             element_properties["ent_description"] = self.entry.description
+            
+        try:
+            dt = self.entry.date_parsed
+        except AttributeError:
+            try:
+                dt = self.entry.published_parsed
+            except:
+                dt = time.localtime()
         
-        element_properties["ent_locale_date_time"] = time.strftime("%x %X", self.entry.date_parsed)            
-        element_properties["ent_locale_time"] = time.strftime("%X", self.entry.date_parsed)            
-        element_properties["ent_locale_date"] = time.strftime("%x", self.entry.date_parsed)
-        element_properties["ent_time_24"] = time.strftime("%H:%M", self.entry.date_parsed) 
-        element_properties["ent_full_time_24"] = time.strftime("%H:%M:%S", self.entry.date_parsed) 
-        element_properties["ent_time_12"] = time.strftime("%I:%M %p", self.entry.date_parsed) 
-        element_properties["ent_full_time_12"] = time.strftime("%I:%M:%S %p", self.entry.date_parsed)
-        element_properties["ent_short_date"] = time.strftime("%a %d %b", self.entry.date_parsed)
-        element_properties["ent_full_date"] = time.strftime("%A %d %B", self.entry.date_parsed)
-        element_properties["ent_month_year"] = time.strftime("%m/%y", self.entry.date_parsed)
+        element_properties["ent_locale_date_time"] = time.strftime("%x %X", dt)            
+        element_properties["ent_locale_time"] = time.strftime("%X", dt)            
+        element_properties["ent_locale_date"] = time.strftime("%x", dt)
+        element_properties["ent_time_24"] = time.strftime("%H:%M", dt) 
+        element_properties["ent_full_time_24"] = time.strftime("%H:%M:%S", dt) 
+        element_properties["ent_time_12"] = time.strftime("%I:%M %p", dt) 
+        element_properties["ent_full_time_12"] = time.strftime("%I:%M:%S %p", dt)
+        element_properties["ent_short_date"] = time.strftime("%a %d %b", dt)
+        element_properties["ent_full_date"] = time.strftime("%A %d %B", dt)
+        element_properties["ent_month_year"] = time.strftime("%m/%y", dt)
                         
         return element_properties 
     
