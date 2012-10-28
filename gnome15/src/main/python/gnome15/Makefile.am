@@ -17,6 +17,7 @@ gnome15_PYTHON = 		\
 	g15drivermanager.py \
 	g15globals.py \
 	g15plugin.py \
+	g15top.py \
 	g15locale.py \
 	g15keyboard.py \
 	g15keyio.py \

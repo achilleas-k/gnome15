@@ -25,7 +25,11 @@ import gnome15.g15util as g15util
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import time
-import gtop
+try:
+    import gtop
+except:
+    # API compatible work around for Ubuntu 12.10
+    import gnome15.g15top as gtop
 import gtk
 import os
 import sys
@@ -202,7 +206,8 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         self.cpu_no = 0  
         self.cpu_data = []  
         selected_cpu_name = self.gconf_client.get_string(self.gconf_key + "/cpu")
-        for i in range(-1, len(gtop.cpu().cpus)):
+        cpus = gtop.cpu().cpus
+        for i in range(-1, len(cpus)):
             cpu = CPU(i)
             self.cpu_data.append(cpu)
             if cpu.name == selected_cpu_name:
@@ -304,6 +309,7 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         self.cached = float(mem.cached)
         self.noncached = self.total - self.free - self.cached
         self.used_history.append(self.used + self.cached)
+        
         while len(self.used_history) > GRAPH_SIZE:
             del self.used_history[0]
         self.cached_history.append(self.cached)

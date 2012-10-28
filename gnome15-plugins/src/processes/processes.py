@@ -29,7 +29,11 @@ import os
 import dbus
 import time
 import gobject
-import gtop
+try:
+    import gtop
+except:
+    # API compatible work around for Ubuntu 12.10
+    import gnome15.g15top as gtop
 
 from Xlib import X
 import Xlib.protocol.event
