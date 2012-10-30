@@ -33,6 +33,7 @@ import gconf
 import gobject
 
 import subprocess
+from threading import Lock
 
 # Logging
 import logging
@@ -184,6 +185,7 @@ class UDisksSource():
         self.udisks = None
         self.system_bus = None
         self.sensors = {}
+        self.lock = Lock()
         
     def get_sensors(self):
         self._check_dbus_connection()
@@ -220,22 +222,25 @@ class UDisksSource():
                     sensor = Sensor(TEMPERATURE, sensor_name, 0.0)
                     device_file = str(udisk_properties.Get(UDISKS_DEVICE_NAME, "DeviceFile"))
                     if int(udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartTimeCollected")) > 0:
-                        # Only get the temperature if SMART data is collected to avoide spinning up disk
+                        # Only get the temperature if SMART data is collected to avoid spinning up disk
                         smart_blob = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartBlob", byte_arrays=True)
                         smart_blob_str = str(smart_blob)
                         process = subprocess.Popen(['skdump', '--temperature', '--load=-'], shell = False, stdout = subprocess.PIPE, stdin = subprocess.PIPE)
-                        process.stdin.write(smart_blob_str)
-                        process.stdin.flush()
-                        process.stdin.close()                            
-                        result  = process.stdout.readline()
+                        result, stderrdata = process.communicate(smart_blob_str)
                         process.wait()
-                        kelvin = int(result) 
-                        kelvin /= 1000;
-                        temp_c = kelvin - 273.15
-                        sensor.value = temp_c
+                        if len(result) > 0:
+                            try:
+                                kelvin = int(result) 
+                                kelvin /= 1000;
+                                temp_c = kelvin - 273.15
+                                sensor.value = temp_c
+                            except ValueError:
+                                logger.warn("Invalid temperature for device %s, %s." % ( sensor_name, result ) )
+                                sensor.value = 0
+                        else:
+                            sensor.value = 0 
                         
                     self.sensors[sensor.name] = sensor
-                
                 
 
 class LibsensorsSource():

@@ -115,7 +115,7 @@ def netload(net):
     try:
         for line in netdata:
             if line.startswith(prefix):
-                data = line[7:].split()
+                data = line[line.index(':') + 1:].split()
                 return NetworkLoad(net, int(data[0]), int(data[8]))
     finally:
         netdata.close()

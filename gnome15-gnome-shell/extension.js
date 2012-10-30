@@ -260,10 +260,23 @@ const DeviceItem = new Lang.Class({
 		let hasScreen = screen != null && screen.length > 0;
 		this._gnome15Button = new DeviceButton(key, modelId, modelFullName, hasScreen);
 		Main.panel._rightBox.insert_child_at_index(this._gnome15Button.actor, 1);
-		Main.panel._rightBox.child_set(this._gnome15Button.actor, {
+		
+		
+		/* I really want to know why I need to reparent the button
+			before I can safely insert it in one of the panel
+			boxes. */
+		/*let dummyBox = new St.BoxLayout();
+		this._gnome15Button.actor.reparent(dummyBox);
+		dummyBox.remove_actor(this._gnome15Button.actor);
+		dummyBox.destroy();*/
+	  	
+		/*Main.panel._rightBox.child_set(this._gnome15Button.actor, {
 			y_fill : true
 		});
 		Main.panel._menus.addMenu(this._gnome15Button.menu);
+		*/
+		Main.panel.menuManager.addMenu(this._gnome15Button.menu);
+		
 		if(hasScreen) {
 			/* If this device already has a screen (i.e. is enabled, load the
 			 * pages now). Otherwise, we wait for ScreenAdded to come in
@@ -437,9 +450,9 @@ const DeviceButton = new Lang.Class({
 		this._modelId = modelId;
 		this._modelName = modelName;
 		this._screen = null;
-        this._iconActor.add_style_class_name('device-icon');
-        this._iconActor.set_icon_size(20);
-        this._iconActor.add_style_class_name('device-button');
+        this.mainIcon.add_style_class_name('device-icon');
+        this.mainIcon.set_icon_size(20);
+        this.mainIcon.add_style_class_name('device-button');
         
         // Mouse whell events
         this.actor.connect('scroll-event', Lang.bind(this, this._onScrollEvent));
@@ -504,7 +517,7 @@ const DeviceButton = new Lang.Class({
 	/**
 	 * Add the menu items for a single page given it's page. Various attributes
 	 * about the page are read via dbus and the menu item constructed and
-	 * added to the menu compent.
+	 * added to the menu component.
 	 * 
 	 * @param pagePath page of page.
 	 */

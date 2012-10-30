@@ -161,19 +161,22 @@ class G15Background():
         self.notify_handlers.append(self.gconf_client.notify_add(self.gconf_key + "/brightness", self.config_changed))
         self.notify_handlers.append(self.gconf_client.notify_add("/apps/gnome15/%s/active_profile" % self.screen.device.uid, self._active_profile_changed))
         self.gnome_dconf_settings = None 
+        self.gnome_dconf_handle = None
         
         # Monitor desktop specific configuration for wallpaper changes
         if g15desktop.get_desktop() in [ "gnome", "gnome-shell" ]:
             self.notify_handlers.append(self.gconf_client.notify_add("/desktop/gnome/background/picture_filename", self.config_changed))
-            try:
-                from gi.repository import Gio
-                if os.path.exists("/usr/share/glib-2.0/schemas/org.gnome.desktop.background.gschema.xml"):
+            if os.path.exists("/usr/share/glib-2.0/schemas/org.gnome.desktop.background.gschema.xml"):
+                try:
+                    from gi.repository import Gio
                     self.gnome_dconf_settings = Gio.Settings.new("org.gnome.desktop.background")
-            except:
-                logger.info("No GNOME3 background settings available, ignoring")
+                except:
+                    # Work around on Ubuntu 12.10+ until Gnome15 is converted to GObject bindings
+                    import gnome15.g15dconf as g15dconf
+                    self.gnome_dconf_settings = g15dconf.GSettings("org.gnome.desktop.background")
 
             if self.gnome_dconf_settings is not None:
-                self.gnome_dconf_settings.connect("changed::picture_uri", self._do_config_changed)
+                self.gnome_dconf_handle = self.gnome_dconf_settings.connect("changed::picture_uri", self._do_config_changed)
                 
         # Listen for profile changes        
         g15profile.profile_listeners.append(self._profiles_changed)
@@ -186,6 +189,9 @@ class G15Background():
         for h in self.notify_handlers:
             self.gconf_client.notify_remove(h);
         self.screen.redraw()
+        if self.gnome_dconf_handle is not None:
+            self.gnome_dconf_settings.disconnect(self.gnome_dconf_handle)
+            self.gnome_dconf_settings.__del__()
         
     def config_changed(self, client, connection_id, entry, args):
         self._do_config_changed()

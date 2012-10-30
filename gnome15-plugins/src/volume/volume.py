@@ -129,7 +129,6 @@ class G15Volume():
                     mute = False
                     mutes = None
                     try :
-                        vol_mixer = self._open_mixer()
                         mutes = vol_mixer.getmute()
                     except alsaaudio.ALSAAudioError:
                         if vol_mixer is not None:
@@ -196,7 +195,7 @@ class G15Volume():
         properties["state"] = icon
         properties["icon"] = icon_path
         properties["vol_pc"] = self._volume
-        for i in range(0, ( self._volume / 10 ) + 1, 1):            
+        for i in range(0, int( self._volume / 10 ) + 1, 1):            
             properties["bar" + str(i)] = True
         return properties
             

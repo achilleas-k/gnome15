@@ -259,15 +259,20 @@ class G15MediaPlayerPage(g15theme.G15Page):
         
     def _setup_gstreamer(self):
         # Create the video source
+        logger.info("Creating audio/visual source")
         self._video_src = self._source.create_source()
 
         # Create our custom sink that is connected to the LCD
+        logger.info("Creating videosink that is connected to the LCD")
         self._video_sink = lcdsink.CairoSurfaceThumbnailSink()
+        logger.info("Connecting to video sink")
         self._video_sink.connect('thumbnail', self._redraw_cb)
         
         # Now create the actual pipeline
         self._pipeline = gst.Pipeline("mypipeline")
+        logger.info("Building pipeline")
         self._source.build_pipeline(self._video_src, self._video_sink, self._pipeline)
+        logger.info("Built pipeline")
         self._connect_signals()
     
     def action_performed(self, binding):
@@ -410,12 +415,14 @@ class G15MediaPlayerPage(g15theme.G15Page):
     
     def _connect_signals(self):
         # Watch signals coming from the bus
+        logger.info("Connecting signals")
         bus = self._pipeline.get_bus()
         bus.add_signal_watch()
         bus.enable_sync_message_emission()
         bus.connect("message", self._on_message)
         bus.connect("sync-message::element", self._on_sync_message)
         self._source.connect_signals()
+        logger.info("Connected signals")
     
     def _convert_time(self, time):
         time = time / 1000000000
@@ -810,7 +817,7 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
         removable_media_items = []
         for i, mount in enumerate(self.volume_monitor.get_mounts()):
             drive = mount.get_drive()
-            if drive is not None and drive.is_media_removable():
+            if not mount.is_shadowed() and drive is not None and drive.is_media_removable():
                 removable_media_items.append(MountMenuItem('mount-%d' % i, mount, self))
         if len(removable_media_items):
             items.append(g15theme.MenuItem("removable-devices", True, _("Removable Devices"), icon = g15util.get_icon_path(["driver-removable-media", "gnome-dev-removable"]), activatable = False))
@@ -940,6 +947,9 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
             self._grabbed_keys = None
          
     def _open_source(self, source):
+        gobject.idle_add(self._do_open_source, source)
+        
+    def _do_open_source(self, source):
         if can_grab_media_keys:
             self._grab_multimedia_keys()
         self._player_page = G15MediaPlayerPage(self.screen, source, self)

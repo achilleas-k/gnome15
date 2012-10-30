@@ -1,6 +1,7 @@
 {
 	"shell-version": [
-		"3.4"
+		"3.4",
+		"3.6"
 	], 
 	"uuid": "gnome15-shell-extension@gnome15.org", 
 	"name": "Logitech Keyboard", 

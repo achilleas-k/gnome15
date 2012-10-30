@@ -109,6 +109,7 @@ class MountMenuItem(g15theme.MenuItem):
             icon_names.append(icon.get_file().get_path())
         else:
             icon_names += icon.get_names()
+            
         icon_names += "gnome-dev-harddisk"
         item_properties["item_icon"] = g15util.get_icon_path(icon_names)
         item_properties["disk_usage"] = self.disk_used_pc
@@ -195,7 +196,8 @@ class G15Places(g15plugin.G15MenuPlugin):
     def _do_activate(self):
         self.volume_monitor = gio.VolumeMonitor()
         for mount in self.volume_monitor.get_mounts():
-            self._add_mount(mount)
+            if not mount.is_shadowed():
+                self._add_mount(mount)
         if len(self.menu.get_children()) > 0:
             self.menu.add_separator()
         for volume in self.volume_monitor.get_volumes():
@@ -252,17 +254,19 @@ class G15Places(g15plugin.G15MenuPlugin):
         self.screen.redraw(self.page)
         
     def _on_mount_added(self, monitor, mount, *args):
-            
-        """
-        Invoked when new mount is available
-        """
-        self._add_mount(mount)
         
         # Remove the volume for this remove
         for item in self.menu.get_children():
             if isinstance(item, VolumeMenuItem) and self._get_key(item.volume) == self._get_key(mount):
                 self._remove_volume(item.volume)
                 
+            
+        """
+        Invoked when new mount is available
+        """
+        self._remove_mount(mount)
+        self._add_mount(mount)
+        
         self._popup()
         
     def _on_mount_removed(self, monitor, mount, *args):
@@ -302,7 +306,9 @@ class G15Places(g15plugin.G15MenuPlugin):
         Remove a mount from the menu
         """ 
         logger.info("Removing mount %s" % str(mount))
-        self.menu.remove_child(self._get_item_for_mount(mount))
+        mnt = self._get_item_for_mount(mount)
+        if mnt:
+            self.menu.remove_child(mnt)
         self.screen.redraw(self.page)
         
     def _get_item_for_mount(self, mount):

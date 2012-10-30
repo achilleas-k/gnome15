@@ -66,13 +66,14 @@ def create(gconf_key, gconf_client, screen):
 Represents a resolution as a single item in a menu
 """
 class ResolutionMenuItem(g15theme.MenuItem):    
-    def __init__(self, index, size, refresh_rate, plugin, id):
-        g15theme.MenuItem.__init__(self, id)
+    def __init__(self, index, size, refresh_rate, plugin, id, display):
+        g15theme.MenuItem.__init__(self, id, group = False)
         self.current = False
         self.size = size
         self.index = index
         self.refresh_rate = refresh_rate
         self._plugin = plugin
+        self.display = display
         
     def get_theme_properties(self):
         item_properties = g15theme.MenuItem.get_theme_properties(self)
@@ -83,7 +84,7 @@ class ResolutionMenuItem(g15theme.MenuItem):
         return item_properties
     
     def activate(self):
-        os.system("xrandr -s %sx%s -r %s" % (self.size[0], self.size[1], self.refresh_rate ))
+        os.system("xrandr --auto --output %s --mode %sx%s -r %s" % (self.display, self.size[0], self.size[1], self.refresh_rate ))
         self._plugin._reload_menu()
         
 
@@ -98,6 +99,7 @@ class G15XRandR(g15plugin.G15MenuPlugin):
     def activate(self):
         self._timer = None
         self._current_active = None
+        self._last_items = -1
         g15plugin.G15MenuPlugin.activate(self)
         
     def deactivate(self): 
@@ -107,15 +109,14 @@ class G15XRandR(g15plugin.G15MenuPlugin):
     def load_menu_items(self):
         self._cancel_timer()
         items = []
+        display = "Default"
         i = 0
-        print "**************************************"
         status, output = self._get_status_output("xrandr")
         if status == 0:
             old_active = self._current_active
-            new_active = None
+            new_active = []
             for line in output.split('\n'):
                 arr = re.findall(r'\S+', line)
-                print line
                 if line.startswith("  "):
                     size = self._parse_size(arr[0])
                     for a in range(1, len(arr)):
@@ -123,21 +124,25 @@ class G15XRandR(g15plugin.G15MenuPlugin):
                         refresh_string = ''.join( c for c in word if  c not in '*+' )
                         if len(refresh_string) > 0:
                             refresh_rate = float(refresh_string)
-                            item = ResolutionMenuItem(i, size, refresh_rate, self, "profile-%d-%s" % ( i, refresh_rate ) )      
+                            i += 1
+                            item = ResolutionMenuItem(i, size, refresh_rate, self, "profile-%d-%s" % ( i, refresh_rate ), display )      
                             item.current = "*" in word
                             items.append(item)
                             if item.current:
-                                new_active = item
-                    i += 1
+                                new_active.append(item)
                 elif "connected" in line:
-                    print "****DEVICE",arr[0]
-                    item = g15theme.MenuItem("display-%s" % arr[0], True, arr[0], activatable=False, icon = g15util.get_icon_path(ICONS))
+                    i += 1
+                    display = arr[0]
+                    item = g15theme.MenuItem("display-%s" % i, True, arr[0], activatable=False, icon = g15util.get_icon_path(ICONS))
                     items.append(item)
                     
-            if old_active is None or ( new_active is not None and new_active.id != old_active.id ):
+                    
+            if len(items) != self._last_items or old_active is None or self._differs(new_active, old_active):
                 self.menu.set_children(items)
+                self._last_items = len(items)
+                
                 if new_active is not None:
-                    self.menu.set_selected_item(new_active)
+                    self.menu.set_selected_item(new_active[0])
                     self._current_active = new_active
                 
             self._schedule_check()
@@ -147,6 +152,20 @@ class G15XRandR(g15plugin.G15MenuPlugin):
     '''
     Private
     '''         
+    def _differs(self, old_active, new_active):
+        if ( old_active is None and new_active is not None ) or \
+            ( old_active is not None and new_active is None ):
+            return True
+        if old_active is not None:
+            it = iter(old_active)
+            try:
+                for i in new_active:
+                    if i.id != next(it).id:
+                        return True
+            except StopIteration:
+                return True
+        
+        
     def _cancel_timer(self):
         if self._timer is not None:
             self._timer.cancel()

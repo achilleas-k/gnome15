@@ -341,31 +341,27 @@ AC_ARG_ENABLE([rss],
 AM_CONDITIONAL([ENABLE_RSS_PLUGIN], [test x$rss_plugin = xyes])
 
 dnl System Monitor Plugin
-AX_PYTHON_MODULE(gtop, [])
-AS_IF([test "x${HAVE_PYMOD_GTOP}" = "xyes"],
-	  [have_gtop=yes],
-	  [have_gtop=no])
 AC_ARG_ENABLE([sysmon],
 	[AS_HELP_STRING([--enable-sysmon],
-		[Enable System Monitor plugin. Requires python gtop])],
+		[Enable System Monitor plugin. Recommends python gtop])],
 	[case "${enableval}" in
  				yes)	sysmon_plugin=yes ;;
  				no)		sysmon_plugin=no ;;
  				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-sysmon]) ;;
  	esac],
-	[sysmon_plugin=${have_gtop}])
+	[sysmon_plugin=yes])
 AM_CONDITIONAL([ENABLE_SYSMON_PLUGIN], [test x$sysmon_plugin = xyes])
 
 dnl Processes Plugin
 AC_ARG_ENABLE([processes],
 	[AS_HELP_STRING([--enable-processes],
-		[Enable Processes plugin. Requires python gtop])],
+		[Enable Processes plugin. Recommends python gtop])],
 	[case "${enableval}" in
  				yes)	processes_plugin=yes ;;
  				no)		processes_plugin=no ;;
  				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-processes]) ;;
  	esac],
-	[processes_plugin=${have_gtop}])
+	[processes_plugin=yes])
 AM_CONDITIONAL([ENABLE_PROCESSES_PLUGIN], [test x$processes_plugin = xyes])
 
 dnl Calendar plugin (base)
