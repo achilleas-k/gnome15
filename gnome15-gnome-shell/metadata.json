@@ -5,7 +5,7 @@
 	], 
 	"uuid": "gnome15-shell-extension@gnome15.org", 
 	"name": "Logitech Keyboard", 
-	"description": "Gnome extension Gnome15, the Logitech keyboard manager, with the panel",
+	"description": "Configure and control Logitech Keyboards such as G15, G19, G13 as well as other devices such as G35 headphones, Z10 speakers and moref",
 	"url": "http://www.gnome15.org",
 	"extension-id": "gnome15-shell-extension"
 }

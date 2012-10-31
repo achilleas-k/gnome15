@@ -364,6 +364,18 @@ AC_ARG_ENABLE([processes],
 	[processes_plugin=yes])
 AM_CONDITIONAL([ENABLE_PROCESSES_PLUGIN], [test x$processes_plugin = xyes])
 
+dnl Debug Plugin
+AC_ARG_ENABLE([debug],
+	[AS_HELP_STRING([--enable-debug],
+		[Enable Debug plugin.])],
+	[case "${enableval}" in
+ 				yes)	debug_plugin=yes ;;
+ 				no)		debug_plugin=no ;;
+ 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+ 	esac],
+	[debug_plugin=no])
+AM_CONDITIONAL([ENABLE_DEBUG_PLUGIN], [test x$debug_plugin = xyes])
+
 dnl Calendar plugin (base)
 AC_ARG_ENABLE([cal],
 	[AS_HELP_STRING([--enable-cal],
@@ -535,6 +547,8 @@ src/cal-evolution/Makefile
 src/cal-google/Makefile
 src/lcdbiff/Makefile
 src/lcdbiff/default/Makefile
+src/debug/Makefile
+src/debug/default/Makefile
 src/background/Makefile
 src/cairo-clock/Makefile
 src/cairo-clock/g15/Makefile
@@ -753,6 +767,10 @@ AS_IF([test "x$voip_teamspeak3_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("google-analytics            - ")
 AS_IF([test "x$google_analytics_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("debug          s            - ")
+AS_IF([test "x$debug_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("")

@@ -21,7 +21,7 @@ from threading import RLock
 from threading import local
 
 # Can be adjusted to speed up time to aid debugging.
-TIME_FACTOR=1.0
+TIME_FACTOR=0.05
 
 # Logging
 import logging

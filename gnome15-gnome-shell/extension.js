@@ -259,7 +259,8 @@ const DeviceItem = new Lang.Class({
 	_addButton: function(key, modelFullName, modelId, screen) {
 		let hasScreen = screen != null && screen.length > 0;
 		this._gnome15Button = new DeviceButton(key, modelId, modelFullName, hasScreen);
-		Main.panel._rightBox.insert_child_at_index(this._gnome15Button.actor, 1);
+		Main.panel.addToStatusArea('gnome15-' + modelId, this._gnome15Button);
+//		Main.panel._rightBox.insert_child_at_index(this._gnome15Button.actor, 1);
 		
 		
 		/* I really want to know why I need to reparent the button
