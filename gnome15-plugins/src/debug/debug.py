@@ -46,19 +46,19 @@ def _VmB(VmKey):
     '''Private.
     '''
     global _proc_status, _scale
-     # get pseudo file  /proc/<pid>/status
+    # get pseudo file  /proc/<pid>/status
     try:
         t = open(_proc_status)
         v = t.read()
         t.close()
     except:
         return 0.0  # non-Linux?
-     # get VmKey line e.g. 'VmRSS:  9999  kB\n ...'
+    # get VmKey line e.g. 'VmRSS:  9999  kB\n ...'
     i = v.index(VmKey)
     v = v[i:].split(None, 3)  # whitespace
     if len(v) < 3:
         return 0.0  # invalid format?
-     # convert Vm value to bytes
+    # convert Vm value to bytes
     return float(v[1]) * _scale[v[2]]
 
 
@@ -85,7 +85,7 @@ def create(gconf_key, gconf_client, screen):
 class G15Debug(g15plugin.G15RefreshingPlugin):
     
     def __init__(self, gconf_key, gconf_client, screen):
-        g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, [""], id, name, refresh_interval = 1.0)
+        g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, ["dialog-error"], id, name, refresh_interval = 1.0)
     
     def activate(self):
         self.text = g15text.new_text(self.screen)

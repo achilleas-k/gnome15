@@ -769,7 +769,7 @@ AS_ECHO_N("google-analytics            - ")
 AS_IF([test "x$google_analytics_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
-AS_ECHO_N("debug          s            - ")
+AS_ECHO_N("debug                       - ")
 AS_IF([test "x$debug_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])

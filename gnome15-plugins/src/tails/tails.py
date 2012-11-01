@@ -41,6 +41,9 @@ id = "tails"
 name = _("Tails")
 description = _("Monitor multiple files, updating when they change. Just \
 like the <b>tail</b> command.\n\n\
+\
+Warning: When monitoring large files that grow quickly, this plugin may \
+cause massive memory usage.\n\n\
 Uses the pytailer library (http://code.google.com/p/pytailer/), licensed \
 under the LGPL. See %s and %s for more details." % ( os.path.join(__file__, "LICENSE" ), os.path.join(__file__, "README" ) ) )
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"

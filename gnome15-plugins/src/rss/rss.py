@@ -38,7 +38,10 @@ logger = logging.getLogger("rss")
 id = "rss"
 name = _("RSS")
 description = _("A simple RSS reader. Multiple feeds may be added, with a screen being \
-allocated to each one once it has loaded.")
+allocated to each one once it has loaded.\n\n\
+\
+Warning: This plugin has a small memory leak. If you experience problems, \
+try reducing the update interval time.")
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://www.gnome15.org/"
