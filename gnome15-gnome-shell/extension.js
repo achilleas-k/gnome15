@@ -36,6 +36,7 @@ const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const GLib = imports.gi.GLib;
 const Clutter = imports.gi.Clutter;
+const Config = imports.misc.config;
 
 let currNotification, gnome15System, devices;
 
@@ -259,24 +260,19 @@ const DeviceItem = new Lang.Class({
 	_addButton: function(key, modelFullName, modelId, screen) {
 		let hasScreen = screen != null && screen.length > 0;
 		this._gnome15Button = new DeviceButton(key, modelId, modelFullName, hasScreen);
-		Main.panel.addToStatusArea('gnome15-' + modelId, this._gnome15Button);
-//		Main.panel._rightBox.insert_child_at_index(this._gnome15Button.actor, 1);
-		
-		
-		/* I really want to know why I need to reparent the button
-			before I can safely insert it in one of the panel
-			boxes. */
-		/*let dummyBox = new St.BoxLayout();
-		this._gnome15Button.actor.reparent(dummyBox);
-		dummyBox.remove_actor(this._gnome15Button.actor);
-		dummyBox.destroy();*/
-	  	
-		/*Main.panel._rightBox.child_set(this._gnome15Button.actor, {
-			y_fill : true
-		});
-		Main.panel._menus.addMenu(this._gnome15Button.menu);
-		*/
-		Main.panel.menuManager.addMenu(this._gnome15Button.menu);
+
+		// API change for 3.6
+		if(Config.PACKAGE_VERSION.indexOf("3.4") == 0) {
+			Main.panel._rightBox.insert_child_at_index(this._gnome15Button.actor, 1);
+			Main.panel._rightBox.child_set(this._gnome15Button.actor, {
+				y_fill : true
+			});
+			Main.panel._menus.addMenu(this._gnome15Button.menu);
+		}
+		else {
+			Main.panel.addToStatusArea('gnome15-' + modelId, this._gnome15Button);
+			Main.panel.menuManager.addMenu(this._gnome15Button.menu);
+		}
 		
 		if(hasScreen) {
 			/* If this device already has a screen (i.e. is enabled, load the
@@ -444,7 +440,15 @@ const DeviceButton = new Lang.Class({
 	_init : function(devicePath, modelId, modelName) {
 		this._deviceUid = devicePath.substring(devicePath.lastIndexOf('/') + 1);
 		this._itemMap = {};
-		this.parent('logitech-' + modelId);
+		
+		// API change for 3.6
+		if(Config.PACKAGE_VERSION.indexOf("3.4") == 0) {
+			this.parent('logitech-' + modelId);
+		}
+		else {
+			this.parent('logitech-' + modelId + '-symbolic');
+		}
+		
 		this._cyclingEnabled = false;
 		this._devicePath = devicePath;
 		this._itemList = new Array();
