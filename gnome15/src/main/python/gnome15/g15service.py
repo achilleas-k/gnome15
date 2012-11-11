@@ -32,6 +32,7 @@ import g15devices
 import g15desktop
 import g15uinput
 import g15network
+import g15accounts
 import traceback
 import gconf
 import g15util
@@ -231,6 +232,7 @@ class G15Service(g15desktop.G15AbstractService):
         
     def shutdown(self, quickly = False):
         logger.info("Shutting down")
+        g15accounts.STATUS.stopping = True
         self.shutting_down = True
         self.global_plugins.destroy()
         self.stop(quickly)

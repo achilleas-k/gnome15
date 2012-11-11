@@ -76,8 +76,13 @@ notifier.name = "AccountsPyInotify"
 notifier.setDaemon(True)
 notifier.start()
 
-CURRENT_USERNAME=pwd.getpwuid(os.getuid())[0] 
+CURRENT_USERNAME=pwd.getpwuid(os.getuid())[0]
 
+class Status():
+    def __init__(self):
+        self.stopping = False
+        
+STATUS = Status()
 
 '''
 Helper classes for getting a secret from the keyring
@@ -118,6 +123,10 @@ class G15Keyring():
     def find_secret(self, account, name, release_lock = True): 
         username = self.get_username(account) 
         try :
+            if STATUS.stopping:
+                self.password = None
+                return
+        
             pw = keyring.get_password(name, username)
             if pw is not None:
                 self.password = pw
@@ -472,7 +481,8 @@ class G15AccountPreferences():
         
     def _load_options_for_type(self):
         account_type = self._get_selected_type()
-        options = self.create_options_for_type(self._get_selected_account(), account_type)
+        acc = self._get_selected_account()
+        options = self.create_options_for_type(acc, account_type) if acc is not None else None
         if self.visible_options != None:
             self.visible_options.component.destroy()
         self.visible_options = options

@@ -390,13 +390,12 @@ AM_CONDITIONAL([ENABLE_CAL_PLUGIN], [test x$cal_plugin = xyes])
 
 dnl Evolution Calendar plugin
 AX_PYTHON_MODULE(vobject, [])
-AX_PYTHON_MODULE(evolution, [])
-AS_IF([test "x${HAVE_PYMOD_VOBJECT}" = "xyes" -a "x${HAVE_PYMOD_EVOLUTION}" = "xyes"],
+AS_IF([test "x${HAVE_PYMOD_VOBJECT}" = "xyes" ],
 	  [have_calendar_evolution_modules=yes],
 	  [have_calendar_evolution_modules=no])
 AC_ARG_ENABLE([cal-evolution],
 	[AS_HELP_STRING([--enable-cal-evolution],
-		[Enable Evolution calendar plugin. Requires calendar plugin, python vobject and python evolution])],
+		[Enable Evolution calendar plugin. Requires python vobject])],
 	[case "${enableval}" in
  				yes)	cal_evolution_plugin=yes ;;
  				no)		cal_evolution_plugin=no ;;

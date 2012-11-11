@@ -23,7 +23,9 @@ import g15globals
 import g15theme
 import g15util
 import g15driver
+import g15debug
 import g15devices
+import g15pluginmanager
 import gc
 import objgraph
 import gobject
@@ -87,6 +89,17 @@ class G15DBUSDebugService(dbus.service.Object):
     def __init__(self, dbus_service):
         dbus.service.Object.__init__(self, dbus_service._bus_name, DEBUG_NAME)
         self._service = dbus_service._service
+        gc.collect()
+        self._snapshot1 = g15debug.take_snapshot()
+        
+    @dbus.service.method(DEBUG_IF_NAME)
+    def Snapshot(self):
+        logger.info("Taking snapshot")
+        gc.collect()
+        _snapshot2 = g15debug.take_snapshot()
+        g15debug.compare_snapshots(self._snapshot1, _snapshot2, show_removed = False)
+        self._snapshot1 = _snapshot2
+        logger.info("Collected garbage")
         
     @dbus.service.method(DEBUG_IF_NAME)
     def GC(self):
@@ -118,6 +131,16 @@ class G15DBUSDebugService(dbus.service.Object):
     @dbus.service.method(DEBUG_IF_NAME)
     def ShowGraph(self):
         objgraph.show_refs(self._service)
+        
+    @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
+    def PluginObject(self, m):
+        for scr in self._service.screens:
+            print "Screen %s" % scr.device.uid
+            for p in scr.plugins.plugin_map:
+                pmod = scr.plugins.plugin_map[p]
+                if m == '' or m == pmod.id:
+                    print "    %s" % pmod.id
+                    objgraph.show_backrefs(p, filename='%s-%s' %(scr.device.uid, pmod.id))
         
     @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
     def Objects(self, typename):

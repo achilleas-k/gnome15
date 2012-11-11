@@ -190,7 +190,7 @@ def find_backref_chain(obj, predicate, max_depth=20, extra_ignore=()):
 
 
 def show_backrefs(objs, max_depth=3, extra_ignore=(), filter=None, too_many=10,
-                  highlight=None):
+                  highlight=None, filename = 'objgraph'):
     """Generate an object reference graph ending at ``objs``
 
     The graph will show you what objects refer to ``objs``, directly and
@@ -221,7 +221,7 @@ def show_backrefs(objs, max_depth=3, extra_ignore=(), filter=None, too_many=10,
     """
     show_graph(objs, max_depth=max_depth, extra_ignore=extra_ignore,
                filter=filter, too_many=too_many, highlight=highlight,
-               edge_func=gc.get_referrers, swap_source_target=False)
+               edge_func=gc.get_referrers, swap_source_target=False, filename = filename)
 
 
 def show_refs(objs, max_depth=3, extra_ignore=(), filter=None, too_many=10,
@@ -264,10 +264,10 @@ def show_refs(objs, max_depth=3, extra_ignore=(), filter=None, too_many=10,
 
 def show_graph(objs, edge_func, swap_source_target,
                max_depth=3, extra_ignore=(), filter=None, too_many=10,
-               highlight=None):
+               highlight=None, filename = 'objects'):
     if not isinstance(objs, (list, tuple)):
         objs = [objs]
-    f = file('objects.dot', 'w')
+    f = file('%s.dot' % filename, 'w')
     print >> f, 'digraph ObjectGraph {'
     print >> f, '  node[shape=box, style=filled, fillcolor=white];'
     queue = []
@@ -328,9 +328,9 @@ def show_graph(objs, edge_func, swap_source_target,
     print "Graph written to objects.dot (%d nodes)" % nodes
     if os.system('which xdot >/dev/null') == 0:
         print "Spawning graph viewer (xdot)"
-        os.system("xdot objects.dot &")
+        os.system("xdot %s.dot &" % filename)
     else:
-        os.system("dot -Tpng objects.dot > objects.png")
+        os.system("dot -Tpng %s.dot > %s.png" % (filename, filename))
         print "Image generated as objects.png"
 
 

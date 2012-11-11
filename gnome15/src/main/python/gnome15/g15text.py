@@ -21,6 +21,7 @@
 import pango
 import pangocairo
 import cairo
+import gobject
 import logging
 logger = logging.getLogger("text")
 
@@ -75,15 +76,14 @@ class G15PangoText(G15Text):
     def __init__(self, antialias):
         G15Text.__init__(self, antialias)
         pangocairo.context_set_font_options(pango_context, self._create_font_options())   
-        self.pango_cairo_context = None
-        self.layout = None
+        self.__pango_cairo_context = None
+        self.__layout = None
         self.valign = pango.ALIGN_CENTER
+        self.__layout = pango.Layout(pango_context)
         
     def set_canvas(self, canvas):           
         G15Text.set_canvas(self, canvas)
-        
-        self.pango_cairo_context = pangocairo.CairoContext(self.canvas)
-        self.layout = pango.Layout(pango_context)
+        self.__pango_cairo_context = pangocairo.CairoContext(self.canvas)
         
     def set_attributes(self, text, bounds = None, wrap = None, align = pango.ALIGN_LEFT, width = None, spacing = None, \
             font_desc = None, font_absolute_size = None, attributes = None,
@@ -107,30 +107,30 @@ class G15PangoText(G15Text):
         font_desc = pango.FontDescription(font_desc_name)
         if font_absolute_size is not None:
             font_desc.set_absolute_size(font_absolute_size)
-        self.layout.set_font_description(font_desc)        
+        self.__layout.set_font_description(font_desc)        
         
         if align != None:
-            self.layout.set_alignment(align)
+            self.__layout.set_alignment(align)
         if spacing != None:
-            self.layout.set_spacing(spacing)
+            self.__layout.set_spacing(spacing)
         if width != None:
-            self.layout.set_width(width)
+            self.__layout.set_width(width)
         if pxwidth != None:
-            self.layout.set_width(int(pango.SCALE * pxwidth))
+            self.__layout.set_width(int(pango.SCALE * pxwidth))
         if wrap:
-            self.layout.set_wrap(wrap)
+            self.__layout.set_wrap(wrap)
         if attributes:
-            self.layout.set_attributes(attributes)
+            self.__layout.set_attributes(attributes)
             
-        self.layout.set_text(text)
-        self.metrics = pango_context.get_metrics(self.layout.get_font_description())
+        self.__layout.set_text(text)
+        self.metrics = pango_context.get_metrics(self.__layout.get_font_description())
         
     def measure(self):
-        text_extents = self.layout.get_extents()[1]
+        text_extents = self.__layout.get_extents()[1]
         return text_extents[0] / pango.SCALE, text_extents[1] / pango.SCALE, text_extents[2] / pango.SCALE, text_extents[3] / pango.SCALE
     
     def draw(self, x = None, y = None):
-        self.pango_cairo_context.save()
+        self.__pango_cairo_context.save()
         
         if self.bounds is not None:
             if x == None:
@@ -138,8 +138,8 @@ class G15PangoText(G15Text):
             if y == None:
                 y = self.bounds[1]
             
-            self.pango_cairo_context.rectangle(self.bounds[0] - 1, self.bounds[1] - 1, self.bounds[2] + 2, self.bounds[3] + 2)
-            self.pango_cairo_context.clip()
+            self.__pango_cairo_context.rectangle(self.bounds[0] - 1, self.bounds[1] - 1, self.bounds[2] + 2, self.bounds[3] + 2)
+            self.__pango_cairo_context.clip()
             
             if self.valign == pango.ALIGN_RIGHT:
                 y += self.bounds[3] - ( self.metrics.get_ascent()  / 1000.0 )
@@ -147,7 +147,8 @@ class G15PangoText(G15Text):
                 y += ( self.bounds[3] - ( self.metrics.get_ascent()  / 1000.0 ) ) / 2
                 
         if x is not None and y is not None:                
-            self.pango_cairo_context.move_to(x, y)
+            self.__pango_cairo_context.move_to(x, y)
             
-        self.pango_cairo_context.show_layout(self.layout)
-        self.pango_cairo_context.restore()
+        self.__pango_cairo_context.show_layout(self.__layout)
+        self.__pango_cairo_context.restore()
+        

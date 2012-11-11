@@ -588,7 +588,10 @@ class G15Macro:
         return not self.__eq__(macro)
     
     def __eq__(self, macro):
-        return macro is not None and self.profile.id == macro.profile.id and self.key_list_key == macro.key_list_key and self.activate_on == macro.activate_on
+        try:
+            return macro is not None and self.profile.id == macro.profile.id and self.key_list_key == macro.key_list_key and self.activate_on == macro.activate_on
+        except AttributeError:
+            return False
     
     def _get_total(self, keys):
         t = 0

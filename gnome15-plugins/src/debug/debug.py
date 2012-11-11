@@ -92,6 +92,7 @@ class G15Debug(g15plugin.G15RefreshingPlugin):
         self.memory = 0
         self.resident = 0
         self.stack = 0
+        self.only_refresh_when_visible = False
         g15plugin.G15RefreshingPlugin.activate(self)
         self.do_refresh()
     

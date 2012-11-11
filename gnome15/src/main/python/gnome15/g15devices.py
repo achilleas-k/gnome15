@@ -268,11 +268,18 @@ class Device():
         return self.ui.__hash()
     
     def __eq__(self, o):
-        return o is not None and self.uid == o.uid
+        try:
+            return o is not None and self.uid == o.uid
+        except AttributeError:
+            return False
         
     def __repr__(self):
+        usb_str = hex(self.usb_id[0]) if self.usb_id is not None and len(self.usb_id) > 0 else "Unknown"
+        usb_str2 = hex(self.usb_id[1]) if self.usb_id is not None and len(self.usb_id) > 1 else "Unknown"
+        sz1 = self.lcd_size[0] if self.lcd_size is not None and len(self.lcd_size) > 0 else "??"
+        sz2 = self.lcd_size[1] if self.lcd_size is not None and len(self.lcd_size) > 1 else "??"
         return "Device [%s] %s model: %s (%s) on USB ID %s:%s. Has a %d BPP screen of %dx%d. " %  \
-            ( str(self.usb_device), self.uid, self.model_id, self.model_fullname, hex(self.usb_id[0]), hex(self.usb_id[1]), self.bpp, self.lcd_size[0], self.lcd_size[1])
+            ( str(self.usb_device), self.uid, self.model_id, self.model_fullname, usb_str, usb_str2, self.bpp, sz1, sz2)
     
 def are_keys_reserved(model_id, keys):
     if len(keys) < 1:

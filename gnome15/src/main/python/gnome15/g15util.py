@@ -635,10 +635,17 @@ def load_surface_from_file(filename, size = None):
             return None
     else:
         if os.path.exists(filename):
-            if filename.lower().endswith(".svg"):
-                return load_svg_as_surface(filename, size)
-            else:
-                return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
+            try:
+                if filename.lower().endswith(".svg"):
+                    if os.path.islink(filename):
+                        filename = os.path.realpath(filename)
+                    return load_svg_as_surface(filename, size)
+                else:
+                    return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
+            
+            except Exception as e:
+                logger.warning("Failed to get image %s (%s). %s" % (filename, type, e))
+                return None
             
 def load_svg_as_surface(filename, size):
     svg = rsvg.Handle(filename)

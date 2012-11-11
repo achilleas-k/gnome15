@@ -10,6 +10,7 @@ gnome15_PYTHON = 		\
 	g15devices.py \
 	g15desktop.py \
 	g15dbus.py \
+	g15debug.py \
 	g15dconf.py \
 	g15gtk.py \
 	g15driver.py \
