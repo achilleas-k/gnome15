@@ -23,20 +23,14 @@ import g15globals
 import g15theme
 import g15util
 import g15driver
-import g15debug
 import g15devices
-import g15pluginmanager
-import gc
-import objgraph
 import gobject
-import sys
-import traceback
+
 
 from cStringIO import StringIO
 
 BUS_NAME="org.gnome15.Gnome15"
 NAME="/org/gnome15/Service"
-DEBUG_NAME="/org/gnome15/Debug"
 PAGE_NAME="/org/gnome15/Page"
 CONTROL_ACQUISITION_NAME="/org/gnome15/Control"
 SCREEN_NAME="/org/gnome15/Screen"
@@ -45,7 +39,6 @@ IF_NAME="org.gnome15.Service"
 PAGE_IF_NAME="org.gnome15.Page"
 CONTROL_ACQUISITION_IF_NAME="org.gnome15.Control"
 SCREEN_IF_NAME="org.gnome15.Screen"
-DEBUG_IF_NAME="org.gnome15.Debug"
 DEVICE_IF_NAME="org.gnome15.Device"
 
 # Logging
@@ -83,111 +76,6 @@ class AbstractG15DBUSService(dbus.service.Object):
             self._screen.key_handler.action_listeners.append(self)
         else:
             self._screen.key_handler.action_listeners.remove(self)
-    
-class G15DBUSDebugService(dbus.service.Object):
-    
-    def __init__(self, dbus_service):
-        dbus.service.Object.__init__(self, dbus_service._bus_name, DEBUG_NAME)
-        self._service = dbus_service._service
-        gc.collect()
-        self._snapshot1 = g15debug.take_snapshot()
-        
-    @dbus.service.method(DEBUG_IF_NAME)
-    def Snapshot(self):
-        logger.info("Taking snapshot")
-        gc.collect()
-        _snapshot2 = g15debug.take_snapshot()
-        g15debug.compare_snapshots(self._snapshot1, _snapshot2, show_removed = False)
-        self._snapshot1 = _snapshot2
-        logger.info("Collected garbage")
-        
-    @dbus.service.method(DEBUG_IF_NAME)
-    def GC(self):
-        logger.info("Collecting garbage")
-        gc.collect()
-        logger.info("Collected garbage")
-        
-    @dbus.service.method(DEBUG_IF_NAME)
-    def ToggleDebugSVG(self):
-        g15theme.DEBUG_SVG = not g15theme.DEBUG_SVG
-        
-    @dbus.service.method(DEBUG_IF_NAME)
-    def MostCommonTypes(self):
-        print "Most used objects"
-        print "-----------------"
-        print
-        objgraph.show_most_common_types(limit=200)
-        print "Job Queues"
-        print "----------"
-        print
-        g15util.scheduler.print_all_jobs()
-        print "Threads"
-        print "-------"
-        for threadId, stack in sys._current_frames().items():
-            print "ThreadID: %s" % threadId
-            for filename, lineno, name, line in traceback.extract_stack(stack):
-                print '    File: "%s", line %d, in %s' % (filename, lineno, name)
-        
-    @dbus.service.method(DEBUG_IF_NAME)
-    def ShowGraph(self):
-        objgraph.show_refs(self._service)
-        
-    @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
-    def PluginObject(self, m):
-        for scr in self._service.screens:
-            print "Screen %s" % scr.device.uid
-            for p in scr.plugins.plugin_map:
-                pmod = scr.plugins.plugin_map[p]
-                if m == '' or m == pmod.id:
-                    print "    %s" % pmod.id
-                    objgraph.show_backrefs(p, filename='%s-%s' %(scr.device.uid, pmod.id))
-        
-    @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
-    def Objects(self, typename):
-        print "%d instances of type %s. Referrers :-" % ( objgraph.count(typename), typename)
-        done = {}
-        for r in objgraph.by_type(typename):
-            if isinstance(r, list):
-                print "%s" % str(r[:min(20, len(r))])
-            else:
-                print "%s" % str(r)
-        
-    @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
-    def SetDebugLevel(self, log_level):
-        levels = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL}
-        logger = logging.getLogger()
-        level = levels.get(log_level.lower(), logging.NOTSET)
-        logger.setLevel(level = level)
-        
-    @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
-    def Referrers(self, typename):
-        print "%d instances of type %s. Referrers :-" % ( objgraph.count(typename), typename)
-        done = {}
-        for r in objgraph.by_type(typename):
-            for o in gc.get_referrers(r):
-                name = type(o).__name__
-                if name != "type" and name != typename and name != "frame" and not name in done:
-                    done[name] = True
-                    count = objgraph.count(name)
-                    if count > 1:
-                        print "   %s  (%d)" % ( name, count )
-        
-    @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
-    def Referents(self, typename):
-        print "%d instances of  type %s. Referents :-" % ( objgraph.count(typename), typename)
-        done = {}
-        for r in objgraph.by_type(typename):
-            for o in gc.get_referents(r):
-                name = type(o).__name__
-                if name != "type" and name != typename and not name in done:
-                    done[name] = True
-                    count = objgraph.count(name)
-                    if count > 1:
-                        print "   %s  (%d)" % ( name, count )
         
 class G15DBUSDeviceService(AbstractG15DBUSService):
     
@@ -490,8 +378,8 @@ class G15DBUSScreenService(AbstractG15DBUSService):
                 self._screen.cycle_color(value, c)
     
     @dbus.service.method(SCREEN_IF_NAME, in_signature='s', out_signature='s')
-    def GetPageForID(self, id):
-        return self._dbus_pages[id]._bus_name
+    def GetPageForID(self, page_id):
+        return self._dbus_pages[page_id]._bus_name
     
     @dbus.service.method(SCREEN_IF_NAME, out_signature='s')
     def GetVisiblePage(self):
@@ -835,8 +723,8 @@ class G15DBUSPageService(AbstractG15DBUSService):
         self._screen_service._screen.redraw(self._page)
     
     @dbus.service.method(PAGE_IF_NAME, in_signature='ss')
-    def LoadTheme(self, dir, variant):
-        self._page.set_theme(g15theme.G15Theme(dir, variant))
+    def LoadTheme(self, theme_dir, variant):
+        self._page.set_theme(g15theme.G15Theme(theme_dir, variant))
         
     @dbus.service.method(PAGE_IF_NAME, in_signature='s')
     def SetThemeSVG(self, svg_text):
@@ -897,7 +785,6 @@ class G15DBUSService(AbstractG15DBUSService):
         logger.debug("Exposing service")
         self._bus_name = dbus.service.BusName(BUS_NAME, bus=self._bus, replace_existing=False, allow_replacement=False, do_not_queue=True)
         dbus.service.Object.__init__(self, self._bus_name, NAME)
-        self._debug_service = G15DBUSDebugService(self)
         self._service.service_listeners.append(self)
         logger.debug("DBUS service ready")
         self._dbus_screens = {}
@@ -938,13 +825,12 @@ class G15DBUSService(AbstractG15DBUSService):
         for dbus_device in self._dbus_devices:
             self._silently_remove_from_connector(dbus_device)
         for screen in self._dbus_screens:
-            self._silently_remove_from_connector(self._dbus_screens[screen])               
-        self._silently_remove_from_connector(self._debug_service)               
+            self._silently_remove_from_connector(self._dbus_screens[screen])    
         self._silently_remove_from_connector(self)
         
-    def _silently_remove_from_connector(self, object):
+    def _silently_remove_from_connector(self, obj):
         try:
-            object.remove_from_connection()
+            obj.remove_from_connection()
         except Exception:
             pass
             

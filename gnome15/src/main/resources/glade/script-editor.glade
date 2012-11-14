@@ -458,6 +458,121 @@ jump to this label. </property>
       <action-widget response="0">button12</action-widget>
     </action-widgets>
   </object>
+  <object class="GtkMessageDialog" id="AddWaitDialog">
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="type_hint">dialog</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="message_type">question</property>
+    <property name="text" translatable="yes">Add Wait</property>
+    <property name="secondary_text" translatable="yes">You can halt the execution of the script either until all the
+keys that trigger this macro are held, or until all the keys
+the trigger this macro are released (depending on the 
+trigger type)
+
+This allows you to have up to 3 stages in your macro when
+activated by press. The 2nd stage would start when the
+key is held, and the 3rd and final stage when the keys are
+released.</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox22">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area22">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="button16">
+                <property name="label">gtk-save</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="has_default">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_action_appearance">False</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button17">
+                <property name="label">gtk-cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_action_appearance">False</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHBox" id="hbox8">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="spacing">4</property>
+            <child>
+              <object class="GtkLabel" id="label9">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Wait</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="WaitCombo">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="model">WaitModel</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext4"/>
+                  <attributes>
+                    <attribute name="text">1</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="-5">button16</action-widget>
+      <action-widget response="0">button17</action-widget>
+    </action-widgets>
+  </object>
   <object class="GtkAdjustment" id="DelayAdjustment">
     <property name="upper">99999</property>
     <property name="step_increment">1</property>
@@ -826,6 +941,21 @@ jump to this label. </property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-media-previous</property>
                 <signal name="clicked" handler="_on_new_goto" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolButton" id="AddWait">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="use_action_appearance">False</property>
+                <property name="label" translatable="yes">Wait</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-stop</property>
+                <signal name="clicked" handler="_on_new_wait" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1413,5 +1543,23 @@ operations?</property>
       <action-widget response="-5">button2</action-widget>
       <action-widget response="0">button3</action-widget>
     </action-widgets>
+  </object>
+  <object class="GtkListStore" id="WaitModel">
+    <columns>
+      <!-- column-name WaitTypeId -->
+      <column type="gchararray"/>
+      <!-- column-name WaitTypeName -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Hold</col>
+        <col id="1" translatable="yes">Until All Keys Held</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Release</col>
+        <col id="1" translatable="yes">Until All Keys Released</col>
+      </row>
+    </data>
   </object>
 </interface>

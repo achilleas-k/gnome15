@@ -73,7 +73,7 @@ DEBUG_SVG=False
 # The color in SVG theme files that by default gets replaced with the current 'highlight' color
 DEFAULT_HIGHLIGHT_COLOR="#ff0000"
 
-class ThemeDefinition():
+class ThemeDefinition(object):
     def __init__(self, theme_id, directory, plugin_module = None):
         self.theme_id = theme_id
         self.plugin_module = plugin_module
@@ -140,7 +140,7 @@ def get_themes(model_id, plugin_module):
                 themes.append(definition)
     return themes
             
-class Render():
+class Render(object):
     def __init__(self, document, properties, text_boxes, attributes, processing_result):
         self.document = document
         self.properties = properties
@@ -148,7 +148,7 @@ class Render():
         self.attributes = attributes
         self.processing_result = processing_result
         
-class ScrollState():
+class ScrollState(object):
     
     def __init__(self):
         self.range = (0.0, 0.0)
@@ -200,7 +200,7 @@ class VerticalWrapScrollState(ScrollState):
     def transform_elements(self):
         self.text_box.base = self.val
 
-class TextBox():
+class TextBox(object):
     def __init__(self):
         self.bounds = ( )
         self.clip = ()
@@ -213,7 +213,7 @@ class TextBox():
         self.transforms = []
         self.base = 0
         
-class LayoutManager():
+class LayoutManager(object):
     def __init__(self):
         pass
     
@@ -234,24 +234,37 @@ class GridLayoutManager(LayoutManager):
         for c in parent.get_children():
             if c.is_showing():
                 bounds = c.view_bounds
-                c.view_bounds = ( x, y, bounds[2], bounds[3])
-                x += bounds[2]
-                row_height = max(row_height, bounds[3])
-                col += 1
-                if col >= self.columns:
-                    x = 0
-                    y += row_height
-                    row_height = 0
-                    col = 0
+                if bounds is None:
+                    logger.warn("No bounds on component %s" % c.id)
+                else:
+                    c.view_bounds = ( x, y, bounds[2], bounds[3])
+                    x += bounds[2]
+                    row_height = max(row_height, bounds[3])
+                    col += 1
+                    if col >= self.columns:
+                        x = 0
+                        y += row_height
+                        row_height = 0
+                        col = 0
 
-        
-class Component():
+
+class Childmap(dict):
+    def __init__(self):
+        type(self).__name__ = "Childmap"
+        dict.__init__(self)        
+
+class Childlist(list):
+    def __init__(self, l = []):
+        type(self).__name__ = "Childlist"
+        list.__init__(self, l)
+
+class Component(object):
         
     def __init__(self, id):
         self.id = id
         self.theme = None
-        self._children = []
-        self.child_map = {}
+        self._children = Childlist()
+        self.child_map = Childmap()
         self.parent = None
         self.screen = None
         self.enabled = True
@@ -318,13 +331,17 @@ class Component():
             self.get_root().next_focus()
         
     def set_theme(self, theme):
-        if self.theme is not None:
-            self.theme._set_component(None)
-        self.theme = theme
-        theme._set_component(self)
-        self.view_bounds = theme.bounds
-        for c in self.get_children():
-            c.configure(self)
+        self.get_tree_lock().acquire()
+        try:
+            if self.theme is not None:
+                self.theme._set_component(None)
+            self.theme = theme
+            theme._set_component(self)
+            self.view_bounds = theme.bounds
+            for c in self.get_children():
+                c.configure(self)
+        finally:
+            self.get_tree_lock().release()
         
     def mark_dirty(self):
         if self.theme is not None:
@@ -407,7 +424,7 @@ class Component():
                 self.add_child(c)
                 
             # Now just change out child list to the new one so the order is correct
-            self._children = children
+            self._children = Childlist(children)
         finally:
             self.get_tree_lock().release()
         
@@ -474,13 +491,15 @@ class Component():
         
     def configure(self, parent):
         self.parent = parent
+        self.on_configure()
         theme = self.get_theme()
         if theme == None:
             logger.warning("No theme for component with ID of %s" % self.id)
-        else: 
-            self.view_element = self.get_theme().get_element(self.id)
+        else:
+            self.view_element = theme.get_element(self.id) 
+            if self.view_element is None:
+                self.view_element = theme.get_element()
             self.view_bounds  = g15util.get_actual_bounds(self.view_element) if self.view_element is not None else None
-        self.on_configure()
         
     def is_visible(self):
         return self.parent != None and self.parent.is_visible()
@@ -519,7 +538,7 @@ class Component():
             canvas.translate(0, -self.base)
                         
             # Draw any theme for this component
-            if self.theme:
+            if self.theme is not None:
                 canvas.save()   
                 properties = self.get_theme_properties()
                 
@@ -933,12 +952,13 @@ class Menu(Component):
     def sort(self):
         pass
         
-    def on_configure(self):    
-        if self.view_element == None:
-            raise Exception("No element in SVG with ID of %s. Required for Menu component" % self.id)    
+    def on_configure(self):        
         menu_theme = self.load_theme()
         if menu_theme:
             self.set_theme(menu_theme)
+            
+    def configure(self, parent):
+        Component.configure(self, parent)
         self._recalc_scroll_values()
         if not self in self.get_screen().key_handler.action_listeners:
             self.get_screen().key_handler.action_listeners.append(self)
@@ -1411,7 +1431,7 @@ class ConfirmationScreen(G15Page):
             self.get_screen().key_handler.action_listeners.remove(self)
             self.callback(self.arg)  
                 
-class G15Theme():    
+class G15Theme(object):    
     def __init__(self, dir_path, variant = None, svg_text = None, prefix = None, auto_dirty = True, translation = None):
         self.translation = translation
         self.plugin = None
@@ -1661,10 +1681,12 @@ class G15Theme():
             buf += style + ":" + styles[style] + ";"
         return buf.rstrip(';')
 
-    def get_element(self, id, root = None):
+    def get_element(self, element_id = None, root = None):
         if root == None:
             root = self.document.getroot()
-        els = root.xpath('//svg:*[@id=\'%s\']' % str(id),namespaces=self.nsmap)
+        if element_id is None:
+            return root
+        els = root.xpath('//svg:*[@id=\'%s\']' % str(element_id),namespaces=self.nsmap)
         return els[0] if len(els) > 0 else None
 
     def get_element_by_tag(self, tag, root = None):
@@ -2049,7 +2071,7 @@ class G15Theme():
     
     def _component_removed(self):
         self.scroll_state = {}
-        pass
+        self._set_component(None)
     
     def _page_visibility_changed(self):
         pass

@@ -199,7 +199,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
         if not mask:
             mask = (X.SubstructureRedirectMask|X.SubstructureNotifyMask)
         
-        display = self.screen.service.get_x_display()
+        display = self.screen.service.macro_handler.get_x_display()
         screen = display.screen()
         root = screen.root
 
@@ -298,8 +298,11 @@ class G15Processes(g15plugin.G15MenuPlugin):
         if self._mode == "applications":
             if self.bamf_matcher != None:            
                 for window in self.bamf_matcher.RunningApplications():
-                    item = self._get_item_for_bamf_application(window)                    
-                    this_items[item.id] = item
+                    try:
+                        item = self._get_item_for_bamf_application(window)                    
+                        this_items[item.id] = item
+                    except:
+                        pass
             else:
                 import wnck
                 screen = wnck.screen_get_default()

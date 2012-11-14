@@ -349,8 +349,9 @@ class G15Screen():
         # Start handling keys
         self.key_handler.start()
         self.key_handler.action_listeners.append(self)
-        self.key_handler.action_listeners.append(self.service)
+        self.key_handler.action_listeners.append(self.service.macro_handler)
         self.key_handler.key_handlers.append(self)
+        self.key_handler.key_handlers.append(self.service.macro_handler)
         
         # This is just here for backwards compatibility and may be removed at some point
         self.action_listeners = self.key_handler.action_listeners
@@ -387,10 +388,12 @@ class G15Screen():
         # Clean up key handler
         if self in self.key_handler.action_listeners:
             self.key_handler.action_listeners.remove(self)
-        if self.service in self.key_handler.action_listeners:
-            self.key_handler.action_listeners.remove(self.service)
+        if self.service.macro_handler in self.key_handler.action_listeners:
+            self.key_handler.action_listeners.remove(self.service.macro_handler)
         if self in self.key_handler.key_handlers:
             self.key_handler.key_handlers.remove(self)
+        if self.service.macro_handler in self.key_handler.key_handlers:
+            self.key_handler.key_handlers.remove(self.service.macro_handler)
         self.key_handler.stop()
         
         # Stop listening for profile changes

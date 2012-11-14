@@ -31,6 +31,7 @@ import gnome15.g15plugin as g15plugin
 import gtk
 import os
 import logging
+import time
 logger = logging.getLogger("macros")
 
 # Plugin details - All of these must be provided
@@ -67,10 +68,9 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
 Represents a mount as a single item in a menu
 """
 class MacroMenuItem(g15theme.MenuItem):    
-    def __init__(self, macro, plugin, id):
-        g15theme.MenuItem.__init__(self, id)
+    def __init__(self, macro, component_id):
+        g15theme.MenuItem.__init__(self, component_id)
         self.macro = macro
-        self._plugin = plugin
         
     def get_theme_properties(self):       
         item_properties = g15theme.MenuItem.get_theme_properties(self)
@@ -104,7 +104,6 @@ class G15Macros(g15plugin.G15MenuPlugin):
         g15profile.profile_listeners.append(self._profiles_changed)
         self.listener = MacrosScreenChangeAdapter(self)
         self.screen.add_screen_change_listener(self.listener)
-        self._reload()
         
     def deactivate(self):
         g15plugin.G15MenuPlugin.deactivate(self)
@@ -139,15 +138,18 @@ class G15Macros(g15plugin.G15MenuPlugin):
     Private functions
     """
     def _profiles_changed(self, arg0 = None, arg1 = None, arg2 = None, arg3 = None):
-#        g15screen.run_on_redraw(self._reload_and_popup)
         self._reload_and_popup()
+        
+    def _reload(self):
+        self.load_menu_items()
+        self.screen.redraw(self.page)
             
     def _reload_and_popup(self):
         self._reload()
         if g15util.get_bool_or_default(self.gconf_client, "%s/raise" % self.gconf_key, True):
             self._popup()
     
-    def _reload(self):
+    def load_menu_items(self):
         """
         Reload all items for the current profile and bank
         """
@@ -160,8 +162,7 @@ class G15Macros(g15plugin.G15MenuPlugin):
         self._load_profile(self._active_profile, macros, macro_keys)
         macros.sort(self._comparator)
         for macro in macros:
-            self._add_macro(macro)
-        self.screen.redraw(self.page)
+            self.menu.add_child(MacroMenuItem(macro, "macro-%s" % macro.key_list_key))
         
     def _load_profile(self, profile, macros, macro_keys):
         for bank in profile.macros.values():
@@ -208,7 +209,6 @@ class G15Macros(g15plugin.G15MenuPlugin):
         """ 
         item = MacroMenuItem(macro, self, "macro-%s" % macro.key_list_key)
         self.menu.add_child(item)
-        self.screen.redraw(self.page)
         
 class MacrosScreenChangeAdapter(g15screen.ScreenChangeAdapter):
     def __init__(self, plugin):

@@ -60,6 +60,7 @@ from dbus.mainloop.glib import DBusGMainLoop
 from dbus.mainloop.glib import threads_init
 threads_init()
 DBusGMainLoop(set_as_default=True)
+            
 
 # Server host class
 
@@ -71,6 +72,7 @@ def check_service_status(session_dbus):
         return False
 
 def start_service(options): 
+
     if module_exists("setproctitle"):
         import setproctitle
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))

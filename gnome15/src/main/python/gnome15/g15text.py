@@ -43,7 +43,7 @@ def new_text(screen = None):
     else:
         return G15PangoText(True)
 
-class G15Text():
+class G15Text(object):
     
     def __init__(self, antialias):
         self.antialias = antialias

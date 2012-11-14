@@ -10,7 +10,8 @@ theme_DATA = g19.svg \
 	mono-rain.gif \
 	mono-snow.gif \
 	mono-sunny.gif \
-	mono-thunder.gif
+	mono-thunder.gif \
+	forecasts.theme
 
 EXTRA_DIST =  			\
 	$(theme_DATA)

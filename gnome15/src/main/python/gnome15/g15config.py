@@ -1634,7 +1634,12 @@ class G15Config:
             
             # Build the macro model and set the initial selection
             for macro in macros:
-                on_name = "Hold" if macro.activate_on == g15driver.KEY_STATE_HELD else ""
+                if macro.activate_on == g15driver.KEY_STATE_HELD:
+                    on_name = _("Hold")
+                elif macro.activate_on == g15driver.KEY_STATE_DOWN:
+                    on_name = _("Press")
+                else:
+                    on_name = _("Release")
                 row = [", ".join(g15util.get_key_names(macro.keys)), 
                                           macro.name, 
                                           macro.key_list_key, 

@@ -371,8 +371,23 @@ def to_key_state_name(key_state_id):
     return "Up" if key_state_id == g15driver.KEY_STATE_UP else \
         ( "Down" if key_state_id == g15driver.KEY_STATE_DOWN else "Held" )
         
+def clone_macro(macro):
+    """
+    Clone a macro
+    
+    Keyword arguments:
+    macro               -- macro to clone
+    """
+    m = G15Macro(macro.profle, macro.memory, macro.key_list_key, macro.activate_on)
+    m.name = macro.name
+    m.macro = macro.macro
+    m.repeat_mode = macro.repeat_mode
+    m.type = macro.type
+    m.repeat_delay = macro.repeat_delay
+    return m
+        
 
-class G15Macro:
+class G15Macro(object):
     """
     Represents a single macro in a profile. A macro defines how it's used
     using the 'type', which may be one of MACRO_COMMAND, MACRO_SIMPLE,
@@ -392,11 +407,12 @@ class G15Macro:
         if profile is None:
             raise Exception("No profile provided")
         
-        self.activate_on = activate_on
-        self.keys = key_list_key.split("_")
-        self.key_list_key = key_list_key
-        self.memory = memory
         self.profile = profile
+        self.memory = memory
+        self.key_list_key = key_list_key
+        self.activate_on = activate_on
+        
+        self.keys = key_list_key.split("_")
         self.name = ""
         self.macro = ""
         self.repeat_mode = REPEAT_WHILE_HELD
@@ -620,7 +636,7 @@ class G15Macro:
     def __repr__(self):
         return "[Macro %d/%s (%s) [%s]" % ( self.memory, self.name, self.key_list_key, to_key_state_name(self.activate_on) )
  
-class G15Profile():
+class G15Profile(object):
     """
     Encapsulates a single macro profile with 3 memory banks. This object
     contains all the general information about the profile, as well as the 
@@ -651,6 +667,7 @@ class G15Profile():
             self.filename = file_path
         self.author = ""
         self.macros = { g15driver.KEY_STATE_UP: [],
+                       g15driver.KEY_STATE_DOWN: [],
                        g15driver.KEY_STATE_HELD: []
                        }      
         self.mkey_color = {}
@@ -977,6 +994,7 @@ class G15Profile():
                  
         # Initial values
         self.macros = { g15driver.KEY_STATE_UP: [],
+                       g15driver.KEY_STATE_DOWN: [],
                        g15driver.KEY_STATE_HELD: []
                        }
         self.mkey_color = {}
@@ -1032,7 +1050,7 @@ class G15Profile():
         
         # Bank sections
         
-        for activate_on in [ g15driver.KEY_STATE_UP, g15driver.KEY_STATE_HELD ]:  
+        for activate_on in [ g15driver.KEY_STATE_UP,  g15driver.KEY_STATE_DOWN, g15driver.KEY_STATE_HELD ]:  
             for i in range(1, 4):
                 section_name = "m%d" % i
                 if activate_on != g15driver.KEY_STATE_UP:
@@ -1059,7 +1077,7 @@ class G15Profile():
         """
         sm = []
         if activate_on is None:
-            for activate_on in [ g15driver.KEY_STATE_UP, g15driver.KEY_STATE_HELD ]:
+            for activate_on in [ g15driver.KEY_STATE_UP, g15driver.KEY_STATE_DOWN, g15driver.KEY_STATE_HELD ]:
                 if activate_on in self.macros and memory_number <= len(self.macros[activate_on]):
                     sm += self.macros[activate_on][memory_number - 1]
         else:

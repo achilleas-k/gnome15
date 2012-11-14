@@ -515,7 +515,7 @@ class G15MacroEditor():
         self.__macro_script.set_sensitive(sel_type == g15profile.MACRO_SCRIPT)
         self.__action_tree.set_sensitive(sel_type == g15profile.MACRO_ACTION)
         self.__activate_on_combo.set_sensitive(not uinput_type and not key_conflict)
-        self.__repeat_mode_combo.set_sensitive(self.__activate_on_combo.get_active() != 1)
+        self.__repeat_mode_combo.set_sensitive(self.__activate_on_combo.get_active() != 2)
         self.__override_default_repeat.set_sensitive(self.editing_macro.repeat_mode != g15profile.NO_REPEAT)
         self.__turbo_box.set_sensitive(self.editing_macro.repeat_mode != g15profile.NO_REPEAT and self.__override_default_repeat.get_active())
         
@@ -631,6 +631,7 @@ OP_ICONS = { 'delay' : 'gtk-media-pause',
             'urelease' : 'gtk-go-up',
             'execute' : 'gtk-execute',
             'label' : 'gtk-underline',
+            'wait'  : 'gtk-stop',
             'goto' : [ 'stock_media-prev','media-skip-backward','gtk-media-previous' ] }
         
 class G15MacroScriptEditor():
@@ -783,6 +784,8 @@ class G15MacroScriptEditor():
         self.__scrip_editor_popup = self.__widget_tree.get_object("ScriptEditorPopup")
         self.__info_box_area =  self.__widget_tree.get_object("InfoBoxArea")
         self.__save_button =  self.__widget_tree.get_object("SaveButton")
+        self.__wait_combo =  self.__widget_tree.get_object("WaitCombo")
+        self.__wait_model =  self.__widget_tree.get_object("WaitModel")
         
     def _load_key_presses(self):
         self.__key_press_model.clear()
@@ -913,33 +916,44 @@ class G15MacroScriptEditor():
         dialog.set_transient_for(self.__window)
         response = dialog.run()
         dialog.hide()
-        if response == gtk.RESPONSE_OK:
-            i = self._get_insert_index()
-            macro_text = "%s %s" % ( self._format_op("goto"), self.__goto_label_model[self.__goto_label.get_active()][0]) 
-            self.__macros.insert(i, macro_text) 
-            self._rebuild_model()   
+        if response == gtk.RESPONSE_OK:            
+            self._insert_macro("%s %s" % ( self._format_op("goto"), self.__goto_label_model[self.__goto_label.get_active()][0]))
     
     def _on_new_label(self, widget):
         dialog = self.__widget_tree.get_object("AddLabelDialog")  
         dialog.set_transient_for(self.__window)
         response = dialog.run()
         dialog.hide()
-        if response == gtk.RESPONSE_OK:
-            i = self._get_insert_index()
-            macro_text = "%s %s" % ( self._format_op("label"), self.__label.get_text()) 
-            self.__macros.insert(i, macro_text) 
-            self._rebuild_model()   
+        if response == gtk.RESPONSE_OK:            
+            self._insert_macro("%s %s" % ( self._format_op("label"), self.__label.get_text()))
     
     def _on_new_execute(self, widget):
         dialog = self.__widget_tree.get_object("AddExecuteDialog")  
         dialog.set_transient_for(self.__window)
         response = dialog.run()
         dialog.hide()
+        if response == gtk.RESPONSE_OK:            
+            self._insert_macro("%s %s" % ( self._format_op("execute"), self.__command.get_text()))
+            
+    
+    def _on_new_wait(self, widget):        
+        dialog = self.__widget_tree.get_object("AddWaitDialog")  
+        dialog.set_transient_for(self.__window)
+        if not self.__wait_combo.get_active() >= 0 and len(self.__wait_model) > 0:
+            self.__wait_combo.set_active(0)
+        response = dialog.run()
+        dialog.hide()
         if response == gtk.RESPONSE_OK:
-            i = self._get_insert_index()
-            macro_text = "%s %s" % ( self._format_op("execute"), self.__command.get_text()) 
-            self.__macros.insert(i, macro_text) 
-            self._rebuild_model()
+            self._insert_macro("%s %s" % ( self._format_op("wait"), self.__wait_model[self.__wait_combo.get_active()][0])) 
+    
+    def _on_add_delay(self, widget):        
+        dialog = self.__widget_tree.get_object("AddDelayDialog")  
+        dialog.set_transient_for(self.__window)
+        response = dialog.run()
+        dialog.hide()
+        self._stop_recorder()
+        if response == gtk.RESPONSE_OK:
+            self._insert_macro("%s %s" % ( self._format_op("delay"), int(self.__delay_adjustment.get_value())) )
             
     def _on_rows_reordered(self, model, path, iter, new_order):
         print "reorder"
@@ -996,19 +1010,12 @@ class G15MacroScriptEditor():
                     self.__macros.insert(i, macro_text)
                     i += 1 
             self._rebuild_model()
-    
-    def _on_add_delay(self, widget):        
-        dialog = self.__widget_tree.get_object("AddDelayDialog")  
-        dialog.set_transient_for(self.__window)
-        response = dialog.run()
-        dialog.hide()
-        self._stop_recorder()
-        if response == gtk.RESPONSE_OK:
-            i = self._get_insert_index()
-            macro_text = "%s %s" % ( self._format_op("delay"), int(self.__delay_adjustment.get_value())) 
-            self.__macros.insert(i, macro_text) 
-            self._rebuild_model()
             
+    def _insert_macro(self, macro_text):
+        i = self._get_insert_index() 
+        self.__macros.insert(i, macro_text) 
+        self._rebuild_model()
+        
     def _on_remove_macro_operations(self, widget):        
         dialog = self.__widget_tree.get_object("RemoveMacroOperationsDialog")  
         dialog.set_transient_for(self.__window)

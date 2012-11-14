@@ -279,9 +279,12 @@ class G15KeyHandler():
         for m in self.__normal_macros:
             up = []
             held = []
+            down = []
             for k in m.keys:
                 if k in self.__key_states:
                     key_state = self.__key_states[k]
+                    if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_DOWN:
+                        down.append(key_state)
                     if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_UP and not key_state.defeat_release:
                         up.append(key_state)
                     if not key_state.is_consumed() and key_state.state_id == g15driver.KEY_STATE_HELD:
@@ -289,6 +292,8 @@ class G15KeyHandler():
                         
             if len(up) == len(m.keys):
                 self._handle_macro(m, g15driver.KEY_STATE_UP, up)
+            if len(down) == len(m.keys):
+                self._handle_macro(m, g15driver.KEY_STATE_DOWN, down)
             if len(held) == len(m.keys):
                 self._handle_macro(m, g15driver.KEY_STATE_HELD, held)
                 
@@ -414,13 +419,15 @@ class G15KeyHandler():
                 self._get_all_macros(profile, macro_list, macro_keys, mapped_to_key, state)
         return macro_list
     
-    def _build_macros(self, profile = None, macro_keys = None, held_macro_keys = None):
+    def _build_macros(self, profile = None, macro_keys = None, held_macro_keys = None, down_macro_keys = None):
         if profile is None:
             profile = g15profile.get_active_profile(self.__screen.device)
         if macro_keys is None:
             macro_keys = []
         if held_macro_keys is None:
             held_macro_keys = []
+        if down_macro_keys is None:
+            down_macro_keys = []
             
         bank = self.__screen.get_memory_bank()
         for m in profile.macros[g15driver.KEY_STATE_UP][bank - 1]:
@@ -431,6 +438,14 @@ class G15KeyHandler():
                     self.__normal_macros.append(m)
                 macro_keys.append(m.key_list_key)
                 
+        for m in profile.macros[g15driver.KEY_STATE_DOWN][bank - 1]:
+            if not m.key_list_key in down_macro_keys:
+                if m.is_uinput():
+                    self.__uinput_macros.append(m)
+                else:
+                    self.__normal_macros.append(m)
+                down_macro_keys.append(m.key_list_key)
+                
         for m in profile.macros[g15driver.KEY_STATE_HELD][bank - 1]:
             if not m.key_list_key in held_macro_keys:
                 if not m.is_uinput():
@@ -440,7 +455,7 @@ class G15KeyHandler():
         if profile.base_profile is not None:
             profile = g15profile.get_profile(self.__screen.device, profile.base_profile)
             if profile is not None:
-                self._build_macros(profile, macro_keys, held_macro_keys)
+                self._build_macros(profile, macro_keys, held_macro_keys, down_macro_keys)
                 
     def _check_key_state(self, new_state_id, key_state):
         """
@@ -480,7 +495,14 @@ class G15KeyHandler():
         if macro in self.__repeat_macros:
             self._send_uinput_keypress(macro, uc, uinput_repeat)
         if macro in self.__repeat_macros:
-            self.__macro_repeat_timer = g15util.queue(self.queue_name, "MacroRepeat", macro.repeat_delay, self._repeat_uinput, self.__reload_macro_instance(macro), uc, uinput_repeat)
+            self.__macro_repeat_timer = g15util.queue(self.queue_name, "MacroRepeat", macro.repeat_delay, self._repeat_uinput, self._reload_macro_instance(macro), uc, uinput_repeat)
+            
+    def _reload_macro_instance(self, macro):
+        p = g15profile.get_profile(macro.profile.device, macro.profile.id)
+        if p:
+            return p.get_macro(macro.activate_on, macro.memory, macro.keys)
+        logger.warning("Could not reload macro %s, using old instance." % macro.name)
+        return macro
         
     def _handle_uinput_macro(self, macro, state, key_states):
         uc = macro.get_uinput_code()
@@ -564,18 +586,18 @@ class G15KeyHandler():
             binding = g15actions.ActionBinding(macro.macro, macro.keys, state)
             if not self._action_performed(binding):
                 # Send it to the service for handling
-                self.__screen.service.handle_macro(macro)
+                self.__screen.service.macro_handler.handle_macro(macro)
             else:
                 for k in key_states:
                     k.consume_until_released = True
         else:
             # Send it to the service for handling
-            self.__screen.service.handle_macro(macro)
+            self.__screen.service.macro_handler.handle_macro(macro)
                 
     def _handle_macro(self, macro, state, key_states, repetition = False):
         self._consume_keys(key_states)                
         delay = macro.repeat_delay if macro.repeat_delay != -1 else 0.1
-        if macro.repeat_mode == g15profile.REPEAT_TOGGLE and not state == g15driver.KEY_STATE_HELD:
+        if macro.repeat_mode == g15profile.REPEAT_TOGGLE and state == g15driver.KEY_STATE_UP:
             if macro in self.__repeat_macros and not repetition:
                 # Key pressed again, so stop repeating
                 self.__cancel_macro_repeat_timer()
@@ -589,7 +611,7 @@ class G15KeyHandler():
                 # We test again because a toggle might have stopped the repeat
                 if macro in self.__repeat_macros:
                     self.__macro_repeat_timer = g15util.queue(self.queue_name, "RepeatMacro", delay, self._handle_macro, macro, state, key_states, True)
-        elif macro.repeat_mode == g15profile.REPEAT_WHILE_HELD:
+        elif macro.repeat_mode == g15profile.REPEAT_WHILE_HELD and not state == g15driver.KEY_STATE_DOWN:
             if state == g15driver.KEY_STATE_UP and macro in self.__repeat_macros and not repetition:
                 # Key released again, so stop repeating
                 self.__cancel_macro_repeat_timer()
@@ -601,7 +623,9 @@ class G15KeyHandler():
                     
                 # We test again because a toggle might have stopped the repeat
                 if macro in self.__repeat_macros:
-                    self.__macro_repeat_timer = g15util.queue(self.queue_name, "RepeatMacro", delay, self._handle_macro, macro, g15driver.KEY_STATE_HELD, key_states, True)
+                    self.__macro_repeat_timer = g15util.queue(self.queue_name, "RepeatMacro", delay, self._handle_macro, macro, g15driver.KEY_STATE_HELD, key_states, True) 
+        elif state == g15driver.KEY_STATE_DOWN and macro.activate_on == g15driver.KEY_STATE_DOWN:
+            self._process_macro(macro, state, key_states)
         elif state == g15driver.KEY_STATE_UP and macro.activate_on == g15driver.KEY_STATE_UP:
             self._process_macro(macro, state, key_states)
         elif state == g15driver.KEY_STATE_HELD and macro.activate_on == g15driver.KEY_STATE_HELD:

@@ -79,6 +79,7 @@ class ProfileMenuItem(g15theme.MenuItem):
         g15theme.MenuItem.__init__(self, id)
         self.profile = profile
         self._plugin = plugin
+        self._surface = None
         
     def get_theme_properties(self):
         locked = self.profile.is_active() and g15profile.is_locked(self._plugin.screen.device)
@@ -96,13 +97,14 @@ class ProfileMenuItem(g15theme.MenuItem):
         item_properties["item_name"] = self.profile.name
         item_properties["item_radio"] = True
         item_properties["item_radio_selected"] = self.profile.is_active()
-        item_properties["item_icon"] = g15util.load_surface_from_file(self.profile.get_profile_icon_path(16), self.theme.bounds[3])
+        item_properties["item_icon"] = self._surface
         item_properties["item_alt_icon"] = locked_icon if locked else "" 
         item_properties["item_alt"] = ""
         return item_properties
     
-    def on_configure(self):        
-        self.set_theme(g15theme.G15Theme(self.parent.get_theme().dir, "menu-entry" if self.group else "menu-child-entry"))
+    def on_configure(self): 
+        g15theme.MenuItem.on_configure(self)
+        self._surface = g15util.load_surface_from_file(self.profile.get_profile_icon_path(16), self.theme.bounds[3])
     
     def activate(self):
         locked = g15profile.is_locked(self._plugin.screen.device)
@@ -143,26 +145,29 @@ class G15Profiles(g15plugin.G15MenuPlugin):
             self.gconf_client.notify_remove(h)
         
     def action_performed(self, binding):
-        if self.page != None and self.page.is_visible():
-            if binding.action == g15driver.VIEW:
-                active = g15profile.get_active_profile(self.screen.device)
-                if active.id == self.menu.selected.profile.id:
-                    g15profile.set_locked(self.screen.device, not g15profile.is_locked(self.screen.device))
-                else:
-                    if g15profile.is_locked(self.screen.device):
-                        g15profile.set_locked(self.screen.device, False)
-                    self.menu.selected.profile.make_active()
-                    g15profile.set_locked(self.screen.device, True)
-                return True
-            elif binding.action == g15driver.CLEAR:
-                profile = self.menu.selected.profile
-                if self.screen.service.active_application_name is not None:
-                    self._configure_profile_with_window_name(profile, self.screen.service.active_application_name)
-                    profile.save()
-                elif self.screen.service.active_window_title is not None:
-                    self._configure_profile_with_window_name(profile, self.screen.service.active_window_title)
-                    profile.save()
-                return True
+        if self.page != None:
+            if binding.action == SELECT_PROFILE:
+                self.screen.raise_page(self.page)
+            elif self.page.is_visible():
+                if binding.action == g15driver.VIEW:
+                    active = g15profile.get_active_profile(self.screen.device)
+                    if active.id == self.menu.selected.profile.id:
+                        g15profile.set_locked(self.screen.device, not g15profile.is_locked(self.screen.device))
+                    else:
+                        if g15profile.is_locked(self.screen.device):
+                            g15profile.set_locked(self.screen.device, False)
+                        self.menu.selected.profile.make_active()
+                        g15profile.set_locked(self.screen.device, True)
+                    return True
+                elif binding.action == g15driver.CLEAR:
+                    profile = self.menu.selected.profile
+                    if self.screen.service.active_application_name is not None:
+                        self._configure_profile_with_window_name(profile, self.screen.service.active_application_name)
+                        profile.save()
+                    elif self.screen.service.active_window_title is not None:
+                        self._configure_profile_with_window_name(profile, self.screen.service.active_window_title)
+                        profile.save()
+                    return True
                 
                 
     def show_menu(self):

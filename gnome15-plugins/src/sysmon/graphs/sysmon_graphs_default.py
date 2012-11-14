@@ -13,9 +13,9 @@ def create(theme):
     
 def destroy(theme):
     page = theme.component
-    page.remove_child(page.get_child_by_id("cpu"))
-    page.remove_child(page.get_child_by_id("net"))
-    page.remove_child(page.get_child_by_id("mem"))
+#    page.remove_child(page.get_child_by_id("cpu"))
+#    page.remove_child(page.get_child_by_id("net"))
+#    page.remove_child(page.get_child_by_id("mem"))
     
 class G15Graph(g15theme.Component):
     
