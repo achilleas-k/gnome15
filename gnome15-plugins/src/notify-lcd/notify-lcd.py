@@ -27,6 +27,7 @@ import gnome15.g15util as g15util
 import gnome15.g15globals as pglobals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
+import gnome15.g15desktop as g15desktop
 import gconf
 import time
 import dbus
@@ -76,7 +77,8 @@ IF_NAME="org.freedesktop.Notifications"
 BUS_NAME="/org/freedesktop/Notifications"
 
 # Match string to use for passive mode
-PASSIVE_MATCH_STRING="eavesdrop='true',type='method_call',interface='org.freedesktop.Notifications',member='Notify'"
+PASSIVE_MATCH_STRING="type='method_call',interface='org.freedesktop.Notifications',member='Notify'"
+EAVESDROP_MATCH_STRING="eavesdrop='true',%s" % PASSIVE_MATCH_STRING
 
 # List of processes to try and kill so the notification DBUS server can be replaced
 OTHER_NOTIFY_DAEMON_PROCESS_NAMES = [ 'notify-osd', 'notification-daemon', 'knotify4' ]
@@ -299,8 +301,16 @@ class G15NotifyLCD():
 #            
         if not self._service:
             # Just monitor raw DBUS events
-            self._bus.add_match_string(PASSIVE_MATCH_STRING)
+            self._match_string = EAVESDROP_MATCH_STRING
+            try:
+                self._bus.add_match_string(self._match_string)
+                logger.info("Using eavesdrop for monitoring DBUS")
+            except:
+                self._match_string = PASSIVE_MATCH_STRING
+                self._bus.add_match_string(self._match_string)
+                logger.info("Not using eavesdrop for monitoring DBUS")
             self._bus.add_message_filter(self.msg_cb)
+                
             
         self._screen.key_handler.action_listeners.append(self)
         self._notify_handle = self._gconf_client.notify_add(self._gconf_key, self._configuration_changed)
@@ -328,7 +338,7 @@ class G15NotifyLCD():
             del self._bus_name
         else:
             # Stop monitoring DBUS
-            self._bus.remove_match_string(PASSIVE_MATCH_STRING)
+            self._bus.remove_match_string(self._match_string)
             self._bus.remove_message_filter(self.msg_cb)
         
     def destroy(self):
