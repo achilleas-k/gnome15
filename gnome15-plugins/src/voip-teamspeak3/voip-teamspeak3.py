@@ -304,12 +304,14 @@ class Teamspeak3Backend(voip.VoipBackend):
     Private
     """
     def _handle_error(self, error):
+        print error
         if isinstance(error, EOFError):
             self._disconnected()
         else:
             logger.warn("Teamspeak3 error. %s" % str(error))
         
     def _handle_message(self, message):
+        print message.command
         try:
             if message.command == 'notifyclientupdated':
                 self._parse_notifyclientupdated(message)
@@ -345,6 +347,7 @@ class Teamspeak3Backend(voip.VoipBackend):
             traceback.print_exc()
                 
     def _disconnected(self):
+        print "disconnex"
         self._plugin._disconnected()
         
     def _create_channel_item(self, message, schandlerid):

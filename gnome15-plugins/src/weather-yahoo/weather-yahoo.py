@@ -183,7 +183,17 @@ class YahooWeatherBackend(weather.WeatherBackend):
         wind_el = p["wind"] if "wind" in p else None
         
         # Observed date
-        observed_datetime = datetime.datetime.strptime(condition_el["date"], "%a, %d %b %Y %H:%M %p %Z") 
+        try:
+            observed_datetime = datetime.datetime.strptime(condition_el["date"], "%a, %d %b %Y %H:%M %p %Z")
+        except ValueError as v: 
+            import email.utils
+            dxt = email.utils.parsedate_tz(condition_el["date"])
+            class TZ(datetime.tzinfo):
+                def dst(self, dt):
+                    return datetime.timedelta(0)
+                    
+                def utcoffset(self, dt): return datetime.timedelta(seconds=dxt[9:10])
+            observed_datetime = datetime.datetime(*dxt[:7],  tzinfo=TZ())
         
         # Forecasts (we only get 2 from yahoo)
         forecasts_el = p["forecasts"]

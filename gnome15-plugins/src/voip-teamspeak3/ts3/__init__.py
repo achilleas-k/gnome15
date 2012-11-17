@@ -33,11 +33,16 @@ class TS3():
             self.setName("TS3ReceiveThread")
             self._reply_handler = None
             self._error_handler = None
+            self._stop = False
             
+        def stop(self):
+            self._stop = True
         def run(self):
             try:
                 while True:
                     try:
+                        if self._stop:
+                            raise EOFError()
                         msg = _receive_message(self._client)
                     except TS3CommandException as e:
                         self._error_handler(e)
@@ -52,6 +57,7 @@ class TS3():
         self.port = port
         
         self._event_client = None
+        self._event_thread = None
         self._command_client = None
         self._lock = RLock()
         
@@ -81,6 +87,8 @@ class TS3():
                                       )
         
     def close(self):
+        if self._event_thread is not None:
+            self._event_thread.stop()
         self._command_client.close()
         self._command_client = None
         if self._event_client is not None:

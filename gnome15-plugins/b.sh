@@ -1,5 +1,11 @@
 #!/bin/bash
 
-version=0.9.0
+#!/bin/bash
 
-autoreconf -f && ./configure --enable-udev=/lib/udev/rules.d --enable-debug && make && make dist && cp gnome15-plugins-${version}.tar.gz ~/Workspaces/home\:tanktarta\:gnome15-unstable/gnome15-plugins/ && cp gnome15-plugins-${version}.tar.gz ~/Workspaces/home\:tanktarta\:gnome15-unstable/gnome15-ubuntu-plugins/
+SUFFIX=""
+VERSION=$(grep "AC_INIT" configure.in|awk -F, '{ print $2 }'|awk -F\) '{ print $1 }'|sed 's/ //g')
+
+autoreconf -f && \
+./configure --enable-debug && \
+make && make dist && \
+cp gnome15-plugins-${VERSION}.tar.gz ~/Workspaces/home\:tanktarta\:gnome15${SUFFIX}/gnome15-plugins/ && cp gnome15-plugins-${VERSION}.tar.gz ~/Workspaces/home\:tanktarta\:gnome15${SUFFIX}/gnome15-ubuntu-plugins/

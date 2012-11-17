@@ -598,11 +598,13 @@ class G15Service(g15desktop.G15AbstractService):
         
     def stop(self, quickly = False):
         if self.started:
+            g15accounts.STATUS.stopping = True
+            self.stopping = True
+            
             g15devices.device_added_listeners.remove(self._device_added)
             g15devices.device_removed_listeners.remove(self._device_removed)
             g15uinput.close_devices()
             self.global_plugins.deactivate()
-            self.stopping = True
             self.session_active = False
             try :
                 for h in self.notify_handles:
@@ -634,7 +636,6 @@ class G15Service(g15desktop.G15AbstractService):
         
     def shutdown(self, quickly = False):
         logger.info("Shutting down")
-        g15accounts.STATUS.stopping = True
         self.shutting_down = True
         self.global_plugins.destroy()
         self.stop(quickly)

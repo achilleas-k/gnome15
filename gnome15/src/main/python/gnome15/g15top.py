@@ -105,7 +105,7 @@ class Mem():
 def netload(net):
     """
     Get the network load details for the network interface described by the
-    provided network interface nam
+    provided network interface name
     
     Keyword arguments:
     net        --    network interface name
