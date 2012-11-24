@@ -31,8 +31,6 @@ import sys
 import pygtk
 pygtk.require('2.0')
 import gtk
-import gnome
-import gnome.ui
 import os
 import gconf
 import traceback
@@ -94,12 +92,6 @@ class G15SystemTray(g15desktop.G15GtkMenuPanelComponent):
     def _on_activate(self, status):
         if len(self.menu.get_children()) > 0:
             self.menu.popup(None, None, None, 1, gtk.get_current_event_time())
-        
-    def _about_info(self, widget):         
-        about = gnome.ui.About("Gnome15", g15globals.version, "GPL", \
-                               "Desktop integration for Logitech 'G' keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
-                               g15desktop.AUTHORS, "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
-        about.show()
         
     def add_service_item(self, item):
         self._append_item(item, self.prefs_menu)   

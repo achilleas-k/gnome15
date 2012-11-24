@@ -21,9 +21,10 @@
 import time
 from ctypes import *
 from threading import Thread
+
 libg15 = cdll.LoadLibrary("libg15.so.1")
 
-# Default kKey read timeout. Too low and keys will be missed (very obvious in a VM)
+# Default key read timeout. Too low and keys will be missed (very obvious in a VM)
 KEY_READ_TIMEOUT = 100
 
 G15_LCD = 1
@@ -62,10 +63,10 @@ class KeyboardReceiveThread(Thread):
         if self._run:
             self._run = False
         
-    def run(self):      
-        pressed_keys = c_int(0)
+    def run(self):    
         try:
-            while self._run:
+            pressed_keys = c_int(0)
+            while self._run:  
                 err = libg15.getPressedKeys(byref(pressed_keys), 10)
                 code = 0
                 ext_code = 0
@@ -89,7 +90,7 @@ class KeyboardReceiveThread(Thread):
                             break
                     else:
                         code = pressed_keys.value
-                        
+
                     self.callback(code, ext_code)
                 elif err in [ G15_TRY_AGAIN, G15_ERROR_READING_USB_DEVICE ] :
                     continue

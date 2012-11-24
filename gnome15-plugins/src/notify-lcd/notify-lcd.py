@@ -486,7 +486,7 @@ class G15NotifyLCD():
             
             # Workaround on Natty missing new email notification icon (from Evolution)?
             if icon_path == None and self._current_message.icon == "notification-message-email":
-                icon_path = g15util.get_icon_path([ "applications-email-pane", "mail_new", "mail-inbox", "evolution-mail" ])
+                icon_path = g15util.get_icon_path([ "applications-email-pane", "mail_new", "mail-inbox", "mail-folder-inbox", "evolution-mail" ])
                 
             properties["icon"] = icon_path 
         elif self._current_message.embedded_image != None:

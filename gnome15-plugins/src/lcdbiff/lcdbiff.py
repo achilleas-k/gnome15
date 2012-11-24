@@ -364,7 +364,7 @@ Gnome15 LCDBiff plugin
 class G15Biff(g15plugin.G15MenuPlugin):
 
     def __init__(self, gconf_client, gconf_key, screen):
-        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, ["mail-inbox"], id, "Email")
+        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, ["mail-inbox", "mail-folder-inbox" ], id, "Email")
         self.refresh_timer = None       
 
     def activate(self):
@@ -451,7 +451,7 @@ class G15Biff(g15plugin.G15MenuPlugin):
             if self.screen.driver.get_bpp() == 1:
                 self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-error.gif"))
             elif self.screen.driver.get_bpp() > 0:
-                self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("new-messages-red"))
+                self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["new-messages-red","messagebox_critical"]))
         else:
             if self.total_count > 0:
                 self._start_blink()
@@ -459,14 +459,14 @@ class G15Biff(g15plugin.G15MenuPlugin):
                 if self.screen.driver.get_bpp() == 1:
                     self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
                 elif self.screen.driver.get_bpp() > 0:
-                    self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages-new"))
+                    self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["indicator-messages-new", "mail-message-new"]))
             else:
                 self._stop_blink()
                 self.attention = False   
                 if self.screen.driver.get_bpp() == 1:
                     self.thumb_icon = None
                 elif self.screen.driver.get_bpp() > 0:
-                    self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path("indicator-messages"))
+                    self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["indicator-messages", "mail-message"]))
 
         if self.screen.driver.get_bpp() > 0:        
             self.screen.redraw(self.page)

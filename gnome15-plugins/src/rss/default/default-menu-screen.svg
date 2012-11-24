@@ -7,14 +7,13 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="160"
    height="43"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="default-menu-screen.svg">
   <defs
      id="defs4">
@@ -77,7 +76,7 @@
     <rect
        style="fill:none;stroke:none"
        id="menu"
-       width="127"
+       width="150"
        height="33.000019"
        x="0"
        y="1019.3622" />
@@ -108,14 +107,6 @@
        d="m 0.5,1018.8622 160,0"
        id="path3041"
        inkscape:connector-curvature="0" />
-    <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/rss/default/${icon}"
-       xlink:href="${icon}"
-       id="image3051"
-       x="128.99998"
-       y="1025.3622"
-       width="22.000017"
-       height="22.000017" />
     <g
        transform="translate(-2,0)"
        id="viewScrollbar">

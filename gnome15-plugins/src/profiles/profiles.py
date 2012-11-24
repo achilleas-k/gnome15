@@ -126,7 +126,7 @@ Profiles plugin class
 class G15Profiles(g15plugin.G15MenuPlugin):
     
     def __init__(self, gconf_client, gconf_key, screen):
-        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, [ "user-bookmarks" ], id, _("Profiles"))
+        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, [ "user-bookmarks", "bookmarks" ], id, _("Profiles"))
     
     def activate(self):
         g15plugin.G15MenuPlugin.activate(self)

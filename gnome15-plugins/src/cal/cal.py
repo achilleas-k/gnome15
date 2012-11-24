@@ -26,10 +26,11 @@ import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
+import gnome15.g15plugin as g15plugin
 import datetime
 import time
 import os
-import gobject
+import gtk
 import calendar
 import traceback
 
@@ -241,19 +242,24 @@ class G15CalendarPreferences(g15accounts.G15AccountPreferences):
             logger.warning("No backend for account type %s" % account_type)
             return None
         return backend.create_options(account, self)
+    
+    def create_general_options(self):
+        widget_tree = gtk.Builder()
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cal.glade"))
+        g15util.configure_checkbox_from_gconf(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, "TwentyFourHourTimes", True, widget_tree)
+        return widget_tree.get_object("OptionPanel")
         
-class G15Cal():  
+class G15Cal(g15plugin.G15Plugin):  
     
     def __init__(self, gconf_key, gconf_client, screen):
-        
-        self._screen = screen
-        self._gconf_client = gconf_client
-        self._gconf_key = gconf_key
+        g15plugin.G15Plugin.__init__(self, gconf_client, gconf_key, screen)
         self._timer = None
         self._icon_path = g15util.get_icon_path(["calendar", "evolution-calendar", "office-calendar", "stock_calendar" ])
         self._thumb_icon = g15util.load_surface_from_file(self._icon_path)
         
     def activate(self):
+        g15plugin.G15Plugin.activate(self)
+        
         self._active = True
         self._event_days = None
         self._calendar_date = None
@@ -273,7 +279,7 @@ class G15Cal():
         self._menu.focused_component = True
         
         # Page
-        self._page = g15theme.G15Page(name, self._screen, on_shown = self._on_shown, \
+        self._page = g15theme.G15Page(name, self.screen, on_shown = self._on_shown, \
                                      on_hidden = self._on_hidden, theme_properties_callback = self._get_properties,
                                      thumbnail_painter = self._paint_thumbnail, 
                                      originating_plugin = self)
@@ -284,26 +290,30 @@ class G15Cal():
         
         # List for account changes        
         self._account_manager.add_change_listener(self._accounts_changed)
-        self._screen.key_handler.action_listeners.append(self)
+        self.screen.key_handler.action_listeners.append(self)
         
         # Run first load in thread
         self._page.add_child(self._menu)
         self._page.add_child(self._calendar)
         self._page.add_child(g15theme.MenuScrollbar("viewScrollbar", self._menu))
-        self._screen.add_page(self._page)
+        self.screen.add_page(self._page)
         g15util.schedule("CalendarFirstLoad", 0, self._redraw)
         
         # Listen for changes in the network state
-        self._screen.service.network_manager.listeners.append(self._network_state_changed)
+        self.screen.service.network_manager.listeners.append(self._network_state_changed)
+        
+        # Config changes
+        self.watch("twenty_four_hour_times", self._config_changed)
         
     def deactivate(self):
-        self._screen.service.network_manager.listeners.append(self._network_state_changed)
+        g15plugin.G15Plugin.deactivate(self)
+        self.screen.service.network_manager.listeners.append(self._network_state_changed)
         self._account_manager.remove_change_listener(self._accounts_changed)
-        self._screen.key_handler.action_listeners.remove(self)
+        self.screen.key_handler.action_listeners.remove(self)
         if self._timer != None:
             self._timer.cancel()
         if self._page != None:
-            g15screen.run_on_redraw(self._screen.del_page, self._page)
+            g15screen.run_on_redraw(self.screen.del_page, self._page)
         
     def destroy(self):
         pass
@@ -311,20 +321,20 @@ class G15Cal():
     def action_performed(self, binding):
         if self._page and self._page.is_visible():
             if self._calendar.is_focused():
-                if ( binding.action == g15driver.PREVIOUS_PAGE and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
-                   ( binding.action == g15driver.PREVIOUS_SELECTION and self._screen.device.model_id != g15driver.MODEL_G19 ):
+                if ( binding.action == g15driver.PREVIOUS_PAGE and self.screen.device.model_id == g15driver.MODEL_G19 ) or \
+                   ( binding.action == g15driver.PREVIOUS_SELECTION and self.screen.device.model_id != g15driver.MODEL_G19 ):
                     self._adjust_calendar_date(-1)
                     return True
-                elif ( binding.action == g15driver.NEXT_PAGE and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
-                     ( binding.action == g15driver.NEXT_SELECTION and self._screen.device.model_id != g15driver.MODEL_G19 ):
+                elif ( binding.action == g15driver.NEXT_PAGE and self.screen.device.model_id == g15driver.MODEL_G19 ) or \
+                     ( binding.action == g15driver.NEXT_SELECTION and self.screen.device.model_id != g15driver.MODEL_G19 ):
                     self._adjust_calendar_date(1)
                     return True
-                elif ( binding.action == g15driver.PREVIOUS_SELECTION and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
-                     ( binding.action == g15driver.PREVIOUS_PAGE and self._screen.device.model_id != g15driver.MODEL_G19 ):
+                elif ( binding.action == g15driver.PREVIOUS_SELECTION and self.screen.device.model_id == g15driver.MODEL_G19 ) or \
+                     ( binding.action == g15driver.PREVIOUS_PAGE and self.screen.device.model_id != g15driver.MODEL_G19 ):
                     self._adjust_calendar_date(-7)
                     return True
-                elif ( binding.action == g15driver.NEXT_SELECTION and self._screen.device.model_id == g15driver.MODEL_G19 ) or \
-                     ( binding.action == g15driver.NEXT_PAGE and self._screen.device.model_id != g15driver.MODEL_G19 ):
+                elif ( binding.action == g15driver.NEXT_SELECTION and self.screen.device.model_id == g15driver.MODEL_G19 ) or \
+                     ( binding.action == g15driver.NEXT_PAGE and self.screen.device.model_id != g15driver.MODEL_G19 ):
                     self._adjust_calendar_date(7)
                     return True
                 elif binding.action == g15driver.VIEW:
@@ -338,6 +348,11 @@ class G15Cal():
     """
     Private
     """
+    
+    def _config_changed(self, client, connection_id, entry, args):
+        self._loaded = 0
+        self._redraw()
+        
     def _network_state_changed(self, state):
         self._loaded = 0
         self._redraw()
@@ -363,13 +378,20 @@ class G15Cal():
         calendar_date = self._get_calendar_date()
         properties = {}
         properties["icon"] = self._icon_path 
-        properties["title"] = _('Calendar') 
+        properties["title"] = _('Calendar')
+        if g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True):
+            properties["time"] = g15locale.format_time_24hour(now, self.gconf_client, False)
+            properties["full_time"] = g15locale.format_time_24hour(now, self.gconf_client, True)
+        else:
+            properties["full_time"] = g15locale.format_time(now, self.gconf_client, True)
+            properties["time"] = g15locale.format_time(now, self.gconf_client, False)
         properties["time_24"] = now.strftime("%H:%M") 
         properties["full_time_24"] = now.strftime("%H:%M:%S") 
         properties["time_12"] = now.strftime("%I:%M %p") 
         properties["full_time_12"] = now.strftime("%I:%M:%S %p")
         properties["short_date"] = now.strftime("%a %d %b")
         properties["full_date"] = now.strftime("%A %d %B")
+        properties["date"] = g15locale.format_date(now, self.gconf_client)
         properties["locale_date"] = now.strftime("%x")
         properties["locale_time"] = now.strftime("%X")
         properties["year"] = now.strftime("%Y")
@@ -413,7 +435,7 @@ class G15Cal():
                     # Backends may specify if they need a network or not, so check the state
                     import gnome15.g15pluginmanager as g15pluginmanager
                     needs_net = g15pluginmanager.is_needs_network(backend)
-                    if not needs_net or ( needs_net and self._screen.service.network_manager.is_network_available() ):
+                    if not needs_net or ( needs_net and self.screen.service.network_manager.is_network_available() ):
                         backend_events = backend.create_backend(acc, self._account_manager).get_events(now)
                         if backend_events is None:
                             logger.warning("Calendar returned no events, skipping")
@@ -456,7 +478,7 @@ class G15Cal():
         self._page.redraw()
         
     def _schedule_redraw(self):
-        if self._screen.is_visible(self._page):
+        if self.screen.is_visible(self._page):
             if self._timer is not None:
                 self._timer.cancel()
             
@@ -481,16 +503,16 @@ class G15Cal():
             self._reload_events_now()
         else:
             self._page.mark_dirty()
-            self._screen.redraw(self._page)
+            self.screen.redraw(self._page)
             self._schedule_redraw()
             
     def _reload_events_now(self):
         self._load_month_events(self._get_calendar_date())
-        self._screen.redraw(self._page)
+        self.screen.redraw(self._page)
         self._schedule_redraw()
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
-        if self._page != None and self._thumb_icon != None and self._screen.driver.get_bpp() == 16:
+        if self._page != None and self._thumb_icon != None and self.screen.driver.get_bpp() == 16:
             return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
         
 

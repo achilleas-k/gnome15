@@ -280,12 +280,18 @@ class G15Processes(g15plugin.G15MenuPlugin):
     def _get_item_for_bamf_application(self, window):
         view = self._get_bamf_application_object(window)
         item = self._get_menu_item(window)
-        item.process_name = view.Name()
-        icon_name = view.Icon()
-        if icon_name and len(icon_name) > 0:
-            icon_path = g15util.get_icon_path(icon_name, warning = False)
-            if icon_path:
-                item.icon = g15util.load_surface_from_file(icon_path, 32) 
+        try:
+            item.process_name = view.Name()
+        except dbus.DBusException:
+            item.process_name = "Unknown"
+        try:
+            icon_name = view.Icon()
+            if icon_name and len(icon_name) > 0:
+                icon_path = g15util.get_icon_path(icon_name, warning = False)
+                if icon_path:
+                    item.icon = g15util.load_surface_from_file(icon_path, 32) 
+        except dbus.DBusException:
+            pass
                 
             
         return item

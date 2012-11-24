@@ -226,7 +226,7 @@ class G15Background():
             if active_profile is not None and active_profile.background is not None and active_profile.background != "":
                 self.bg_img = active_profile.background
         
-        if self.bg_img == None and  bg_type == "desktop":
+        if self.bg_img == None and bg_type == "desktop":
             # Get the current background the desktop is using if possible
             desktop_env = g15desktop.get_desktop()
             if desktop_env in [ "gnome", "gnome-shell" ]:

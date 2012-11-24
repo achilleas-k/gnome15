@@ -142,6 +142,7 @@ class G15WeatherPreferences():
         unit.connect("changed", self._unit_changed, unit, gconf_key + "/units")
         
         g15util.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, self._widget_tree)
+        g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, self._widget_tree)
         
         dialog.run()
         dialog.hide()
@@ -284,6 +285,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
     def _buid_properties(self):
         properties = {}
         attributes = {}
+        use_twenty_four_hour = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True)
         if self._weather is None:            
             properties["message"] = _("No weather source configuration")
         else: 
@@ -293,12 +295,14 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
             else:
                 properties["location"] = self._weather['location']
                 dt = self._weather['datetime']
-                properties["time"] = dt.strftime("%H:%M")          
-                properties["date"] = dt.strftime("%d %b")
-                properties["datetime"] = dt.strftime("%d %b %H:%M")
+                if use_twenty_four_hour:
+                    properties["time"] = g15locale.format_time_24hour(dt, self.gconf_client, False)
+                else:          
+                    properties["time"] = g15locale.format_time(dt, self.gconf_client, False)
+                properties["date"] = g15locale.format_date(dt, self.gconf_client)
+                properties["datetime"] = g15locale.format_date_time(dt, self.gconf_client, False)
                 properties["message"] = ""
-                c_icon, f_icon, t_icon = self._get_icons(current)
-                t_icon = self._translate_icon(c_icon, f_icon)
+                c_icon, _, t_icon = self._get_icons(current)
                 if t_icon != None:
                     attributes["icon"] = g15util.load_surface_from_file(t_icon)
                     properties["icon"] = g15util.get_embedded_image_url(attributes["icon"]) 
@@ -379,11 +383,21 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 
                 # Sunrise                
                 dt = current['sunrise'] if 'sunrise' in current else None
-                properties["sunrise_time"] = time.strftime("%H:%M", dt) if dt is not None else ""
+                if dt is None:
+                    properties["sunrise_time"] = ""
+                elif use_twenty_four_hour:
+                    properties["sunrise_time"] = g15locale.format_time_24hour(dt, self.gconf_client, False)
+                else:          
+                    properties["sunrise_time"] = g15locale.format_time(dt, self.gconf_client, False)
                     
                 # Sunset                
                 dt = current['sunset'] if 'sunset' in current else None
-                properties["sunset_time"] = time.strftime("%H:%M", dt) if dt is not None else ""
+                if dt is None:
+                    properties["sunset_time"] = ""
+                elif use_twenty_four_hour:
+                    properties["sunset_time"] = g15locale.format_time_24hour(dt, self.gconf_client, False)
+                else:          
+                    properties["sunset_time"] = g15locale.format_time(dt, self.gconf_client, False)
                     
                 # Blank all the forecasts by default
                 for y in range(1, 10):
@@ -470,7 +484,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
             if icon_path != None:
                 return icon_path
              
-        return icon
+        return g15util.get_icon_path(icon)
         
     def _get_base_icon(self, icon):
         # Strips off URL path, image extension, size and weather prefix if present

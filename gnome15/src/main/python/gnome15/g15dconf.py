@@ -31,8 +31,8 @@ import dbus
 import os
 import gobject
 
-PASSIVE_MATCH_STRING="eavesdrop='true',type='method_call',interface='ca.desrt.dconf.Writer',member='Change'"
-
+PASSIVE_MATCH_STRING="type='method_call',interface='ca.desrt.dconf.Writer',member='Change'"
+EAVESDROP_MATCH_STRING="eavesdrop='true',%s" % PASSIVE_MATCH_STRING
 
 class GSettingsCallback():
     
@@ -48,9 +48,15 @@ class GSettings():
         self._handle = 1
         # DBUS session instance must be private or monitoring will not work properly
         self._session_bus = dbus.SessionBus(private=True)
-        self._session_bus.add_match_string(PASSIVE_MATCH_STRING)
         self._writer = dbus.Interface(self._session_bus.get_object("ca.desrt.dconf", "/ca/desrt/dconf/Writer/user"), "ca.desrt.dconf.Writer")
         self._monitors = {}
+        
+        self._match_string = EAVESDROP_MATCH_STRING
+        try:
+            self._session_bus.add_match_string(self._match_string)
+        except:
+            self._match_string = PASSIVE_MATCH_STRING
+            self._session_bus.add_match_string(self._match_string)
         self._session_bus.add_message_filter(self._msg_cb)
         
     def connect(self, key, callback):
@@ -112,4 +118,4 @@ class GSettings():
                 self._changed(*msg.get_args_list())
                 
     def __del__(self):
-        self._session_bus.remove_match_string(PASSIVE_MATCH_STRING)
+        self._session_bus.remove_match_string(self._match_string)

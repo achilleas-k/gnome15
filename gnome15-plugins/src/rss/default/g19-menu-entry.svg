@@ -55,12 +55,12 @@
        clipPathUnits="userSpaceOnUse"
        id="clipPath2999">
       <rect
-         y="784.11218"
-         x="104.54774"
+         style="fill:#000000;fill-opacity:0.50196078;stroke:none"
+         id="rect3002"
+         width="229"
          height="21.999977"
-         width="242"
-         id="rect3001"
-         style="fill:#000000;fill-opacity:0.50196078;stroke:none" />
+         x="104.54774"
+         y="784.11218" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -79,8 +79,8 @@
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="441"
-     inkscape:window-y="50"
+     inkscape:window-x="338"
+     inkscape:window-y="116"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -139,7 +139,7 @@
        id="text2999"
        sodipodi:linespacing="125%"
        clip-path="url(#clipPath2999)"
-       transform="translate(-22,1)"><tspan
+       transform="translate(-14,1)"><tspan
          sodipodi:role="line"
          id="tspan3001"
          x="107.22406"
@@ -156,6 +156,6 @@
          sodipodi:role="line"
          id="tspan3001-8"
          x="17.616716"
-         y="673.33795">${ent_month_year} ${ent_time_24}</tspan></text>
+         y="673.33795">${ent_month_year} ${ent_time}</tspan></text>
   </g>
 </svg>

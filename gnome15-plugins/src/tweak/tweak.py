@@ -56,6 +56,11 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/all_off_on_disconnect", "AllOffOnDisconnect", True, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/start_in_threads", "StartScreensInThreads", False, widget_tree)
     g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/monitor_desktop_session", "MonitorDesktopSession", True, widget_tree)
+    g15util.configure_text_from_gconf(gconf_client, "/apps/gnome15/time_format", "TimeFormat", "", widget_tree)
+    g15util.configure_text_from_gconf(gconf_client, "/apps/gnome15/time_format_24hr", "TimeFormatTwentyFour", "", widget_tree)
+    g15util.configure_text_from_gconf(gconf_client, "/apps/gnome15/date_format", "DateFormat", "", widget_tree)
+    g15util.configure_text_from_gconf(gconf_client, "/apps/gnome15/date_time_format", "DateTimeFormat", "", widget_tree)
+    
     dialog.run()
     dialog.hide()
         

@@ -903,14 +903,16 @@ class G15Profile(object):
         height        --    preferred height
         """
         icon = self.icon
-        if icon == None or icon == "":
-            icon = "preferences-desktop-keyboard-shortcuts"
-        if icon.startswith("/"):
+        if icon is not None and icon.startswith("/"):
             return icon
-        else:
-            path = self.get_resource_path(icon)
-            if path is None:
-                return g15util.get_icon_path(icon, height)
+        
+        path = self.get_resource_path(icon)
+        if path is None:
+            if icon == None or icon == "":
+                icon = [ "preferences-desktop-keyboard-shortcuts", "preferences-desktop-keyboard" ]
+            
+            return g15util.get_icon_path(icon, height)
+        
         return path
         
     def get_resource_path(self, resource_name):

@@ -191,8 +191,11 @@ class YahooWeatherBackend(weather.WeatherBackend):
             class TZ(datetime.tzinfo):
                 def dst(self, dt):
                     return datetime.timedelta(0)
-                    
-                def utcoffset(self, dt): return datetime.timedelta(seconds=dxt[9:10])
+                
+                def tzname(self, dt):
+                    return dxt[9]
+                
+                def utcoffset(self, dt): return datetime.timedelta(seconds=dxt[9])
             observed_datetime = datetime.datetime(*dxt[:7],  tzinfo=TZ())
         
         # Forecasts (we only get 2 from yahoo)

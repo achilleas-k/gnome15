@@ -368,6 +368,12 @@ class G15AccountPreferences():
         # Hide non-relevant stuff
         self.widget_tree.get_object("TypeContainer").set_visible(len(self.get_account_types()) > 1)
         
+        # Additional options        
+        place_holder = self.widget_tree.get_object("OptionsContainer")
+        opts = self.create_general_options()
+        if opts:       
+            opts.reparent(place_holder)
+        
         # Show dialog
         dialog = self.widget_tree.get_object("AccountDialog")
         dialog.set_transient_for(parent)
@@ -380,6 +386,13 @@ class G15AccountPreferences():
     """
     Implement
     """
+    def create_general_options(self):
+        """
+        Create general options for the dialog. These are added to the area
+        beneath the refresh interval spinner
+        """
+        pass
+    
     def get_account_type_name(self, account_type):
         """
         Get the localized account type name

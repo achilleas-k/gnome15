@@ -186,7 +186,8 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
     
     def activate(self):
         self._net_icon = g15util.get_icon_path([ "network-transmit-receive", 
-                                                "gnome-fs-network" ], 
+                                                "gnome-fs-network",
+                                                "network-server" ], 
                                                self.screen.height)
         self._cpu_icon = g15util.get_icon_path( CPU_ICONS,  
                                                self.screen.height)

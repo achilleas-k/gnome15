@@ -30,8 +30,6 @@ import sys
 import pygtk
 pygtk.require('2.0')
 import gtk
-import gnome
-import gnome.ui
 import os
 import appindicator
 import gconf

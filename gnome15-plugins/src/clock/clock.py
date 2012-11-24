@@ -76,6 +76,10 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     display_date.set_active(gconf_client.get_bool(gconf_key + "/display_date"))
     display_date.connect("toggled", _changed, gconf_key + "/display_date", gconf_client)
     
+    use_24hr_format = widget_tree.get_object("TwentFourHourCheckbox")
+    use_24hr_format.set_active(gconf_client.get_bool(gconf_key + "/use_24hr_format"))
+    use_24hr_format.connect("toggled", _changed, gconf_key + "/use_24hr_format", gconf_client)
+    
     dialog.run()
     dialog.hide()
 
@@ -180,7 +184,7 @@ class G15Clock(g15plugin.G15Plugin):
         The watch function is used, as this will automatically track the monitor handles
         and clean them up when the plugin is deactivated
         '''        
-        self.watch(None, self._config_changed);
+        self.watch(None, self._config_changed)
     
     def deactivate(self):
         g15plugin.G15Plugin.deactivate(self)
@@ -304,6 +308,7 @@ class G15Clock(g15plugin.G15Plugin):
     def _load_configuration(self):
         self.display_date = self.gconf_client.get_bool(self.gconf_key + "/display_date")
         self.display_seconds = self.gconf_client.get_bool(self.gconf_key + "/display_seconds")
+        self.use_24hr_format = self.gconf_client.get_bool(self.gconf_key + "/use_24hr_format")
         
     def _redraw(self):
         '''
@@ -351,12 +356,12 @@ class G15Clock(g15plugin.G15Plugin):
         Get the details to display and place them as properties which are passed to
         the theme
         '''
-        time_format = "%H:%M"
-        properties["time_nosec"] = datetime.datetime.now().strftime(time_format)
-        if self.display_seconds:
-            time_format = "%H:%M:%S"
-        properties["time"] = datetime.datetime.now().strftime(time_format)            
+        now = datetime.datetime.now()
+        if self.use_24hr_format:
+            properties["time"] = g15locale.format_time_24hour(now, self.gconf_client, self.display_seconds)
+        else:
+            properties["time"] = g15locale.format_time(now, self.gconf_client, self.display_seconds)
         if self.display_date:
-            properties["date"] = datetime.datetime.now().strftime(locale.nl_langinfo(locale.D_FMT))
+            properties["date"] = g15locale.format_date(now, self.gconf_client)
             
         return properties

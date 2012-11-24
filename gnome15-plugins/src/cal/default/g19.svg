@@ -80,8 +80,8 @@
      borderlayer="false"
      inkscape:window-width="1266"
      inkscape:window-height="852"
-     inkscape:window-x="497"
-     inkscape:window-y="88"
+     inkscape:window-x="1983"
+     inkscape:window-y="15"
      inkscape:window-maximized="0"
      showguides="true"
      inkscape:guide-bbox="true">
@@ -130,8 +130,8 @@
        rx="4" />
     <text
        xml:space="preserve"
-       style="font-size:36px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill-opacity:0.969697;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="24.545761"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill-opacity:0.969697;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="77.928574"
        y="881.14789"
        id="text3820"
        sodipodi:linespacing="125%"
@@ -139,8 +139,8 @@
        inkscape:transform-center-y="7.3828125"><tspan
          sodipodi:role="line"
          id="tspan3822"
-         x="24.545761"
-         y="881.14789">${time_24}</tspan></text>
+         x="77.928574"
+         y="881.14789">${time}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill-opacity:0.969697;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
@@ -151,7 +151,7 @@
          sodipodi:role="line"
          id="tspan3826"
          x="77.605537"
-         y="901.29077">${locale_date}</tspan></text>
+         y="901.29077">${date}</tspan></text>
     <g
        id="g5232"
        transform="translate(2.4999994,10.999997)">
@@ -398,11 +398,11 @@
     <image
        sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/cal/default/${icon}"
        xlink:href="${icon}"
-       id="image4256"
-       x="288"
-       y="819.36218"
+       height="24.999987"
        width="24.999987"
-       height="24.999987" />
+       y="819.36218"
+       x="288"
+       id="image4256" />
     <text
        xml:space="preserve"
        style="font-size:28px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"

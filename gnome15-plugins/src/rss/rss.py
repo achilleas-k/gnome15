@@ -80,15 +80,18 @@ class G15RSSPreferences():
         self.feed_list = widget_tree.get_object("FeedList")
         self.url_renderer = widget_tree.get_object("URLRenderer")
         
-        # Updates
+        # Optins
         self.update_adjustment = widget_tree.get_object("UpdateAdjustment")
-        self.update_adjustment.set_value(g15util.get_int_or_default(self._gconf_client, "%s/update_time" % self._gconf_key, 60))
+        self.update_adjustment.set_value(g15util.get_int_or_default(self._gconf_client, "%s/update_time" % self._gconf_key, 60))        
+        g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, widget_tree)
         
         # Connect to events
         self.update_adjustment.connect("value-changed", self.update_time_changed)
         self.url_renderer.connect("edited", self.url_edited)
         widget_tree.get_object("NewURL").connect("clicked", self.new_url)
         widget_tree.get_object("RemoveURL").connect("clicked", self.remove_url)
+        
+        # Display
         
         # Show dialog
         dialog = widget_tree.get_object("RSSDialog")
@@ -135,9 +138,11 @@ class G15RSSPreferences():
             self._gconf_client.set_list(self._gconf_key + "/urls", gconf.VALUE_STRING, urls)   
         
 class G15FeedsMenuItem(g15theme.MenuItem):
-    def __init__(self, component_id, entry):
+    def __init__(self, component_id, entry, gconf_client, gconf_key):
         g15theme.MenuItem.__init__(self, component_id)
         self.entry = entry
+        self.gconf_client = gconf_client
+        self.gconf_key = gconf_key
         if "icon" in self.entry:
             self.icon = self.entry["icon"]
         elif "image" in self.entry:
@@ -152,7 +157,10 @@ class G15FeedsMenuItem(g15theme.MenuItem):
     def on_configure(self):
         self.set_theme(g15theme.G15Theme(self.parent.get_theme().dir, "menu-entry"))
         
-    def get_theme_properties(self):        
+    def get_theme_properties(self):  
+        
+        use_twenty_four_hour = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True)
+              
         element_properties = g15theme.MenuItem.get_theme_properties(self)
         element_properties["ent_title"] = self.entry.title
         element_properties["ent_link"] = self.entry.link
@@ -171,7 +179,15 @@ class G15FeedsMenuItem(g15theme.MenuItem):
         element_properties["ent_locale_time"] = time.strftime("%X", dt)            
         element_properties["ent_locale_date"] = time.strftime("%x", dt)
         element_properties["ent_time_24"] = time.strftime("%H:%M", dt) 
-        element_properties["ent_full_time_24"] = time.strftime("%H:%M:%S", dt) 
+        if use_twenty_four_hour:
+            element_properties["ent_time"] = g15locale.format_time_24hour(time, self.gconf_client, False)
+        else:             
+            element_properties["ent_time"] = g15locale.format_time(time, self.gconf_client, False)
+        element_properties["ent_full_time_24"] = time.strftime("%H:%M:%S", dt)
+        if use_twenty_four_hour:
+            element_properties["ent_full_time"] = g15locale.format_time_24hour(time, self.gconf_client, True)
+        else:
+            element_properties["ent_full_time"] = g15locale.format_time(time, self.gconf_client, True)
         element_properties["ent_time_12"] = time.strftime("%I:%M %p", dt) 
         element_properties["ent_full_time_12"] = time.strftime("%I:%M:%S %p", dt)
         element_properties["ent_short_date"] = time.strftime("%a %d %b", dt)
@@ -258,7 +274,7 @@ class G15FeedPage(g15theme.G15Page):
         self._menu.remove_all_children()
         i = 0
         for entry in self.feed.entries:
-            self._menu.add_child(G15FeedsMenuItem("feeditem-%d" % i, entry))
+            self._menu.add_child(G15FeedsMenuItem("feeditem-%d" % i, entry, self._gconf_client, self._gconf_key))
             i += 1
             
     def _get_theme_properties(self):

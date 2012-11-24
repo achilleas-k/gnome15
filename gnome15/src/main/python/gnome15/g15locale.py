@@ -32,6 +32,9 @@ import os
 import locale
 import gettext
 import g15globals
+import g15util
+import time
+import datetime
  
 # Change this variable to your app name!
 #  The translation files will be under
@@ -65,6 +68,112 @@ mo_location = LOCALE_DIR
 
 # Cached translations
 __translations = {}
+
+# Replace these date/time formats to get a format without seconds
+REPLACE_FORMATS = [
+        (u'.%S', u''),
+        (u':%S', u''),
+        (u',%S', u''),
+        (u' %S', u''),
+        (u':%OS', ''),
+        (u'%r', '%I:%M %p'),
+        (u'%t', '%H:%M'),
+        (u'%T', '%H:%M')
+    ]
+
+def format_time(time_val, gconf_client, display_seconds = True, show_timezone = False, compact = True):
+    """
+    Format a given time / datetime as a time in the 12hour format. GConf
+    is checked for custom format, otherwise the default for the locale is
+    used.
+    
+    Keyword arguments:
+    time_val         --    time / datetime object
+    gconf_client     --    gconf client instance
+    display_seconds  --    if false, seconds will be stripped from result
+    """
+    fmt = g15util.get_string_or_default(gconf_client, 
+                                        "/apps/gnome15/time_format", 
+                                        locale.nl_langinfo(locale.T_FMT_AMPM))
+    if not display_seconds:
+        fmt = __strip_seconds(fmt)
+    if isinstance(time_val, time.struct_time):
+        time_val = datetime.datetime(*time_val[:6])
+    
+    if not show_timezone:
+        fmt = fmt.replace("%Z", "")
+    
+    if compact:
+        fmt = fmt.replace(" %p", "%p")
+        fmt = fmt.replace(" %P", "%P")
+        
+    fmt = fmt.strip()
+
+    if isinstance(time_val, tuple):
+        return time.strftime(fmt, time_val)
+    else:
+        return time_val.strftime(fmt)
+
+def format_time_24hour(time_val, gconf_client, display_seconds = True, show_timezone = False):
+    """
+    Format a given time / datetime as a time in the 24hour format. GConf
+    is checked for custom format, otherwise the default for the locale is
+    used.
+    
+    Keyword arguments:
+    time_val         --    time / datetime object / tuple
+    gconf_client     --    gconf client instance
+    display_seconds  --    if false, seconds will be stripped from result
+    """    
+    fmt = g15util.get_string_or_default(gconf_client, "/apps/gnome15/time_format_24hr", locale.nl_langinfo(locale.T_FMT))
+    if not display_seconds:
+        fmt = __strip_seconds(fmt)
+    if isinstance(time_val, time.struct_time):
+        time_val = datetime.datetime(*time_val[:6])
+        
+    if not show_timezone:
+        fmt = fmt.replace("%Z", "")
+    fmt = fmt.strip()
+    
+    if isinstance(time_val, tuple):
+        return time.strftime(fmt, time_val)
+    else:
+        return time_val.strftime(fmt)
+
+def format_date(date_val, gconf_client):
+    """
+    Format a datetime as a date (without time). GConf
+    is checked for custom format, otherwise the default for the locale is
+    used.
+    
+    Keyword arguments:
+    date_val         --    date / datetime object
+    gconf_client     --    gconf client instance
+    """    
+    fmt = g15util.get_string_or_default(gconf_client, "/apps/gnome15/date_format", locale.nl_langinfo(locale.D_FMT))
+    if isinstance(date_val, tuple):
+        return datetime.date.strftime(fmt, date_val)
+    else:
+        return date_val.strftime(fmt)
+
+def format_date_time(date_val, gconf_client, display_seconds = True):
+    """
+    Format a datetime as a date and a time. GConf
+    is checked for custom format, otherwise the default for the locale is
+    used.
+    
+    Keyword arguments:
+    date_val         --    date / datetime object
+    gconf_client     --    gconf client instance
+    display_seconds  --    if false, seconds will be stripped from result
+    """    
+    fmt = g15util.get_string_or_default(gconf_client, "/apps/gnome15/date_time_format", locale.nl_langinfo(locale.D_T_FMT))
+    if not display_seconds:
+        fmt = __strip_seconds(fmt)
+    if isinstance(date_val, tuple):
+        return datetime.datetime.strftime(fmt, date_val)
+    else:
+        return date_val.strftime(fmt)
  
 def get_translation(domain, modfile=None):
     """
@@ -93,3 +202,12 @@ def get_translation(domain, modfile=None):
     language = gettext.translation (domain, translation_location, languages=languages, fallback=True)
     __translations[domain] = language
     return language
+
+"""
+Private
+"""
+
+def __strip_seconds(fmt):
+    for f in REPLACE_FORMATS:
+        fmt = fmt.replace(*f)
+    return fmt

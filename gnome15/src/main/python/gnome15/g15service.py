@@ -334,7 +334,7 @@ class MacroHandler(object):
         
     def action_performed(self, binding):
         if binding.action == g15actions.CANCEL_MACRO:
-            self.cancel_running_macro()
+            self.cancel()
             return True 
         
     def _do_handle_key(self, keys, state_id, post):
@@ -577,6 +577,7 @@ class G15Service(g15desktop.G15AbstractService):
         if not no_trap:
             signal.signal(signal.SIGINT, self.sigint_handler)
             signal.signal(signal.SIGTERM, self.sigterm_handler)
+            signal.signal(signal.SIGUSR1, self.sigusr1_handler)
             
         g15desktop.G15AbstractService.__init__(self)
         self.name = "DesktopService"
@@ -587,6 +588,10 @@ class G15Service(g15desktop.G15AbstractService):
         except Exception as e:
             self.shutdown(True)
             logger.error("Failed to start service. %s" % str(e))
+    
+    def sigusr1_handler(self, signum, frame):
+        logger.info("Got SIGUSR1 signal from %s, restarting" % str(frame))
+        self.restart()
     
     def sigint_handler(self, signum, frame):
         logger.info("Got SIGINT signal from %s, shutting down" % str(frame))
@@ -633,7 +638,9 @@ class G15Service(g15desktop.G15AbstractService):
         else:
             logger.warn("Ignoring stop request, already stopped.")
             
-        
+    def restart(self):        
+        g15util.run_script("g15-desktop-service", ["restart"], background = True)
+            
     def shutdown(self, quickly = False):
         logger.info("Shutting down")
         self.shutting_down = True
@@ -660,12 +667,18 @@ class G15Service(g15desktop.G15AbstractService):
     def _active_window_changed(self, old, object_name):
         if object_name != "":
             app = self.session_bus.get_object("org.ayatana.bamf", object_name)
-            view = dbus.Interface(app, 'org.ayatana.bamf.view')
-            self.active_application_name = view.Name()
-            screens = list(self.screens)
-            for s in list(screens):
-                if self._check_active_application(s, app, view):
-                    screens.remove(s)
+            view = None
+            try:
+                view = dbus.Interface(app, 'org.ayatana.bamf.view')
+                self.active_application_name = view.Name()
+            except dbus.DBusException:
+                self.active_application_name = None
+                
+            if view is not None:
+                screens = list(self.screens)
+                for s in list(screens):
+                    if self._check_active_application(s, app, view):
+                        screens.remove(s)
                     
             window = dbus.Interface(app, 'org.ayatana.bamf.window')
             self.active_window_title = self._get_x_prop(window, '_NET_WM_VISIBLE_NAME')
@@ -703,7 +716,7 @@ class G15Service(g15desktop.G15AbstractService):
         
     def _check_active_application(self, screen, app, view):
         try :
-            if view.IsActive() == 1:
+            if view is not None and view.IsActive() == 1:
                 vn = view.Name()
                 if screen.set_active_application_name(vn):
                     return True

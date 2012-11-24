@@ -337,7 +337,7 @@ class SensorMenuItem(g15theme.MenuItem):
 class G15Sensors(g15plugin.G15RefreshingPlugin):
     
     def __init__(self, gconf_key, gconf_client, screen):
-        g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, [ "system" ], id, name, 5.0)
+        g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, [ "system", "applications-system" ], id, name, 5.0)
         self.schedule_on_gobject = True
         self._sensors_changed_handle = None
         self._menu = None

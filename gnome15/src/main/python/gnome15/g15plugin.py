@@ -76,7 +76,10 @@ class G15Plugin():
             for k in key:
                 self.watch(k, callback)
             return
-        k = "%s/%s" % (self.gconf_key, key) if key is not None else self.gconf_key
+        if key is not None and key.startswith("/"):
+            k = key
+        else:
+            k = "%s/%s" % (self.gconf_key, key) if key is not None else self.gconf_key
         self.__notify_handlers.append(self.gconf_client.notify_add(k, callback))
         
     def activate(self):

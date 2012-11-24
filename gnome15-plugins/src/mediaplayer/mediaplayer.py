@@ -114,7 +114,7 @@ else:
              }
 
 
-icon_path = g15util.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player" ])
+icon_path = g15util.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player", "applications-multimedia" ])
 
 def create(gconf_key, gconf_client, screen):
     return G15MediaPlayer(gconf_client, gconf_key, screen)

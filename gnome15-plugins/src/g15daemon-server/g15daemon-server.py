@@ -18,28 +18,28 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15locale as g15locale
-_ = g15locale.get_translation("g15daemon-server", modfile = __file__).ugettext
-
-import gnome15.g15screen as g15screen 
-import gnome15.g15theme as g15theme 
-import gnome15.g15util as g15util
-import gnome15.g15driver as g15driver
-import gtk
-import os
-import sys
-import asyncore
-import socket
 from threading import Thread
-import traceback
-import ImageMath
 import Image
+import ImageMath
 import ImageOps
 import array
-import struct
+import asyncore
 import cairo
+import gnome15.g15driver as g15driver
+import gnome15.g15locale as g15locale
+import gnome15.g15screen as g15screen
+import gnome15.g15theme as g15theme
+import gnome15.g15util as g15util
 import gobject
+import gtk
 import logging
+import os
+import socket
+import struct
+import sys
+import traceback
+_ = g15locale.get_translation("g15daemon-server", modfile = __file__).ugettext
+
 logger = logging.getLogger("g15daemon")
 
 # Plugin details - All of these must be provided
@@ -120,6 +120,9 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/keep_aspect_ratio", "KeepAspectRatio", False, widget_tree, True)
     g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/take_over_macro_keys", "TakeOverMacroKeys", True, widget_tree, True)
     
+    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/use_custom_foreground", "UseCustomForeground", False, widget_tree)
+    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/custom_foreground", "CustomForeground", ( 255, 255, 255 ), widget_tree)
+    
     dialog.run()
     dialog.hide()
 
@@ -131,11 +134,13 @@ class G15DaemonClient(asyncore.dispatcher):
         self.buffer_type = None
         self.buffer_len = 0
         self.surface = None
- 
+        self.last_img_buffer = None
         self.enable_keys = False
         self.plugin = plugin
         self.plugin.join(self)
         self.handshake = False
+        self.keyboard_backlight_value = None
+        self.backlight_value = None
                 
         self.page = g15theme.G15Page("G15Daemon%d" % self.plugin.screen_index, plugin.screen, painter = self._paint, on_shown = self._on_shown, on_hidden = self._on_hidden, originating_plugin = self)
         self.page.set_title(_("G15Daemon Screen %d") % self.plugin.screen_index)
@@ -172,27 +177,40 @@ class G15DaemonClient(asyncore.dispatcher):
             # So instead, we just only send keyboard events if the client requests this.
             self.enable_keys = True
         elif val & CLIENT_CMD_BACKLIGHT:
-            level = val - CLIENT_CMD_BACKLIGHT
-            if level == 0:
-                bl = 0
-            elif level == 1:
-                bl = self.plugin.default_lcd_brightness / 2
-            elif level == 2:
-                bl = self.plugin.default_lcd_brightness
-            if self.backlight_acquire:                
+            level = val - CLIENT_CMD_BACKLIGHT                        
+            if isinstance(self.plugin.default_backlight, int):
+                # Others
+                bl = level
+            else:       
+                # G19
+                if level == 0:
+                    bl = 0
+                elif level == 1:
+                    bl = self.plugin.default_lcd_brightness / 2
+                elif level == 2:
+                    bl = self.plugin.default_lcd_brightness
+            if self.backlight_acquire:      
+                self.backlight_value = bl          
                 self.backlight_acquire.set_value(bl)
             else:
                 logger.warning("g15daemon client requested backlight be changed, but there is no backlight to change")
         elif val & CLIENT_CMD_KB_BACKLIGHT:
             level = val - CLIENT_CMD_KB_BACKLIGHT
-            if level == 0:
-                bl = (0, 0, 0)
-            elif level == 1:
-                bl = ( self.plugin.default_backlight[0] / 2, self.plugin.default_backlight[1] / 2, self.plugin.default_backlight[2] / 2 )
-            elif level == 2:
-                bl = self.plugin.default_backlight
+            
+            if isinstance(self.plugin.default_backlight, int):
+                # Others
+                bl = level
+            else:            
+                # G19
+                if level == 0:
+                    bl = (0, 0, 0)
+                elif level == 1:
+                    bl = ( self.plugin.default_backlight[0] / 2, self.plugin.default_backlight[1] / 2, self.plugin.default_backlight[2] / 2 )
+                elif level == 2:
+                    bl = self.plugin.default_backlight
                 
-            if self.keyboard_backlight_acquire:                
+            if self.keyboard_backlight_acquire:    
+                self.keyboard_backlight_value = bl                         
                 self.keyboard_backlight_acquire.set_value(bl)
             else:
                 logger.warning("g15daemon client requested keyboard backlight be changed, but there is no backlight to change")
@@ -223,28 +241,30 @@ class G15DaemonClient(asyncore.dispatcher):
             recv = self.recv(self.buffer_len - len(self.img_buffer))
             self.img_buffer += recv
             if len(self.img_buffer) == self.buffer_len:
-                
                 if self.buffer_type == "G":
                     self.img_buffer = self.convert_gbuf(self.img_buffer)
-                    
-                pil_img = Image.fromstring("1", (160,43), self.img_buffer)
-                mask_img = pil_img.copy()                           
-                mask_img = mask_img.convert("L")
-                pil_img = pil_img.convert("P")
-                if self.plugin.palette is not None:
-                    pil_img.putpalette(self.plugin.palette)                              
-                    pil_img = pil_img.convert("RGBA")                        
-                    pil_img.putalpha(mask_img)                    
-
-                # TODO find a quicker way of converting
-                pixbuf = g15util.image_to_pixbuf(pil_img, "png")
-                self.surface = g15util.pixbuf_to_surface(pixbuf)
-                self.plugin.screen.redraw(self.page)
-                
+                self.draw_buffer(self.img_buffer)
+                self.last_img_buffer = self.img_buffer
                 self.img_buffer = ""
 
             elif len(self.img_buffer) > self.buffer_len:
                 logger.warning('Received bad frame (%d bytes), should be %d' % ( len(self.img_buffer), self.buffer_len ) )
+                
+    def draw_buffer(self, img_buffer):
+                
+        pil_img = Image.fromstring("1", (160,43), img_buffer)
+        mask_img = pil_img.copy()                           
+        mask_img = mask_img.convert("L")
+        pil_img = pil_img.convert("P")
+        if self.plugin.palette is not None:
+            pil_img.putpalette(self.plugin.palette)                              
+            pil_img = pil_img.convert("RGBA")                        
+            pil_img.putalpha(mask_img)                    
+
+        # TODO find a quicker way of converting
+        pixbuf = g15util.image_to_pixbuf(pil_img, "png")
+        self.surface = g15util.pixbuf_to_surface(pixbuf)
+        self.plugin.screen.redraw(self.page)
                 
     def dump_buf(self, buf):
         i = 0
@@ -319,10 +339,14 @@ class G15DaemonClient(asyncore.dispatcher):
     def _on_shown(self):
         self.backlight_control = self.plugin.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
         if self.backlight_control:
-            self.backlight_acquire = self.plugin.screen.driver.acquire_control(self.backlight_control, val = self.backlight_control.value)
+            if self.backlight_value is None:
+                 self.backlight_value = self.backlight_control.value
+            self.backlight_acquire = self.plugin.screen.driver.acquire_control(self.backlight_control, val = self.backlight_value)
         self.keyboard_backlight_control = self.plugin.screen.driver.get_control_for_hint(g15driver.HINT_SHADEABLE)
         if self.keyboard_backlight_control:
-            self.keyboard_backlight_acquire = self.plugin.screen.driver.acquire_control(self.keyboard_backlight_control, val = self.backlight_control.value)
+            if self.keyboard_backlight_value is None:
+                 self.keyboard_backlight_value = self.keyboard_backlight_control.value 
+            self.keyboard_backlight_acquire = self.plugin.screen.driver.acquire_control(self.keyboard_backlight_control, val = self.keyboard_backlight_value)
         
     def _paint(self, canvas):
         if self.surface != None:
@@ -380,8 +404,9 @@ class G15DaemonServer():
         pass
     
     def control_updated(self, control):
-        self.load_configuration()
-        self.screen.redraw()
+        if control.id == "foreground":
+            self.load_configuration()
+            self.screen.redraw()
         
     def _get_port(self):
         port_entry = self.gconf_client.get(self.gconf_key + "/port")
@@ -399,26 +424,38 @@ class G15DaemonServer():
             self.daemon = G15Daemon(port, self)
             self.async = G15Async()
             self.async.start()
+        else:
+            for c in self.clients:
+                if c.last_img_buffer is not None:
+                    c.draw_buffer(c.last_img_buffer)
             
     def _stop_all_clients(self):
         for c in self.clients:
             c.handle_close()
         
     def load_configuration(self):
-        self.take_over_macro_keys = g15util.get_bool_or_default(self.gconf_client, "%s/take_over_macro_keys" % self.gconf_key, True) 
-        foreground_control = self.screen.driver.get_control("foreground")
-        if foreground_control is None:
-            self.palette = None
-        else:        
+        self.take_over_macro_keys = g15util.get_bool_or_default(self.gconf_client, "%s/take_over_macro_keys" % self.gconf_key, True)
+        
+        if g15util.get_bool_or_default(self.gconf_client, "%s/use_custom_foreground" % self.gconf_key, False):
+            col = g15util.get_rgb_or_default(self.gconf_client, "%s/custom_foreground" % self.gconf_key, (255,255,255))
             self.palette = [0 for n in range(768)]
-            self.palette[765] = foreground_control.value[0]
-            self.palette[766] = foreground_control.value[1]
-            self.palette[767] = foreground_control.value[2]
+            self.palette[765] = col[0]
+            self.palette[766] = col[1]
+            self.palette[767] = col[2]
+        else: 
+            foreground_control = self.screen.driver.get_control("foreground")
+            if foreground_control is None:
+                self.palette = None
+            else:        
+                self.palette = [0 for n in range(768)]
+                self.palette[765] = foreground_control.value[0]
+                self.palette[766] = foreground_control.value[1]
+                self.palette[767] = foreground_control.value[2]
         
         backlight_control = self.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
         self.default_backlight = backlight_control.value if backlight_control is not None else None 
         
-        lcd_brightness_control = self.screen.driver.get_control_for_hint(g15driver.HINT_DIMMABLE)
+        lcd_brightness_control = self.screen.driver.get_control_for_hint(g15driver.HINT_SHADEABLE)
         self.default_lcd_brightness = lcd_brightness_control.value if lcd_brightness_control is not None else None
     
     def leave(self, client):

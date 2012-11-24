@@ -85,7 +85,7 @@ class MenuItem(g15theme.MenuItem):
 class G15Menu(g15plugin.G15MenuPlugin):
     
     def __init__(self, gconf_client, gconf_key, screen):
-        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, [ "gnome-main-menu", "gnome-window-manager", "gnome-gmenu" ], id, name)
+        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, [ "gnome-main-menu", "gnome-window-manager", "gnome-gmenu", "kmenuedit" ], id, name)
         self._show_on_activate = False
     
     def activate(self):

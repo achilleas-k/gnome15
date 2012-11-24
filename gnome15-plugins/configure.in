@@ -1,4 +1,4 @@
-AC_INIT(gnome15-plugins, 0.9.1)
+AC_INIT(gnome15-plugins, 0.9.2)
 AC_CONFIG_SRCDIR([src/cal/cal.py])
 AM_INIT_AUTOMAKE
 

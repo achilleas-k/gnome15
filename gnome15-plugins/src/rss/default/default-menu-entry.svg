@@ -13,7 +13,7 @@
    height="7"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="default-menu-entry.svg"
    inkscape:label="Deselected">
   <defs
@@ -65,25 +65,25 @@
     </clipPath>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3024">
+       id="clipPath3007">
       <rect
-         style="opacity:0.5;fill:#ff4500;fill-opacity:1"
-         id="rect3026"
-         width="80.000328"
-         height="6.9999714"
-         x="54.547958"
-         y="804.10889" />
+         y="-0.96176523"
+         x="54.067245"
+         height="6.7323565"
+         width="99.81646"
+         id="rect3009"
+         style="opacity:0.5;fill:#ff4500;fill-opacity:1;display:inline" />
     </clipPath>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3055">
+       id="clipPath3012">
       <rect
-         y="-0.99999589"
-         x="46.000187"
-         height="6.9999714"
-         width="80.000328"
-         id="rect3057"
-         style="opacity:0.5;fill:#ff4500;fill-opacity:1;display:inline" />
+         style="opacity:0.5;fill:#ff4500;fill-opacity:1"
+         id="rect3014"
+         width="97.702019"
+         height="6.878057"
+         x="63.533344"
+         y="789.81586" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -97,13 +97,13 @@
      inkscape:cx="146.22016"
      inkscape:cy="-58.018389"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="layer2"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1429"
      inkscape:window-height="940"
-     inkscape:window-x="2212"
-     inkscape:window-y="84"
+     inkscape:window-x="248"
+     inkscape:window-y="108"
      inkscape:window-maximized="0"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -136,37 +136,32 @@
      transform="translate(-9.5477352,-804.11218)"
      style="display:inline"
      title="del item_selected">
-    <g
-       id="g3030"
-       transform="translate(0.99999999,-2.6171875e-6)"
-       style="fill:#000000">
-      <text
-         class="shadow"
-         sodipodi:linespacing="125%"
-         id="text2997"
-         y="810"
-         x="9"
-         style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-         xml:space="preserve"><tspan
-           y="810"
-           x="9"
-           id="tspan2999"
-           sodipodi:role="line">${ent_month_year} ${ent_time_24}</tspan></text>
-      <text
-         class="shadow"
-         transform="scale(0.9999959,1.0000041)"
-         sodipodi:linespacing="125%"
-         id="text3001"
-         y="810"
-         x="55"
-         style="font-size:5.9999752px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-         xml:space="preserve"
-         clip-path="url(#clipPath3024)"><tspan
-           y="810"
-           x="55"
-           id="tspan3003"
-           sodipodi:role="line">${ent_title}</tspan></text>
-    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="10"
+       y="810"
+       id="text2997"
+       sodipodi:linespacing="125%"
+       class="shadow"><tspan
+         sodipodi:role="line"
+         id="tspan2999"
+         x="10"
+         y="810">${ent_month_year} ${ent_time}</tspan></text>
+    <text
+       clip-path="url(#clipPath3012)"
+       xml:space="preserve"
+       style="font-size:5.64835072px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="63.064487"
+       y="795.65015"
+       id="text3001"
+       sodipodi:linespacing="125%"
+       transform="matrix(0.98257952,0,0,1.0177293,1.1211719,0.29342416)"
+       class="shadow"><tspan
+         sodipodi:role="line"
+         id="tspan3003"
+         x="63.064487"
+         y="795.65015">${ent_title}</tspan></text>
   </g>
   <g
      inkscape:groupmode="layer"
@@ -192,19 +187,19 @@
          sodipodi:role="line"
          id="tspan2999-2"
          x="-0.49804688"
-         y="4.5849609">${ent_month_year} ${ent_time_24}</tspan></text>
+         y="4.5849609">${ent_month_year} ${ent_time}</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:5.9999752px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
-       x="45.502144"
-       y="4.585062"
+       style="font-size:5.77059126px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;baseline-shift:baseline;color:#000000;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Fixed"
+       x="53.588242"
+       y="4.4097714"
        id="text3001-5"
        sodipodi:linespacing="125%"
-       transform="scale(0.9999959,1.0000041)"
-       clip-path="url(#clipPath3055)"><tspan
+       transform="matrix(0.96176526,0,0,1.0397548,2,0)"
+       clip-path="url(#clipPath3007)"><tspan
          sodipodi:role="line"
          id="tspan3003-4"
-         x="45.502144"
-         y="4.585062">${ent_title}</tspan></text>
+         x="53.588242"
+         y="4.4097714">${ent_title}</tspan></text>
   </g>
 </svg>

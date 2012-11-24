@@ -445,21 +445,23 @@ class Driver(g15driver.AbstractDriver):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("Key code %d" % code)
             
+        has_js = ext_code & EXT_KEY_MAP[g15driver.G_KEY_JOY] > 0
+        if has_js:
+            ext_code -= EXT_KEY_MAP[g15driver.G_KEY_JOY]
+            
         this_keys = [] if code == 0 else self._convert_from_g15daemon_code(code)
         if ext_code > 0 and self.get_model_name() == g15driver.MODEL_G510:
             this_keys += self._get_g510_multimedia_keys(ext_code)
         elif ext_code > 0:
             this_keys += self._convert_ext_g15daemon_code(ext_code)
         
-        if self.get_model_name() == g15driver.MODEL_G13 and self.has_joystick_key(this_keys):
+        if self.get_model_name() == g15driver.MODEL_G13 and has_js:
             c = self.analogue_calibration if self.joy_mode in [ "joystick", "mouse" ] else self.digital_calibration
             
             low_val = 128 - c
             high_val = 128 + c
             max_step = 5
                 
-            if g15driver.G_KEY_JOY in this_keys:
-                this_keys.remove(g15driver.G_KEY_JOY)
             pos = pylibg15.get_joystick_position()
             
             if logger.isEnabledFor(logging.DEBUG):
@@ -470,7 +472,7 @@ class Driver(g15driver.AbstractDriver):
             elif self.joy_mode == "mouse":
                 self._rel_mouse(this_keys, pos, low_val, high_val, max_step)                 
             else:
-                self._emit_macro_keys(this_keys, pos, low_val, high_val)            
+                self._emit_macro_keys(this_keys, pos, low_val, high_val)
         
         up = []
         down = []

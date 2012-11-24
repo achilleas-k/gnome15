@@ -100,6 +100,7 @@ class G15CairoClockPreferences():
         g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_digital_time" % gconf_key, "DisplayDigitalTimeCheckbox", True, widget_tree)
         g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_year" % gconf_key, "DisplayYearCheckbox", True, widget_tree)
         g15util.configure_checkbox_from_gconf(gconf_client, "%s/second_sweep" % gconf_key, "SecondSweep", False, widget_tree)
+        g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_digital" % gconf_key, "TwentyFourHourDigitalCheckbox", True, widget_tree)
     
         e = gconf_client.get(gconf_key + "/theme")
         theme_name = "default"
@@ -183,6 +184,10 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
         self.display_year = g15util.get_bool_or_default(self.gconf_client, "%s/display_year" % self.gconf_key, True)
         self.display_digital_time = g15util.get_bool_or_default(self.gconf_client, "%s/display_digital_time" % self.gconf_key, True)
         self.second_sweep = g15util.get_bool_or_default(self.gconf_client, "%s/second_sweep" % self.gconf_key, False)
+        self.twenty_four_hour = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour" % self.gconf_key, False)
+        self.twenty_four_hour_digital = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_digital" % self.gconf_key, True)
+        
+        self.gconf_client.get_bool(self.gconf_key + "/twenty_four_hour")
         
         self.svg_size = None
         self.width = self.screen.width
@@ -298,10 +303,10 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
     def _get_time_text(self, display_seconds = None):
         if display_seconds == None:
             display_seconds = self.display_seconds
-        time_format = "%H:%M"
-        if display_seconds:
-            time_format = "%H:%M:%S"
-        return datetime.datetime.now().strftime(time_format)
+        if self.twenty_four_hour_digital:
+            return g15locale.format_time_24hour(datetime.datetime.now(), self.gconf_client, display_seconds)
+        else:
+            return g15locale.format_time(datetime.datetime.now(), self.gconf_client, display_seconds)
     
     def _get_date_text(self):
         if self.display_year:
@@ -399,7 +404,7 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
             s_deg = now.second * 6
         m_deg = now.minute * 6 + ( now.second * ( 6.0 / 60.0 ) )
         
-        if self.gconf_client.get_bool(self.gconf_key + "/twenty_four_hour"):
+        if self.twenty_four_hour:
             h_deg = float(now.hour) * 15.0 + (  float ( now.minute * 0.25 ) )
         else:
             h_deg = float( now.hour % 12 ) * 30.0 + (  float ( now.minute * 0.5 ) )

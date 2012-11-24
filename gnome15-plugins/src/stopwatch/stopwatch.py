@@ -72,7 +72,8 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
 class G15Stopwatch(g15plugin.G15RefreshingPlugin):
 
     def __init__(self, gconf_key, gconf_client, screen):
-        g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, [ "cairo-clock", "clock", "gnome-panel-clock", "xfce4-clock", "rclock" ], id, name)
+        g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, \
+                                               screen, [ "cairo-clock", "clock", "gnome-panel-clock", "xfce4-clock", "rclock", "player-time" ], id, name)
         self._active_timer = None
         self._message = None
         self._priority = g15screen.PRI_NORMAL
@@ -185,9 +186,6 @@ class G15Stopwatch(g15plugin.G15RefreshingPlugin):
         return properties
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
-        return self._paint_thumbnail(canvas, allocated_size, horizontal)
-
-    def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if not self.page or self.screen.is_visible(self.page):
             return
         if not (self._timer1.get_enabled() or self._timer2.get_enabled()):

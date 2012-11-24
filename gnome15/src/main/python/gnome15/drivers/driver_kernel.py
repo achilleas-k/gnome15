@@ -1162,7 +1162,7 @@ It should be launched automatically if Gnome15 is installed correctly.")
         if not self.system_service:
             logger.warning("Attempt to write to LED when not connected")
         else:
-            logger.debug("Writing %d to LED %s" % (value, name ))
+            logger.debug("Writing %s to LED %s" % (value, name ))
             self.system_service.SetLight(self.device.uid, name, value)
     
     def _write_to_led(self, name, value):

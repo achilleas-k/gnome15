@@ -93,7 +93,7 @@ Macros plugin class
 class G15Macros(g15plugin.G15MenuPlugin):
 
     def __init__(self, gconf_client, gconf_key, screen):
-        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, ["preferences-desktop-keyboard-shortcuts"], id, name)
+        g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, ["preferences-desktop-keyboard-shortcuts", "input-keyboard"], id, name)
         
     def activate(self):
         self._get_configuration()
