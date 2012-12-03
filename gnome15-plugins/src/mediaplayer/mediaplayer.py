@@ -53,10 +53,13 @@ try:
                         '/org/gnome/SettingsDaemon'), 'org.gnome.SettingsDaemon')
     can_grab_media_keys = True
 except dbus.DBusException:
-    dbus.Interface(session_bus.get_object('org.gnome.SettingsDaemon',
-                        '/org/gnome/SettingsDaemon/MediaKeys'),
-                        'org.gnome.SettingsDaemon.MediaKeys')
-    can_grab_media_keys = True
+    try:
+        dbus.Interface(session_bus.get_object('org.gnome.SettingsDaemon',
+                            '/org/gnome/SettingsDaemon/MediaKeys'),
+                            'org.gnome.SettingsDaemon.MediaKeys')
+        can_grab_media_keys = True
+    except dbus.DBusException:
+        pass
 
 # Register the custom actions
 
