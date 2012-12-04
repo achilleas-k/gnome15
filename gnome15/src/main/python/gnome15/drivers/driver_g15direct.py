@@ -481,7 +481,7 @@ class Driver(g15driver.AbstractDriver):
         up = []
         down = []
         
-        last_keys = self.last_keys if ext_code == 0 else self.last_ext_keys
+        last_keys = self.last_keys
         
         for k in this_keys:
             if last_keys is None or not k in last_keys:
@@ -509,10 +509,7 @@ class Driver(g15driver.AbstractDriver):
         else:
             self._do_macro_keys(down, up)
         
-        if ext_code == 0:
-            self.last_keys = this_keys
-        else:
-            self.last_ext_keys = this_keys
+        self.last_keys = this_keys
         
     def has_joystick_key(self, keys):
         for k in keys:
