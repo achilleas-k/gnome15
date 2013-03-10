@@ -1,7 +1,8 @@
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
-#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        | Copyright (c) 2010-2012 Brett Smith <tanktarta@blueyonder.co.uk>            |
+#        | Copyright © 2013 Nuno Araujo <nuno.araujo@russo79.com>                      |
 #        |                                                                             |
 #        | This program is free software; you can redistribute it and/or               |
 #        | modify it under the terms of the GNU General Public License                 |
@@ -228,7 +229,9 @@ class G15Clock(g15plugin.G15Plugin):
             properties = self._get_properties()
             # Don't display the date or seconds on mono displays, not enough room as it is
             if self.screen.driver.get_bpp() == 1:
-                text = properties["time_nosec"]
+                text = properties["time"]
+                if self.display_seconds:
+                    text = text[:-3]
                 font_size = 8
                 factor = 2
                 font_name = g15globals.fixed_size_font_name
