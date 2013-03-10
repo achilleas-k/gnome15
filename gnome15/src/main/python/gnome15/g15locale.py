@@ -97,6 +97,11 @@ def format_time(time_val, gconf_client, display_seconds = True, show_timezone = 
     fmt = g15util.get_string_or_default(gconf_client, 
                                         "/apps/gnome15/time_format", 
                                         locale.nl_langinfo(locale.T_FMT_AMPM))
+    # For some locales T_FMT_AMPM is empty.
+    # Set the format to a default value if this is the case.
+    if fmt == "":
+        fmt = "%r"
+
     if not display_seconds:
         fmt = __strip_seconds(fmt)
     if isinstance(time_val, time.struct_time):
