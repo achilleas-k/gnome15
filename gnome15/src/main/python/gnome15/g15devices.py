@@ -353,8 +353,8 @@ def find_all_devices(do_cache = True):
                 type can exist at a time, but any more is pretty unlikely
                 """
                 if device_info.model_id == g15driver.MODEL_G15_V1 and not (0x046d, 0xc222) in device_map:
-                    # Actually a G11
-                    device_info = device_list[g15driver.MODEL_G11]
+                    # Actually a G11, will be detected with id (0x046d, 0xc225)
+                    continue
                 elif device_info.model_id == g15driver.MODEL_G11 and (0x046d, 0xc222) in device_map:
                     # Actually a G15v1
                     device_info = device_list[g15driver.MODEL_G15_V1]
