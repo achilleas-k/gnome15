@@ -16,8 +16,11 @@ SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c21
 # Logitech Z10 Speakers 
 SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0a07", MODE="@DEVICEMODE@", GROUP="@DEVICEGROUP@"
 
-# Logitech G110 Keyboard (no LCD)
+# Logitech G11 Keyboard (no LCD)
 SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c225", MODE="@DEVICEMODE@", GROUP="@DEVICEGROUP@"
+
+# Logitech G110 Keyboard (no LCD)
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22b", MODE="@DEVICEMODE@", GROUP="@DEVICEGROUP@"
 
 # Logitech Game Panel (Dell XPS 1730?)
 SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c251", MODE="@DEVICEMODE@", GROUP="@DEVICEGROUP@"
