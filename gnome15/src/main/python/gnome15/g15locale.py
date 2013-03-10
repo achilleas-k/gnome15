@@ -3,7 +3,8 @@
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
-#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        | Copyright (c) 2010-2012 Brett Smith <tanktarta@blueyonder.co.uk>            |
+#        | Copyright © 2013 Nuno Araujo <nuno.araujo@russo79.com>                      |
 #        |                                                                             |
 #        | This program is free software; you can redistribute it and/or               |
 #        | modify it under the terms of the GNU General Public License                 |
@@ -35,6 +36,7 @@ import g15globals
 import g15util
 import time
 import datetime
+import re
  
 # Change this variable to your app name!
 #  The translation files will be under
@@ -202,6 +204,20 @@ def get_translation(domain, modfile=None):
     language = gettext.translation (domain, translation_location, languages=languages, fallback=True)
     __translations[domain] = language
     return language
+
+def parse_US_time(time_val):
+    """
+    Parses a time in the US format (%I:%M %p)
+    This method assumes that the time_val value is valid.
+    It's behaviour is similar to a call to time.strptime
+    """
+    parsed = re.match('(0?[1-9]|1[0-2]):([0-5][0-9]) (AM|am|PM|pm)', time_val)
+    hour, minute, ampm = parsed.group(1, 2, 3)
+    hour = int(hour)
+    minute = int(minute)
+    if ampm.lower() == 'pm':
+        hour = hour + 12
+    return time.struct_time((1900, 1, 1, hour, minute, 0, 0, 1, -1))
 
 """
 Private
