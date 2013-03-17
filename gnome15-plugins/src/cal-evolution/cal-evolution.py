@@ -95,6 +95,9 @@ class EvolutionBackend(cal.CalendarBackend):
         
         # Find all the calendar files
         cal_dir = os.path.expanduser("~/.local/share/evolution/calendar")
+        if not os.path.exists(cal_dir):
+            # Older versions of evolution store their data in ~/.evolution
+            cal_dir = os.path.expanduser("~/.evolution/calendar")
         if os.path.exists(cal_dir):
             for root, dirs, files in os.walk(cal_dir):
                 for _file in files:
