@@ -543,6 +543,8 @@ def set_gnome_shell_extension_enabled(extension, enabled):
         try:
             extensions = eval(text)
         except:
+            # No extensions available, so init an empty array
+            extensions = []
             pass
         contains = extension in extensions
         if contains and not enabled:
