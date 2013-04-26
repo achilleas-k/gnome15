@@ -2,6 +2,7 @@
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
 #        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        | Copyright (c) Nuno Araujo <nuno.araujo@russo79.com>                         |
 #        |                                                                             |
 #        | This program is free software; you can redistribute it and/or               |
 #        | modify it under the terms of the GNU General Public License                 |
@@ -534,7 +535,8 @@ class G15Plugins():
                 
     def _plugin_changed(self, client, connection_id, entry, args):
         self.lock.acquire()
-        self.screen._check_active_plugins()
+        if self.screen is not None:
+            self.screen._check_active_plugins()
         try : 
             path = entry.key.split("/")
             plugin_id = path[5]
