@@ -739,7 +739,7 @@
                                 <property name="can_focus">False</property>
                                 <property name="spacing">8</property>
                                 <child>
-                                  <object class="GtkToggleButton" id="GlobalPreferencesButton">
+                                  <object class="GtkButton" id="GlobalPreferencesButton">
                                     <property name="label">gtk-preferences</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
@@ -2743,7 +2743,7 @@ g15-launch matches the following pattern</property>
                                             <property name="can_focus">False</property>
                                             <property name="spacing">8</property>
                                             <child>
-                                              <object class="GtkToggleButton" id="PreferencesButton">
+                                              <object class="GtkButton" id="PreferencesButton">
                                                 <property name="label">gtk-preferences</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
