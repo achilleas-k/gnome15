@@ -302,7 +302,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 properties["date"] = g15locale.format_date(dt, self.gconf_client)
                 properties["datetime"] = g15locale.format_date_time(dt, self.gconf_client, False)
                 properties["message"] = ""
-                c_icon, _, t_icon = self._get_icons(current)
+                c_icon, f_icon, t_icon = self._get_icons(current)
                 if t_icon != None:
                     attributes["icon"] = g15util.load_surface_from_file(t_icon)
                     properties["icon"] = g15util.get_embedded_image_url(attributes["icon"]) 
