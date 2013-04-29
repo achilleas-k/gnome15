@@ -2271,7 +2271,7 @@ g15-launch matches the following pattern</property>
                                                         <property name="receives_default">True</property>
                                                         <property name="use_action_appearance">False</property>
                                                         <property name="relief">none</property>
-                                                        <property name="uri">http://www.gnome15.org/index.php?option=com_kunena&amp;func=showcat&amp;catid=8&amp;Itemid=8</property>
+                                                        <property name="uri">http://www.russo79.com/forum/gnome-15/macro-profiles</property>
                                                       </object>
                                                       <packing>
                                                         <property name="expand">True</property>
