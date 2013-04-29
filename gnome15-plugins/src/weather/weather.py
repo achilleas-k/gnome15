@@ -45,7 +45,7 @@ description=_("Displays the current weather at a location. It can currently use 
 of weather information.")  
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=True
 default_enabled=True
 needs_network=True

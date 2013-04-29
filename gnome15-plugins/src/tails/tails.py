@@ -48,7 +48,7 @@ Uses the pytailer library (http://code.google.com/p/pytailer/), licensed \
 under the LGPL. See %s and %s for more details." % ( os.path.join(__file__, "LICENSE" ), os.path.join(__file__, "README" ) ) )
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = _("Copyright (C)2011 Brett Smith, Michael Thornton")
-site = "http://www.gnome15.org/"
+site = "http://www.russo79.com/gnome15"
 has_preferences = True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 actions={ 

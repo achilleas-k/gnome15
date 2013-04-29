@@ -55,7 +55,7 @@ NOTE, this plugin is not required on Ubuntu 11.10 and onwards, as the \
 functionality is now provided by Indicator Messages")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 actions={ 

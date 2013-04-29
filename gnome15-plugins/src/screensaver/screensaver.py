@@ -38,7 +38,7 @@ name=_("Screensaver")
 description=_("Dim the keyboard and display a message (on models with an LCD screen) when the desktop screen saver activates.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 

@@ -43,7 +43,7 @@ description=_("Calendar for Evolution. Adds Evolution as a source for calendars 
 to the Calendar plugin")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2012 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=False
 global_plugin=True
 passive=True

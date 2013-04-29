@@ -33,7 +33,7 @@ performance tweaks. If Gnome15 is using too much CPU, \
 you will find adjusting some of these may reduce it. ") 
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=True
 passive=True
 global_plugin=True

@@ -61,7 +61,7 @@ Note, TeamSpeak3 is currently the only supported client, but the intention is\n\
 to add support for others such as Mumble")
 author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = _("Copyright (C)2012 Brett Smith")
-site = "http://www.gnome15.org/"
+site = "http://www.russo79.com/gnome15"
 has_preferences = True
 needs_network=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]

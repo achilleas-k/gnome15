@@ -41,7 +41,7 @@ description=_("Stopwatch/Countdown timer plugin for gnome15.\
 Two timers are available. User can select the a mode (stopwatch/countdown) for each of them.")
 author="Nuno Araujo <nuno.araujo@russo79.com>"
 copyright=_("Copyright (C)2011 Nuno Araujo")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 actions={ 
