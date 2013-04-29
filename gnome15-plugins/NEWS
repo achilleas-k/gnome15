@@ -1,0 +1,17 @@
+gnome15-plugins 0.9.3 (2013-04-29)
+==================================
+
+This is an "unofficial" release of gnome15-plugins.
+There was no news from the original author since four
+months now.
+
+Changes since 0.9.2:
+
+* Update URL for the project.
+
+Bugs fixed in this release:
+
+* https://projects.russo79.com/issues/113
+* https://projects.russo79.com/issues/156
+* https://projects.russo79.com/issues/161
+* https://projects.russo79.com/issues/163
