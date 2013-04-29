@@ -1,4 +1,4 @@
-AC_INIT(gnome15-impulse15, 0.0.13)
+AC_INIT(gnome15-impulse15, 0.0.14, https://projects.russo79.com/projects/gnome15/issues/new)
 AC_CONFIG_SRCDIR([impulse15/impulse15.py])
 AM_INIT_AUTOMAKE
 
