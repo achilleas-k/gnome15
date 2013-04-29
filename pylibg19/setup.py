@@ -9,6 +9,6 @@ setup(name='pylibg19',
       author='MultiCoreNop,Brett Smith',
       author_email='tanktarta@blueyonder.co.uk',
       license="GPL",
-      url='http://www.gnome15.org/',
+      url='http://www.russo79.com/gnome15',
       packages= [ 'g19' ],
       )
