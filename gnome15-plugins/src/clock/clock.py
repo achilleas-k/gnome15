@@ -2,7 +2,7 @@
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
 #        | Copyright (c) 2010-2012 Brett Smith <tanktarta@blueyonder.co.uk>            |
-#        | Copyright © 2013 Nuno Araujo <nuno.araujo@russo79.com>                      |
+#        | Copyright (c) 2013 Nuno Araujo <nuno.araujo@russo79.com>                    |
 #        |                                                                             |
 #        | This program is free software; you can redistribute it and/or               |
 #        | modify it under the terms of the GNU General Public License                 |
