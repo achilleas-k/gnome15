@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='pylibg19',
-      version='0.0.5',
+      version='0.0.6',
       description='Python interface to the Logitech G19',
       requires='usb',
       author='MultiCoreNop,Brett Smith',
