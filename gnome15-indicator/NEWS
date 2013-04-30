@@ -1,0 +1,14 @@
+gnome15-indicator 0.9.1 (2013-05-01)
+====================================
+
+This is an "unofficial" release of gnome15-indicator
+There was no news from the original author since four
+months now.
+
+Changes since 0.9.0:
+
+* Only some build system fixes and some updates to "common" files.
+
+Bugs fixed in this release:
+
+* None
