@@ -1,4 +1,4 @@
-AC_INIT(gnome15-iconpack, 0.0.5)
+AC_INIT(gnome15-iconpack, 0.0.6, https://projects.russo79.com/projects/gnome15/issues/new)
 AC_CONFIG_SRCDIR([AwOken/status/16/logitech-g-keyboard-error-panel.png])
 AM_INIT_AUTOMAKE([tar-ustar])
 
