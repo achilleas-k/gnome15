@@ -1,7 +1,8 @@
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
-#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        | Copyright (c) 2010-2012 Brett Smith <tanktarta@blueyonder.co.uk>            |
+#        | Copyright (c) Nuno Araujo <nuno.araujo@russo79.com>                         |
 #        |                                                                             |
 #        | This program is free software; you can redistribute it and/or               |
 #        | modify it under the terms of the GNU General Public License                 |
@@ -78,7 +79,7 @@ name=_("Weather (Yahoo support)")
 description=_("Adds Yahoo as a source of weather data.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2012 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=False
 passive=True
 needs_network=True
@@ -225,9 +226,9 @@ class YahooWeatherBackend(weather.WeatherBackend):
         if "astronomy" in p:
             astronomy = p["astronomy"]
             if "sunset" in astronomy:
-                sunset = time.strptime(astronomy["sunset"], "%I:%M %p") 
+                sunset = g15locale.parse_US_time(astronomy["sunset"])
             if "sunrise" in astronomy:
-                sunrise = time.strptime(astronomy["sunrise"], "%I:%M %p")
+                sunrise = g15locale.parse_US_time(astronomy["sunrise"])
                 
         # Pressure, Visibility and Humidity
         pressure = None

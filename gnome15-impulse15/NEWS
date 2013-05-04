@@ -1,0 +1,15 @@
+gnome15-impulse15 0.0.14 (2013-04-29)
+=====================================
+
+This is an "unofficial" release of Gnome15 Impulse15 plugin.
+There was no news from the original author since four
+months now.
+
+Changes since 0.0.13:
+
+* Add a bug submit URL to configure.ac
+
+Bugs fixed in this release:
+
+* None
+

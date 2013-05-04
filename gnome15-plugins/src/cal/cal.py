@@ -46,7 +46,7 @@ plugin work, you will also need a second plugin for your calendar\n\
 provider. Currently, Gnome15 supports Evolution and Google calendars.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=True
 actions={ 
      g15driver.PREVIOUS_SELECTION : _("Previous day/Event"), 

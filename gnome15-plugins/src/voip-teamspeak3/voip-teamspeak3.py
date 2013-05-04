@@ -43,7 +43,7 @@ description=_("Provides integration with TeamSpeak3. Note, this plugin also\n\
 requires the 'Voip' plugin as well which provides the user interface.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2011 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=False
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 

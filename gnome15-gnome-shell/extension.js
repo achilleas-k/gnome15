@@ -455,9 +455,17 @@ const DeviceButton = new Lang.Class({
 		this._modelId = modelId;
 		this._modelName = modelName;
 		this._screen = null;
-        this.mainIcon.add_style_class_name('device-icon');
-        this.mainIcon.set_icon_size(20);
-        this.mainIcon.add_style_class_name('device-button');
+		// API change for 3.6
+		if(Config.PACKAGE_VERSION.indexOf("3.4") == 0) {
+			this._iconActor.add_style_class_name('device-icon');
+			this._iconActor.set_icon_size(20);
+			this._iconActor.add_style_class_name('device-button');
+		}
+		else {
+			this.mainIcon.add_style_class_name('device-icon');
+			this.mainIcon.set_icon_size(20);
+			this.mainIcon.add_style_class_name('device-button');
+		}
         
         // Mouse whell events
         this.actor.connect('scroll-event', Lang.bind(this, this._onScrollEvent));

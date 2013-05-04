@@ -61,7 +61,7 @@ You may also delete macros by assigning an empty macro to a key. \
 The macro will be recorded on the currently selected profile and memory bank.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=False
 default_enabled=True
 unsupported_models = [ g15driver.MODEL_Z10, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]

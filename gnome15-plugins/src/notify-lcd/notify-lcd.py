@@ -63,7 +63,7 @@ Gnome15 can completely take over the notification service and display messages \
 on the keyboard only.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=True
 single_instance=True
 unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35 ]

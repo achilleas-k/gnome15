@@ -48,7 +48,7 @@ you must use specially crafted themes (using GIF files instead of SVG). \
 One default theme for low resolution screens is provided.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=True
 default_enabled=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]

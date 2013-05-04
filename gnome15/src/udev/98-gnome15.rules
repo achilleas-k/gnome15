@@ -1,8 +1,0 @@
-# This file maintains permissions for Gnome15 input devices
-#
-
-# Make uinput load
-SUBSYSTEM=="input", RUN+="/sbin/modprobe uinput"
-
-# Set permissions for uinput devices
-KERNEL=="event*|uinput", GROUP="plugdev", MODE="0660"

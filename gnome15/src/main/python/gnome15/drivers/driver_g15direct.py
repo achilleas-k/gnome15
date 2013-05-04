@@ -199,6 +199,7 @@ class Driver(g15driver.AbstractDriver):
         self.connected = False
         self.conf_client = gconf.client_get_default()
         self.last_keys = None
+        self.last_ext_keys = None
         
         # We can only have one instance of this driver active in a single runtime
         self.allow_multiple = False
@@ -255,7 +256,8 @@ class Driver(g15driver.AbstractDriver):
         
     def grab_keyboard(self, callback):
         self.callback = callback
-        self.last_keys = None        
+        self.last_keys = None
+        self.last_ext_keys = None      
         self.thread = pylibg15.grab_keyboard(self._handle_key_event, \
                 g15util.get_int_or_default(self.conf_client, "/apps/gnome15/usb_key_read_timeout", 100),
                 self._on_error)
@@ -455,7 +457,7 @@ class Driver(g15driver.AbstractDriver):
         elif ext_code > 0:
             this_keys += self._convert_ext_g15daemon_code(ext_code)
         
-        if self.get_model_name() == g15driver.MODEL_G13 and has_js:
+        if self.get_model_name() == g15driver.MODEL_G13:
             c = self.analogue_calibration if self.joy_mode in [ "joystick", "mouse" ] else self.digital_calibration
             
             low_val = 128 - c
@@ -468,17 +470,21 @@ class Driver(g15driver.AbstractDriver):
                 logger.debug("Joystick at %s" % str(pos))
             
             if self.joy_mode == "joystick":
-                self._abs_joystick(this_keys, pos)
+                if has_js:
+                    self._abs_joystick(this_keys, pos)
             elif self.joy_mode == "mouse":
-                self._rel_mouse(this_keys, pos, low_val, high_val, max_step)                 
+                if has_js:
+                    self._rel_mouse(this_keys, pos, low_val, high_val, max_step)                 
             else:
                 self._emit_macro_keys(this_keys, pos, low_val, high_val)
         
         up = []
         down = []
         
+        last_keys = self.last_keys
+        
         for k in this_keys:
-            if self.last_keys is None or not k in self.last_keys:
+            if last_keys is None or not k in last_keys:
                 down.append(k)
                 
                 """
@@ -492,8 +498,8 @@ class Driver(g15driver.AbstractDriver):
                     up.append(k)
                     this_keys.remove(k)
                 
-        if self.last_keys is not None:
-            for k in self.last_keys:
+        if last_keys is not None:
+            for k in last_keys:
                 if not k in this_keys and not k in down and not k in up:
                     up.append(k)
                     

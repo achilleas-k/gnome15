@@ -1,0 +1,14 @@
+gnome15-gnome-shell 0.0.2 (2013-04-30)
+======================================
+
+This is an "unofficial" release of gnome15-gnome-shell
+There was no news from the original author since four
+months now.
+
+Changes since 0.0.1:
+
+* None, this is a bugfix only release
+
+Bugs fixed in this release:
+
+* https://projects.russo79.com/issues/170

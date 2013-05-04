@@ -1,7 +1,8 @@
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
-#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        | Copyright (c) 2010-2012 Brett Smith <tanktarta@blueyonder.co.uk>            |
+#        | Copyright (c) 2013 Nuno Araujo <nuno.araujo@russo79.com>                    |
 #        |                                                                             |
 #        | This program is free software; you can redistribute it and/or               |
 #        | modify it under the terms of the GNU General Public License                 |
@@ -41,7 +42,7 @@ description=_("Just displays a simple clock. This is the plugin used in \
 the tutorial at the Gnome15 site.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=True
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 
@@ -228,7 +229,9 @@ class G15Clock(g15plugin.G15Plugin):
             properties = self._get_properties()
             # Don't display the date or seconds on mono displays, not enough room as it is
             if self.screen.driver.get_bpp() == 1:
-                text = properties["time_nosec"]
+                text = properties["time"]
+                if self.display_seconds:
+                    text = text[:-3]
                 font_size = 8
                 factor = 2
                 font_name = g15globals.fixed_size_font_name

@@ -175,14 +175,19 @@ def get_profiles(device):
     '''
     profiles = []
     for profile_dir in get_all_profile_dirs(device):
-        for profile in os.listdir(profile_dir):
-            if not profile.startswith(".") and profile.endswith(".macros"):
-                profile_id = ".".join(profile.split(".")[:-1])
-                profile_object = G15Profile(device, profile_id, \
-                                           file_path = "%s/%s" % \
-                                           ( profile_dir, profile ))
-                if device.model_id in profile_object.models:
-                    profiles.append(profile_object)
+        if os.path.exists(profile_dir):
+            for profile in os.listdir(profile_dir):
+                if not profile.startswith(".") and profile.endswith(".macros"):
+                    profile_id = ".".join(profile.split(".")[:-1])
+                    profile_object = G15Profile(device, profile_id, \
+                                               file_path = "%s/%s" % \
+                                               ( profile_dir, profile ))
+                    if device.model_id in profile_object.models:
+                        profiles.append(profile_object)
+                        
+    if len(profiles) == 0:
+        return [ create_default(device) ]
+                        
     return profiles
 
 def get_all_profile_dirs(device):
@@ -203,14 +208,16 @@ def create_default(device):
     Keyword arguments:
     device        -- device associated with default profile
     """
-    if not get_profile(device, "0"):
+    if not get_default_profile(device):
         logger.info("No default macro profile. Creating one")
-        default_profile = G15Profile(device, profile_id = "0")
+        default_profile = G15Profile(device, profile_id = "Default")
         default_profile.name = "Default"
         default_profile.device = device
         default_profile.activate_on_focus = True
         default_profile.activate_on_launch = False
         create_profile(default_profile)
+        wdd = wm.add_watch(conf_dir, mask, rec=True)
+    return get_default_profile(device)
 
 def create_profile(profile):
     """
@@ -248,13 +255,21 @@ def get_active_profile(device):
     device        -- device associated with profile
     """
     val= conf_client.get("/apps/gnome15/%s/active_profile" % device.uid)
+    profile = None
     if val != None and val.type == gconf.VALUE_INT:
         # This is just here for compatibility with <= 0.7.x
-        return get_profile(device, str(val.get_int()))
+        profile = get_profile(device, str(val.get_int()))
     elif val != None and val.type == gconf.VALUE_STRING:
-        return get_profile(device, val.get_string())
-    else:
-        return get_default_profile(device)
+        profile = get_profile(device, val.get_string())
+
+    if profile is None:
+        profile = get_default_profile(device)
+        
+    if profile is None:
+        profile = create_default(device)
+        conf_client.set_string("/apps/gnome15/%s/active_profile" % device.uid, profile.id)
+    
+    return profile
 
 def is_locked(device):
     """
@@ -283,7 +298,10 @@ def get_default_profile(device):
     Keyword arguments:
     device        -- device associated with default profile
     """
-    return get_profile(device, "0")
+    old_default = get_profile(device, "0")
+    if old_default is not None:
+        return old_default
+    return get_profile(device, "Default")
 
 def get_keys_from_key(key_list_key):
     """
@@ -755,7 +773,7 @@ class G15Profile(object):
         """
         Get if this profile is the default one
         """
-        return self.id == "0"
+        return self == get_default_profile(self.device)
         
     def save(self, filename = None):
         """
@@ -1117,6 +1135,7 @@ class G15Profile(object):
         return profile is not None and self.id == profile.id
         
     def _write(self, save_file = None):
+        
         if save_file is None or self.id == -1:
             raise Exception("Cannot save a profile without a filename or an id.")
         

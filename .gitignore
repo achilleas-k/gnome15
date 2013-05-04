@@ -1,9 +1,8 @@
-*.in
 Makefile
+Makefile.in
 config.log
 config.status
 gnome15-*.tar.gz
-Makefile.in
 py-compile
 missing
 install-sh
@@ -41,3 +40,5 @@ gnome15-kde-plugins/window-thumbnail/build
 .libs
 lgsetled*.tar.gz
 en_GB
+gnome15/src/udev/*.rules
+gnome15/src/main/python/gnome15/g15globals.py

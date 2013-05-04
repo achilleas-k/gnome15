@@ -1381,7 +1381,7 @@ class G15Config:
         dialog.hide()
         if response == 1:
             active_profile = g15profile.get_active_profile(self.selected_device)
-            if self.selected_profile.id == active_profile.id:
+            if active_profile is not None and self.selected_profile.id == active_profile.id:
                 if g15profile.is_locked(self.selected_device):
                     g15profile.set_locked(self.selected_device, False)
                 self._make_active(g15profile.get_profile(self.selected_device, 0))
@@ -1563,6 +1563,7 @@ class G15Config:
             if active != None:
                 active_id = active.id
             self.selected_profile = None
+            default_profile = g15profile.get_default_profile(self.selected_device)
             self.profiles = g15profile.get_profiles(self.selected_device)
             locked = g15profile.is_locked(self.selected_device)
             for profile in self.profiles: 
@@ -1571,14 +1572,10 @@ class G15Config:
                 if selected:
                     weight = 700
                 lock_icon = gtk.gdk.pixbuf_new_from_file(os.path.join(g15globals.image_dir, "locked.png")) if locked and selected else None 
-                self.profiles_model.append([profile.name, weight, profile.id, profile.name != "Default", not profile.read_only, lock_icon ])
+                self.profiles_model.append([profile.name, weight, profile.id, profile == default_profile, not profile.read_only, lock_icon ])
                 if current_selection != None and profile.id == current_selection.id:
                     tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(len(self.profiles_model) - 1)))
                     self.selected_profile = profile         
-            if len(self.profiles) == 0:
-                default_profile = g15profile.G15Profile(self.selected_device, "Default")
-                g15profile.create_profile(default_profile)
-                self._load_profile_list()
             if self.selected_profile == None:                
                 tree_selection.select_path(self.profiles_model.get_path(self.profiles_model.get_iter(0)))
                 self.selected_profile = self.profiles[0]

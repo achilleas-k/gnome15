@@ -45,7 +45,7 @@ description=_("Displays the current weather at a location. It can currently use 
 of weather information.")  
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=True
 default_enabled=True
 needs_network=True
@@ -302,7 +302,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 properties["date"] = g15locale.format_date(dt, self.gconf_client)
                 properties["datetime"] = g15locale.format_date_time(dt, self.gconf_client, False)
                 properties["message"] = ""
-                c_icon, _, t_icon = self._get_icons(current)
+                c_icon, f_icon, t_icon = self._get_icons(current)
                 if t_icon != None:
                     attributes["icon"] = g15util.load_surface_from_file(t_icon)
                     properties["icon"] = g15util.get_embedded_image_url(attributes["icon"]) 

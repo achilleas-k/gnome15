@@ -47,6 +47,12 @@ g11_key_layout = [
                   [ g15driver.G_KEY_M1, g15driver.G_KEY_M2, g15driver.G_KEY_M3, g15driver.G_KEY_MR ]
                   ]
 
+g11_action_keys = {
+                   g15driver.MEMORY_1: g15actions.ActionBinding(g15driver.MEMORY_1, [ g15driver.G_KEY_M1 ], g15driver.KEY_STATE_UP),
+                   g15driver.MEMORY_2: g15actions.ActionBinding(g15driver.MEMORY_2, [ g15driver.G_KEY_M2 ], g15driver.KEY_STATE_UP),
+                   g15driver.MEMORY_3: g15actions.ActionBinding(g15driver.MEMORY_3, [ g15driver.G_KEY_M3 ], g15driver.KEY_STATE_UP)
+                  }
+
 g15v1_key_layout = [
                   [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
                   [ g15driver.G_KEY_G4, g15driver.G_KEY_G5, g15driver.G_KEY_G6 ],
@@ -347,8 +353,8 @@ def find_all_devices(do_cache = True):
                 type can exist at a time, but any more is pretty unlikely
                 """
                 if device_info.model_id == g15driver.MODEL_G15_V1 and not (0x046d, 0xc222) in device_map:
-                    # Actually a G11
-                    device_info = device_list[g15driver.MODEL_G11]
+                    # Actually a G11, will be detected with id (0x046d, 0xc225)
+                    continue
                 elif device_info.model_id == g15driver.MODEL_G11 and (0x046d, 0xc222) in device_map:
                     # Actually a G15v1
                     device_info = device_list[g15driver.MODEL_G15_V1]
@@ -390,7 +396,7 @@ Register all supported models
 """
 if g15drivermanager.get_driver_mod("gtk"): 
     DeviceInfo('virtual',               (0x0000, 0x0000),       None,               [],                 0,  ( 0,    0 ),    False,  _("Virtual LCD Window"),                        None)
-DeviceInfo(g15driver.MODEL_G11,         (0x046d, 0xc225),       None,               g11_key_layout,     0,  ( 0,    0 ),    True,   _("Logitech G11 Keyboard"),                     {})
+DeviceInfo(g15driver.MODEL_G11,         (0x046d, 0xc225),       None,               g11_key_layout,     0,  ( 0,    0 ),    True,   _("Logitech G11 Keyboard"),                     g11_action_keys)
 DeviceInfo(g15driver.MODEL_G19,         (0x046d, 0xc229),       None,               g19_key_layout,     16, ( 320,  240 ),  True,   _("Logitech G19 Gaming Keyboard"),              g19_action_keys)
 DeviceInfo(g15driver.MODEL_G15_V1,      (0x046d, 0xc221),       (0x046d, 0xc222),   g15v1_key_layout,   1,  ( 160,  43 ),   True,   _("Logitech G15 Gaming Keyboard (version 1)"),  g15_action_keys) 
 DeviceInfo(g15driver.MODEL_G15_V2,      (0x046d, 0xc227),       None,               g15v2_key_layout,   1,  ( 160,  43 ),   True,   _("Logitech G15 Gaming Keyboard (version 2)"),  g15_action_keys)

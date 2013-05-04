@@ -62,7 +62,7 @@ The actions volume-up, volume-down and mute all work directly on the mixer, \
 so may be used control the master volume when full screen games are running too.")
 author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
-site="http://www.gnome15.org/"
+site="http://www.russo79.com/gnome15"
 has_preferences=True
 default_enabled=True
 unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35 ]
