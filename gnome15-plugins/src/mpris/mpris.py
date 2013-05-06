@@ -78,7 +78,7 @@ actions={
          }
 
 # Players that are not supported
-mpris_blacklist = [ "org.mpris.xbmc" ]
+mpris_blacklist = [ "org.mpris.xbmc", "org.mpris.audacious" ]
 
 def create(gconf_key, gconf_client, screen):
     return G15MPRIS(gconf_client,gconf_key, screen)
