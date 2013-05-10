@@ -369,7 +369,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 wind = g15util.append_if_exists(current, "wind_direction", wind, "%sdeg")
                 properties["wind"] =  wind 
                 
-                # Pressure
+                # Visibility
                 visibility = g15util.append_if_exists(current, "visibility", "", "%sM")
                 properties["visibility"] =  visibility
                 
