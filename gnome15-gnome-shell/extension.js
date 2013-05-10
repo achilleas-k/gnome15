@@ -30,10 +30,10 @@
 const St = imports.gi.St;
 const Main = imports.ui.main;
 const Tweener = imports.ui.tweener;
-const DBus = imports.dbus;
 const Lang = imports.lang;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
+const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Clutter = imports.gi.Clutter;
 const Config = imports.misc.config;
@@ -45,182 +45,137 @@ let currNotification, gnome15System, devices;
  * available, just enough to do the job
  */ 
 
-const Gnome15ServiceInterface = {
-	name : 'org.gnome15.Service',
-	methods : [ {
-		name : 'GetDevices',
-		inSignature : '',
-		outSignature : 'as'
-	}, {
-		name : 'GetScreens',
-		inSignature : '',
-		outSignature : 'as'
-	}, {
-		name : 'GetServerInformation',
-		inSignature : '',
-		outSignature : 'ssss'
-	},{
-		name : 'IsStarted',
-		inSignature : '',
-		outSignature : 'b'
-	},{
-		name : 'IsStarting',
-		inSignature : '',
-		outSignature : 'b'
-	},{
-		name : 'IsStopping',
-		inSignature : '',
-		outSignature : 'b'
-	},{
-		name : 'Stop',
-		inSignature : '',
-		outSignature : ''
-	},{
-		name : 'Stop',
-		inSignature : '',
-		outSignature : ''
-	}, ],
-	signals : [ {
-		name : 'ScreenAdded',
-		inSignature : 's'
-	},{
-		name : 'ScreenRemoved',
-		inSignature : 's'
-	},{
-		name : 'DeviceAdded',
-		inSignature : 's'
-	},{
-		name : 'DeviceRemoved',
-		inSignature : 's'
-	},{
-		name : 'Started'
-	},{
-		name : 'Starting'
-	},{
-		name : 'Stopped'
-	},{
-		name : 'Stopping'
-	} ]
-};
+const Gnome15ServiceInterface = <interface name="org.gnome15.Service">
+<method name="GetDevices">
+	<arg type="as" direction="out"/>
+</method>
+<method name="GetScreens">
+	<arg type="as" direction="out"/>
+</method>
+<method name="GetServerInformation">
+	<arg type="s" direction="out" name="name"/>
+	<arg type="s" direction="out" name="vendor"/>
+	<arg type="s" direction="out" name="version"/>
+	<arg type="s" direction="out" name="spec_version"/>
+</method>
+<method name="IsStarted">
+	<arg type="b" direction="out"/>
+</method>
+<method name="IsStarting">
+	<arg type="b" direction="out"/>
+</method>
+<method name="IsStopping">
+	<arg type="b" direction="out"/>
+</method>
+<method name="Stop"/>
+<signal name="ScreenAdded">
+	<arg type="s" name="screen_name"/>
+</signal>
+<signal name="ScreenRemoved">
+	<arg type="s" name="screen_name"/>
+</signal>
+<signal name="DeviceAdded">
+	<arg type="s" name="device_name"/>
+</signal>
+<signal name="DeviceRemoved">
+	<arg type="s" name="device_name"/>
+</signal>
+<signal name="Started"/>
+<signal name="Starting"/>
+<signal name="Stopped"/>
+<signal name="Stopping"/>
+</interface>
 
 
-const Gnome15ScreenInterface = {
-	name : 'org.gnome15.Screen',
-	methods : [ {
-		name : 'GetPages',
-		inSignature : '',
-		outSignature : 'as'
-	}, {
-		name : 'IsConnected',
-		inSignature : '',
-		outSignature : 'b'
-	}, {
-		name : 'GetDriverInformation',
-		inSignature : '',
-		outSignature : 'ssnnn'
-	}, {
-		name : 'IsCyclingEnabled',
-		inSignature : '',
-		outSignature : 'b'
-	}, {
-		name : 'SetCyclingEnabled',
-		inSignature : 'b',
-		outSignature : ''
-	}, {
-		name : 'Cycle',
-		/* No idea why, but this signature is actually 'n', but this causes
-		 * an exception when calling with JavaScript integer. 
-		 */ 
-		inSignature : 'i',
-		outSignature : ''
-	}, {
-		name : 'CycleKeyboard',
-		/* No idea why, but this signature is actually 'n', but this causes
-		 * an exception when calling with JavaScript integer. 
-		 */ 
-		inSignature : 'i',
-		outSignature : ''
-	} ],
-	signals : [ {
-		name : 'PageCreated',
-		inSignature : 'ss'
-	},{
-		name : 'PageDeleted',
-		inSignature : 's'
-	},{
-		name : 'PageDeleting',
-		inSignature : 's'
-	},{
-		name : 'PageChanged',
-		inSignature : 's'
-	},{
-		name : 'PageTitleChanged',
-		inSignature : 'ss'
-	},{
-		name : 'Connected',
-		inSignature : 's'
-	},{
-		name : 'Disconnected',
-		inSignature : 's'
-	}, {
-		name: 'CyclingChanged',
-		inSignature : 'b'
-	} ]
-};
+const Gnome15ScreenInterface = <interface name="org.gnome15.Screen">
+<method name="GetPages">
+	<arg type="as" direction="out" />
+</method>
+<method name="IsConnected">
+	<arg type="b" direction="out" />
+</method>
+<method name="GetDriverInformation">
+	<arg type="s" direction="out" name="name"/>
+	<arg type="s" direction="out" name="model_name"/>
+	<arg type="n" direction="out" name="xres"/>
+	<arg type="n" direction="out" name="yres"/>
+	<arg type="n" direction="out" name="bpp"/>
+</method>
+<method name="IsCyclingEnabled">
+	<arg type="b" direction="out" />
+</method>
+<method name="SetCyclingEnabled">
+	<arg type="b" direction="in" name="enabled"/>
+</method>
+<method name="Cycle">
+	<arg type="i" direction="in" name="cycle"/>
+</method>
+<method name="CycleKeyboard">
+	<arg type="i" direction="in" name="value"/>
+</method>
+<signal name="PageCreated">
+	<arg type="s" name="page_path"/>
+	<arg type="s" name="title"/>
+</signal>
+<signal name="PageDeleted">
+	<arg type="s" name="page_path"/>
+</signal>
+<signal name="PageDeleting">
+	<arg type="s" name="page_path"/>
+</signal>
+<signal name="PageChanged">
+	<arg type="s" name="page_path"/>
+</signal>
+<signal name="PageTitleChanged">
+	<arg type="s" name="page_path"/>
+	<arg type="s" name="new_title"/>
+</signal>
+<signal name="Connected">
+	<arg type="s" name="driver_name"/>
+</signal>
+<signal name="Disconnected">
+	<arg type="s" name="driver_name"/>
+</signal>
+<signal name="CyclingChanged">
+	<arg type="b" name="cycle"/>
+</signal>
+</interface>
+/* No idea why, but Cycle and CycleKeyboard signatures argument type are actually 'n',
+ * but this causes an exception when calling with JavaScript integer.
+ */
 
+const Gnome15DeviceInterface = <interface name="org.gnome15.Device">
+<method name="GetScreen">
+	<arg type="s" direction="out" />
+</method>
+<method name="GetModelFullName">
+	<arg type="s" direction="out" />
+</method>
+<method name="GetUID">
+	<arg type="s" direction="out" />
+</method>
+<method name="GetModelId">
+	<arg type="s" direction="out" />
+</method>
+<method name="Enable"/>
+<method name="Disable"/>
+<signal name="ScreenAdded">
+	<arg type="s" name="screen_name"/>
+</signal>
+<signal name="ScreenRemoved">
+	<arg type="s" name="screen_name"/>
+</signal>
+</interface>
 
-const Gnome15DeviceInterface = {
-	name : 'org.gnome15.Device',
-	methods : [ {
-		name : 'GetScreen',
-		inSignature : '',
-		outSignature : 's'
-	},{
-		name : 'GetModelFullName',
-		inSignature : '',
-		outSignature : 's'
-	},{
-		name : 'GetUID',
-		inSignature : '',
-		outSignature : 's'
-	},{
-		name : 'GetModelId',
-		inSignature : '',
-		outSignature : 's'
-	},{
-		name : 'Enable',
-		inSignature : '',
-		outSignature : ''
-	}, {
-		name : 'Disable',
-		inSignature : '',
-		outSignature : ''
-	} ],
-	signals : [ {
-		name : 'ScreenAdded',
-		inSignature : 's'
-	},{
-		name : 'ScreenRemoved',
-		inSignature : 's'
-	} ]
-};
-
-const Gnome15PageInterface = {
-	name : 'org.gnome15.Page',
-	methods : [ {
-		name : 'GetTitle',
-		inSignature : '',
-		outSignature : 's'
-	},{
-		name : 'GetId',
-		inSignature : '',
-		outSignature : 's'
-	}, {
-		name : 'CycleTo',
-		inSignature : '',
-		outSignature : ''
-	} ]
-};
+const Gnome15PageInterface = <interface name="org.gnome15.Page">
+<method name="GetTitle">
+	<arg type="s" direction="out" />
+</method>
+<method name="GetId">
+	<arg type="s" direction="out" />
+</method>
+<method name="CycleTo"/>
+</interface>
 
 /**
  * Instances of this class are responsible for managing a single device.
@@ -237,21 +192,24 @@ const DeviceItem = new Lang.Class({
 		this.parent();
 		this._buttonSignals = new Array();
 		let gnome15Device = _createDevice(key);
-		gnome15Device.GetModelFullNameRemote(Lang.bind(this, function(msg) {
-			let modelFullName = msg;
-			gnome15Device.GetModelIdRemote(Lang.bind(this, function(msg) {
-				let uid = msg;
-				gnome15Device.GetScreenRemote(Lang.bind(this, function(msg) {
-					gnome15Device.connect("ScreenAdded", Lang.bind(this, function(src, screenPath) {
+		gnome15Device.GetModelFullNameRemote(Lang.bind(this, function(result) {
+			let [modelFullName] = result;
+			gnome15Device.GetModelIdRemote(Lang.bind(this, function(result) {
+				let [uid] = result;
+				gnome15Device.GetScreenRemote(Lang.bind(this, function(result) {
+					let [screen] = result;
+					gnome15Device.connectSignal("ScreenAdded", Lang.bind(this, function(src, senderName, args) {
+						let [screenPath] = args;
 						global.log("Screen added " + screenPath);
 						this._getPages(screenPath);
 					}));
-					gnome15Device.connect("ScreenRemoved", Lang.bind(this, function(src, screenPath) {
+					gnome15Device.connectSignal("ScreenRemoved", Lang.bind(this, function(src, senderName, args) {
+						let [screenPath] = args;
 						global.log("Screen removed " + screenPath);
 						this._cleanUp();
 						this._gnome15Button.clearPages();
 					}));
-					this._addButton(key, modelFullName, uid, msg);
+					this._addButton(key, modelFullName, uid, screen);
 				}));
 			}));
 		}));
@@ -294,7 +252,7 @@ const DeviceItem = new Lang.Class({
 	_cleanUp: function() {
 		if(this._gnome15Button._screen != null) {
 			for(let key in this._buttonSignals) {
-				this._gnome15Button._screen.disconnect(this._buttonSignals[key]);
+				this._gnome15Button._screen.disconnectSignal(this._buttonSignals[key]);
 			}
 			this._buttonSignals.splice(0, this._buttonSignals.length);
 			this._gnome15Button._screen = null;
@@ -309,20 +267,25 @@ const DeviceItem = new Lang.Class({
 	_getPages: function(screen) {
 		this._cleanUp();
 		this._gnome15Button._screen = _createScreen(screen);
-		this._gnome15Button._screen.GetPagesRemote(Lang.bind(this, function(pages) {
+		this._gnome15Button._screen.GetPagesRemote(Lang.bind(this, function(result) {
+			let [pages] = result;
 			this._gnome15Button.clearPages();
 			for(let key in pages) {
 		        this._gnome15Button.addPage(pages[key]);
 			}
-			this._gnome15Button._screen.IsCyclingEnabledRemote(Lang.bind(this, function(cyclingEnabled) {
+			this._gnome15Button._screen.IsCyclingEnabledRemote(Lang.bind(this, function(result) {
+				let [cyclingEnabled] = result;
 				this._gnome15Button.setCyclingEnabled(cyclingEnabled);
-				this._buttonSignals.push(this._gnome15Button._screen.connect("PageCreated", Lang.bind(this, function(src, pagePath, title) {
+				this._buttonSignals.push(this._gnome15Button._screen.connectSignal("PageCreated", Lang.bind(this, function(src, senderName, args) {
+					let pagePath = args[0];
 					this._gnome15Button.addPage(pagePath);
 				})));
-				this._buttonSignals.push(this._gnome15Button._screen.connect("PageDeleting", Lang.bind(this, function(src, pagePath) {
+				this._buttonSignals.push(this._gnome15Button._screen.connectSignal("PageDeleting", Lang.bind(this, function(src, senderName, args) {
+					let pagePath = args[0];
 					this._gnome15Button.deletePage(pagePath);
 				})));
-				this._buttonSignals.push(this._gnome15Button._screen.connect("CyclingChanged", Lang.bind(this, function(src, cycle) {
+				this._buttonSignals.push(this._gnome15Button._screen.connectSignal("CyclingChanged", Lang.bind(this, function(src, senderName, args) {
+					let [cycle] = args;
 					this._gnome15Button.setCyclingEnabled(cycle);
 				})));
 			}));			
@@ -535,9 +498,10 @@ const DeviceButton = new Lang.Class({
 	 * @param pagePath page of page.
 	 */
 	_addPage : function(pagePath) {
-		let Gnome15PageProxy = DBus.makeProxyClass(Gnome15PageInterface);
-		let pageProxy = new Gnome15PageProxy(DBus.session, 'org.gnome15.Gnome15', pagePath);
-		pageProxy.GetTitleRemote(Lang.bind(this, function(title) {
+		let Gnome15PageProxy = Gio.DBusProxy.makeProxyWrapper(Gnome15PageInterface);
+		let pageProxy = new Gnome15PageProxy(Gio.DBus.session, 'org.gnome15.Gnome15', pagePath);
+		pageProxy.GetTitleRemote(Lang.bind(this, function(result) {
+			let [title] = result;
 			let item = new PageMenuItem(title, title, pageProxy);
 			this._itemMap[pagePath] = item;
 			this.menu.addMenuItem(item);
@@ -575,33 +539,33 @@ const DeviceButton = new Lang.Class({
 
 function init() {
 	devices = {}
-	let Gnome15ServiceProxy = DBus.makeProxyClass(Gnome15ServiceInterface);
+	let Gnome15ServiceProxy = Gio.DBusProxy.makeProxyWrapper(Gnome15ServiceInterface);
 	
 	/* The "Service" is the core of Gnome, so connect to it and watch for some
 	 * signals
 	 */
-	gnome15System = new Gnome15ServiceProxy(DBus.session,
+	gnome15System = new Gnome15ServiceProxy(Gio.DBus.session,
 			'org.gnome15.Gnome15', '/org/gnome15/Service');
 
-	gnome15System.connect("Started", _onDesktopServiceStarted);
-	gnome15System.connect("Stopping", _onDesktopServiceStopping);
-	gnome15System.connect("DeviceAdded", _deviceAdded);
-	gnome15System.connect("DeviceRemoved", _deviceRemoved);
-
+	gnome15System.connectSignal("Started", _onDesktopServiceStarted);
+	gnome15System.connectSignal("Stopping", _onDesktopServiceStopping);
+	gnome15System.connectSignal("DeviceAdded", _deviceAdded);
+	gnome15System.connectSignal("DeviceRemoved", _deviceRemoved);
 }
 
 function enable() {
-	DBus.session.watch_name('org.gnome15.Gnome15',
-	                       false, // do not launch a name-owner if none exists
-	                       _onDesktopServiceAppeared,
-	                       _onDesktopServiceVanished);
+	Gio.bus_watch_name(Gio.BusType.SESSION,
+	                   'org.gnome15.Gnome15',
+	                   Gio.BusNameWatcherFlags.NONE,
+	                   _onDesktopServiceAppeared,
+	                   _onDesktopServiceVanished);
 
 	gnome15System.IsStartedRemote(_onStarted);
 }
 
 function disable() {
 	for(let key in devices) {
-        _deviceRemoved(devices, key);
+		_removeDevice(key);
 	}
 }
 
@@ -641,14 +605,21 @@ function _onDesktopServiceStarted() {
 function _onDesktopServiceStopping() {
 	global.log("Desktop service stopping");
 	for(let key in devices) {
-        _deviceRemoved(devices, key);
+		_removeDevice(key);
 	}
 }
 
 /**
  * Callback from IsStarted called during initialisation.
  */
-function _onStarted(started) {
+function _onStarted(result, excp) {
+	/* If there was an exception (e.g. g15-desktop-service isn't running) we
+       return. started value is null in this case                             */
+	if(excp) {
+		return;
+	}
+
+	let [started] = result;
 	if(started) {
 		gnome15System.GetDevicesRemote(_refreshDeviceList);
 	}
@@ -658,9 +629,10 @@ function _onStarted(started) {
  * Callback from GetDevicesRemote that reads the returned device list and
  * creates a button for each one.
  */
-function _refreshDeviceList(msg) {
-	for (let key in msg) {
-		_deviceAdded(msg, msg[key]);
+function _refreshDeviceList(result) {
+	let [devices] = result;
+	for (let key in devices) {
+		_addDevice(devices[key]);
 	}
 }
 
@@ -671,7 +643,13 @@ function _refreshDeviceList(msg) {
  * @param source device source (may be null)
  * @param key device DBUS object path
  */
-function _deviceAdded(source, key) {
+function _deviceAdded(source, senderName, args) {
+	let [key] = args;
+	_addDevice(key);
+}
+
+
+function _addDevice(key) {
 	global.log("Added device " + key);
 	devices[key] = new DeviceItem(key);
 }
@@ -683,7 +661,12 @@ function _deviceAdded(source, key) {
  * @param source device source (may be null)
  * @param key device DBUS object path
  */
-function _deviceRemoved(source, key) {
+function _deviceRemoved(source, senderName, args) {
+	let [key] = args;
+	_removeDevice(key);
+}
+
+function _removeDevice(key) {
 	global.log("Removed device " + key);
 	devices[key].close();
 	delete devices[key];
@@ -696,8 +679,8 @@ function _deviceRemoved(source, key) {
  * @returns {Gnome15ScreenProxy}
  */
 function _createScreen(path) {
-	let Gnome15ScreenProxy = DBus.makeProxyClass(Gnome15ScreenInterface);
-	return new Gnome15ScreenProxy(DBus.session,
+	let Gnome15ScreenProxy = Gio.DBusProxy.makeProxyWrapper(Gnome15ScreenInterface);
+	return new Gnome15ScreenProxy(Gio.DBus.session,
 			'org.gnome15.Gnome15', path);
 }
 
@@ -708,7 +691,7 @@ function _createScreen(path) {
  * @returns {Gnome15DeviceProxy}
  */
 function _createDevice(path) {
-	let Gnome15DeviceProxy = DBus.makeProxyClass(Gnome15DeviceInterface);
-	return new Gnome15DeviceProxy(DBus.session,
+	let Gnome15DeviceProxy = Gio.DBusProxy.makeProxyWrapper(Gnome15DeviceInterface);
+	return new Gnome15DeviceProxy(Gio.DBus.session,
 			'org.gnome15.Gnome15', path);
 }
