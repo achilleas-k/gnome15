@@ -451,7 +451,7 @@ const DeviceButton = new Lang.Class({
 	 */
 	deletePage: function(pagePath) {
 		let idx = this._itemList.indexOf(pagePath);
-		if(idx > 0) {
+		if(idx != -1) {
 			this._itemList.splice(idx, 1);
 			this._itemMap[pagePath].destroy();
 			delete this._itemMap[pagePath];
