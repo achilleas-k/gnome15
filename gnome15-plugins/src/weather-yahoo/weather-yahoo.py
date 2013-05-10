@@ -168,7 +168,7 @@ class YahooWeatherBackend(weather.WeatherBackend):
         handler.close()
         
     def _do_get_weather_data_xml(self):
-        location_id = g15util.get_string_or_default(self.gconf_client, "%s/location_id" % self.gconf_key, "KPEO")
+        location_id = g15util.get_string_or_default(self.gconf_client, "%s/location_id" % self.gconf_key, "2487956")
         p = self._get_weather_from_yahoo(location_id)
         if p is None:
             return None
