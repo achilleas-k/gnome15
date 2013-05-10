@@ -240,7 +240,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 self._weather = backend.get_weather_data()
             else:
                 self._weather = None
-            self._page_properties, self._page_attributes = self._buid_properties()
+            self._page_properties, self._page_attributes = self._build_properties()
         except Exception as e:
             traceback.print_exc(file=sys.stderr)
             self._weather = None
@@ -282,7 +282,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
         t_icon = self._translate_icon(c_icon, f_icon)
         return c_icon, f_icon, t_icon
         
-    def _buid_properties(self):
+    def _build_properties(self):
         properties = {}
         attributes = {}
         use_twenty_four_hour = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True)
