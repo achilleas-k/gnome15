@@ -244,9 +244,9 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
         except Exception as e:
             traceback.print_exc(file=sys.stderr)
             self._weather = None
-            if self.page:
-                self._page_properties = {}
-                self._page_attributes = {}
+            self._page_properties = {}
+            self._page_attributes = {}
+            self._page_properties['message'] = _("Error parsing weather data!")
     
     def get_theme_properties(self):
         return self._page_properties
