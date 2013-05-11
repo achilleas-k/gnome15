@@ -679,6 +679,7 @@ class G15Profile(object):
         self.icon = None
         self.background = None
         self.filename = None
+        self.id = -1
         if profile_id is not None:
             self.set_id(profile_id)
         if file_path is not None:
