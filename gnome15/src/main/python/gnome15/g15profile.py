@@ -1021,7 +1021,7 @@ class G15Profile(object):
         self.mkey_color = {}
         
         # Load macro file
-        if self.id != -1 or filename is not None:
+        if self.id != -1 or filename is not None or fd is not None:
             if ( isinstance(filename, str) or isinstance(filename, unicode) ) and os.path.exists(filename):
                 self.read_only = not os.stat(filename)[0] & stat.S_IWRITE
                 self.parser.readfp(codecs.open(filename, "r", "utf8"))
