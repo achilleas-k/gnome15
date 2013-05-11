@@ -205,9 +205,9 @@ class YahooWeatherBackend(weather.WeatherBackend):
         today_low = None
         today_high = None
         for f in forecasts_el:        
-            condition_code = int(f["code"])
-            high = float(f["high"])
-            low = float(f["low"])
+            condition_code = g15util.to_int_or_none(f["code"])
+            high = g15util.to_float_or_none(f["high"])
+            low = g15util.to_float_or_none(f["low"])
             if today_low is None:
                 today_low = low
                 today_high = high
@@ -226,23 +226,23 @@ class YahooWeatherBackend(weather.WeatherBackend):
         if "astronomy" in p:
             astronomy = p["astronomy"]
             if "sunset" in astronomy:
-                sunset = g15locale.parse_US_time(astronomy["sunset"])
+                sunset = g15locale.parse_US_time_or_none(astronomy["sunset"])
             if "sunrise" in astronomy:
-                sunrise = g15locale.parse_US_time(astronomy["sunrise"])
+                sunrise = g15locale.parse_US_time_or_none(astronomy["sunrise"])
                 
         # Pressure, Visibility and Humidity
         pressure = None
         if "atmosphere" in p:
             atmosphere = p["atmosphere"]
             if "pressure" in atmosphere:
-                pressure = float(atmosphere["pressure"])
+                pressure = g15util.to_float_or_none(atmosphere["pressure"])
             if "visibility" in atmosphere:
-                visibility = float(atmosphere["visibility"])
+                visibility = g15util.to_float_or_none(atmosphere["visibility"])
             if "humidity" in atmosphere:
-                humidity = float(atmosphere["humidity"])
+                humidity = g15util.to_float_or_none(atmosphere["humidity"])
         
         # Build data structure        
-        condition_code = int(condition_el["code"])
+        condition_code = g15util.to_int_or_none(condition_el["code"])
         data = {
             "location" : location,
             "forecasts" : forecasts,
@@ -259,9 +259,9 @@ class YahooWeatherBackend(weather.WeatherBackend):
                 "humidity" : humidity,
                 "low" : today_low,
                 "high" : today_high,
-                "temp_c" : float(condition_el["temp"]),
+                "temp_c" : g15util.to_float_or_none(condition_el["temp"]),
                 "icon" : self._translate_icon(condition_code),
-                "fallback_icon" : "http://l.yimg.com/a/i/us/we/52/%s.gif" % condition_code
+                "fallback_icon" : "http://l.yimg.com/a/i/us/we/52/%s.gif" % condition_code if condition_code is not None else None
             }
         }
                 
