@@ -1234,14 +1234,7 @@ class G15Config:
             profile_dir = g15profile.get_profile_dir(self.selected_device)
             file = zipfile.ZipFile(import_filename, "r")
             
-            # Find the next free id
-            # TODO bit crap
-            profile_id = 0
-            while True:
-                if g15profile.get_profile(self.selected_device, profile_id):
-                    profile_id += 1
-                else:
-                    break
+            profile_id = long(time.time())
             
             try:
                 for info in file.infolist():
