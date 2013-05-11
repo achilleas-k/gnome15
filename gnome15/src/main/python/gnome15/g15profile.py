@@ -227,9 +227,13 @@ def create_profile(profile):
     profile        --    profile to save
     """
     if profile.id == None or profile.id == -1:
-        profile.set_id(long(time.time()))
+        profile.set_id(generate_profile_id())
     logger.info("Creating profile %s, %s" % ( profile.id, profile.name ))
     profile.save()
+
+
+def generate_profile_id():
+    return long(time.time())
     
 def get_profile(device, profile_id):
     """

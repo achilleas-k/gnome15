@@ -1234,7 +1234,7 @@ class G15Config:
             profile_dir = g15profile.get_profile_dir(self.selected_device)
             file = zipfile.ZipFile(import_filename, "r")
             
-            profile_id = long(time.time())
+            profile_id = g15profile.generate_profile_id()
             
             try:
                 for info in file.infolist():
@@ -1470,7 +1470,7 @@ class G15Config:
         dialog.hide()
         if response == 1:
             new_profile_name = self.widget_tree.get_object("NewProfileName").get_text()
-            new_profile = g15profile.G15Profile(self.selected_device, long(time.time()))
+            new_profile = g15profile.G15Profile(self.selected_device, g15profile.generate_profile_id())
             new_profile.name = new_profile_name
             g15profile.create_profile(new_profile)
             self.selected_profile = g15profile.get_profile(self.selected_device, new_profile.id)
@@ -1501,7 +1501,7 @@ class G15Config:
         response = dialog.run()
         dialog.hide()
         if response == 1:            
-            dupe_profile.set_id(long(time.time()))
+            dupe_profile.set_id(g15profile.generate_profile_id())
             dupe_profile.name = self.widget_tree.get_object("CopiedProfileName").get_text()
             dupe_profile.save()
             self.selected_profile = dupe_profile
