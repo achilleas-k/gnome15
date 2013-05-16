@@ -1229,6 +1229,7 @@ class G15Config:
         dialog.set_transient_for(self.main_window)
         self._add_macro_filters(dialog)
         response = dialog.run()
+        dialog.hide()
         if response == gtk.RESPONSE_OK:
             import_filename = dialog.get_filename()
             profile_dir = g15profile.get_profile_dir(self.selected_device)
@@ -1253,6 +1254,14 @@ class G15Config:
                             imported_profile.set_id(profile_id)
                         finally:
                             macro_file.close()
+
+                        if self.selected_device.model_id not in imported_profile.models:
+                            incompatible_profile_dialog = self.widget_tree.get_object("IncompatibleProfileError")
+                            incompatible_profile_dialog_close_button = self.widget_tree.get_object("CloseIncompatibleProfileErrorButton")
+                            incompatible_profile_dialog_close_button.connect("clicked", lambda x: incompatible_profile_dialog.hide())
+                            incompatible_profile_dialog.run()
+                            incompatible_profile_dialog.hide()
+                            break
                             
                         # Find the best new name for the profile
                         new_name = imported_profile.name
