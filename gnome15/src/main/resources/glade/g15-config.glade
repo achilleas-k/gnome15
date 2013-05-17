@@ -3240,7 +3240,7 @@ choose another name.</property>
       <action-widget response="0">button5</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkMessageDialog" id="IncompatibleProfileError">
+  <object class="GtkMessageDialog" id="ImportProfileError">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="modal">True</property>
@@ -3249,8 +3249,8 @@ choose another name.</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="transient_for">MainWindow</property>
     <property name="message_type">error</property>
-    <property name="text" translatable="yes">Incompatible profile</property>
-    <property name="secondary_text" translatable="yes">The profile you imported was made for another device.</property>
+    <property name="text" translatable="yes">Error importing profile</property>
+    <property name="secondary_text" translatable="yes">Error message to display</property>
     <property name="secondary_use_markup">True</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox16">
@@ -3263,7 +3263,7 @@ choose another name.</property>
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <object class="GtkButton" id="CloseIncompatibleProfileErrorButton">
+              <object class="GtkButton" id="ImportProfileErrorCloseButton">
                 <property name="label">gtk-close</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
