@@ -479,7 +479,11 @@ class MPRIS2Player(AbstractMPRISPlayer):
         player_obj = session_bus.get_object(bus_name, '/org/mpris/MediaPlayer2')     
         self.player = dbus.Interface(player_obj, 'org.mpris.MediaPlayer2.Player')                   
         self.player_properties = dbus.Interface(player_obj, 'org.freedesktop.DBus.Properties')
-        props = self.player_properties.GetAll("org.mpris.MediaPlayer2")
+        try:
+            identity = self.player_properties.Get("org.mpris.MediaPlayer2", "Identity")
+        except DBusException:
+            # Set a default identity if we cannot get players identity
+            Identity = "MPRIS2"
         
         # Connect to DBUS     
         self.track_list =  None   
@@ -495,7 +499,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
             logger.info("No TrackList interface")     
         
         # Configure the initial state 
-        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, bus_name, session_bus, props["Identity"] if "Identity" in props else "MPRIS2", theme)
+        AbstractMPRISPlayer.__init__(self, gconf_client, screen, players, bus_name, session_bus, identity, theme)
         
         session_bus.add_signal_receiver(self.properties_changed_handler, dbus_interface = "org.freedesktop.DBus.Properties", signal_name = "PropertiesChanged") 
         session_bus.add_signal_receiver(self.seeked, dbus_interface = "org.mpris.MediaPlayer2.Player", signal_name = "Seeked")
@@ -607,9 +611,9 @@ class MPRIS2Player(AbstractMPRISPlayer):
     def load_song_details(self):
         if not self.stopped:
             logger.info("Getting all song properties")
-            properties = self.player_properties.GetAll("org.mpris.MediaPlayer2.Player")
+            properties = self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Metadata")
             logger.info("Got all song properties")           
-            self.last_properties = dict(properties)
+            self.last_properties = {"Metadata":properties}
             self.load_meta()
         
     def load_meta(self):
