@@ -94,17 +94,25 @@ class Teamspeak3ServerMenuItem(voip.ChannelMenuItem):
         self.schandlerid = schandlerid
         self.activatable = False
         self.radio = False
+        self.path = ""
         
 class Teamspeak3ChannelMenuItem(voip.ChannelMenuItem):
     
-    def __init__(self, schandlerid, cid, name, order, backend):
+    def __init__(self, schandlerid, cid, cpid, name, order, backend):
         voip.ChannelMenuItem.__init__(self, "channel-%s-%d" % (cid, schandlerid), name, backend)
         self.group = False
         self.cid = cid
+        self.cpid = int(cpid)
         self.order = order
         self._backend = backend
         self.schandlerid = schandlerid
-        
+
+        # Set full path of the channel
+        self.path = self.name
+        if self.cpid != 0:
+            parent_item = self.backend._channel_map[self.cpid]
+            self.path = parent_item.path + "/" + self.path
+
     def on_activate(self):
         if self._backend._client.schandlerid != self.schandlerid:
             self._backend._client.change_server(self.schandlerid)
@@ -152,9 +160,9 @@ class Teamspeak3Backend(voip.VoipBackend):
                                 'channelconnectinfo'
                             ))
             if 'path' in reply.args:
-                cn = reply.args['path']
+                channel_path = reply.args['path']
                 for c in self._channels:
-                    if c.name == cn:
+                    if c.path == channel_path:
                         self._current_channel = c
             
         return self._current_channel
@@ -352,6 +360,7 @@ class Teamspeak3Backend(voip.VoipBackend):
         
     def _create_channel_item(self, message, schandlerid):
         item = Teamspeak3ChannelMenuItem(schandlerid, int(message.args['cid']), 
+                                   message.args['cpid'] if 'cpid' in message.args else message.args['pid'],
                                    message.args['channel_name'],
                                    int(message.args['channel_order']), self)
         if 'channel_topic' in message.args:
