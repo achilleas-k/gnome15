@@ -102,7 +102,7 @@ class Teamspeak3ChannelMenuItem(voip.ChannelMenuItem):
         voip.ChannelMenuItem.__init__(self, "channel-%s-%d" % (cid, schandlerid), name, backend)
         self.group = False
         self.cid = cid
-        self.cpid = int(cpid)
+        self.cpid = cpid
         self.order = order
         self._backend = backend
         self.schandlerid = schandlerid
@@ -360,7 +360,7 @@ class Teamspeak3Backend(voip.VoipBackend):
         
     def _create_channel_item(self, message, schandlerid):
         item = Teamspeak3ChannelMenuItem(schandlerid, int(message.args['cid']), 
-                                   message.args['cpid'] if 'cpid' in message.args else message.args['pid'],
+                                   int(message.args['cpid']) if 'cpid' in message.args else int(message.args['pid']),
                                    message.args['channel_name'],
                                    int(message.args['channel_order']), self)
         if 'channel_topic' in message.args:
