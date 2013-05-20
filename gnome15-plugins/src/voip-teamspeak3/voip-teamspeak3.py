@@ -107,11 +107,13 @@ class Teamspeak3ChannelMenuItem(voip.ChannelMenuItem):
         self._backend = backend
         self.schandlerid = schandlerid
 
-        # Set full path of the channel
-        self.path = self.name
+    @property
+    def path(self):
+        result = self.name
         if self.cpid != 0:
             parent_item = self.backend._channel_map[self.cpid]
-            self.path = parent_item.path + "/" + self.path
+            result = parent_item.path + "/" + result
+        return result
 
     def on_activate(self):
         if self._backend._client.schandlerid != self.schandlerid:
