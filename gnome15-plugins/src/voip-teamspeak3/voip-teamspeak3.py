@@ -454,12 +454,37 @@ class Teamspeak3Backend(voip.VoipBackend):
         self._channels.remove(item)
         del self._channel_map[item.cid]
         self._plugin.channel_removed(item)
+
+    def _find_teamspeak3servermenuitem(self, id):
+        matching_items = [ x for x in self._channels if x.schandlerid == id and type(x) is Teamspeak3ServerMenuItem ]
+        if len(matching_items) > 0:
+            return matching_items[0]
+        else:
+            return None
         
     def _parse_notifychannelcreated_reply(self, message):
         item = self._create_channel_item(message, self._client.schandlerid)
-        self._channels.append(item)
+        # Insert the item at the correct position in the menu
+        if item.cpid == 0 and item.order == 0:
+            # If first channel of server
+            position = self._channels.index(self._find_teamspeak3servermenuitem(item.schandlerid)) + 1
+        elif item.order == 0:
+            # If first sub-channel of a channel
+            position = self._channels.index(self._channel_map[item.cpid]) + 1
+        else:
+            # Other cases
+            position = self._channels.index(self._channel_map[item.order]) + 1
+        self._channels.insert(position, item)
         self._channel_map[item.cid] = item
         self._plugin.new_channel(item)
+
+        # Update the following item order if necessary
+        try:
+            next_item = self._channels[position + 1]
+            if next_item.cpid == item.cpid:
+                next_item.order = item.cid
+        except IndexError:
+            pass
     
     def _parse_notifyconnectstatuschange_reply(self, message):
         status = message.args['status']
