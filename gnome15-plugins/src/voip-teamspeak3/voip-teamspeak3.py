@@ -451,6 +451,16 @@ class Teamspeak3Backend(voip.VoipBackend):
         
     def _parse_notifychanneldeleted_reply(self, message):
         item = self._channel_map[int(message.args['cid'])]
+        position = self._channels.index(item)
+
+        # Update the following item order if necessary
+        try:
+            next_item = self._channels[position + 1]
+            if next_item.cpid == item.cpid:
+                next_item.order = item.order
+        except IndexError:
+            pass
+
         self._channels.remove(item)
         del self._channel_map[item.cid]
         self._plugin.channel_removed(item)
