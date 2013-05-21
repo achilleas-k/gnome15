@@ -115,6 +115,19 @@ class Teamspeak3ChannelMenuItem(voip.ChannelMenuItem):
             result = parent_item.path + "/" + result
         return result
 
+    @property
+    def parent_count(self):
+        result = 0
+        if self.cpid != 0:
+            parent_item = self.backend._channel_map[self.cpid]
+            result = 1 + parent_item.parent_count
+        return result
+
+    def get_theme_properties(self):
+        p = voip.ChannelMenuItem.get_theme_properties(self)
+        p["item_name"] = self.parent_count * "  " + p["item_name"]
+        return p
+
     def on_activate(self):
         if self._backend._client.schandlerid != self.schandlerid:
             self._backend._client.change_server(self.schandlerid)
