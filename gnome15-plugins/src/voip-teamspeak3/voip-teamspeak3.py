@@ -516,12 +516,35 @@ class Teamspeak3Backend(voip.VoipBackend):
         self._buddies = items    
         self._buddy_map = item_map    
 
+    def _sort_channellist(self, channels):
+        """
+        Sort the channel list the same way that it's done in TeamSpeak3
+        """
+        result = []
+        search_stack = []
+        # Initialize the search stack with the criteria for the first item (always 0,0)
+        search_stack.append((0, 0))
+        while len(channels) > len(result):
+            search_criteria = search_stack.pop()
+            try:
+                item = channels[search_criteria]
+                result.append(item)
+                search_stack.append((item.cpid, item.cid))
+                search_stack.append((item.cid, 0))
+            except KeyError:
+                continue
+
+        return result
+
     def _parse_channellist_reply(self, message, schandlerid):
+        channels = {}
         for r in message.responses if isinstance(message, ts3.message.MultipartMessage) else [ message ]:
             item = self._create_channel_item(r, schandlerid)
-            self._channels.append(item)
+            channels[item.cpid, item.order] = item
             self._channel_map[item.cid] = item
-        
+
+        self._channels.extend(self._sort_channellist(channels))
+
     def _parse_notifyclientupdated(self, message):
         item = self._buddy_map[int(message.args['clid'])]
         self._update_item_from_message(item, message)
