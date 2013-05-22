@@ -123,6 +123,22 @@ class Teamspeak3ChannelMenuItem(voip.ChannelMenuItem):
             result = 1 + parent_item.parent_count
         return result
 
+    @property
+    def direct_children(self):
+        return [ child for child in self._backend._channels if type(child) is Teamspeak3ChannelMenuItem and child.cpid == self.cid ]
+
+    @property
+    def children(self):
+        children = []
+        for direct_child in self.direct_children:
+            children.append(direct_child)
+            children.extend(direct_child.children)
+        return children
+
+    @property
+    def child_count(self):
+        return len(self.children)
+
     def get_theme_properties(self):
         p = voip.ChannelMenuItem.get_theme_properties(self)
         p["item_name"] = self.parent_count * "  " + p["item_name"]
@@ -444,6 +460,15 @@ class Teamspeak3Backend(voip.VoipBackend):
             item.name = message.args['channel_name']
             if self._current_channel is None:
                 self.get_current_channel()
+
+        # Update the position of the channel in the channel list if it's order has been changed
+        if 'channel_order' in message.args:
+            children = self._remove_channel(item)
+            item.order = int(message.args['channel_order'])
+            self._insert_channel(item)
+            for child in children:
+                self._insert_channel(child)
+
         self._plugin.channel_updated(item)
         
     def _parse_notifyclientpermlist_reply(self, message):
@@ -451,19 +476,27 @@ class Teamspeak3Backend(voip.VoipBackend):
         
     def _parse_notifychanneldeleted_reply(self, message):
         item = self._channel_map[int(message.args['cid'])]
+        self._remove_channel(item)
+        del self._channel_map[item.cid]
+        self._plugin.channel_removed(item)
+
+    def _remove_channel(self, item):
         position = self._channels.index(item)
+        children = item.children
 
         # Update the following item order if necessary
         try:
-            next_item = self._channels[position + 1]
+            next_item = self._channels[position + item.child_count + 1]
             if next_item.cpid == item.cpid:
                 next_item.order = item.order
         except IndexError:
             pass
 
         self._channels.remove(item)
-        del self._channel_map[item.cid]
-        self._plugin.channel_removed(item)
+        for channel in children:
+            self._channels.remove(channel)
+
+        return children
 
     def _find_teamspeak3servermenuitem(self, id):
         matching_items = [ x for x in self._channels if x.schandlerid == id and type(x) is Teamspeak3ServerMenuItem ]
@@ -474,6 +507,11 @@ class Teamspeak3Backend(voip.VoipBackend):
         
     def _parse_notifychannelcreated_reply(self, message):
         item = self._create_channel_item(message, self._client.schandlerid)
+        self._channel_map[item.cid] = item
+        self._insert_channel(item)
+        self._plugin.new_channel(item)
+
+    def _insert_channel(self, item):
         # Insert the item at the correct position in the menu
         if item.cpid == 0 and item.order == 0:
             # If first channel of server
@@ -483,10 +521,9 @@ class Teamspeak3Backend(voip.VoipBackend):
             position = self._channels.index(self._channel_map[item.cpid]) + 1
         else:
             # Other cases
-            position = self._channels.index(self._channel_map[item.order]) + 1
+            future_previous_item = self._channel_map[item.order]
+            position = self._channels.index(future_previous_item) + future_previous_item.child_count + 1
         self._channels.insert(position, item)
-        self._channel_map[item.cid] = item
-        self._plugin.new_channel(item)
 
         # Update the following item order if necessary
         try:
