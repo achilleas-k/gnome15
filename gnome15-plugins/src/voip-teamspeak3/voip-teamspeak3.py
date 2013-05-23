@@ -475,9 +475,11 @@ class Teamspeak3Backend(voip.VoipBackend):
         pass
         
     def _parse_notifychanneldeleted_reply(self, message):
-        item = self._channel_map[int(message.args['cid'])]
-        self._remove_channel(item)
+        item = self._channel_map[int(message.args['cid'][-1] if type(message.args['cid']) is tuple else message.args['cid'])]
+        children = self._remove_channel(item)
         del self._channel_map[item.cid]
+        for child in children:
+            del self._channel_map[child.cid]
         self._plugin.channel_removed(item)
 
     def _remove_channel(self, item):
