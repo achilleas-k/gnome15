@@ -375,6 +375,8 @@ class Teamspeak3Backend(voip.VoipBackend):
                 self._parse_notifychanneledited_reply(message)
             elif message.command == 'notifychanneldeleted':
                 self._parse_notifychanneldeleted_reply(message)
+            elif message.command == 'notifychannelmoved':
+                self._parse_notifychannelmoved_reply(message)
             elif message.command == 'notifycurrentserverconnectionchanged':
                 self._parse_notifycurrentserverconnectionchanged_reply(message)
                 
@@ -481,6 +483,18 @@ class Teamspeak3Backend(voip.VoipBackend):
         for child in children:
             del self._channel_map[child.cid]
         self._plugin.channel_removed(item)
+
+    def _parse_notifychannelmoved_reply(self, message):
+        item = self._channel_map[int(message.args['cid'])]
+
+        children = self._remove_channel(item)
+        item.order = int(message.args['order'])
+        item.cpid = int(message.args['cpid'])
+        self._insert_channel(item)
+        for child in children:
+            self._insert_channel(child)
+
+        self._plugin.channel_moved(item)
 
     def _remove_channel(self, item):
         position = self._channels.index(item)

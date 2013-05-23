@@ -562,6 +562,15 @@ class G15Voip(g15plugin.G15MenuPlugin):
         """        
         self.redraw() 
         
+    def channel_moved(self, channel_item):
+        """
+        A channel has been moved
+
+        Keyword arugments:
+        channel_item            -- channel menu item object
+        """
+        self.redraw()
+
     def moved_channels(self, buddy_item, old_channel, new_channel):
         """
         A buddy has moved channels
