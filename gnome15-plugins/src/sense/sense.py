@@ -294,7 +294,8 @@ class NvidiaSource():
         self.name = "NVidia"
         
     def get_sensors(self):
-        return [Sensor(TEMPERATURE, "GPUCoreTemp", int(self.getstatusoutput("nvidia-settings -q GPUCoreTemp -t")[1]))]
+        status, value = self.getstatusoutput("nvidia-settings -q GPUCoreTemp -t")
+        return [Sensor(TEMPERATURE, "GPUCoreTemp", int(value.split('\n')[0]))]
     
     def getstatusoutput(self, cmd):
         pipe = os.popen('{ ' + cmd + '; } 2>/dev/null', 'r')
