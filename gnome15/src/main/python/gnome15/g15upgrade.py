@@ -70,7 +70,7 @@ def version_0_x_0_to_0_7_0():
                 for device in devices:
                     device_dir = os.path.join(macros_dir, device.uid)
                     if not os.path.exists(device_dir):
-                        logger.info("Creating macro_profile directory for " % device.uid)
+                        logger.info("Creating macro_profile directory for %s" % device.uid)
                         os.mkdir(device_dir)
                     logger.info("Copying macro_profile %s to %s " % ( file, device.uid ))
                     shutil.copyfile(profile_file, os.path.join(device_dir, file))
