@@ -62,6 +62,8 @@ CELSIUS=0
 FARANHEIT=1
 KELVIN=2
 
+DEFAULT_UPDATE_INTERVAL = 60 # minutes
+
 def create(gconf_key, gconf_client, screen):
     return G15Weather(gconf_key, gconf_client, screen)
 
@@ -135,7 +137,7 @@ class G15WeatherPreferences():
         self._load_options_for_source()
         
         update = self._widget_tree.get_object("UpdateAdjustment")
-        update.set_value(gconf_client.get_int(gconf_key + "/update"))
+        update.set_value(g15util.get_int_or_default(gconf_client, gconf_key + "/update", DEFAULT_UPDATE_INTERVAL))
         update.connect("value-changed", self._value_changed, update, gconf_key + "/update")
         
         unit = self._widget_tree.get_object("UnitCombo")
@@ -260,9 +262,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
     """
     
     def _load_config(self):        
-        val = self.gconf_client.get_int(self.gconf_key + "/update")
-        if val == 0:
-            val = 3600
+        val = g15util.get_int_or_default(self.gconf_client, self.gconf_key + "/update", DEFAULT_UPDATE_INTERVAL)
         self.refresh_interval = val * 60.0
         
     def _loc_changed(self, client, connection_id, entry, args):
