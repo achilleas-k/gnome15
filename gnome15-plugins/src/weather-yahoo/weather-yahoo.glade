@@ -34,9 +34,6 @@
               <object class="GtkEntry" id="LocationID">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="tooltip_text" translatable="yes">You may enter a hostname or IP address to use the
-default port, or suffix the hostname with a colon and
-the port number, e.g. mail.mycompany.com:110</property>
                 <property name="invisible_char">●</property>
                 <property name="primary_icon_activatable">False</property>
                 <property name="secondary_icon_activatable">False</property>

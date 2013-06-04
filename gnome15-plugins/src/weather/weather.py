@@ -2,7 +2,8 @@
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
-#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        | Copyright (c) 2010-2012 Brett Smith <tanktarta@blueyonder.co.uk>            |
+#        | Copyright (c) Nuno Araujo <nuno.araujo@russo79.com>                         |
 #        |                                                                             |
 #        | This program is free software; you can redistribute it and/or               |
 #        | modify it under the terms of the GNU General Public License                 |
@@ -60,6 +61,8 @@ This simple plugin displays the current weather at a location
 CELSIUS=0
 FARANHEIT=1
 KELVIN=2
+
+DEFAULT_UPDATE_INTERVAL = 60 # minutes
 
 def create(gconf_key, gconf_client, screen):
     return G15Weather(gconf_key, gconf_client, screen)
@@ -134,7 +137,7 @@ class G15WeatherPreferences():
         self._load_options_for_source()
         
         update = self._widget_tree.get_object("UpdateAdjustment")
-        update.set_value(gconf_client.get_int(gconf_key + "/update"))
+        update.set_value(g15util.get_int_or_default(gconf_client, gconf_key + "/update", DEFAULT_UPDATE_INTERVAL))
         update.connect("value-changed", self._value_changed, update, gconf_key + "/update")
         
         unit = self._widget_tree.get_object("UnitCombo")
@@ -240,13 +243,13 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 self._weather = backend.get_weather_data()
             else:
                 self._weather = None
-            self._page_properties, self._page_attributes = self._buid_properties()
+            self._page_properties, self._page_attributes = self._build_properties()
         except Exception as e:
             traceback.print_exc(file=sys.stderr)
             self._weather = None
-            if self.page:
-                self._page_properties = {}
-                self._page_attributes = {}
+            self._page_properties = {}
+            self._page_attributes = {}
+            self._page_properties['message'] = _("Error parsing weather data!")
     
     def get_theme_properties(self):
         return self._page_properties
@@ -259,9 +262,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
     """
     
     def _load_config(self):        
-        val = self.gconf_client.get_int(self.gconf_key + "/update")
-        if val == 0:
-            val = 3600
+        val = g15util.get_int_or_default(self.gconf_client, self.gconf_key + "/update", DEFAULT_UPDATE_INTERVAL)
         self.refresh_interval = val * 60.0
         
     def _loc_changed(self, client, connection_id, entry, args):
@@ -282,7 +283,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
         t_icon = self._translate_icon(c_icon, f_icon)
         return c_icon, f_icon, t_icon
         
-    def _buid_properties(self):
+    def _build_properties(self):
         properties = {}
         attributes = {}
         use_twenty_four_hour = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True)
@@ -313,15 +314,15 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                     attributes["mono_thumb_icon"] = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
                 properties["condition"] = current['condition']
                 
-                temp_c = float(current['temp_c'])
-                if temp_c is not None :
+                temp_c = g15util.to_float_or_none(current['temp_c'])
+                if temp_c is not None:
                     temp_f = c_to_f(temp_c)
                     temp_k = c_to_k(temp_c)
-                low_c = float(current['low']) if 'low' in current else None
+                low_c = g15util.to_float_or_none(current['low']) if 'low' in current else None
                 if low_c is not None :
                     low_f = c_to_f(low_c)
                     low_k = c_to_k(low_c)
-                high_c  = float(current['high']) if 'high' in current else None
+                high_c  = g15util.to_float_or_none(current['high']) if 'high' in current else None
                 if high_c is not None :
                     high_f  = c_to_f(high_c)
                     high_k = c_to_k(high_c)
@@ -339,8 +340,8 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 units = self.gconf_client.get_int(self.gconf_key + "/units")
                 if units == CELSIUS:      
                     unit = "C"           
-                    properties["temp"] = properties["temp_c"] if temp_c else ""
-                    properties["temp_short"] = "%2.0f°" % temp_c                 
+                    properties["temp"] = properties["temp_c"]
+                    properties["temp_short"] = "%2.0f°" % temp_c if temp_c else ""
                     properties["hi"] = properties["hi_c"]
                     properties["hi_short"] = "%2.0f°" % high_c if high_c else ""                 
                     properties["lo"] = properties["lo_c"]
@@ -369,7 +370,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 wind = g15util.append_if_exists(current, "wind_direction", wind, "%sdeg")
                 properties["wind"] =  wind 
                 
-                # Pressure
+                # Visibility
                 visibility = g15util.append_if_exists(current, "visibility", "", "%sM")
                 properties["visibility"] =  visibility
                 
@@ -414,12 +415,14 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                     for forecast in self._weather['forecasts']:        
                         properties["condition" + str(y)] = forecast['condition']
                         
-                        lo_c = float(forecast['low'])
-                        lo_f = c_to_f(temp_c)
-                        lo_k = c_to_k(temp_c)
-                        hi_c = float(forecast['high'])
-                        hi_f = c_to_f(hi_c)
-                        hi_k = c_to_k(hi_c) 
+                        lo_c = g15util.to_float_or_none(forecast['low'])
+                        if lo_c is not None:
+                            lo_f = c_to_f(temp_c)
+                            lo_k = c_to_k(temp_c)
+                        hi_c = g15util.to_float_or_none(forecast['high'])
+                        if hi_c is not None:
+                            hi_f = c_to_f(hi_c)
+                            hi_k = c_to_k(hi_c)
                         
                         if units == CELSIUS:                 
                             properties["hi" + str(y)] = "%3.0f°C" % hi_c

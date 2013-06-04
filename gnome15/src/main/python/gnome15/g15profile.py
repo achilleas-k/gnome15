@@ -227,9 +227,13 @@ def create_profile(profile):
     profile        --    profile to save
     """
     if profile.id == None or profile.id == -1:
-        profile.set_id(long(time.time()))
+        profile.set_id(generate_profile_id())
     logger.info("Creating profile %s, %s" % ( profile.id, profile.name ))
     profile.save()
+
+
+def generate_profile_id():
+    return long(time.time())
     
 def get_profile(device, profile_id):
     """
@@ -679,6 +683,7 @@ class G15Profile(object):
         self.icon = None
         self.background = None
         self.filename = None
+        self.id = -1
         if profile_id is not None:
             self.set_id(profile_id)
         if file_path is not None:
@@ -1020,7 +1025,7 @@ class G15Profile(object):
         self.mkey_color = {}
         
         # Load macro file
-        if self.id != -1 or filename is not None:
+        if self.id != -1 or filename is not None or fd is not None:
             if ( isinstance(filename, str) or isinstance(filename, unicode) ) and os.path.exists(filename):
                 self.read_only = not os.stat(filename)[0] & stat.S_IWRITE
                 self.parser.readfp(codecs.open(filename, "r", "utf8"))

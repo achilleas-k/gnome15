@@ -94,17 +94,56 @@ class Teamspeak3ServerMenuItem(voip.ChannelMenuItem):
         self.schandlerid = schandlerid
         self.activatable = False
         self.radio = False
+        self.path = ""
         
 class Teamspeak3ChannelMenuItem(voip.ChannelMenuItem):
     
-    def __init__(self, schandlerid, cid, name, order, backend):
+    def __init__(self, schandlerid, cid, cpid, name, order, backend):
         voip.ChannelMenuItem.__init__(self, "channel-%s-%d" % (cid, schandlerid), name, backend)
         self.group = False
         self.cid = cid
+        self.cpid = cpid
         self.order = order
         self._backend = backend
         self.schandlerid = schandlerid
-        
+
+    @property
+    def path(self):
+        result = self.name
+        if self.cpid != 0:
+            parent_item = self.backend._channel_map[self.cpid]
+            result = parent_item.path + "/" + result
+        return result
+
+    @property
+    def parent_count(self):
+        result = 0
+        if self.cpid != 0:
+            parent_item = self.backend._channel_map[self.cpid]
+            result = 1 + parent_item.parent_count
+        return result
+
+    @property
+    def direct_children(self):
+        return [ child for child in self._backend._channels if type(child) is Teamspeak3ChannelMenuItem and child.cpid == self.cid ]
+
+    @property
+    def children(self):
+        children = []
+        for direct_child in self.direct_children:
+            children.append(direct_child)
+            children.extend(direct_child.children)
+        return children
+
+    @property
+    def child_count(self):
+        return len(self.children)
+
+    def get_theme_properties(self):
+        p = voip.ChannelMenuItem.get_theme_properties(self)
+        p["item_name"] = self.parent_count * "  " + p["item_name"]
+        return p
+
     def on_activate(self):
         if self._backend._client.schandlerid != self.schandlerid:
             self._backend._client.change_server(self.schandlerid)
@@ -152,9 +191,9 @@ class Teamspeak3Backend(voip.VoipBackend):
                                 'channelconnectinfo'
                             ))
             if 'path' in reply.args:
-                cn = reply.args['path']
+                channel_path = reply.args['path']
                 for c in self._channels:
-                    if c.name == cn:
+                    if c.path == channel_path:
                         self._current_channel = c
             
         return self._current_channel
@@ -336,6 +375,8 @@ class Teamspeak3Backend(voip.VoipBackend):
                 self._parse_notifychanneledited_reply(message)
             elif message.command == 'notifychanneldeleted':
                 self._parse_notifychanneldeleted_reply(message)
+            elif message.command == 'notifychannelmoved':
+                self._parse_notifychannelmoved_reply(message)
             elif message.command == 'notifycurrentserverconnectionchanged':
                 self._parse_notifycurrentserverconnectionchanged_reply(message)
                 
@@ -352,6 +393,7 @@ class Teamspeak3Backend(voip.VoipBackend):
         
     def _create_channel_item(self, message, schandlerid):
         item = Teamspeak3ChannelMenuItem(schandlerid, int(message.args['cid']), 
+                                   int(message.args['cpid']) if 'cpid' in message.args else int(message.args['pid']),
                                    message.args['channel_name'],
                                    int(message.args['channel_order']), self)
         if 'channel_topic' in message.args:
@@ -420,22 +462,92 @@ class Teamspeak3Backend(voip.VoipBackend):
             item.name = message.args['channel_name']
             if self._current_channel is None:
                 self.get_current_channel()
+
+        # Update the position of the channel in the channel list if it's order has been changed
+        if 'channel_order' in message.args:
+            children = self._remove_channel(item)
+            item.order = int(message.args['channel_order'])
+            self._insert_channel(item)
+            for child in children:
+                self._insert_channel(child)
+
         self._plugin.channel_updated(item)
         
     def _parse_notifyclientpermlist_reply(self, message):
         pass
         
     def _parse_notifychanneldeleted_reply(self, message):
-        item = self._channel_map[int(message.args['cid'])]
-        self._channels.remove(item)
+        item = self._channel_map[int(message.args['cid'][-1] if type(message.args['cid']) is tuple else message.args['cid'])]
+        children = self._remove_channel(item)
         del self._channel_map[item.cid]
+        for child in children:
+            del self._channel_map[child.cid]
         self._plugin.channel_removed(item)
+
+    def _parse_notifychannelmoved_reply(self, message):
+        item = self._channel_map[int(message.args['cid'])]
+
+        children = self._remove_channel(item)
+        item.order = int(message.args['order'])
+        item.cpid = int(message.args['cpid'])
+        self._insert_channel(item)
+        for child in children:
+            self._insert_channel(child)
+
+        self._plugin.channel_moved(item)
+
+    def _remove_channel(self, item):
+        position = self._channels.index(item)
+        children = item.children
+
+        # Update the following item order if necessary
+        try:
+            next_item = self._channels[position + item.child_count + 1]
+            if next_item.cpid == item.cpid:
+                next_item.order = item.order
+        except IndexError:
+            pass
+
+        self._channels.remove(item)
+        for channel in children:
+            self._channels.remove(channel)
+
+        return children
+
+    def _find_teamspeak3servermenuitem(self, id):
+        matching_items = [ x for x in self._channels if x.schandlerid == id and type(x) is Teamspeak3ServerMenuItem ]
+        if len(matching_items) > 0:
+            return matching_items[0]
+        else:
+            return None
         
     def _parse_notifychannelcreated_reply(self, message):
         item = self._create_channel_item(message, self._client.schandlerid)
-        self._channels.append(item)
         self._channel_map[item.cid] = item
+        self._insert_channel(item)
         self._plugin.new_channel(item)
+
+    def _insert_channel(self, item):
+        # Insert the item at the correct position in the menu
+        if item.cpid == 0 and item.order == 0:
+            # If first channel of server
+            position = self._channels.index(self._find_teamspeak3servermenuitem(item.schandlerid)) + 1
+        elif item.order == 0:
+            # If first sub-channel of a channel
+            position = self._channels.index(self._channel_map[item.cpid]) + 1
+        else:
+            # Other cases
+            future_previous_item = self._channel_map[item.order]
+            position = self._channels.index(future_previous_item) + future_previous_item.child_count + 1
+        self._channels.insert(position, item)
+
+        # Update the following item order if necessary
+        try:
+            next_item = self._channels[position + 1]
+            if next_item.cpid == item.cpid:
+                next_item.order = item.cid
+        except IndexError:
+            pass
     
     def _parse_notifyconnectstatuschange_reply(self, message):
         status = message.args['status']
@@ -492,12 +604,35 @@ class Teamspeak3Backend(voip.VoipBackend):
         self._buddies = items    
         self._buddy_map = item_map    
 
+    def _sort_channellist(self, channels):
+        """
+        Sort the channel list the same way that it's done in TeamSpeak3
+        """
+        result = []
+        search_stack = []
+        # Initialize the search stack with the criteria for the first item (always 0,0)
+        search_stack.append((0, 0))
+        while len(channels) > len(result):
+            search_criteria = search_stack.pop()
+            try:
+                item = channels[search_criteria]
+                result.append(item)
+                search_stack.append((item.cpid, item.cid))
+                search_stack.append((item.cid, 0))
+            except KeyError:
+                continue
+
+        return result
+
     def _parse_channellist_reply(self, message, schandlerid):
+        channels = {}
         for r in message.responses if isinstance(message, ts3.message.MultipartMessage) else [ message ]:
             item = self._create_channel_item(r, schandlerid)
-            self._channels.append(item)
+            channels[item.cpid, item.order] = item
             self._channel_map[item.cid] = item
-        
+
+        self._channels.extend(self._sort_channellist(channels))
+
     def _parse_notifyclientupdated(self, message):
         item = self._buddy_map[int(message.args['clid'])]
         self._update_item_from_message(item, message)

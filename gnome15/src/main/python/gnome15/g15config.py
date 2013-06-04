@@ -1229,38 +1229,51 @@ class G15Config:
         dialog.set_transient_for(self.main_window)
         self._add_macro_filters(dialog)
         response = dialog.run()
+        dialog.hide()
         if response == gtk.RESPONSE_OK:
             import_filename = dialog.get_filename()
             profile_dir = g15profile.get_profile_dir(self.selected_device)
             file = zipfile.ZipFile(import_filename, "r")
             
-            # Find the next free id
-            # TODO bit crap
-            profile_id = 0
-            while True:
-                if g15profile.get_profile(self.selected_device, profile_id):
-                    profile_id += 1
-                else:
-                    break
+            profile_id = g15profile.generate_profile_id()
             
             try:
-                for info in file.infolist():
-                    file_split = info.filename.split(".", 1)
-                    dest_name = info.filename
+                everything_ok = False
+                error = ""
+
+                zip_contents = file.namelist();
+
+                # Check if there is a macro file
+                macro_filename = ""
+                for filename in zip_contents:
+                    if filename.endswith(".macros"):
+                        everything_ok = True
+                        macro_filename = filename
+                        break
+                else:
+                    error = "Invalid archive (missing .macros file)"
+
+                if everything_ok:
+                    # Parse and handle the macro file
+                    file_split = macro_filename.split(".", 1)
                         
                     dest_name = "%d.%s" % ( profile_id, file_split[1])
                     
-                    if dest_name.endswith(".macros"):
-                        # Read the profile so we can adjust for the new environment
-                        profiles = g15profile.get_profiles(self.selected_device)
-                        macro_file = file.open(info.filename, 'r')
-                        try:
-                            imported_profile = g15profile.G15Profile(self.selected_device)
-                            imported_profile.load(None, macro_file)
-                            imported_profile.set_id(profile_id)
-                        finally:
-                            macro_file.close()
-                            
+                    # Read the profile so we can adjust for the new environment
+                    profiles = g15profile.get_profiles(self.selected_device)
+                    macro_file = file.open(macro_filename, 'r')
+                    try:
+                        imported_profile = g15profile.G15Profile(self.selected_device)
+                        imported_profile.load(None, macro_file)
+                        imported_profile.set_id(profile_id)
+                    finally:
+                        macro_file.close()
+
+                    if self.selected_device.model_id not in imported_profile.models:
+                        everything_ok = False
+                        error = "The profile you imported was made for another device."
+
+                    if everything_ok:
                         # Find the best new name for the profile
                         new_name = imported_profile.name
                         idx = 1
@@ -1285,19 +1298,36 @@ class G15Config:
                             
                         # Actually save
                         g15profile.create_profile(imported_profile)
-                    else:
-                        # Just extract all other files                        
-                        dest_dir = os.path.join(profile_dir, os.path.dirname(dest_name))
-                        g15util.mkdir_p(dest_dir)
-                        macro_file = file.open(info.filename, 'r')
-                        try:
-                            out_file = open(os.path.join(dest_dir, os.path.basename(dest_name)), 'w')
-                            try:
-                                out_file.write(macro_file.read())
-                            finally:
-                                out_file.close()
-                        finally:
-                            macro_file.close()
+
+                        # Import the other files
+                        for filename in zip_contents:
+                            file_split = filename.split(".", 1)
+
+                            dest_name = "%d.%s" % ( profile_id, file_split[1])
+
+                            if not dest_name.endswith(".macros"):
+                                # Just extract all other files
+                                dest_dir = os.path.join(profile_dir, os.path.dirname(dest_name))
+                                g15util.mkdir_p(dest_dir)
+                                macro_file = file.open(filename, 'r')
+                                try:
+                                    out_file = open(os.path.join(dest_dir, os.path.basename(dest_name)), 'w')
+                                    try:
+                                        out_file.write(macro_file.read())
+                                    finally:
+                                        out_file.close()
+                                finally:
+                                    macro_file.close()
+
+                # If there was an error when importing display an error message
+                if not everything_ok:
+                    import_profile_error_dialog = self.widget_tree.get_object("ImportProfileError")
+                    import_profile_error_dialog.set_transient_for(self.main_window)
+                    import_profile_error_dialog.format_secondary_text(error)
+                    import_profile_error_dialog_close_button = self.widget_tree.get_object("ImportProfileErrorCloseButton")
+                    import_profile_error_dialog_close_button.connect("clicked", lambda x: import_profile_error_dialog.hide())
+                    import_profile_error_dialog.run()
+
             finally:
                 file.close()
             
@@ -1477,7 +1507,7 @@ class G15Config:
         dialog.hide()
         if response == 1:
             new_profile_name = self.widget_tree.get_object("NewProfileName").get_text()
-            new_profile = g15profile.G15Profile(self.selected_device, long(time.time()))
+            new_profile = g15profile.G15Profile(self.selected_device, g15profile.generate_profile_id())
             new_profile.name = new_profile_name
             g15profile.create_profile(new_profile)
             self.selected_profile = g15profile.get_profile(self.selected_device, new_profile.id)
@@ -1508,7 +1538,7 @@ class G15Config:
         response = dialog.run()
         dialog.hide()
         if response == 1:            
-            dupe_profile.set_id(long(time.time()))
+            dupe_profile.set_id(g15profile.generate_profile_id())
             dupe_profile.name = self.widget_tree.get_object("CopiedProfileName").get_text()
             dupe_profile.save()
             self.selected_profile = dupe_profile

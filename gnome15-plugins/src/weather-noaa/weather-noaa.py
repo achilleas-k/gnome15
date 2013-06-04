@@ -1,7 +1,8 @@
 #        +-----------------------------------------------------------------------------+
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
-#        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        | Copyright (c) 2010-2012 Brett Smith <tanktarta@blueyonder.co.uk>            |
+#        | Copyright (c) Nuno Araujo <nuno.araujo@russo79.com>                         |
 #        |                                                                             |
 #        | This program is free software; you can redistribute it and/or               |
 #        | modify it under the terms of the GNU General Public License                 |
@@ -91,14 +92,14 @@ class NOAAWeatherBackend(weather.WeatherBackend):
             "location" : p["location"],
             "datetime" : datetime.datetime.fromtimestamp(time.mktime(tm)),
             "current_conditions" : {
-                "wind_speed" : int(weather.mph_to_kph(float(p["wind_mph"]))) if "wind_mph" in p else None,
-                "wind_direction" : int(p["wind_degrees"]) if "wind_degrees" in p else None,
+                "wind_speed" : g15util.to_int_or_none(weather.mph_to_kph(float(p["wind_mph"]))) if "wind_mph" in p else None,
+                "wind_direction" : g15util.to_int_or_none(p["wind_degrees"]) if "wind_degrees" in p else None,
                 "pressure" : p["pressure_mb"] if "pressure_mb" in p else None,
                 "humidity" : p["relative_humidity"] if "relative_humidity" in p else None,
-                "condition" : p["weather"],
-                "temp_c" : p["temp_c"],
-                "icon" : self._get_icon(p["icon_url_name"]),
-                "fallback_icon" : "http://w1.weather.gov/images/fcicons/%s" % ( "%s.jpg" % os.path.splitext(p["icon_url_name"])[0] )
+                "condition" : p["weather"] if "weather" in p else None,
+                "temp_c" : p["temp_c"] if "temp_c" in p else None,
+                "icon" : self._get_icon(p["icon_url_name"]) if "icon_url_name" in p else None,
+                "fallback_icon" : "http://w1.weather.gov/images/fcicons/%s" % ( "%s.jpg" % os.path.splitext(p["icon_url_name"])[0] ) if "icon_url_name" in p else None
             }
         }
                 

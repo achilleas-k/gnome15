@@ -1,11 +1,12 @@
 {
 	"shell-version": [
 		"3.4",
-		"3.6"
+		"3.6",
+		"3.8"
 	], 
 	"uuid": "gnome15-shell-extension@gnome15.org", 
 	"name": "Logitech Keyboard", 
 	"description": "Configure and control Logitech Keyboards such as G15, G19, G13 as well as other devices such as G35 headphones, Z10 speakers and moref",
-	"url": "http://www.gnome15.org",
+	"url": "http://www.russo79.com/gnome15",
 	"extension-id": "gnome15-shell-extension"
 }

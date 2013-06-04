@@ -2,6 +2,7 @@
 ##
 ## Copyright (C), all rights reserved:
 ##      2010 Brett Smith <tanktarta@blueyonder.co.uk>
+##      2013 Nuno Araujo <nuno.araujo@russo79.com>
 ##
 ## This program is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU General Public License version 2
@@ -1014,3 +1015,20 @@ def parse_as_properties(properties_string):
         if len(a) > 1:
             d[a[0]] = a[1]
     return d
+
+"""
+Number utilities
+"""
+
+def to_int_or_none(s):
+    try:
+        return int(s)
+    except (ValueError, TypeError):
+        return None
+
+def to_float_or_none(s):
+    try:
+        return float(s)
+    except (ValueError, TypeError):
+        return None
+

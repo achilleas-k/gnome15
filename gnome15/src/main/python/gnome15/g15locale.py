@@ -224,6 +224,12 @@ def parse_US_time(time_val):
         hour = hour + 12
     return time.struct_time((1900, 1, 1, hour, minute, 0, 0, 1, -1))
 
+def parse_US_time_or_none(time_val):
+    try:
+        return parse_US_time(time_val)
+    except:
+        return None
+
 """
 Private
 """
