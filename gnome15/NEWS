@@ -1,3 +1,27 @@
+gnome15 0.9.4 (2013-06-04)
+==========================
+
+This is an "unofficial" release of Gnome15.
+There was no news from the original author since almost
+six months now.
+
+Changes since 0.9.3:
+
+* https://projects.russo79.com/issues/196
+
+Bugs fixed in this release:
+
+* https://projects.russo79.com/issues/186
+* https://projects.russo79.com/issues/192
+* https://projects.russo79.com/issues/211
+* https://projects.russo79.com/issues/160
+* https://projects.russo79.com/issues/162
+* https://projects.russo79.com/issues/167
+
+Under the hood changes for this release:
+
+* https://projects.russo79.com/issues/193
+
 gnome15 0.9.3 (2013-04-29)
 ==========================
 
