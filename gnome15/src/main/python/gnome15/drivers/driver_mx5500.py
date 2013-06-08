@@ -27,6 +27,7 @@ keyboard
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gtk
 import os.path
 import socket
@@ -317,7 +318,7 @@ class Driver(g15driver.AbstractDriver):
     def config_changed(self, client, connection_id, entry, args):
         if self.change_timer != None:
             self.change_timer.cancel()
-        self.change_timer = g15util.schedule("ChangeG15DaemonConfiguration", 3.0, self.update_conf)
+        self.change_timer = g15scheduler.schedule("ChangeG15DaemonConfiguration", 3.0, self.update_conf)
         
     def update_conf(self):
         logger.info("Configuration changed")

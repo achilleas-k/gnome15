@@ -20,6 +20,7 @@
  
 import gnome15.g15screen as g15screen  
 import gnome15.g15util as g15util  
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
 import gobject
@@ -260,7 +261,7 @@ class G15Impulse():
         if self.timer != None:
             self.timer.cancel()
             self.timer = None
-        g15util.clear_jobs("impulseQueue")
+        g15scheduler.clear_jobs("impulseQueue")
         
     def destroy(self):
         pass
@@ -304,12 +305,12 @@ class G15Impulse():
             next_tick = self.refresh_interval
             if self.painter.is_idle():
                 next_tick = 1.0
-            self.timer = g15util.queue("impulseQueue", "ImpulseRedraw", next_tick, self.redraw)
+            self.timer = g15scheduler.queue("impulseQueue", "ImpulseRedraw", next_tick, self.redraw)
         
     def _config_changed(self, client, connection_id, entry, args):
         if self.config_change_timer is not None:
             self.config_change_timer.cancel()
-        self.config_change_timer = g15util.schedule("ConfigReload", 1, self._do_config_changed)
+        self.config_change_timer = g15scheduler.schedule("ConfigReload", 1, self._do_config_changed)
         
     def _do_config_changed(self):
         self.stop_redraw()

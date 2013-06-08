@@ -37,6 +37,7 @@ import g15driver
 import traceback
 import gconf
 import g15util
+import g15scheduler
 import Xlib.X 
 import Xlib.ext
 import Xlib.XK
@@ -161,7 +162,7 @@ class MacroHandler(object):
         Handle raw keys. We use this to complete any macros waiting for another
         key events
         """
-        g15util.queue(MACRO_HANDLER_QUEUE, "HandleMacro", 0, self._do_handle_key, keys, state_id, post)
+        g15scheduler.queue(MACRO_HANDLER_QUEUE, "HandleMacro", 0, self._do_handle_key, keys, state_id, post)
         
     def handle_macro(self, macro):  
         """
@@ -173,7 +174,7 @@ class MacroHandler(object):
         Keyword arguments:
         macro            -- macro to handle
         """              
-        g15util.queue(MACRO_HANDLER_QUEUE, "HandleMacro", 0, self._do_handle, macro)
+        g15scheduler.queue(MACRO_HANDLER_QUEUE, "HandleMacro", 0, self._do_handle, macro)
         
     def get_x_display(self):
         self.init_xtest()
@@ -646,10 +647,10 @@ class G15Service(g15desktop.G15AbstractService):
         self.shutting_down = True
         self.global_plugins.destroy()
         self.stop(quickly)
-        g15util.stop_queue(MACRO_HANDLER_QUEUE)
-        g15util.stop_queue(SERVICE_QUEUE)   
+        g15scheduler.stop_queue(MACRO_HANDLER_QUEUE)
+        g15scheduler.stop_queue(SERVICE_QUEUE)
         logger.info("Stopping all schedulers")
-        g15util.stop_all_schedulers()
+        g15scheduler.stop_all_schedulers()
         for listener in self.service_listeners:
             listener.service_stopped()
         logger.info("Quiting loop")
@@ -937,7 +938,7 @@ class G15Service(g15desktop.G15AbstractService):
             def e():
                 self.stop()
                 self._sm_client_dbus_will_quit(True, "")
-            g15util.queue(SERVICE_QUEUE, "endSession", 0.0, e)
+            g15scheduler.queue(SERVICE_QUEUE, "endSession", 0.0, e)
     
     def _sm_client_dbus_will_quit(self, can_quit=True, reason=""):
         self.session_manager_client_object.EndSessionResponse(can_quit,reason)
@@ -957,7 +958,7 @@ class G15Service(g15desktop.G15AbstractService):
                 logger.info("g15-desktop service is running on the active session")
             else:
                 logger.info("g15-desktop service is NOT running on the active session")
-            g15util.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
+            g15scheduler.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
         
     def _configure_window_monitoring(self):
         logger.info("Attempting to set up BAMF")
@@ -1012,7 +1013,7 @@ class G15Service(g15desktop.G15AbstractService):
                 page.mark_dirty()
             
     def _device_enabled_configuration_changed(self, client, connection_id, entry, device):
-        g15util.queue(SERVICE_QUEUE, "deviceStateChanged", 0, self._check_device_state, device)
+        g15scheduler.queue(SERVICE_QUEUE, "deviceStateChanged", 0, self._check_device_state, device)
         
     def _check_device_state(self, device, quickly = False):
         enabled = device in self.devices and g15devices.is_enabled(self.conf_client, device) and self.session_active

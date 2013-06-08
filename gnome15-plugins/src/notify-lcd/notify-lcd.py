@@ -24,6 +24,7 @@ _ = g15locale.get_translation("notify-lcd", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15globals as pglobals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -568,7 +569,7 @@ class G15NotifyLCD():
     def _do_redraw(self):
         if self._page != None:
             self._screen.redraw(self._page)
-            self._redraw_timer = g15util.schedule("Notification", self._screen.service.animation_delay, self._do_redraw)
+            self._redraw_timer = g15scheduler.schedule("Notification", self._screen.service.animation_delay, self._do_redraw)
           
     def _cancel_redraw(self):
         if self._redraw_timer != None:
@@ -605,5 +606,5 @@ class G15NotifyLCD():
         logger.debug("Starting hide timeout")
         self._cancel_timer() 
         self._displayed_notification = time.time()                       
-        self._timer = g15util.schedule("Notification", message.timeout, self._hide_notification)
+        self._timer = g15scheduler.schedule("Notification", message.timeout, self._hide_notification)
                    

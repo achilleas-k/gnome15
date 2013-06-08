@@ -52,6 +52,7 @@ import g15driver
 import g15globals
 import g15screen
 import g15util
+import g15scheduler
 import g15text
 import g15locale
 import xml.sax.saxutils as saxutils
@@ -796,7 +797,7 @@ class G15Page(Component):
         try:
             scroll = self.check_for_scroll()
             if scroll and self.theme_scroll_timer == None:
-                self.theme_scroll_timer = g15util.schedule("ScrollRedraw", self.screen.service.scroll_delay, self.scroll_and_reschedule)
+                self.theme_scroll_timer = g15scheduler.schedule("ScrollRedraw", self.screen.service.scroll_delay, self.scroll_and_reschedule)
             elif not scroll and self.theme_scroll_timer != None:
                 self.theme_scroll_timer.cancel()
                 self.theme_scroll_timer = None
@@ -1058,7 +1059,7 @@ class Menu(Component):
                 if self.scroll_timer is not None:
                     self.scroll_timer.cancel()
                 if self.get_screen().service.animated_menus:
-                    self.scroll_timer = g15util.schedule("ScrollTo", self.get_screen().service.animation_delay, self.get_root().redraw)
+                    self.scroll_timer = g15scheduler.schedule("ScrollTo", self.get_screen().service.animation_delay, self.get_root().redraw)
                 else:
                     self.get_root().redraw()
             

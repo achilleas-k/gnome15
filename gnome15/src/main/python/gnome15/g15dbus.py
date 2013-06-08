@@ -22,6 +22,7 @@ import dbus.service
 import g15globals
 import g15theme
 import g15util
+import g15scheduler
 import g15driver
 import g15devices
 import gobject
@@ -171,48 +172,48 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     '''
         
     def memory_bank_changed(self, new_memory_bank):
-        if g15util.run_on_gobject(self.memory_bank_changed, new_memory_bank):
+        if g15scheduler.run_on_gobject(self.memory_bank_changed, new_memory_bank):
             return
         logger.debug("Sending memory bank changed signel (%d)" % new_memory_bank)
         self.MemoryBankChanged(new_memory_bank)
         
     def attention_cleared(self):
-        if g15util.run_on_gobject(self.attention_cleared):
+        if g15scheduler.run_on_gobject(self.attention_cleared):
             return
         logger.debug("Sending attention cleared signal")
         self.AttentionCleared()
         logger.debug("Sent attention cleared signal")
             
     def attention_requested(self, message):
-        if g15util.run_on_gobject(self.attention_requested, message):
+        if g15scheduler.run_on_gobject(self.attention_requested, message):
             return
         logger.debug("Sending attention requested signal")
         self.AttentionRequested(message if message != None else "")
         logger.debug("Sent attention requested signal")
             
     def driver_connected(self, driver):
-        if g15util.run_on_gobject(self.driver_connected, driver):
+        if g15scheduler.run_on_gobject(self.driver_connected, driver):
             return
         logger.debug("Sending driver connected signal")
         self.Connected(driver.get_name())
         logger.debug("Sent driver connected signal")
             
     def driver_connection_failed(self, driver, exception):
-        if g15util.run_on_gobject(self.driver_connection_failed, driver, exception):
+        if g15scheduler.run_on_gobject(self.driver_connection_failed, driver, exception):
             return
         logger.debug("Sending driver connection failed signal")
         self.ConnectionFailed(driver.get_name(), str(exception))
         logger.debug("Sent driver connection failed signal")
             
     def driver_disconnected(self, driver):
-        if g15util.run_on_gobject(self.driver_disconnected, driver):
+        if g15scheduler.run_on_gobject(self.driver_disconnected, driver):
             return
         logger.debug("Sending driver disconnected signal")
         self.Disconnected(driver.get_name())
         logger.debug("Sent driver disconnected signal")
         
     def page_changed(self, page):
-        if g15util.run_on_gobject(self.page_changed, page):
+        if g15scheduler.run_on_gobject(self.page_changed, page):
             return
         logger.debug("Sending page changed signal for %s" % page.id)
         if page.id in self._dbus_pages:
@@ -223,7 +224,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
             logger.warn("Got page_changed event when no such page (%s) exists" % page.id)
         
     def new_page(self, page): 
-        if g15util.run_on_gobject(self.new_page, page):
+        if g15scheduler.run_on_gobject(self.new_page, page):
             return
         logger.debug("Sending new page signal for %s" % page.id)
         if page.id in self._dbus_pages:
@@ -235,7 +236,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         logger.debug("Sent new page signal for %s" % page.id)
         
     def title_changed(self, page, title): 
-        if g15util.run_on_gobject(self.title_changed, page, title):
+        if g15scheduler.run_on_gobject(self.title_changed, page, title):
             return
         logger.debug("Sending title changed signal for %s" % page.id)
         dbus_page = self._dbus_pages[page.id]
@@ -243,7 +244,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         logger.debug("Sent title changed signal for %s" % page.id)
     
     def deleting_page(self, page):
-        if g15util.run_on_gobject(self.deleting_page, page):
+        if g15scheduler.run_on_gobject(self.deleting_page, page):
             return
         logger.debug("Sending page deleting signal for %s" % page.id)
         
@@ -262,7 +263,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
         logger.debug("Sent page deleting signal for %s" % page.id)
             
     def deleted_page(self, page):
-        if g15util.run_on_gobject(self.deleted_page, page):
+        if g15scheduler.run_on_gobject(self.deleted_page, page):
             return
         logger.debug("Sending page deleted signal for %s" % page.id)
         if page.id in self._dbus_pages:
@@ -838,7 +839,7 @@ class G15DBUSService(AbstractG15DBUSService):
     service listener
     '''
     def screen_added(self, screen):
-        if g15util.run_on_gobject(self.screen_added, screen):
+        if g15scheduler.run_on_gobject(self.screen_added, screen):
             return
         logger.debug("Screen added for %s" % screen.device.model_id)        
         screen_service = G15DBUSScreenService(self, screen)
@@ -848,7 +849,7 @@ class G15DBUSService(AbstractG15DBUSService):
         dbus_device.ScreenAdded("%s/%s" % ( SCREEN_NAME, screen.device.uid ))
         
     def screen_removed(self, screen):
-        if g15util.run_on_gobject(self.screen_removed, screen):
+        if g15scheduler.run_on_gobject(self.screen_removed, screen):
             return
         logger.debug("Screen removed for %s" % screen.device.model_id)
         self.ScreenRemoved("%s/%s" % ( SCREEN_NAME, screen.device.uid ))
@@ -865,25 +866,25 @@ class G15DBUSService(AbstractG15DBUSService):
         del self._dbus_screens[screen.device.uid]
         
     def service_stopping(self):
-        if g15util.run_on_gobject(self.service_stopping):
+        if g15scheduler.run_on_gobject(self.service_stopping):
             return
         logger.debug("Sending stopping down signal")
         self.Stopping()
         
     def service_stopped(self):
-        if g15util.run_on_gobject(self.service_stopped):
+        if g15scheduler.run_on_gobject(self.service_stopped):
             return
         logger.debug("Sending stopped down signal")
         self.Stopped()
         
     def service_starting_up(self):
-        if g15util.run_on_gobject(self.service_starting_up):
+        if g15scheduler.run_on_gobject(self.service_starting_up):
             return
         logger.debug("Sending starting up signal")
         self.Starting()
         
     def service_started_up(self):
-        if g15util.run_on_gobject(self.service_started_up):
+        if g15scheduler.run_on_gobject(self.service_started_up):
             return
         logger.debug("Sending started up signal")
         self.Started()
@@ -933,7 +934,7 @@ class G15DBUSService(AbstractG15DBUSService):
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='')
     def Stop(self):
-        g15util.queue("serviceQueue", "dbusShutdown", 0, self._service.shutdown)
+        g15scheduler.queue("serviceQueue", "dbusShutdown", 0, self._service.shutdown)
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='b')
     def IsStarting(self):

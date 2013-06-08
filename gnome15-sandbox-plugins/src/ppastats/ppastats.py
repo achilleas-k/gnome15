@@ -21,6 +21,7 @@
 #        +-----------------------------------------------------------------------------+
  
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import subprocess
@@ -196,7 +197,7 @@ class G15PPAStats():
         
     def _schedule_refresh(self):
         schedule_seconds = get_update_time(self.gconf_client, self.gconf_key) * 60.0
-        self.refresh_timer = g15util.schedule("PPARefreshTimer", schedule_seconds, self._refresh)
+        self.refresh_timer = g15scheduler.schedule("PPARefreshTimer", schedule_seconds, self._refresh)
         
     def _refresh(self):
         for page_id in self.pages:

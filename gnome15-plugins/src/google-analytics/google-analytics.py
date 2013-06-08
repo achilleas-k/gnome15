@@ -24,6 +24,7 @@ _ = g15locale.get_translation("cal", modfile = __file__).ugettext
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
 import gnome15.g15globals as g15globals
@@ -279,7 +280,7 @@ class G15GoogleAnalytics():
                         self._menu.set_selected_item(m)
         
     def _schedule_refresh(self, time):
-        self._timer = g15util.schedule("AnalyticsRedraw", time, self._do_refresh)
+        self._timer = g15scheduler.schedule("AnalyticsRedraw", time, self._do_refresh)
     
     def _accounts_changed(self, account_manager):        
         self._cancel_refresh()

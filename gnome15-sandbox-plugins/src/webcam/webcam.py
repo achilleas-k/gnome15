@@ -22,6 +22,7 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("webcam", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
@@ -169,7 +170,7 @@ class G15Webcam():
         highgui.cvSetCaptureProperty(self._camera, highgui.CV_CAP_PROP_HUE, hue)
             
     def _schedule_redraw(self, interval = 0.1):
-        self._timer = g15util.schedule("RedrawWebcam", interval, self._redraw)
+        self._timer = g15scheduler.schedule("RedrawWebcam", interval, self._redraw)
     
     def _redraw(self):
         im = self._get_image()

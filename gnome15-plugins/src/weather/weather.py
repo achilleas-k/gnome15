@@ -25,6 +25,7 @@ _ = g15locale.get_translation("weather", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -269,7 +270,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
         if not entry.get_key().endswith("/theme") and not entry.get_key().endswith("/enabled"):
             if self._config_change_handle is not None:
                 self._config_change_handle.cancel()
-            self._config_change_handle = g15util.schedule("ApplyConfig", 3.0, self._config_changed)
+            self._config_change_handle = g15scheduler.schedule("ApplyConfig", 3.0, self._config_changed)
     
     def _config_changed(self):
         self.reload_theme()

@@ -31,6 +31,7 @@ _ = g15locale.get_translation("voip", modfile=__file__).ugettext
 
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -375,10 +376,10 @@ class G15Voip(g15plugin.G15MenuPlugin):
                 self.show_menu()
                 self._connected = True
             else:
-                self._connection_timer = g15util.schedule("ReconnectVoip", 5, self._attempt_connection)
+                self._connection_timer = g15scheduler.schedule("ReconnectVoip", 5, self._attempt_connection)
         except:          
             traceback.print_exc()
-            self._connection_timer = g15util.schedule("ReconnectVoip", 5, self._attempt_connection)
+            self._connection_timer = g15scheduler.schedule("ReconnectVoip", 5, self._attempt_connection)
             
     def create_menu(self):    
         return BuddyMenu()

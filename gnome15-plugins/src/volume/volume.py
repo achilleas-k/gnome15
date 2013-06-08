@@ -23,6 +23,7 @@ _ = g15locale.get_translation("volume", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15devices as g15devices
@@ -224,7 +225,7 @@ class G15Volume():
         if self._lights_timer is not None:
             self._lights_timer.cancel()
         if self._light_controls is not None:
-            self._lights_timer = g15util.schedule("ReleaseMKeyLights", 3.0, self._release_lights)
+            self._lights_timer = g15scheduler.schedule("ReleaseMKeyLights", 3.0, self._release_lights)
         
         page = self._screen.get_page(id)
         if page == None:
@@ -325,7 +326,7 @@ class VolumeThread(Thread):
                 if self._poll.poll(5):
                     if self._stop:
                         break
-                    g15util.schedule("popupVolume", 0, self._volume._popup)
+                    g15scheduler.schedule("popupVolume", 0, self._volume._popup)
                     if not self._open.read():
                         break
         finally:

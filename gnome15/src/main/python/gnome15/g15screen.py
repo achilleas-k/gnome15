@@ -52,6 +52,7 @@ COLOURS = [(0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255
 
 import g15driver
 import g15util
+import g15scheduler
 import g15profile
 import g15globals
 import g15drivermanager
@@ -94,7 +95,7 @@ def run_on_redraw(cb, *args):
     """
     Helper to run a callback function on the redraw queue.
     """
-    g15util.queue(REDRAW_QUEUE, "Redraw", 0, cb, *args)
+    g15scheduler.queue(REDRAW_QUEUE, "Redraw", 0, cb, *args)
         
 class ScreenChangeAdapter():
     """
@@ -594,7 +595,7 @@ class G15Screen():
                 self.deleting[page.id].cancel()
                 del self.deleting[page.id]       
                           
-            timer = g15util.schedule("DeleteScreen", delete_after, self.del_page, page)
+            timer = g15scheduler.schedule("DeleteScreen", delete_after, self.del_page, page)
             self.deleting[page.id] = timer
             return timer
         finally:
@@ -635,7 +636,7 @@ class G15Screen():
                         del self.reverting[page.id]                                        
                         
                     # Start a new timer to revert                    
-                    timer = g15util.schedule("Revert", revert_after, self.set_priority, page, old_priority)
+                    timer = g15scheduler.schedule("Revert", revert_after, self.set_priority, page, old_priority)
                     self.reverting[page.id] = (old_priority, timer)
                     return timer
                 if delete_after != 0.0:       
@@ -755,7 +756,7 @@ class G15Screen():
                 time = 10
                 if val != None:
                     time = val.get_int()
-                self.cycle_timer = g15util.schedule("CycleTimer", time, self.screen_cycle)
+                self.cycle_timer = g15scheduler.schedule("CycleTimer", time, self.screen_cycle)
         finally:
             self.reschedule_lock.release()
             
@@ -833,7 +834,7 @@ class G15Screen():
         if self.reconnect_timer:
             self.reconnect_timer.cancel()
         if self.driver == None or self.driver.id != entry.value.get_string():
-            g15util.schedule("DriverChange", 1.0, self._reload_driver)
+            g15scheduler.schedule("DriverChange", 1.0, self._reload_driver)
         
     def active_profile_changed(self, client, connection_id, entry, args):
         # Check if the active profile has change)
@@ -845,7 +846,7 @@ class G15Screen():
             logger.info("Active profile changed to %s" % new_profile.name)
             self.activate_profile()
         self.set_color_for_mkey()                
-        g15util.schedule("ProfileChange", 1.0, self._check_active_plugins)
+        g15scheduler.schedule("ProfileChange", 1.0, self._check_active_plugins)
                 
         return 1
 
@@ -856,11 +857,11 @@ class G15Screen():
             self.set_memory_bank(1)
             
     def _network_state_change(self, new_state):
-        g15util.schedule("ProfileChange", 1.0, self._check_active_plugins)
+        g15scheduler.schedule("ProfileChange", 1.0, self._check_active_plugins)
                 
     def _profile_changed(self, profile_id, device_uid):
         self.set_color_for_mkey()        
-        g15util.schedule("ProfileChange", 1.0, self._check_active_plugins)
+        g15scheduler.schedule("ProfileChange", 1.0, self._check_active_plugins)
         
     def deactivate_profile(self):
         logger.debug("De-activating profile")
@@ -1136,12 +1137,12 @@ class G15Screen():
         return o_transition
     
     def cycle_to(self, page, transitions=True):
-        g15util.clear_jobs(REDRAW_QUEUE)
-        g15util.execute(REDRAW_QUEUE, "cycleTo", self._do_cycle_to, page, transitions)
+        g15scheduler.clear_jobs(REDRAW_QUEUE)
+        g15scheduler.execute(REDRAW_QUEUE, "cycleTo", self._do_cycle_to, page, transitions)
             
     def cycle(self, number, transitions=True):
-        g15util.clear_jobs(REDRAW_QUEUE)
-        g15util.execute(REDRAW_QUEUE, "doCycle", self._do_cycle, number, transitions)
+        g15scheduler.clear_jobs(REDRAW_QUEUE)
+        g15scheduler.execute(REDRAW_QUEUE, "doCycle", self._do_cycle, number, transitions)
             
     def redraw(self, page=None, direction="up", transitions=True, redraw_content=True, queue=True):
         if page:
@@ -1149,7 +1150,7 @@ class G15Screen():
         else:
             logger.debug("Redrawing current page")
         if queue:
-            g15util.execute(REDRAW_QUEUE, "redraw", self._do_redraw, page, direction, transitions, redraw_content)
+            g15scheduler.execute(REDRAW_QUEUE, "redraw", self._do_redraw, page, direction, transitions, redraw_content)
         else:
             self._do_redraw(page, direction, transitions, redraw_content)
             
@@ -1216,7 +1217,7 @@ class G15Screen():
             self.first_page = self.conf_client.get_string("/apps/gnome15/%s/last_page" % self.device.uid)
             
             if delay != 0.0:
-                self.reconnect_timer = g15util.schedule("ReconnectTimer", delay, self.attempt_connection)
+                self.reconnect_timer = g15scheduler.schedule("ReconnectTimer", delay, self.attempt_connection)
                 return
                             
             try :
@@ -1564,7 +1565,7 @@ class G15Splash():
     def complete(self):
         self.progress = 100
         self.screen.redraw(self.page)
-        g15util.queue(REDRAW_QUEUE, "ClearSplash", 2.0, self._hide)
+        g15scheduler.queue(REDRAW_QUEUE, "ClearSplash", 2.0, self._hide)
         
     def update_splash(self, value, max_value, text=None):
         self.progress = (float(value) / float(max_value)) * 100.0

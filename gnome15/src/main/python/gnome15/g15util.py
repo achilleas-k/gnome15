@@ -37,7 +37,6 @@ import logging
 logger = logging.getLogger("util")
 
 from cStringIO import StringIO
-import jobqueue
 
 from HTMLParser import HTMLParser
 import threading
@@ -85,11 +84,6 @@ px_to_pt = {}
 for pt in pt_to_px:
     px_to_pt[pt_to_px[pt]] = pt
 
-
-''' 
-Default scheduler
-'''
-scheduler = jobqueue.JobScheduler()
 
 '''
 Look for icons locally as well if running from source
@@ -358,37 +352,6 @@ def get_int_or_default(gconf_client, key, default = None):
 def get_rgb_or_default(gconf_client, key, default = None):
     val = gconf_client.get_string(key)
     return default if val == None or val == "" else to_rgb(val)
-    
-'''
-Task scheduler. Tasks may be added to the queue to execute
-after a specified interval. The timer is done by the gobject
-event loop, which then executes the job on a different thread
-'''
-
-def clear_jobs(queue_name = None):
-    scheduler.clear_jobs(queue_name)
-
-def execute(queue_name, job_name, function, *args):
-    return scheduler.execute(queue_name, job_name, function, *args)
-
-def schedule(job_name, interval, function, *args):
-    return scheduler.schedule(job_name, interval, function, *args)
-
-def run_on_gobject(function, *args):
-    if is_gobject_thread():
-        return False
-    else:
-        gobject.idle_add(function, *args)
-        return True
-
-def stop_queue(queue_name):
-    scheduler.stop_queue(queue_name)
-
-def queue(queue_name, job_name, interval, function, *args):    
-    return scheduler.queue(queue_name, job_name, interval, function, *args)
-
-def stop_all_schedulers():
-    scheduler.stop_all()
     
 '''
 GObject. Allows us to test if we are on the gobject loop

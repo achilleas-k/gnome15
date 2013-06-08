@@ -29,6 +29,7 @@ _ = g15locale.get_translation("gnome15").ugettext
 import g15globals
 import g15profile
 import g15util
+import g15scheduler
 import g15uinput
 import g15devices
 import g15driver
@@ -410,7 +411,7 @@ class G15MacroEditor():
         if not self.adjusting:
             if self.__macro_save_timer is not None:
                 self.__macro_save_timer.cancel()
-            self.__macro_save_timer = g15util.schedule("SaveMacro", 2, self.__do_save_macro, macro)            
+            self.__macro_save_timer = g15scheduler.schedule("SaveMacro", 2, self.__do_save_macro, macro)
             
     def __do_save_macro(self, macro):
         """

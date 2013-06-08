@@ -22,6 +22,7 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("rss", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15desktop as g15desktop
@@ -315,7 +316,7 @@ class G15RSS():
         self._schedule_refresh() 
         self._update_time_changed_handle = self._gconf_client.notify_add(self._gconf_key + "/update_time", self._update_time_changed)
         self._urls_changed_handle = self._gconf_client.notify_add(self._gconf_key + "/urls", self._urls_changed)
-        g15util.schedule("LoadFeeds", 0, self._load_feeds)
+        g15scheduler.schedule("LoadFeeds", 0, self._load_feeds)
     
     def deactivate(self):
         self._cancel_refresh()
@@ -331,7 +332,7 @@ class G15RSS():
         
     def _schedule_refresh(self):
         schedule_seconds = g15util.get_int_or_default(self._gconf_client, "%s/update_time" % self._gconf_key, 60) * 60.0
-        self._refresh_timer = g15util.schedule("FeedRefreshTimer", schedule_seconds, self._refresh)
+        self._refresh_timer = g15scheduler.schedule("FeedRefreshTimer", schedule_seconds, self._refresh)
         
     def _refresh(self):
         logger.info("Refreshing RSS feeds")

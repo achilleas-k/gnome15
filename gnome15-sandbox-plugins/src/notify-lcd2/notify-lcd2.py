@@ -61,6 +61,7 @@ if __name__ == "__main__":
  
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15globals as pglobals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -390,7 +391,7 @@ class G15NotifyService(dbus.service.Object):
         if self._page != None:
             self._do_draw()
             self._page.SetThemeProperty("remaining", str(self._get_remaining()))
-            self._redraw_timer = g15util.schedule("Notification", 0.1, self._do_redraw)
+            self._redraw_timer = g15scheduler.schedule("Notification", 0.1, self._do_redraw)
             
     def _do_draw(self):        
         if self._page != None:
@@ -425,7 +426,7 @@ class G15NotifyService(dbus.service.Object):
     def _start_timer(self, message):
         self._cancel_timer() 
         self._displayed_notification = time.time()                       
-        self._timer = g15util.schedule("Notification", message.timeout, self._hide_notification)
+        self._timer = g15scheduler.schedule("Notification", message.timeout, self._hide_notification)
     
 '''
 Gnome15 notification plugin

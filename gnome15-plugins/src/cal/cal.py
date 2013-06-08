@@ -24,6 +24,7 @@ _ = g15locale.get_translation("cal", modfile = __file__).ugettext
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
 import gnome15.g15plugin as g15plugin
@@ -297,7 +298,7 @@ class G15Cal(g15plugin.G15Plugin):
         self._page.add_child(self._calendar)
         self._page.add_child(g15theme.MenuScrollbar("viewScrollbar", self._menu))
         self.screen.add_page(self._page)
-        g15util.schedule("CalendarFirstLoad", 0, self._redraw)
+        g15scheduler.schedule("CalendarFirstLoad", 0, self._redraw)
         
         # Listen for changes in the network state
         self.screen.service.network_manager.listeners.append(self._network_state_changed)
@@ -486,7 +487,7 @@ class G15Cal(g15plugin.G15Plugin):
             Because the calendar page also displays a clock, we want to
             redraw at second zero of every minute
             """
-            self._timer = g15util.schedule("CalRedraw", 60 - time.gmtime().tm_sec, self._redraw)
+            self._timer = g15scheduler.schedule("CalRedraw", 60 - time.gmtime().tm_sec, self._redraw)
         
     def _on_shown(self):
         self._hidden = False

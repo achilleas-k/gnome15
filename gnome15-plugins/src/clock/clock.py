@@ -25,6 +25,7 @@ _ = g15locale.get_translation("clock", modfile = __file__).ugettext
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -339,9 +340,9 @@ class G15Clock(g15plugin.G15Plugin):
         delay = g15util.total_seconds( next_tick - now )
         
         '''
-        Try not to create threads or timers if possible. Use g15util.schedule() instead
+        Try not to create threads or timers if possible. Use g15scheduler.schedule) instead
         '''
-        self.timer = g15util.schedule("ClockRedraw", delay, self._redraw)
+        self.timer = g15scheduler.schedule("ClockRedraw", delay, self._redraw)
         
     def _reload_theme(self):        
         variant = None

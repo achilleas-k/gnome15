@@ -22,6 +22,7 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("processes", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -258,7 +259,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
         return result
 
     def _reload_menu(self):
-        g15util.schedule("ReloadProcesses", 0, self._do_reload_menu)
+        g15scheduler.schedule("ReloadProcesses", 0, self._do_reload_menu)
         
     def _get_menu_item(self, pid):
         item = self.menu.get_child_by_id("process-%s" % pid)
@@ -391,4 +392,4 @@ class G15Processes(g15plugin.G15MenuPlugin):
         events when BAMF is available
         """
         if not self._mode == "applications" or self.bamf_matcher is None:
-            self._timer = g15util.schedule("ProcessesRefresh", 5.0, self._refresh)
+            self._timer = g15scheduler.schedule("ProcessesRefresh", 5.0, self._refresh)

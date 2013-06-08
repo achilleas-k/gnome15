@@ -31,6 +31,7 @@ import g15drivermanager
 import g15macroeditor
 import g15devices
 import g15util
+import g15scheduler
 import g15theme
 import colorpicker
 import subprocess
@@ -1491,7 +1492,7 @@ class G15Config:
         if not self.adjusting:
             if self.profile_save_timer is not None:
                 self.profile_save_timer.cancel()
-            self.profile_save_timer = g15util.schedule("SaveProfile", 2, self._do_save_profile, profile)
+            self.profile_save_timer = g15scheduler.schedule("SaveProfile", 2, self._do_save_profile, profile)
             
     def _do_save_profile(self, profile):
         logger.info("Saving profile %s" % profile.name)

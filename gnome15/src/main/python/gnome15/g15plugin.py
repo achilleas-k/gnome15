@@ -20,6 +20,7 @@
  
 import dbus
 import g15util
+import g15scheduler
 import g15theme
 import g15screen
 import sys
@@ -282,7 +283,7 @@ class G15RefreshingPlugin(G15PagePlugin):
             if self.schedule_on_gobject:
                 self.timer = gobject.timeout_add(int(self.get_next_tick() * 1000), self._refresh)
             else:
-                self.timer = g15util.schedule("%s-Redraw" % self.page.id, self.get_next_tick(), self._refresh)
+                self.timer = g15scheduler.schedule("%s-Redraw" % self.page.id, self.get_next_tick(), self._refresh)
         
     def _refresh(self):
         self.refresh()

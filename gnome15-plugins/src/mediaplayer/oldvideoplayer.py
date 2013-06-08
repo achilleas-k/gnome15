@@ -23,6 +23,7 @@ _ = g15locale.get_translation("videoplayer", modfile = __file__).ugettext
 
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15theme as g15theme
 from threading import Timer
 import gtk
@@ -197,7 +198,7 @@ class G15VideoPage(g15theme.G15Page):
             self._sidebar_offset = 0 
             if self._hide_timer != None:
                 self._hide_timer.cancel()
-            self._hide_timer = g15util.schedule("HideSidebar", after, self._hide_sidebar)
+            self._hide_timer = g15scheduler.schedule("HideSidebar", after, self._hide_sidebar)
         
     def _open(self):
         dialog = gtk.FileChooserDialog("Open..",

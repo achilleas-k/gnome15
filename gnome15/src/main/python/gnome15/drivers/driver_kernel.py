@@ -24,6 +24,7 @@ import select
 import pyinputevent.scancodes as S
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15globals as g15globals
 import gnome15.g15uinput as g15uinput
 import gconf
@@ -785,7 +786,7 @@ class ForwardDevice(AbstractInputDevice):
                 g15uinput.emit(g15uinput.MOUSE, g15uinput.REL_X, self.move_x)        
             if self.move_y != 0:
                 g15uinput.emit(g15uinput.MOUSE, g15uinput.REL_Y, self.move_y)
-            self.move_timer = g15util.schedule("MouseMove", 0.1, self._mouse_move)
+            self.move_timer = g15scheduler.schedule("MouseMove", 0.1, self._mouse_move)
         
     def _digital_joystick(self, event):
         low_val, high_val = self._compute_bounds()
@@ -1127,7 +1128,7 @@ It should be launched automatically if Gnome15 is installed correctly.")
             self.fb.__del__()
             self.fb = None
         if self.on_close != None:
-            g15util.schedule("Close", 0, self.on_close, self)
+            g15scheduler.schedule("Close", 0, self.on_close, self)
         self.system_service = None
         
     def _reload_and_reconnect(self):

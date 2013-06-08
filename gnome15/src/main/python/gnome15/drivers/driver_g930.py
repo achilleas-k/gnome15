@@ -21,6 +21,7 @@ import select
 import pyinputevent.scancodes as S
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15globals as g15globals
 import gnome15.g15uinput as g15uinput
 import gconf
@@ -243,7 +244,7 @@ class Driver(g15driver.AbstractDriver):
             raise Exception("Not connected")
         self._stop_receiving_keys()
         if self.on_close != None:
-            g15util.schedule("Close", 0, self.on_close, self)
+            g15scheduler.schedule("Close", 0, self.on_close, self)
             
     def _on_connect(self):
         self.notify_handles = []

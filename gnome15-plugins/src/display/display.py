@@ -27,6 +27,7 @@ import gnome15.g15plugin as g15plugin
 import gnome15.g15devices as g15devices
 import gnome15.g15actions as g15actions
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import logging
 import os
 import re
@@ -172,7 +173,7 @@ class G15XRandR(g15plugin.G15MenuPlugin):
             self._timer = None
         
     def _schedule_check(self):
-        g15util.schedule("CheckResolution", 10.0, self.load_menu_items)
+        g15scheduler.schedule("CheckResolution", 10.0, self.load_menu_items)
         
     def _parse_size(self, line):
         arr = line.split("x")

@@ -25,6 +25,7 @@ _ = g15locale.get_translation("mpris", modfile = __file__).ugettext
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15devices as g15devices
@@ -156,7 +157,7 @@ class AbstractMPRISPlayer():
             logger.info("Playback status changed to %s" % new_status)
             self.status = new_status
             if self.status == "Playing":
-                g15util.schedule("playbackStarted", 1.0, self._playback_started)
+                g15scheduler.schedule("playbackStarted", 1.0, self._playback_started)
             elif self.status == "Paused":
                 self.cancel_redraw()
                 if self.page != None:
@@ -212,7 +213,7 @@ class AbstractMPRISPlayer():
             
     def schedule_redraw(self): 
         self.cancel_redraw()
-        self.redraw_timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "MPRIS2Redraw", 1.0, self.redraw)
+        self.redraw_timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "MPRIS2Redraw", 1.0, self.redraw)
         
     def on_shown(self):
         self.hidden = False
@@ -380,7 +381,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.check_status()
         
         # Start polling for status, position and track changes        
-        self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)            
+        self.timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)
         session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def next_track(self):
@@ -404,9 +405,9 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.playback_started = time.time()
         self.check_status()
         if self.status == "Playing":        
-            self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)
+            self.timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)
         else:        
-            self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 5.0, self.update_track)
+            self.timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 5.0, self.update_track)
         
     def on_stop(self):
         if self.timer != None:
@@ -414,7 +415,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.session_bus.remove_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def track_changed_handler(self, detail):
-        g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "LoadTrackDetails", 1.0, self.load_and_draw)
+        g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "LoadTrackDetails", 1.0, self.load_and_draw)
         
     def load_and_draw(self):
         self.load_song_details()
@@ -512,7 +513,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
         
         # xnoise doesn't send seeked signals, so we need to refresh
         if "xnoise" in bus_name:
-            self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)        
+            self.timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)
         
     def next_track(self):
         self.player.Next()
@@ -586,7 +587,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
             This doesn't seem right, but it stops the hanging problem when notify-lcd is enabled and 
             tracks change
             """            
-            g15util.schedule("loadMeta", 1.0, self.reset_elapsed)
+            g15scheduler.schedule("loadMeta", 1.0, self.reset_elapsed)
             
         if "Volume" in properties:
             self.volume = int(properties["Volume"] * 100)
@@ -602,7 +603,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
             This doesn't seem right, but it stops the hanging problem when notify-lcd is enabled and 
             tracks change
             """            
-            g15util.schedule("loadMeta", 1.0, self.load_meta)
+            g15scheduler.schedule("loadMeta", 1.0, self.load_meta)
             
     def _load_and_redraw(self):
         self.load_meta()
@@ -672,7 +673,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
     def update_track(self):
         logger.debug("Updating elapsed time")
         self.reset_elapsed()
-        self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0 if self.status == "Playing" else 5.0, self.update_track)
+        self.timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0 if self.status == "Playing" else 5.0, self.update_track)
             
 class G15MPRIS(g15plugin.G15Plugin):
     
@@ -701,7 +702,7 @@ class G15MPRIS(g15plugin.G15Plugin):
         self.screen.key_handler.action_listeners.remove(self)
         for key in self.players.keys():
             self.players[key].stop()
-        g15util.stop_queue("mprisDataQueue-%s" % self.screen.device.uid)
+        g15scheduler.stop_queue("mprisDataQueue-%s" % self.screen.device.uid)
         self.session_bus.remove_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
                                      signal_name='NameOwnerChanged')  

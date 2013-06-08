@@ -22,6 +22,7 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("lcdbiff", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -420,7 +421,7 @@ class G15Biff(g15plugin.G15MenuPlugin):
     def schedule_refresh(self, time = - 1):
         if time == -1:
             time = get_update_time(self.gconf_client, self.gconf_key) * 60.0        
-        self.refresh_timer = g15util.queue("lcdbiff-%s" % self.screen.device.uid, "MailRefreshTimer", time, self.refresh)
+        self.refresh_timer = g15scheduler.queue("lcdbiff-%s" % self.screen.device.uid, "MailRefreshTimer", time, self.refresh)
         
     def refresh(self):
         t_count = 0

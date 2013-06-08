@@ -25,6 +25,7 @@ _ = g15locale.get_translation("weather", modfile = __file__).ugettext
 import gnome15.g15screen as g15screen
 import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -162,7 +163,7 @@ class G15Weather():
         val = self._gconf_client.get_int(self._gconf_key + "/update")
         if val == 0:
             val = 3600
-        self._timer = g15util.schedule("WeatherRefreshTimer", val * 60.0, self._refresh)
+        self._timer = g15scheduler.schedule("WeatherRefreshTimer", val * 60.0, self._refresh)
         
     def _loc_changed(self, client, connection_id, entry, args):
         # Redraw so icon option is immediate

@@ -33,6 +33,7 @@ from lxml import etree
 import gtk
 import g15globals
 import g15util
+import g15scheduler
 import pyinotify
 import pwd
 from threading import Lock
@@ -425,7 +426,7 @@ class G15AccountPreferences():
         if not self._adjusting:
             if self._save_timer is not None:
                 self._save_timer.cancel()
-            self._save_timer = g15util.schedule("SaveAccounts", 2, self._do_save_accounts)
+            self._save_timer = g15scheduler.schedule("SaveAccounts", 2, self._do_save_accounts)
         
     def _do_save_accounts(self):        
         self.account_mgr.save()

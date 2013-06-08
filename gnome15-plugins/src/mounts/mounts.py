@@ -24,6 +24,7 @@ _ = g15locale.get_translation("mounts", modfile = __file__).ugettext
 
 import gnome15.g15plugin as g15plugin
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
@@ -209,7 +210,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         self.volume_monitor.connect("mount_removed", self._on_mount_removed)
         
         # Refresh disk etc space every minute
-        self._handle = g15util.schedule("DiskRefresh", 60.0, self._refresh)
+        self._handle = g15scheduler.schedule("DiskRefresh", 60.0, self._refresh)
         
     def deactivate(self):
         g15plugin.G15MenuPlugin.deactivate(self)

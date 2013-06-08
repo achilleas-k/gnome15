@@ -23,6 +23,7 @@ _ = g15locale.get_translation("videoplayer", modfile = __file__).ugettext
 
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15screen as g15screen
@@ -353,7 +354,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
         g15theme.G15Page.paint(self, canvas)
         canvas.restore()
         if self._sidebar_offset < 0 and self._sidebar_offset > -(self.theme.bounds[2]):
-            g15util.schedule("RepaintVideoOverly", 0.1, self.redraw)
+            g15scheduler.schedule("RepaintVideoOverly", 0.1, self.redraw)
                 
     """
     GStreamer callbacks
@@ -459,7 +460,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
         else:    
             self._sidebar_offset = 0 
             self._cancel_hide()
-            self._hide_timer = g15util.schedule("HideSidebar", after, self._hide_sidebar)
+            self._hide_timer = g15scheduler.schedule("HideSidebar", after, self._hide_sidebar)
             
     def _cancel_hide(self):
         if self._hide_timer != None:
@@ -921,7 +922,7 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
                     if self._mm_key_timer is not None:
                         self._mm_key_timer.cancel()
                         self._mm_key_timer = None
-                    self._mm_key_timer = g15util.schedule("CancelMMKey", 1.0, self._clear_mm_key)
+                    self._mm_key_timer = g15scheduler.schedule("CancelMMKey", 1.0, self._clear_mm_key)
 
             try:
                 self._settings = dbus.Interface(session_bus.get_object('org.g.SettingsDaemon',

@@ -27,6 +27,7 @@ import gnome15.g15globals as g15globals
 import gnome15.g15plugin as g15plugin
 import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import pango
 import os
 import sys
@@ -297,7 +298,7 @@ class G15DBUSDebugService(dbus.service.Object):
         print "Job Queues"
         print "----------"
         print
-        g15util.scheduler.print_all_jobs()
+        g15scheduler.scheduler.print_all_jobs()
         print "Threads"
         print "-------"
         for threadId, stack in sys._current_frames().items():

@@ -30,6 +30,7 @@ import cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
+import gnome15.g15scheduler as g15scheduler
 import gnome15.g15uinput as g15uinput
 import gnome15.g15exceptions as g15exceptions
 import sys
@@ -614,7 +615,7 @@ class Driver(g15driver.AbstractDriver):
                 g15uinput.emit(g15uinput.MOUSE, g15uinput.REL_X, self.move_x)        
             if self.move_y != 0:
                 g15uinput.emit(g15uinput.MOUSE, g15uinput.REL_Y, self.move_y)
-            self.timer = g15util.schedule("MouseMove", 0.05, self._mouse_move)
+            self.timer = g15scheduler.schedule("MouseMove", 0.05, self._mouse_move)
         
     def _do_update_control(self, control):
         level = control.value
