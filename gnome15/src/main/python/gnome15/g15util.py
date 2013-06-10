@@ -426,23 +426,6 @@ def mkdir_p(path):
             pass
         else: raise
 
-        
-'''
-Notification
-'''
-def notify(summary, body = "", icon = "dialog-info", actions = [], hints = {}, timeout  = 0):    
-    session_bus = dbus.SessionBus()
-    notification = dbus.Interface(session_bus.get_object("org.freedesktop.Notifications", '/org/freedesktop/Notifications'), "org.freedesktop.Notifications")
-    def reph(return_args):
-        pass
-    def errh(exception):
-        logger.error("Failed notification message. %s" % str(exception))
-        
-#    @dbus.service.method(IF_NAME, in_signature='susssasa{sv}i', out_signature='u')
-#    def Notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
-    icon = icon if icon is not None else ""
-    return notification.Notify(g15globals.name, 0, icon , summary, body, actions, hints, timeout, error_handler = errh, reply_handler = reph)
-    
 '''
 Markup utilities
 '''

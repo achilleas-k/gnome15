@@ -29,6 +29,7 @@ import os.path
 import gtk
 import gobject
 import gnome15.g15util as g15util
+import gnome15.g15notify as g15notify
 import subprocess
 import shutil
 from threading import Thread
@@ -144,15 +145,15 @@ class G15LCDShot():
                          "-lavcopts", "vcodec=mpeg4", "-oac", "copy", "-o", self._record_to]
         ret = subprocess.call(cmd)
         if ret == 0:
-            g15util.notify(_("LCD Screenshot"), _("Video encoding complete. Result at %s" % self._record_to), "dialog-info")
+            g15notify.notify(_("LCD Screenshot"), _("Video encoding complete. Result at %s" % self._record_to), "dialog-info", timeout = 0)
             shutil.rmtree("%s.tmp" % self._record_to, True)
         else:
             logger.error("Video encoding failed with status %d" % ret)
-            g15util.notify(_("LCD Screenshot"), _("Video encoding failed. Do you have mencoder installed?"), "dialog-error")
+            g15notify.notify(_("LCD Screenshot"), _("Video encoding failed. Do you have mencoder installed?"), "dialog-error", timeout = 0)
                     
     def _stop_recording(self):
         self._recording = False
-        g15util.notify(_("LCD Screenshot"), _("Video recording stopped. Now encoding"), "dialog-info")
+        g15notify.notify(_("LCD Screenshot"), _("Video recording stopped. Now encoding"), "dialog-info", timeout = 0)
         t = Thread(target = self._encode);
         t.setName("LCDScreenshotEncode")
         t.start()
@@ -160,7 +161,7 @@ class G15LCDShot():
     def _start_recording(self):
         self._record_fps = g15util.get_int_or_default(self._gconf_client, "%s/fps" % self._gconf_key, 10)
         path = self._find_next_free_filename("avi", _("Gnome15_Video"))
-        g15util.notify(_("LCD Screenshot"), _("Started recording video"), "dialog-info")
+        g15notify.notify(_("LCD Screenshot"), _("Started recording video"), "dialog-info")
         g15util.mkdir_p("%s.tmp" % path)
         self._frame_no = 1
         self._recording = True
@@ -203,7 +204,7 @@ class G15LCDShot():
                 path = self._find_next_free_filename("png", self._screen.get_visible_page().title)
                 self._screen.old_surface.write_to_png(path)
                 logger.info("Written to screenshot to %s" % path)
-                g15util.notify(_("LCD Screenshot"), _("Screenshot saved to %s") % path, "dialog-info")
+                g15notify.notify(_("LCD Screenshot"), _("Screenshot saved to %s") % path, "dialog-info", timeout = 0)
                 return True
             except Exception as e:
                 logger.error("Failed to save screenshot. %s" % str(e))
