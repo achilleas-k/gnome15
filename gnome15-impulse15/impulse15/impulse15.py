@@ -43,7 +43,7 @@ unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 has_preferences=True
 
 def get_source_index(source_name):
-    status, output = g15util.execute_for_output("pacmd list-sources")
+    status, output = g15util.get_command_output("pacmd list-sources")
     if status == 0 and len(output) > 0:
         i = 0
         for line in output.split("\n"):
@@ -67,7 +67,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     
     # Set up the audio source model  
     audio_source_model = widget_tree.get_object("AudioSourceModel")
-    status, output = g15util.execute_for_output("pacmd list-sources")
+    status, output = g15util.get_command_output("pacmd list-sources")
     source_name = "0"
     if status == 0 and len(output) > 0:
         i = 0

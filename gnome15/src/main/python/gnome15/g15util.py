@@ -95,14 +95,6 @@ if pglobals.dev:
 '''
 Executing stuff
 '''
-    
-def execute_for_output(cmd):
-    pipe = os.popen('{ ' + cmd + '; } 2>/dev/null', 'r')
-    text = pipe.read()
-    sts = pipe.close()
-    if sts is None: sts = 0
-    if text[-1:] == '\n': text = text[:-1]
-    return sts, text
 
 def run_script(script, args = None, background = True):
     a = ""

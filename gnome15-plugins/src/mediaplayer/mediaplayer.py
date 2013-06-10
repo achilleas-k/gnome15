@@ -828,7 +828,7 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
             items += removable_media_items
             
         # Pulse
-        status, output = g15util.execute_for_output("pacmd list-sources")
+        status, output = g15util.get_command_output("pacmd list-sources")
         if status == 0 and len(output) > 0:
             i = 0
             pulse_items = []
