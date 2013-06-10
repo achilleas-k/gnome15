@@ -22,6 +22,7 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("rss", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
+import gnome15.g15python_helpers as g15python_helpers
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -165,7 +166,7 @@ class G15FeedsMenuItem(g15theme.MenuItem):
         element_properties = g15theme.MenuItem.get_theme_properties(self)
         element_properties["ent_title"] = self.entry.title
         element_properties["ent_link"] = self.entry.link
-        if g15util.attr_exists(self.entry, "description"):
+        if g15python_helpers.attr_exists(self.entry, "description"):
             element_properties["ent_description"] = self.entry.description
             
         try:
