@@ -32,6 +32,7 @@ _ = g15locale.get_translation("voip", modfile=__file__).ugettext
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -113,8 +114,8 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "voip.glade"))
     dialog = widget_tree.get_object("VoipDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/raise_on_talk_status_change" % gconf_key, "RaiseOnTalkStatusChange", False, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/raise_on_chat_message" % gconf_key, "RaiseOnChatMessage", False, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/raise_on_talk_status_change" % gconf_key, "RaiseOnTalkStatusChange", False, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/raise_on_chat_message" % gconf_key, "RaiseOnChatMessage", False, widget_tree)
     dialog.run()
     dialog.hide()
     

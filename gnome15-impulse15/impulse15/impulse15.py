@@ -21,6 +21,7 @@
 import gnome15.g15screen as g15screen  
 import gnome15.g15util as g15util  
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
 import gobject
@@ -84,20 +85,20 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
         for i in range(0, 9):
             audio_source_model.append((str(i), "Source %d" % i))
 
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/disco", "Disco", False, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/animate_mkeys", "AnimateMKeys", False, widget_tree)
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/mode", "ModeCombo", "spectrum", widget_tree)
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/paint", "PaintCombo", "screen", widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bars", "BarsSpinner", 16, widget_tree)
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/audio_source_name", "AudioSource", source_name, widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_width", "BarWidthSpinner", 16, widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/spacing", "SpacingSpinner", 0, widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/rows", "RowsSpinner", 16, widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_height", "BarHeightSpinner", 2, widget_tree)
-    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col1", "Color1", ( 255, 0, 0 ), widget_tree, default_alpha = 255)
-    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col2", "Color2", ( 0, 0, 255 ), widget_tree, default_alpha = 255)
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/frame_rate", "FrameRateAdjustment", 10.0, widget_tree)
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/gain", "GainAdjustment", 1.0, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/disco", "Disco", False, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/animate_mkeys", "AnimateMKeys", False, widget_tree)
+    g15ui_gconf.configure_combo_from_gconf(gconf_client, gconf_key + "/mode", "ModeCombo", "spectrum", widget_tree)
+    g15ui_gconf.configure_combo_from_gconf(gconf_client, gconf_key + "/paint", "PaintCombo", "screen", widget_tree)
+    g15ui_gconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/bars", "BarsSpinner", 16, widget_tree)
+    g15ui_gconf.configure_combo_from_gconf(gconf_client, gconf_key + "/audio_source_name", "AudioSource", source_name, widget_tree)
+    g15ui_gconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_width", "BarWidthSpinner", 16, widget_tree)
+    g15ui_gconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/spacing", "SpacingSpinner", 0, widget_tree)
+    g15ui_gconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/rows", "RowsSpinner", 16, widget_tree)
+    g15ui_gconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_height", "BarHeightSpinner", 2, widget_tree)
+    g15ui_gconf.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col1", "Color1", ( 255, 0, 0 ), widget_tree, default_alpha = 255)
+    g15ui_gconf.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col2", "Color2", ( 0, 0, 255 ), widget_tree, default_alpha = 255)
+    g15ui_gconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/frame_rate", "FrameRateAdjustment", 10.0, widget_tree)
+    g15ui_gconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/gain", "GainAdjustment", 1.0, widget_tree)
     
     if driver.get_bpp() == 0:
         widget_tree.get_object("LCDTable").set_visible(False)

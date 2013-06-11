@@ -108,24 +108,6 @@ def run_script(script, args = None, background = True):
 '''
 GConf stuff
 '''
-        
-def configure_colorchooser_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, default_alpha = None):
-    widget = widget_tree.get_object(widget_id)
-    if widget == None:
-        raise Exception("No widget with id %s." % widget_id)
-    val = gconf_client.get_string(gconf_key)
-    if val == None or val == "":
-        col  = to_color(default_value)
-    else:   
-        col = to_color(to_rgb(val))
-    if default_alpha != None:
-        alpha = gconf_client.get_int(gconf_key + "_opacity")
-        widget.set_use_alpha(True)
-        widget.set_alpha(alpha << 8)
-    else:
-        widget.set_use_alpha(False)
-    widget.set_color(col)
-    widget.connect("color-set", color_changed, gconf_client, gconf_key)
     
 def to_cairo_rgba(gconf_client, key, default):
     str_val = gconf_client.get_string(key)
@@ -136,12 +118,6 @@ def to_cairo_rgba(gconf_client, key, default):
         alpha = gconf_client.get_int(key + "_opacity")
         val = ( v[0], v[1],v[2], alpha)
     return (float(val[0]) / 255.0, float(val[1]) / 255.0, float(val[2]) / 255.0, float(val[3]) / 255.0)
-    
-def color_changed(widget, gconf_client, key):
-    val = widget.get_color()
-    gconf_client.set_string(key, "%d,%d,%d" % ( val.red >> 8, val.green >> 8, val.blue >> 8 ))
-    if widget.get_use_alpha():
-        gconf_client.set_int(key + "_opacity", widget.get_alpha() >> 8)
         
 def rgb_to_string(rgb):
     if rgb == None:
@@ -170,138 +146,6 @@ def to_pixel(rgb):
       
 def to_color(rgb):
     return gtk.gdk.Color(rgb[0] <<8, rgb[1] <<8,rgb[2] <<8)
-    
-def spinner_changed(widget, gconf_client, key, model, decimal = False):
-    if decimal:
-        gconf_client.set_float(key, widget.get_value())
-    else:
-        gconf_client.set_int(key, int(widget.get_value()))
-        
-def configure_spinner_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, decimal = False):
-    widget = widget_tree.get_object(widget_id)
-    if widget == None:
-        raise Exception("No widget with id %s." % widget_id)
-    model = widget.get_adjustment()
-    entry = gconf_client.get(gconf_key)
-    val = default_value
-    if entry != None:
-        if decimal:
-            val = entry.get_float()
-        else:
-            val = entry.get_int()
-    model.set_value(val)
-    widget.connect("value-changed", spinner_changed, gconf_client, gconf_key, model)
-
-def configure_combo_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree):
-    widget = widget_tree.get_object(widget_id)
-    if widget == None:
-        raise Exception("No widget with id %s." % widget_id)
-    model = widget.get_model()
-    widget.connect("changed", combo_box_changed, gconf_client, gconf_key, model, default_value)
-    
-    if isinstance(default_value, int):
-        e = gconf_client.get(gconf_key)
-        if e:
-            val = e.get_int()
-        else:
-            val = default_value
-    else:
-        val = gconf_client.get_string(gconf_key)
-        if val == None or val == "":
-            val = default_value
-    idx = 0
-    for row in model:
-        if isinstance(default_value, int):
-            row_val = int(row[0])
-        else:
-            row_val = str(row[0])
-        if row_val == val:
-            widget.set_active(idx)
-        idx += 1
-    
-def combo_box_changed(widget, gconf_client, key, model, default_value):
-    if isinstance(default_value, int):
-        gconf_client.set_int(key, int(model[widget.get_active()][0]))
-    else:
-        gconf_client.set_string(key, model[widget.get_active()][0])
-    
-def boolean_conf_value_change(client, connection_id, entry, args):
-    widget, key = args
-    widget.set_active( entry.get_value().get_bool())
-    
-def text_conf_value_change(client, connection_id, entry, args):
-    widget, key = args
-    widget.set_text( entry.get_value().get_string())
-    
-def radio_conf_value_change(client, connection_id, entry, args):
-    widget, key, gconf_value = args
-    str_value = entry.get_value().get_string()
-    widget.set_active(str_value == gconf_value)
-        
-def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, watch_changes = False):
-    widget = widget_tree.get_object(widget_id)
-    entry = gconf_client.get(gconf_key)
-    if entry != None:
-        widget.set_active(entry.get_bool())
-    else:
-        widget.set_active(default_value)
-    widget.connect("toggled", checkbox_changed, gconf_key, gconf_client)
-    if watch_changes:
-        return gconf_client.notify_add(gconf_key, boolean_conf_value_change,( widget, gconf_key ));
-    
-def configure_text_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree, watch_changes = False):
-    widget = widget_tree.get_object(widget_id)
-    entry = gconf_client.get(gconf_key)
-    if entry != None:
-        widget.set_text(entry.get_string())
-    else:
-        widget.set_text(default_value)
-    widget.connect("changed", text_changed, gconf_key, gconf_client)
-    if watch_changes:
-        return gconf_client.notify_add(gconf_key, text_conf_value_change,( widget, gconf_key ));
-        
-def configure_radio_from_gconf(gconf_client, gconf_key, widget_ids , gconf_values, default_value, widget_tree, watch_changes = False):
-    entry = gconf_client.get(gconf_key)
-    handles = []
-    sel_entry = entry.get_string() if entry else None
-    for i in range(0, len(widget_ids)):
-        gconf_value = gconf_values[i]
-        active = ( entry != None and gconf_value == sel_entry ) or ( entry == None and default_value == gconf_value )
-        widget_tree.get_object(widget_ids[i]).set_active(active)
-        
-    for i in range(0, len(widget_ids)):
-        widget = widget_tree.get_object(widget_ids[i])
-        widget.connect("toggled", radio_changed, gconf_key, gconf_client, gconf_values[i])
-        if watch_changes:
-            handles.append(gconf_client.notify_add(gconf_key, radio_conf_value_change,( widget, gconf_key, gconf_values[i] )))
-    return handles
-        
-def configure_adjustment_from_gconf(gconf_client, gconf_key, widget_id, default_value, widget_tree):
-    adj = widget_tree.get_object(widget_id)
-    entry = gconf_client.get(gconf_key)
-    if entry != None:
-        if isinstance(default_value, int):
-            adj.set_value(entry.get_int())
-        else:
-            adj.set_value(entry.get_float())
-    else:
-        adj.set_value(default_value)
-    adj.connect("value-changed", adjustment_changed, gconf_key, gconf_client, isinstance(default_value, int))
-    
-def adjustment_changed(adjustment, key, gconf_client, integer = True):
-    if integer:
-        gconf_client.set_int(key, int(adjustment.get_value()))
-    else:
-        gconf_client.set_float(key, adjustment.get_value())
-    
-def checkbox_changed(widget, key, gconf_client):
-    gconf_client.set_bool(key, widget.get_active())
-    
-def text_changed(widget, key, gconf_client):
-    gconf_client.set_string(key, widget.get_text())
-    
-def radio_changed(widget, key, gconf_client, gconf_value):
-    gconf_client.set_string(key, gconf_value)
     
 '''
 gconf utilities

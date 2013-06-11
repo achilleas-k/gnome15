@@ -22,6 +22,7 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("sysmon", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import time
@@ -65,7 +66,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "sysmon.glade"))    
     dialog = widget_tree.get_object("SysmonDialog")
     dialog.set_transient_for(parent)    
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/show_cpu_on_panel", "ShowCPUUsageOnPanel", True, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/show_cpu_on_panel", "ShowCPUUsageOnPanel", True, widget_tree)
     dialog.run()
     dialog.hide()
     

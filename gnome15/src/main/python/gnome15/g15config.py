@@ -32,6 +32,7 @@ import g15macroeditor
 import g15devices
 import g15util
 import g15scheduler
+import g15ui_gconf
 import g15theme
 import colorpicker
 import subprocess
@@ -380,7 +381,7 @@ class G15Config:
 
         # Indicator options
         # TODO move this out of here        
-        g15util.configure_checkbox_from_gconf(self.conf_client, "/apps/gnome15/indicate_only_on_error", "OnlyShowIndicatorOnError", False, self.widget_tree, True)
+        g15ui_gconf.configure_checkbox_from_gconf(self.conf_client, "/apps/gnome15/indicate_only_on_error", "OnlyShowIndicatorOnError", False, self.widget_tree, True)
         
         # Bind to events
         self.cycle_seconds.connect("value-changed", self._cycle_seconds_changed)

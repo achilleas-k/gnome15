@@ -30,6 +30,7 @@ import gnome15.g15locale as g15locale
 import gnome15.g15screen as g15screen
 import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
+import gnome15.g15ui_gconf as g15ui_gconf
 import gobject
 import gtk
 import logging
@@ -116,12 +117,12 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     dialog = widget_tree.get_object("G15DaemonServerDialog")
     dialog.set_transient_for(parent)
     
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/port", "PortAdjustment", 15550, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/keep_aspect_ratio", "KeepAspectRatio", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/take_over_macro_keys", "TakeOverMacroKeys", True, widget_tree, True)
+    g15ui_gconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/port", "PortAdjustment", 15550, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/keep_aspect_ratio", "KeepAspectRatio", False, widget_tree, True)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/take_over_macro_keys", "TakeOverMacroKeys", True, widget_tree, True)
     
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/use_custom_foreground", "UseCustomForeground", False, widget_tree)
-    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/custom_foreground", "CustomForeground", ( 255, 255, 255 ), widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/use_custom_foreground", "UseCustomForeground", False, widget_tree)
+    g15ui_gconf.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/custom_foreground", "CustomForeground", ( 255, 255, 255 ), widget_tree)
     
     dialog.run()
     dialog.hide()

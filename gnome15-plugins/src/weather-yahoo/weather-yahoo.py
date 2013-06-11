@@ -50,6 +50,7 @@ _ = g15locale.get_translation("weather-yahoo", modfile = __file__).ugettext
 import gnome15.g15accounts as g15accounts
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
+import gnome15.g15ui_gconf as g15ui_gconf
 import weather
 import gtk
 import os
@@ -141,7 +142,7 @@ class YahooWeatherOptions(weather.WeatherOptions):
         self.widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "weather-yahoo.glade"))
         self.component = self.widget_tree.get_object("OptionPanel")
         
-        g15util.configure_text_from_gconf(gconf_client, "%s/location_id" % gconf_key, "LocationID", "", self.widget_tree)
+        g15ui_gconf.configure_text_from_gconf(gconf_client, "%s/location_id" % gconf_key, "LocationID", "", self.widget_tree)
 
 class YahooWeatherData(weather.WeatherData):
     

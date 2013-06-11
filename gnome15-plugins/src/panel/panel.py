@@ -24,6 +24,7 @@ _ = g15locale.get_translation("panel", modfile = __file__).ugettext
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15ui_gconf as g15ui_gconf
 import os
 import gtk
 import cairo
@@ -46,10 +47,10 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "panel.glade"))
     dialog = widget_tree.get_object("PanelDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/size", "SizeAdjustment", 24, widget_tree)
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/position", "PositionCombo", "bottom", widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/stretch", "Stretch", False, widget_tree)
-    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/color", "Color", ( 128, 128, 128 ), widget_tree, default_alpha = 128)
+    g15ui_gconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/size", "SizeAdjustment", 24, widget_tree)
+    g15ui_gconf.configure_combo_from_gconf(gconf_client, gconf_key + "/position", "PositionCombo", "bottom", widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/stretch", "Stretch", False, widget_tree)
+    g15ui_gconf.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/color", "Color", ( 128, 128, 128 ), widget_tree, default_alpha = 128)
     dialog.run()
     dialog.hide()
     

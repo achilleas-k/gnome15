@@ -21,7 +21,7 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("tweak", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
+import gnome15.g15ui_gconf as g15ui_gconf
 import gtk
 import os.path
 
@@ -43,23 +43,23 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "tweak.glade"))
     dialog = widget_tree.get_object("TweakDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/scroll_delay", "ScrollDelayAdjustment", 500, widget_tree)
-    g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/scroll_amount", "ScrollAmountAdjustment", 5, widget_tree)
-    g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/animation_delay", "AnimationDelayAdjustment", 100, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/animated_menus", "AnimatedMenus", True, widget_tree)
-    g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/key_hold_duration", "KeyHoldDurationAdjustment", 2000, widget_tree)
-    g15util.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/usb_key_read_timeout", "UsbKeyReadTimeoutAdjustment", 100, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/use_xtest", "UseXTest", True, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/disable_svg_glow", "DisableSVGGlow", False, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/fade_screen_on_close", "FadeScreenOnClose", True, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/fade_keyboard_backlight_on_close", "FadeKeyboardBacklightOnClose", True, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/all_off_on_disconnect", "AllOffOnDisconnect", True, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/start_in_threads", "StartScreensInThreads", False, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/monitor_desktop_session", "MonitorDesktopSession", True, widget_tree)
-    g15util.configure_text_from_gconf(gconf_client, "/apps/gnome15/time_format", "TimeFormat", "", widget_tree)
-    g15util.configure_text_from_gconf(gconf_client, "/apps/gnome15/time_format_24hr", "TimeFormatTwentyFour", "", widget_tree)
-    g15util.configure_text_from_gconf(gconf_client, "/apps/gnome15/date_format", "DateFormat", "", widget_tree)
-    g15util.configure_text_from_gconf(gconf_client, "/apps/gnome15/date_time_format", "DateTimeFormat", "", widget_tree)
+    g15ui_gconf.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/scroll_delay", "ScrollDelayAdjustment", 500, widget_tree)
+    g15ui_gconf.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/scroll_amount", "ScrollAmountAdjustment", 5, widget_tree)
+    g15ui_gconf.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/animation_delay", "AnimationDelayAdjustment", 100, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/animated_menus", "AnimatedMenus", True, widget_tree)
+    g15ui_gconf.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/key_hold_duration", "KeyHoldDurationAdjustment", 2000, widget_tree)
+    g15ui_gconf.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/usb_key_read_timeout", "UsbKeyReadTimeoutAdjustment", 100, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/use_xtest", "UseXTest", True, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/disable_svg_glow", "DisableSVGGlow", False, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/fade_screen_on_close", "FadeScreenOnClose", True, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/fade_keyboard_backlight_on_close", "FadeKeyboardBacklightOnClose", True, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/all_off_on_disconnect", "AllOffOnDisconnect", True, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/start_in_threads", "StartScreensInThreads", False, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/monitor_desktop_session", "MonitorDesktopSession", True, widget_tree)
+    g15ui_gconf.configure_text_from_gconf(gconf_client, "/apps/gnome15/time_format", "TimeFormat", "", widget_tree)
+    g15ui_gconf.configure_text_from_gconf(gconf_client, "/apps/gnome15/time_format_24hr", "TimeFormatTwentyFour", "", widget_tree)
+    g15ui_gconf.configure_text_from_gconf(gconf_client, "/apps/gnome15/date_format", "DateFormat", "", widget_tree)
+    g15ui_gconf.configure_text_from_gconf(gconf_client, "/apps/gnome15/date_time_format", "DateTimeFormat", "", widget_tree)
     
     dialog.run()
     dialog.hide()

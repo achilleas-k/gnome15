@@ -62,6 +62,7 @@ if __name__ == "__main__":
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15globals as pglobals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -109,15 +110,15 @@ def show_preferences(parent, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "notify-lcd.glade"))
     dialog = widget_tree.get_object("NotifyLCDDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/respect_timeout", "RespectTimeout", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_actions", "AllowActions", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_cancel", "AllowCancel", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/enable_sounds", "EnableSounds", True, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/lcd_only", "LCDOnly", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_keyboard", "BlinkKeyboard", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/change_keyboard_color", "ChangeKeyboardColor", False, widget_tree, True)
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/blink_delay", "DelayAdjustment", 500, widget_tree)
-    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/color", "Color", ( 128, 128, 128 ), widget_tree, None)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/respect_timeout", "RespectTimeout", False, widget_tree, True)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_actions", "AllowActions", False, widget_tree, True)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_cancel", "AllowCancel", False, widget_tree, True)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/enable_sounds", "EnableSounds", True, widget_tree, True)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/lcd_only", "LCDOnly", False, widget_tree, True)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_keyboard", "BlinkKeyboard", False, widget_tree, True)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/change_keyboard_color", "ChangeKeyboardColor", False, widget_tree, True)
+    g15ui_gconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/blink_delay", "DelayAdjustment", 500, widget_tree)
+    g15ui_gconf.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/color", "Color", ( 128, 128, 128 ), widget_tree, None)
     
     set_available(None, widget_tree)
     widget_tree.get_object("ChangeKeyboardColor").connect("toggled", set_available, widget_tree)

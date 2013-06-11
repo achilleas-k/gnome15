@@ -16,6 +16,7 @@ _ = g15locale.get_translation("gnome15-drivers").ugettext
 
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15globals as g15globals
 
 import gconf
@@ -79,7 +80,7 @@ def show_preferences(device, parent, gconf_client):
     mode_model.clear()
     for mode in g15driver.MODELS:
         mode_model.append([mode])    
-    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/gtk_mode" % device.uid, "ModeCombo", g15driver.MODEL_G19, widget_tree)
+    g15ui_gconf.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/gtk_mode" % device.uid, "ModeCombo", g15driver.MODEL_G19, widget_tree)
     return widget_tree.get_object("DriverComponent")
 
 class Driver(g15driver.AbstractDriver):

@@ -24,6 +24,7 @@ _ = g15locale.get_translation("rss", modfile = __file__).ugettext
 import gnome15.g15util as g15util
 import gnome15.g15python_helpers as g15python_helpers
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15desktop as g15desktop
@@ -85,7 +86,7 @@ class G15RSSPreferences():
         # Optins
         self.update_adjustment = widget_tree.get_object("UpdateAdjustment")
         self.update_adjustment.set_value(g15util.get_int_or_default(self._gconf_client, "%s/update_time" % self._gconf_key, 60))        
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, widget_tree)
+        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, widget_tree)
         
         # Connect to events
         self.update_adjustment.connect("value-changed", self.update_time_changed)

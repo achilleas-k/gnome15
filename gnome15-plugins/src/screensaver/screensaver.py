@@ -24,6 +24,7 @@ _ = g15locale.get_translation("screensaver", modfile = __file__).ugettext
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15theme as g15theme
 from threading import Timer
 import gtk
@@ -57,7 +58,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     dialog = widget_tree.get_object("ScreenSaverDialog")
     dialog.set_transient_for(parent)
 
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/dim_keyboard" % gconf_key,"DimKeyboardCheckbox", True, widget_tree)    
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/dim_keyboard" % gconf_key,"DimKeyboardCheckbox", True, widget_tree)
     
     if driver.get_bpp() == 0:
         widget_tree.get_object("MessageFrame").hide()

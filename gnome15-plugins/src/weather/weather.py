@@ -26,6 +26,7 @@ _ = g15locale.get_translation("weather", modfile = __file__).ugettext
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -134,7 +135,7 @@ class G15WeatherPreferences():
         for b in get_available_backends():
             l = [b, get_backend(b).backend_name ]
             self._sources_model.append(l)
-        g15util.configure_combo_from_gconf(gconf_client, "%s/source" % gconf_key, "Source", self._sources_model[0][0] if len(self._sources_model) > 0 else None, self._widget_tree)
+        g15ui_gconf.configure_combo_from_gconf(gconf_client, "%s/source" % gconf_key, "Source", self._sources_model[0][0] if len(self._sources_model) > 0 else None, self._widget_tree)
         self._load_options_for_source()
         
         update = self._widget_tree.get_object("UpdateAdjustment")
@@ -145,8 +146,8 @@ class G15WeatherPreferences():
         unit.set_active(gconf_client.get_int(gconf_key + "/units"))
         unit.connect("changed", self._unit_changed, unit, gconf_key + "/units")
         
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, self._widget_tree)
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, self._widget_tree)
+        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, self._widget_tree)
+        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, self._widget_tree)
         
         dialog.run()
         dialog.hide()

@@ -26,6 +26,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -86,7 +87,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     unit.set_active(gconf_client.get_int(gconf_key + "/units"))
     unit.connect("changed", unit_changed, location, gconf_key + "/units", gconf_client)
     
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, widget_tree)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, widget_tree)
     
     dialog.run()
     dialog.hide()

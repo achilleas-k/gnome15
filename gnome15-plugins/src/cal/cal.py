@@ -25,6 +25,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
 import gnome15.g15plugin as g15plugin
@@ -247,7 +248,7 @@ class G15CalendarPreferences(g15accounts.G15AccountPreferences):
     def create_general_options(self):
         widget_tree = gtk.Builder()
         widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cal.glade"))
-        g15util.configure_checkbox_from_gconf(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, "TwentyFourHourTimes", True, widget_tree)
+        g15ui_gconf.configure_checkbox_from_gconf(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, "TwentyFourHourTimes", True, widget_tree)
         return widget_tree.get_object("OptionPanel")
         
 class G15Cal(g15plugin.G15Plugin):  

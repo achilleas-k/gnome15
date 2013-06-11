@@ -31,6 +31,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15uinput as g15uinput
 import gnome15.g15exceptions as g15exceptions
 import sys
@@ -153,7 +154,7 @@ def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
     widget_tree.set_translation_domain("driver_g15direct")
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15direct.glade"))  
-    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
+    g15ui_gconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
     if not device.model_id == g15driver.MODEL_G13:
         widget_tree.get_object("JoyModeCombo").destroy()
         widget_tree.get_object("JoyModeLabel").destroy()
@@ -161,7 +162,7 @@ def show_preferences(device, parent, gconf_client):
         widget_tree.get_object("OffsetLabel").destroy()
         widget_tree.get_object("OffsetDescription").destroy()
     else:  
-        g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
+        g15ui_gconf.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
         # We have separate offset values for digital / analogue, so swap between them based on configuration 
         offset_widget = widget_tree.get_object("Offset")    
         set_offset_depending_on_mode(None, gconf_client, device, offset_widget)

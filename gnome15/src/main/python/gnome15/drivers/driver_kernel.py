@@ -23,8 +23,8 @@ from threading import Thread
 import select 
 import pyinputevent.scancodes as S
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15globals as g15globals
 import gnome15.g15uinput as g15uinput
 import gconf
@@ -469,9 +469,9 @@ class KernelDriverPreferences():
             if dev_file.startswith("fb"):
                 device_model.append(["/dev/%s" % dev_file])
                   
-        g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/fb_device" % device.uid, "DeviceCombo", "auto", widget_tree)  
-        g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)  
-        g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/grab_multimedia" % device.uid, "GrabMultimedia", False, widget_tree)
+        g15ui_gconf.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/fb_device" % device.uid, "DeviceCombo", "auto", widget_tree)
+        g15ui_gconf.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
+        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/grab_multimedia" % device.uid, "GrabMultimedia", False, widget_tree)
         
         self.grab_multimedia.set_sensitive(device_info[device.model_id].mm_pattern is not None)
         

@@ -23,7 +23,7 @@ _ = g15locale.get_translation("fx", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen 
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.g15ui_gconf as g15ui_gconf
 import gtk
 import os
 import time
@@ -52,8 +52,8 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "fx.glade"))    
     dialog = widget_tree.get_object("FxDialog")
     dialog.set_transient_for(parent)    
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/transition_effect", "TransitionCombo", "random", widget_tree)
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/anim_speed", "AnimationSpeedAdjustment", 5.0, widget_tree)
+    g15ui_gconf.configure_combo_from_gconf(gconf_client, gconf_key + "/transition_effect", "TransitionCombo", "random", widget_tree)
+    g15ui_gconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/anim_speed", "AnimationSpeedAdjustment", 5.0, widget_tree)
     dialog.run()
     dialog.hide()
     

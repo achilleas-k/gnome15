@@ -31,6 +31,7 @@ import cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15exceptions as g15exceptions
 import sys
 import os
@@ -117,9 +118,9 @@ def show_preferences(device, parent, gconf_client):
     widget_tree.set_translation_domain("driver_g19direct")
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.glade"))
     
-    g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/reset_usb" % device.uid, "Reset", False, widget_tree, True)
-    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
-    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/reset_wait" % device.uid, "ResetWait", 0, widget_tree, False)
+    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/reset_usb" % device.uid, "Reset", False, widget_tree, True)
+    g15ui_gconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
+    g15ui_gconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/reset_wait" % device.uid, "ResetWait", 0, widget_tree, False)
     return widget_tree.get_object("DriverComponent")
 
 class Driver(g15driver.AbstractDriver):

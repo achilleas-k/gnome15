@@ -22,6 +22,7 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("background", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
+import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
 import gnome15.g15profile as g15profile
@@ -63,12 +64,12 @@ class G15BackgroundPreferences():
         # Widgets
         dialog = widget_tree.get_object("BackgroundDialog")
         dialog.set_transient_for(parent)        
-        g15util.configure_radio_from_gconf(gconf_client, gconf_key + "/type", [ "UseDesktop", "UseFile" ], [ "desktop", "file" ], "desktop", widget_tree, True)
-        g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/style", "StyleCombo", "zoom", widget_tree)
+        g15ui_gconf.configure_radio_from_gconf(gconf_client, gconf_key + "/type", [ "UseDesktop", "UseFile" ], [ "desktop", "file" ], "desktop", widget_tree, True)
+        g15ui_gconf.configure_combo_from_gconf(gconf_client, gconf_key + "/style", "StyleCombo", "zoom", widget_tree)
         widget_tree.get_object("UseDesktop").connect("toggled", self.set_available, widget_tree)
         widget_tree.get_object("UseFile").connect("toggled", self.set_available, widget_tree)
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_profile_override", "AllowProfileOverride", True, widget_tree)
-        g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/brightness", "BrightnessAdjustment", 50, widget_tree)
+        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_profile_override", "AllowProfileOverride", True, widget_tree)
+        g15ui_gconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/brightness", "BrightnessAdjustment", 50, widget_tree)
         
         # Currently, only GNOME is supported for getting the desktop background
         if g15desktop.get_desktop() in [ "gnome", "gnome-shell" ]:
