@@ -34,3 +34,72 @@ def call_if_exists(obj, function_name, *args):
     if callable(func):
         func(*args)
 
+def module_exists(module_name):
+    """
+    Get if a module exists
+
+    Keyword arguments:
+    module_name: the name of the module to check
+    """
+    try:
+        __import__(module_name)
+    except ImportError:
+        return False
+    else:
+        return True
+
+def value_or_empty(d, key):
+    """
+    Returns the value corresponding to a given key in a dictionnary.
+    If no value is found, then an empty array is returned.
+
+    Keyword arguments:
+    d:   The dictionnary where to search for the value
+    key: The key to use for the lookup
+    """
+    return value_or_default(d, key, [])
+
+def value_or_blank(d, key):
+    """
+    Returns the value corresponding to a given key in a dictionnary.
+    If no value is found, then an empty string is returned.
+
+    Keyword arguments:
+    d:   The dictionnary where to search for the value
+    key: The key to use for the lookup
+    """
+    return value_or_default(d, key, "")
+
+def value_or_default(d, key, default_value):
+    """
+    Returns the value corresponding to a given key in a dictionnary.
+    If no value is found, then a default value is returned.
+
+    Keyword arguments:
+    d:             The dictionnary where to search for the value
+    key:           The key to use for the lookup
+    default_value: The default value to return if no value is found
+    """
+    try :
+        return d[key]
+    except KeyError:
+        return default_value
+
+def to_int_or_none(s):
+    """
+    Converts a string to a int or returns None if there was an error converting
+    """
+    try:
+        return int(s)
+    except (ValueError, TypeError):
+        return None
+
+def to_float_or_none(s):
+    """
+    Converts a string to a float or returns None if there was an error converting
+    """
+    try:
+        return float(s)
+    except (ValueError, TypeError):
+        return None
+

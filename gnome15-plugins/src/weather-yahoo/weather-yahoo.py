@@ -51,6 +51,7 @@ import gnome15.g15accounts as g15accounts
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15python_helpers as g15python_helpers
 import weather
 import gtk
 import os
@@ -206,9 +207,9 @@ class YahooWeatherBackend(weather.WeatherBackend):
         today_low = None
         today_high = None
         for f in forecasts_el:        
-            condition_code = g15util.to_int_or_none(f["code"])
-            high = g15util.to_float_or_none(f["high"])
-            low = g15util.to_float_or_none(f["low"])
+            condition_code = g15python_helpers.to_int_or_none(f["code"])
+            high = g15python_helpers.to_float_or_none(f["high"])
+            low = g15python_helpers.to_float_or_none(f["low"])
             if today_low is None:
                 today_low = low
                 today_high = high
@@ -236,14 +237,14 @@ class YahooWeatherBackend(weather.WeatherBackend):
         if "atmosphere" in p:
             atmosphere = p["atmosphere"]
             if "pressure" in atmosphere:
-                pressure = g15util.to_float_or_none(atmosphere["pressure"])
+                pressure = g15python_helpers.to_float_or_none(atmosphere["pressure"])
             if "visibility" in atmosphere:
-                visibility = g15util.to_float_or_none(atmosphere["visibility"])
+                visibility = g15python_helpers.to_float_or_none(atmosphere["visibility"])
             if "humidity" in atmosphere:
-                humidity = g15util.to_float_or_none(atmosphere["humidity"])
+                humidity = g15python_helpers.to_float_or_none(atmosphere["humidity"])
         
         # Build data structure        
-        condition_code = g15util.to_int_or_none(condition_el["code"])
+        condition_code = g15python_helpers.to_int_or_none(condition_el["code"])
         data = {
             "location" : location,
             "forecasts" : forecasts,
@@ -260,7 +261,7 @@ class YahooWeatherBackend(weather.WeatherBackend):
                 "humidity" : humidity,
                 "low" : today_low,
                 "high" : today_high,
-                "temp_c" : g15util.to_float_or_none(condition_el["temp"]),
+                "temp_c" : g15python_helpers.to_float_or_none(condition_el["temp"]),
                 "icon" : self._translate_icon(condition_code),
                 "fallback_icon" : "http://l.yimg.com/a/i/us/we/52/%s.gif" % condition_code if condition_code is not None else None
             }

@@ -26,6 +26,7 @@ import gnome15.g15accounts as g15accounts
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15python_helpers as g15python_helpers
 import weather
 import gtk
 import os
@@ -93,8 +94,8 @@ class NOAAWeatherBackend(weather.WeatherBackend):
             "location" : p["location"],
             "datetime" : datetime.datetime.fromtimestamp(time.mktime(tm)),
             "current_conditions" : {
-                "wind_speed" : g15util.to_int_or_none(weather.mph_to_kph(float(p["wind_mph"]))) if "wind_mph" in p else None,
-                "wind_direction" : g15util.to_int_or_none(p["wind_degrees"]) if "wind_degrees" in p else None,
+                "wind_speed" : g15python_helpers.to_int_or_none(weather.mph_to_kph(float(p["wind_mph"]))) if "wind_mph" in p else None,
+                "wind_direction" : g15python_helpers.to_int_or_none(p["wind_degrees"]) if "wind_degrees" in p else None,
                 "pressure" : p["pressure_mb"] if "pressure_mb" in p else None,
                 "humidity" : p["relative_humidity"] if "relative_humidity" in p else None,
                 "condition" : p["weather"] if "weather" in p else None,

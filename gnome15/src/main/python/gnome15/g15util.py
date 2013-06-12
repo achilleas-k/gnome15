@@ -207,26 +207,6 @@ def get_command_output( cmd):
     if sts is None: sts = 0
     if text[-1:] == '\n': text = text[:-1]
     return sts, text
-    
-def module_exists(module_name):
-    try:
-        __import__(module_name)
-    except ImportError:
-        return False
-    else:
-        return True
-    
-def value_or_empty(d, key):
-    return value_or_default(d, key, [])
-
-def value_or_blank(d, key):
-    return value_or_default(d, key, "")
-
-def value_or_default(d, key, default_value):
-    try :
-        return d[key]
-    except KeyError:
-        return default_value
 
 def find(f, seq):
     """Return first item in sequence where f(item) == True."""
@@ -778,20 +758,4 @@ def parse_as_properties(properties_string):
         if len(a) > 1:
             d[a[0]] = a[1]
     return d
-
-"""
-Number utilities
-"""
-
-def to_int_or_none(s):
-    try:
-        return int(s)
-    except (ValueError, TypeError):
-        return None
-
-def to_float_or_none(s):
-    try:
-        return float(s)
-    except (ValueError, TypeError):
-        return None
 

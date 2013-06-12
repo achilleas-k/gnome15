@@ -27,6 +27,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15python_helpers as g15python_helpers
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -316,15 +317,15 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                     attributes["mono_thumb_icon"] = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
                 properties["condition"] = current['condition']
                 
-                temp_c = g15util.to_float_or_none(current['temp_c'])
+                temp_c = g15python_helpers.to_float_or_none(current['temp_c'])
                 if temp_c is not None:
                     temp_f = c_to_f(temp_c)
                     temp_k = c_to_k(temp_c)
-                low_c = g15util.to_float_or_none(current['low']) if 'low' in current else None
+                low_c = g15python_helpers.to_float_or_none(current['low']) if 'low' in current else None
                 if low_c is not None :
                     low_f = c_to_f(low_c)
                     low_k = c_to_k(low_c)
-                high_c  = g15util.to_float_or_none(current['high']) if 'high' in current else None
+                high_c  = g15python_helpers.to_float_or_none(current['high']) if 'high' in current else None
                 if high_c is not None :
                     high_f  = c_to_f(high_c)
                     high_k = c_to_k(high_c)
@@ -417,11 +418,11 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                     for forecast in self._weather['forecasts']:        
                         properties["condition" + str(y)] = forecast['condition']
                         
-                        lo_c = g15util.to_float_or_none(forecast['low'])
+                        lo_c = g15python_helpers.to_float_or_none(forecast['low'])
                         if lo_c is not None:
                             lo_f = c_to_f(temp_c)
                             lo_k = c_to_k(temp_c)
-                        hi_c = g15util.to_float_or_none(forecast['high'])
+                        hi_c = g15python_helpers.to_float_or_none(forecast['high'])
                         if hi_c is not None:
                             hi_f = c_to_f(hi_c)
                             hi_k = c_to_k(hi_c)
