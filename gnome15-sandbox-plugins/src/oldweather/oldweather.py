@@ -27,6 +27,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -306,7 +307,7 @@ class G15Weather():
             return None
         else:
             base_icon= self._get_base_icon(icon)
-            if g15util.get_bool_or_default(self._gconf_client, "%s/use_theme_icons" % self._gconf_key, True):
+            if g15gconf.get_bool_or_default(self._gconf_client, "%s/use_theme_icons" % self._gconf_key, True):
                 if base_icon in [ "chanceofrain", "scatteredshowers" ]:
                     theme_icon = "weather-showers-scattered"
                 elif base_icon in [ "sunny", "haze" ]: 

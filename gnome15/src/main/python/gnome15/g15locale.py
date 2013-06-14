@@ -33,7 +33,7 @@ import os
 import locale
 import gettext
 import g15globals
-import g15util
+import g15gconf
 import time
 import datetime
 import re
@@ -94,7 +94,7 @@ def format_time(time_val, gconf_client, display_seconds = True, show_timezone = 
     gconf_client     --    gconf client instance
     display_seconds  --    if false, seconds will be stripped from result
     """
-    fmt = g15util.get_string_or_default(gconf_client, 
+    fmt = g15gconf.get_string_or_default(gconf_client,
                                         "/apps/gnome15/time_format", 
                                         locale.nl_langinfo(locale.T_FMT_AMPM))
     # For some locales T_FMT_AMPM is empty.
@@ -132,7 +132,7 @@ def format_time_24hour(time_val, gconf_client, display_seconds = True, show_time
     gconf_client     --    gconf client instance
     display_seconds  --    if false, seconds will be stripped from result
     """    
-    fmt = g15util.get_string_or_default(gconf_client, "/apps/gnome15/time_format_24hr", locale.nl_langinfo(locale.T_FMT))
+    fmt = g15gconf.get_string_or_default(gconf_client, "/apps/gnome15/time_format_24hr", locale.nl_langinfo(locale.T_FMT))
     if not display_seconds:
         fmt = __strip_seconds(fmt)
     if isinstance(time_val, time.struct_time):
@@ -157,7 +157,7 @@ def format_date(date_val, gconf_client):
     date_val         --    date / datetime object
     gconf_client     --    gconf client instance
     """    
-    fmt = g15util.get_string_or_default(gconf_client, "/apps/gnome15/date_format", locale.nl_langinfo(locale.D_FMT))
+    fmt = g15gconf.get_string_or_default(gconf_client, "/apps/gnome15/date_format", locale.nl_langinfo(locale.D_FMT))
     if isinstance(date_val, tuple):
         return datetime.date.strftime(fmt, date_val)
     else:
@@ -174,7 +174,7 @@ def format_date_time(date_val, gconf_client, display_seconds = True):
     gconf_client     --    gconf client instance
     display_seconds  --    if false, seconds will be stripped from result
     """    
-    fmt = g15util.get_string_or_default(gconf_client, "/apps/gnome15/date_time_format", locale.nl_langinfo(locale.D_T_FMT))
+    fmt = g15gconf.get_string_or_default(gconf_client, "/apps/gnome15/date_time_format", locale.nl_langinfo(locale.D_T_FMT))
     if not display_seconds:
         fmt = __strip_seconds(fmt)
     if isinstance(date_val, tuple):

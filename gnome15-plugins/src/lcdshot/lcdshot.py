@@ -31,6 +31,7 @@ import gobject
 import gnome15.g15util as g15util
 import gnome15.g15notify as g15notify
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import subprocess
 import shutil
 from threading import Thread
@@ -90,7 +91,7 @@ class LCDShotPreferences():
         chooser_button.connect("file-set", self._file_set)
         chooser_button.connect("file-activated", self._file_activated)
         chooser_button.connect("current-folder-changed", self._file_activated)
-        bg_img = g15util.get_string_or_default(self.gconf_client, "%s/folder" % self.gconf_key, os.path.expanduser("~/Desktop"))
+        bg_img = g15gconf.get_string_or_default(self.gconf_client, "%s/folder" % self.gconf_key, os.path.expanduser("~/Desktop"))
         chooser_button.set_current_folder(bg_img)
         g15ui_gconf.configure_combo_from_gconf(self.gconf_client, "%s/mode" % self.gconf_key, "Mode", "still", widget_tree)
         mode = widget_tree.get_object("Mode")
@@ -131,7 +132,7 @@ class G15LCDShot():
     def action_performed(self, binding):
         # TODO better key
         if binding.action == SCREENSHOT:
-            mode = g15util.get_string_or_default(self._gconf_client, "%s/mode" % self._gconf_key, "still")
+            mode = g15gconf.get_string_or_default(self._gconf_client, "%s/mode" % self._gconf_key, "still")
             if mode == "still":
                 return self._take_still()
             else:
@@ -160,7 +161,7 @@ class G15LCDShot():
         t.start()
                     
     def _start_recording(self):
-        self._record_fps = g15util.get_int_or_default(self._gconf_client, "%s/fps" % self._gconf_key, 10)
+        self._record_fps = g15gconf.get_int_or_default(self._gconf_client, "%s/fps" % self._gconf_key, 10)
         path = self._find_next_free_filename("avi", _("Gnome15_Video"))
         g15notify.notify(_("LCD Screenshot"), _("Started recording video"), "dialog-info")
         g15util.mkdir_p("%s.tmp" % path)
@@ -189,7 +190,7 @@ class G15LCDShot():
             self._recording_timer = gobject.timeout_add(1000 / self._record_fps, self._frame)
             
     def _find_next_free_filename(self, ext, title):
-        dir_path = g15util.get_string_or_default(self._gconf_client, "%s/folder" % \
+        dir_path = g15gconf.get_string_or_default(self._gconf_client, "%s/folder" % \
                     self._gconf_key, os.path.expanduser("~/Desktop"))
         for i in range(1, 9999):
             path = "%s/%s-%s-%d.%s" % ( dir_path, \

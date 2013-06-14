@@ -34,6 +34,7 @@ import gtk
 import g15globals
 import g15util
 import g15scheduler
+import g15gconf
 import pyinotify
 import pwd
 from threading import Lock
@@ -352,7 +353,7 @@ class G15AccountPreferences():
         
         # Updates
         self.update_adjustment = self.widget_tree.get_object("UpdateAdjustment")
-        self.update_adjustment.set_value(g15util.get_int_or_default(gconf_client, gconf_key + "/update_time", default_refresh))
+        self.update_adjustment.set_value(g15gconf.get_int_or_default(gconf_client, gconf_key + "/update_time", default_refresh))
         
         # Connect to events
         self.account_list.connect("cursor-changed", self._select_account)

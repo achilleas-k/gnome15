@@ -26,6 +26,7 @@ import gnome15.g15plugin as g15plugin
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15gconf as g15gconf
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
@@ -285,7 +286,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         self._popup()
                  
     def _popup(self): 
-        if not self.page.is_visible() and g15util.get_bool_or_default(self.gconf_client,"%s/raise" % self.gconf_key, True):
+        if not self.page.is_visible() and g15gconf.get_bool_or_default(self.gconf_client,"%s/raise" % self.gconf_key, True):
             self._raise_timer = self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 4.0)
             self.screen.redraw(self.page)
                 

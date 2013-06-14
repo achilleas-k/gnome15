@@ -25,6 +25,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15theme as g15theme 
 import gnome15.g15util as g15util 
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gnome15.g15driver as g15driver 
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -179,14 +180,14 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
     '''
     
     def _load_surfaces(self):
-        self.display_date = g15util.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
-        self.display_seconds = g15util.get_bool_or_default(self.gconf_client, "%s/display_seconds" % self.gconf_key, True)
-        self.display_date = g15util.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
-        self.display_year = g15util.get_bool_or_default(self.gconf_client, "%s/display_year" % self.gconf_key, True)
-        self.display_digital_time = g15util.get_bool_or_default(self.gconf_client, "%s/display_digital_time" % self.gconf_key, True)
-        self.second_sweep = g15util.get_bool_or_default(self.gconf_client, "%s/second_sweep" % self.gconf_key, False)
-        self.twenty_four_hour = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour" % self.gconf_key, False)
-        self.twenty_four_hour_digital = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_digital" % self.gconf_key, True)
+        self.display_date = g15gconf.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
+        self.display_seconds = g15gconf.get_bool_or_default(self.gconf_client, "%s/display_seconds" % self.gconf_key, True)
+        self.display_date = g15gconf.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
+        self.display_year = g15gconf.get_bool_or_default(self.gconf_client, "%s/display_year" % self.gconf_key, True)
+        self.display_digital_time = g15gconf.get_bool_or_default(self.gconf_client, "%s/display_digital_time" % self.gconf_key, True)
+        self.second_sweep = g15gconf.get_bool_or_default(self.gconf_client, "%s/second_sweep" % self.gconf_key, False)
+        self.twenty_four_hour = g15gconf.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour" % self.gconf_key, False)
+        self.twenty_four_hour_digital = g15gconf.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_digital" % self.gconf_key, True)
         
         self.gconf_client.get_bool(self.gconf_key + "/twenty_four_hour")
         

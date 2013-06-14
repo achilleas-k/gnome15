@@ -24,6 +24,7 @@ _ = g15locale.get_translation("cal", modfile = __file__).ugettext
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
+import gnome15.g15gconf as g15gconf
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
@@ -273,7 +274,7 @@ class G15GoogleAnalytics():
             self._load_site_data()
             self._page.redraw()
             self._schedule_refresh(get_update_time(self._gconf_client, self._gconf_key) * 60.0) 
-            selected = g15util.get_string_or_default(self._gconf_client, "%s/selected_site" % self._gconf_key, None)
+            selected = g15gconf.get_string_or_default(self._gconf_client, "%s/selected_site" % self._gconf_key, None)
             if selected:
                 for m in self._menu.get_children():
                     if m.id == selected:

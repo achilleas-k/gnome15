@@ -54,6 +54,7 @@ import g15driver
 import g15util
 import g15scheduler
 import g15python_helpers
+import g15gconf
 import g15profile
 import g15globals
 import g15drivermanager
@@ -750,7 +751,7 @@ class G15Screen():
         try:
             logger.debug("Rescheduling cycle")
             self._cancel_timer()
-            cycle_screens = g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % self.device.uid, True)
+            cycle_screens = g15gconf.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % self.device.uid, True)
             active = self.driver != None and self.driver.is_connected() and cycle_screens
             if active and self.cycle_timer == None:
                 val = self.conf_client.get("/apps/gnome15/%s/cycle_seconds" % self.device.uid)

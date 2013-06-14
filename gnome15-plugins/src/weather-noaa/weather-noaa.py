@@ -24,9 +24,9 @@ _ = g15locale.get_translation("weather-noaa", modfile = __file__).ugettext
 
 import gnome15.g15accounts as g15accounts
 import gnome15.g15globals as g15globals
-import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15python_helpers as g15python_helpers
+import gnome15.g15gconf as g15gconf
 import weather
 import gtk
 import os
@@ -86,7 +86,7 @@ class NOAAWeatherBackend(weather.WeatherBackend):
         weather.WeatherBackend.__init__(self, gconf_client, gconf_key)
     
     def get_weather_data(self):
-        station_id = g15util.get_string_or_default(self.gconf_client, "%s/station_id" % self.gconf_key, "KPEO")
+        station_id = g15gconf.get_string_or_default(self.gconf_client, "%s/station_id" % self.gconf_key, "KPEO")
         p = pywapi.get_weather_from_noaa(station_id)
         
         tm = email.utils.parsedate_tz(p["observation_time_rfc822"])[:9]

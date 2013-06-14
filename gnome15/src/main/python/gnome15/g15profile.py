@@ -29,6 +29,7 @@ getting the default or active profile.
 import gconf
 import time
 import g15util
+import g15gconf
 import g15actions
 import g15devices
 import g15uinput
@@ -282,7 +283,7 @@ def is_locked(device):
     Keyword arguments:
     device        -- device associated with profile
     """
-    return g15util.get_bool_or_default(conf_client, "/apps/gnome15/%s/locked" % device.uid, False)
+    return g15gconf.get_bool_or_default(conf_client, "/apps/gnome15/%s/locked" % device.uid, False)
 
 def set_locked(device, locked):
     """

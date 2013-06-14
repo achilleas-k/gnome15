@@ -25,6 +25,7 @@ import gnome15.g15profile as g15profile
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gnome15.g15globals as g15globals
 import gnome15.g15theme as g15theme
 import gnome15.g15screen as g15screen
@@ -147,7 +148,7 @@ class G15Macros(g15plugin.G15MenuPlugin):
             
     def _reload_and_popup(self):
         self._reload()
-        if g15util.get_bool_or_default(self.gconf_client, "%s/raise" % self.gconf_key, True):
+        if g15gconf.get_bool_or_default(self.gconf_client, "%s/raise" % self.gconf_key, True):
             self._popup()
     
     def load_menu_items(self):
@@ -218,5 +219,5 @@ class MacrosScreenChangeAdapter(g15screen.ScreenChangeAdapter):
     def memory_bank_changed(self, new_bank_number):
         self.plugin._get_configuration()
         self.plugin._reload()
-        if g15util.get_bool_or_default(self.plugin.gconf_client, "%s/raise" % self.plugin.gconf_key, True):
+        if g15gconf.get_bool_or_default(self.plugin.gconf_client, "%s/raise" % self.plugin.gconf_key, True):
             self.plugin._popup()

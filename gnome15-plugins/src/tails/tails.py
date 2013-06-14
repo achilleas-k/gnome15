@@ -22,6 +22,7 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("tails", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
+import gnome15.g15gconf as g15gconf
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
@@ -85,7 +86,7 @@ class G15TailsPreferences():
         
         # Lines
         self.lines_adjustment = widget_tree.get_object("LinesAdjustment")
-        self.lines_adjustment.set_value(g15util.get_int_or_default(self._gconf_client, "%s/lines" % self._gconf_key, 10))
+        self.lines_adjustment.set_value(g15gconf.get_int_or_default(self._gconf_client, "%s/lines" % self._gconf_key, 10))
         
         # Connect to events
         self.lines_adjustment.connect("value-changed", self.lines_changed)
@@ -331,7 +332,7 @@ class G15Tails():
         self._load_files()
     
     def _load_files(self):
-        self.lines = g15util.get_int_or_default(self._gconf_client, "%s/lines" % self._gconf_key, 10)
+        self.lines = g15gconf.get_int_or_default(self._gconf_client, "%s/lines" % self._gconf_key, 10)
         file_list = self._gconf_client.get_list(self._gconf_key + "/files", gconf.VALUE_STRING)
         
         def init():

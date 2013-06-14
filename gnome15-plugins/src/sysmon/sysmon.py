@@ -23,6 +23,7 @@ _ = g15locale.get_translation("sysmon", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import time
@@ -327,7 +328,7 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         self._reschedule_refresh()
             
     def _set_panel(self, client = None, connection_id = None, entry = None, args = None):        
-        self.page.panel_painter = self._paint_panel if g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/show_cpu_on_panel", True) else None
+        self.page.panel_painter = self._paint_panel if g15gconf.get_bool_or_default(self.gconf_client, self.gconf_key + "/show_cpu_on_panel", True) else None
         
     def _refresh(self):
         if self.page is not None:

@@ -28,6 +28,7 @@ import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15python_helpers as g15python_helpers
+import gnome15.g15gconf as g15gconf
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -140,7 +141,7 @@ class G15WeatherPreferences():
         self._load_options_for_source()
         
         update = self._widget_tree.get_object("UpdateAdjustment")
-        update.set_value(g15util.get_int_or_default(gconf_client, gconf_key + "/update", DEFAULT_UPDATE_INTERVAL))
+        update.set_value(g15gconf.get_int_or_default(gconf_client, gconf_key + "/update", DEFAULT_UPDATE_INTERVAL))
         update.connect("value-changed", self._value_changed, update, gconf_key + "/update")
         
         unit = self._widget_tree.get_object("UnitCombo")
@@ -240,7 +241,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
     
     def refresh(self):        
         try :            
-            backend_type = g15util.get_string_or_default(self.gconf_client, "%s/source" % self.gconf_key, None)
+            backend_type = g15gconf.get_string_or_default(self.gconf_client, "%s/source" % self.gconf_key, None)
             if backend_type:
                 backend = get_backend(backend_type).create_backend(self.gconf_client, "%s/%s" % (self.gconf_key, backend_type) )
                 self._weather = backend.get_weather_data()
@@ -265,7 +266,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
     """
     
     def _load_config(self):        
-        val = g15util.get_int_or_default(self.gconf_client, self.gconf_key + "/update", DEFAULT_UPDATE_INTERVAL)
+        val = g15gconf.get_int_or_default(self.gconf_client, self.gconf_key + "/update", DEFAULT_UPDATE_INTERVAL)
         self.refresh_interval = val * 60.0
         
     def _loc_changed(self, client, connection_id, entry, args):
@@ -289,7 +290,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
     def _build_properties(self):
         properties = {}
         attributes = {}
-        use_twenty_four_hour = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True)
+        use_twenty_four_hour = g15gconf.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True)
         if self._weather is None:            
             properties["message"] = _("No weather source configuration")
         else: 
@@ -479,7 +480,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
         if theme_icon == None or theme_icon == "":
             return None
         else:
-            if not g15util.get_bool_or_default(self.gconf_client, "%s/use_theme_icons" % self.gconf_key, True):
+            if not g15gconf.get_bool_or_default(self.gconf_client, "%s/use_theme_icons" % self.gconf_key, True):
                 return fallback_icon
             
         if theme_icon != None:

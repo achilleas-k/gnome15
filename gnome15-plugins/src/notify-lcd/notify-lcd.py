@@ -26,6 +26,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gnome15.g15globals as pglobals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -251,17 +252,17 @@ class G15NotifyLCD():
         self.id = 1
         
     def _load_configuration(self):
-        self.respect_timeout = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/respect_timeout", False)
-        self.allow_actions = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_actions", False)
-        self.allow_cancel = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_cancel", True)
-        self.on_keyboard_screen = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_keyboard_screen", True)
-        self.on_desktop = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_desktop", True)
-        self.blink_keyboard_backlight = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/blink_keyboard_backlight", True)
-        self.blink_memory_bank = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/blink_memory_bank", True)
-        self.change_keyboard_backlight_color = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/change_keyboard_backlight_color", False)
-        self.enable_sounds = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/enable_sounds", True)
-        self.blink_delay = g15util.get_int_or_default(self._gconf_client, self._gconf_key + "/blink_delay", 500)
-        self.keyboard_backlight_color  = g15util.get_rgb_or_default(self._gconf_client, self._gconf_key + "/keyboard_backlight_color", ( 128, 128, 128 ))
+        self.respect_timeout = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/respect_timeout", False)
+        self.allow_actions = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_actions", False)
+        self.allow_cancel = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_cancel", True)
+        self.on_keyboard_screen = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_keyboard_screen", True)
+        self.on_desktop = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_desktop", True)
+        self.blink_keyboard_backlight = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/blink_keyboard_backlight", True)
+        self.blink_memory_bank = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/blink_memory_bank", True)
+        self.change_keyboard_backlight_color = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/change_keyboard_backlight_color", False)
+        self.enable_sounds = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/enable_sounds", True)
+        self.blink_delay = g15gconf.get_int_or_default(self._gconf_client, self._gconf_key + "/blink_delay", 500)
+        self.keyboard_backlight_color  = g15gconf.get_rgb_or_default(self._gconf_client, self._gconf_key + "/keyboard_backlight_color", ( 128, 128, 128 ))
 
     def activate(self):
         self._last_variant = None

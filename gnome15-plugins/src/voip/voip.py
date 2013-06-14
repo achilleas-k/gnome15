@@ -33,6 +33,7 @@ import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -501,7 +502,7 @@ class G15Voip(g15plugin.G15MenuPlugin):
             self.message_menu.add_child(MessageMenuItem(sender, message, highlight))
             self.message_menu.select_last_item()
             self.page.mark_dirty()  
-            if g15util.get_bool_or_default(self.gconf_client, "%s/raise_on_chat_message" % self.gconf_key, False):   
+            if g15gconf.get_bool_or_default(self.gconf_client, "%s/raise_on_chat_message" % self.gconf_key, False):
                 self._popup() 
             
     def activate_item(self, item):
@@ -601,14 +602,14 @@ class G15Voip(g15plugin.G15MenuPlugin):
                 self.screen.driver.release_control(self._backlight_acq)
                 self._backlight_acq = None
             if self._talking is not None:
-                hex_color = g15util.get_string_or_default(self.gconf_client, get_backlight_key(self.gconf_key, self._talking), "")
+                hex_color = g15gconf.get_string_or_default(self.gconf_client, get_backlight_key(self.gconf_key, self._talking), "")
                 if hex_color != "":
                     if self._backlight_acq is None:
                         self._backlight_acq = self.screen.driver.acquire_control(self._backlight_ctrl)
                     self._backlight_acq.set_value(g15util.to_rgb(hex_color))
                      
         self.redraw()   
-        if g15util.get_bool_or_default(self.gconf_client, "%s/raise_on_talk_status_change" % self.gconf_key, False):   
+        if g15gconf.get_bool_or_default(self.gconf_client, "%s/raise_on_talk_status_change" % self.gconf_key, False):
             self._popup()
         
     """
@@ -770,7 +771,7 @@ class SelectModeMenuItem(g15theme.MenuItem):
     def get_theme_properties(self):
         p = g15theme.MenuItem.get_theme_properties(self)
         p["item_radio"] = True
-        p["item_radio_selected"] = self._mode == g15util.get_string_or_default(self._gconf_client, "%s/mode" % self._gconf_key, MODE_ONLINE)
+        p["item_radio_selected"] = self._mode == g15gconf.get_string_or_default(self._gconf_client, "%s/mode" % self._gconf_key, MODE_ONLINE)
         return p
         
     def activate(self):      
@@ -851,7 +852,7 @@ class BuddyBacklightMenu(g15theme.G15Page):
         self.ctrl = ctrl
         self.acq = None
         
-        sel_color = g15util.to_rgb(g15util.get_string_or_default(
+        sel_color = g15util.to_rgb(g15gconf.get_string_or_default(
                 gconf_client, get_backlight_key(gconf_key, buddy),
                 "255,255,255"))
         for i, c in enumerate(colorpicker.COLORS_FULL):

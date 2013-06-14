@@ -22,6 +22,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util  
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
 import gobject
@@ -337,11 +338,11 @@ class G15Impulse():
         self.audio_source_index = get_source_index(self.gconf_client.get_string(self.gconf_key + "/audio_source_name"))
         gobject.idle_add(self.set_audio_source)
         self.mode = self.gconf_client.get_string(self.gconf_key + "/mode")
-        self.disco = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/disco", False)
-        self.refresh_interval = 1.0 / g15util.get_float_or_default(self.gconf_client, self.gconf_key + "/frame_rate", 25.0)
-        self.gain = g15util.get_float_or_default(self.gconf_client, self.gconf_key + "/gain", 1.0)
+        self.disco = g15gconf.get_bool_or_default(self.gconf_client, self.gconf_key + "/disco", False)
+        self.refresh_interval = 1.0 / g15gconf.get_float_or_default(self.gconf_client, self.gconf_key + "/frame_rate", 25.0)
+        self.gain = g15gconf.get_float_or_default(self.gconf_client, self.gconf_key + "/gain", 1.0)
         logger.info("Refresh interval is %f" % self.refresh_interval)
-        self.animate_mkeys = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/animate_mkeys", False)
+        self.animate_mkeys = g15gconf.get_bool_or_default(self.gconf_client, self.gconf_key + "/animate_mkeys", False)
         if self.mode == None or self.mode == "" or self.mode == "spectrum" or self.mode == "scope":
             self.mode = "default"
         self.paint_mode = self.gconf_client.get_string(self.gconf_key + "/paint")

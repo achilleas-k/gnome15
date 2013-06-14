@@ -38,6 +38,7 @@ import traceback
 import gconf
 import g15util
 import g15scheduler
+import g15gconf
 import Xlib.X 
 import Xlib.ext
 import Xlib.XK
@@ -948,7 +949,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.shutdown(True)
         
     def _is_monitor_session(self):
-        return g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/monitor_desktop_session", True)
+        return g15gconf.get_bool_or_default(self.conf_client, "/apps/gnome15/monitor_desktop_session", True)
             
     def _active_session_changed(self, object_path):        
         logger.debug("Adding seat %s" % object_path)
@@ -994,17 +995,17 @@ class G15Service(g15desktop.G15AbstractService):
         self._load_hidden_configuration()
         
     def _load_hidden_configuration(self):
-        self.scroll_delay = float(g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_delay', 500)) / 1000.0
-        self.scroll_amount = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_amount', 5)
-        self.animated_menus = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/animated_menus', True)
-        self.animation_delay = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/animation_delay', 100) / 1000.0
-        self.key_hold_duration = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/key_hold_duration', 2000) / 1000.0
-        self.macro_handler.use_x_test = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/use_x_test', True)
-        self.disable_svg_glow = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/disable_svg_glow', False)
-        self.fade_screen_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_screen_on_close', True)
-        self.all_off_on_disconnect = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/all_off_on_disconnect', True)
-        self.fade_keyboard_backlight_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_keyboard_backlight_on_close', True)
-        self.start_in_threads = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/start_in_threads', False)
+        self.scroll_delay = float(g15gconf.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_delay', 500)) / 1000.0
+        self.scroll_amount = g15gconf.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_amount', 5)
+        self.animated_menus = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/animated_menus', True)
+        self.animation_delay = g15gconf.get_int_or_default(self.conf_client, '/apps/gnome15/animation_delay', 100) / 1000.0
+        self.key_hold_duration = g15gconf.get_int_or_default(self.conf_client, '/apps/gnome15/key_hold_duration', 2000) / 1000.0
+        self.macro_handler.use_x_test = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/use_x_test', True)
+        self.disable_svg_glow = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/disable_svg_glow', False)
+        self.fade_screen_on_close = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_screen_on_close', True)
+        self.all_off_on_disconnect = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/all_off_on_disconnect', True)
+        self.fade_keyboard_backlight_on_close = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_keyboard_backlight_on_close', True)
+        self.start_in_threads = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/start_in_threads', False)
         self._mark_all_pages_dirty()
         
     def _mark_all_pages_dirty(self):

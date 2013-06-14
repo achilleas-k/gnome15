@@ -25,6 +25,7 @@ import gnome15.g15globals as g15globals
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -230,7 +231,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
         
     def _popup(self):
         self._check_status()    
-        if g15util.get_bool_or_default(self.gconf_client,"%s/raise" % self.gconf_key, True):
+        if g15gconf.get_bool_or_default(self.gconf_client,"%s/raise" % self.gconf_key, True):
             if not self.page.is_visible():
                 self._raise_timer = self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 4.0)
                 self.screen.redraw(self.page)

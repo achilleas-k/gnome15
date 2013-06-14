@@ -52,6 +52,7 @@ import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15python_helpers as g15python_helpers
+import gnome15.g15gconf as g15gconf
 import weather
 import gtk
 import os
@@ -170,7 +171,7 @@ class YahooWeatherBackend(weather.WeatherBackend):
         handler.close()
         
     def _do_get_weather_data_xml(self):
-        location_id = g15util.get_string_or_default(self.gconf_client, "%s/location_id" % self.gconf_key, "2487956")
+        location_id = g15gconf.get_string_or_default(self.gconf_client, "%s/location_id" % self.gconf_key, "2487956")
         p = self._get_weather_from_yahoo(location_id)
         if p is None:
             return None

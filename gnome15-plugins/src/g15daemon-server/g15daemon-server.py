@@ -31,6 +31,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gobject
 import gtk
 import logging
@@ -435,10 +436,10 @@ class G15DaemonServer():
             c.handle_close()
         
     def load_configuration(self):
-        self.take_over_macro_keys = g15util.get_bool_or_default(self.gconf_client, "%s/take_over_macro_keys" % self.gconf_key, True)
+        self.take_over_macro_keys = g15gconf.get_bool_or_default(self.gconf_client, "%s/take_over_macro_keys" % self.gconf_key, True)
         
-        if g15util.get_bool_or_default(self.gconf_client, "%s/use_custom_foreground" % self.gconf_key, False):
-            col = g15util.get_rgb_or_default(self.gconf_client, "%s/custom_foreground" % self.gconf_key, (255,255,255))
+        if g15gconf.get_bool_or_default(self.gconf_client, "%s/use_custom_foreground" % self.gconf_key, False):
+            col = g15gconf.get_rgb_or_default(self.gconf_client, "%s/custom_foreground" % self.gconf_key, (255,255,255))
             self.palette = [0 for n in range(768)]
             self.palette[765] = col[0]
             self.palette[766] = col[1]

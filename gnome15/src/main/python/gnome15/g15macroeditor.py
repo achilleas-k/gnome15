@@ -30,6 +30,7 @@ import g15globals
 import g15profile
 import g15util
 import g15scheduler
+import g15gconf
 import g15uinput
 import g15devices
 import g15driver
@@ -663,8 +664,8 @@ class G15MacroScriptEditor():
         self.__widget_tree.connect_signals(self)
         
         # Configure defaults
-        self.__output_delays.set_active(g15util.get_bool_or_default(self.__gconf_client, "/apps/gnome15/script_editor/record_delays", True))
-        self.__emit_uinput.set_active(g15util.get_bool_or_default(self.__gconf_client, "/apps/gnome15/script_editor/emit_uinput", False))
+        self.__output_delays.set_active(g15gconf.get_bool_or_default(self.__gconf_client, "/apps/gnome15/script_editor/record_delays", True))
+        self.__emit_uinput.set_active(g15gconf.get_bool_or_default(self.__gconf_client, "/apps/gnome15/script_editor/emit_uinput", False))
         self.__recorder.output_delays = self.__output_delays.get_active()
         self.__recorder.emit_uinput = self.__emit_uinput.get_active()
         

@@ -29,9 +29,9 @@ from threading import RLock
 import cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
-import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gnome15.g15uinput as g15uinput
 import gnome15.g15exceptions as g15exceptions
 import sys
@@ -144,9 +144,9 @@ def set_offset_depending_on_mode(widget, gconf_client, device, offset_widget):
     mode = gconf_client.get_string("/apps/gnome15/%s/joymode" % device.uid)
     offset_model = offset_widget.get_adjustment()
     if mode in [ "joystick", "mouse"]:
-        val = g15util.get_int_or_default(gconf_client, "/apps/gnome15/%s/analogue_offset" % device.uid, ANALOGUE_OFFSET)
+        val = g15gconf.get_int_or_default(gconf_client, "/apps/gnome15/%s/analogue_offset" % device.uid, ANALOGUE_OFFSET)
     else:
-        val = g15util.get_int_or_default(gconf_client, "/apps/gnome15/%s/digital_offset" % device.uid, DIGITAL_OFFSET)
+        val = g15gconf.get_int_or_default(gconf_client, "/apps/gnome15/%s/digital_offset" % device.uid, DIGITAL_OFFSET)
     offset_model.set_value(val)
         
 def show_preferences(device, parent, gconf_client):
@@ -261,7 +261,7 @@ class Driver(g15driver.AbstractDriver):
         self.last_keys = None
         self.last_ext_keys = None      
         self.thread = pylibg15.grab_keyboard(self._handle_key_event, \
-                g15util.get_int_or_default(self.conf_client, "/apps/gnome15/usb_key_read_timeout", 100),
+                g15gconf.get_int_or_default(self.conf_client, "/apps/gnome15/usb_key_read_timeout", 100),
                 self._on_error)
         self.thread.on_unplug = self._keyboard_unplugged
         
@@ -377,8 +377,8 @@ class Driver(g15driver.AbstractDriver):
         
     def _load_configuration(self):
         self.joy_mode = self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
-        self.digital_calibration = g15util.get_int_or_default(self.conf_client, "/apps/gnome15/%s/digital_offset" % self.device.uid, 63)
-        self.analogue_calibration = g15util.get_int_or_default(self.conf_client, "/apps/gnome15/%s/analogue_offset" % self.device.uid, 20)
+        self.digital_calibration = g15gconf.get_int_or_default(self.conf_client, "/apps/gnome15/%s/digital_offset" % self.device.uid, 63)
+        self.analogue_calibration = g15gconf.get_int_or_default(self.conf_client, "/apps/gnome15/%s/analogue_offset" % self.device.uid, 20)
             
     def _config_changed(self, client, connection_id, entry, args):
         self._load_configuration()

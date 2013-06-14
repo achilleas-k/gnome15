@@ -24,6 +24,7 @@ _ = g15locale.get_translation("videoplayer", modfile = __file__).ugettext
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15gconf as g15gconf
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15screen as g15screen
@@ -130,7 +131,7 @@ def get_visualisation(plugin):
     Keyword arguments:
     plugin        -- plugin instance
     """
-    return g15util.get_string_or_default(
+    return g15gconf.get_string_or_default(
                     plugin.gconf_client, 
                     "%s/visualisation" % plugin.gconf_key, "goom")
     

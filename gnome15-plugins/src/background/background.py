@@ -23,6 +23,7 @@ _ = g15locale.get_translation("background", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
 import gnome15.g15profile as g15profile
@@ -219,7 +220,7 @@ class G15Background():
         bg_style = self.gconf_client.get_string(self.gconf_key + "/style")
         if bg_style == None:
             bg_style = "zoom"
-        allow_profile_override = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/allow_profile_override", True)
+        allow_profile_override = g15gconf.get_bool_or_default(self.gconf_client, self.gconf_key + "/allow_profile_override", True)
         
         # See if the current profile has a background
         if allow_profile_override:

@@ -25,6 +25,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import gnome15.g15theme as g15theme
 from threading import Timer
 import gtk
@@ -170,12 +171,12 @@ class G15ScreenSaver():
                 self._page.key_handlers.append(self)
                 self._screen.add_page(self._page)
                 self._screen.redraw(self._page)
-            if not self.dimmed and g15util.get_bool_or_default(self._gconf_client, "%s/dim_keyboard" % self._gconf_key, True):
+            if not self.dimmed and g15gconf.get_bool_or_default(self._gconf_client, "%s/dim_keyboard" % self._gconf_key, True):
                 self._dim_keyboard()
         else:
             if self._screen.driver.get_bpp() != 0:
                 self._remove_page()
-            if self.dimmed and g15util.get_bool_or_default(self._gconf_client,"%s/dim_keyboard" % self._gconf_key, True):
+            if self.dimmed and g15gconf.get_bool_or_default(self._gconf_client,"%s/dim_keyboard" % self._gconf_key, True):
                 self._light_keyboard()
         
     def _screensaver_changed_handler(self, value):

@@ -148,29 +148,6 @@ def to_color(rgb):
     return gtk.gdk.Color(rgb[0] <<8, rgb[1] <<8,rgb[2] <<8)
     
 '''
-gconf utilities
-'''
-def get_float_or_default(gconf_client, key, default = None):
-    float_val = gconf_client.get(key)
-    return default if float_val == None else float_val.get_float()
-
-def get_string_or_default(gconf_client, key, default = None):
-    str_val = gconf_client.get(key)
-    return default if str_val == None else str_val.get_string()
-
-def get_bool_or_default(gconf_client, key, default = None):
-    bool_val = gconf_client.get(key)
-    return default if bool_val == None else bool_val.get_bool()
-
-def get_int_or_default(gconf_client, key, default = None):
-    int_val = gconf_client.get(key)
-    return default if int_val == None else int_val.get_int()
-
-def get_rgb_or_default(gconf_client, key, default = None):
-    val = gconf_client.get_string(key)
-    return default if val == None or val == "" else to_rgb(val)
-    
-'''
 GObject. Allows us to test if we are on the gobject loop
 '''    
 def is_gobject_thread():

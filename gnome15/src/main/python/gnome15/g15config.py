@@ -33,6 +33,7 @@ import g15devices
 import g15util
 import g15scheduler
 import g15ui_gconf
+import g15gconf
 import g15theme
 import colorpicker
 import subprocess
@@ -918,7 +919,7 @@ class G15Config:
             self.cycle_seconds.set_value(time)
             
     def _set_cycle_screens_value_from_configuration(self):
-        val = g15util.get_bool_or_default(self.conf_client, self._get_full_key("cycle_screens"), True)
+        val = g15gconf.get_bool_or_default(self.conf_client, self._get_full_key("cycle_screens"), True)
         self.cycle_seconds_widget.set_sensitive(val)
         if val != self.cycle_screens.get_active():
             self.cycle_screens.set_active(val)

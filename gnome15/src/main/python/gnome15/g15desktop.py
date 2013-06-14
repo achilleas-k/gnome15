@@ -41,6 +41,7 @@ import traceback
 import gnome15.g15globals as g15globals
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
+import gnome15.g15gconf as g15gconf
 import gnome15.g15notify as g15notify
 import dbus
 import os.path
@@ -568,7 +569,7 @@ def browse(url):
     Keyword arguments:
     url        -- URL
     """
-    b = g15util.get_string_or_default(gconf.client_get_default(), \
+    b = g15gconf.get_string_or_default(gconf.client_get_default(), \
                                       "/apps/gnome15/browser", "default")
     if not b in __browsers and not b == "default":
         logger.warning("Could not find browser %s, falling back to default" % b)
@@ -1072,7 +1073,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                         
                         # Cycle screens
                         item = gtk.CheckMenuItem(_("Cycle screens automatically"))
-                        item.set_active(g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % screen.device_uid, True))
+                        item.set_active(g15gconf.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % screen.device_uid, True))
                         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/cycle_screens" % screen.device_uid, self._cycle_screens_option_changed))
                         item.connect("toggled", self._cycle_screens_changed, screen.device_uid)
                         self._append_item(item)

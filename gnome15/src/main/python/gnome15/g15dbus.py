@@ -23,6 +23,7 @@ import g15globals
 import g15theme
 import g15util
 import g15scheduler
+import g15gconf
 import g15driver
 import g15devices
 import gobject
@@ -323,7 +324,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
             
     @dbus.service.method(SCREEN_IF_NAME, in_signature='', out_signature='b')
     def IsCyclingEnabled(self):
-        return g15util.get_bool_or_default(self._service.conf_client, "/apps/gnome15/%s/cycle_screens" % self._screen.device.uid, True);
+        return g15gconf.get_bool_or_default(self._service.conf_client, "/apps/gnome15/%s/cycle_screens" % self._screen.device.uid, True);
             
     @dbus.service.method(SCREEN_IF_NAME, in_signature='b', out_signature='')
     def SetCyclingEnabled(self, enabled):
