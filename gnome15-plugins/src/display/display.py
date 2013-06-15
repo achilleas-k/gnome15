@@ -28,6 +28,7 @@ import gnome15.g15devices as g15devices
 import gnome15.g15actions as g15actions
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15python_helpers as g15python_helpers
 import logging
 import os
 import re
@@ -184,7 +185,7 @@ class G15XRandR(g15plugin.G15MenuPlugin):
         self.screen.redraw(self.page)
             
     def _get_item_for_current_resolution(self):
-        return g15util.find(lambda m: m.current, self.menu.get_children())
+        return g15python_helpers.find(lambda m: m.current, self.menu.get_children())
 
     def _get_status_output(self, cmd):
         # TODO something like this is used in sense.py as well, make it a utility

@@ -369,21 +369,21 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                     
                 
                 # Wind
-                wind = g15util.append_if_exists(current, "wind_chill", "", "%sC")
-                wind = g15util.append_if_exists(current, "wind_speed", wind, "%sKph")
-                wind = g15util.append_if_exists(current, "wind_direction", wind, "%sdeg")
+                wind = g15python_helpers.append_if_exists(current, "wind_chill", "", "%sC")
+                wind = g15python_helpers.append_if_exists(current, "wind_speed", wind, "%sKph")
+                wind = g15python_helpers.append_if_exists(current, "wind_direction", wind, "%sdeg")
                 properties["wind"] =  wind 
                 
                 # Visibility
-                visibility = g15util.append_if_exists(current, "visibility", "", "%sM")
+                visibility = g15python_helpers.append_if_exists(current, "visibility", "", "%sM")
                 properties["visibility"] =  visibility
                 
                 # Pressure
-                pressure = g15util.append_if_exists(current, "pressure", "", "%smb")
+                pressure = g15python_helpers.append_if_exists(current, "pressure", "", "%smb")
                 properties["pressure"] =  pressure
                 
                 # Humidity
-                humidity = g15util.append_if_exists(current, "humidity", "", "%s%%")
+                humidity = g15python_helpers.append_if_exists(current, "humidity", "", "%s%%")
                 properties["humidity"] =  humidity
                 
                 # Sunrise                

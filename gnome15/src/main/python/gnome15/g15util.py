@@ -170,13 +170,6 @@ def get_lsb_distributor():
 '''
 General utilities
 '''
-def append_if_exists( el, key, val, formatter = "%s"):   
-    if key in el and el[key] is not None and len(str(el[key])) > 0:
-        if len(val) > 0:
-            val += ","            
-        val += formatter % el[key]
-    return val
-    
 def get_command_output( cmd):
     pipe = os.popen('{ ' + cmd + '; } 2>/dev/null', 'r')
     text = pipe.read()
@@ -184,12 +177,6 @@ def get_command_output( cmd):
     if sts is None: sts = 0
     if text[-1:] == '\n': text = text[:-1]
     return sts, text
-
-def find(f, seq):
-    """Return first item in sequence where f(item) == True."""
-    for item in seq:
-        if f(item): 
-            return item
 
 def mkdir_p(path):
     try:

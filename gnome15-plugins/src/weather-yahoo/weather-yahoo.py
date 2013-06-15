@@ -49,7 +49,6 @@ _ = g15locale.get_translation("weather-yahoo", modfile = __file__).ugettext
 
 import gnome15.g15accounts as g15accounts
 import gnome15.g15globals as g15globals
-import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15python_helpers as g15python_helpers
 import gnome15.g15gconf as g15gconf
@@ -178,9 +177,9 @@ class YahooWeatherBackend(weather.WeatherBackend):
         
         # Get location
         location_el = p["location"]
-        location = g15util.append_if_exists(location_el, "city", "")
-        location = g15util.append_if_exists(location_el, "region", location)
-        location = g15util.append_if_exists(location_el, "country", location)
+        location = g15python_helpers.append_if_exists(location_el, "city", "")
+        location = g15python_helpers.append_if_exists(location_el, "region", location)
+        location = g15python_helpers.append_if_exists(location_el, "country", location)
         
         # Get current condition
         condition_el = p["condition"]

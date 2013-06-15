@@ -103,3 +103,28 @@ def to_float_or_none(s):
     except (ValueError, TypeError):
         return None
 
+def find(f, seq):
+    """Return first item in sequence where f(item) == True."""
+    for item in seq:
+        if f(item):
+            return item
+
+def append_if_exists(el, key, val, formatter = "%s"):
+    """
+    Appends a value from a dictionnary to a string applying a formatter.
+    The value is only appended if it exists in the dictionnary and it's value is not None
+
+    Keyword arguments:
+    el:        The dictionnary where to search for the value
+    key:       The key to search of the dictionnary
+    val:       The string to which the found value will be appended
+    formatter: A format string to apply when appending the found value
+
+    Returns:  A new string with the found value appended to (prefixed by a comma)
+    """
+    if key in el and el[key] is not None and len(str(el[key])) > 0:
+        if len(val) > 0:
+            val += ","
+        val += formatter % el[key]
+    return val
+

@@ -28,7 +28,7 @@ import gnome15.g15plugin as g15plugin
 import gnome15.g15util as g15util
 import gnome15.g15devices as g15devices
 import gnome15.g15actions as g15actions
-from gnome15.g15util import find
+from gnome15.g15python_helpers import find
 import os
 import logging
 logger = logging.getLogger("macros")
