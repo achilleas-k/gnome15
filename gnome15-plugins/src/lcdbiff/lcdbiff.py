@@ -23,6 +23,7 @@ _ = g15locale.get_translation("lcdbiff", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15cairo as g15cairo
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -450,24 +451,24 @@ class G15Biff(g15plugin.G15MenuPlugin):
             self._stop_blink()
             self.attention = True   
             if self.screen.driver.get_bpp() == 1:
-                self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-error.gif"))
+                self.thumb_icon = g15cairo.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-error.gif"))
             elif self.screen.driver.get_bpp() > 0:
-                self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["new-messages-red","messagebox_critical"]))
+                self.thumb_icon = g15cairo.load_surface_from_file(g15util.get_icon_path(["new-messages-red","messagebox_critical"]))
         else:
             if self.total_count > 0:
                 self._start_blink()
                 self.attention = True
                 if self.screen.driver.get_bpp() == 1:
-                    self.thumb_icon = g15util.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
+                    self.thumb_icon = g15cairo.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
                 elif self.screen.driver.get_bpp() > 0:
-                    self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["indicator-messages-new", "mail-message-new"]))
+                    self.thumb_icon = g15cairo.load_surface_from_file(g15util.get_icon_path(["indicator-messages-new", "mail-message-new"]))
             else:
                 self._stop_blink()
                 self.attention = False   
                 if self.screen.driver.get_bpp() == 1:
                     self.thumb_icon = None
                 elif self.screen.driver.get_bpp() > 0:
-                    self.thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["indicator-messages", "mail-message"]))
+                    self.thumb_icon = g15cairo.load_surface_from_file(g15util.get_icon_path(["indicator-messages", "mail-message"]))
 
         if self.screen.driver.get_bpp() > 0:        
             self.screen.redraw(self.page)

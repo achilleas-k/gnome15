@@ -24,6 +24,7 @@ import g15theme
 import g15util
 import g15scheduler
 import g15gconf
+import g15cairo
 import g15driver
 import g15devices
 import gobject
@@ -706,13 +707,13 @@ class G15DBUSPageService(AbstractG15DBUSService):
             
         size = None if width == 0 or height == 0 else (width, height)
         
-        img_surface = g15util.load_surface_from_file(path, size)
+        img_surface = g15cairo.load_surface_from_file(path, size)
         self._page.image(img_surface, x, y)
         
     @dbus.service.method(PAGE_IF_NAME, in_signature='aydd')
     def ImageData(self, image_data, x, y):
         file_str = StringIO(str(image_data))
-        img_surface = g15util.load_surface_from_file(file_str, None)
+        img_surface = g15cairo.load_surface_from_file(file_str, None)
         file_str.close()
         self._page.image(img_surface, x, y)
     

@@ -22,6 +22,7 @@
  
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15cairo as g15cairo
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import subprocess
@@ -151,7 +152,7 @@ class G15PPAPage():
         self.title = "PPA"
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
-        return g15util.paint_thumbnail_image(allocated_size, g15util.load_surface_from_file(self.icon), canvas)
+        return g15util.paint_thumbnail_image(allocated_size, g15cairo.load_surface_from_file(self.icon), canvas)
         
     def paint(self, canvas):
         properties = {}

@@ -23,6 +23,7 @@ _ = g15locale.get_translation("tails", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
 import gnome15.g15gconf as g15gconf
+import gnome15.g15cairo as g15cairo
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
@@ -262,7 +263,7 @@ class G15TailPage(g15theme.G15Page):
             self._icon_embedded = None
         else:
             try :
-                icon_surface = g15util.load_surface_from_file(icon)
+                icon_surface = g15cairo.load_surface_from_file(icon)
                 self._icon_surface = icon_surface
                 self._icon_embedded = g15util.get_embedded_image_url(icon_surface)
             except:

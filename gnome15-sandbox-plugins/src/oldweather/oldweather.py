@@ -28,6 +28,7 @@ import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
+import gnome15.g15cairo as g15cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -208,13 +209,13 @@ class G15Weather():
             properties["message"] = ""
             t_icon = self._translate_icon(current['icon'])
             if t_icon != None:
-                attributes["icon"] = g15util.load_surface_from_file(t_icon)
+                attributes["icon"] = g15cairo.load_surface_from_file(t_icon)
                 properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])
             else:
                 logger.warning("No translated weather icon for %s" % current['icon'])
             mono_thumb = self._get_mono_thumb_icon(current['icon'])        
             if mono_thumb != None:
-                attributes["mono_thumb_icon"] = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
+                attributes["mono_thumb_icon"] = g15cairo.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
             properties["condition"] = current['condition']
             
             properties["temp_c"] = "%3.1f°C" % float(current['temp_c'])

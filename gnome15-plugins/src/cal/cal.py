@@ -27,6 +27,7 @@ import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
+import gnome15.g15cairo as g15cairo
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
 import gnome15.g15plugin as g15plugin
@@ -258,7 +259,7 @@ class G15Cal(g15plugin.G15Plugin):
         g15plugin.G15Plugin.__init__(self, gconf_client, gconf_key, screen)
         self._timer = None
         self._icon_path = g15util.get_icon_path(["calendar", "evolution-calendar", "office-calendar", "stock_calendar" ])
-        self._thumb_icon = g15util.load_surface_from_file(self._icon_path)
+        self._thumb_icon = g15cairo.load_surface_from_file(self._icon_path)
         
     def activate(self):
         g15plugin.G15Plugin.activate(self)

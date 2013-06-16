@@ -36,6 +36,7 @@ gnome15_PYTHON = 		\
 	g15ui_gconf.py \
 	g15gconf.py \
 	g15os.py \
+	g15cairo.py \
 	g15upgrade.py \
 	g15uinput.py \
 	jobqueue.py \

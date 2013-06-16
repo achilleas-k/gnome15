@@ -24,6 +24,7 @@ _ = g15locale.get_translation("background", modfile = __file__).ugettext
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
+import gnome15.g15cairo as g15cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
 import gnome15.g15profile as g15profile
@@ -251,7 +252,7 @@ class G15Background():
         if self.bg_img != self.this_image or bg_style != self.current_style:
             self.this_image = self.bg_img
             self.current_style = bg_style
-            if g15util.is_url(self.bg_img) or os.path.exists(self.bg_img):
+            if g15cairo.is_url(self.bg_img) or os.path.exists(self.bg_img):
                 
                 """
                 TODO handle background themes and transitions from XML files properly
@@ -263,7 +264,7 @@ class G15Background():
                     if filet:
                         self.bg_img = filet                
                 
-                img_surface = g15util.load_surface_from_file(self.bg_img)
+                img_surface = g15cairo.load_surface_from_file(self.bg_img)
                 if img_surface is not None:
                     sx = float(screen_size[0]) / img_surface.get_width()
                     sy = float(screen_size[1]) / img_surface.get_height()  

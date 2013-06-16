@@ -26,6 +26,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15gconf as g15gconf
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15cairo as g15cairo
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
 import gnome15.g15globals as g15globals
@@ -213,7 +214,7 @@ class G15GoogleAnalytics():
         self._gconf_key = gconf_key
         self._timer = None
         self._icon_path = g15util.get_icon_path([ "redhat-office", "package_office", "gnome-applications", "xfce-office", "baobab" ])
-        self._thumb_icon = g15util.load_surface_from_file(self._icon_path)
+        self._thumb_icon = g15cairo.load_surface_from_file(self._icon_path)
         self._timer = None
         
     def activate(self):

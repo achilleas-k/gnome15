@@ -26,6 +26,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util 
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
+import gnome15.g15cairo as g15cairo
 import gnome15.g15driver as g15driver 
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -238,7 +239,7 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
                 
             path = self.clock_theme_dir + "/" + i + ".gif"
             if os.path.exists(path):
-                img_surface = g15util.load_surface_from_file(path, self.height)
+                img_surface = g15cairo.load_surface_from_file(path, self.height)
                 surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, img_surface.get_width() * 2, img_surface.get_height() * 2)  
                 context = cairo.Context(surface)
                 self.screen.configure_canvas(context)
@@ -434,8 +435,8 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
         for svg_size, surface in hand_surfaces:
             drawing_context.save()
             drawing_context.translate(svg_size[0] / 2.0, svg_size[1] / 2.0)
-            g15util.rotate(drawing_context, -90)
-            g15util.rotate(drawing_context, deg)
+            g15cairo.rotate(drawing_context, -90)
+            g15cairo.rotate(drawing_context, deg)
             drawing_context.translate(-svg_size[0], -svg_size[1])
             drawing_context.set_source_surface(surface)
             drawing_context.paint()

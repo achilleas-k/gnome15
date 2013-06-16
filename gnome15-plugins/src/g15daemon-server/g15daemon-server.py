@@ -32,6 +32,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
+import gnome15.g15cairo as g15cairo
 import gobject
 import gtk
 import logging
@@ -264,8 +265,8 @@ class G15DaemonClient(asyncore.dispatcher):
             pil_img.putalpha(mask_img)                    
 
         # TODO find a quicker way of converting
-        pixbuf = g15util.image_to_pixbuf(pil_img, "png")
-        self.surface = g15util.pixbuf_to_surface(pixbuf)
+        pixbuf = g15cairo.image_to_pixbuf(pil_img, "png")
+        self.surface = g15cairo.pixbuf_to_surface(pixbuf)
         self.plugin.screen.redraw(self.page)
                 
     def dump_buf(self, buf):

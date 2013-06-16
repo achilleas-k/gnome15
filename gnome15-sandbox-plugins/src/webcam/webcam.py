@@ -24,6 +24,7 @@ _ = g15locale.get_translation("webcam", modfile = __file__).ugettext
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15cairo as g15cairo
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
@@ -176,7 +177,7 @@ class G15Webcam():
     def _redraw(self):
         im = self._get_image()
         if im:
-            self._surface = g15util.image_to_surface(im)
+            self._surface = g15cairo.image_to_surface(im)
             self._screen.redraw(self._page)
             interval = 1.0 / float(10 if self._fps == -1 else self._fps)
             self._schedule_redraw(interval)

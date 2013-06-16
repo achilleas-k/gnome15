@@ -21,6 +21,7 @@
 import dbus
 import g15util
 import g15scheduler
+import g15cairo
 import g15theme
 import g15screen
 import sys
@@ -123,7 +124,7 @@ class G15PagePlugin(G15Plugin):
         self._icon_path = g15util.get_icon_path(icon)
         self._title = title
         self.page = None
-        self.thumb_icon = g15util.load_surface_from_file(self._icon_path)
+        self.thumb_icon = g15cairo.load_surface_from_file(self._icon_path)
         self.add_page_on_activate = True
         
     def activate(self):
@@ -321,7 +322,7 @@ class G15MenuPlugin(G15Plugin):
         
     def set_icon(self, icon):
         self._icon_path = g15util.get_icon_path(icon)
-        self.thumb_icon = g15util.load_surface_from_file(self._icon_path)
+        self.thumb_icon = g15cairo.load_surface_from_file(self._icon_path)
 
     def activate(self):         
         G15Plugin.activate(self) 

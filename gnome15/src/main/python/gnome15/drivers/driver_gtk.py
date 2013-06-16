@@ -17,6 +17,7 @@ _ = g15locale.get_translation("gnome15-drivers").ugettext
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15cairo as g15cairo
 import gnome15.g15globals as g15globals
 
 import gconf
@@ -297,7 +298,7 @@ class Driver(g15driver.AbstractDriver):
         width = self.lcd_size[0]
         height = self.lcd_size[1]
         zoom = self.get_zoom()
-        pixbuf = g15util.image_to_pixbuf(self.image)
+        pixbuf = g15cairo.image_to_pixbuf(self.image)
         pixbuf = pixbuf.scale_simple(zoom * width, zoom * height, 0)
         if self.area != None:
             self.area.set_pixbuf(pixbuf)
@@ -392,7 +393,7 @@ class VirtualLCD(gtk.DrawingArea):
         cr.paint()
         
     def set_pixbuf(self, pixbuf):
-        self.buffer = g15util.pixbuf_to_surface(pixbuf)
+        self.buffer = g15cairo.pixbuf_to_surface(pixbuf)
         
     def set_surface(self, surface):
         self.buffer = surface

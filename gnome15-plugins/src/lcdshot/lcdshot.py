@@ -33,6 +33,7 @@ import gnome15.g15notify as g15notify
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
 import gnome15.g15os as g15os
+import gnome15.g15cairo as g15cairo
 import subprocess
 import shutil
 from threading import Thread
@@ -177,7 +178,7 @@ class G15LCDShot():
                 self._screen.draw_lock.acquire()
                 try:
                     path = os.path.join("%s.tmp" % self._record_to, "%012d.jpeg" % self._frame_no)
-                    pixbuf = g15util.surface_to_pixbuf(self._screen.old_surface)
+                    pixbuf = g15cairo.surface_to_pixbuf(self._screen.old_surface)
                 finally:
                     self._screen.draw_lock.release()
                     

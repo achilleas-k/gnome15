@@ -25,6 +25,7 @@ import gtk
 import gobject
 import g15driver as g15driver
 import g15util as g15util
+import g15cairo
 from threading import Lock
 from threading import Semaphore
 import g15theme
@@ -285,6 +286,6 @@ class G15Window(gtk.OffscreenWindow):
         self.content.window.process_updates(True)
         pixbuf = gtk.gdk.Pixbuf( gtk.gdk.COLORSPACE_RGB, False, 8, self.area_width, self.area_height)
         pixbuf.get_from_drawable(self.content.window, self.content.get_colormap(), 0, 0, 0, 0, self.area_width, self.area_height)
-        self.surface = g15util.pixbuf_to_surface(pixbuf)
+        self.surface = g15cairo.pixbuf_to_surface(pixbuf)
         self.pixbuf = pixbuf        
         self.lock.release()

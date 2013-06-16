@@ -27,6 +27,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15python_helpers as g15python_helpers
+import gnome15.g15cairo as g15cairo
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15devices as g15devices
@@ -265,19 +266,19 @@ class AbstractMPRISPlayer():
             self.cover_image = None
             self.thumb_image = None
             if self.cover_uri != None:
-                cover_image = g15util.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
+                cover_image = g15cairo.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
                 if cover_image:
                     self.cover_image = cover_image
                     
                     # If the cover URI was from HTTP, then we cached it. Use that as the URI
                     if self.cover_uri.startswith("http:") or self.cover_uri.startswith("http:"):
-                        self.cover_uri = g15util.get_image_cache_file(self.cover_uri, self.screen.driver.get_size()[0])
+                        self.cover_uri = g15cairo.get_image_cache_file(self.cover_uri, self.screen.driver.get_size()[0])
                 else:
                     cover_image = self.get_default_cover()
                     logger.warning("Failed to loaded preferred cover art, falling back to default of %s" % cover_image)
                     if cover_image:
                         self.cover_uri = cover_image
-                        self.cover_image = g15util.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
+                        self.cover_image = g15cairo.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
                   
         # Track status
         if self.status == "Stopped":
@@ -288,13 +289,13 @@ class AbstractMPRISPlayer():
         else:            
             if self.status == "Playing":
                 if self.screen.driver.get_bpp() == 1:
-                    self.thumb_image = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "play.gif"))
+                    self.thumb_image = g15cairo.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "play.gif"))
                 else:
                     self.thumb_image = self.cover_image
                 self.song_properties["playing"] = True
             else:
                 if self.screen.driver.get_bpp() == 1:
-                    self.thumb_image = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "pause.gif"))
+                    self.thumb_image = g15cairo.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "pause.gif"))
                 else:
                     self.thumb_image = self.cover_image                
                 self.song_properties["paused"] = True

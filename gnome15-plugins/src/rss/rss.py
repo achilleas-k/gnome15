@@ -26,6 +26,7 @@ import gnome15.g15python_helpers as g15python_helpers
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
+import gnome15.g15cairo as g15cairo
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15desktop as g15desktop
@@ -237,7 +238,7 @@ class G15FeedPage(g15theme.G15Page):
         self._selected_icon_embedded = None
         if self._menu.selected is not None and self._menu.selected.icon is not None:
             try :
-                icon_surface = g15util.load_surface_from_file(self._menu.selected.icon)
+                icon_surface = g15cairo.load_surface_from_file(self._menu.selected.icon)
                 self._selected_icon_embedded = g15util.get_embedded_image_url(icon_surface)
             except:
                 logger.warning("Failed to get icon %s" % str(self._menu.selected.icon))
@@ -266,7 +267,7 @@ class G15FeedPage(g15theme.G15Page):
             self._icon_embedded = None
         else:
             try :
-                icon_surface = g15util.load_surface_from_file(icon)
+                icon_surface = g15cairo.load_surface_from_file(icon)
                 self._icon_surface = icon_surface
                 self._icon_embedded = g15util.get_embedded_image_url(icon_surface)
             except:

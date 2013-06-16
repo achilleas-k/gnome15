@@ -24,6 +24,7 @@ _ = g15locale.get_translation("indicator-me", modfile = __file__).ugettext
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15os as g15os
+import gnome15.g15cairo as g15cairo
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
@@ -216,7 +217,7 @@ class G15IndicatorMe():
         
     def _get_details(self):
         self._icon = self._me_service.StatusIcons()
-        self._icon_image = g15util.load_surface_from_file(g15util.get_icon_path(self._icon))
+        self._icon_image = g15cairo.load_surface_from_file(g15util.get_icon_path(self._icon))
         self._username = self._me_service.PrettyUserName()
         if self._menu_page != None:
             self._menu_page.set_title(self._get_status_text())

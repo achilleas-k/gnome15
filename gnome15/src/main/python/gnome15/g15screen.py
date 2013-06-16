@@ -55,6 +55,7 @@ import g15util
 import g15scheduler
 import g15python_helpers
 import g15gconf
+import g15cairo
 import g15profile
 import g15globals
 import g15drivermanager
@@ -1559,7 +1560,7 @@ class G15Splash():
         icon_path = g15util.get_icon_path("gnome15")
         if icon_path == None:
             icon_path = os.path.join(g15globals.icons_dir, "hicolor", "apps", "scalable", "gnome15.svg")
-        self.logo = g15util.load_surface_from_file(icon_path)
+        self.logo = g15cairo.load_surface_from_file(icon_path)
         self.page = g15theme.G15Page("Splash", self.screen, priority=PRI_EXCLUSIVE, thumbnail_painter=self._paint_thumbnail, \
                                          theme_properties_callback=self._get_properties, theme=g15theme.G15Theme(g15globals.image_dir, "background"))        
         self.screen.add_page(self.page)

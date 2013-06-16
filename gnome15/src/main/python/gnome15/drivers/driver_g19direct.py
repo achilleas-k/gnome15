@@ -32,6 +32,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15cairo as g15cairo
 import gnome15.g15exceptions as g15exceptions
 import sys
 import os
@@ -195,8 +196,8 @@ class Driver(g15driver.AbstractDriver):
             back_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, height, width)
         
         back_context = cairo.Context (back_surface)        
-        g15util.rotate_around_center(back_context, width, height, 270)
-        g15util.flip_horizontal(back_context, width, height)
+        g15cairo.rotate_around_center(back_context, width, height, 270)
+        g15cairo.flip_horizontal(back_context, width, height)
         back_context.set_source_surface(img, 0, 0)
         back_context.set_operator (cairo.OPERATOR_SOURCE);
         back_context.paint()

@@ -40,6 +40,7 @@ if os.path.exists(path):
     sys.path.insert(0, path)
     
 import gnome15.g15util as g15util
+import gnome15.g15cairo as g15cairo
 import gnome15.drivers.fb as fb 
     
 if __name__ == "__main__":
@@ -71,8 +72,8 @@ if __name__ == "__main__":
     
     # Load the image
     bg_img = args[0]
-    if g15util.is_url(bg_img) or os.path.exists(bg_img):
-        img_surface = g15util.load_surface_from_file(bg_img)
+    if g15cairo.is_url(bg_img) or os.path.exists(bg_img):
+        img_surface = g15cairo.load_surface_from_file(bg_img)
         if img_surface is not None:
             sx = float(width) / img_surface.get_width()
             sy = float(height) / img_surface.get_height()  

@@ -26,6 +26,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15util as g15util
+import gnome15.g15cairo as g15cairo
 import gnome15.g15devices as g15devices
 import gnome15.g15actions as g15actions
 from gnome15.g15python_helpers import find
@@ -104,7 +105,7 @@ class ProfileMenuItem(g15theme.MenuItem):
     
     def on_configure(self): 
         g15theme.MenuItem.on_configure(self)
-        self._surface = g15util.load_surface_from_file(self.profile.get_profile_icon_path(16), self.theme.bounds[3])
+        self._surface = g15cairo.load_surface_from_file(self.profile.get_profile_icon_path(16), self.theme.bounds[3])
     
     def activate(self):
         locked = g15profile.is_locked(self._plugin.screen.device)

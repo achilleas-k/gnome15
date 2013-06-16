@@ -23,6 +23,7 @@ _ = g15locale.get_translation("processes", modfile = __file__).ugettext
 
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15cairo as g15cairo
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -290,7 +291,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
             if icon_name and len(icon_name) > 0:
                 icon_path = g15util.get_icon_path(icon_name, warning = False)
                 if icon_path:
-                    item.icon = g15util.load_surface_from_file(icon_path, 32) 
+                    item.icon = g15cairo.load_surface_from_file(icon_path, 32)
         except dbus.DBusException:
             pass
                 
@@ -326,7 +327,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
                         if item.icon == None:
                             pixbuf = window.get_icon()
                             if pixbuf:               
-                                item.icon = g15util.pixbuf_to_surface(pixbuf)
+                                item.icon = g15cairo.pixbuf_to_surface(pixbuf)
                                 
         else:
             for process_id in gtop.proclist():

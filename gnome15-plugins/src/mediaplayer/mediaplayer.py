@@ -26,6 +26,7 @@ import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15gconf as g15gconf
 import gnome15.g15os as g15os
+import gnome15.g15cairo as g15cairo
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15screen as g15screen
@@ -249,7 +250,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
         self._active = True
         self._frame_index = 1
         self._last_seconds = -1
-        self._thumb_icon = g15util.load_surface_from_file(icon_path)
+        self._thumb_icon = g15cairo.load_surface_from_file(icon_path)
         self._setup_gstreamer()
         self.screen.key_handler.action_listeners.append(self) 
         def on_delete():

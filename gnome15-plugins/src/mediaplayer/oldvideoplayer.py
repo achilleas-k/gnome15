@@ -24,6 +24,7 @@ _ = g15locale.get_translation("videoplayer", modfile = __file__).ugettext
 import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15cairo as g15cairo
 import gnome15.g15theme as g15theme
 from threading import Timer
 import gtk
@@ -132,7 +133,7 @@ class G15VideoPage(g15theme.G15Page):
         self._active = True
         self._frame_index = 1
         self._frame_wait = 0.04
-        self._thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player" ]))
+        self._thumb_icon = g15cairo.load_surface_from_file(g15util.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player" ]))
             
     def get_theme_properties(self):
         properties = g15theme.G15Page.get_theme_properties(self)
@@ -164,7 +165,7 @@ class G15VideoPage(g15theme.G15Page):
             if len(dir) > 1:
                 dir = dir[1:]
                 file = os.path.join(self._playing.temp_dir, dir[0])
-                self._surface = g15util.load_surface_from_file(file)
+                self._surface = g15cairo.load_surface_from_file(file)
                 for path in dir:
                     file = os.path.join(self._playing.temp_dir, path)
                     os.remove(file)
