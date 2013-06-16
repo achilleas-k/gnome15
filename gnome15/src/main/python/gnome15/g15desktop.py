@@ -42,6 +42,7 @@ import gnome15.g15globals as g15globals
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15gconf as g15gconf
+import gnome15.g15os as g15os
 import gnome15.g15notify as g15notify
 import dbus
 import os.path
@@ -520,7 +521,7 @@ def is_gnome_shell_extension_enabled(extension):
     Keyword arguments:
     extension        --    extension name
     """
-    status, text = g15util.get_command_output("gsettings get org.gnome.shell enabled-extensions")
+    status, text = g15os.get_command_output("gsettings get org.gnome.shell enabled-extensions")
     if status == 0:
         try:
             return extension in eval(text)
@@ -539,7 +540,7 @@ def set_gnome_shell_extension_enabled(extension, enabled):
     extension        --    extension name
     enabled          --    enabled
     """
-    status, text = g15util.get_command_output("gsettings get org.gnome.shell enabled-extensions")
+    status, text = g15os.get_command_output("gsettings get org.gnome.shell enabled-extensions")
     if status == 0:
         try:
             extensions = eval(text)
@@ -558,7 +559,7 @@ def set_gnome_shell_extension_enabled(extension, enabled):
                 s += ","
             s += "'%s'" % c
         try:
-            status, text = g15util.get_command_output("gsettings set org.gnome.shell enabled-extensions \"[%s]\"" % s)
+            status, text = g15os.get_command_output("gsettings set org.gnome.shell enabled-extensions \"[%s]\"" % s)
         except Exception as e:
             logger.debug("Failed to set extension enabled. %s" % e)
             
@@ -729,7 +730,7 @@ class G15DesktopComponent():
         """
         Show the configuration user interface
         """        
-        g15util.run_script("g15-config")
+        g15os.run_script("g15-config")
         
     def stop_desktop_service(self, arg = None):
         """
@@ -741,7 +742,7 @@ class G15DesktopComponent():
         """
         Start the desktop service
         """    
-        g15util.run_script("g15-desktop-service", ["-f"])   
+        g15os.run_script("g15-desktop-service", ["-f"])
         
     def show_page(self, path):
         """

@@ -30,6 +30,7 @@ import gconf
 import time
 import g15util
 import g15gconf
+import g15os
 import g15actions
 import g15devices
 import g15uinput
@@ -60,7 +61,7 @@ mask = pyinotify.IN_DELETE | pyinotify.IN_MODIFY | pyinotify.IN_CREATE | pyinoti
 
 # Create macro profiles directory
 conf_dir = os.path.expanduser("~/.config/gnome15/macro_profiles")
-g15util.mkdir_p(conf_dir)
+g15os.mkdir_p(conf_dir)
 
 class EventHandler(pyinotify.ProcessEvent):
     """

@@ -34,6 +34,7 @@ import g15util
 import g15scheduler
 import g15ui_gconf
 import g15gconf
+import g15os
 import g15theme
 import colorpicker
 import subprocess
@@ -681,7 +682,7 @@ class G15Config:
         
     def _start_service(self, widget):
         widget.set_sensitive(False)
-        g15util.run_script("g15-desktop-service", ["-f"])
+        g15os.run_script("g15-desktop-service", ["-f"])
     
     def _show_message(self, type, text, start_service_button = True):
         self.infobar.set_message_type(type)
@@ -1311,7 +1312,7 @@ class G15Config:
                             if not dest_name.endswith(".macros"):
                                 # Just extract all other files
                                 dest_dir = os.path.join(profile_dir, os.path.dirname(dest_name))
-                                g15util.mkdir_p(dest_dir)
+                                g15os.mkdir_p(dest_dir)
                                 macro_file = file.open(filename, 'r')
                                 try:
                                     out_file = open(os.path.join(dest_dir, os.path.basename(dest_name)), 'w')

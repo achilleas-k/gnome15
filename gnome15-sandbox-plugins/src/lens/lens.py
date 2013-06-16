@@ -31,6 +31,7 @@ _m = dir(Dee.SequenceModel)
 from gi.repository import Unity
 from gnome15 import g15devices
 from gnome15 import g15util
+from gnome15 import g15os
 from gnome15 import g15screen
 from cStringIO import StringIO
 import base64
@@ -57,7 +58,7 @@ global_plugin=True
 # Cached 
 cache_dir = os.path.expanduser("~/.cache/gnome15/lens")
 if not os.path.exists(cache_dir):
-    g15util.mkdir_p(cache_dir)
+    g15os.mkdir_p(cache_dir)
 
 def create(gconf_key, gconf_client, service):
     return G15Lens(service, gconf_client, gconf_key)

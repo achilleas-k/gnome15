@@ -32,6 +32,7 @@ import gnome15.g15util as g15util
 import gnome15.g15notify as g15notify
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
+import gnome15.g15os as g15os
 import subprocess
 import shutil
 from threading import Thread
@@ -164,7 +165,7 @@ class G15LCDShot():
         self._record_fps = g15gconf.get_int_or_default(self._gconf_client, "%s/fps" % self._gconf_key, 10)
         path = self._find_next_free_filename("avi", _("Gnome15_Video"))
         g15notify.notify(_("LCD Screenshot"), _("Started recording video"), "dialog-info")
-        g15util.mkdir_p("%s.tmp" % path)
+        g15os.mkdir_p("%s.tmp" % path)
         self._frame_no = 1
         self._recording = True
         self._record_to = path

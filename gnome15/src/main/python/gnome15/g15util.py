@@ -19,6 +19,7 @@ THIS HAS TURNED INTO A DUMPING GROUND AND NEEDS REFACTORING
 '''
 
 import g15globals as pglobals
+from gnome15 import g15os
 import gtk.gdk
 import os
 import gobject
@@ -93,19 +94,6 @@ if pglobals.dev:
     gtk_icon_theme.prepend_search_path(pglobals.icons_dir)
     
 '''
-Executing stuff
-'''
-
-def run_script(script, args = None, background = True):
-    a = ""
-    if args:
-        for arg in args:
-            a += "\"%s\"" % arg
-    p = os.path.realpath(os.path.join(pglobals.scripts_dir,script))
-    logger.info("Running '%s'" % p)
-    return os.system("python \"%s\" %s %s" % ( p, a, " &" if background else "" ))
-
-'''
 GConf stuff
 '''
     
@@ -156,37 +144,6 @@ def is_gobject_thread():
 def set_gobject_thread():
     gobject_thread[0] = threading.currentThread()
     
-'''
-Distribution / version
-'''
-def get_lsb_release():
-    ret, r = get_command_output('lsb_release -rs')
-    return float(r) if ret == 0 else 0
-
-def get_lsb_distributor():
-    ret, r = get_command_output('lsb_release -is')
-    return r if ret == 0 else "Unknown"
-
-'''
-General utilities
-'''
-def get_command_output( cmd):
-    pipe = os.popen('{ ' + cmd + '; } 2>/dev/null', 'r')
-    text = pipe.read()
-    sts = pipe.close()
-    if sts is None: sts = 0
-    if text[-1:] == '\n': text = text[:-1]
-    return sts, text
-
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc: # Python >2.5
-        import errno
-        if exc.errno == errno.EEXIST:
-            pass
-        else: raise
-
 '''
 Markup utilities
 '''

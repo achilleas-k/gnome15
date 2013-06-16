@@ -23,6 +23,7 @@ import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
+import gnome15.g15os as g15os
 import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
 import gobject
@@ -45,7 +46,7 @@ unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 has_preferences=True
 
 def get_source_index(source_name):
-    status, output = g15util.get_command_output("pacmd list-sources")
+    status, output = g15os.get_command_output("pacmd list-sources")
     if status == 0 and len(output) > 0:
         i = 0
         for line in output.split("\n"):
@@ -69,7 +70,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     
     # Set up the audio source model  
     audio_source_model = widget_tree.get_object("AudioSourceModel")
-    status, output = g15util.get_command_output("pacmd list-sources")
+    status, output = g15os.get_command_output("pacmd list-sources")
     source_name = "0"
     if status == 0 and len(output) > 0:
         i = 0

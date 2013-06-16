@@ -23,6 +23,7 @@ _ = g15locale.get_translation("indicator-me", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
+import gnome15.g15os as g15os
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
@@ -41,9 +42,9 @@ import logging
 logger = logging.getLogger("indicator-me")
 
 # Only works on Ubuntu. Doesn't work on later versions of Ubuntu
-if not "Ubuntu" == g15util.get_lsb_distributor():
+if not "Ubuntu" == g15os.get_lsb_distributor():
     raise Exception("Indicator Me only works on Ubuntu")
-elif g15util.get_lsb_release() > 11.04:
+elif g15os.get_lsb_release() > 11.04:
     raise Exception("Indicator Me only works on Ubuntu up to version 11.04")
 
 

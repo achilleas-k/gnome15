@@ -36,9 +36,9 @@ import g15accounts
 import g15driver
 import traceback
 import gconf
-import g15util
 import g15scheduler
 import g15gconf
+import g15os
 import Xlib.X 
 import Xlib.ext
 import Xlib.XK
@@ -641,7 +641,7 @@ class G15Service(g15desktop.G15AbstractService):
             logger.warn("Ignoring stop request, already stopped.")
             
     def restart(self):        
-        g15util.run_script("g15-desktop-service", ["restart"], background = True)
+        g15os.run_script("g15-desktop-service", ["restart"], background = True)
             
     def shutdown(self, quickly = False):
         logger.info("Shutting down")

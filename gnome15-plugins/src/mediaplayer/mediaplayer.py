@@ -25,6 +25,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15gconf as g15gconf
+import gnome15.g15os as g15os
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15screen as g15screen
@@ -829,7 +830,7 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
             items += removable_media_items
             
         # Pulse
-        status, output = g15util.get_command_output("pacmd list-sources")
+        status, output = g15os.get_command_output("pacmd list-sources")
         if status == 0 and len(output) > 0:
             i = 0
             pulse_items = []

@@ -25,7 +25,7 @@ joystick events) into the kernel.
         
 import logging
 import uinput
-import g15util
+import g15os
 import os
 import subprocess
 from uinput.ev import *
@@ -153,7 +153,7 @@ def calibrate(device_type):
         device_file = get_device(device_type)
         if device_file:
             load_calibration(device_type)
-            g15util.mkdir_p(os.path.expanduser("~/.config/gnome15"))
+            g15os.mkdir_p(os.path.expanduser("~/.config/gnome15"))
             os.system("jstest-gtk '%s'" % (device_file))
             save_calibration(device_type)
         
@@ -172,7 +172,7 @@ def save_calibration(device_type):
             proc = subprocess.Popen(["jscal", "-q", device_file ], stdout=subprocess.PIPE) 
             out = proc.communicate()[0]
             js_config_file = "%s/%s.js" % ( os.path.expanduser("~/.config/gnome15"), device_type )
-            g15util.mkdir_p(os.path.expanduser("~/.config/gnome15"))
+            g15os.mkdir_p(os.path.expanduser("~/.config/gnome15"))
             f = open(js_config_file, "w")
             try :
                 f.write(out)
