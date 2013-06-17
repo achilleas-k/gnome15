@@ -252,7 +252,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
         if self.page != None:
             t = 0
             if self.thumb_icon != None and self._attention == 1:
-                t += g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+                t += g15cairo.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
             if self._status_icon != None:
-                t += g15util.paint_thumbnail_image(allocated_size, self._status_icon, canvas)
+                t += g15cairo.paint_thumbnail_image(allocated_size, self._status_icon, canvas)
             return t

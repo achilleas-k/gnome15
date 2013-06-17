@@ -288,7 +288,7 @@ class G15VideoPage(g15theme.G15Page):
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._thumb_icon != None and self._screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
 
         
 class G15VideoPlayer():

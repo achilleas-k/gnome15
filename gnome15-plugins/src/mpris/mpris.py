@@ -234,12 +234,12 @@ class AbstractMPRISPlayer():
         
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None and self.thumb_image != None:
-            size = g15util.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
+            size = g15cairo.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
             return size
         
     def paint_panel(self, canvas, allocated_size, horizontal):
         if self.page != None and self.thumb_image != None and self.status == "Playing":
-            size = g15util.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
+            size = g15cairo.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
             return size
             
     def process_properties(self):

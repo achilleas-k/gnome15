@@ -51,7 +51,6 @@ Simple colors
 COLOURS = [(0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
 
 import g15driver
-import g15util
 import g15scheduler
 import g15python_helpers
 import g15gconf
@@ -1584,7 +1583,7 @@ class G15Splash():
                  }
         
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
-        return g15util.paint_thumbnail_image(allocated_size, self.logo, canvas)
+        return g15cairo.paint_thumbnail_image(allocated_size, self.logo, canvas)
         
     def _hide(self):
         self.screen.del_page(self.page)

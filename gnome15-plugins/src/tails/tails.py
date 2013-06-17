@@ -298,7 +298,7 @@ class G15TailPage(g15theme.G15Page):
         
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._icon_surface:
-            return g15util.paint_thumbnail_image(allocated_size, self._icon_surface, canvas)  
+            return g15cairo.paint_thumbnail_image(allocated_size, self._icon_surface, canvas)
             
 class G15Tails():
     

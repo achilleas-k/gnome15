@@ -511,12 +511,12 @@ class G15Biff(g15plugin.G15MenuPlugin):
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None:
             if self.thumb_icon != None:
-                size = g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+                size = g15cairo.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
                 return size
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
         if self.page != None:
             if self.thumb_icon != None and self.attention:
-                size = g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+                size = g15cairo.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
                 return size
             

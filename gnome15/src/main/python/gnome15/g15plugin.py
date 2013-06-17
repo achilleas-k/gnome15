@@ -19,7 +19,6 @@
 #        +-----------------------------------------------------------------------------+
  
 import dbus
-import g15util
 import g15scheduler
 import g15cairo
 import g15icontools
@@ -183,7 +182,7 @@ class G15PagePlugin(G15Plugin):
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None and self.thumb_icon != None and self.screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
         pass
@@ -423,5 +422,5 @@ class G15MenuPlugin(G15Plugin):
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None and self.thumb_icon != None and self.screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
     

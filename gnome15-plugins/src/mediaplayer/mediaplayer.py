@@ -535,7 +535,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._surface != None and self._screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self._surface, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self._surface, canvas)
 
 
 class G15MediaSource():

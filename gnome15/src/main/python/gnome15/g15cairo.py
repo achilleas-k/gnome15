@@ -221,3 +221,13 @@ def surface_to_pixbuf(surface):
     loader.close()  
     return pixbuf
 
+def paint_thumbnail_image(allocated_size, image, canvas):
+    s = float(allocated_size) / image.get_height()
+    canvas.save()
+    canvas.scale(s, s)
+    canvas.set_source_surface(image)
+    canvas.paint()
+    canvas.scale(1 / s, 1 / s)
+    canvas.restore()
+    return image.get_width() * s
+

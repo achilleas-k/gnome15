@@ -511,7 +511,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
         self._text.set_canvas(canvas)
         if self.screen.driver.get_bpp() == 1:
             if "mono_thumb_icon" in self._page_attributes:
-                size = g15util.paint_thumbnail_image(allocated_size, self._page_attributes["mono_thumb_icon"], canvas)
+                size = g15cairo.paint_thumbnail_image(allocated_size, self._page_attributes["mono_thumb_icon"], canvas)
                 canvas.translate(size + 2, 0)
                 total_taken += size + 2
             if "temp_short" in self._page_properties:
@@ -525,7 +525,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
             rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
             canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
             if "icon" in self._page_attributes:
-                size = g15util.paint_thumbnail_image(allocated_size, self._page_attributes["icon"], canvas)
+                size = g15cairo.paint_thumbnail_image(allocated_size, self._page_attributes["icon"], canvas)
                 total_taken += size
             if "temp" in self._page_properties:
                 if horizontal:

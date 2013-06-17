@@ -229,7 +229,7 @@ class G15IndicatorMe():
     def _paint_popup_thumbnail(self, canvas, allocated_size, horizontal):
         if self._popup_page != None:
             if self._icon_image != None and self._screen.driver.get_bpp() != 1:
-                return g15util.paint_thumbnail_image(allocated_size, self._icon_image, canvas)
+                return g15cairo.paint_thumbnail_image(allocated_size, self._icon_image, canvas)
             
     def _get_menu_properties(self):
         props = { "icon" :  g15icontools.get_icon_path(self._icon),

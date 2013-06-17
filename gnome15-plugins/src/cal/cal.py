@@ -518,6 +518,6 @@ class G15Cal(g15plugin.G15Plugin):
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._page != None and self._thumb_icon != None and self.screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
         
 
