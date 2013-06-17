@@ -1447,7 +1447,7 @@ class G15Config:
                     
         if use:
             macro = self.selected_profile.create_macro(memory, [use], 
-                                                       _("Macro %s") % " ".join(g15util.get_key_names([use])), 
+                                                       _("Macro %s") % " ".join(g15driver.get_key_names([use])),
                                                        g15profile.MACRO_SIMPLE, 
                                                        "", 
                                                        g15driver.KEY_STATE_UP)
@@ -1672,7 +1672,7 @@ class G15Config:
                     on_name = _("Press")
                 else:
                     on_name = _("Release")
-                row = [", ".join(g15util.get_key_names(macro.keys)), 
+                row = [", ".join(g15driver.get_key_names(macro.keys)),
                                           macro.name, 
                                           macro.key_list_key, 
                                           not profile.read_only, 

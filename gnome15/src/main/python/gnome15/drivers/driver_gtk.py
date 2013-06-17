@@ -15,7 +15,6 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("gnome15-drivers").ugettext
 
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15cairo as g15cairo
 import gnome15.g15icontools as g15icontools
@@ -264,7 +263,7 @@ class Driver(g15driver.AbstractDriver):
     def _modify_button(self, id, lights, mask):
         on = lights & mask != 0
         c = self.buttons[id]
-        key_text = " ".join(g15util.get_key_names(list(id)))
+        key_text = " ".join(g15driver.get_key_names(list(id)))
         c.set_label("*%s" % key_text if on else "%s" % key_text)
         
     def _close_window(self):
@@ -336,7 +335,7 @@ class Driver(g15driver.AbstractDriver):
         for row in self.get_key_layout():
             hbox = gtk.HBox()
             for key in row:
-                key_text = " ".join(g15util.get_key_names(list(key)))
+                key_text = " ".join(g15driver.get_key_names(list(key)))
                 g_button = gtk.Button(key_text)
                 g_button.connect("pressed", self._simulate_key, key, g15driver.KEY_STATE_DOWN)
                 g_button.connect("released", self._simulate_key, key, g15driver.KEY_STATE_UP)

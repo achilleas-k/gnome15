@@ -28,7 +28,6 @@ _ = g15locale.get_translation("gnome15").ugettext
 
 import g15globals
 import g15profile
-import g15util
 import g15scheduler
 import g15gconf
 import g15icontools
@@ -134,7 +133,7 @@ class G15MacroEditor():
                 hbox = gtk.HBox()
                 hbox.set_spacing(4)
                 for key in row:
-                    key_name = g15util.get_key_names([ key ])
+                    key_name = g15driver.get_key_names([ key ])
                     g_button = gtk.ToggleButton(" ".join(key_name))
                     g_button.key = key
                     key_active = key in self.editing_macro.keys
@@ -348,7 +347,7 @@ class G15MacroEditor():
                                                      self.memory_number, keys, 
                                                      exclude=[self.editing_macro]):
             if self.__macro_name_field.get_text() == "" or self.__macro_name_field.get_text().startswith("Macro "):
-                new_name = " ".join(g15util.get_key_names(keys))
+                new_name = " ".join(g15driver.get_key_names(keys))
                 self.editing_macro.name = _("Macro %s") % new_name
                 self.__macro_name_field.set_text(self.editing_macro.name)
             macro.set_keys(keys)

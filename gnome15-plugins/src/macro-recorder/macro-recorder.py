@@ -25,7 +25,6 @@ _ = g15locale.get_translation("macro-recorder", modfile = __file__).ugettext
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
 import gnome15.g15devices as g15devices 
-import gnome15.g15util as g15util
 import gnome15.g15icontools as g15icontools
 import gnome15.g15driver as g15driver
 import gnome15.g15profile as g15profile
@@ -241,7 +240,7 @@ class G15MacroRecorder():
             self._halt_recorder()   
               
             active_profile = g15profile.get_active_profile(self._screen.device)
-            key_name = ", ".join(g15util.get_key_names(record_keys))
+            key_name = ", ".join(g15driver.get_key_names(record_keys))
             if len(self._script_model) == 0:  
                 self.icon = "edit-delete"
                 self._message = key_name + " deleted"

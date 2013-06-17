@@ -181,7 +181,16 @@ import logging
 logger = logging.getLogger("driver")
 
 seq_no = 0
-                        
+
+def get_key_names(keys):
+    """
+    Get the string name of the key given it's code
+    """
+    key_names = []
+    for key in keys:
+        key_names.append((key[:1].upper() + key[1:].lower()).replace('-',' '))
+    return key_names
+
 def zeroize(val):
     """
     Zeroise a control value (will be used for the fully off value). The type
