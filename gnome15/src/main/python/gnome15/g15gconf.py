@@ -81,3 +81,26 @@ def get_rgb_or_default(gconf_client, key, default = None):
     val = gconf_client.get_string(key)
     return default if val == None or val == "" else g15util.to_rgb(val)
 
+def get_cairo_rgba_or_default(gconf_client, key, default):
+    """
+    Tries to read a "rgba" value from GConf and return a default value if
+    it doesn't exist.
+    A "rgba" value is encoded as two key on gconf. The first one is similar to
+    the rgb value described in get_rgb_or_default. The second one is stored in
+    <key>_opacity and it represents the alpha value.
+    The returned value is encoded in a float tuple with each component ranging
+    from 0.0 to 1.
+
+    Keyword arguments:
+    gconf_client : GConf client instance that will read the value
+    key          : full path of the key to be read
+    default      : value to return if key was not found
+    """
+    str_val = gconf_client.get_string(key)
+    if str_val == None or str_val == "":
+        val = default
+    else:
+        v = g15util.to_rgb(str_val)
+        alpha = gconf_client.get_int(key + "_opacity")
+        val = ( v[0], v[1],v[2], alpha)
+    return (float(val[0]) / 255.0, float(val[1]) / 255.0, float(val[2]) / 255.0, float(val[3]) / 255.0)

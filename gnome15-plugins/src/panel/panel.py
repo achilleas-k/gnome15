@@ -23,8 +23,8 @@ _ = g15locale.get_translation("panel", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15gconf as g15gconf
 import os
 import gtk
 import cairo
@@ -78,7 +78,7 @@ class G15PanelPainter(g15screen.Painter):
             inset = 0
             align = "start"
             gap = panel_height / 10.0
-            bg = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/color", ( 128, 128, 128, 128 ))                
+            bg = g15gconf.get_cairo_rgba_or_default(self.gconf_client, self.gconf_key + "/color", ( 128, 128, 128, 128 ))
         widget_size = panel_height - ( gap * 2 )
             
         # Paint the panel in memory first so it can be aligned easily

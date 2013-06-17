@@ -19,7 +19,6 @@
 #        +-----------------------------------------------------------------------------+
  
 import gnome15.g15screen as g15screen  
-import gnome15.g15util as g15util  
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
@@ -364,8 +363,8 @@ class G15Impulse():
         if self.rows == 0:
             self.rows = 16
         self.spacing = self.gconf_client.get_int(self.gconf_key + "/spacing")
-        self.col1 = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/col1", ( 255, 0, 0, 255 )) 
-        self.col2 = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/col2", ( 0, 0, 255, 255 ))
+        self.col1 = g15gconf.get_cairo_rgba_or_default(self.gconf_client, self.gconf_key + "/col1", ( 255, 0, 0, 255 ))
+        self.col2 = g15gconf.get_cairo_rgba_or_default(self.gconf_client, self.gconf_key + "/col2", ( 0, 0, 255, 255 ))
             
         self.peak_heights = [ 0 for i in range( self.bars ) ]
 

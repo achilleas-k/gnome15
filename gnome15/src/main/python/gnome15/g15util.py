@@ -86,20 +86,6 @@ for pt in pt_to_px:
     px_to_pt[pt_to_px[pt]] = pt
 
 
-'''
-GConf stuff
-'''
-    
-def to_cairo_rgba(gconf_client, key, default):
-    str_val = gconf_client.get_string(key)
-    if str_val == None or str_val == "":
-        val = default
-    else:
-        v = to_rgb(str_val)
-        alpha = gconf_client.get_int(key + "_opacity")
-        val = ( v[0], v[1],v[2], alpha)
-    return (float(val[0]) / 255.0, float(val[1]) / 255.0, float(val[2]) / 255.0, float(val[3]) / 255.0)
-        
 def rgb_to_string(rgb):
     if rgb == None:
         return None
