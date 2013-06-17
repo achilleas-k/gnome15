@@ -25,6 +25,7 @@ import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import time
@@ -188,13 +189,13 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         self.only_refresh_when_visible = False
     
     def activate(self):
-        self._net_icon = g15util.get_icon_path([ "network-transmit-receive", 
+        self._net_icon = g15icontools.get_icon_path([ "network-transmit-receive",
                                                 "gnome-fs-network",
                                                 "network-server" ], 
                                                self.screen.height)
-        self._cpu_icon = g15util.get_icon_path( CPU_ICONS,  
+        self._cpu_icon = g15icontools.get_icon_path( CPU_ICONS,
                                                self.screen.height)
-        self._mem_icon = g15util.get_icon_path( [ "media-memory", 
+        self._mem_icon = g15icontools.get_icon_path( [ "media-memory",
                                                  "media-flash" ],  
                                                self.screen.height)
         self._thumb_icon = g15cairo.load_surface_from_file(self._cpu_icon)

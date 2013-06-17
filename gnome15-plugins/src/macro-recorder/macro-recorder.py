@@ -26,6 +26,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15theme as g15theme 
 import gnome15.g15devices as g15devices 
 import gnome15.g15util as g15util
+import gnome15.g15icontools as g15icontools
 import gnome15.g15driver as g15driver
 import gnome15.g15profile as g15profile
 import gnome15.g15actions as g15actions
@@ -320,7 +321,7 @@ class G15MacroRecorder():
         active_profile = g15profile.get_active_profile(self._screen.device)
 
         properties = {}
-        properties["icon"] = g15util.get_icon_path(self.icon, self._screen.height)
+        properties["icon"] = g15icontools.get_icon_path(self.icon, self._screen.height)
         properties["memory"] = "M%d" % self._screen.get_memory_bank()
             
         if active_profile != None:

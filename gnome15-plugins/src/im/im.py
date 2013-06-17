@@ -29,8 +29,8 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("im", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -241,7 +241,7 @@ class ContactMenuItem(g15theme.MenuItem):
         item_properties["item_name"] = self.alias
         item_properties["item_alt"] = self._get_status_text(self.presence)
         item_properties["item_type"] = ""
-        item_properties["item_icon"] = g15util.get_icon_path(self._get_status_icon_name(self.presence))
+        item_properties["item_icon"] = g15icontools.get_icon_path(self._get_status_icon_name(self.presence))
         return item_properties
         
     def set_presence(self, presence):

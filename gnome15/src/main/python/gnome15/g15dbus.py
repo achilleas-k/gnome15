@@ -21,10 +21,10 @@
 import dbus.service
 import g15globals
 import g15theme
-import g15util
 import g15scheduler
 import g15gconf
 import g15cairo
+import g15icontools
 import g15driver
 import g15devices
 import gobject
@@ -703,7 +703,7 @@ class G15DBUSPageService(AbstractG15DBUSService):
     @dbus.service.method(PAGE_IF_NAME, in_signature='sdddd')
     def Image(self, path, x, y, width, height):
         if not "/" in path:
-            path = g15util.get_icon_path(path, width if width != 0 else 128)
+            path = g15icontools.get_icon_path(path, width if width != 0 else 128)
             
         size = None if width == 0 or height == 0 else (width, height)
         

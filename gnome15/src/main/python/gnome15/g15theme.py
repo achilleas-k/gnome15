@@ -57,6 +57,7 @@ import g15text
 import g15locale
 import g15cairo
 import g15svg
+import g15icontools
 import xml.sax.saxutils as saxutils
 import base64
 import dbusmenu
@@ -1328,7 +1329,7 @@ class DBusMenuItem(MenuItem):
         properties["item_alt"] = self.dbus_menu_entry.get_alt_label()
         icon_name = self.dbus_menu_entry.get_icon_name()
         if icon_name != None:
-            properties["item_icon"] = g15cairo.load_surface_from_file(g15util.get_icon_path(icon_name), self.theme.bounds[3])
+            properties["item_icon"] = g15cairo.load_surface_from_file(g15icontools.get_icon_path(icon_name), self.theme.bounds[3])
         else:
             properties["item_icon"] = self.dbus_menu_entry.get_icon()
         return properties 
@@ -1395,7 +1396,7 @@ class ErrorScreen(G15Page):
         self.theme_properties = { 
                            "title": title,
                            "text": text,
-                           "icon": g15util.get_icon_path(icon)
+                           "icon": g15icontools.get_icon_path(icon)
                       }               
         self.get_screen().add_page(self)
         self.redraw()

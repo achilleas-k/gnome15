@@ -26,9 +26,9 @@ import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15devices as g15devices
 import gnome15.g15actions as g15actions
-import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15python_helpers as g15python_helpers
+import gnome15.g15icontools as g15icontools
 import logging
 import os
 import re
@@ -135,7 +135,7 @@ class G15XRandR(g15plugin.G15MenuPlugin):
                 elif "connected" in line:
                     i += 1
                     display = arr[0]
-                    item = g15theme.MenuItem("display-%s" % i, True, arr[0], activatable=False, icon = g15util.get_icon_path(ICONS))
+                    item = g15theme.MenuItem("display-%s" % i, True, arr[0], activatable=False, icon = g15icontools.get_icon_path(ICONS))
                     items.append(item)
                     
                     

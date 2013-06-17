@@ -23,10 +23,10 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("mounts", modfile = __file__).ugettext
 
 import gnome15.g15plugin as g15plugin
-import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15gconf as g15gconf
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
@@ -114,7 +114,7 @@ class MountMenuItem(g15theme.MenuItem):
             icon_names += icon.get_names()
             
         icon_names += "gnome-dev-harddisk"
-        item_properties["item_icon"] = g15util.get_icon_path(icon_names)
+        item_properties["item_icon"] = g15icontools.get_icon_path(icon_names)
         item_properties["disk_usage"] = self.disk_used_pc
         item_properties["sel_disk_usage"] = self.disk_used_pc
         item_properties["disk_used_mb"] =  "%4.2f" % (self.disk_used / 1024.0 / 1024.0 )
@@ -165,7 +165,7 @@ class VolumeMenuItem(g15theme.MenuItem):
         item_properties["item_alt"] = ""
         item_properties["item_type"] = ""
         
-        item_properties["item_icon"] = g15util.get_icon_path([ self.volume.get_icon().get_names()[0], "gnome-dev-harddisk" ])
+        item_properties["item_icon"] = g15icontools.get_icon_path([ self.volume.get_icon().get_names()[0], "gnome-dev-harddisk" ])
         return item_properties
     
     def activate(self):

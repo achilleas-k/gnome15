@@ -23,7 +23,7 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("voip-teamspeak3", modfile = __file__).ugettext
 
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.g15icontools as g15icontools
 import ts3
 import traceback
 from threading import Thread
@@ -90,7 +90,7 @@ class Teamspeak3BuddyMenuItem(voip.BuddyMenuItem):
 class Teamspeak3ServerMenuItem(voip.ChannelMenuItem):
     
     def __init__(self, schandlerid, name, backend):
-        voip.ChannelMenuItem.__init__(self, "server-%s" % schandlerid, name, backend, icon=g15util.get_icon_path(['server', 'redhat-server', 'network-server', 'redhat-network-server', 'gnome-fs-server' ], include_missing=False))
+        voip.ChannelMenuItem.__init__(self, "server-%s" % schandlerid, name, backend, icon=g15icontools.get_icon_path(['server', 'redhat-server', 'network-server', 'redhat-network-server', 'gnome-fs-server' ], include_missing=False))
         self.schandlerid = schandlerid
         self.activatable = False
         self.radio = False

@@ -27,6 +27,7 @@ import gnome15.g15scheduler as g15scheduler
 import gnome15.g15gconf as g15gconf
 import gnome15.g15os as g15os
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15screen as g15screen
@@ -121,7 +122,7 @@ else:
              }
 
 
-icon_path = g15util.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player", "applications-multimedia" ])
+icon_path = g15icontools.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player", "applications-multimedia" ])
 
 def create(gconf_key, gconf_client, screen):
     return G15MediaPlayer(gconf_client, gconf_key, screen)
@@ -171,7 +172,7 @@ class MountMenuItem(g15theme.MenuItem):
         icon = self._mount.get_icon()        
         icon_names = [ icon.get_file().get_path() ] if isinstance(icon, gio.FileIcon) else icon.get_names() 
         icon_names += "gnome-dev-harddisk"
-        item_properties["item_icon"] = g15util.get_icon_path(icon_names)
+        item_properties["item_icon"] = g15icontools.get_icon_path(icon_names)
         return item_properties
     
     def activate(self):
@@ -808,14 +809,14 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
                 video_devices.append(i)
                 
         if len(video_devices) > 0:
-            items.append(g15theme.MenuItem("video-devices", True, _("Video Devices"), icon = g15util.get_icon_path(["camera-web", "camera-video"]), activatable = False))
+            items.append(g15theme.MenuItem("video-devices", True, _("Video Devices"), icon = g15icontools.get_icon_path(["camera-web", "camera-video"]), activatable = False))
             for i in video_devices:
                 items.append(G15VideoDeviceMenuItem(self, i))
                 
         # Video File
         def activate_video_file():
             gobject.idle_add(self._open_video_file)
-        items.append(g15theme.MenuItem("video-file", True, _("Open Audio/Video File"), activate = activate_video_file, icon = g15util.get_icon_path("folder")))
+        items.append(g15theme.MenuItem("video-file", True, _("Open Audio/Video File"), activate = activate_video_file, icon = g15icontools.get_icon_path("folder")))
         
         # DVD / Mounts
         self.volume_monitor = gio.VolumeMonitor()
@@ -827,7 +828,7 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
             if not mount.is_shadowed() and drive is not None and drive.is_media_removable():
                 removable_media_items.append(MountMenuItem('mount-%d' % i, mount, self))
         if len(removable_media_items):
-            items.append(g15theme.MenuItem("removable-devices", True, _("Removable Devices"), icon = g15util.get_icon_path(["driver-removable-media", "gnome-dev-removable"]), activatable = False))
+            items.append(g15theme.MenuItem("removable-devices", True, _("Removable Devices"), icon = g15icontools.get_icon_path(["driver-removable-media", "gnome-dev-removable"]), activatable = False))
             items += removable_media_items
             
         # Pulse
@@ -842,12 +843,12 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
                 elif line.startswith("device.description = "):
                     pulse_items.append(PulseSourceMenuItem(name, line[22:-1], self))
             if len(pulse_items) > 0:
-                items.append(g15theme.MenuItem("pulse-sources", True, _("PulseAudio Source"), icon = g15util.get_icon_path(["audio-card", "audio-speakers", "audio-volume-high", "audio-x-generic"]), activatable = False))
+                items.append(g15theme.MenuItem("pulse-sources", True, _("PulseAudio Source"), icon = g15icontools.get_icon_path(["audio-card", "audio-speakers", "audio-volume-high", "audio-x-generic"]), activatable = False))
                 items += pulse_items
 
 
         # Visualisations - TODO - there must be a better way to list them
-        items.append(g15theme.MenuItem("visualisation-mode", True, _("Visualisation Mode"), icon = g15util.get_icon_path(["preferences-color", "gtk-select-color", "preferences-desktop-screensaver", "kscreensaver", "xscreensaver"]), activatable = False))
+        items.append(g15theme.MenuItem("visualisation-mode", True, _("Visualisation Mode"), icon = g15icontools.get_icon_path(["preferences-color", "gtk-select-color", "preferences-desktop-screensaver", "kscreensaver", "xscreensaver"]), activatable = False))
         for c in [ "goom", \
                   "libvisual_bumpscope", \
                   "libvisual_corona", \

@@ -30,8 +30,8 @@ from gi.repository import Dee
 _m = dir(Dee.SequenceModel)
 from gi.repository import Unity
 from gnome15 import g15devices
-from gnome15 import g15util
 from gnome15 import g15os
+from gnome15 import g15icontools
 from gnome15 import g15screen
 from cStringIO import StringIO
 import base64
@@ -177,9 +177,9 @@ class G15Lens():
         sections_model.clear ()
         for device in g15devices.find_all_devices():
             if device.model_id == 'virtual':
-                icon_file = g15util.get_icon_path(["preferences-system-window", "preferences-system-windows", "gnome-window-manager", "window_fullscreen"])
+                icon_file = g15icontools.get_icon_path(["preferences-system-window", "preferences-system-windows", "gnome-window-manager", "window_fullscreen"])
             else:
-                icon_file = g15util.get_app_icon(self._gconf_client,  device.model_id)
+                icon_file = g15icontools.get_app_icon(self._gconf_client,  device.model_id)
             icon = Gio.FileIcon(Gio.File(icon_file))
             sections_model.append (device.model_fullname,
                                    icon.to_string())

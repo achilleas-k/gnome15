@@ -59,7 +59,7 @@ DBusGMainLoop(set_as_default=True)
 import gnome15.g15globals as g15globals
 import gnome15.g15service as g15service
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
+import gnome15.g15icontools as g15icontools
 import gnome15.g15desktop as g15desktop
 
 class G15SystemTray(g15desktop.G15GtkMenuPanelComponent):
@@ -115,8 +115,8 @@ class G15SystemTray(g15desktop.G15GtkMenuPanelComponent):
         self.prefs_menu.show_all()
         
     def icons_changed(self):
-        self.normal_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15util.get_icon_path([ "logitech-g-keyboard-applet", "logitech-g-keyboard-panel" ]), self.status_icon.get_size(), self.status_icon.get_size())
-        self.attention_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15util.get_icon_path([ "logitech-g-keyboard-error-panel", "logitech-g-keyboard-error-applet" ]), self.status_icon.get_size(), self.status_icon.get_size())
+        self.normal_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15icontools.get_icon_path([ "logitech-g-keyboard-applet", "logitech-g-keyboard-panel" ]), self.status_icon.get_size(), self.status_icon.get_size())
+        self.attention_icon = gtk.gdk.pixbuf_new_from_file_at_size(g15icontools.get_icon_path([ "logitech-g-keyboard-error-panel", "logitech-g-keyboard-error-applet" ]), self.status_icon.get_size(), self.status_icon.get_size())
     
 # run it in a gtk window
 if __name__ == "__main__":

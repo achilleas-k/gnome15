@@ -24,6 +24,7 @@ _ = g15locale.get_translation("tails", modfile = __file__).ugettext
 import gnome15.g15util as g15util
 import gnome15.g15gconf as g15gconf
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
@@ -256,7 +257,7 @@ class G15TailPage(g15theme.G15Page):
         icons.append("text-plain")
         icons.append("panel-searchtool")
         icons.append("gnome-searchtool")
-        icon = g15util.get_icon_path(icons, size=self.plugin._screen.height)  
+        icon = g15icontools.get_icon_path(icons, size=self.plugin._screen.height)
         
         if icon is None:
             self._icon_surface = None
@@ -265,7 +266,7 @@ class G15TailPage(g15theme.G15Page):
             try :
                 icon_surface = g15cairo.load_surface_from_file(icon)
                 self._icon_surface = icon_surface
-                self._icon_embedded = g15util.get_embedded_image_url(icon_surface)
+                self._icon_embedded = g15icontools.get_embedded_image_url(icon_surface)
             except:
                 logger.warning("Failed to get icon %s" % str(icon))
                 self._icon_surface = None

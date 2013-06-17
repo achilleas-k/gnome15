@@ -56,6 +56,7 @@ import g15scheduler
 import g15python_helpers
 import g15gconf
 import g15cairo
+import g15icontools
 import g15profile
 import g15globals
 import g15drivermanager
@@ -1557,7 +1558,7 @@ class G15Splash():
         self.screen = screen        
         self.progress = 0.0
         self.text = _("Starting up ..")
-        icon_path = g15util.get_icon_path("gnome15")
+        icon_path = g15icontools.get_icon_path("gnome15")
         if icon_path == None:
             icon_path = os.path.join(g15globals.icons_dir, "hicolor", "apps", "scalable", "gnome15.svg")
         self.logo = g15cairo.load_surface_from_file(icon_path)

@@ -29,6 +29,7 @@ import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -210,7 +211,7 @@ class G15Weather():
             t_icon = self._translate_icon(current['icon'])
             if t_icon != None:
                 attributes["icon"] = g15cairo.load_surface_from_file(t_icon)
-                properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])
+                properties["icon"] = g15icontools.get_embedded_image_url(attributes["icon"])
             else:
                 logger.warning("No translated weather icon for %s" % current['icon'])
             mono_thumb = self._get_mono_thumb_icon(current['icon'])        
@@ -338,10 +339,10 @@ class G15Weather():
             theme_icon = [ "%s-night" % theme_icon, theme_icon ]
             
         if theme_icon != None:
-            icon_path = g15util.get_icon_path(theme_icon, warning = False, include_missing = False)
+            icon_path = g15icontools.get_icon_path(theme_icon, warning = False, include_missing = False)
             if icon_path == None and ( now.hour > 18 or now.hour < 4):
                 # Try the day icons
-                icon_path = g15util.get_icon_path(theme_icon[:len(theme_icon) - 6], include_missing = False)
+                icon_path = g15icontools.get_icon_path(theme_icon[:len(theme_icon) - 6], include_missing = False)
                 
             if icon_path != None:
                 return icon_path

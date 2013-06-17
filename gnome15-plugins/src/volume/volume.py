@@ -22,9 +22,9 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("volume", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15devices as g15devices
@@ -193,7 +193,7 @@ class G15Volume():
                 icon = "audio-volume-high"
         else:
             properties [ "muted"] = True
-        icon_path = g15util.get_icon_path(icon, self._screen.driver.get_size()[0])
+        icon_path = g15icontools.get_icon_path(icon, self._screen.driver.get_size()[0])
         properties["state"] = icon
         properties["icon"] = icon_path
         properties["vol_pc"] = self._volume

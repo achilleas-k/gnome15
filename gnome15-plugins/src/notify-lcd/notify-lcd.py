@@ -27,6 +27,7 @@ import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
+import gnome15.g15icontools as g15icontools
 import gnome15.g15globals as pglobals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -184,7 +185,7 @@ class G15Message():
                 logger.warn("Failed to decode notification image")
                 
             if self.embedded_image == None and ( self.icon == None or self.icon == "" ):
-                self.icon = g15util.get_icon_path("dialog-information", 1024)
+                self.icon = g15icontools.get_icon_path("dialog-information", 1024)
     
     def close(self):
         if self.embedded_image != None:
@@ -485,17 +486,17 @@ class G15NotifyLCD():
         properties["title"] = self._current_message.summary
         properties["message"] = self._current_message.body
         if self._current_message.icon != None and len(self._current_message.icon) > 0:
-            icon_path = g15util.get_icon_path(self._current_message.icon)
+            icon_path = g15icontools.get_icon_path(self._current_message.icon)
             
             # Workaround on Natty missing new email notification icon (from Evolution)?
             if icon_path == None and self._current_message.icon == "notification-message-email":
-                icon_path = g15util.get_icon_path([ "applications-email-pane", "mail_new", "mail-inbox", "mail-folder-inbox", "evolution-mail" ])
+                icon_path = g15icontools.get_icon_path([ "applications-email-pane", "mail_new", "mail-inbox", "mail-folder-inbox", "evolution-mail" ])
                 
             properties["icon"] = icon_path 
         elif self._current_message.embedded_image != None:
             properties["icon"] = self._current_message.embedded_image            
         if not "icon" in properties or properties["icon"] == None:
-            properties["icon"] = g15util.get_icon_path(["dialog-info", "stock_dialog-info", "messagebox_info" ])
+            properties["icon"] = g15icontools.get_icon_path(["dialog-info", "stock_dialog-info", "messagebox_info" ])
                     
         properties["next"] = len(self._message_queue) > 1
         action = 1

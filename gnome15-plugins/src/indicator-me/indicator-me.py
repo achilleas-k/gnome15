@@ -25,6 +25,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15os as g15os
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
@@ -217,7 +218,7 @@ class G15IndicatorMe():
         
     def _get_details(self):
         self._icon = self._me_service.StatusIcons()
-        self._icon_image = g15cairo.load_surface_from_file(g15util.get_icon_path(self._icon))
+        self._icon_image = g15cairo.load_surface_from_file(g15icontools.get_icon_path(self._icon))
         self._username = self._me_service.PrettyUserName()
         if self._menu_page != None:
             self._menu_page.set_title(self._get_status_text())
@@ -231,13 +232,13 @@ class G15IndicatorMe():
                 return g15util.paint_thumbnail_image(allocated_size, self._icon_image, canvas)
             
     def _get_menu_properties(self):
-        props = { "icon" :  g15util.get_icon_path(self._icon),
+        props = { "icon" :  g15icontools.get_icon_path(self._icon),
                  "title" : _("Status"),
                  "alt_title": STATUS_ICONS[self._icon] }
         return props
 
     def _get_popup_properties(self):     
-        properties = { "icon" : g15util.get_icon_path(self._icon, self._screen.width) }
+        properties = { "icon" : g15icontools.get_icon_path(self._icon, self._screen.width) }
         properties["text"] = _("Unknown")
         if self._icon in STATUS_ICONS:
             properties["text"] = STATUS_ICONS[self._icon]

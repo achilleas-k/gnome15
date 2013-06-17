@@ -27,6 +27,7 @@ import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -167,7 +168,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
         return  {
                   "title" : _("Messages"),
                   "alt_title" : "",
-                  "icon" : g15util.get_icon_path("indicator-messages-new" if self._attention else "indicator-messages"),
+                  "icon" : g15icontools.get_icon_path("indicator-messages-new" if self._attention else "indicator-messages"),
                   "attention": self._attention
                   }  
         
@@ -185,12 +186,12 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
             if self.screen.driver.get_bpp() == 1:
                 self.thumb_icon = g15cairo.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
             else:
-                self.thumb_icon = g15cairo.load_surface_from_file(g15util.get_icon_path("indicator-messages-new"))
+                self.thumb_icon = g15cairo.load_surface_from_file(g15icontools.get_icon_path("indicator-messages-new"))
             self._popup()
         else:
             self._stop_blink()
             if self.screen.driver.get_bpp() == 16:
-                self.thumb_icon = g15cairo.load_surface_from_file(g15util.get_icon_path("indicator-messages"))
+                self.thumb_icon = g15cairo.load_surface_from_file(g15icontools.get_icon_path("indicator-messages"))
             self.screen.redraw()
             
     def _menu_changed(self, menu = None, property = None, value = None):
@@ -211,7 +212,7 @@ class G15IndicatorMessages(g15plugin.G15MenuPlugin):
                     icon_name in [ "user-available", "user-away", 
                                     "user-busy", "user-offline", 
                                     "user-invisible", "user-indeterminate" ]:
-                    self._status_icon = g15cairo.load_surface_from_file(g15util.get_icon_path(icon_name))
+                    self._status_icon = g15cairo.load_surface_from_file(g15icontools.get_icon_path(icon_name))
         
     '''
     Private

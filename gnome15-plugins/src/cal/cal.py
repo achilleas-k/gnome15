@@ -28,6 +28,7 @@ import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
 import gnome15.g15plugin as g15plugin
@@ -179,7 +180,7 @@ class EventMenuItem(g15theme.MenuItem):
         item_properties["item_alarm"] = self.event.alarm  
         if self.event.alarm:          
             if self.get_screen().device.bpp > 1:  
-                item_properties["item_icon"] = g15util.get_icon_path([ "stock_alarm", "alarm-clock", "alarm-timer", "dialog-warning" ])
+                item_properties["item_icon"] = g15icontools.get_icon_path([ "stock_alarm", "alarm-clock", "alarm-timer", "dialog-warning" ])
             else:  
                 item_properties["item_icon"] = os.path.join(os.path.dirname(__file__), 'bell.gif')
         if self.event.alt_icon:
@@ -258,7 +259,7 @@ class G15Cal(g15plugin.G15Plugin):
     def __init__(self, gconf_key, gconf_client, screen):
         g15plugin.G15Plugin.__init__(self, gconf_client, gconf_key, screen)
         self._timer = None
-        self._icon_path = g15util.get_icon_path(["calendar", "evolution-calendar", "office-calendar", "stock_calendar" ])
+        self._icon_path = g15icontools.get_icon_path(["calendar", "evolution-calendar", "office-calendar", "stock_calendar" ])
         self._thumb_icon = g15cairo.load_surface_from_file(self._icon_path)
         
     def activate(self):

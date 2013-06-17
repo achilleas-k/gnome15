@@ -63,6 +63,7 @@ import gnome15.g15screen as g15screen
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.g15icontools as g15icontools
 import gnome15.g15globals as pglobals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -178,7 +179,7 @@ class G15Message():
                 file.close()
                 pixbuf.save(self.embedded_image, "png")
             else:
-                self.icon = g15util.get_icon_path("dialog-info", 1024)
+                self.icon = g15icontools.get_icon_path("dialog-info", 1024)
     
     def close(self):
         if self.embedded_image != None:
@@ -321,7 +322,7 @@ class G15NotifyService(dbus.service.Object):
         properties["title"] = self._current_message.summary
         properties["message"] = self._current_message.body
         if self._current_message.icon != None and len(self._current_message.icon) > 0:
-            properties["icon"] = g15util.get_icon_path(self._current_message.icon)
+            properties["icon"] = g15icontools.get_icon_path(self._current_message.icon)
         elif self._current_message.embedded_image != None:
             properties["icon"] = self._current_message.embedded_image
                     

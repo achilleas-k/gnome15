@@ -21,9 +21,9 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("processes", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -95,7 +95,7 @@ class ProcessMenuItem(g15theme.MenuItem):
     def activate(self):
         kill_name = str(self.process_id) if isinstance(self.process_id, int) else self.process_name 
         self.plugin.confirm_screen = g15theme.ConfirmationScreen(self.get_screen(), _("Kill Process"), _("Are you sure you want to kill\n%s") % kill_name,  
-                                    g15util.get_icon_path("utilities-system-monitor"), self.plugin._kill_process, self.process_id,
+                                    g15icontools.get_icon_path("utilities-system-monitor"), self.plugin._kill_process, self.process_id,
                                     cancel_callback = self.plugin._cancel_kill)
                     
      
@@ -289,7 +289,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
         try:
             icon_name = view.Icon()
             if icon_name and len(icon_name) > 0:
-                icon_path = g15util.get_icon_path(icon_name, warning = False)
+                icon_path = g15icontools.get_icon_path(icon_name, warning = False)
                 if icon_path:
                     item.icon = g15cairo.load_surface_from_file(icon_path, 32)
         except dbus.DBusException:
@@ -321,7 +321,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
                         item.process_name = window.get_name()
                         this_items[item.id] = item
                         if window.has_icon_name():
-                            icon_path = g15util.get_icon_path(window.get_icon_name(), warning = False)
+                            icon_path = g15icontools.get_icon_path(window.get_icon_name(), warning = False)
                             if icon_path:
                                 item.icon = "file:" + icon_path
                         if item.icon == None:

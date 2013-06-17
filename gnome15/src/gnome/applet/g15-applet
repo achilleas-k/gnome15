@@ -50,8 +50,8 @@ import gnome15.g15globals as g15globals
 import gnome15.g15setup as g15setup
 import gnome15.g15drivermanager as g15drivermanager
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
 import gnome15.g15os as g15os
+import gnome15.g15icontools as g15icontools
 
 session_bus = dbus.SessionBus()
 
@@ -347,7 +347,7 @@ class G15Applet(gnomeapplet.Applet):
     def _about_info(self, widget, data):         
         about = gnome.ui.About("Gnome15", g15globals.version, "GPL", \
                                "Desktop integration for Logitech 'G' keyboards.", ["Brett Smith <tanktarta@blueyonder.co.uk>"], \
-                               ["Brett Smith <tanktarta@blueyonder.co.uk>"], "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
+                               ["Brett Smith <tanktarta@blueyonder.co.uk>"], "Brett Smith <tanktarta@blueyonder.co.uk>", gtk.gdk.pixbuf_new_from_file(g15icontools.get_app_icon(self.conf_client, "gnome15", 128)))
         about.show()
 
     def _create_menu(self):

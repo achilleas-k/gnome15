@@ -31,6 +31,7 @@ import g15profile
 import g15util
 import g15scheduler
 import g15gconf
+import g15icontools
 import g15uinput
 import g15devices
 import g15driver
@@ -685,7 +686,7 @@ class G15MacroScriptEditor():
                 val = " ".join(split[1:])                
                 if op in OP_ICONS:
                     icon = OP_ICONS[op]
-                    icon_path = g15util.get_icon_path(icon, 24)
+                    icon_path = g15icontools.get_icon_path(icon, 24)
                     self.__script_model.append([gtk.gdk.pixbuf_new_from_file(icon_path), val, op, True])
                     
         self._validate_script()

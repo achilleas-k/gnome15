@@ -30,6 +30,7 @@ import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15python_helpers as g15python_helpers
 import gnome15.g15gconf as g15gconf
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -311,7 +312,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 c_icon, f_icon, t_icon = self._get_icons(current)
                 if t_icon != None:
                     attributes["icon"] = g15cairo.load_surface_from_file(t_icon)
-                    properties["icon"] = g15util.get_embedded_image_url(attributes["icon"]) 
+                    properties["icon"] = g15icontools.get_embedded_image_url(attributes["icon"])
                 else:
                     logger.warning("No translated weather icon for %s" % c_icon)
                 mono_thumb = self._get_mono_thumb_icon(c_icon)        
@@ -443,7 +444,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                         properties["day_letter" + str(y)] = forecast['day_of_week'][:1]
                         
                         c_icon, f_icon, t_icon = self._get_icons(forecast)
-                        properties["icon" + str(y)] = g15util.get_embedded_image_url(g15cairo.load_surface_from_file(t_icon))
+                        properties["icon" + str(y)] = g15icontools.get_embedded_image_url(g15cairo.load_surface_from_file(t_icon))
                         
                         y += 1
         
@@ -485,14 +486,14 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 return fallback_icon
             
         if theme_icon != None:
-            icon_path = g15util.get_icon_path(theme_icon, warning = False, include_missing = False)
+            icon_path = g15icontools.get_icon_path(theme_icon, warning = False, include_missing = False)
             if icon_path == None and theme_icon.endswith("-night"):
-                icon_path = g15util.get_icon_path(theme_icon[:len(theme_icon) - 6], include_missing = False)
+                icon_path = g15icontools.get_icon_path(theme_icon[:len(theme_icon) - 6], include_missing = False)
                 
             if icon_path != None:
                 return icon_path
              
-        return g15util.get_icon_path(icon)
+        return g15icontools.get_icon_path(icon)
         
     def _get_base_icon(self, icon):
         # Strips off URL path, image extension, size and weather prefix if present

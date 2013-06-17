@@ -18,6 +18,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15globals as g15globals
 
 import gconf
@@ -349,7 +350,7 @@ class Driver(g15driver.AbstractDriver):
         
         self.main_window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.main_window.set_title("Gnome15") 
-        self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
+        self.main_window.set_icon_from_file(g15icontools.get_app_icon(self.conf_client, "gnome15"))
         self.main_window.add(self.vbox)
         self.main_window.connect("delete-event", self._window_closed)
         

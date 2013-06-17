@@ -44,6 +44,7 @@ import gnome15.g15util as g15util
 import gnome15.g15gconf as g15gconf
 import gnome15.g15os as g15os
 import gnome15.g15notify as g15notify
+import gnome15.g15icontools as g15icontools
 import dbus
 import os.path
 import operator
@@ -715,14 +716,14 @@ class G15DesktopComponent():
             # Because the icons aren't installed in this mode, they must be provided
             # using the full filename. Unfortunately this means scaling may be a bit
             # blurry in the indicator applet
-            path = g15util.get_icon_path(icon_name, 128)
+            path = g15icontools.get_icon_path(icon_name, 128)
             logger.debug("Dev mode icon %s is at %s" % ( icon_name, path ) )
             return path
         else:
             if not isinstance(icon_name, list):
                 icon_name = [ icon_name ]
             for i in icon_name:
-                p = g15util.get_icon_path(i, -1)
+                p = g15icontools.get_icon_path(i, -1)
                 if p is not None:
                     return i
              
@@ -994,7 +995,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
         about.set_license(GPL)
         about.set_authors(AUTHORS)
         about.set_documenters(["Brett Smith <tanktarta@blueyonder.co.uk>"])
-        about.set_logo(gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
+        about.set_logo(gtk.gdk.pixbuf_new_from_file(g15icontools.get_app_icon(self.conf_client, "gnome15", 128)))
         about.set_comments(_("Desktop integration for Logitech 'G' keyboards."))
         about.run()
         about.hide()

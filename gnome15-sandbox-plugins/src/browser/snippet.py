@@ -23,7 +23,7 @@
 import gnome15.g15theme as g15theme
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.g15icontools as g15icontools
 import gnome15.g15gtk  as g15gtk
 import os
 import gtk
@@ -81,7 +81,7 @@ class G15WebkitBrowser():
     def _get_theme_properties(self):
         return {
                       "url" : "www.somewhere.com",
-                      "icon" : g15util.get_icon_path("system-config-display")
+                      "icon" : g15icontools.get_icon_path("system-config-display")
                       }
         
     def _scroll_up(self):

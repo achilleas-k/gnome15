@@ -35,6 +35,7 @@ import g15scheduler
 import g15ui_gconf
 import g15gconf
 import g15os
+import g15icontools
 import g15theme
 import colorpicker
 import subprocess
@@ -369,7 +370,7 @@ class G15Config:
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
-        self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client,  "gnome15"))
+        self.main_window.set_icon_from_file(g15icontools.get_app_icon(self.conf_client,  "gnome15"))
         
         # Monitor gconf
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
@@ -1009,7 +1010,7 @@ class G15Config:
                         if view.Name() == self.selected_profile.window_name:
                             icon = view.Icon()
                             if icon != None:
-                                icon_path = g15util.get_icon_path(icon)
+                                icon_path = g15icontools.get_icon_path(icon)
                                 if icon_path != None:
                                     # We need to copy the icon as it may be temporary
                                     copy_path = os.path.join(icons_dir, os.path.basename(icon_path))
@@ -1565,9 +1566,9 @@ class G15Config:
         idx = 0
         for device in self.devices:
             if device.model_id == 'virtual':
-                icon_file = g15util.get_icon_path(["preferences-system-window", "preferences-system-windows", "gnome-window-manager", "window_fullscreen"])
+                icon_file = g15icontools.get_icon_path(["preferences-system-window", "preferences-system-windows", "gnome-window-manager", "window_fullscreen"])
             else:
-                icon_file = g15util.get_app_icon(self.conf_client,  device.model_id)
+                icon_file = g15icontools.get_app_icon(self.conf_client,  device.model_id)
             pixb = gtk.gdk.pixbuf_new_from_file(icon_file)
             self.device_model.append([pixb.scale_simple(96, 96, gtk.gdk.INTERP_BILINEAR), device.model_fullname, 96, gtk.WRAP_WORD, pango.ALIGN_CENTER])
             if previous_sel_device_name is not None and device.uid == previous_sel_device_name:

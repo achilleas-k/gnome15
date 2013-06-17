@@ -28,6 +28,7 @@ import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15python_helpers as g15python_helpers
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15devices as g15devices
@@ -283,7 +284,7 @@ class AbstractMPRISPlayer():
         # Track status
         if self.status == "Stopped":
             self.song_properties["stopped"] = True
-            self.song_properties["icon"] = g15util.get_icon_path(["media-stop", "media-playback-stop", "gtk-media-stop", "player_stop" ], self.screen.height)
+            self.song_properties["icon"] = g15icontools.get_icon_path(["media-stop", "media-playback-stop", "gtk-media-stop", "player_stop" ], self.screen.height)
             self.song_properties["title"] = _("No track playing")
             self.song_properties["time_text"] = ""
         else:            
@@ -305,7 +306,7 @@ class AbstractMPRISPlayer():
         mime_type = mime.get_type(self.playing_uri)
         new_cover_uri = None
         if mime_type != None:
-            mime_icon = g15util.get_icon_path(str(mime_type).replace("/","-"), size=self.screen.height)
+            mime_icon = g15icontools.get_icon_path(str(mime_type).replace("/","-"), size=self.screen.height)
             if mime_icon != None:                    
                 new_cover_uri = mime_icon  
         if new_cover_uri != None:
@@ -315,7 +316,7 @@ class AbstractMPRISPlayer():
                 new_cover_uri = None
                               
         if new_cover_uri == None:                      
-            new_cover_uri = g15util.get_icon_path(["audio-player", "applications-multimedia" ], size=self.screen.height)
+            new_cover_uri = g15icontools.get_icon_path(["audio-player", "applications-multimedia" ], size=self.screen.height)
             
         return new_cover_uri
         
@@ -338,7 +339,7 @@ class AbstractMPRISPlayer():
             vol_icon = "audio-volume-medium"
         elif self.volume >= 67.0:
             vol_icon = "audio-volume-high"
-        self.song_properties["vol_icon"] = g15util.get_icon_path(vol_icon, self.screen.height)
+        self.song_properties["vol_icon"] = g15icontools.get_icon_path(vol_icon, self.screen.height)
         
         # For the bars on the G15 (the icon is too small, bars are better)
         for i in range(0, int( self.volume / 10 ) + 1, 1):            

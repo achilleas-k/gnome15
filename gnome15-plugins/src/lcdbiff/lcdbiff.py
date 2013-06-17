@@ -24,6 +24,7 @@ _ = g15locale.get_translation("lcdbiff", modfile = __file__).ugettext
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -332,23 +333,23 @@ class MailItem(g15theme.MenuItem):
             if self.plugin.screen.driver.get_bpp() == 1:
                 item_properties["item_icon"] =  os.path.join(os.path.dirname(__file__), "mono-mail-refresh.gif")
             else:
-                item_properties["item_icon"] =  g15util.get_icon_path(["view-refresh", "stock_refresh", "gtk-refresh", "view-refresh-symbolic"])
+                item_properties["item_icon"] =  g15icontools.get_icon_path(["view-refresh", "stock_refresh", "gtk-refresh", "view-refresh-symbolic"])
         elif self.error is not None:            
             if self.plugin.screen.driver.get_bpp() == 1:
                 item_properties["item_icon"] = os.path.join(os.path.dirname(__file__), "mono-mail-error.gif")
             else:
-                item_properties["item_icon"] =  g15util.get_icon_path("new-messages-red")
+                item_properties["item_icon"] =  g15icontools.get_icon_path("new-messages-red")
         else:
             if self.count > 0:
                 if self.plugin.screen.driver.get_bpp() == 1:
                     item_properties["item_icon"] = os.path.join(os.path.dirname(__file__), "mono-mail-new.gif")
                 else:                        
-                    item_properties["item_icon"] =  g15util.get_icon_path("indicator-messages-new")
+                    item_properties["item_icon"] =  g15icontools.get_icon_path("indicator-messages-new")
             else:
                 if self.plugin.screen.driver.get_bpp() == 1:
                     item_properties["item_icon"] = ""
                 else:
-                    item_properties["item_icon"] =  g15util.get_icon_path("indicator-messages")
+                    item_properties["item_icon"] =  g15icontools.get_icon_path("indicator-messages")
         
         return item_properties
     
@@ -453,7 +454,7 @@ class G15Biff(g15plugin.G15MenuPlugin):
             if self.screen.driver.get_bpp() == 1:
                 self.thumb_icon = g15cairo.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-error.gif"))
             elif self.screen.driver.get_bpp() > 0:
-                self.thumb_icon = g15cairo.load_surface_from_file(g15util.get_icon_path(["new-messages-red","messagebox_critical"]))
+                self.thumb_icon = g15cairo.load_surface_from_file(g15icontools.get_icon_path(["new-messages-red","messagebox_critical"]))
         else:
             if self.total_count > 0:
                 self._start_blink()
@@ -461,14 +462,14 @@ class G15Biff(g15plugin.G15MenuPlugin):
                 if self.screen.driver.get_bpp() == 1:
                     self.thumb_icon = g15cairo.load_surface_from_file(os.path.join(os.path.dirname(__file__), "mono-mail-new.gif"))
                 elif self.screen.driver.get_bpp() > 0:
-                    self.thumb_icon = g15cairo.load_surface_from_file(g15util.get_icon_path(["indicator-messages-new", "mail-message-new"]))
+                    self.thumb_icon = g15cairo.load_surface_from_file(g15icontools.get_icon_path(["indicator-messages-new", "mail-message-new"]))
             else:
                 self._stop_blink()
                 self.attention = False   
                 if self.screen.driver.get_bpp() == 1:
                     self.thumb_icon = None
                 elif self.screen.driver.get_bpp() > 0:
-                    self.thumb_icon = g15cairo.load_surface_from_file(g15util.get_icon_path(["indicator-messages", "mail-message"]))
+                    self.thumb_icon = g15cairo.load_surface_from_file(g15icontools.get_icon_path(["indicator-messages", "mail-message"]))
 
         if self.screen.driver.get_bpp() > 0:        
             self.screen.redraw(self.page)

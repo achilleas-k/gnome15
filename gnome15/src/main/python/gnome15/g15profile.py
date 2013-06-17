@@ -31,6 +31,7 @@ import time
 import g15util
 import g15gconf
 import g15os
+import g15icontools
 import g15actions
 import g15devices
 import g15uinput
@@ -936,7 +937,7 @@ class G15Profile(object):
             if icon == None or icon == "":
                 icon = [ "preferences-desktop-keyboard-shortcuts", "preferences-desktop-keyboard" ]
             
-            return g15util.get_icon_path(icon, height)
+            return g15icontools.get_icon_path(icon, height)
         
         return path
         

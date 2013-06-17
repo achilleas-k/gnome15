@@ -23,6 +23,7 @@
 import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15cairo as g15cairo
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import subprocess
@@ -148,7 +149,7 @@ class G15PPAPage():
         print self.project
         
     def reload(self):
-        self.icon = g15util.get_icon_path("application-rss+xml", self.screen.height )
+        self.icon = g15icontools.get_icon_path("application-rss+xml", self.screen.height )
         self.title = "PPA"
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):

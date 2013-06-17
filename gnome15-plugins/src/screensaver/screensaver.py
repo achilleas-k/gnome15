@@ -23,9 +23,9 @@ _ = g15locale.get_translation("screensaver", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
+import gnome15.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 from threading import Timer
 import gtk
@@ -209,6 +209,6 @@ class G15ScreenSaver():
         properties = {}
         properties["title"] = _("Workstation Locked")
         properties["body"] = self._gconf_client.get_string(self._gconf_key + "/message_text")
-        properties["icon"] = g15util.get_icon_path("sleep", self._screen.height)
+        properties["icon"] = g15icontools.get_icon_path("sleep", self._screen.height)
         
         return properties
