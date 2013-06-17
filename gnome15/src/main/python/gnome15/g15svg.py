@@ -33,7 +33,7 @@ def rotate_element(element, degrees):
     else:
         t = cairo.Matrix()
 
-    t.rotate(g15util.degrees_to_radians(degrees))
+    t.rotate(g15convert.degrees_to_radians(degrees))
     ts = "m" + str(t)[7:]
     element.set("transform", ts)
     

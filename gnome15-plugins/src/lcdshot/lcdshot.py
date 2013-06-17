@@ -28,7 +28,7 @@ import gnome15.g15actions as g15actions
 import os.path
 import gtk
 import gobject
-import gnome15.g15util as g15util
+import gnome15.g15convert as g15convert
 import gnome15.g15notify as g15notify
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf

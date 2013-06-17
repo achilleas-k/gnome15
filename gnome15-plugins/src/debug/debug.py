@@ -26,7 +26,6 @@ import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15plugin as g15plugin
 import gnome15.g15theme as g15theme
-import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import pango
 import os

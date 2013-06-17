@@ -30,7 +30,7 @@ import g15desktop
 import g15drivermanager
 import g15macroeditor
 import g15devices
-import g15util
+import g15convert
 import g15scheduler
 import g15ui_gconf
 import g15gconf
@@ -1759,10 +1759,10 @@ class G15Config:
                 if rgb == None:
                     self.enable_color_for_m_key.set_active(False)
                     self.color_button.set_sensitive(False)
-                    self.color_button.set_color(g15util.to_color((255, 255, 255)))
+                    self.color_button.set_color(g15convert.to_color((255, 255, 255)))
                 else:
                     self.color_button.set_sensitive(True and not profile.read_only)
-                    self.color_button.set_color(g15util.to_color(rgb))
+                    self.color_button.set_color(g15convert.to_color(rgb))
                     self.enable_color_for_m_key.set_active(True)
                 self.enable_color_for_m_key.set_sensitive(not profile.read_only)
                 
@@ -1962,7 +1962,7 @@ class G15Config:
     def _profile_color_changed(self, widget):
         if not self.adjusting:
             self.selected_profile.set_mkey_color(self._get_memory_number(), 
-                                                 g15util.color_to_rgb(widget.get_color()) if self.enable_color_for_m_key.get_active() else None)
+                                                 g15convert.color_to_rgb(widget.get_color()) if self.enable_color_for_m_key.get_active() else None)
             self._save_profile(self.selected_profile)
     
     def _color_for_mkey_enabled(self, widget):

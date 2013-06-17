@@ -30,7 +30,7 @@ gnome15_PYTHON = 		\
 	g15system.py \
 	g15theme.py \
 	g15text.py \
-	g15util.py \
+	g15convert.py \
 	g15scheduler.py \
 	g15python_helpers.py \
 	g15ui_gconf.py \

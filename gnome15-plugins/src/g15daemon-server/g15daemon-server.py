@@ -29,7 +29,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15locale as g15locale
 import gnome15.g15screen as g15screen
 import gnome15.g15theme as g15theme
-import gnome15.g15util as g15util
+import gnome15.g15convert as g15convert
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
 import gnome15.g15cairo as g15cairo

@@ -21,7 +21,7 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("background", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
+import gnome15.g15convert as g15convert
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
 import gnome15.g15cairo as g15cairo

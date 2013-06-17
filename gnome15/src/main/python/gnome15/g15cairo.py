@@ -25,7 +25,7 @@ import rsvg
 import urllib
 import base64
 import xdg.Mime as mime
-import g15util
+import g15convert
 
 # Logging
 import logging
@@ -34,7 +34,7 @@ logger = logging.getLogger("cairo")
 from cStringIO import StringIO
 
 def rotate(context, degrees):
-    context.rotate(g15util.degrees_to_radians(degrees));
+    context.rotate(g15convert.degrees_to_radians(degrees));
     
 def rotate_around_center(context, width, height, degrees):    
     context.translate (height * 0.5, width * 0.5);

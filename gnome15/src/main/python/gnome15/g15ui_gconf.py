@@ -12,7 +12,7 @@
 ##
 ############################################################################
 
-import g15util
+import g15convert
 
 '''
 Set of utility methods to ease the binding between UI widgets and gconf settings
@@ -37,9 +37,9 @@ def configure_colorchooser_from_gconf(gconf_client, gconf_key, widget_id, defaul
         raise Exception("No widget with id %s." % widget_id)
     val = gconf_client.get_string(gconf_key)
     if val == None or val == "":
-        col  = g15util.to_color(default_value)
+        col  = g15convert.to_color(default_value)
     else:
-        col = g15util.to_color(g15util.to_rgb(val))
+        col = g15convert.to_color(g15convert.to_rgb(val))
     if default_alpha != None:
         alpha = gconf_client.get_int(gconf_key + "_opacity")
         widget.set_use_alpha(True)

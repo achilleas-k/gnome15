@@ -39,7 +39,7 @@ path = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])
 if os.path.exists(path):
     sys.path.insert(0, path)
     
-import gnome15.g15util as g15util
+import gnome15.g15convert as g15convert
 import gnome15.g15cairo as g15cairo
 import gnome15.drivers.fb as fb 
     
@@ -150,7 +150,7 @@ if __name__ == "__main__":
                 r = ord(data[i + 2])
                 g = ord(data[i + 1])
                 b = ord(data[i + 0])
-                file_str.write(g15util.rgb_to_uint16(r, g, b))             
+                file_str.write(g15convert.rgb_to_uint16(r, g, b))
             buf = file_str.getvalue()
         else:   
             buf = str(back_surface.get_data())

@@ -30,7 +30,7 @@ from threading import RLock
 import cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
-import gnome15.g15util as g15util
+import gnome15.g15convert as g15convert
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15cairo as g15cairo
 import gnome15.g15exceptions as g15exceptions

@@ -51,7 +51,7 @@ import pango
 import g15driver
 import g15globals
 import g15screen
-import g15util
+import g15convert
 import g15scheduler
 import g15text
 import g15locale
@@ -754,7 +754,7 @@ class G15Page(Component):
         self.back_context.set_line_width(line_width)
         
     def arc(self, x, y, radius, angle1, angle2, fill = False):
-        self.back_context.arc(x, y, radius, g15util.degrees_to_radians(angle1), g15util.degrees_to_radians(angle2))
+        self.back_context.arc(x, y, radius, g15convert.degrees_to_radians(angle1), g15convert.degrees_to_radians(angle2))
         if fill:
             self.back_context.fill()
         else:
@@ -2128,7 +2128,7 @@ class G15Theme(object):
         self._update_text(text_box, text_box.wrap)
         
 #        if "fill" in text_css:
-#            rgb = g15util. css["fill"]
+#            rgb = g15convert. css["fill"]
 #        else:
 #            foreground = None
         

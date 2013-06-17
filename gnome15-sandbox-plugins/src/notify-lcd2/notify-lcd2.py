@@ -60,7 +60,7 @@ if __name__ == "__main__":
         sys.path.insert(0, path)
  
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
+import gnome15.g15convert as g15convert
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15icontools as g15icontools
@@ -387,7 +387,7 @@ class G15NotifyService(dbus.service.Object):
                 self._driver.BlinkKeyboard(float(blink_delay) / 1000.0, 3.0, [])
             if self._gconf_client.get_bool(self._gconf_key + "/change_keyboard_color"):
                 color = gconf_client.get_string(gconf_key + "/color")
-                self._driver.BlinkKeyboard(0.0, 3.0, (128, 128, 128) if color == None else g15util.to_rgb(color))
+                self._driver.BlinkKeyboard(0.0, 3.0, (128, 128, 128) if color == None else g15convert.to_rgb(color))
                 
     def _do_redraw(self):
         if self._page != None:

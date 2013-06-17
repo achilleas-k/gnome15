@@ -1,6 +1,6 @@
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.g15convert as g15convert
 import cairoplot
 import cairo
 
@@ -95,8 +95,8 @@ class G15NetGraph(G15Graph):
             alt_series_color = (1.0,1.0,1.0,1.0)
             alt_fill_color = (1.0,1.0,1.0,1.0)
         else:
-            alt_series_color = g15util.get_alt_color(series_color)
-            alt_fill_color = g15util.get_alt_color(fill_color)
+            alt_series_color = g15convert.get_alt_color(series_color)
+            alt_fill_color = g15convert.get_alt_color(fill_color)
         return cairoplot.AreaPlot( graph_surface, [ self.plugin.selected_net.send_history, self.plugin.selected_net.recv_history ], 
                                       self.view_bounds[2], 
                                       self.view_bounds[3], 
@@ -126,8 +126,8 @@ class G15MemGraph(G15Graph):
             alt_series_color = (1.0,1.0,1.0,1.0)
             alt_fill_color = (1.0,1.0,1.0,1.0)
         else:
-            alt_series_color = g15util.get_alt_color(series_color)
-            alt_fill_color = g15util.get_alt_color(fill_color)
+            alt_series_color = g15convert.get_alt_color(series_color)
+            alt_fill_color = g15convert.get_alt_color(fill_color)
         return cairoplot.AreaPlot( graph_surface, [ self.plugin.used_history, self.plugin.cached_history ], 
                                       self.view_bounds[2], 
                                       self.view_bounds[3], 

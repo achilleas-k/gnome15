@@ -30,7 +30,7 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("voip", modfile=__file__).ugettext
 
 import gnome15.g15globals as g15globals
-import gnome15.g15util as g15util
+import gnome15.g15convert as g15convert
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
@@ -607,7 +607,7 @@ class G15Voip(g15plugin.G15MenuPlugin):
                 if hex_color != "":
                     if self._backlight_acq is None:
                         self._backlight_acq = self.screen.driver.acquire_control(self._backlight_ctrl)
-                    self._backlight_acq.set_value(g15util.to_rgb(hex_color))
+                    self._backlight_acq.set_value(g15convert.to_rgb(hex_color))
                      
         self.redraw()   
         if g15gconf.get_bool_or_default(self.gconf_client, "%s/raise_on_talk_status_change" % self.gconf_key, False):
@@ -792,7 +792,7 @@ class ColorMenuItem(BuddyActionMenuItem):
         self._gconf_key = gconf_key
         
     def activate(self):
-        self._gconf_client.set_string(get_backlight_key(self._gconf_key, self.buddy), g15util.rgb_to_string(self.color))
+        self._gconf_client.set_string(get_backlight_key(self._gconf_key, self.buddy), g15convert.rgb_to_string(self.color))
         self.get_root().delete()
         
     def color_square(self, color, size, radius=0):
@@ -853,7 +853,7 @@ class BuddyBacklightMenu(g15theme.G15Page):
         self.ctrl = ctrl
         self.acq = None
         
-        sel_color = g15util.to_rgb(g15gconf.get_string_or_default(
+        sel_color = g15convert.to_rgb(g15gconf.get_string_or_default(
                 gconf_client, get_backlight_key(gconf_key, buddy),
                 "255,255,255"))
         for i, c in enumerate(colorpicker.COLORS_FULL):

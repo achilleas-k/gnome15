@@ -23,7 +23,7 @@ _ = g15locale.get_translation("cal", modfile = __file__).ugettext
 
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.g15convert as g15convert
 import gnome15.g15gconf as g15gconf
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15cairo as g15cairo
@@ -145,8 +145,8 @@ class G15VisitsGraph(g15theme.Component):
         
     def create_plot(self, graph_surface):
         series_color, fill_color = self.get_colors()
-        alt_series_color = g15util.get_alt_color(series_color)
-        alt_fill_color = g15util.get_alt_color(fill_color)
+        alt_series_color = g15convert.get_alt_color(series_color)
+        alt_fill_color = g15convert.get_alt_color(fill_color)
         
         selected = self.plugin._menu.selected
         pie_data = {}
