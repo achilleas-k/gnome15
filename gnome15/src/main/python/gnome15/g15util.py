@@ -27,9 +27,6 @@ import math
 import logging
 logger = logging.getLogger("util")
 
-from HTMLParser import HTMLParser
-
-
 def rgb_to_string(rgb):
     if rgb == None:
         return None
@@ -58,23 +55,6 @@ def to_pixel(rgb):
 def to_color(rgb):
     return gtk.gdk.Color(rgb[0] <<8, rgb[1] <<8,rgb[2] <<8)
     
-'''
-Markup utilities
-'''
-class MLStripper(HTMLParser):
-    def __init__(self):
-        self.reset()
-        self.fed = []
-    def handle_data(self, d):
-        self.fed.append(d)
-    def get_data(self):
-        return ''.join(self.fed)
-
-def strip_tags(html):
-    s = MLStripper()
-    s.feed(html)
-    return s.get_data()
-
 '''
 Various conversions
 '''
@@ -106,19 +86,4 @@ def get_key_names(keys):
     for key in keys:
         key_names.append((key[:1].upper() + key[1:].lower()).replace('-',' '))
     return key_names
-
-"""
-HTML utilities
-"""
-
-html_escape_table = {
-                     "&": "&amp;",
-                     '"': "&quot;",
-                     "'": "&apos;",
-                     ">": "&gt;",
-                     "<": "&lt;",
-                     }
-
-def html_escape(text):
-    return "".join(html_escape_table.get(c,c) for c in text)
 

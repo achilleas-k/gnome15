@@ -39,6 +39,7 @@ gnome15_PYTHON = 		\
 	g15cairo.py \
 	g15svg.py \
 	g15icontools.py \
+	g15markup.py \
 	g15upgrade.py \
 	g15uinput.py \
 	jobqueue.py \

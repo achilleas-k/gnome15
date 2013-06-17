@@ -21,10 +21,10 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("tails", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
 import gnome15.g15gconf as g15gconf
 import gnome15.g15cairo as g15cairo
 import gnome15.g15icontools as g15icontools
+import gnome15.g15markup as g15markup
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
@@ -213,7 +213,7 @@ class G15TailThread(Thread):
     def _add_line(self, line):
         line = line.strip()
         if len(line) > 0 and not self._stopped:
-            line  = g15util.html_escape(line)
+            line  = g15markup.html_escape(line)
             while self.page._menu.get_child_count() > self.page.plugin.lines:
                 self.page._menu.remove_child_at(0)
             self.page._menu.add_child(G15TailMenuItem("Line-%d" % self.line_seq, line, self.page.file_path))

@@ -23,11 +23,11 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("notify-lcd", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
 import gnome15.g15icontools as g15icontools
+import gnome15.g15markup as g15markup
 import gnome15.g15globals as pglobals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -378,9 +378,9 @@ class G15NotifyLCD():
                     
                 # Strip markup
                 if body:
-                    body = g15util.strip_tags(body) 
+                    body = g15markup.strip_tags(body)
                 if summary:
-                    summary  = g15util.strip_tags(summary)
+                    summary  = g15markup.strip_tags(summary)
 
                 if id != 0 and not id in self._message_map:
                     if len(self._message_queue) > 0:
