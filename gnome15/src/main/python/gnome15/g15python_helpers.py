@@ -12,6 +12,9 @@
 ##
 ############################################################################
 
+import re
+import threading
+
 '''
 Helper methods "extending" the python syntax
 '''
@@ -127,4 +130,47 @@ def append_if_exists(el, key, val, formatter = "%s"):
             val += ","
         val += formatter % el[key]
     return val
+
+def parse_as_properties(properties_string):
+    """
+    Create a dictionnary [key,value] from a string containing a set of
+    name=value pairs separated by '\n'
+
+    Keyword elements:
+    properties_string: string containing a set of name=value fields
+    """
+    d = {}
+    for l in properties_string.split("\n"):
+        a = l.split("=")
+        if len(a) > 1:
+            d[a[0]] = a[1]
+    return d
+
+def split_args(args):
+    return re.findall(r'\w+', args)
+
+'''
+Date / time utilities
+'''
+def total_seconds(time_delta):
+    """
+    Calculate the total of seconds ellapsed in a timedelta value
+
+    Keyword arguments:
+    time_delta: The timedelta value for which the number of seconds should be
+    calculated.
+    """
+    return (time_delta.microseconds + (time_delta.seconds + time_delta.days * 24.0 * 3600.0) * 10.0**6.0) / 10.0**6.0
+
+'''
+GObject thread. Hosting applications may set this so that is_gobject_thread()
+function works
+'''
+gobject_thread = [ None ]
+
+def is_gobject_thread():
+    return threading.currentThread() == gobject_thread[0]
+
+def set_gobject_thread():
+    gobject_thread[0] = threading.currentThread()
 

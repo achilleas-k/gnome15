@@ -23,10 +23,10 @@ _ = g15locale.get_translation("cairo-clock", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
-import gnome15.g15util as g15util 
 import gnome15.g15ui_gconf as g15ui_gconf
 import gnome15.g15gconf as g15gconf
 import gnome15.g15cairo as g15cairo
+import gnome15.g15python_helpers as g15python_helpers
 import gnome15.g15driver as g15driver 
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -173,7 +173,7 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
             next_tick = now + datetime.timedelta(0, 60.0)
             next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, 0)
             
-        return g15util.total_seconds( next_tick - now )    
+        return g15python_helpers.total_seconds( next_tick - now )
     
     
     '''

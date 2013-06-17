@@ -40,7 +40,7 @@ import shutil
 import traceback
 import gnome15.g15globals as g15globals
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
+import gnome15.g15python_helpers as g15python_helpers
 import gnome15.g15gconf as g15gconf
 import gnome15.g15os as g15os
 import gnome15.g15notify as g15notify
@@ -623,7 +623,7 @@ class G15AbstractService(Thread):
         
     def start_loop(self):
         logger.info("Starting GLib loop")
-        g15util.set_gobject_thread()
+        g15python_helpers.set_gobject_thread()
         try:
             self.loop.run()
         except:

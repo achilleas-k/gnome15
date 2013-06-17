@@ -24,8 +24,8 @@ _ = g15locale.get_translation("clock", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
-import gnome15.g15util as g15util
 import gnome15.g15scheduler as g15scheduler
+import gnome15.g15python_helpers as g15python_helpers
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -337,7 +337,7 @@ class G15Clock(g15plugin.G15Plugin):
         else:
             next_tick = now + datetime.timedelta(0, 60.0)
             next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, 0)
-        delay = g15util.total_seconds( next_tick - now )
+        delay = g15python_helpers.total_seconds( next_tick - now )
         
         '''
         Try not to create threads or timers if possible. Use g15scheduler.schedule) instead

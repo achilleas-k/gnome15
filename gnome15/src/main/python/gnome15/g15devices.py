@@ -24,7 +24,7 @@ _ = g15locale.get_translation("gnome15").ugettext
 import usb
 import g15driver
 import g15actions
-import g15util
+import g15python_helpers
 import g15drivermanager
 
 # Logging
@@ -419,7 +419,7 @@ device_removed_listeners = []
     
 def __device_added(observer, device):
     if "uevent" in device.attributes:
-        uevent = g15util.parse_as_properties(device.attributes["uevent"])
+        uevent = g15python_helpers.parse_as_properties(device.attributes["uevent"])
         if "PRODUCT" in uevent:
             if "subsystem" in device.attributes and device.attributes["subsystem"] == "usb":
                 major,minor,_ = uevent["PRODUCT"].split("/")

@@ -21,32 +21,13 @@ THIS HAS TURNED INTO A DUMPING GROUND AND NEEDS REFACTORING
 import g15globals as pglobals
 from gnome15 import g15os
 import gtk.gdk
-import os
-import gobject
-import re
-import cairo
 import math
-import dbus
-import Image
-import rsvg
-import urllib
-import base64
-import xdg.Mime as mime
 
 # Logging
 import logging
 logger = logging.getLogger("util")
 
-from cStringIO import StringIO
-
 from HTMLParser import HTMLParser
-import threading
-
-'''
-GObject thread. Hosting applications may set this so that is_gobject_thread()
-function works
-'''
-gobject_thread = [ None ]
 
 '''
 Lookup tables
@@ -115,15 +96,6 @@ def to_color(rgb):
     return gtk.gdk.Color(rgb[0] <<8, rgb[1] <<8,rgb[2] <<8)
     
 '''
-GObject. Allows us to test if we are on the gobject loop
-'''    
-def is_gobject_thread():
-    return threading.currentThread() == gobject_thread[0]
-
-def set_gobject_thread():
-    gobject_thread[0] = threading.currentThread()
-    
-'''
 Markup utilities
 '''
 class MLStripper(HTMLParser):
@@ -139,12 +111,6 @@ def strip_tags(html):
     s = MLStripper()
     s.feed(html)
     return s.get_data()
-
-''' 
-Date / time utilities
-''' 
-def total_seconds(time_delta):
-    return (time_delta.microseconds + (time_delta.seconds + time_delta.days * 24.0 * 3600.0) * 10.0**6.0) / 10.0**6.0
 
 '''
 Various conversions
@@ -192,9 +158,6 @@ def approx_px_to_pt(px):
     else:
         return int(px * 72.0 / 96)
 
-def split_args(args):
-    return re.findall(r'\w+', args)
-
 """
 Get the string name of the key given it's code
 """
@@ -218,16 +181,4 @@ html_escape_table = {
 
 def html_escape(text):
     return "".join(html_escape_table.get(c,c) for c in text)
-
-"""
-Property type files
-"""
-
-def parse_as_properties(properties_string):
-    d = {}
-    for l in properties_string.split("\n"):
-        a = l.split("=")
-        if len(a) > 1:
-            d[a[0]] = a[1]
-    return d
 
