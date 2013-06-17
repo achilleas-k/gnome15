@@ -2169,7 +2169,7 @@ class G15Theme(object):
             nw = "".join(font_size_css.split()).lower()                 
             if nw.endswith("px"):   
                 fs = float(font_size_css[:-2])
-                font_pt_size = int(g15util.approx_px_to_pt(fs))
+                font_pt_size = int(g15cairo.approx_px_to_pt(fs))
             elif nw.endswith("pt"):
                 font_pt_size = int(font_size_css[:-2])
                 

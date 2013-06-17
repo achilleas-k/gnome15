@@ -19,6 +19,7 @@ Icon utilities
 '''
 
 import g15globals as pglobals
+import g15cairo
 import gtk.gdk
 import os
 import cairo
@@ -121,13 +122,13 @@ def get_icon(gconf_client, icon, size = None):
     if real_icon_file != None:
         if real_icon_file.endswith(".svg"):
             pixbuf = gtk.gdk.pixbuf_new_from_file(real_icon_file)
-            scale = g15util.get_scale(size, (pixbuf.get_width(), pixbuf.get_height()))
+            scale = g15cairo.get_scale(size, (pixbuf.get_width(), pixbuf.get_height()))
             if scale != 1.0:
                 pixbuf = pixbuf.scale_simple(pixbuf.get_width() * scale, pixbuf.get_height() * scale, gtk.gdk.INTERP_BILINEAR)
             img = Image.fromstring("RGBA", (pixbuf.get_width(), pixbuf.get_height()), pixbuf.get_pixels())
         else:
             img = Image.open(real_icon_file)
-            scale = get_scale(size, img.size)
+            scale = g15cairo.get_scale(size, img.size)
             if scale != 1.0:
                 img = img.resize((img.size[0] * scale, img.size[1] * scale),Image.BILINEAR)
 

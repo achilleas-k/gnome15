@@ -29,43 +29,6 @@ logger = logging.getLogger("util")
 
 from HTMLParser import HTMLParser
 
-'''
-Lookup tables
-'''
-pt_to_px = { 
-            6.0: 8.0, 
-            7.0: 9, 
-            7.5: 10, 
-            8.0: 11, 
-            9.0: 12, 
-            10.0: 13, 
-            10.5: 14, 
-            11.0: 15, 
-            12.0: 16, 
-            13.0: 17, 
-            13.5: 18, 
-            14.0: 19, 
-            14.5: 20, 
-            15.0: 21, 
-            16.0: 22, 
-            17.0: 23, 
-            18.0: 24, 
-            20.0: 26, 
-            22.0: 29, 
-            24.0: 32, 
-            26.0: 35, 
-            27.0: 36, 
-            28.0: 37, 
-            29.0: 38, 
-            30.0: 40, 
-            32.0: 42, 
-            34.0: 45, 
-            36.0: 48
-            }
-px_to_pt = {}
-for pt in pt_to_px:
-    px_to_pt[pt_to_px[pt]] = pt
-
 
 def rgb_to_string(rgb):
     if rgb == None:
@@ -134,29 +97,6 @@ def rgb_to_hex(rgb):
 
 def degrees_to_radians(degrees):
     return degrees * (math.pi / 180.0)
-
-'''
-Various maths
-'''
-        
-def get_scale(target, actual):
-    scale = 1.0
-    if target != None:
-        if isinstance(target, int) or isinstance(target, float):
-            sx = float(target) / actual[0]
-            sy = float(target) / actual[1]
-        else:
-            sx = float(target[0]) / actual[0]
-            sy = float(target[1]) / actual[1]
-        scale = max(sx, sy)
-    return scale
-
-def approx_px_to_pt(px):
-    px = round(px)
-    if px in px_to_pt:
-        return px_to_pt[px]
-    else:
-        return int(px * 72.0 / 96)
 
 """
 Get the string name of the key given it's code
