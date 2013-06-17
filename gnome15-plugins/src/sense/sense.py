@@ -24,8 +24,8 @@ _ = g15locale.get_translation("sensors", modfile = __file__).ugettext
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import gnome15.g15theme as g15theme
-import gnome15.g15util as g15util
 import gnome15.g15gconf as g15gconf
+import gnome15.g15svg as g15svg
 import os.path
 import dbus
 import sensors
@@ -456,7 +456,7 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
             This is a bit weak. It doesn't take transformations into account,
             so care is needed in the SVG.            
             """
-            center_bounds = g15util.get_bounds(needle_center)
+            center_bounds = g15svg.get_bounds(needle_center)
             needle.set("transform", "rotate(%f,%f,%f)" % (degr, center_bounds[0], center_bounds[1]) )
         
     def _get_stats(self):

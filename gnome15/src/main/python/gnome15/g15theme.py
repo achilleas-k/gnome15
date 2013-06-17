@@ -56,6 +56,7 @@ import g15scheduler
 import g15text
 import g15locale
 import g15cairo
+import g15svg
 import xml.sax.saxutils as saxutils
 import base64
 import dbusmenu
@@ -501,7 +502,7 @@ class Component(object):
             self.view_element = theme.get_element(self.id) 
             if self.view_element is None:
                 self.view_element = theme.get_element()
-            self.view_bounds  = g15util.get_actual_bounds(self.view_element) if self.view_element is not None else None
+            self.view_bounds  = g15svg.get_actual_bounds(self.view_element) if self.view_element is not None else None
         
     def is_visible(self):
         return self.parent != None and self.parent.is_visible()
@@ -908,8 +909,8 @@ class Scrollbar(Component):
         max_s, view_size, position = self.values_callback()
         knob = element.xpath('svg:*[@class=\'knob\']',namespaces=theme.nsmap)[0]
         track = element.xpath('svg:*[@class=\'track\']',namespaces=theme.nsmap)[0]
-        track_bounds = g15util.get_bounds(track)
-        knob_bounds = g15util.get_bounds(knob)
+        track_bounds = g15svg.get_bounds(track)
+        knob_bounds = g15svg.get_bounds(knob)
         scale = max(1.0, max_s / view_size)
         knob.set("y", str( int( knob_bounds[1] + ( position / max(scale, 0.01) ) ) ) )
         knob.set("height", str(int(track_bounds[3] / max(scale, 0.01) )))
@@ -1559,7 +1560,7 @@ class G15Theme(object):
                     raise Exception("Must either supply theme directory or SVG text")
                     
                 self.process_svg()
-                self.bounds = g15util.get_bounds(self.document.getroot())
+                self.bounds = g15svg.get_bounds(self.document.getroot())
         finally:
             self.render_lock.release()
         
@@ -1843,7 +1844,7 @@ class G15Theme(object):
         properties  -- theme properties
         """ 
         for element in root.xpath('//svg:rect[@class=\'progress\']',namespaces=self.nsmap):
-            bounds = g15util.get_bounds(element)
+            bounds = g15svg.get_bounds(element)
             id = element.get("id")
             if id.endswith("_progress"):
                 property_key = id[:-9]
@@ -1954,8 +1955,8 @@ class G15Theme(object):
                 clip_path_rect_node = self.get_element_by_tag("rect", clip_path_node)
                 if clip_path_rect_node is None:
                     raise Exception("No svg:rect for clip %s" % str(clip_path_node))
-                clip_path_bounds = g15util.get_actual_bounds(clip_path_rect_node, element)
-                text_bounds = g15util.get_actual_bounds(element)
+                clip_path_bounds = g15svg.get_actual_bounds(clip_path_rect_node, element)
+                text_bounds = g15svg.get_actual_bounds(element)
                 
                 text_box = TextBox()            
                 text_box.text = Template(t_span_text).safe_substitute(properties) 
@@ -1994,7 +1995,7 @@ class G15Theme(object):
                 text_box.css = styles
                 text_box.wrap = True
                 text_boxes.append(text_box)
-                text_box.bounds = g15util.get_actual_bounds(element)
+                text_box.bounds = g15svg.get_actual_bounds(element)
                 text_box.clip = text_box.bounds
                 
                 # Remove the textnod SVG element
@@ -2148,7 +2149,7 @@ class G15Theme(object):
         list_transforms = [ cairo.Matrix(width, 0.0, 0.0, height, float(element.get("x")), float(element.get("y"))) ]
         el = element
         while el != None:
-            list_transforms += g15util.get_transforms(el)
+            list_transforms += g15svg.get_transforms(el)
             el = el.getparent()
         list_transforms.reverse()
         t = list_transforms[0]
@@ -2216,7 +2217,7 @@ class G15Theme(object):
         
         for element in root.xpath('//svg:*[@class=\'%s\']' % id,namespaces=self.nsmap):
             clip_path_element = self._get_clip_path_element(element)
-            bounds = g15util.get_bounds(element)
+            bounds = g15svg.get_bounds(element)
             idx = 1
             for x in range(-1, 2):
                 for y in range(-1, 2):
