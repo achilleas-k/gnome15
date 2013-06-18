@@ -12,8 +12,6 @@
 ##
 ############################################################################
 
-import g15convert
-
 def get_float_or_default(gconf_client, key, default = None):
     """
     Tries to read a float value from GConf and return a default value it
@@ -79,7 +77,7 @@ def get_rgb_or_default(gconf_client, key, default = None):
     default      : value to return if key was not found
     """
     val = gconf_client.get_string(key)
-    return default if val == None or val == "" else g15convert.to_rgb(val)
+    return default if val == None or val == "" else _to_rgb(val)
 
 def get_cairo_rgba_or_default(gconf_client, key, default):
     """
@@ -100,7 +98,17 @@ def get_cairo_rgba_or_default(gconf_client, key, default):
     if str_val == None or str_val == "":
         val = default
     else:
-        v = g15convert.to_rgb(str_val)
+        v = _to_rgb(str_val)
         alpha = gconf_client.get_int(key + "_opacity")
         val = ( v[0], v[1],v[2], alpha)
     return (float(val[0]) / 255.0, float(val[1]) / 255.0, float(val[2]) / 255.0, float(val[3]) / 255.0)
+
+def _to_rgb(string_rgb, default = None):
+    #This method should be in g15convert. The thing is that
+    #g15convert depends on gtk and on Fedora it raises an error when launching
+    #g15-system-service.
+    #(See https://projects.russo79.com/issues/173)
+    if string_rgb == None or string_rgb == "":
+        return default
+    rgb = string_rgb.split(",")
+    return (int(rgb[0]), int(rgb[1]), int(rgb[2]))

@@ -36,10 +36,15 @@ def color_to_rgb(color):
     return ( i[0],i[1],i[2] )
 
 def to_rgb(string_rgb, default = None):
-    if string_rgb == None or string_rgb == "":
-        return default
-    rgb = string_rgb.split(",")
-    return (int(rgb[0]), int(rgb[1]), int(rgb[2]))
+    # Currently this method is implemented in g15gconf so that it avoids
+    # a dependency on g15convert.
+    # g15convert depends on gtk, and when initializing the gtk module a
+    # DISPLAY needs to be available.
+    # Unfortunately, for running g15-system-service, there is no DISPLAY
+    # set in it's environment, so it would make it throw an error.
+    # See https://projects.russo79.com/issues/173
+    import g15gconf
+    return g15gconf._to_rgb(string_rgb, default)
 
 def to_pixel(rgb):
     return ( rgb[0] << 24 ) + ( rgb[1] << 16 ) + ( rgb[2] < 8 ) + 0
@@ -62,7 +67,15 @@ def rgb_to_uint16(r, g, b):
     return chr(valueL & 0xff) + chr(valueH & 0xff)
 
 def rgb_to_hex(rgb):
-    return '#%02x%02x%02x' % rgb
+    # Currently this method is implemented in g15driver so that it avoids
+    # a dependency on g15convert.
+    # g15convert depends on gtk, and when initializing the gtk module a
+    # DISPLAY needs to be available.
+    # Unfortunately, for running g15-system-service, there is no DISPLAY
+    # set in it's environment, so it would make it throw an error.
+    # See https://projects.russo79.com/issues/173
+    import g15driver
+    return g15driver.rgb_to_hex(rgb)
 
 def degrees_to_radians(degrees):
     return degrees * (math.pi / 180.0)

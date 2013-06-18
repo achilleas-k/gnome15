@@ -171,7 +171,6 @@ CAIRO_IMAGE_FORMAT=4
 
 FX_QUEUE = "ControlEffects"
 
-import g15convert as g15convert
 import g15scheduler
 import time
 import colorsys
@@ -765,7 +764,7 @@ class AbstractDriver(object):
         fg_rgb = default
         if fg_control != None:
             fg_rgb = fg_control.value
-        return g15convert.rgb_to_hex(fg_rgb)
+        return rgb_to_hex(fg_rgb)
     
     def get_color(self, hint, default):
         fg_control = self.get_control_for_hint(hint)
@@ -787,3 +786,6 @@ class AbstractDriver(object):
         self.control_update_listeners = []
         self.acquired_controls = {}
         self.initial_acquired_control_values = {}
+
+def rgb_to_hex(rgb):
+    return '#%02x%02x%02x' % rgb
