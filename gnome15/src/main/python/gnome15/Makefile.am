@@ -1,4 +1,4 @@
-SUBDIRS = drivers
+SUBDIRS = drivers util
 gnome15dir = $(pkgpythondir)
 gnome15_PYTHON = 		\
 	__init__.py \
@@ -30,19 +30,8 @@ gnome15_PYTHON = 		\
 	g15system.py \
 	g15theme.py \
 	g15text.py \
-	g15convert.py \
-	g15scheduler.py \
-	g15python_helpers.py \
-	g15ui_gconf.py \
-	g15gconf.py \
-	g15os.py \
-	g15cairo.py \
-	g15svg.py \
-	g15icontools.py \
-	g15markup.py \
 	g15upgrade.py \
 	g15uinput.py \
-	jobqueue.py \
 	objgraph.py \
 	dbusmenu.py \
 	colorpicker.py \

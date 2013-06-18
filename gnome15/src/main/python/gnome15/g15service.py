@@ -36,9 +36,9 @@ import g15accounts
 import g15driver
 import traceback
 import gconf
-import g15scheduler
-import g15gconf
-import g15os
+import util.g15scheduler as g15scheduler
+import util.g15gconf as g15gconf
+import util.g15os as g15os
 import Xlib.X 
 import Xlib.ext
 import Xlib.XK

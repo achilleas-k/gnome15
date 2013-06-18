@@ -23,8 +23,8 @@ _ = g15locale.get_translation("macros", modfile = __file__).ugettext
 
 import gnome15.g15profile as g15profile
 import gnome15.g15driver as g15driver
-import gnome15.g15ui_gconf as g15ui_gconf
-import gnome15.g15gconf as g15gconf
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
 import gnome15.g15globals as g15globals
 import gnome15.g15theme as g15theme
 import gnome15.g15screen as g15screen
@@ -61,7 +61,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "macros.glade"))
     dialog = widget_tree.get_object("MacrosDialog")
     dialog.set_transient_for(parent)
-    g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/raise" % gconf_key, "RaisePageCheckbox", True, widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/raise" % gconf_key, "RaisePageCheckbox", True, widget_tree)
     dialog.run()
     dialog.hide()
 

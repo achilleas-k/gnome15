@@ -20,10 +20,10 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15convert as g15convert
-import gnome15.g15scheduler as g15scheduler
-import gnome15.g15cairo as g15cairo
-import gnome15.g15icontools as g15icontools
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import subprocess

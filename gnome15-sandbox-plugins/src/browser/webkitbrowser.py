@@ -23,7 +23,7 @@
 import gnome15.g15theme as g15theme
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
-import gnome15.g15icontools as g15icontools
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15gtk  as g15gtk
 import os
 import gtk

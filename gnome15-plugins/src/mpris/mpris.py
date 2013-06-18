@@ -24,11 +24,11 @@ _ = g15locale.get_translation("mpris", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
-import gnome15.g15convert as g15convert
-import gnome15.g15scheduler as g15scheduler
-import gnome15.g15python_helpers as g15python_helpers
-import gnome15.g15cairo as g15cairo
-import gnome15.g15icontools as g15icontools
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15pythonlang as g15pythonlang
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15devices as g15devices
@@ -441,27 +441,27 @@ class MPRIS1Player(AbstractMPRISPlayer):
         meta_data = self.player.GetMetadata()
         
         # Format properties that need formatting
-        bitrate = g15python_helpers.value_or_default(meta_data,"audio-bitrate", 0)
+        bitrate = g15pythonlang.value_or_default(meta_data,"audio-bitrate", 0)
         if str(bitrate) == "0":
             bitrate = ""            
-        self.playing_uri = g15python_helpers.value_or_blank(meta_data,"location")
-        self.duration = g15python_helpers.value_or_default(meta_data,"time", 0)
+        self.playing_uri = g15pythonlang.value_or_blank(meta_data,"location")
+        self.duration = g15pythonlang.value_or_default(meta_data,"time", 0)
         if self.duration == 0:
-            self.duration = g15python_helpers.value_or_default(meta_data,"mtime", 0) / 1000
+            self.duration = g15pythonlang.value_or_default(meta_data,"mtime", 0) / 1000
                             
         # General properties                    
         self.song_properties = {
                                 "status": self.status,
                                 "uri": self.playing_uri,
-                                "art_uri": g15python_helpers.value_or_blank(meta_data,"arturl"),
-                                "title": g15python_helpers.value_or_blank(meta_data,"title"),
-                                "genre": g15python_helpers.value_or_blank(meta_data,"genre"),
-                                "track_no": g15python_helpers.value_or_blank(meta_data,"tracknumber"),
-                                "artist": g15python_helpers.value_or_blank(meta_data,"artist"),
-                                "album": g15python_helpers.value_or_blank(meta_data,"album"),
+                                "art_uri": g15pythonlang.value_or_blank(meta_data,"arturl"),
+                                "title": g15pythonlang.value_or_blank(meta_data,"title"),
+                                "genre": g15pythonlang.value_or_blank(meta_data,"genre"),
+                                "track_no": g15pythonlang.value_or_blank(meta_data,"tracknumber"),
+                                "artist": g15pythonlang.value_or_blank(meta_data,"artist"),
+                                "album": g15pythonlang.value_or_blank(meta_data,"album"),
                                 "bitrate": bitrate,
-                                "rating": g15python_helpers.value_or_default(meta_data,"rating", 0.0),
-                                "album_artist": g15python_helpers.value_or_blank(meta_data,"mb album artist"),
+                                "rating": g15pythonlang.value_or_default(meta_data,"rating", 0.0),
+                                "album_artist": g15pythonlang.value_or_blank(meta_data,"mb album artist"),
                                 }
     
         self.process_properties()
@@ -625,17 +625,17 @@ class MPRIS2Player(AbstractMPRISPlayer):
         meta_data = self.last_properties["Metadata"]
         
         # Format properties that need formatting
-        bitrate = g15python_helpers.value_or_default(meta_data,"xesam:audioBitrate", 0)
+        bitrate = g15pythonlang.value_or_default(meta_data,"xesam:audioBitrate", 0)
         if bitrate == 0:
             bitrate = ""
         else:
             bitrate = str(bitrate / 1024)
         
-        self.playing_uri = g15python_helpers.value_or_blank(meta_data,"xesam:url")
-        self.playing_track_id = g15python_helpers.value_or_blank(meta_data,"mpris:trackid")
-        self.playing_title = g15python_helpers.value_or_blank(meta_data,"xesam:title")
-        self.playing_artist = g15python_helpers.value_or_blank(meta_data,"xesam:artist")
-        self.playing_album = g15python_helpers.value_or_blank(meta_data,"xesam:album")
+        self.playing_uri = g15pythonlang.value_or_blank(meta_data,"xesam:url")
+        self.playing_track_id = g15pythonlang.value_or_blank(meta_data,"mpris:trackid")
+        self.playing_title = g15pythonlang.value_or_blank(meta_data,"xesam:title")
+        self.playing_artist = g15pythonlang.value_or_blank(meta_data,"xesam:artist")
+        self.playing_album = g15pythonlang.value_or_blank(meta_data,"xesam:album")
                             
         # General properties                    
         self.song_properties = {
@@ -643,18 +643,18 @@ class MPRIS2Player(AbstractMPRISPlayer):
                                 "tracklist": len(self.tracks) > 0,
                                 "uri": self.playing_uri,
                                 "track_id": self.playing_track_id,
-                                "title": g15python_helpers.value_or_blank(meta_data,"xesam:title"),
-                                "art_uri": g15python_helpers.value_or_blank(meta_data,"mpris:artUrl"),
-                                "genre": ",".join(list(g15python_helpers.value_or_empty(meta_data,"xesam:genre"))),
-                                "track_no": g15python_helpers.value_or_blank(meta_data,"xesam:trackNumber"),
-                                "artist": ",".join(list(g15python_helpers.value_or_empty(meta_data,"xesam:artist"))),
-                                "album": g15python_helpers.value_or_blank(meta_data,"xesam:album"),
+                                "title": g15pythonlang.value_or_blank(meta_data,"xesam:title"),
+                                "art_uri": g15pythonlang.value_or_blank(meta_data,"mpris:artUrl"),
+                                "genre": ",".join(list(g15pythonlang.value_or_empty(meta_data,"xesam:genre"))),
+                                "track_no": g15pythonlang.value_or_blank(meta_data,"xesam:trackNumber"),
+                                "artist": ",".join(list(g15pythonlang.value_or_empty(meta_data,"xesam:artist"))),
+                                "album": g15pythonlang.value_or_blank(meta_data,"xesam:album"),
                                 "bitrate": bitrate,
-                                "rating": g15python_helpers.value_or_default(meta_data,"xesam:userRating", 0.0),
-                                "album_artist": ",".join(list(g15python_helpers.value_or_empty(meta_data,"xesam:albumArtist"))),
+                                "rating": g15pythonlang.value_or_default(meta_data,"xesam:userRating", 0.0),
+                                "album_artist": ",".join(list(g15pythonlang.value_or_empty(meta_data,"xesam:albumArtist"))),
                                 }
     
-        self.duration = g15python_helpers.value_or_default(meta_data, "mpris:length", 0) / 1000 / 1000
+        self.duration = g15pythonlang.value_or_default(meta_data, "mpris:length", 0) / 1000 / 1000
         self.process_properties()
         
     def get_volume(self):

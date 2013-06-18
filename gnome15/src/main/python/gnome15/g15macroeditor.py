@@ -28,9 +28,9 @@ _ = g15locale.get_translation("gnome15").ugettext
 
 import g15globals
 import g15profile
-import g15scheduler
-import g15gconf
-import g15icontools
+import util.g15scheduler as g15scheduler
+import util.g15gconf as g15gconf
+import util.g15icontools as g15icontools
 import g15uinput
 import g15devices
 import g15driver

@@ -28,12 +28,12 @@ import gnome15.g15actions as g15actions
 import os.path
 import gtk
 import gobject
-import gnome15.g15convert as g15convert
+import gnome15.util.g15convert as g15convert
 import gnome15.g15notify as g15notify
-import gnome15.g15ui_gconf as g15ui_gconf
-import gnome15.g15gconf as g15gconf
-import gnome15.g15os as g15os
-import gnome15.g15cairo as g15cairo
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15os as g15os
+import gnome15.util.g15cairo as g15cairo
 import subprocess
 import shutil
 from threading import Thread
@@ -95,10 +95,10 @@ class LCDShotPreferences():
         chooser_button.connect("current-folder-changed", self._file_activated)
         bg_img = g15gconf.get_string_or_default(self.gconf_client, "%s/folder" % self.gconf_key, os.path.expanduser("~/Desktop"))
         chooser_button.set_current_folder(bg_img)
-        g15ui_gconf.configure_combo_from_gconf(self.gconf_client, "%s/mode" % self.gconf_key, "Mode", "still", widget_tree)
+        g15uigconf.configure_combo_from_gconf(self.gconf_client, "%s/mode" % self.gconf_key, "Mode", "still", widget_tree)
         mode = widget_tree.get_object("Mode")
         mode.connect("changed", self._mode_changed)
-        g15ui_gconf.configure_spinner_from_gconf(self.gconf_client, "%s/fps" % gconf_key, "FPS", 10, widget_tree, False)
+        g15uigconf.configure_spinner_from_gconf(self.gconf_client, "%s/fps" % gconf_key, "FPS", 10, widget_tree, False)
         self._spinner = widget_tree.get_object("FPS")
         self._mode_changed(mode)
         dialog.run()

@@ -22,9 +22,9 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("volume", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
-import gnome15.g15scheduler as g15scheduler
-import gnome15.g15ui_gconf as g15ui_gconf
-import gnome15.g15icontools as g15icontools
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15devices as g15devices
@@ -91,7 +91,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     for mixer in alsaaudio.mixers():
         model.append([mixer])
     dialog.set_transient_for(parent)    
-    g15ui_gconf.configure_combo_from_gconf(gconf_client, gconf_key + "/mixer", "DeviceCombo", "Master", widget_tree)
+    g15uigconf.configure_combo_from_gconf(gconf_client, gconf_key + "/mixer", "DeviceCombo", "Master", widget_tree)
     dialog.run()
     dialog.hide()
             

@@ -1,6 +1,6 @@
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
-import gnome15.g15convert as g15convert
+import gnome15.util.g15convert as g15convert
 import cairoplot
 import cairo
 

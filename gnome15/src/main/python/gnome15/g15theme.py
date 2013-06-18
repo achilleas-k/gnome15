@@ -51,13 +51,13 @@ import pango
 import g15driver
 import g15globals
 import g15screen
-import g15convert
-import g15scheduler
+import util.g15convert as g15convert
+import util.g15scheduler as g15scheduler
 import g15text
 import g15locale
-import g15cairo
-import g15svg
-import g15icontools
+import util.g15cairo as g15cairo
+import util.g15svg as g15svg
+import util.g15icontools as g15icontools
 import xml.sax.saxutils as saxutils
 import base64
 import dbusmenu

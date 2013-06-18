@@ -12,7 +12,7 @@
 ############################################################################
 
 import gobject
-import g15python_helpers
+import g15pythonlang
 
 # Logging
 import logging
@@ -41,7 +41,7 @@ def schedule(job_name, interval, function, *args):
     return scheduler.schedule(job_name, interval, function, *args)
 
 def run_on_gobject(function, *args):
-    if g15python_helpers.is_gobject_thread():
+    if g15pythonlang.is_gobject_thread():
         return False
     else:
         gobject.idle_add(function, *args)

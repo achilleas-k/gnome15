@@ -21,13 +21,13 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("rss", modfile = __file__).ugettext
 
-import gnome15.g15convert as g15convert
-import gnome15.g15python_helpers as g15python_helpers
-import gnome15.g15scheduler as g15scheduler
-import gnome15.g15ui_gconf as g15ui_gconf
-import gnome15.g15gconf as g15gconf
-import gnome15.g15cairo as g15cairo
-import gnome15.g15icontools as g15icontools
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15pythonlang as g15pythonlang
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15desktop as g15desktop
@@ -89,7 +89,7 @@ class G15RSSPreferences():
         # Optins
         self.update_adjustment = widget_tree.get_object("UpdateAdjustment")
         self.update_adjustment.set_value(g15gconf.get_int_or_default(self._gconf_client, "%s/update_time" % self._gconf_key, 60))
-        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, widget_tree)
         
         # Connect to events
         self.update_adjustment.connect("value-changed", self.update_time_changed)
@@ -170,7 +170,7 @@ class G15FeedsMenuItem(g15theme.MenuItem):
         element_properties = g15theme.MenuItem.get_theme_properties(self)
         element_properties["ent_title"] = self.entry.title
         element_properties["ent_link"] = self.entry.link
-        if g15python_helpers.attr_exists(self.entry, "description"):
+        if g15pythonlang.attr_exists(self.entry, "description"):
             element_properties["ent_description"] = self.entry.description
             
         try:

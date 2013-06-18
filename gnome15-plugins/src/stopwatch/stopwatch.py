@@ -23,8 +23,8 @@ _ = g15locale.get_translation("stopwatch", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
-import gnome15.g15gconf as g15gconf
-import gnome15.g15python_helpers as g15python_helpers
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15pythonlang as g15pythonlang
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15plugin as g15plugin
@@ -162,7 +162,7 @@ class G15Stopwatch(g15plugin.G15RefreshingPlugin):
                         self._refresh()
                         
     def get_next_tick(self):
-        return g15python_helpers.total_seconds( datetime.timedelta( seconds = 1 ))
+        return g15pythonlang.total_seconds( datetime.timedelta( seconds = 1 ))
     
     def get_theme_properties(self):
         properties = { }

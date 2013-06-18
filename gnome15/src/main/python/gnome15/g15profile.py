@@ -28,10 +28,10 @@ getting the default or active profile.
 
 import gconf
 import time
-import g15convert
-import g15gconf
-import g15os
-import g15icontools
+import util.g15convert as g15convert
+import util.g15gconf as g15gconf
+import util.g15os as g15os
+import util.g15icontools as g15icontools
 import g15actions
 import g15devices
 import g15uinput

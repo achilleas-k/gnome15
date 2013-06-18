@@ -21,10 +21,10 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("webcam", modfile = __file__).ugettext
 
-import gnome15.g15convert as g15convert
-import gnome15.g15scheduler as g15scheduler
-import gnome15.g15ui_gconf as g15ui_gconf
-import gnome15.g15cairo as g15cairo
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15cairo as g15cairo
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
@@ -57,11 +57,11 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     for i in range(0, 8):
         model.append([i])
     dialog.set_transient_for(parent)    
-    g15ui_gconf.configure_combo_from_gconf(gconf_client, gconf_key + "/device", "DeviceCombo", 0, widget_tree)
-    g15ui_gconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/contrast", "Contrast", 128, widget_tree, False)
-    g15ui_gconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/brightness", "Brightness", 128, widget_tree, False)
-    g15ui_gconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/saturation", "Saturation", 128, widget_tree, False)
-    g15ui_gconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/hue", "Hue", 128, widget_tree, False)
+    g15uigconf.configure_combo_from_gconf(gconf_client, gconf_key + "/device", "DeviceCombo", 0, widget_tree)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/contrast", "Contrast", 128, widget_tree, False)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/brightness", "Brightness", 128, widget_tree, False)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/saturation", "Saturation", 128, widget_tree, False)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/hue", "Hue", 128, widget_tree, False)
     dialog.run()
     dialog.hide()
 

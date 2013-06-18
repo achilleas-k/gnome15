@@ -17,7 +17,7 @@ SVG utilities
 '''
 
 import cairo
-import g15python_helpers
+import g15pythonlang
 
 # Logging
 import logging
@@ -85,7 +85,7 @@ def get_location(element):
                 if end_args == -1:
                     logger.warning("Unexpected end of transform arguments")
                     break
-                args = g15python_helpers.split_args(transform_val[start_args + 1:end_args])
+                args = g15pythonlang.split_args(transform_val[start_args + 1:end_args])
                 if name == "translate":
                     list.append((float(args[0]), float(args[1])))
                 elif name == "matrix":

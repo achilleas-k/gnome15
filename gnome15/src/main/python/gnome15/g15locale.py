@@ -33,7 +33,7 @@ import os
 import locale
 import gettext
 import g15globals
-import g15gconf
+import util.g15gconf as g15gconf
 import time
 import datetime
 import re

@@ -21,10 +21,10 @@
 import dbus.service
 import g15globals
 import g15theme
-import g15scheduler
-import g15gconf
-import g15cairo
-import g15icontools
+import util.g15scheduler as g15scheduler
+import util.g15gconf as g15gconf
+import util.g15cairo as g15cairo
+import util.g15icontools as g15icontools
 import g15driver
 import g15devices
 import gobject

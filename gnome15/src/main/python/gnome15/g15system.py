@@ -25,7 +25,7 @@ import dbus.service
 import os.path
 import g15devices
 import g15driver
-import g15scheduler
+import util.g15scheduler as g15scheduler
 
 # Logging
 import logging

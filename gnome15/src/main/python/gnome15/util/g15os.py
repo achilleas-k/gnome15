@@ -12,13 +12,12 @@
 ##
 ############################################################################
 
-from gnome15 import g15globals
 '''
 Gnome15 utilities to work with the system (running commands, manipulating the
 filesystem, getting OS information...)
 '''
 
-import g15globals as pglobals
+from gnome15 import g15globals
 import os
 
 # Logging
@@ -38,7 +37,7 @@ def run_script(script, args = None, background = True):
     if args:
         for arg in args:
             a += "\"%s\"" % arg
-    p = os.path.realpath(os.path.join(pglobals.scripts_dir,script))
+    p = os.path.realpath(os.path.join(g15globals.scripts_dir,script))
     logger.info("Running '%s'" % p)
     return os.system("python \"%s\" %s %s" % ( p, a, " &" if background else "" ))
 

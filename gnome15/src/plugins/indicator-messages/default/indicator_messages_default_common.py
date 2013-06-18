@@ -1,6 +1,6 @@
 import gnome15.g15_theme as g15theme
-import gnome15.g15cairo as g15cairo
-import gnome15.g15icontools as g15icontools
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import os
 import time
 

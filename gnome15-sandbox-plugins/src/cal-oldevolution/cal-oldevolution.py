@@ -88,7 +88,7 @@ class EvolutionBackend(cal.CalendarBackend):
         
     def get_events(self, now):
         # Has to run in gobject thread
-        if g15python_helpers.is_gobject_thread():
+        if g15pythonlang.is_gobject_thread():
             return self._do_get_events(now)            
         else:
             self._lock.acquire()

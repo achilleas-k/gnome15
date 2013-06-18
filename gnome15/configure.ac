@@ -232,6 +232,7 @@ src/main/python/Makefile
 src/main/python/gnome15/Makefile
 src/main/python/gnome15/g15globals.py
 src/main/python/gnome15/drivers/Makefile
+src/main/python/gnome15/util/Makefile
 src/main/resources/Makefile
 src/main/resources/icons/Makefile
 src/main/resources/icons/hicolor/Makefile

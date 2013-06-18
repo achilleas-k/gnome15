@@ -59,7 +59,7 @@ DBusGMainLoop(set_as_default=True)
 import gnome15.g15globals as g15globals
 import gnome15.g15service as g15service
 import gnome15.g15screen as g15screen
-import gnome15.g15icontools as g15icontools
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15desktop as g15desktop
 
 class G15SystemTray(g15desktop.G15GtkMenuPanelComponent):

@@ -32,9 +32,9 @@ import os
 from lxml import etree 
 import gtk
 import g15globals
-import g15scheduler
-import g15gconf
-import g15python_helpers
+import util.g15scheduler as g15scheduler
+import util.g15gconf as g15gconf
+import util.g15pythonlang as g15pythonlang
 import pyinotify
 import pwd
 from threading import Lock
@@ -171,7 +171,7 @@ a password change).") % (account.name, username))
         
         TODO find out what is actually happening
         '''
-        if g15python_helpers.is_gobject_thread():
+        if g15pythonlang.is_gobject_thread():
             self.find_secret(account, name, False)            
         else:
             self.lock.acquire()

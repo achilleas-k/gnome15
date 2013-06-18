@@ -24,8 +24,8 @@ A top level GTK windows that draws on the LCD
 import gtk
 import gobject
 import g15driver as g15driver
-import g15cairo
-import g15python_helpers as g15python_helpers
+import util.g15cairo as g15cairo
+import util.g15pythonlang as g15pythonlang as g15pythonlang
 from threading import Lock
 from threading import Semaphore
 import g15theme
@@ -185,7 +185,7 @@ class G15Window(gtk.OffscreenWindow):
             self.scroller = content
         
     def paint(self, canvas):
-        if g15python_helpers.is_gobject_thread():
+        if g15pythonlang.is_gobject_thread():
             raise Exception("Painting on mainloop")
         self.start_for_capture()
         gobject.idle_add(self._do_capture)

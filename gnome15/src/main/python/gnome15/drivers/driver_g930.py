@@ -20,8 +20,8 @@ from pyinputevent.pyinputevent import SimpleDevice
 import select 
 import pyinputevent.scancodes as S
 import gnome15.g15driver as g15driver
-import gnome15.g15scheduler as g15scheduler
-import gnome15.g15ui_gconf as g15ui_gconf
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
 import gnome15.g15globals as g15globals
 import gnome15.g15uinput as g15uinput
 import gconf
@@ -72,7 +72,7 @@ class G930DriverPreferences():
         widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g930.glade"))
         
         self.grab_multimedia = widget_tree.get_object("GrabMultimedia")
-        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/grab_multimedia" % device.uid, "GrabMultimedia", False, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/grab_multimedia" % device.uid, "GrabMultimedia", False, widget_tree)
         
         self.component = widget_tree.get_object("DriverComponent")
         

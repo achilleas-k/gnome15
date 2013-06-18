@@ -26,7 +26,7 @@ any migration needs to take place.
  
 import os.path
 import g15devices
-import g15python_helpers
+import util.g15pythonlang as g15pythonlang
 import logging
 import shutil
 import sys
@@ -114,6 +114,6 @@ def version_0_x_0_to_0_7_0():
             import commands
             process_info = commands.getstatusoutput("sh -c \"ps -U %d|grep gconfd|head -1\"" % os.getuid()) 
         if process_info:
-            pid = g15python_helpers.split_args(process_info)[0]
+            pid = g15pythonlang.split_args(process_info)[0]
             logger.info("Sending process %s SIGHUP" % pid)
             subprocess.check_call([ "kill", "-SIGHUP", pid ])

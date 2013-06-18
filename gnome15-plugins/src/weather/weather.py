@@ -24,13 +24,13 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("weather", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
-import gnome15.g15convert as g15convert
-import gnome15.g15scheduler as g15scheduler
-import gnome15.g15ui_gconf as g15ui_gconf
-import gnome15.g15python_helpers as g15python_helpers
-import gnome15.g15gconf as g15gconf
-import gnome15.g15cairo as g15cairo
-import gnome15.g15icontools as g15icontools
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15pythonlang as g15pythonlang
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -139,7 +139,7 @@ class G15WeatherPreferences():
         for b in get_available_backends():
             l = [b, get_backend(b).backend_name ]
             self._sources_model.append(l)
-        g15ui_gconf.configure_combo_from_gconf(gconf_client, "%s/source" % gconf_key, "Source", self._sources_model[0][0] if len(self._sources_model) > 0 else None, self._widget_tree)
+        g15uigconf.configure_combo_from_gconf(gconf_client, "%s/source" % gconf_key, "Source", self._sources_model[0][0] if len(self._sources_model) > 0 else None, self._widget_tree)
         self._load_options_for_source()
         
         update = self._widget_tree.get_object("UpdateAdjustment")
@@ -150,8 +150,8 @@ class G15WeatherPreferences():
         unit.set_active(gconf_client.get_int(gconf_key + "/units"))
         unit.connect("changed", self._unit_changed, unit, gconf_key + "/units")
         
-        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, self._widget_tree)
-        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, self._widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, self._widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, self._widget_tree)
         
         dialog.run()
         dialog.hide()
@@ -320,15 +320,15 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                     attributes["mono_thumb_icon"] = g15cairo.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
                 properties["condition"] = current['condition']
                 
-                temp_c = g15python_helpers.to_float_or_none(current['temp_c'])
+                temp_c = g15pythonlang.to_float_or_none(current['temp_c'])
                 if temp_c is not None:
                     temp_f = c_to_f(temp_c)
                     temp_k = c_to_k(temp_c)
-                low_c = g15python_helpers.to_float_or_none(current['low']) if 'low' in current else None
+                low_c = g15pythonlang.to_float_or_none(current['low']) if 'low' in current else None
                 if low_c is not None :
                     low_f = c_to_f(low_c)
                     low_k = c_to_k(low_c)
-                high_c  = g15python_helpers.to_float_or_none(current['high']) if 'high' in current else None
+                high_c  = g15pythonlang.to_float_or_none(current['high']) if 'high' in current else None
                 if high_c is not None :
                     high_f  = c_to_f(high_c)
                     high_k = c_to_k(high_c)
@@ -371,21 +371,21 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                     
                 
                 # Wind
-                wind = g15python_helpers.append_if_exists(current, "wind_chill", "", "%sC")
-                wind = g15python_helpers.append_if_exists(current, "wind_speed", wind, "%sKph")
-                wind = g15python_helpers.append_if_exists(current, "wind_direction", wind, "%sdeg")
+                wind = g15pythonlang.append_if_exists(current, "wind_chill", "", "%sC")
+                wind = g15pythonlang.append_if_exists(current, "wind_speed", wind, "%sKph")
+                wind = g15pythonlang.append_if_exists(current, "wind_direction", wind, "%sdeg")
                 properties["wind"] =  wind 
                 
                 # Visibility
-                visibility = g15python_helpers.append_if_exists(current, "visibility", "", "%sM")
+                visibility = g15pythonlang.append_if_exists(current, "visibility", "", "%sM")
                 properties["visibility"] =  visibility
                 
                 # Pressure
-                pressure = g15python_helpers.append_if_exists(current, "pressure", "", "%smb")
+                pressure = g15pythonlang.append_if_exists(current, "pressure", "", "%smb")
                 properties["pressure"] =  pressure
                 
                 # Humidity
-                humidity = g15python_helpers.append_if_exists(current, "humidity", "", "%s%%")
+                humidity = g15pythonlang.append_if_exists(current, "humidity", "", "%s%%")
                 properties["humidity"] =  humidity
                 
                 # Sunrise                
@@ -421,11 +421,11 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                     for forecast in self._weather['forecasts']:        
                         properties["condition" + str(y)] = forecast['condition']
                         
-                        lo_c = g15python_helpers.to_float_or_none(forecast['low'])
+                        lo_c = g15pythonlang.to_float_or_none(forecast['low'])
                         if lo_c is not None:
                             lo_f = c_to_f(temp_c)
                             lo_k = c_to_k(temp_c)
-                        hi_c = g15python_helpers.to_float_or_none(forecast['high'])
+                        hi_c = g15pythonlang.to_float_or_none(forecast['high'])
                         if hi_c is not None:
                             hi_f = c_to_f(hi_c)
                             hi_k = c_to_k(hi_c)

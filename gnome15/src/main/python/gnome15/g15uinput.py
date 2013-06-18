@@ -25,7 +25,7 @@ joystick events) into the kernel.
         
 import logging
 import uinput
-import g15os
+import util.g15os as g15os
 import os
 import subprocess
 from uinput.ev import *

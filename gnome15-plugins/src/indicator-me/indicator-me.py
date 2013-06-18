@@ -22,10 +22,10 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("indicator-me", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
-import gnome15.g15convert as g15convert
-import gnome15.g15os as g15os
-import gnome15.g15cairo as g15cairo
-import gnome15.g15icontools as g15icontools
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15os as g15os
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals

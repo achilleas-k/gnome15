@@ -25,7 +25,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
 import gnome15.g15plugin as g15plugin
-from gnome15.g15python_helpers import find
+from gnome15.util.g15pythonlang import find
 import sys
 import cairo
 import traceback

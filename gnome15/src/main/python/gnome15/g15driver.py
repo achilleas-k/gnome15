@@ -171,7 +171,7 @@ CAIRO_IMAGE_FORMAT=4
 
 FX_QUEUE = "ControlEffects"
 
-import g15scheduler
+import util.g15scheduler as g15scheduler
 import time
 import colorsys
 from threading import Lock

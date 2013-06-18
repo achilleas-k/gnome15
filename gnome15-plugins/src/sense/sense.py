@@ -24,8 +24,8 @@ _ = g15locale.get_translation("sensors", modfile = __file__).ugettext
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import gnome15.g15theme as g15theme
-import gnome15.g15gconf as g15gconf
-import gnome15.g15svg as g15svg
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15svg as g15svg
 import os.path
 import dbus
 import sensors

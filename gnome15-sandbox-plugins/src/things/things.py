@@ -20,8 +20,8 @@
  
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
-import gnome15.g15convert as g15convert
-import gnome15.g15scheduler as g15scheduler
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
 import logging
 logger = logging.getLogger("things")
 

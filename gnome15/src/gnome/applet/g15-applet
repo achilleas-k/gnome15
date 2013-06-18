@@ -50,8 +50,8 @@ import gnome15.g15globals as g15globals
 import gnome15.g15setup as g15setup
 import gnome15.g15drivermanager as g15drivermanager
 import gnome15.g15screen as g15screen
-import gnome15.g15os as g15os
-import gnome15.g15icontools as g15icontools
+import gnome15.util.g15os as g15os
+import gnome15.util.g15icontools as g15icontools
 
 session_bus = dbus.SessionBus()
 

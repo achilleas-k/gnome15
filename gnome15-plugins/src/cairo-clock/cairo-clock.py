@@ -23,10 +23,10 @@ _ = g15locale.get_translation("cairo-clock", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
-import gnome15.g15ui_gconf as g15ui_gconf
-import gnome15.g15gconf as g15gconf
-import gnome15.g15cairo as g15cairo
-import gnome15.g15python_helpers as g15python_helpers
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15pythonlang as g15pythonlang
 import gnome15.g15driver as g15driver 
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -97,13 +97,13 @@ class G15CairoClockPreferences():
         dialog = widget_tree.get_object("ClockDialog")
         dialog.set_transient_for(parent)
         
-        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/display_seconds" % gconf_key, "DisplaySecondsCheckbox", True, widget_tree)
-        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/display_date" % gconf_key, "DisplayDateCheckbox", True, widget_tree)
-        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour" % gconf_key, "TwentyFourHourCheckbox", True, widget_tree)
-        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/display_digital_time" % gconf_key, "DisplayDigitalTimeCheckbox", True, widget_tree)
-        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/display_year" % gconf_key, "DisplayYearCheckbox", True, widget_tree)
-        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/second_sweep" % gconf_key, "SecondSweep", False, widget_tree)
-        g15ui_gconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_digital" % gconf_key, "TwentyFourHourDigitalCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/display_seconds" % gconf_key, "DisplaySecondsCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/display_date" % gconf_key, "DisplayDateCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour" % gconf_key, "TwentyFourHourCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/display_digital_time" % gconf_key, "DisplayDigitalTimeCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/display_year" % gconf_key, "DisplayYearCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/second_sweep" % gconf_key, "SecondSweep", False, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_digital" % gconf_key, "TwentyFourHourDigitalCheckbox", True, widget_tree)
     
         e = gconf_client.get(gconf_key + "/theme")
         theme_name = "default"
@@ -173,7 +173,7 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
             next_tick = now + datetime.timedelta(0, 60.0)
             next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, 0)
             
-        return g15python_helpers.total_seconds( next_tick - now )
+        return g15pythonlang.total_seconds( next_tick - now )
     
     
     '''

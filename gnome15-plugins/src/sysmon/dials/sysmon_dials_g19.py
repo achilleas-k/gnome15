@@ -1,5 +1,5 @@
-import gnome15.g15convert as g15convert
-import gnome15.g15cairo as g15cairo
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15cairo as g15cairo
 import os
 import rsvg
 import cairo

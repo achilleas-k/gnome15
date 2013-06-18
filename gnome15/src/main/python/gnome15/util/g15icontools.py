@@ -11,14 +11,12 @@
 ##           keyboard
 ##
 ############################################################################
-from gnome15 import g15globals
-
 
 '''
 Icon utilities
 '''
 
-import g15globals as pglobals
+from gnome15 import g15globals
 import g15cairo
 import gtk.gdk
 import os
@@ -37,8 +35,8 @@ from cStringIO import StringIO
 Look for icons locally as well if running from source
 '''
 gtk_icon_theme = gtk.icon_theme_get_default()
-if pglobals.dev:
-    gtk_icon_theme.prepend_search_path(pglobals.icons_dir)
+if g15globals.dev:
+    gtk_icon_theme.prepend_search_path(g15globals.icons_dir)
 
 def local_icon_or_default(icon_name, size = 128):
     return get_icon_path(icon_name, size)
@@ -114,7 +112,7 @@ def get_icon_path(icon = None, size = 128, warning = True, include_missing = Tru
 def get_app_icon(gconf_client, icon, size = 128):
     icon_path = get_icon_path(icon, size)
     if icon_path == None:
-        icon_path = os.path.join(pglobals.icons_dir,"hicolor", "scalable", "apps", "%s.svg" % icon)
+        icon_path = os.path.join(g15globals.icons_dir,"hicolor", "scalable", "apps", "%s.svg" % icon)
     return icon_path
 
 def get_icon(gconf_client, icon, size = None):

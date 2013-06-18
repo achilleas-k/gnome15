@@ -24,7 +24,7 @@ import cairo
 from gtk import gdk
 import gobject
 import g15globals
-import g15convert
+import util.g15convert as g15convert
 import os
 
 COLORS_REDBLUE = [(0, 0, 0, 1), (255, 0, 0, 1), (255, 0, 255, 1), (0, 0, 255, 1)  ]

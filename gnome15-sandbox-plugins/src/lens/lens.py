@@ -30,8 +30,8 @@ from gi.repository import Dee
 _m = dir(Dee.SequenceModel)
 from gi.repository import Unity
 from gnome15 import g15devices
-from gnome15 import g15os
-from gnome15 import g15icontools
+from gnome15 import util.g15os as g15os
+from gnome15 import util.g15icontools as g15icontools
 from gnome15 import g15screen
 from cStringIO import StringIO
 import base64

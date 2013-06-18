@@ -29,8 +29,8 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("im", modfile = __file__).ugettext
 
-import gnome15.g15scheduler as g15scheduler
-import gnome15.g15icontools as g15icontools
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
