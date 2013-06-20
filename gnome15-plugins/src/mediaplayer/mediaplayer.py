@@ -75,12 +75,16 @@ STOP_TRACK = "mediaplayer-stop-track"
 
 # Register the action with all supported models
 g15devices.g15_action_keys[NEXT_TRACK] = g15actions.ActionBinding(NEXT_TRACK, [ g15driver.G_KEY_NEXT ], g15driver.KEY_STATE_UP)
+g15devices.z10_action_keys[NEXT_TRACK] = g15actions.ActionBinding(NEXT_TRACK, [ g15driver.G_KEY_NEXT ], g15driver.KEY_STATE_UP)
 g15devices.g19_action_keys[NEXT_TRACK] = g15actions.ActionBinding(NEXT_TRACK, [ g15driver.G_KEY_NEXT ], g15driver.KEY_STATE_UP)
 g15devices.g15_action_keys[PREV_TRACK] = g15actions.ActionBinding(PREV_TRACK, [ g15driver.G_KEY_PREV ], g15driver.KEY_STATE_UP)
+g15devices.z10_action_keys[PREV_TRACK] = g15actions.ActionBinding(PREV_TRACK, [ g15driver.G_KEY_PREV ], g15driver.KEY_STATE_UP)
 g15devices.g19_action_keys[PREV_TRACK] = g15actions.ActionBinding(PREV_TRACK, [ g15driver.G_KEY_PREV ], g15driver.KEY_STATE_UP)
 g15devices.g15_action_keys[STOP_TRACK] = g15actions.ActionBinding(STOP_TRACK, [ g15driver.G_KEY_STOP ], g15driver.KEY_STATE_UP)
+g15devices.z10_action_keys[STOP_TRACK] = g15actions.ActionBinding(STOP_TRACK, [ g15driver.G_KEY_STOP ], g15driver.KEY_STATE_UP)
 g15devices.g19_action_keys[STOP_TRACK] = g15actions.ActionBinding(STOP_TRACK, [ g15driver.G_KEY_STOP ], g15driver.KEY_STATE_UP)
 g15devices.g15_action_keys[PLAY_TRACK] = g15actions.ActionBinding(PLAY_TRACK, [ g15driver.G_KEY_PLAY ], g15driver.KEY_STATE_UP)
+g15devices.z10_action_keys[PLAY_TRACK] = g15actions.ActionBinding(PLAY_TRACK, [ g15driver.G_KEY_PLAY ], g15driver.KEY_STATE_UP)
 g15devices.g19_action_keys[PLAY_TRACK] = g15actions.ActionBinding(PLAY_TRACK, [ g15driver.G_KEY_PLAY ], g15driver.KEY_STATE_UP)
 
 
@@ -95,7 +99,7 @@ author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://localhost"
 has_preferences = False
-unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35, g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
+unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35, g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 
 if can_grab_media_keys:
     actions={ 

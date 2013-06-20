@@ -250,7 +250,7 @@ class Driver(g15driver.AbstractDriver):
     def get_model_names(self):
         return [ g15driver.MODEL_G11, g15driver.MODEL_G15_V1, \
                 g15driver.MODEL_G15_V2, g15driver.MODEL_G110, \
-                g15driver.MODEL_G510, \
+                g15driver.MODEL_G510, g15driver.MODEL_Z10, \
                 g15driver.MODEL_G13 ]
     
     def get_model_name(self):

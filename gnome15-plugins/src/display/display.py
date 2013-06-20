@@ -41,6 +41,7 @@ SELECT_PROFILE = "select-profile"
 
 # Register the action with all supported models
 g15devices.g15_action_keys[SELECT_PROFILE] = g15actions.ActionBinding(SELECT_PROFILE, [ g15driver.G_KEY_L1 ], g15driver.KEY_STATE_HELD)
+g15devices.z10_action_keys[SELECT_PROFILE] = g15actions.ActionBinding(SELECT_PROFILE, [ g15driver.G_KEY_L1 ], g15driver.KEY_STATE_HELD)
 g15devices.g19_action_keys[SELECT_PROFILE] = g15actions.ActionBinding(SELECT_PROFILE, [ g15driver.G_KEY_BACK ], g15driver.KEY_STATE_HELD)
 
 # Plugin details - All of these must be provided
@@ -52,7 +53,7 @@ copyright=_("Copyright (C)2012 Brett Smith")
 site="http://www.russo79.com/gnome15"
 has_preferences=False
 default_enabled=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Previous item"), 
          g15driver.NEXT_SELECTION : _("Next item"),

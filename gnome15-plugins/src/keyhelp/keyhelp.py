@@ -36,6 +36,7 @@ SHOW_KEY_HELP = 'key-help'
 
 # Register the action with all supported models
 g15devices.g15_action_keys[SHOW_KEY_HELP] = g15actions.ActionBinding(SHOW_KEY_HELP, [ g15driver.G_KEY_M1 ], g15driver.KEY_STATE_HELD)
+g15devices.z10_action_keys[SHOW_KEY_HELP] = g15actions.ActionBinding(SHOW_KEY_HELP, [ g15driver.G_KEY_L1 ], g15driver.KEY_STATE_HELD)
 g15devices.g19_action_keys[SHOW_KEY_HELP] = g15actions.ActionBinding(SHOW_KEY_HELP, [ g15driver.G_KEY_M1 ], g15driver.KEY_STATE_HELD)
 
 # Plugin details - All of these must be provided
