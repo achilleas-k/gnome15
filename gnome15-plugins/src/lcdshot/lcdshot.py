@@ -147,13 +147,17 @@ class G15LCDShot():
         cmd = ["mencoder", "-really-quiet", "mf://%s.tmp/*.jpeg" % self._record_to, "-mf", \
                          "w=%d:h=%d:fps=%d:type=jpg" % (self._screen.device.lcd_size[0],self._screen.device.lcd_size[1],self._record_fps), "-ovc", "lavc", \
                          "-lavcopts", "vcodec=mpeg4", "-oac", "copy", "-o", self._record_to]
-        ret = subprocess.call(cmd)
-        if ret == 0:
-            g15notify.notify(_("LCD Screenshot"), _("Video encoding complete. Result at %s" % self._record_to), "dialog-info", timeout = 0)
-            shutil.rmtree("%s.tmp" % self._record_to, True)
-        else:
-            logger.error("Video encoding failed with status %d" % ret)
-            g15notify.notify(_("LCD Screenshot"), _("Video encoding failed. Do you have mencoder installed?"), "dialog-error", timeout = 0)
+        try:
+            ret = subprocess.call(cmd)
+            if ret == 0:
+                g15notify.notify(_("LCD Screenshot"), _("Video encoding complete. Result at %s" % self._record_to), "dialog-info", timeout = 0)
+                shutil.rmtree("%s.tmp" % self._record_to, True)
+            else:
+                logger.error("Video encoding failed with status %d" % ret)
+                g15notify.notify(_("LCD Screenshot"), _("Video encoding failed."), "dialog-error", timeout = 0)
+        except Exception as e:
+                logger.error("Video encoding failed. Exception thrown: %s" %e)
+                g15notify.notify(_("LCD Screenshot"), _("Video encoding failed. Do you have mencoder installed?"), "dialog-error", timeout = 0)
                     
     def _stop_recording(self):
         self._recording = False
