@@ -95,12 +95,30 @@ class LCDShotPreferences():
         chooser_button.connect("current-folder-changed", self._file_activated)
         bg_img = g15gconf.get_string_or_default(self.gconf_client, "%s/folder" % self.gconf_key, os.path.expanduser("~/Desktop"))
         chooser_button.set_current_folder(bg_img)
+
+        # Reset the value of the mode setting to 'still' if mencoder is not installed
+        mencoder_is_installed = g15os.is_program_in_path('mencoder')
+        if not mencoder_is_installed:
+            gconf_client.set_string("%s/mode" % self.gconf_key, "still")
+
+        # Initialize the mode combobox content
+        modes = widget_tree.get_object("ModeModel")
+        modes.clear()
+        modes.append(('still','Still', True))
+        modes.append(('video','Video', mencoder_is_installed))
+
+        # Display a warning message to the user if mencoder is not installed
+        warning = widget_tree.get_object("NoVideoMessage")
+        warning.set_visible(not mencoder_is_installed)
+
         g15uigconf.configure_combo_from_gconf(self.gconf_client, "%s/mode" % self.gconf_key, "Mode", "still", widget_tree)
         mode = widget_tree.get_object("Mode")
         mode.connect("changed", self._mode_changed)
+
         g15uigconf.configure_spinner_from_gconf(self.gconf_client, "%s/fps" % gconf_key, "FPS", 10, widget_tree, False)
         self._spinner = widget_tree.get_object("FPS")
         self._mode_changed(mode)
+
         dialog.run()
         dialog.hide()
                     

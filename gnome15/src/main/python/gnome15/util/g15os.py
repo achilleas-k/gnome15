@@ -76,6 +76,35 @@ def mkdir_p(path):
             pass
         else: raise
 
+def full_path_of_program(program_name):
+    """
+    Search for program_name in all the directories declared in the PATH
+    environment variable
+
+    Keyword arguments:
+    program_name: the name of the program to search for
+
+    Returns:
+    Full path name of the program_name, None if program_name was not
+    found in PATH.
+    """
+    for dir in os.environ['PATH'].split(':'):
+        full_path = os.path.join(dir, program_name)
+        if os.path.exists(full_path):
+            return full_path
+    return None
+
+def is_program_in_path(program_name):
+    """
+    Checks if a program_name is available in PATH environment variable
+
+    Keyword arguments:
+    program_name: the name of the program to check
+
+    Returns True if program_name is in PATH, else False
+    """
+    return full_path_of_program(program_name) != None
+
 def get_lsb_release():
     """
     Gets the release number of the distribution
