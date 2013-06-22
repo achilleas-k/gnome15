@@ -536,6 +536,18 @@ AC_ARG_ENABLE([voip-teamspeak3],
 	[voip_teamspeak3_plugin=yes])
 AM_CONDITIONAL([ENABLE_VOIP_TEAMSPEAK3_PLUGIN], [test x$voip_teamspeak3_plugin = xyes])
 
+dnl Traffic Stats Plugin
+AC_ARG_ENABLE([trafficstats],
+	[AS_HELP_STRING([--enable-trafficstats],
+		[Enable Traffic Stats plugin.])],
+	[case "${enableval}" in
+				yes)	trafficstats_plugin=yes ;;
+				no)	trafficstats_plugin=no ;;
+				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-trafficstats]) ;;
+	esac],
+	[trafficstats_plugin=yes])
+AM_CONDITIONAL([ENABLE_TRAFFIC_STATS_PLUGIN], [test x$trafficstats_plugin = xyes])
+
 
 AC_OUTPUT([
 Makefile
@@ -611,6 +623,8 @@ src/voip-teamspeak3/Makefile
 src/voip-teamspeak3/ts3/Makefile
 src/google-analytics/Makefile
 src/google-analytics/default/Makefile
+src/trafficstats/Makefile
+src/trafficstats/default/Makefile
 ])
 
 
@@ -770,6 +784,10 @@ AS_IF([test "x$google_analytics_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("debug                       - ")
 AS_IF([test "x$debug_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("trafficstats                - ")
+AS_IF([test "x$trafficstats_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("")

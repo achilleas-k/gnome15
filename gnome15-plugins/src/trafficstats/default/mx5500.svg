@@ -1,0 +1,679 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="136"
+   height="32"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="mx5500.svg">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient3851">
+      <stop
+         style="stop-color:#000000;stop-opacity:0.97619045;"
+         offset="0"
+         id="stop3853" />
+      <stop
+         id="stop3859"
+         offset="0.62337661"
+         style="stop-color:#0a0a0a;stop-opacity:1;" />
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="1"
+         id="stop3855" />
+    </linearGradient>
+    <filter
+       id="filter3074"
+       inkscape:label="Glow"
+       width="1.5"
+       height="1.5"
+       x="-0.25"
+       y="-0.25"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3076"
+         in="SourceAlpha"
+         stdDeviation="4"
+         result="blur" />
+      <feColorMatrix
+         id="feColorMatrix3078"
+         result="bluralpha"
+         type="matrix"
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 " />
+      <feOffset
+         id="feOffset3080"
+         in="bluralpha"
+         dx="0.9"
+         dy="0.9"
+         result="offsetBlur" />
+      <feMerge
+         id="feMerge3082"
+         result="fbSourceGraphic">
+        <feMergeNode
+           id="feMergeNode3084"
+           in="offsetBlur" />
+        <feMergeNode
+           id="feMergeNode3086"
+           in="SourceGraphic" />
+      </feMerge>
+      <feColorMatrix
+         result="fbSourceGraphicAlpha"
+         in="fbSourceGraphic"
+         values="0 0 0 -1 0 0 0 0 -1 0 0 0 0 -1 0 0 0 0 1 0"
+         id="feColorMatrix3886" />
+      <feGaussianBlur
+         id="feGaussianBlur3888"
+         stdDeviation="5"
+         result="result91"
+         in="fbSourceGraphic" />
+      <feComposite
+         id="feComposite3890"
+         in2="result91"
+         in="fbSourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3088"
+       inkscape:label="Glow"
+       width="1.5"
+       height="1.5"
+       x="-0.25"
+       y="-0.25"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3090"
+         in="SourceAlpha"
+         stdDeviation="4"
+         result="blur" />
+      <feColorMatrix
+         id="feColorMatrix3092"
+         result="bluralpha"
+         type="matrix"
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 " />
+      <feOffset
+         id="feOffset3094"
+         in="bluralpha"
+         dx="0.9"
+         dy="0.9"
+         result="offsetBlur" />
+      <feMerge
+         id="feMerge3096"
+         result="fbSourceGraphic">
+        <feMergeNode
+           id="feMergeNode3098"
+           in="offsetBlur" />
+        <feMergeNode
+           id="feMergeNode3100"
+           in="SourceGraphic" />
+      </feMerge>
+      <feColorMatrix
+         result="fbSourceGraphicAlpha"
+         in="fbSourceGraphic"
+         values="0 0 0 -1 0 0 0 0 -1 0 0 0 0 -1 0 0 0 0 1 0"
+         id="feColorMatrix3892" />
+      <feGaussianBlur
+         id="feGaussianBlur3894"
+         stdDeviation="5"
+         result="result91"
+         in="fbSourceGraphic" />
+      <feComposite
+         id="feComposite3896"
+         in2="result91"
+         in="fbSourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3874"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3876"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3878"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3880"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3882"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3884"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3874-0"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3876-5"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3878-0"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3088-7"
+       inkscape:label="Glow"
+       width="1.5"
+       height="1.5"
+       x="-0.25"
+       y="-0.25"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3090-4"
+         in="SourceAlpha"
+         stdDeviation="4"
+         result="blur" />
+      <feColorMatrix
+         id="feColorMatrix3092-4"
+         result="bluralpha"
+         type="matrix"
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0 " />
+      <feOffset
+         id="feOffset3094-3"
+         in="bluralpha"
+         dx="0.9"
+         dy="0.9"
+         result="offsetBlur" />
+      <feMerge
+         id="feMerge3096-0"
+         result="fbSourceGraphic">
+        <feMergeNode
+           id="feMergeNode3098-7"
+           in="offsetBlur" />
+        <feMergeNode
+           id="feMergeNode3100-8"
+           in="SourceGraphic" />
+      </feMerge>
+      <feColorMatrix
+         result="fbSourceGraphicAlpha"
+         in="fbSourceGraphic"
+         values="0 0 0 -1 0 0 0 0 -1 0 0 0 0 -1 0 0 0 0 1 0"
+         id="feColorMatrix3892-6" />
+      <feGaussianBlur
+         id="feGaussianBlur3894-8"
+         stdDeviation="5"
+         result="result91"
+         in="fbSourceGraphic" />
+      <feComposite
+         id="feComposite3896-8"
+         in2="result91"
+         in="fbSourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3865"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3867"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3869"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3871"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3873"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3875"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3877"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3879"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3881"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3883"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3885"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3887"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3889"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3891"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3893"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3895"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3897"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3899"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3901"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3903"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3905"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3909"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3911"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3913"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3919"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3921"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3923"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <filter
+       id="filter3927"
+       inkscape:label="Glow"
+       inkscape:menu="Shadows and Glows"
+       inkscape:menu-tooltip="Glow of object's own color at the edges"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3929"
+         stdDeviation="5"
+         result="result91" />
+      <feComposite
+         id="feComposite3931"
+         in2="result91"
+         in="SourceGraphic"
+         operator="over" />
+    </filter>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3851"
+       id="linearGradient3845"
+       x1="0"
+       y1="932.36218"
+       x2="320"
+       y2="932.36218"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.5,0,0,0.17838552,0,864.63606)" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="7.919596"
+     inkscape:cx="53.740753"
+     inkscape:cy="27.285384"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer2"
+     showgrid="true"
+     borderlayer="false"
+     inkscape:window-width="1912"
+     inkscape:window-height="1022"
+     inkscape:window-x="0"
+     inkscape:window-y="30"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3986"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-1020.3622)"
+     style="display:inline">
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="-1.1428566"
+       y="1031.1479"
+       id="text2985"
+       sodipodi:linespacing="125%"
+       text-rendering="optimizeLegibility" />
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="0"
+       y="1025.3622"
+       id="text3044"
+       title="del !title"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3046"
+         x="0"
+         y="1025.3622"
+         style="font-size:6px">${title}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="0"
+       y="1036.3837"
+       id="text3125"
+       title="del !des1"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3127"
+         x="0"
+         y="1036.3837"
+         style="font-size:6px">${des1}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="58"
+       y="1036.1141"
+       id="text3129"
+       title="del !dup1"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3131"
+         x="58"
+         y="1036.1141"
+         style="font-size:6px">${dup1} </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="0"
+       y="1043.3837"
+       id="text3137"
+       title="del !des2"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3139"
+         x="0"
+         y="1043.3837"
+         style="font-size:6px">${des2}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="58"
+       y="1043.1141"
+       id="text3129-9"
+       title="del !dup2"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3131-1"
+         x="58"
+         y="1043.1141"
+         style="font-size:6px">${dup2}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="0"
+       y="1050.3837"
+       id="text3183"
+       title="del !des3"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3185"
+         x="0"
+         y="1050.3837"
+         style="font-size:6px">${des3}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="58"
+       y="1050.1141"
+       id="text3129-9-9"
+       title="del !dup3"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3131-1-9"
+         x="58"
+         y="1050.1141"
+         style="font-size:6px">${dup3}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;text-align:end;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="136.20898"
+       y="1036.3837"
+       id="text2998"
+       title="del !ddn1"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3000"
+         x="136.20898"
+         y="1036.3837"
+         style="font-size:6px">${ddn1}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8.00012684px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="91.613899"
+       y="1036.4001"
+       id="text3002"
+       title="del !d"
+       sodipodi:linespacing="125%"
+       transform="scale(1.0000159,0.99998411)"><tspan
+         sodipodi:role="line"
+         id="tspan3004"
+         x="91.613899"
+         y="1036.4001"
+         style="font-size:6.00009537px">${d}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="136.20898"
+       y="1043.3837"
+       id="text3006"
+       title="del !ddn2"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3008"
+         x="136.20898"
+         y="1043.3837"
+         style="font-size:6px;text-align:end;text-anchor:end">${ddn2}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="91.614952"
+       y="1043.3837"
+       id="text3010"
+       title="del !d"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3012"
+         x="91.614952"
+         y="1043.3837"
+         style="font-size:6px">${d}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="136.20898"
+       y="1050.3837"
+       id="text3014"
+       title="del !ddn3"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3016"
+         x="136.20898"
+         y="1050.3837"
+         style="font-size:6px;text-align:end;text-anchor:end">${ddn3}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="91.614952"
+       y="1050.3837"
+       id="text3018"
+       title="del !d"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3020"
+         x="91.614952"
+         y="1050.3837"
+         style="font-size:6px">${d}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="0"
+       y="1045.1141"
+       id="text3022"
+       title="del !sup"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3024"
+         x="0"
+         y="1045.1141"
+         style="font-size:6px">${sup}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="135.70898"
+       y="1045.3837"
+       id="text3026"
+       title="del !sdn"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3028"
+         x="135.70898"
+         y="1045.3837"
+         style="font-size:6px;text-align:end;text-anchor:end">${sdn}</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="message">
+    <text
+       xml:space="preserve"
+       style="font-size:6px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="67"
+       y="19"
+       id="text3089"
+       title="del !message"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3091"
+         x="67"
+         y="19"
+         style="text-align:center;text-anchor:middle">${message}</tspan></text>
+  </g>
+</svg>
