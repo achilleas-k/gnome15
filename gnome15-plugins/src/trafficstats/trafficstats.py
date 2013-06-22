@@ -74,7 +74,21 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "trafficstats.glade"))
     dialog = widget_tree.get_object("TrafficStats")
-    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/use_vnstat", "UseVnstat", os.path.isfile("/usr/bin/vnstat"), widget_tree)
+
+    # Resets the value of the use_vnstat flag if vnstat is not installed
+    vnstat_installed = g15os.is_program_in_path('vnstat')
+    if not vnstat_installed:
+        gconf_client.set_bool("%s/use_vnstat" % gconf_key, False)
+
+    # Displays a warning message to the user if vnstat is not installed
+    warning = widget_tree.get_object("NoVnstatMessage")
+    warning.set_visible(not vnstat_installed)
+
+    # Disables the vnstat checkbox if vnstat is not installed
+    use_vnstat = widget_tree.get_object('UseVnstat')
+    use_vnstat.set_sensitive(vnstat_installed)
+
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/use_vnstat", "UseVnstat", vnstat_installed, widget_tree)
     ndevice = widget_tree.get_object("NetDevice")
     for netdev in gtop.netlist():
         ndevice.append([netdev])
