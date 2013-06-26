@@ -901,9 +901,10 @@ class G15Service(g15desktop.G15AbstractService):
             logger.warning("ConsoleKit not available, will not track active desktop session. %s" % str(e))
             self.session_active = True
             
-            
-        # GNOME session manager stuff (watch for logout etc)
+        connected_to_session_manager = False
+        # session manager stuff (watch for logout etc)
         try :
+            logger.info("Connecting to GNOME session manager")
             session_manager_object = self.session_bus.get_object("org.gnome.SessionManager", "/org/gnome/SessionManager", "org.gnome.SessionManager")
             client_path = session_manager_object.RegisterClient('gnome15.desktop', '', dbus_interface="org.gnome.SessionManager")
             
@@ -916,8 +917,34 @@ class G15Service(g15desktop.G15AbstractService):
             session_manager_client_public_object = self.session_bus.get_object("org.gnome.SessionManager", client_path, "org.gnome.SessionManager.Client")
             sm_client_id = session_manager_client_public_object.GetStartupId()
             gtk.gdk.set_sm_client_id(sm_client_id)
+            connected_to_session_manager = True
+            logger.info("Connected to GNOME session manager")
         except Exception as e:
-            logger.warning("GNOME session manager not available, will not detect logout signal for clean shutdown. %s" % str(e))
+            logger.warning("GNOME session manager not available. (%s)" % str(e))
+
+        if not connected_to_session_manager:
+            try :
+                logger.info("Connecting to MATE session manager")
+                session_manager_object = self.session_bus.get_object("org.mate.SessionManager", "/org/mate/SessionManager", "org.mate.SessionManager")
+                client_path = session_manager_object.RegisterClient('gnome15.desktop', '', dbus_interface="org.mate.SessionManager")
+
+                self.session_manager_client_object = self.session_bus.get_object("org.mate.SessionManager", client_path, "org.mate.SessionManager.ClientPrivate")
+                self.session_manager_client_object.connect_to_signal("QueryEndSession", self._sm_query_end_session)
+                self.session_manager_client_object.connect_to_signal("EndSession", self._sm_end_session)
+                self.session_manager_client_object.connect_to_signal("CancelEndSession", self._sm_cancel_end_session)
+                self.session_manager_client_object.connect_to_signal("Stop", self._sm_stop)
+
+                session_manager_client_public_object = self.session_bus.get_object("org.mate.SessionManager", client_path, "org.mate.SessionManager.Client")
+                sm_client_id = session_manager_client_public_object.GetStartupId()
+                gtk.gdk.set_sm_client_id(sm_client_id)
+                connected_to_session_manager = True
+                logger.info("Connected to MATE session manager")
+            except Exception as e:
+            logger.warning("MATE session manager not available. (%s)" % str(e))
+
+        if not connected_to_session_manager:
+            logger.warning("None of the supported session managers available, will not detect logout signal for clean shutdown.")
+
             
     def _sm_query_end_session(self, flags):
         if self._is_monitor_session():
