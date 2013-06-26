@@ -940,7 +940,7 @@ class G15Service(g15desktop.G15AbstractService):
                 connected_to_session_manager = True
                 logger.info("Connected to MATE session manager")
             except Exception as e:
-            logger.warning("MATE session manager not available. (%s)" % str(e))
+                logger.warning("MATE session manager not available. (%s)" % str(e))
 
         if not connected_to_session_manager:
             logger.warning("None of the supported session managers available, will not detect logout signal for clean shutdown.")
