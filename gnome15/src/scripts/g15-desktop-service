@@ -4,6 +4,7 @@
 #        | GPL                                                                         |
 #        +-----------------------------------------------------------------------------+
 #        | Copyright (c) Brett Smith <tanktarta@blueyonder.co.uk>                      |
+#        | Copyright (c) 2013 Nuno Araujo <nuno.araujo@russo79.com>                    |
 #        |                                                                             |
 #        | This program is free software; you can redistribute it and/or               |
 #        | modify it under the terms of the GNU General Public License                 |
@@ -19,15 +20,6 @@
 #        | along with this program; if not, write to the Free Software                 |
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
-
-
-def module_exists(module_name):
-    try:
-        __import__(module_name)
-    except ImportError:
-        return False
-    else:
-        return True
 
 import sys
 import os
@@ -52,6 +44,7 @@ if os.path.exists(path):
     
 #
 import gobject
+import gnome15.util.g15pythonlang as g15pythonlang
 gobject.threads_init()
 
 # DBUS - Use to check current desktop service status or stop it
@@ -73,7 +66,7 @@ def check_service_status(session_dbus):
 
 def start_service(options): 
 
-    if module_exists("setproctitle"):
+    if g15pythonlang.module_exists("setproctitle"):
         import setproctitle
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
     else:
