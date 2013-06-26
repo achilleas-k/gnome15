@@ -285,16 +285,6 @@ AX_PYTHON_MODULE(appindicator, [])
 AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
 	  [have_indicator=yes],
 	  [have_indicator=no])
-AC_ARG_ENABLE([indicator-me],
-	[AS_HELP_STRING([--enable-indicator-me],
-		[Enable Indicator Me plugin.])],
-	[case "${enableval}" in
- 				yes)	indicator_me_plugin=yes ;;
- 				no)		indicator_me_plugin=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-indicator-me]) ;;
- 	esac],
-	[indicator_me_plugin=${have_indicator}])
-AM_CONDITIONAL([ENABLE_INDICATOR_ME_PLUGIN], [test x$indicator_me_plugin = xyes])
 
 dnl Indicator Messages Plugin (enable by default when appindicator module is installed, suggesting Ubuntu)
 AC_ARG_ENABLE([indicator-messages],
@@ -586,7 +576,6 @@ src/panel/Makefile
 src/profiles/Makefile
 src/processes/Makefile
 src/im/Makefile
-src/indicator-me/Makefile
 src/indicator-messages/Makefile
 src/lcdshot/Makefile
 src/notify-lcd/Makefile
@@ -684,10 +673,6 @@ AS_IF([test "x$g15daemon_server_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("im                          - ")
 AS_IF([test "x$im_plugin" = "xyes" ],
-     [AS_ECHO("Enabled")],
-     [AS_ECHO("Disabled")])
-AS_ECHO_N("indicator-me                - ")
-AS_IF([test "x$indicator_me_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("indicator-messages          - ")
