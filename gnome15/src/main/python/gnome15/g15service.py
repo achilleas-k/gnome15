@@ -905,7 +905,7 @@ class G15Service(g15desktop.G15AbstractService):
         # GNOME session manager stuff (watch for logout etc)
         try :
             session_manager_object = self.session_bus.get_object("org.gnome.SessionManager", "/org/gnome/SessionManager", "org.gnome.SessionManager")
-            client_path = session_manager_object.RegisterClient('Gnome15', '', dbus_interface="org.gnome.SessionManager")
+            client_path = session_manager_object.RegisterClient('gnome15.desktop', '', dbus_interface="org.gnome.SessionManager")
             
             self.session_manager_client_object = self.session_bus.get_object("org.gnome.SessionManager", client_path, "org.gnome.SessionManager.ClientPrivate")
             self.session_manager_client_object.connect_to_signal("QueryEndSession", self._sm_query_end_session)
