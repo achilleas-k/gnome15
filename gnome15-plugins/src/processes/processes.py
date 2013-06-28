@@ -320,14 +320,9 @@ class G15Processes(g15plugin.G15MenuPlugin):
                         item = self._get_menu_item(pid)
                         item.process_name = window.get_name()
                         this_items[item.id] = item
-                        if window.has_icon_name():
-                            icon_path = g15icontools.get_icon_path(window.get_icon_name(), warning = False)
-                            if icon_path:
-                                item.icon = "file:" + icon_path
-                        if item.icon == None:
-                            pixbuf = window.get_icon()
-                            if pixbuf:               
-                                item.icon = g15cairo.pixbuf_to_surface(pixbuf)
+                        pixbuf = window.get_icon()
+                        if pixbuf:
+                            item.icon = g15cairo.pixbuf_to_surface(pixbuf)
                                 
         else:
             for process_id in gtop.proclist():
