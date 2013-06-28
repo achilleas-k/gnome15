@@ -791,6 +791,7 @@ class G15Service(g15desktop.G15AbstractService):
                 raise
         
         self.session_bus = dbus.SessionBus()
+        self.system_bus = dbus.SystemBus()
         
         # Create a screen for each device        
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
@@ -880,11 +881,11 @@ class G15Service(g15desktop.G15AbstractService):
             
     def _monitor_session(self):        
         # Monitor active session (we shut down the driver when becoming inactive)
+        connected_to_system_session_manager = False
         try :
-            logger.info("Connecting to system bus") 
-            system_bus = dbus.SystemBus()
-            system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
-            console_kit_object = system_bus.get_object("org.freedesktop.ConsoleKit", '/org/freedesktop/ConsoleKit/Manager')
+            logger.info("Connecting to ConsoleKit")
+            self.system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
+            console_kit_object = self.system_bus.get_object("org.freedesktop.ConsoleKit", '/org/freedesktop/ConsoleKit/Manager')
             console_kit_manager = dbus.Interface(console_kit_object, 'org.freedesktop.ConsoleKit.Manager')
             logger.info("Seats %s " % str(console_kit_manager.GetSeats())) 
             self.this_session_path = console_kit_manager.GetSessionForCookie (os.environ['XDG_SESSION_COOKIE'])
@@ -896,9 +897,27 @@ class G15Service(g15desktop.G15AbstractService):
 #            self.session_active = current_session == self.this_session_path
             self.session_active = True
              
-            logger.info("Connected to system bus") 
+            logger.info("Connected to ConsoleKit")
+            connected_to_system_session_manager = True
         except Exception as e:
-            logger.warning("ConsoleKit not available, will not track active desktop session. %s" % str(e))
+            logger.warning("ConsoleKit not available (%s)" % str(e))
+
+        if not connected_to_system_session_manager:
+            try :
+                logger.info("Connecting to logind")
+                self.system_bus.add_signal_receiver(self._logind_seat0_property_changed, "PropertiesChanged", "org.freedesktop.DBus.Properties", "org.freedesktop.login1", "/org/freedesktop/login1/seat/seat0")
+                self.this_session_path = self._get_systemd_active_session_path()
+                logger.info("This session %s " % self.this_session_path)
+
+                self.session_active = True
+
+                logger.info("Connected to logind")
+                connected_to_system_session_manager = True
+            except Exception as e:
+                logger.warning("logind not available. (%s)" % str(e))
+
+        if not connected_to_system_session_manager:
+            logger.warning("None of the supported system session manager available, will not track active desktop session.")
             self.session_active = True
             
         connected_to_session_manager = False
@@ -978,6 +997,24 @@ class G15Service(g15desktop.G15AbstractService):
     def _is_monitor_session(self):
         return g15gconf.get_bool_or_default(self.conf_client, "/apps/gnome15/monitor_desktop_session", True)
             
+    def _get_systemd_active_session_path(self):
+        seat0_object = self.system_bus.get_object("org.freedesktop.login1", '/org/freedesktop/login1/seat/seat0')
+        seat0_properties_interface = dbus.Interface(seat0_object, 'org.freedesktop.DBus.Properties')
+        id, session_path = seat0_properties_interface.Get('org.freedesktop.login1.Seat', 'ActiveSession')
+        return session_path
+
+    def _logind_seat0_property_changed(self, interface, dicto, properties):
+        if "ActiveSession" in properties:
+            if self._is_monitor_session():
+                session_path = self._get_systemd_active_session_path()
+                logger.info("This session %s " % session_path)
+                self.session_active = session_path == self.this_session_path
+                if self.session_active:
+                    logger.info("g15-desktop service is running on the active session")
+                else:
+                    logger.info("g15-desktop service is NOT running on the active session")
+                g15scheduler.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
+
     def _active_session_changed(self, object_path):        
         logger.debug("Adding seat %s" % object_path)
         if self._is_monitor_session():
