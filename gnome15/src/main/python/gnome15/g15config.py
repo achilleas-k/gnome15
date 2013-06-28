@@ -114,22 +114,10 @@ class G15GlobalConfig:
         global_plugin_enabled_renderer = self.widget_tree.get_object("GlobalPluginEnabledRenderer")
         enable_gnome_shell_extension = self.widget_tree.get_object("EnableGnomeShellExtension")
         
-        notify_h = self.conf_client.notify_add("/apps/gnome15/global/plugins", self._plugins_changed)
-               
         self.dialog = self.widget_tree.get_object("GlobalOptionsDialog")
         self.global_plugin_model = self.widget_tree.get_object("GlobalPluginModel")
         self.global_plugin_tree = self.widget_tree.get_object("GlobalPluginTree")        
         self.global_plugin_tree.connect("cursor-changed", self._select_plugin)
-
-        
-        # Plugins
-        self._load_plugins()
-        if len(self.global_plugin_model) > 0 and self._get_selected_plugin() == None:            
-            self.global_plugin_tree.get_selection().select_path(self.global_plugin_model.get_path(self.global_plugin_model.get_iter(0)))
-            self._select_plugin()
-        else:
-            self.widget_tree.get_object("GlobalPluginsFrame").set_visible(False)
-            self.dialog.set_size_request(-1, -1)
 
         self.widget_tree.get_object("GlobalPreferencesButton").connect("clicked", self._show_preferences)
         self.widget_tree.get_object("GlobalAboutPluginButton").connect("clicked", self._show_about_plugin)            
@@ -152,6 +140,19 @@ class G15GlobalConfig:
         enable_gnome_shell_extension.set_active(g15desktop.is_gnome_shell_extension_enabled("gnome15-shell-extension@gnome15.org"))
         
         self.dialog.set_transient_for(parent)
+
+    def run(self):
+        notify_h = self.conf_client.notify_add("/apps/gnome15/global/plugins", self._plugins_changed)
+        # Plugins
+        self._load_plugins()
+
+        if len(self.global_plugin_model) == 0:
+            self.widget_tree.get_object("GlobalPluginsFrame").set_visible(False)
+            self.dialog.set_size_request(-1, -1)
+        elif self._get_selected_plugin() == None:
+            self.global_plugin_tree.get_selection().select_path(self.global_plugin_model.get_path(self.global_plugin_model.get_iter(0)))
+            self._select_plugin()
+
         self.dialog.run()
         self.dialog.hide()
         self.conf_client.notify_remove(notify_h)
@@ -1502,8 +1503,11 @@ class G15Config:
         logger.info("Saving profile %s" % profile.name)
         profile.save()
             
+    global_config = None
     def _show_global_options(self, widget): 
-        G15GlobalConfig(self.main_window, self.widget_tree, self.conf_client)
+        if self.global_config is None:
+           self.global_config = G15GlobalConfig(self.main_window, self.widget_tree, self.conf_client)
+        self.global_config.run()
         
     def _add_profile(self, widget):
         dialog = self.widget_tree.get_object("NewProfileDialog") 
