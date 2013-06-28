@@ -284,7 +284,7 @@ class Driver(g15driver.AbstractDriver):
           
     def _on_disconnect(self):  
         if self.is_connected():  
-            self.lg19.stop_event_handling()
+            self.lg19.close()
             self.connected = False
             if self.on_close != None:
                 self.on_close(self)
