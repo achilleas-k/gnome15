@@ -881,42 +881,11 @@ class G15Service(g15desktop.G15AbstractService):
             
     def _monitor_session(self):        
         # Monitor active session (we shut down the driver when becoming inactive)
-        connected_to_system_session_manager = False
-        try :
-            logger.info("Connecting to ConsoleKit")
-            self.system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
-            console_kit_object = self.system_bus.get_object("org.freedesktop.ConsoleKit", '/org/freedesktop/ConsoleKit/Manager')
-            console_kit_manager = dbus.Interface(console_kit_object, 'org.freedesktop.ConsoleKit.Manager')
-            logger.info("Seats %s " % str(console_kit_manager.GetSeats())) 
-            self.this_session_path = console_kit_manager.GetSessionForCookie (os.environ['XDG_SESSION_COOKIE'])
-            logger.info("This session %s " % self.this_session_path)
-            
-            # TODO GetCurrentSession doesn't seem to work as i would expect. Investigate. For now, assume we are the active session
-#            current_session = console_kit_manager.GetCurrentSession()
-#            logger.info("Current session %s " % current_session)            
-#            self.session_active = current_session == self.this_session_path
-            self.session_active = True
-             
-            logger.info("Connected to ConsoleKit")
-            connected_to_system_session_manager = True
-        except Exception as e:
-            logger.warning("ConsoleKit not available (%s)" % str(e))
-
-        if not connected_to_system_session_manager:
-            try :
-                logger.info("Connecting to logind")
-                self.system_bus.add_signal_receiver(self._logind_seat0_property_changed, "PropertiesChanged", "org.freedesktop.DBus.Properties", "org.freedesktop.login1", "/org/freedesktop/login1/seat/seat0")
-                self.this_session_path = self._get_systemd_active_session_path()
-                logger.info("This session %s " % self.this_session_path)
-
-                self.session_active = True
-
-                logger.info("Connected to logind")
-                connected_to_system_session_manager = True
-            except Exception as e:
-                logger.warning("logind not available. (%s)" % str(e))
-
-        if not connected_to_system_session_manager:
+        if self.system_bus.name_has_owner('org.freedesktop.ConsoleKit'):
+            self._connect_to_consolekit()
+        elif self.system_bus.name_has_owner('org.freedesktop.login1'):
+            self._connect_to_logind()
+        else:
             logger.warning("None of the supported system session manager available, will not track active desktop session.")
             self.session_active = True
             
@@ -997,6 +966,41 @@ class G15Service(g15desktop.G15AbstractService):
     def _is_monitor_session(self):
         return g15gconf.get_bool_or_default(self.conf_client, "/apps/gnome15/monitor_desktop_session", True)
             
+    def _connect_to_consolekit(self):
+        try :
+            logger.info("Connecting to ConsoleKit")
+            self.system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
+            console_kit_object = self.system_bus.get_object("org.freedesktop.ConsoleKit", '/org/freedesktop/ConsoleKit/Manager')
+            console_kit_manager = dbus.Interface(console_kit_object, 'org.freedesktop.ConsoleKit.Manager')
+            logger.info("Seats %s " % str(console_kit_manager.GetSeats()))
+            self.this_session_path = console_kit_manager.GetSessionForCookie (os.environ['XDG_SESSION_COOKIE'])
+            logger.info("This session %s " % self.this_session_path)
+
+            # TODO GetCurrentSession doesn't seem to work as i would expect. Investigate. For now, assume we are the active session
+#            current_session = console_kit_manager.GetCurrentSession()
+#            logger.info("Current session %s " % current_session)
+#            self.session_active = current_session == self.this_session_path
+            self.session_active = True
+
+            logger.info("Connected to ConsoleKit")
+            connected_to_system_session_manager = True
+        except Exception as e:
+            logger.warning("ConsoleKit not available (%s)" % str(e))
+
+    def _connect_to_logind(self):
+        try :
+            logger.info("Connecting to logind")
+            self.system_bus.add_signal_receiver(self._logind_seat0_property_changed, "PropertiesChanged", "org.freedesktop.DBus.Properties", "org.freedesktop.login1", "/org/freedesktop/login1/seat/seat0")
+            self.this_session_path = self._get_systemd_active_session_path()
+            logger.info("This session %s " % self.this_session_path)
+
+            self.session_active = True
+
+            logger.info("Connected to logind")
+            connected_to_system_session_manager = True
+        except Exception as e:
+            logger.warning("logind not available. (%s)" % str(e))
+
     def _get_systemd_active_session_path(self):
         seat0_object = self.system_bus.get_object("org.freedesktop.login1", '/org/freedesktop/login1/seat/seat0')
         seat0_properties_interface = dbus.Interface(seat0_object, 'org.freedesktop.DBus.Properties')
