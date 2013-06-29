@@ -64,9 +64,14 @@ def create_backend():
 
 def find_avatar(server_unique_identifier, client_unique_identifier):
     decoded = ""
-    for c in base64.b64decode(client_unique_identifier):
-        decoded += chr(((ord(c) & 0xf0) >> 4) + 97)
-        decoded += chr((ord(c) & 0x0f) + 97)
+    try:
+        for c in base64.b64decode(client_unique_identifier):
+            decoded += chr(((ord(c) & 0xf0) >> 4) + 97)
+            decoded += chr((ord(c) & 0x0f) + 97)
+    except TypeError:
+        # Sometimes the client_unique_identifier is not base64 encoded
+        decoded = client_unique_identifier
+
     return os.path.expanduser("~/.ts3client/cache/%s/clients/avatar_%s" % (base64.b64encode(server_unique_identifier), decoded))
 
 """
