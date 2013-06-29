@@ -35,6 +35,7 @@ import os
 import base64
 import socket
 import errno
+import re
 
 # Plugin details 
 id="voip-teamspeak3"
@@ -645,7 +646,7 @@ class Teamspeak3Backend(voip.VoipBackend):
             
     def _parse_notifytextmessage_reply(self, message):
         if 'invokername' in message.args and 'msg' in message.args:
-            self._plugin.message_received(message.args['invokername'], message.args['msg'])
+            self._plugin.message_received(message.args['invokername'], self._filter_formatting_tags(message.args['msg']))
         else:
             logger.warn("Got text messsage I didn't understand. %s" % str(message))
             
@@ -660,3 +661,12 @@ class Teamspeak3Backend(voip.VoipBackend):
                 self._plugin.menu.centre_on_selected()
             
             self._plugin.talking_status_changed(self.get_talking())
+
+    def _filter_formatting_tags(self, message):
+        filtered = message
+        for regex in ('\[B\](?P<filtered>.*?)\[/B\]', \
+                      '\[I\](?P<filtered>.*?)\[/I\]', \
+                      '\[U\](?P<filtered>.*?)\[/U\]', \
+                      '\[COLOR=#([0-9]|[a-f]).*?\](?P<filtered>.*?)\[/COLOR\]'):
+            filtered = re.sub(regex, '\g<filtered>', filtered, flags = re.IGNORECASE)
+        return filtered
