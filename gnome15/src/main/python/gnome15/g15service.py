@@ -836,7 +836,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/scroll_amount", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/animated_menus", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/animation_delay", self._hidden_configuration_changed))
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/key_hold_delay", self._hidden_configuration_changed))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/key_hold_duration", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/use_x_test", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/disable_svg_glow", self._hidden_configuration_changed))
         
