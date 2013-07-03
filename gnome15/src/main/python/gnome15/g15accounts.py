@@ -32,7 +32,9 @@ import os
 from lxml import etree 
 import gtk
 import g15globals
-import g15util
+import util.g15scheduler as g15scheduler
+import util.g15gconf as g15gconf
+import util.g15pythonlang as g15pythonlang
 import pyinotify
 import pwd
 from threading import Lock
@@ -169,7 +171,7 @@ a password change).") % (account.name, username))
         
         TODO find out what is actually happening
         '''
-        if g15util.is_gobject_thread():
+        if g15pythonlang.is_gobject_thread():
             self.find_secret(account, name, False)            
         else:
             self.lock.acquire()
@@ -351,7 +353,7 @@ class G15AccountPreferences():
         
         # Updates
         self.update_adjustment = self.widget_tree.get_object("UpdateAdjustment")
-        self.update_adjustment.set_value(g15util.get_int_or_default(gconf_client, gconf_key + "/update_time", default_refresh))
+        self.update_adjustment.set_value(g15gconf.get_int_or_default(gconf_client, gconf_key + "/update_time", default_refresh))
         
         # Connect to events
         self.account_list.connect("cursor-changed", self._select_account)
@@ -425,7 +427,7 @@ class G15AccountPreferences():
         if not self._adjusting:
             if self._save_timer is not None:
                 self._save_timer.cancel()
-            self._save_timer = g15util.schedule("SaveAccounts", 2, self._do_save_accounts)
+            self._save_timer = g15scheduler.schedule("SaveAccounts", 2, self._do_save_accounts)
         
     def _do_save_accounts(self):        
         self.account_mgr.save()

@@ -21,6 +21,8 @@ SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", A
 # Logitech G510 Keyboard
 SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22d", MODE="@DEVICEMODE@", GROUP="@DEVICEGROUP@", SYMLINK+="g510-extra-keys"
 SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22d", MODE="@DEVICEMODE@", GROUP="@DEVICEGROUP@", SYMLINK+="g510-lcd"
+SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22e", MODE="@DEVICEMODE@", GROUP="@DEVICEGROUP@", SYMLINK+="g510-extra-keys"
+SUBSYSTEMS=="usb", ACTION=="add", KERNEL=="fb[0-9]*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c22e", MODE="@DEVICEMODE@", GROUP="@DEVICEGROUP@", SYMLINK+="g510-lcd"
 
 # Logitech Z10 Speakers 
 SUBSYSTEM=="input", ACTION=="add", KERNEL=="event*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0a07", MODE="@DEVICEMODE@", GROUP="@DEVICEGROUP@", SYMLINK+="z10-extra-keys"

@@ -22,7 +22,12 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("videoplayer", modfile = __file__).ugettext
 
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15os as g15os
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15screen as g15screen
@@ -70,12 +75,16 @@ STOP_TRACK = "mediaplayer-stop-track"
 
 # Register the action with all supported models
 g15devices.g15_action_keys[NEXT_TRACK] = g15actions.ActionBinding(NEXT_TRACK, [ g15driver.G_KEY_NEXT ], g15driver.KEY_STATE_UP)
+g15devices.z10_action_keys[NEXT_TRACK] = g15actions.ActionBinding(NEXT_TRACK, [ g15driver.G_KEY_NEXT ], g15driver.KEY_STATE_UP)
 g15devices.g19_action_keys[NEXT_TRACK] = g15actions.ActionBinding(NEXT_TRACK, [ g15driver.G_KEY_NEXT ], g15driver.KEY_STATE_UP)
 g15devices.g15_action_keys[PREV_TRACK] = g15actions.ActionBinding(PREV_TRACK, [ g15driver.G_KEY_PREV ], g15driver.KEY_STATE_UP)
+g15devices.z10_action_keys[PREV_TRACK] = g15actions.ActionBinding(PREV_TRACK, [ g15driver.G_KEY_PREV ], g15driver.KEY_STATE_UP)
 g15devices.g19_action_keys[PREV_TRACK] = g15actions.ActionBinding(PREV_TRACK, [ g15driver.G_KEY_PREV ], g15driver.KEY_STATE_UP)
 g15devices.g15_action_keys[STOP_TRACK] = g15actions.ActionBinding(STOP_TRACK, [ g15driver.G_KEY_STOP ], g15driver.KEY_STATE_UP)
+g15devices.z10_action_keys[STOP_TRACK] = g15actions.ActionBinding(STOP_TRACK, [ g15driver.G_KEY_STOP ], g15driver.KEY_STATE_UP)
 g15devices.g19_action_keys[STOP_TRACK] = g15actions.ActionBinding(STOP_TRACK, [ g15driver.G_KEY_STOP ], g15driver.KEY_STATE_UP)
 g15devices.g15_action_keys[PLAY_TRACK] = g15actions.ActionBinding(PLAY_TRACK, [ g15driver.G_KEY_PLAY ], g15driver.KEY_STATE_UP)
+g15devices.z10_action_keys[PLAY_TRACK] = g15actions.ActionBinding(PLAY_TRACK, [ g15driver.G_KEY_PLAY ], g15driver.KEY_STATE_UP)
 g15devices.g19_action_keys[PLAY_TRACK] = g15actions.ActionBinding(PLAY_TRACK, [ g15driver.G_KEY_PLAY ], g15driver.KEY_STATE_UP)
 
 
@@ -90,7 +99,7 @@ author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://localhost"
 has_preferences = False
-unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35, g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
+unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35, g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500 ]
 
 if can_grab_media_keys:
     actions={ 
@@ -117,7 +126,7 @@ else:
              }
 
 
-icon_path = g15util.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player", "applications-multimedia" ])
+icon_path = g15icontools.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player", "applications-multimedia" ])
 
 def create(gconf_key, gconf_client, screen):
     return G15MediaPlayer(gconf_client, gconf_key, screen)
@@ -129,7 +138,7 @@ def get_visualisation(plugin):
     Keyword arguments:
     plugin        -- plugin instance
     """
-    return g15util.get_string_or_default(
+    return g15gconf.get_string_or_default(
                     plugin.gconf_client, 
                     "%s/visualisation" % plugin.gconf_key, "goom")
     
@@ -167,7 +176,7 @@ class MountMenuItem(g15theme.MenuItem):
         icon = self._mount.get_icon()        
         icon_names = [ icon.get_file().get_path() ] if isinstance(icon, gio.FileIcon) else icon.get_names() 
         icon_names += "gnome-dev-harddisk"
-        item_properties["item_icon"] = g15util.get_icon_path(icon_names)
+        item_properties["item_icon"] = g15icontools.get_icon_path(icon_names)
         return item_properties
     
     def activate(self):
@@ -246,7 +255,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
         self._active = True
         self._frame_index = 1
         self._last_seconds = -1
-        self._thumb_icon = g15util.load_surface_from_file(icon_path)
+        self._thumb_icon = g15cairo.load_surface_from_file(icon_path)
         self._setup_gstreamer()
         self.screen.key_handler.action_listeners.append(self) 
         def on_delete():
@@ -353,7 +362,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
         g15theme.G15Page.paint(self, canvas)
         canvas.restore()
         if self._sidebar_offset < 0 and self._sidebar_offset > -(self.theme.bounds[2]):
-            g15util.schedule("RepaintVideoOverly", 0.1, self.redraw)
+            g15scheduler.schedule("RepaintVideoOverly", 0.1, self.redraw)
                 
     """
     GStreamer callbacks
@@ -459,7 +468,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
         else:    
             self._sidebar_offset = 0 
             self._cancel_hide()
-            self._hide_timer = g15util.schedule("HideSidebar", after, self._hide_sidebar)
+            self._hide_timer = g15scheduler.schedule("HideSidebar", after, self._hide_sidebar)
             
     def _cancel_hide(self):
         if self._hide_timer != None:
@@ -530,7 +539,7 @@ class G15MediaPlayerPage(g15theme.G15Page):
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._surface != None and self._screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self._surface, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self._surface, canvas)
 
 
 class G15MediaSource():
@@ -804,14 +813,14 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
                 video_devices.append(i)
                 
         if len(video_devices) > 0:
-            items.append(g15theme.MenuItem("video-devices", True, _("Video Devices"), icon = g15util.get_icon_path(["camera-web", "camera-video"]), activatable = False))
+            items.append(g15theme.MenuItem("video-devices", True, _("Video Devices"), icon = g15icontools.get_icon_path(["camera-web", "camera-video"]), activatable = False))
             for i in video_devices:
                 items.append(G15VideoDeviceMenuItem(self, i))
                 
         # Video File
         def activate_video_file():
             gobject.idle_add(self._open_video_file)
-        items.append(g15theme.MenuItem("video-file", True, _("Open Audio/Video File"), activate = activate_video_file, icon = g15util.get_icon_path("folder")))
+        items.append(g15theme.MenuItem("video-file", True, _("Open Audio/Video File"), activate = activate_video_file, icon = g15icontools.get_icon_path("folder")))
         
         # DVD / Mounts
         self.volume_monitor = gio.VolumeMonitor()
@@ -823,11 +832,11 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
             if not mount.is_shadowed() and drive is not None and drive.is_media_removable():
                 removable_media_items.append(MountMenuItem('mount-%d' % i, mount, self))
         if len(removable_media_items):
-            items.append(g15theme.MenuItem("removable-devices", True, _("Removable Devices"), icon = g15util.get_icon_path(["driver-removable-media", "gnome-dev-removable"]), activatable = False))
+            items.append(g15theme.MenuItem("removable-devices", True, _("Removable Devices"), icon = g15icontools.get_icon_path(["driver-removable-media", "gnome-dev-removable"]), activatable = False))
             items += removable_media_items
             
         # Pulse
-        status, output = g15util.execute_for_output("pacmd list-sources")
+        status, output = g15os.get_command_output("pacmd list-sources")
         if status == 0 and len(output) > 0:
             i = 0
             pulse_items = []
@@ -838,12 +847,12 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
                 elif line.startswith("device.description = "):
                     pulse_items.append(PulseSourceMenuItem(name, line[22:-1], self))
             if len(pulse_items) > 0:
-                items.append(g15theme.MenuItem("pulse-sources", True, _("PulseAudio Source"), icon = g15util.get_icon_path(["audio-card", "audio-speakers", "audio-volume-high", "audio-x-generic"]), activatable = False))
+                items.append(g15theme.MenuItem("pulse-sources", True, _("PulseAudio Source"), icon = g15icontools.get_icon_path(["audio-card", "audio-speakers", "audio-volume-high", "audio-x-generic"]), activatable = False))
                 items += pulse_items
 
 
         # Visualisations - TODO - there must be a better way to list them
-        items.append(g15theme.MenuItem("visualisation-mode", True, _("Visualisation Mode"), icon = g15util.get_icon_path(["preferences-color", "gtk-select-color", "preferences-desktop-screensaver", "kscreensaver", "xscreensaver"]), activatable = False))
+        items.append(g15theme.MenuItem("visualisation-mode", True, _("Visualisation Mode"), icon = g15icontools.get_icon_path(["preferences-color", "gtk-select-color", "preferences-desktop-screensaver", "kscreensaver", "xscreensaver"]), activatable = False))
         for c in [ "goom", \
                   "libvisual_bumpscope", \
                   "libvisual_corona", \
@@ -921,7 +930,7 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
                     if self._mm_key_timer is not None:
                         self._mm_key_timer.cancel()
                         self._mm_key_timer = None
-                    self._mm_key_timer = g15util.schedule("CancelMMKey", 1.0, self._clear_mm_key)
+                    self._mm_key_timer = g15scheduler.schedule("CancelMMKey", 1.0, self._clear_mm_key)
 
             try:
                 self._settings = dbus.Interface(session_bus.get_object('org.g.SettingsDaemon',

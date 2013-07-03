@@ -28,7 +28,12 @@ import gnome15.g15actions as g15actions
 import os.path
 import gtk
 import gobject
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.g15notify as g15notify
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15os as g15os
+import gnome15.util.g15cairo as g15cairo
 import subprocess
 import shutil
 from threading import Thread
@@ -53,7 +58,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.russo79.com/gnome15"
 has_preferences=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35, g15driver.MODEL_Z10 ]
 actions={ 
          SCREENSHOT : "Take LCD screenshot"
          }
@@ -88,14 +93,32 @@ class LCDShotPreferences():
         chooser_button.connect("file-set", self._file_set)
         chooser_button.connect("file-activated", self._file_activated)
         chooser_button.connect("current-folder-changed", self._file_activated)
-        bg_img = g15util.get_string_or_default(self.gconf_client, "%s/folder" % self.gconf_key, os.path.expanduser("~/Desktop"))
+        bg_img = g15gconf.get_string_or_default(self.gconf_client, "%s/folder" % self.gconf_key, os.path.expanduser("~/Desktop"))
         chooser_button.set_current_folder(bg_img)
-        g15util.configure_combo_from_gconf(self.gconf_client, "%s/mode" % self.gconf_key, "Mode", "still", widget_tree)
+
+        # Reset the value of the mode setting to 'still' if mencoder is not installed
+        mencoder_is_installed = g15os.is_program_in_path('mencoder')
+        if not mencoder_is_installed:
+            gconf_client.set_string("%s/mode" % self.gconf_key, "still")
+
+        # Initialize the mode combobox content
+        modes = widget_tree.get_object("ModeModel")
+        modes.clear()
+        modes.append(('still','Still', True))
+        modes.append(('video','Video', mencoder_is_installed))
+
+        # Display a warning message to the user if mencoder is not installed
+        warning = widget_tree.get_object("NoVideoMessage")
+        warning.set_visible(not mencoder_is_installed)
+
+        g15uigconf.configure_combo_from_gconf(self.gconf_client, "%s/mode" % self.gconf_key, "Mode", "still", widget_tree)
         mode = widget_tree.get_object("Mode")
         mode.connect("changed", self._mode_changed)
-        g15util.configure_spinner_from_gconf(self.gconf_client, "%s/fps" % gconf_key, "FPS", 10, widget_tree, False)
+
+        g15uigconf.configure_spinner_from_gconf(self.gconf_client, "%s/fps" % gconf_key, "FPS", 10, widget_tree, False)
         self._spinner = widget_tree.get_object("FPS")
         self._mode_changed(mode)
+
         dialog.run()
         dialog.hide()
                     
@@ -129,7 +152,7 @@ class G15LCDShot():
     def action_performed(self, binding):
         # TODO better key
         if binding.action == SCREENSHOT:
-            mode = g15util.get_string_or_default(self._gconf_client, "%s/mode" % self._gconf_key, "still")
+            mode = g15gconf.get_string_or_default(self._gconf_client, "%s/mode" % self._gconf_key, "still")
             if mode == "still":
                 return self._take_still()
             else:
@@ -142,26 +165,30 @@ class G15LCDShot():
         cmd = ["mencoder", "-really-quiet", "mf://%s.tmp/*.jpeg" % self._record_to, "-mf", \
                          "w=%d:h=%d:fps=%d:type=jpg" % (self._screen.device.lcd_size[0],self._screen.device.lcd_size[1],self._record_fps), "-ovc", "lavc", \
                          "-lavcopts", "vcodec=mpeg4", "-oac", "copy", "-o", self._record_to]
-        ret = subprocess.call(cmd)
-        if ret == 0:
-            g15util.notify(_("LCD Screenshot"), _("Video encoding complete. Result at %s" % self._record_to), "dialog-info")
-            shutil.rmtree("%s.tmp" % self._record_to, True)
-        else:
-            logger.error("Video encoding failed with status %d" % ret)
-            g15util.notify(_("LCD Screenshot"), _("Video encoding failed. Do you have mencoder installed?"), "dialog-error")
+        try:
+            ret = subprocess.call(cmd)
+            if ret == 0:
+                g15notify.notify(_("LCD Screenshot"), _("Video encoding complete. Result at %s" % self._record_to), "dialog-info", timeout = 0)
+                shutil.rmtree("%s.tmp" % self._record_to, True)
+            else:
+                logger.error("Video encoding failed with status %d" % ret)
+                g15notify.notify(_("LCD Screenshot"), _("Video encoding failed."), "dialog-error", timeout = 0)
+        except Exception as e:
+                logger.error("Video encoding failed. Exception thrown: %s" %e)
+                g15notify.notify(_("LCD Screenshot"), _("Video encoding failed. Do you have mencoder installed?"), "dialog-error", timeout = 0)
                     
     def _stop_recording(self):
         self._recording = False
-        g15util.notify(_("LCD Screenshot"), _("Video recording stopped. Now encoding"), "dialog-info")
+        g15notify.notify(_("LCD Screenshot"), _("Video recording stopped. Now encoding"), "dialog-info", timeout = 0)
         t = Thread(target = self._encode);
         t.setName("LCDScreenshotEncode")
         t.start()
                     
     def _start_recording(self):
-        self._record_fps = g15util.get_int_or_default(self._gconf_client, "%s/fps" % self._gconf_key, 10)
+        self._record_fps = g15gconf.get_int_or_default(self._gconf_client, "%s/fps" % self._gconf_key, 10)
         path = self._find_next_free_filename("avi", _("Gnome15_Video"))
-        g15util.notify(_("LCD Screenshot"), _("Started recording video"), "dialog-info")
-        g15util.mkdir_p("%s.tmp" % path)
+        g15notify.notify(_("LCD Screenshot"), _("Started recording video"), "dialog-info")
+        g15os.mkdir_p("%s.tmp" % path)
         self._frame_no = 1
         self._recording = True
         self._record_to = path
@@ -173,7 +200,7 @@ class G15LCDShot():
                 self._screen.draw_lock.acquire()
                 try:
                     path = os.path.join("%s.tmp" % self._record_to, "%012d.jpeg" % self._frame_no)
-                    pixbuf = g15util.surface_to_pixbuf(self._screen.old_surface)
+                    pixbuf = g15cairo.surface_to_pixbuf(self._screen.old_surface)
                 finally:
                     self._screen.draw_lock.release()
                     
@@ -187,7 +214,7 @@ class G15LCDShot():
             self._recording_timer = gobject.timeout_add(1000 / self._record_fps, self._frame)
             
     def _find_next_free_filename(self, ext, title):
-        dir_path = g15util.get_string_or_default(self._gconf_client, "%s/folder" % \
+        dir_path = g15gconf.get_string_or_default(self._gconf_client, "%s/folder" % \
                     self._gconf_key, os.path.expanduser("~/Desktop"))
         for i in range(1, 9999):
             path = "%s/%s-%s-%d.%s" % ( dir_path, \
@@ -203,7 +230,7 @@ class G15LCDShot():
                 path = self._find_next_free_filename("png", self._screen.get_visible_page().title)
                 self._screen.old_surface.write_to_png(path)
                 logger.info("Written to screenshot to %s" % path)
-                g15util.notify(_("LCD Screenshot"), _("Screenshot saved to %s") % path, "dialog-info")
+                g15notify.notify(_("LCD Screenshot"), _("Screenshot saved to %s") % path, "dialog-info", timeout = 0)
                 return True
             except Exception as e:
                 logger.error("Failed to save screenshot. %s" % str(e))

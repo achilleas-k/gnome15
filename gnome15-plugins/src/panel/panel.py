@@ -23,7 +23,8 @@ _ = g15locale.get_translation("panel", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
 import os
 import gtk
 import cairo
@@ -46,10 +47,10 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "panel.glade"))
     dialog = widget_tree.get_object("PanelDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/size", "SizeAdjustment", 24, widget_tree)
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/position", "PositionCombo", "bottom", widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/stretch", "Stretch", False, widget_tree)
-    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/color", "Color", ( 128, 128, 128 ), widget_tree, default_alpha = 128)
+    g15uigconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/size", "SizeAdjustment", 24, widget_tree)
+    g15uigconf.configure_combo_from_gconf(gconf_client, gconf_key + "/position", "PositionCombo", "bottom", widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/stretch", "Stretch", False, widget_tree)
+    g15uigconf.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/color", "Color", ( 128, 128, 128 ), widget_tree, default_alpha = 128)
     dialog.run()
     dialog.hide()
     
@@ -77,7 +78,7 @@ class G15PanelPainter(g15screen.Painter):
             inset = 0
             align = "start"
             gap = panel_height / 10.0
-            bg = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/color", ( 128, 128, 128, 128 ))                
+            bg = g15gconf.get_cairo_rgba_or_default(self.gconf_client, self.gconf_key + "/color", ( 128, 128, 128, 128 ))
         widget_size = panel_height - ( gap * 2 )
             
         # Paint the panel in memory first so it can be aligned easily

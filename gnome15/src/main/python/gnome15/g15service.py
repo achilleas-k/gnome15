@@ -36,7 +36,9 @@ import g15accounts
 import g15driver
 import traceback
 import gconf
-import g15util
+import util.g15scheduler as g15scheduler
+import util.g15gconf as g15gconf
+import util.g15os as g15os
 import Xlib.X 
 import Xlib.ext
 import Xlib.XK
@@ -161,7 +163,7 @@ class MacroHandler(object):
         Handle raw keys. We use this to complete any macros waiting for another
         key events
         """
-        g15util.queue(MACRO_HANDLER_QUEUE, "HandleMacro", 0, self._do_handle_key, keys, state_id, post)
+        g15scheduler.queue(MACRO_HANDLER_QUEUE, "HandleMacro", 0, self._do_handle_key, keys, state_id, post)
         
     def handle_macro(self, macro):  
         """
@@ -173,7 +175,7 @@ class MacroHandler(object):
         Keyword arguments:
         macro            -- macro to handle
         """              
-        g15util.queue(MACRO_HANDLER_QUEUE, "HandleMacro", 0, self._do_handle, macro)
+        g15scheduler.queue(MACRO_HANDLER_QUEUE, "HandleMacro", 0, self._do_handle, macro)
         
     def get_x_display(self):
         self.init_xtest()
@@ -639,17 +641,17 @@ class G15Service(g15desktop.G15AbstractService):
             logger.warn("Ignoring stop request, already stopped.")
             
     def restart(self):        
-        g15util.run_script("g15-desktop-service", ["restart"], background = True)
+        g15os.run_script("g15-desktop-service", ["restart"], background = True)
             
     def shutdown(self, quickly = False):
         logger.info("Shutting down")
         self.shutting_down = True
         self.global_plugins.destroy()
         self.stop(quickly)
-        g15util.stop_queue(MACRO_HANDLER_QUEUE)
-        g15util.stop_queue(SERVICE_QUEUE)   
+        g15scheduler.stop_queue(MACRO_HANDLER_QUEUE)
+        g15scheduler.stop_queue(SERVICE_QUEUE)
         logger.info("Stopping all schedulers")
-        g15util.stop_all_schedulers()
+        g15scheduler.stop_all_schedulers()
         for listener in self.service_listeners:
             listener.service_stopped()
         logger.info("Quiting loop")
@@ -789,6 +791,7 @@ class G15Service(g15desktop.G15AbstractService):
                 raise
         
         self.session_bus = dbus.SessionBus()
+        self.system_bus = dbus.SystemBus()
         
         # Create a screen for each device        
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
@@ -833,7 +836,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/scroll_amount", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/animated_menus", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/animation_delay", self._hidden_configuration_changed))
-        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/key_hold_delay", self._hidden_configuration_changed))
+        self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/key_hold_duration", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/use_x_test", self._hidden_configuration_changed))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/disable_svg_glow", self._hidden_configuration_changed))
         
@@ -878,32 +881,20 @@ class G15Service(g15desktop.G15AbstractService):
             
     def _monitor_session(self):        
         # Monitor active session (we shut down the driver when becoming inactive)
-        try :
-            logger.info("Connecting to system bus") 
-            system_bus = dbus.SystemBus()
-            system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
-            console_kit_object = system_bus.get_object("org.freedesktop.ConsoleKit", '/org/freedesktop/ConsoleKit/Manager')
-            console_kit_manager = dbus.Interface(console_kit_object, 'org.freedesktop.ConsoleKit.Manager')
-            logger.info("Seats %s " % str(console_kit_manager.GetSeats())) 
-            self.this_session_path = console_kit_manager.GetSessionForCookie (os.environ['XDG_SESSION_COOKIE'])
-            logger.info("This session %s " % self.this_session_path)
-            
-            # TODO GetCurrentSession doesn't seem to work as i would expect. Investigate. For now, assume we are the active session
-#            current_session = console_kit_manager.GetCurrentSession()
-#            logger.info("Current session %s " % current_session)            
-#            self.session_active = current_session == self.this_session_path
-            self.session_active = True
-             
-            logger.info("Connected to system bus") 
-        except Exception as e:
-            logger.warning("ConsoleKit not available, will not track active desktop session. %s" % str(e))
+        if self.system_bus.name_has_owner('org.freedesktop.ConsoleKit'):
+            self._connect_to_consolekit()
+        elif self.system_bus.name_has_owner('org.freedesktop.login1'):
+            self._connect_to_logind()
+        else:
+            logger.warning("None of the supported system session manager available, will not track active desktop session.")
             self.session_active = True
             
-            
-        # GNOME session manager stuff (watch for logout etc)
+        connected_to_session_manager = False
+        # session manager stuff (watch for logout etc)
         try :
+            logger.info("Connecting to GNOME session manager")
             session_manager_object = self.session_bus.get_object("org.gnome.SessionManager", "/org/gnome/SessionManager", "org.gnome.SessionManager")
-            client_path = session_manager_object.RegisterClient('Gnome15', '', dbus_interface="org.gnome.SessionManager")
+            client_path = session_manager_object.RegisterClient('gnome15.desktop', '', dbus_interface="org.gnome.SessionManager")
             
             self.session_manager_client_object = self.session_bus.get_object("org.gnome.SessionManager", client_path, "org.gnome.SessionManager.ClientPrivate")
             self.session_manager_client_object.connect_to_signal("QueryEndSession", self._sm_query_end_session)
@@ -914,8 +905,34 @@ class G15Service(g15desktop.G15AbstractService):
             session_manager_client_public_object = self.session_bus.get_object("org.gnome.SessionManager", client_path, "org.gnome.SessionManager.Client")
             sm_client_id = session_manager_client_public_object.GetStartupId()
             gtk.gdk.set_sm_client_id(sm_client_id)
+            connected_to_session_manager = True
+            logger.info("Connected to GNOME session manager")
         except Exception as e:
-            logger.warning("GNOME session manager not available, will not detect logout signal for clean shutdown. %s" % str(e))
+            logger.warning("GNOME session manager not available. (%s)" % str(e))
+
+        if not connected_to_session_manager:
+            try :
+                logger.info("Connecting to MATE session manager")
+                session_manager_object = self.session_bus.get_object("org.mate.SessionManager", "/org/mate/SessionManager", "org.mate.SessionManager")
+                client_path = session_manager_object.RegisterClient('gnome15.desktop', '', dbus_interface="org.mate.SessionManager")
+
+                self.session_manager_client_object = self.session_bus.get_object("org.mate.SessionManager", client_path, "org.mate.SessionManager.ClientPrivate")
+                self.session_manager_client_object.connect_to_signal("QueryEndSession", self._sm_query_end_session)
+                self.session_manager_client_object.connect_to_signal("EndSession", self._sm_end_session)
+                self.session_manager_client_object.connect_to_signal("CancelEndSession", self._sm_cancel_end_session)
+                self.session_manager_client_object.connect_to_signal("Stop", self._sm_stop)
+
+                session_manager_client_public_object = self.session_bus.get_object("org.mate.SessionManager", client_path, "org.mate.SessionManager.Client")
+                sm_client_id = session_manager_client_public_object.GetStartupId()
+                gtk.gdk.set_sm_client_id(sm_client_id)
+                connected_to_session_manager = True
+                logger.info("Connected to MATE session manager")
+            except Exception as e:
+                logger.warning("MATE session manager not available. (%s)" % str(e))
+
+        if not connected_to_session_manager:
+            logger.warning("None of the supported session managers available, will not detect logout signal for clean shutdown.")
+
             
     def _sm_query_end_session(self, flags):
         if self._is_monitor_session():
@@ -937,7 +954,7 @@ class G15Service(g15desktop.G15AbstractService):
             def e():
                 self.stop()
                 self._sm_client_dbus_will_quit(True, "")
-            g15util.queue(SERVICE_QUEUE, "endSession", 0.0, e)
+            g15scheduler.queue(SERVICE_QUEUE, "endSession", 0.0, e)
     
     def _sm_client_dbus_will_quit(self, can_quit=True, reason=""):
         self.session_manager_client_object.EndSessionResponse(can_quit,reason)
@@ -947,8 +964,61 @@ class G15Service(g15desktop.G15AbstractService):
         self.shutdown(True)
         
     def _is_monitor_session(self):
-        return g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/monitor_desktop_session", True)
+        return g15gconf.get_bool_or_default(self.conf_client, "/apps/gnome15/monitor_desktop_session", True)
             
+    def _connect_to_consolekit(self):
+        try :
+            logger.info("Connecting to ConsoleKit")
+            self.system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
+            console_kit_object = self.system_bus.get_object("org.freedesktop.ConsoleKit", '/org/freedesktop/ConsoleKit/Manager')
+            console_kit_manager = dbus.Interface(console_kit_object, 'org.freedesktop.ConsoleKit.Manager')
+            logger.info("Seats %s " % str(console_kit_manager.GetSeats()))
+            self.this_session_path = console_kit_manager.GetSessionForCookie (os.environ['XDG_SESSION_COOKIE'])
+            logger.info("This session %s " % self.this_session_path)
+
+            # TODO GetCurrentSession doesn't seem to work as i would expect. Investigate. For now, assume we are the active session
+#            current_session = console_kit_manager.GetCurrentSession()
+#            logger.info("Current session %s " % current_session)
+#            self.session_active = current_session == self.this_session_path
+            self.session_active = True
+
+            logger.info("Connected to ConsoleKit")
+            connected_to_system_session_manager = True
+        except Exception as e:
+            logger.warning("ConsoleKit not available (%s)" % str(e))
+
+    def _connect_to_logind(self):
+        try :
+            logger.info("Connecting to logind")
+            self.system_bus.add_signal_receiver(self._logind_seat0_property_changed, "PropertiesChanged", "org.freedesktop.DBus.Properties", "org.freedesktop.login1", "/org/freedesktop/login1/seat/seat0")
+            self.this_session_path = self._get_systemd_active_session_path()
+            logger.info("This session %s " % self.this_session_path)
+
+            self.session_active = True
+
+            logger.info("Connected to logind")
+            connected_to_system_session_manager = True
+        except Exception as e:
+            logger.warning("logind not available. (%s)" % str(e))
+
+    def _get_systemd_active_session_path(self):
+        seat0_object = self.system_bus.get_object("org.freedesktop.login1", '/org/freedesktop/login1/seat/seat0')
+        seat0_properties_interface = dbus.Interface(seat0_object, 'org.freedesktop.DBus.Properties')
+        id, session_path = seat0_properties_interface.Get('org.freedesktop.login1.Seat', 'ActiveSession')
+        return session_path
+
+    def _logind_seat0_property_changed(self, interface, dicto, properties):
+        if "ActiveSession" in properties:
+            if self._is_monitor_session():
+                session_path = self._get_systemd_active_session_path()
+                logger.info("This session %s " % session_path)
+                self.session_active = session_path == self.this_session_path
+                if self.session_active:
+                    logger.info("g15-desktop service is running on the active session")
+                else:
+                    logger.info("g15-desktop service is NOT running on the active session")
+                g15scheduler.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
+
     def _active_session_changed(self, object_path):        
         logger.debug("Adding seat %s" % object_path)
         if self._is_monitor_session():
@@ -957,7 +1027,7 @@ class G15Service(g15desktop.G15AbstractService):
                 logger.info("g15-desktop service is running on the active session")
             else:
                 logger.info("g15-desktop service is NOT running on the active session")
-            g15util.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
+            g15scheduler.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
         
     def _configure_window_monitoring(self):
         logger.info("Attempting to set up BAMF")
@@ -993,17 +1063,17 @@ class G15Service(g15desktop.G15AbstractService):
         self._load_hidden_configuration()
         
     def _load_hidden_configuration(self):
-        self.scroll_delay = float(g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_delay', 500)) / 1000.0
-        self.scroll_amount = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_amount', 5)
-        self.animated_menus = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/animated_menus', True)
-        self.animation_delay = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/animation_delay', 100) / 1000.0
-        self.key_hold_duration = g15util.get_int_or_default(self.conf_client, '/apps/gnome15/key_hold_duration', 2000) / 1000.0
-        self.macro_handler.use_x_test = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/use_x_test', True)
-        self.disable_svg_glow = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/disable_svg_glow', False)
-        self.fade_screen_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_screen_on_close', True)
-        self.all_off_on_disconnect = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/all_off_on_disconnect', True)
-        self.fade_keyboard_backlight_on_close = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_keyboard_backlight_on_close', True)
-        self.start_in_threads = g15util.get_bool_or_default(self.conf_client, '/apps/gnome15/start_in_threads', False)
+        self.scroll_delay = float(g15gconf.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_delay', 500)) / 1000.0
+        self.scroll_amount = g15gconf.get_int_or_default(self.conf_client, '/apps/gnome15/scroll_amount', 5)
+        self.animated_menus = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/animated_menus', True)
+        self.animation_delay = g15gconf.get_int_or_default(self.conf_client, '/apps/gnome15/animation_delay', 100) / 1000.0
+        self.key_hold_duration = g15gconf.get_int_or_default(self.conf_client, '/apps/gnome15/key_hold_duration', 2000) / 1000.0
+        self.macro_handler.use_x_test = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/use_x_test', True)
+        self.disable_svg_glow = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/disable_svg_glow', False)
+        self.fade_screen_on_close = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_screen_on_close', True)
+        self.all_off_on_disconnect = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/all_off_on_disconnect', True)
+        self.fade_keyboard_backlight_on_close = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/fade_keyboard_backlight_on_close', True)
+        self.start_in_threads = g15gconf.get_bool_or_default(self.conf_client, '/apps/gnome15/start_in_threads', False)
         self._mark_all_pages_dirty()
         
     def _mark_all_pages_dirty(self):
@@ -1012,7 +1082,7 @@ class G15Service(g15desktop.G15AbstractService):
                 page.mark_dirty()
             
     def _device_enabled_configuration_changed(self, client, connection_id, entry, device):
-        g15util.queue(SERVICE_QUEUE, "deviceStateChanged", 0, self._check_device_state, device)
+        g15scheduler.queue(SERVICE_QUEUE, "deviceStateChanged", 0, self._check_device_state, device)
         
     def _check_device_state(self, device, quickly = False):
         enabled = device in self.devices and g15devices.is_enabled(self.conf_client, device) and self.session_active

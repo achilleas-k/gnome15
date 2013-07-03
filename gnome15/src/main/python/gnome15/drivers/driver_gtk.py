@@ -15,7 +15,9 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("gnome15-drivers").ugettext
 
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15globals as g15globals
 
 import gconf
@@ -79,7 +81,7 @@ def show_preferences(device, parent, gconf_client):
     mode_model.clear()
     for mode in g15driver.MODELS:
         mode_model.append([mode])    
-    g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/gtk_mode" % device.uid, "ModeCombo", g15driver.MODEL_G19, widget_tree)
+    g15uigconf.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/gtk_mode" % device.uid, "ModeCombo", g15driver.MODEL_G19, widget_tree)
     return widget_tree.get_object("DriverComponent")
 
 class Driver(g15driver.AbstractDriver):
@@ -261,7 +263,7 @@ class Driver(g15driver.AbstractDriver):
     def _modify_button(self, id, lights, mask):
         on = lights & mask != 0
         c = self.buttons[id]
-        key_text = " ".join(g15util.get_key_names(list(id)))
+        key_text = " ".join(g15driver.get_key_names(list(id)))
         c.set_label("*%s" % key_text if on else "%s" % key_text)
         
     def _close_window(self):
@@ -296,7 +298,7 @@ class Driver(g15driver.AbstractDriver):
         width = self.lcd_size[0]
         height = self.lcd_size[1]
         zoom = self.get_zoom()
-        pixbuf = g15util.image_to_pixbuf(self.image)
+        pixbuf = g15cairo.image_to_pixbuf(self.image)
         pixbuf = pixbuf.scale_simple(zoom * width, zoom * height, 0)
         if self.area != None:
             self.area.set_pixbuf(pixbuf)
@@ -333,7 +335,7 @@ class Driver(g15driver.AbstractDriver):
         for row in self.get_key_layout():
             hbox = gtk.HBox()
             for key in row:
-                key_text = " ".join(g15util.get_key_names(list(key)))
+                key_text = " ".join(g15driver.get_key_names(list(key)))
                 g_button = gtk.Button(key_text)
                 g_button.connect("pressed", self._simulate_key, key, g15driver.KEY_STATE_DOWN)
                 g_button.connect("released", self._simulate_key, key, g15driver.KEY_STATE_UP)
@@ -347,7 +349,7 @@ class Driver(g15driver.AbstractDriver):
         
         self.main_window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.main_window.set_title("Gnome15") 
-        self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client, "gnome15"))
+        self.main_window.set_icon_from_file(g15icontools.get_app_icon(self.conf_client, "gnome15"))
         self.main_window.add(self.vbox)
         self.main_window.connect("delete-event", self._window_closed)
         
@@ -391,7 +393,7 @@ class VirtualLCD(gtk.DrawingArea):
         cr.paint()
         
     def set_pixbuf(self, pixbuf):
-        self.buffer = g15util.pixbuf_to_surface(pixbuf)
+        self.buffer = g15cairo.pixbuf_to_surface(pixbuf)
         
     def set_surface(self, surface):
         self.buffer = surface

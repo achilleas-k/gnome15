@@ -30,7 +30,12 @@ import g15desktop
 import g15drivermanager
 import g15macroeditor
 import g15devices
-import g15util
+import util.g15convert as g15convert
+import util.g15scheduler as g15scheduler
+import util.g15uigconf as g15uigconf
+import util.g15gconf as g15gconf
+import util.g15os as g15os
+import util.g15icontools as g15icontools
 import g15theme
 import colorpicker
 import subprocess
@@ -109,22 +114,10 @@ class G15GlobalConfig:
         global_plugin_enabled_renderer = self.widget_tree.get_object("GlobalPluginEnabledRenderer")
         enable_gnome_shell_extension = self.widget_tree.get_object("EnableGnomeShellExtension")
         
-        notify_h = self.conf_client.notify_add("/apps/gnome15/global/plugins", self._plugins_changed)
-               
         self.dialog = self.widget_tree.get_object("GlobalOptionsDialog")
         self.global_plugin_model = self.widget_tree.get_object("GlobalPluginModel")
         self.global_plugin_tree = self.widget_tree.get_object("GlobalPluginTree")        
         self.global_plugin_tree.connect("cursor-changed", self._select_plugin)
-
-        
-        # Plugins
-        self._load_plugins()
-        if len(self.global_plugin_model) > 0 and self._get_selected_plugin() == None:            
-            self.global_plugin_tree.get_selection().select_path(self.global_plugin_model.get_path(self.global_plugin_model.get_iter(0)))
-            self._select_plugin()
-        else:
-            self.widget_tree.get_object("GlobalPluginsFrame").set_visible(False)
-            self.dialog.set_size_request(-1, -1)
 
         self.widget_tree.get_object("GlobalPreferencesButton").connect("clicked", self._show_preferences)
         self.widget_tree.get_object("GlobalAboutPluginButton").connect("clicked", self._show_about_plugin)            
@@ -147,6 +140,19 @@ class G15GlobalConfig:
         enable_gnome_shell_extension.set_active(g15desktop.is_gnome_shell_extension_enabled("gnome15-shell-extension@gnome15.org"))
         
         self.dialog.set_transient_for(parent)
+
+    def run(self):
+        notify_h = self.conf_client.notify_add("/apps/gnome15/global/plugins", self._plugins_changed)
+        # Plugins
+        self._load_plugins()
+
+        if len(self.global_plugin_model) == 0:
+            self.widget_tree.get_object("GlobalPluginsFrame").set_visible(False)
+            self.dialog.set_size_request(-1, -1)
+        elif self._get_selected_plugin() == None:
+            self.global_plugin_tree.get_selection().select_path(self.global_plugin_model.get_path(self.global_plugin_model.get_iter(0)))
+            self._select_plugin()
+
         self.dialog.run()
         self.dialog.hide()
         self.conf_client.notify_remove(notify_h)
@@ -365,7 +371,7 @@ class G15Config:
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
-        self.main_window.set_icon_from_file(g15util.get_app_icon(self.conf_client,  "gnome15"))
+        self.main_window.set_icon_from_file(g15icontools.get_app_icon(self.conf_client,  "gnome15"))
         
         # Monitor gconf
         self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
@@ -379,7 +385,7 @@ class G15Config:
 
         # Indicator options
         # TODO move this out of here        
-        g15util.configure_checkbox_from_gconf(self.conf_client, "/apps/gnome15/indicate_only_on_error", "OnlyShowIndicatorOnError", False, self.widget_tree, True)
+        g15uigconf.configure_checkbox_from_gconf(self.conf_client, "/apps/gnome15/indicate_only_on_error", "OnlyShowIndicatorOnError", False, self.widget_tree, True)
         
         # Bind to events
         self.cycle_seconds.connect("value-changed", self._cycle_seconds_changed)
@@ -678,7 +684,7 @@ class G15Config:
         
     def _start_service(self, widget):
         widget.set_sensitive(False)
-        g15util.run_script("g15-desktop-service", ["-f"])
+        g15os.run_script("g15-desktop-service", ["-f"])
     
     def _show_message(self, type, text, start_service_button = True):
         self.infobar.set_message_type(type)
@@ -916,7 +922,7 @@ class G15Config:
             self.cycle_seconds.set_value(time)
             
     def _set_cycle_screens_value_from_configuration(self):
-        val = g15util.get_bool_or_default(self.conf_client, self._get_full_key("cycle_screens"), True)
+        val = g15gconf.get_bool_or_default(self.conf_client, self._get_full_key("cycle_screens"), True)
         self.cycle_seconds_widget.set_sensitive(val)
         if val != self.cycle_screens.get_active():
             self.cycle_screens.set_active(val)
@@ -1005,7 +1011,7 @@ class G15Config:
                         if view.Name() == self.selected_profile.window_name:
                             icon = view.Icon()
                             if icon != None:
-                                icon_path = g15util.get_icon_path(icon)
+                                icon_path = g15icontools.get_icon_path(icon)
                                 if icon_path != None:
                                     # We need to copy the icon as it may be temporary
                                     copy_path = os.path.join(icons_dir, os.path.basename(icon_path))
@@ -1308,7 +1314,7 @@ class G15Config:
                             if not dest_name.endswith(".macros"):
                                 # Just extract all other files
                                 dest_dir = os.path.join(profile_dir, os.path.dirname(dest_name))
-                                g15util.mkdir_p(dest_dir)
+                                g15os.mkdir_p(dest_dir)
                                 macro_file = file.open(filename, 'r')
                                 try:
                                     out_file = open(os.path.join(dest_dir, os.path.basename(dest_name)), 'w')
@@ -1442,7 +1448,7 @@ class G15Config:
                     
         if use:
             macro = self.selected_profile.create_macro(memory, [use], 
-                                                       _("Macro %s") % " ".join(g15util.get_key_names([use])), 
+                                                       _("Macro %s") % " ".join(g15driver.get_key_names([use])),
                                                        g15profile.MACRO_SIMPLE, 
                                                        "", 
                                                        g15driver.KEY_STATE_UP)
@@ -1491,14 +1497,17 @@ class G15Config:
         if not self.adjusting:
             if self.profile_save_timer is not None:
                 self.profile_save_timer.cancel()
-            self.profile_save_timer = g15util.schedule("SaveProfile", 2, self._do_save_profile, profile)
+            self.profile_save_timer = g15scheduler.schedule("SaveProfile", 2, self._do_save_profile, profile)
             
     def _do_save_profile(self, profile):
         logger.info("Saving profile %s" % profile.name)
         profile.save()
             
+    global_config = None
     def _show_global_options(self, widget): 
-        G15GlobalConfig(self.main_window, self.widget_tree, self.conf_client)
+        if self.global_config is None:
+           self.global_config = G15GlobalConfig(self.main_window, self.widget_tree, self.conf_client)
+        self.global_config.run()
         
     def _add_profile(self, widget):
         dialog = self.widget_tree.get_object("NewProfileDialog") 
@@ -1561,9 +1570,9 @@ class G15Config:
         idx = 0
         for device in self.devices:
             if device.model_id == 'virtual':
-                icon_file = g15util.get_icon_path(["preferences-system-window", "preferences-system-windows", "gnome-window-manager", "window_fullscreen"])
+                icon_file = g15icontools.get_icon_path(["preferences-system-window", "preferences-system-windows", "gnome-window-manager", "window_fullscreen"])
             else:
-                icon_file = g15util.get_app_icon(self.conf_client,  device.model_id)
+                icon_file = g15icontools.get_app_icon(self.conf_client,  device.model_id)
             pixb = gtk.gdk.pixbuf_new_from_file(icon_file)
             self.device_model.append([pixb.scale_simple(96, 96, gtk.gdk.INTERP_BILINEAR), device.model_fullname, 96, gtk.WRAP_WORD, pango.ALIGN_CENTER])
             if previous_sel_device_name is not None and device.uid == previous_sel_device_name:
@@ -1667,7 +1676,7 @@ class G15Config:
                     on_name = _("Press")
                 else:
                     on_name = _("Release")
-                row = [", ".join(g15util.get_key_names(macro.keys)), 
+                row = [", ".join(g15driver.get_key_names(macro.keys)),
                                           macro.name, 
                                           macro.key_list_key, 
                                           not profile.read_only, 
@@ -1754,10 +1763,10 @@ class G15Config:
                 if rgb == None:
                     self.enable_color_for_m_key.set_active(False)
                     self.color_button.set_sensitive(False)
-                    self.color_button.set_color(g15util.to_color((255, 255, 255)))
+                    self.color_button.set_color(g15convert.to_color((255, 255, 255)))
                 else:
                     self.color_button.set_sensitive(True and not profile.read_only)
-                    self.color_button.set_color(g15util.to_color(rgb))
+                    self.color_button.set_color(g15convert.to_color(rgb))
                     self.enable_color_for_m_key.set_active(True)
                 self.enable_color_for_m_key.set_sensitive(not profile.read_only)
                 
@@ -1957,7 +1966,7 @@ class G15Config:
     def _profile_color_changed(self, widget):
         if not self.adjusting:
             self.selected_profile.set_mkey_color(self._get_memory_number(), 
-                                                 g15util.color_to_rgb(widget.get_color()) if self.enable_color_for_m_key.get_active() else None)
+                                                 g15convert.color_to_rgb(widget.get_color()) if self.enable_color_for_m_key.get_active() else None)
             self._save_profile(self.selected_profile)
     
     def _color_for_mkey_enabled(self, widget):

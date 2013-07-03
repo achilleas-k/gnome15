@@ -24,7 +24,11 @@ _ = g15locale.get_translation("mpris", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15pythonlang as g15pythonlang
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15devices as g15devices
@@ -156,7 +160,7 @@ class AbstractMPRISPlayer():
             logger.info("Playback status changed to %s" % new_status)
             self.status = new_status
             if self.status == "Playing":
-                g15util.schedule("playbackStarted", 1.0, self._playback_started)
+                g15scheduler.schedule("playbackStarted", 1.0, self._playback_started)
             elif self.status == "Paused":
                 self.cancel_redraw()
                 if self.page != None:
@@ -212,7 +216,7 @@ class AbstractMPRISPlayer():
             
     def schedule_redraw(self): 
         self.cancel_redraw()
-        self.redraw_timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "MPRIS2Redraw", 1.0, self.redraw)
+        self.redraw_timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "MPRIS2Redraw", 1.0, self.redraw)
         
     def on_shown(self):
         self.hidden = False
@@ -230,12 +234,12 @@ class AbstractMPRISPlayer():
         
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None and self.thumb_image != None:
-            size = g15util.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
+            size = g15cairo.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
             return size
         
     def paint_panel(self, canvas, allocated_size, horizontal):
         if self.page != None and self.thumb_image != None and self.status == "Playing":
-            size = g15util.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
+            size = g15cairo.paint_thumbnail_image(allocated_size, self.thumb_image, canvas)
             return size
             
     def process_properties(self):
@@ -263,36 +267,36 @@ class AbstractMPRISPlayer():
             self.cover_image = None
             self.thumb_image = None
             if self.cover_uri != None:
-                cover_image = g15util.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
+                cover_image = g15cairo.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
                 if cover_image:
                     self.cover_image = cover_image
                     
                     # If the cover URI was from HTTP, then we cached it. Use that as the URI
                     if self.cover_uri.startswith("http:") or self.cover_uri.startswith("http:"):
-                        self.cover_uri = g15util.get_image_cache_file(self.cover_uri, self.screen.driver.get_size()[0])
+                        self.cover_uri = g15cairo.get_image_cache_file(self.cover_uri, self.screen.driver.get_size()[0])
                 else:
                     cover_image = self.get_default_cover()
                     logger.warning("Failed to loaded preferred cover art, falling back to default of %s" % cover_image)
                     if cover_image:
                         self.cover_uri = cover_image
-                        self.cover_image = g15util.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
+                        self.cover_image = g15cairo.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
                   
         # Track status
         if self.status == "Stopped":
             self.song_properties["stopped"] = True
-            self.song_properties["icon"] = g15util.get_icon_path(["media-stop", "media-playback-stop", "gtk-media-stop", "player_stop" ], self.screen.height)
+            self.song_properties["icon"] = g15icontools.get_icon_path(["media-stop", "media-playback-stop", "gtk-media-stop", "player_stop" ], self.screen.height)
             self.song_properties["title"] = _("No track playing")
             self.song_properties["time_text"] = ""
         else:            
             if self.status == "Playing":
                 if self.screen.driver.get_bpp() == 1:
-                    self.thumb_image = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "play.gif"))
+                    self.thumb_image = g15cairo.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "play.gif"))
                 else:
                     self.thumb_image = self.cover_image
                 self.song_properties["playing"] = True
             else:
                 if self.screen.driver.get_bpp() == 1:
-                    self.thumb_image = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "pause.gif"))
+                    self.thumb_image = g15cairo.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), "pause.gif"))
                 else:
                     self.thumb_image = self.cover_image                
                 self.song_properties["paused"] = True
@@ -302,7 +306,7 @@ class AbstractMPRISPlayer():
         mime_type = mime.get_type(self.playing_uri)
         new_cover_uri = None
         if mime_type != None:
-            mime_icon = g15util.get_icon_path(str(mime_type).replace("/","-"), size=self.screen.height)
+            mime_icon = g15icontools.get_icon_path(str(mime_type).replace("/","-"), size=self.screen.height)
             if mime_icon != None:                    
                 new_cover_uri = mime_icon  
         if new_cover_uri != None:
@@ -312,7 +316,7 @@ class AbstractMPRISPlayer():
                 new_cover_uri = None
                               
         if new_cover_uri == None:                      
-            new_cover_uri = g15util.get_icon_path(["audio-player", "applications-multimedia" ], size=self.screen.height)
+            new_cover_uri = g15icontools.get_icon_path(["audio-player", "applications-multimedia" ], size=self.screen.height)
             
         return new_cover_uri
         
@@ -335,7 +339,7 @@ class AbstractMPRISPlayer():
             vol_icon = "audio-volume-medium"
         elif self.volume >= 67.0:
             vol_icon = "audio-volume-high"
-        self.song_properties["vol_icon"] = g15util.get_icon_path(vol_icon, self.screen.height)
+        self.song_properties["vol_icon"] = g15icontools.get_icon_path(vol_icon, self.screen.height)
         
         # For the bars on the G15 (the icon is too small, bars are better)
         for i in range(0, int( self.volume / 10 ) + 1, 1):            
@@ -380,7 +384,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.check_status()
         
         # Start polling for status, position and track changes        
-        self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)            
+        self.timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)
         session_bus.add_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def next_track(self):
@@ -404,9 +408,9 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.playback_started = time.time()
         self.check_status()
         if self.status == "Playing":        
-            self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)
+            self.timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)
         else:        
-            self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 5.0, self.update_track)
+            self.timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 5.0, self.update_track)
         
     def on_stop(self):
         if self.timer != None:
@@ -414,7 +418,7 @@ class MPRIS1Player(AbstractMPRISPlayer):
         self.session_bus.remove_signal_receiver(self.track_changed_handler, dbus_interface = "org.freedesktop.MediaPlayer", signal_name = "TrackChange")
         
     def track_changed_handler(self, detail):
-        g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "LoadTrackDetails", 1.0, self.load_and_draw)
+        g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "LoadTrackDetails", 1.0, self.load_and_draw)
         
     def load_and_draw(self):
         self.load_song_details()
@@ -437,27 +441,27 @@ class MPRIS1Player(AbstractMPRISPlayer):
         meta_data = self.player.GetMetadata()
         
         # Format properties that need formatting
-        bitrate = g15util.value_or_default(meta_data,"audio-bitrate", 0)
+        bitrate = g15pythonlang.value_or_default(meta_data,"audio-bitrate", 0)
         if str(bitrate) == "0":
             bitrate = ""            
-        self.playing_uri = g15util.value_or_blank(meta_data,"location")
-        self.duration = g15util.value_or_default(meta_data,"time", 0)
+        self.playing_uri = g15pythonlang.value_or_blank(meta_data,"location")
+        self.duration = g15pythonlang.value_or_default(meta_data,"time", 0)
         if self.duration == 0:
-            self.duration = g15util.value_or_default(meta_data,"mtime", 0) / 1000
+            self.duration = g15pythonlang.value_or_default(meta_data,"mtime", 0) / 1000
                             
         # General properties                    
         self.song_properties = {
                                 "status": self.status,
                                 "uri": self.playing_uri,
-                                "art_uri": g15util.value_or_blank(meta_data,"arturl"),
-                                "title": g15util.value_or_blank(meta_data,"title"),
-                                "genre": g15util.value_or_blank(meta_data,"genre"),
-                                "track_no": g15util.value_or_blank(meta_data,"tracknumber"),
-                                "artist": g15util.value_or_blank(meta_data,"artist"),
-                                "album": g15util.value_or_blank(meta_data,"album"),
+                                "art_uri": g15pythonlang.value_or_blank(meta_data,"arturl"),
+                                "title": g15pythonlang.value_or_blank(meta_data,"title"),
+                                "genre": g15pythonlang.value_or_blank(meta_data,"genre"),
+                                "track_no": g15pythonlang.value_or_blank(meta_data,"tracknumber"),
+                                "artist": g15pythonlang.value_or_blank(meta_data,"artist"),
+                                "album": g15pythonlang.value_or_blank(meta_data,"album"),
                                 "bitrate": bitrate,
-                                "rating": g15util.value_or_default(meta_data,"rating", 0.0),
-                                "album_artist": g15util.value_or_blank(meta_data,"mb album artist"),
+                                "rating": g15pythonlang.value_or_default(meta_data,"rating", 0.0),
+                                "album_artist": g15pythonlang.value_or_blank(meta_data,"mb album artist"),
                                 }
     
         self.process_properties()
@@ -512,7 +516,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
         
         # xnoise doesn't send seeked signals, so we need to refresh
         if "xnoise" in bus_name:
-            self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)        
+            self.timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0, self.update_track)
         
     def next_track(self):
         self.player.Next()
@@ -586,7 +590,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
             This doesn't seem right, but it stops the hanging problem when notify-lcd is enabled and 
             tracks change
             """            
-            g15util.schedule("loadMeta", 1.0, self.reset_elapsed)
+            g15scheduler.schedule("loadMeta", 1.0, self.reset_elapsed)
             
         if "Volume" in properties:
             self.volume = int(properties["Volume"] * 100)
@@ -602,7 +606,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
             This doesn't seem right, but it stops the hanging problem when notify-lcd is enabled and 
             tracks change
             """            
-            g15util.schedule("loadMeta", 1.0, self.load_meta)
+            g15scheduler.schedule("loadMeta", 1.0, self.load_meta)
             
     def _load_and_redraw(self):
         self.load_meta()
@@ -621,17 +625,17 @@ class MPRIS2Player(AbstractMPRISPlayer):
         meta_data = self.last_properties["Metadata"]
         
         # Format properties that need formatting
-        bitrate = g15util.value_or_default(meta_data,"xesam:audioBitrate", 0)
+        bitrate = g15pythonlang.value_or_default(meta_data,"xesam:audioBitrate", 0)
         if bitrate == 0:
             bitrate = ""
         else:
             bitrate = str(bitrate / 1024)
         
-        self.playing_uri = g15util.value_or_blank(meta_data,"xesam:url")         
-        self.playing_track_id = g15util.value_or_blank(meta_data,"mpris:trackid")
-        self.playing_title = g15util.value_or_blank(meta_data,"xesam:title")
-        self.playing_artist = g15util.value_or_blank(meta_data,"xesam:artist")
-        self.playing_album = g15util.value_or_blank(meta_data,"xesam:album")
+        self.playing_uri = g15pythonlang.value_or_blank(meta_data,"xesam:url")
+        self.playing_track_id = g15pythonlang.value_or_blank(meta_data,"mpris:trackid")
+        self.playing_title = g15pythonlang.value_or_blank(meta_data,"xesam:title")
+        self.playing_artist = g15pythonlang.value_or_blank(meta_data,"xesam:artist")
+        self.playing_album = g15pythonlang.value_or_blank(meta_data,"xesam:album")
                             
         # General properties                    
         self.song_properties = {
@@ -639,18 +643,18 @@ class MPRIS2Player(AbstractMPRISPlayer):
                                 "tracklist": len(self.tracks) > 0,
                                 "uri": self.playing_uri,
                                 "track_id": self.playing_track_id,
-                                "title": g15util.value_or_blank(meta_data,"xesam:title"),
-                                "art_uri": g15util.value_or_blank(meta_data,"mpris:artUrl"),
-                                "genre": ",".join(list(g15util.value_or_empty(meta_data,"xesam:genre"))),
-                                "track_no": g15util.value_or_blank(meta_data,"xesam:trackNumber"),
-                                "artist": ",".join(list(g15util.value_or_empty(meta_data,"xesam:artist"))),
-                                "album": g15util.value_or_blank(meta_data,"xesam:album"),
+                                "title": g15pythonlang.value_or_blank(meta_data,"xesam:title"),
+                                "art_uri": g15pythonlang.value_or_blank(meta_data,"mpris:artUrl"),
+                                "genre": ",".join(list(g15pythonlang.value_or_empty(meta_data,"xesam:genre"))),
+                                "track_no": g15pythonlang.value_or_blank(meta_data,"xesam:trackNumber"),
+                                "artist": ",".join(list(g15pythonlang.value_or_empty(meta_data,"xesam:artist"))),
+                                "album": g15pythonlang.value_or_blank(meta_data,"xesam:album"),
                                 "bitrate": bitrate,
-                                "rating": g15util.value_or_default(meta_data,"xesam:userRating", 0.0),
-                                "album_artist": ",".join(list(g15util.value_or_empty(meta_data,"xesam:albumArtist"))),
+                                "rating": g15pythonlang.value_or_default(meta_data,"xesam:userRating", 0.0),
+                                "album_artist": ",".join(list(g15pythonlang.value_or_empty(meta_data,"xesam:albumArtist"))),
                                 }
     
-        self.duration = g15util.value_or_default(meta_data, "mpris:length", 0) / 1000 / 1000
+        self.duration = g15pythonlang.value_or_default(meta_data, "mpris:length", 0) / 1000 / 1000
         self.process_properties()
         
     def get_volume(self):
@@ -672,7 +676,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
     def update_track(self):
         logger.debug("Updating elapsed time")
         self.reset_elapsed()
-        self.timer = g15util.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0 if self.status == "Playing" else 5.0, self.update_track)
+        self.timer = g15scheduler.queue("mprisDataQueue-%s" % self.screen.device.uid, "UpdateTrackData", 1.0 if self.status == "Playing" else 5.0, self.update_track)
             
 class G15MPRIS(g15plugin.G15Plugin):
     
@@ -701,7 +705,7 @@ class G15MPRIS(g15plugin.G15Plugin):
         self.screen.key_handler.action_listeners.remove(self)
         for key in self.players.keys():
             self.players[key].stop()
-        g15util.stop_queue("mprisDataQueue-%s" % self.screen.device.uid)
+        g15scheduler.stop_queue("mprisDataQueue-%s" % self.screen.device.uid)
         self.session_bus.remove_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
                                      signal_name='NameOwnerChanged')  

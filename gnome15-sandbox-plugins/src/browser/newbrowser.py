@@ -20,7 +20,8 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
  
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15cairo as g15cairo
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
@@ -151,6 +152,6 @@ class G15Browser():
         print "Painting"
         pixbuf = self.pixbuf
         if pixbuf != None:
-            image = g15util.pixbuf_to_surface(pixbuf)
+            image = g15cairo.pixbuf_to_surface(pixbuf)
             canvas.set_source_surface(image)
             canvas.paint()

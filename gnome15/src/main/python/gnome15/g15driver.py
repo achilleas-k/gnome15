@@ -171,7 +171,7 @@ CAIRO_IMAGE_FORMAT=4
 
 FX_QUEUE = "ControlEffects"
 
-import g15util as g15util
+import util.g15scheduler as g15scheduler
 import time
 import colorsys
 from threading import Lock
@@ -180,7 +180,16 @@ import logging
 logger = logging.getLogger("driver")
 
 seq_no = 0
-                        
+
+def get_key_names(keys):
+    """
+    Get the string name of the key given it's code
+    """
+    key_names = []
+    for key in keys:
+        key_names.append((key[:1].upper() + key[1:].lower()).replace('-',' '))
+    return key_names
+
 def zeroize(val):
     """
     Zeroise a control value (will be used for the fully off value). The type
@@ -333,7 +342,7 @@ class AbstractControlAcquisition(object):
             self.adjust(off_val if isinstance(off_val, int) or isinstance(off_val, tuple) else off_val())
         self.on = not self.on
         if duration == None or time.time() < blink_started + duration:
-            self.reset_timer = g15util.queue(FX_QUEUE, "Blink", delay, self.blink, off_val, delay, duration, blink_started)
+            self.reset_timer = g15scheduler.queue(FX_QUEUE, "Blink", delay, self.blink, off_val, delay, duration, blink_started)
         return self.reset_timer
     
     def is_active(self):
@@ -359,7 +368,7 @@ class AbstractControlAcquisition(object):
                     
             if reset_after:
                 self.reset_val = old_val
-                self.reset_timer = g15util.queue(FX_QUEUE, "LEDReset", reset_after, self.reset)
+                self.reset_timer = g15scheduler.queue(FX_QUEUE, "LEDReset", reset_after, self.reset)
                 return self.reset_timer
             
     def reset(self):
@@ -392,7 +401,7 @@ class AbstractControlAcquisition(object):
                 if release:
                     self.driver.release_control(self)
             else:                
-                self.fade_timer = g15util.queue(FX_QUEUE, "Fade", interval, self._reduce, interval, target_val, release, step)
+                self.fade_timer = g15scheduler.queue(FX_QUEUE, "Fade", interval, self._reduce, interval, target_val, release, step)
                 
     def _notify_released(self):
         if self._released:
@@ -474,7 +483,7 @@ class ControlAcquisition(AbstractControlAcquisition):
                     if release and not self._released:
                         self.driver.release_control(self)
                 else:
-                    g15util.queue(FX_QUEUE, "Fade", interval, self._reduce, interval, target_val, release, step)
+                    g15scheduler.queue(FX_QUEUE, "Fade", interval, self._reduce, interval, target_val, release, step)
         
 class AbstractDriver(object):
     
@@ -525,7 +534,7 @@ class AbstractDriver(object):
         control_acquisition.set_value(val if val is not None else control.value)
         
         if release_after:
-            g15util.queue(FX_QUEUE, "ReleaseControl", release_after, self._release_control, control_acquisition)
+            g15scheduler.queue(FX_QUEUE, "ReleaseControl", release_after, self._release_control, control_acquisition)
         return control_acquisition
         
     def acquire_control_with_hint(self, hint, release_after = None, val = None):
@@ -755,7 +764,7 @@ class AbstractDriver(object):
         fg_rgb = default
         if fg_control != None:
             fg_rgb = fg_control.value
-        return g15util.rgb_to_hex(fg_rgb)
+        return rgb_to_hex(fg_rgb)
     
     def get_color(self, hint, default):
         fg_control = self.get_control_for_hint(hint)
@@ -777,3 +786,6 @@ class AbstractDriver(object):
         self.control_update_listeners = []
         self.acquired_controls = {}
         self.initial_acquired_control_values = {}
+
+def rgb_to_hex(rgb):
+    return '#%02x%02x%02x' % rgb

@@ -29,7 +29,10 @@ import gnome15.g15driver as g15driver
 import gnome15.g15locale as g15locale
 import gnome15.g15screen as g15screen
 import gnome15.g15theme as g15theme
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
 import gobject
 import gtk
 import logging
@@ -116,12 +119,12 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     dialog = widget_tree.get_object("G15DaemonServerDialog")
     dialog.set_transient_for(parent)
     
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/port", "PortAdjustment", 15550, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/keep_aspect_ratio", "KeepAspectRatio", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/take_over_macro_keys", "TakeOverMacroKeys", True, widget_tree, True)
+    g15uigconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/port", "PortAdjustment", 15550, widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/keep_aspect_ratio", "KeepAspectRatio", False, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/take_over_macro_keys", "TakeOverMacroKeys", True, widget_tree, True)
     
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/use_custom_foreground", "UseCustomForeground", False, widget_tree)
-    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/custom_foreground", "CustomForeground", ( 255, 255, 255 ), widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/use_custom_foreground", "UseCustomForeground", False, widget_tree)
+    g15uigconf.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/custom_foreground", "CustomForeground", ( 255, 255, 255 ), widget_tree)
     
     dialog.run()
     dialog.hide()
@@ -262,8 +265,8 @@ class G15DaemonClient(asyncore.dispatcher):
             pil_img.putalpha(mask_img)                    
 
         # TODO find a quicker way of converting
-        pixbuf = g15util.image_to_pixbuf(pil_img, "png")
-        self.surface = g15util.pixbuf_to_surface(pixbuf)
+        pixbuf = g15cairo.image_to_pixbuf(pil_img, "png")
+        self.surface = g15cairo.pixbuf_to_surface(pixbuf)
         self.plugin.screen.redraw(self.page)
                 
     def dump_buf(self, buf):
@@ -434,10 +437,10 @@ class G15DaemonServer():
             c.handle_close()
         
     def load_configuration(self):
-        self.take_over_macro_keys = g15util.get_bool_or_default(self.gconf_client, "%s/take_over_macro_keys" % self.gconf_key, True)
+        self.take_over_macro_keys = g15gconf.get_bool_or_default(self.gconf_client, "%s/take_over_macro_keys" % self.gconf_key, True)
         
-        if g15util.get_bool_or_default(self.gconf_client, "%s/use_custom_foreground" % self.gconf_key, False):
-            col = g15util.get_rgb_or_default(self.gconf_client, "%s/custom_foreground" % self.gconf_key, (255,255,255))
+        if g15gconf.get_bool_or_default(self.gconf_client, "%s/use_custom_foreground" % self.gconf_key, False):
+            col = g15gconf.get_rgb_or_default(self.gconf_client, "%s/custom_foreground" % self.gconf_key, (255,255,255))
             self.palette = [0 for n in range(768)]
             self.palette[765] = col[0]
             self.palette[766] = col[1]

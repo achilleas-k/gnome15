@@ -40,8 +40,11 @@ import shutil
 import traceback
 import gnome15.g15globals as g15globals
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
+import gnome15.util.g15pythonlang as g15pythonlang
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15os as g15os
 import gnome15.g15notify as g15notify
+import gnome15.util.g15icontools as g15icontools
 import dbus
 import os.path
 import operator
@@ -519,7 +522,7 @@ def is_gnome_shell_extension_enabled(extension):
     Keyword arguments:
     extension        --    extension name
     """
-    status, text = g15util.execute_for_output("gsettings get org.gnome.shell enabled-extensions")
+    status, text = g15os.get_command_output("gsettings get org.gnome.shell enabled-extensions")
     if status == 0:
         try:
             return extension in eval(text)
@@ -538,7 +541,7 @@ def set_gnome_shell_extension_enabled(extension, enabled):
     extension        --    extension name
     enabled          --    enabled
     """
-    status, text = g15util.execute_for_output("gsettings get org.gnome.shell enabled-extensions")
+    status, text = g15os.get_command_output("gsettings get org.gnome.shell enabled-extensions")
     if status == 0:
         try:
             extensions = eval(text)
@@ -557,7 +560,7 @@ def set_gnome_shell_extension_enabled(extension, enabled):
                 s += ","
             s += "'%s'" % c
         try:
-            status, text = g15util.execute_for_output("gsettings set org.gnome.shell enabled-extensions \"[%s]\"" % s)
+            status, text = g15os.get_command_output("gsettings set org.gnome.shell enabled-extensions \"[%s]\"" % s)
         except Exception as e:
             logger.debug("Failed to set extension enabled. %s" % e)
             
@@ -568,7 +571,7 @@ def browse(url):
     Keyword arguments:
     url        -- URL
     """
-    b = g15util.get_string_or_default(gconf.client_get_default(), \
+    b = g15gconf.get_string_or_default(gconf.client_get_default(), \
                                       "/apps/gnome15/browser", "default")
     if not b in __browsers and not b == "default":
         logger.warning("Could not find browser %s, falling back to default" % b)
@@ -620,7 +623,7 @@ class G15AbstractService(Thread):
         
     def start_loop(self):
         logger.info("Starting GLib loop")
-        g15util.set_gobject_thread()
+        g15pythonlang.set_gobject_thread()
         try:
             self.loop.run()
         except:
@@ -713,14 +716,14 @@ class G15DesktopComponent():
             # Because the icons aren't installed in this mode, they must be provided
             # using the full filename. Unfortunately this means scaling may be a bit
             # blurry in the indicator applet
-            path = g15util.get_icon_path(icon_name, 128)
+            path = g15icontools.get_icon_path(icon_name, 128)
             logger.debug("Dev mode icon %s is at %s" % ( icon_name, path ) )
             return path
         else:
             if not isinstance(icon_name, list):
                 icon_name = [ icon_name ]
             for i in icon_name:
-                p = g15util.get_icon_path(i, -1)
+                p = g15icontools.get_icon_path(i, -1)
                 if p is not None:
                     return i
              
@@ -728,7 +731,7 @@ class G15DesktopComponent():
         """
         Show the configuration user interface
         """        
-        g15util.run_script("g15-config")
+        g15os.run_script("g15-config")
         
     def stop_desktop_service(self, arg = None):
         """
@@ -740,7 +743,7 @@ class G15DesktopComponent():
         """
         Start the desktop service
         """    
-        g15util.run_script("g15-desktop-service", ["-f"])   
+        g15os.run_script("g15-desktop-service", ["-f"])
         
     def show_page(self, path):
         """
@@ -992,7 +995,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
         about.set_license(GPL)
         about.set_authors(AUTHORS)
         about.set_documenters(["Brett Smith <tanktarta@blueyonder.co.uk>"])
-        about.set_logo(gtk.gdk.pixbuf_new_from_file(g15util.get_app_icon(self.conf_client, "gnome15", 128)))
+        about.set_logo(gtk.gdk.pixbuf_new_from_file(g15icontools.get_app_icon(self.conf_client, "gnome15", 128)))
         about.set_comments(_("Desktop integration for Logitech 'G' keyboards."))
         about.run()
         about.hide()
@@ -1072,7 +1075,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                         
                         # Cycle screens
                         item = gtk.CheckMenuItem(_("Cycle screens automatically"))
-                        item.set_active(g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % screen.device_uid, True))
+                        item.set_active(g15gconf.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % screen.device_uid, True))
                         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/cycle_screens" % screen.device_uid, self._cycle_screens_option_changed))
                         item.connect("toggled", self._cycle_screens_changed, screen.device_uid)
                         self._append_item(item)

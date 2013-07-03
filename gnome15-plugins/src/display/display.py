@@ -26,7 +26,9 @@ import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
 import gnome15.g15devices as g15devices
 import gnome15.g15actions as g15actions
-import gnome15.g15util as g15util
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15pythonlang as g15pythonlang
+import gnome15.util.g15icontools as g15icontools
 import logging
 import os
 import re
@@ -39,6 +41,7 @@ SELECT_PROFILE = "select-profile"
 
 # Register the action with all supported models
 g15devices.g15_action_keys[SELECT_PROFILE] = g15actions.ActionBinding(SELECT_PROFILE, [ g15driver.G_KEY_L1 ], g15driver.KEY_STATE_HELD)
+g15devices.z10_action_keys[SELECT_PROFILE] = g15actions.ActionBinding(SELECT_PROFILE, [ g15driver.G_KEY_L1 ], g15driver.KEY_STATE_HELD)
 g15devices.g19_action_keys[SELECT_PROFILE] = g15actions.ActionBinding(SELECT_PROFILE, [ g15driver.G_KEY_BACK ], g15driver.KEY_STATE_HELD)
 
 # Plugin details - All of these must be provided
@@ -50,7 +53,7 @@ copyright=_("Copyright (C)2012 Brett Smith")
 site="http://www.russo79.com/gnome15"
 has_preferences=False
 default_enabled=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Previous item"), 
          g15driver.NEXT_SELECTION : _("Next item"),
@@ -133,7 +136,7 @@ class G15XRandR(g15plugin.G15MenuPlugin):
                 elif "connected" in line:
                     i += 1
                     display = arr[0]
-                    item = g15theme.MenuItem("display-%s" % i, True, arr[0], activatable=False, icon = g15util.get_icon_path(ICONS))
+                    item = g15theme.MenuItem("display-%s" % i, True, arr[0], activatable=False, icon = g15icontools.get_icon_path(ICONS))
                     items.append(item)
                     
                     
@@ -172,7 +175,7 @@ class G15XRandR(g15plugin.G15MenuPlugin):
             self._timer = None
         
     def _schedule_check(self):
-        g15util.schedule("CheckResolution", 10.0, self.load_menu_items)
+        g15scheduler.schedule("CheckResolution", 10.0, self.load_menu_items)
         
     def _parse_size(self, line):
         arr = line.split("x")
@@ -183,7 +186,7 @@ class G15XRandR(g15plugin.G15MenuPlugin):
         self.screen.redraw(self.page)
             
     def _get_item_for_current_resolution(self):
-        return g15util.find(lambda m: m.current, self.menu.get_children())
+        return g15pythonlang.find(lambda m: m.current, self.menu.get_children())
 
     def _get_status_output(self, cmd):
         # TODO something like this is used in sense.py as well, make it a utility

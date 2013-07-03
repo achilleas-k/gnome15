@@ -21,7 +21,13 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("rss", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15pythonlang as g15pythonlang
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15desktop as g15desktop
@@ -82,8 +88,8 @@ class G15RSSPreferences():
         
         # Optins
         self.update_adjustment = widget_tree.get_object("UpdateAdjustment")
-        self.update_adjustment.set_value(g15util.get_int_or_default(self._gconf_client, "%s/update_time" % self._gconf_key, 60))        
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, widget_tree)
+        self.update_adjustment.set_value(g15gconf.get_int_or_default(self._gconf_client, "%s/update_time" % self._gconf_key, 60))
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, widget_tree)
         
         # Connect to events
         self.update_adjustment.connect("value-changed", self.update_time_changed)
@@ -159,12 +165,12 @@ class G15FeedsMenuItem(g15theme.MenuItem):
         
     def get_theme_properties(self):  
         
-        use_twenty_four_hour = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True)
+        use_twenty_four_hour = g15gconf.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True)
               
         element_properties = g15theme.MenuItem.get_theme_properties(self)
         element_properties["ent_title"] = self.entry.title
         element_properties["ent_link"] = self.entry.link
-        if g15util.attr_exists(self.entry, "description"):
+        if g15pythonlang.attr_exists(self.entry, "description"):
             element_properties["ent_description"] = self.entry.description
             
         try:
@@ -233,8 +239,8 @@ class G15FeedPage(g15theme.G15Page):
         self._selected_icon_embedded = None
         if self._menu.selected is not None and self._menu.selected.icon is not None:
             try :
-                icon_surface = g15util.load_surface_from_file(self._menu.selected.icon)
-                self._selected_icon_embedded = g15util.get_embedded_image_url(icon_surface)
+                icon_surface = g15cairo.load_surface_from_file(self._menu.selected.icon)
+                self._selected_icon_embedded = g15icontools.get_embedded_image_url(icon_surface)
             except:
                 logger.warning("Failed to get icon %s" % str(self._menu.selected.icon))
         
@@ -253,18 +259,18 @@ class G15FeedPage(g15theme.G15Page):
         title = self.feed["feed"]["title"] if "title" in self.feed["feed"] else self.url
         if icon is None and title.endswith("- Twitter Search"):
             title = title[:-16]
-            icon = g15util.get_icon_path("gnome15")
+            icon = g15icontools.get_icon_path("gnome15")
         if icon is None:
-            icon = g15util.get_icon_path(["application-rss+xml","gnome-mime-application-rss+xml"], self._screen.height)
+            icon = g15icontools.get_icon_path(["application-rss+xml","gnome-mime-application-rss+xml"], self._screen.height)
             
         if icon == None:
             self._icon_surface = None
             self._icon_embedded = None
         else:
             try :
-                icon_surface = g15util.load_surface_from_file(icon)
+                icon_surface = g15cairo.load_surface_from_file(icon)
                 self._icon_surface = icon_surface
-                self._icon_embedded = g15util.get_embedded_image_url(icon_surface)
+                self._icon_embedded = g15icontools.get_embedded_image_url(icon_surface)
             except:
                 logger.warning("Failed to get icon %s" % str(icon))
                 self._icon_surface = None
@@ -299,7 +305,7 @@ class G15FeedPage(g15theme.G15Page):
         
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._icon_surface:
-            return g15util.paint_thumbnail_image(allocated_size, self._icon_surface, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self._icon_surface, canvas)
         
 class G15RSS():
     
@@ -315,7 +321,7 @@ class G15RSS():
         self._schedule_refresh() 
         self._update_time_changed_handle = self._gconf_client.notify_add(self._gconf_key + "/update_time", self._update_time_changed)
         self._urls_changed_handle = self._gconf_client.notify_add(self._gconf_key + "/urls", self._urls_changed)
-        g15util.schedule("LoadFeeds", 0, self._load_feeds)
+        g15scheduler.schedule("LoadFeeds", 0, self._load_feeds)
     
     def deactivate(self):
         self._cancel_refresh()
@@ -330,8 +336,8 @@ class G15RSS():
     '''
         
     def _schedule_refresh(self):
-        schedule_seconds = g15util.get_int_or_default(self._gconf_client, "%s/update_time" % self._gconf_key, 60) * 60.0
-        self._refresh_timer = g15util.schedule("FeedRefreshTimer", schedule_seconds, self._refresh)
+        schedule_seconds = g15gconf.get_int_or_default(self._gconf_client, "%s/update_time" % self._gconf_key, 60) * 60.0
+        self._refresh_timer = g15scheduler.schedule("FeedRefreshTimer", schedule_seconds, self._refresh)
         
     def _refresh(self):
         logger.info("Refreshing RSS feeds")

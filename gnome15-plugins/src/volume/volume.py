@@ -22,7 +22,9 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("volume", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15devices as g15devices
@@ -89,7 +91,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     for mixer in alsaaudio.mixers():
         model.append([mixer])
     dialog.set_transient_for(parent)    
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/mixer", "DeviceCombo", "Master", widget_tree)
+    g15uigconf.configure_combo_from_gconf(gconf_client, gconf_key + "/mixer", "DeviceCombo", "Master", widget_tree)
     dialog.run()
     dialog.hide()
             
@@ -191,7 +193,7 @@ class G15Volume():
                 icon = "audio-volume-high"
         else:
             properties [ "muted"] = True
-        icon_path = g15util.get_icon_path(icon, self._screen.driver.get_size()[0])
+        icon_path = g15icontools.get_icon_path(icon, self._screen.driver.get_size()[0])
         properties["state"] = icon
         properties["icon"] = icon_path
         properties["vol_pc"] = self._volume
@@ -224,7 +226,7 @@ class G15Volume():
         if self._lights_timer is not None:
             self._lights_timer.cancel()
         if self._light_controls is not None:
-            self._lights_timer = g15util.schedule("ReleaseMKeyLights", 3.0, self._release_lights)
+            self._lights_timer = g15scheduler.schedule("ReleaseMKeyLights", 3.0, self._release_lights)
         
         page = self._screen.get_page(id)
         if page == None:
@@ -325,7 +327,7 @@ class VolumeThread(Thread):
                 if self._poll.poll(5):
                     if self._stop:
                         break
-                    g15util.schedule("popupVolume", 0, self._volume._popup)
+                    g15scheduler.schedule("popupVolume", 0, self._volume._popup)
                     if not self._open.read():
                         break
         finally:

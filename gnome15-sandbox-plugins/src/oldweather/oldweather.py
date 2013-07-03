@@ -24,7 +24,12 @@ _ = g15locale.get_translation("weather", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
 import gnome15.g15theme as g15theme
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -85,7 +90,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     unit.set_active(gconf_client.get_int(gconf_key + "/units"))
     unit.connect("changed", unit_changed, location, gconf_key + "/units", gconf_client)
     
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, widget_tree)
     
     dialog.run()
     dialog.hide()
@@ -162,7 +167,7 @@ class G15Weather():
         val = self._gconf_client.get_int(self._gconf_key + "/update")
         if val == 0:
             val = 3600
-        self._timer = g15util.schedule("WeatherRefreshTimer", val * 60.0, self._refresh)
+        self._timer = g15scheduler.schedule("WeatherRefreshTimer", val * 60.0, self._refresh)
         
     def _loc_changed(self, client, connection_id, entry, args):
         # Redraw so icon option is immediate
@@ -205,13 +210,13 @@ class G15Weather():
             properties["message"] = ""
             t_icon = self._translate_icon(current['icon'])
             if t_icon != None:
-                attributes["icon"] = g15util.load_surface_from_file(t_icon)
-                properties["icon"] = g15util.get_embedded_image_url(attributes["icon"])
+                attributes["icon"] = g15cairo.load_surface_from_file(t_icon)
+                properties["icon"] = g15icontools.get_embedded_image_url(attributes["icon"])
             else:
                 logger.warning("No translated weather icon for %s" % current['icon'])
             mono_thumb = self._get_mono_thumb_icon(current['icon'])        
             if mono_thumb != None:
-                attributes["mono_thumb_icon"] = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
+                attributes["mono_thumb_icon"] = g15cairo.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
             properties["condition"] = current['condition']
             
             properties["temp_c"] = "%3.1f°C" % float(current['temp_c'])
@@ -304,7 +309,7 @@ class G15Weather():
             return None
         else:
             base_icon= self._get_base_icon(icon)
-            if g15util.get_bool_or_default(self._gconf_client, "%s/use_theme_icons" % self._gconf_key, True):
+            if g15gconf.get_bool_or_default(self._gconf_client, "%s/use_theme_icons" % self._gconf_key, True):
                 if base_icon in [ "chanceofrain", "scatteredshowers" ]:
                     theme_icon = "weather-showers-scattered"
                 elif base_icon in [ "sunny", "haze" ]: 
@@ -334,10 +339,10 @@ class G15Weather():
             theme_icon = [ "%s-night" % theme_icon, theme_icon ]
             
         if theme_icon != None:
-            icon_path = g15util.get_icon_path(theme_icon, warning = False, include_missing = False)
+            icon_path = g15icontools.get_icon_path(theme_icon, warning = False, include_missing = False)
             if icon_path == None and ( now.hour > 18 or now.hour < 4):
                 # Try the day icons
-                icon_path = g15util.get_icon_path(theme_icon[:len(theme_icon) - 6], include_missing = False)
+                icon_path = g15icontools.get_icon_path(theme_icon[:len(theme_icon) - 6], include_missing = False)
                 
             if icon_path != None:
                 return icon_path
@@ -360,7 +365,7 @@ class G15Weather():
         self._text.set_canvas(canvas)
         if self._screen.driver.get_bpp() == 1:
             if "mono_thumb_icon" in self._page.theme_attributes:
-                size = g15util.paint_thumbnail_image(allocated_size, self._page.theme_attributes["mono_thumb_icon"], canvas)
+                size = g15cairo.paint_thumbnail_image(allocated_size, self._page.theme_attributes["mono_thumb_icon"], canvas)
                 canvas.translate(size + 2, 0)
                 total_taken += size + 2
             if "temp_short" in self._page.theme_properties:
@@ -374,7 +379,7 @@ class G15Weather():
             rgb = self._screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
             canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
             if "icon" in self._page.theme_attributes:
-                size = g15util.paint_thumbnail_image(allocated_size, self._page.theme_attributes["icon"], canvas)
+                size = g15cairo.paint_thumbnail_image(allocated_size, self._page.theme_attributes["icon"], canvas)
                 total_taken += size
             if "temp" in self._page.theme_properties:
                 if horizontal:

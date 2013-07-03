@@ -21,7 +21,10 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("webcam", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15cairo as g15cairo
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
@@ -54,11 +57,11 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     for i in range(0, 8):
         model.append([i])
     dialog.set_transient_for(parent)    
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/device", "DeviceCombo", 0, widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/contrast", "Contrast", 128, widget_tree, False)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/brightness", "Brightness", 128, widget_tree, False)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/saturation", "Saturation", 128, widget_tree, False)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/hue", "Hue", 128, widget_tree, False)
+    g15uigconf.configure_combo_from_gconf(gconf_client, gconf_key + "/device", "DeviceCombo", 0, widget_tree)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/contrast", "Contrast", 128, widget_tree, False)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/brightness", "Brightness", 128, widget_tree, False)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/saturation", "Saturation", 128, widget_tree, False)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/hue", "Hue", 128, widget_tree, False)
     dialog.run()
     dialog.hide()
 
@@ -169,12 +172,12 @@ class G15Webcam():
         highgui.cvSetCaptureProperty(self._camera, highgui.CV_CAP_PROP_HUE, hue)
             
     def _schedule_redraw(self, interval = 0.1):
-        self._timer = g15util.schedule("RedrawWebcam", interval, self._redraw)
+        self._timer = g15scheduler.schedule("RedrawWebcam", interval, self._redraw)
     
     def _redraw(self):
         im = self._get_image()
         if im:
-            self._surface = g15util.image_to_surface(im)
+            self._surface = g15cairo.image_to_surface(im)
             self._screen.redraw(self._page)
             interval = 1.0 / float(10 if self._fps == -1 else self._fps)
             self._schedule_redraw(interval)

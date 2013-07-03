@@ -21,7 +21,10 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("tails", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
+import gnome15.util.g15markup as g15markup
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
@@ -85,7 +88,7 @@ class G15TailsPreferences():
         
         # Lines
         self.lines_adjustment = widget_tree.get_object("LinesAdjustment")
-        self.lines_adjustment.set_value(g15util.get_int_or_default(self._gconf_client, "%s/lines" % self._gconf_key, 10))
+        self.lines_adjustment.set_value(g15gconf.get_int_or_default(self._gconf_client, "%s/lines" % self._gconf_key, 10))
         
         # Connect to events
         self.lines_adjustment.connect("value-changed", self.lines_changed)
@@ -210,7 +213,7 @@ class G15TailThread(Thread):
     def _add_line(self, line):
         line = line.strip()
         if len(line) > 0 and not self._stopped:
-            line  = g15util.html_escape(line)
+            line  = g15markup.html_escape(line)
             while self.page._menu.get_child_count() > self.page.plugin.lines:
                 self.page._menu.remove_child_at(0)
             self.page._menu.add_child(G15TailMenuItem("Line-%d" % self.line_seq, line, self.page.file_path))
@@ -254,16 +257,16 @@ class G15TailPage(g15theme.G15Page):
         icons.append("text-plain")
         icons.append("panel-searchtool")
         icons.append("gnome-searchtool")
-        icon = g15util.get_icon_path(icons, size=self.plugin._screen.height)  
+        icon = g15icontools.get_icon_path(icons, size=self.plugin._screen.height)
         
         if icon is None:
             self._icon_surface = None
             self._icon_embedded = None
         else:
             try :
-                icon_surface = g15util.load_surface_from_file(icon)
+                icon_surface = g15cairo.load_surface_from_file(icon)
                 self._icon_surface = icon_surface
-                self._icon_embedded = g15util.get_embedded_image_url(icon_surface)
+                self._icon_embedded = g15icontools.get_embedded_image_url(icon_surface)
             except:
                 logger.warning("Failed to get icon %s" % str(icon))
                 self._icon_surface = None
@@ -295,7 +298,7 @@ class G15TailPage(g15theme.G15Page):
         
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._icon_surface:
-            return g15util.paint_thumbnail_image(allocated_size, self._icon_surface, canvas)  
+            return g15cairo.paint_thumbnail_image(allocated_size, self._icon_surface, canvas)
             
 class G15Tails():
     
@@ -331,7 +334,7 @@ class G15Tails():
         self._load_files()
     
     def _load_files(self):
-        self.lines = g15util.get_int_or_default(self._gconf_client, "%s/lines" % self._gconf_key, 10)
+        self.lines = g15gconf.get_int_or_default(self._gconf_client, "%s/lines" % self._gconf_key, 10)
         file_list = self._gconf_client.get_list(self._gconf_key + "/files", gconf.VALUE_STRING)
         
         def init():

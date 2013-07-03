@@ -23,7 +23,10 @@ _ = g15locale.get_translation("cairo-clock", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen 
 import gnome15.g15theme as g15theme 
-import gnome15.g15util as g15util 
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15pythonlang as g15pythonlang
 import gnome15.g15driver as g15driver 
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -94,13 +97,13 @@ class G15CairoClockPreferences():
         dialog = widget_tree.get_object("ClockDialog")
         dialog.set_transient_for(parent)
         
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_seconds" % gconf_key, "DisplaySecondsCheckbox", True, widget_tree)
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_date" % gconf_key, "DisplayDateCheckbox", True, widget_tree)
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour" % gconf_key, "TwentyFourHourCheckbox", True, widget_tree)
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_digital_time" % gconf_key, "DisplayDigitalTimeCheckbox", True, widget_tree)
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/display_year" % gconf_key, "DisplayYearCheckbox", True, widget_tree)
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/second_sweep" % gconf_key, "SecondSweep", False, widget_tree)
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_digital" % gconf_key, "TwentyFourHourDigitalCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/display_seconds" % gconf_key, "DisplaySecondsCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/display_date" % gconf_key, "DisplayDateCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour" % gconf_key, "TwentyFourHourCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/display_digital_time" % gconf_key, "DisplayDigitalTimeCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/display_year" % gconf_key, "DisplayYearCheckbox", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/second_sweep" % gconf_key, "SecondSweep", False, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_digital" % gconf_key, "TwentyFourHourDigitalCheckbox", True, widget_tree)
     
         e = gconf_client.get(gconf_key + "/theme")
         theme_name = "default"
@@ -170,7 +173,7 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
             next_tick = now + datetime.timedelta(0, 60.0)
             next_tick = datetime.datetime(next_tick.year,next_tick.month,next_tick.day,next_tick.hour, next_tick.minute, 0)
             
-        return g15util.total_seconds( next_tick - now )    
+        return g15pythonlang.total_seconds( next_tick - now )
     
     
     '''
@@ -178,14 +181,14 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
     '''
     
     def _load_surfaces(self):
-        self.display_date = g15util.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
-        self.display_seconds = g15util.get_bool_or_default(self.gconf_client, "%s/display_seconds" % self.gconf_key, True)
-        self.display_date = g15util.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
-        self.display_year = g15util.get_bool_or_default(self.gconf_client, "%s/display_year" % self.gconf_key, True)
-        self.display_digital_time = g15util.get_bool_or_default(self.gconf_client, "%s/display_digital_time" % self.gconf_key, True)
-        self.second_sweep = g15util.get_bool_or_default(self.gconf_client, "%s/second_sweep" % self.gconf_key, False)
-        self.twenty_four_hour = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour" % self.gconf_key, False)
-        self.twenty_four_hour_digital = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_digital" % self.gconf_key, True)
+        self.display_date = g15gconf.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
+        self.display_seconds = g15gconf.get_bool_or_default(self.gconf_client, "%s/display_seconds" % self.gconf_key, True)
+        self.display_date = g15gconf.get_bool_or_default(self.gconf_client, "%s/display_date" % self.gconf_key, True)
+        self.display_year = g15gconf.get_bool_or_default(self.gconf_client, "%s/display_year" % self.gconf_key, True)
+        self.display_digital_time = g15gconf.get_bool_or_default(self.gconf_client, "%s/display_digital_time" % self.gconf_key, True)
+        self.second_sweep = g15gconf.get_bool_or_default(self.gconf_client, "%s/second_sweep" % self.gconf_key, False)
+        self.twenty_four_hour = g15gconf.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour" % self.gconf_key, False)
+        self.twenty_four_hour_digital = g15gconf.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_digital" % self.gconf_key, True)
         
         self.gconf_client.get_bool(self.gconf_key + "/twenty_four_hour")
         
@@ -236,7 +239,7 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
                 
             path = self.clock_theme_dir + "/" + i + ".gif"
             if os.path.exists(path):
-                img_surface = g15util.load_surface_from_file(path, self.height)
+                img_surface = g15cairo.load_surface_from_file(path, self.height)
                 surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, img_surface.get_width() * 2, img_surface.get_height() * 2)  
                 context = cairo.Context(surface)
                 self.screen.configure_canvas(context)
@@ -432,8 +435,8 @@ class G15CairoClock(g15plugin.G15RefreshingPlugin):
         for svg_size, surface in hand_surfaces:
             drawing_context.save()
             drawing_context.translate(svg_size[0] / 2.0, svg_size[1] / 2.0)
-            g15util.rotate(drawing_context, -90)
-            g15util.rotate(drawing_context, deg)
+            g15cairo.rotate(drawing_context, -90)
+            g15cairo.rotate(drawing_context, deg)
             drawing_context.translate(-svg_size[0], -svg_size[1])
             drawing_context.set_source_surface(surface)
             drawing_context.paint()

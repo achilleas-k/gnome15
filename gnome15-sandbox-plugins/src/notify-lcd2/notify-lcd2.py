@@ -60,7 +60,10 @@ if __name__ == "__main__":
         sys.path.insert(0, path)
  
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15globals as pglobals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -108,15 +111,15 @@ def show_preferences(parent, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "notify-lcd.glade"))
     dialog = widget_tree.get_object("NotifyLCDDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/respect_timeout", "RespectTimeout", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_actions", "AllowActions", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_cancel", "AllowCancel", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/enable_sounds", "EnableSounds", True, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/lcd_only", "LCDOnly", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_keyboard", "BlinkKeyboard", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/change_keyboard_color", "ChangeKeyboardColor", False, widget_tree, True)
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/blink_delay", "DelayAdjustment", 500, widget_tree)
-    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/color", "Color", ( 128, 128, 128 ), widget_tree, None)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/respect_timeout", "RespectTimeout", False, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_actions", "AllowActions", False, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_cancel", "AllowCancel", False, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/enable_sounds", "EnableSounds", True, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/lcd_only", "LCDOnly", False, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_keyboard", "BlinkKeyboard", False, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/change_keyboard_color", "ChangeKeyboardColor", False, widget_tree, True)
+    g15uigconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/blink_delay", "DelayAdjustment", 500, widget_tree)
+    g15uigconf.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/color", "Color", ( 128, 128, 128 ), widget_tree, None)
     
     set_available(None, widget_tree)
     widget_tree.get_object("ChangeKeyboardColor").connect("toggled", set_available, widget_tree)
@@ -176,7 +179,7 @@ class G15Message():
                 file.close()
                 pixbuf.save(self.embedded_image, "png")
             else:
-                self.icon = g15util.get_icon_path("dialog-info", 1024)
+                self.icon = g15icontools.get_icon_path("dialog-info", 1024)
     
     def close(self):
         if self.embedded_image != None:
@@ -319,7 +322,7 @@ class G15NotifyService(dbus.service.Object):
         properties["title"] = self._current_message.summary
         properties["message"] = self._current_message.body
         if self._current_message.icon != None and len(self._current_message.icon) > 0:
-            properties["icon"] = g15util.get_icon_path(self._current_message.icon)
+            properties["icon"] = g15icontools.get_icon_path(self._current_message.icon)
         elif self._current_message.embedded_image != None:
             properties["icon"] = self._current_message.embedded_image
                     
@@ -384,13 +387,13 @@ class G15NotifyService(dbus.service.Object):
                 self._driver.BlinkKeyboard(float(blink_delay) / 1000.0, 3.0, [])
             if self._gconf_client.get_bool(self._gconf_key + "/change_keyboard_color"):
                 color = gconf_client.get_string(gconf_key + "/color")
-                self._driver.BlinkKeyboard(0.0, 3.0, (128, 128, 128) if color == None else g15util.to_rgb(color))
+                self._driver.BlinkKeyboard(0.0, 3.0, (128, 128, 128) if color == None else g15convert.to_rgb(color))
                 
     def _do_redraw(self):
         if self._page != None:
             self._do_draw()
             self._page.SetThemeProperty("remaining", str(self._get_remaining()))
-            self._redraw_timer = g15util.schedule("Notification", 0.1, self._do_redraw)
+            self._redraw_timer = g15scheduler.schedule("Notification", 0.1, self._do_redraw)
             
     def _do_draw(self):        
         if self._page != None:
@@ -425,7 +428,7 @@ class G15NotifyService(dbus.service.Object):
     def _start_timer(self, message):
         self._cancel_timer() 
         self._displayed_notification = time.time()                       
-        self._timer = g15util.schedule("Notification", message.timeout, self._hide_notification)
+        self._timer = g15scheduler.schedule("Notification", message.timeout, self._hide_notification)
     
 '''
 Gnome15 notification plugin

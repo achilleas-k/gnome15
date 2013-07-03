@@ -51,7 +51,11 @@ Simple colors
 COLOURS = [(0, 0, 0), (255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255)]
 
 import g15driver
-import g15util
+import util.g15scheduler as g15scheduler
+import util.g15pythonlang as g15pythonlang
+import util.g15gconf as g15gconf
+import util.g15cairo as g15cairo
+import util.g15icontools as g15icontools
 import g15profile
 import g15globals
 import g15drivermanager
@@ -94,7 +98,7 @@ def run_on_redraw(cb, *args):
     """
     Helper to run a callback function on the redraw queue.
     """
-    g15util.queue(REDRAW_QUEUE, "Redraw", 0, cb, *args)
+    g15scheduler.queue(REDRAW_QUEUE, "Redraw", 0, cb, *args)
         
 class ScreenChangeAdapter():
     """
@@ -466,7 +470,7 @@ class G15Screen():
             self.acquired_controls[control.id].set_value(val)
         self.set_color_for_mkey()
         for listener in self.screen_change_listeners:
-            g15util.call_if_exists(listener, "memory_bank_changed", bank)
+            g15pythonlang.call_if_exists(listener, "memory_bank_changed", bank)
     
     def index(self, page):
         """
@@ -526,7 +530,7 @@ class G15Screen():
                         break
             self.pages.append(page)   
             for l in self.screen_change_listeners:
-                g15util.call_if_exists(l, "new_page", page) 
+                g15pythonlang.call_if_exists(l, "new_page", page)
             return page
         finally:
             self.page_model_lock.release() 
@@ -572,7 +576,7 @@ class G15Screen():
                            originating_plugin = originating_plugin)
             self.pages.append(page)   
             for l in self.screen_change_listeners:                
-                g15util.call_if_exists(l, "new_page", page)
+                g15pythonlang.call_if_exists(l, "new_page", page)
             if title:
                 page.set_title(title)
             return page
@@ -594,7 +598,7 @@ class G15Screen():
                 self.deleting[page.id].cancel()
                 del self.deleting[page.id]       
                           
-            timer = g15util.schedule("DeleteScreen", delete_after, self.del_page, page)
+            timer = g15scheduler.schedule("DeleteScreen", delete_after, self.del_page, page)
             self.deleting[page.id] = timer
             return timer
         finally:
@@ -635,7 +639,7 @@ class G15Screen():
                         del self.reverting[page.id]                                        
                         
                     # Start a new timer to revert                    
-                    timer = g15util.schedule("Revert", revert_after, self.set_priority, page, old_priority)
+                    timer = g15scheduler.schedule("Revert", revert_after, self.set_priority, page, old_priority)
                     self.reverting[page.id] = (old_priority, timer)
                     return timer
                 if delete_after != 0.0:       
@@ -680,7 +684,7 @@ class G15Screen():
                     del self.reverting[page.id]   
                         
                 for l in self.screen_change_listeners:       
-                    g15util.call_if_exists(l, "deleting_page", page)                 
+                    g15pythonlang.call_if_exists(l, "deleting_page", page)
             
                 if page == self.visible_page:
                     self.visible_page = None   
@@ -692,7 +696,7 @@ class G15Screen():
                 page._do_on_deleted()                   
                 self.redraw()                   
                 for l in self.screen_change_listeners:
-                    g15util.call_if_exists(l, "deleted_page", page)
+                    g15pythonlang.call_if_exists(l, "deleted_page", page)
         finally:
             self.page_model_lock.release()
             
@@ -748,14 +752,14 @@ class G15Screen():
         try:
             logger.debug("Rescheduling cycle")
             self._cancel_timer()
-            cycle_screens = g15util.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % self.device.uid, True)
+            cycle_screens = g15gconf.get_bool_or_default(self.conf_client, "/apps/gnome15/%s/cycle_screens" % self.device.uid, True)
             active = self.driver != None and self.driver.is_connected() and cycle_screens
             if active and self.cycle_timer == None:
                 val = self.conf_client.get("/apps/gnome15/%s/cycle_seconds" % self.device.uid)
                 time = 10
                 if val != None:
                     time = val.get_int()
-                self.cycle_timer = g15util.schedule("CycleTimer", time, self.screen_cycle)
+                self.cycle_timer = g15scheduler.schedule("CycleTimer", time, self.screen_cycle)
         finally:
             self.reschedule_lock.release()
             
@@ -833,7 +837,7 @@ class G15Screen():
         if self.reconnect_timer:
             self.reconnect_timer.cancel()
         if self.driver == None or self.driver.id != entry.value.get_string():
-            g15util.schedule("DriverChange", 1.0, self._reload_driver)
+            g15scheduler.schedule("DriverChange", 1.0, self._reload_driver)
         
     def active_profile_changed(self, client, connection_id, entry, args):
         # Check if the active profile has change)
@@ -845,7 +849,7 @@ class G15Screen():
             logger.info("Active profile changed to %s" % new_profile.name)
             self.activate_profile()
         self.set_color_for_mkey()                
-        g15util.schedule("ProfileChange", 1.0, self._check_active_plugins)
+        g15scheduler.schedule("ProfileChange", 1.0, self._check_active_plugins)
                 
         return 1
 
@@ -856,11 +860,11 @@ class G15Screen():
             self.set_memory_bank(1)
             
     def _network_state_change(self, new_state):
-        g15util.schedule("ProfileChange", 1.0, self._check_active_plugins)
+        g15scheduler.schedule("ProfileChange", 1.0, self._check_active_plugins)
                 
     def _profile_changed(self, profile_id, device_uid):
         self.set_color_for_mkey()        
-        g15util.schedule("ProfileChange", 1.0, self._check_active_plugins)
+        g15scheduler.schedule("ProfileChange", 1.0, self._check_active_plugins)
         
     def deactivate_profile(self):
         logger.debug("De-activating profile")
@@ -871,7 +875,7 @@ class G15Screen():
         logger.debug("Clearing attention")
         self.attention = False
         for listener in self.screen_change_listeners:
-            g15util.call_if_exists(listener, "attention_cleared")
+            g15pythonlang.call_if_exists(listener, "attention_cleared")
             
     def request_attention(self, message=None):
         logger.debug("Requesting attention '%s'" % message)
@@ -880,7 +884,7 @@ class G15Screen():
             self.attention_message = message
             
         for listener in self.screen_change_listeners:
-            g15util.call_if_exists(listener, "attention_requested", message)
+            g15pythonlang.call_if_exists(listener, "attention_requested", message)
     
     def handle_key(self, keys, state_id, post):
         """
@@ -976,7 +980,7 @@ class G15Screen():
         self.resched_cycle()   
         if self.driver is not None:
             for listener in self.screen_change_listeners:            
-                g15util.call_if_exists(listener, "driver_connection_failed", self.driver, exception)
+                g15pythonlang.call_if_exists(listener, "driver_connection_failed", self.driver, exception)
             self.driver = None     
         if self.should_reconnect(exception):
             if logger.isEnabledFor(logging.DEBUG):
@@ -1100,7 +1104,7 @@ class G15Screen():
                 self.del_page(page)
 
         for listener in self.screen_change_listeners:
-            g15util.call_if_exists(listener, "driver_disconnected", driver)
+            g15pythonlang.call_if_exists(listener, "driver_disconnected", driver)
                 
         if not self.service.shutting_down and not self.stopping:
             if retry:
@@ -1136,12 +1140,12 @@ class G15Screen():
         return o_transition
     
     def cycle_to(self, page, transitions=True):
-        g15util.clear_jobs(REDRAW_QUEUE)
-        g15util.execute(REDRAW_QUEUE, "cycleTo", self._do_cycle_to, page, transitions)
+        g15scheduler.clear_jobs(REDRAW_QUEUE)
+        g15scheduler.execute(REDRAW_QUEUE, "cycleTo", self._do_cycle_to, page, transitions)
             
     def cycle(self, number, transitions=True):
-        g15util.clear_jobs(REDRAW_QUEUE)
-        g15util.execute(REDRAW_QUEUE, "doCycle", self._do_cycle, number, transitions)
+        g15scheduler.clear_jobs(REDRAW_QUEUE)
+        g15scheduler.execute(REDRAW_QUEUE, "doCycle", self._do_cycle, number, transitions)
             
     def redraw(self, page=None, direction="up", transitions=True, redraw_content=True, queue=True):
         if page:
@@ -1149,7 +1153,7 @@ class G15Screen():
         else:
             logger.debug("Redrawing current page")
         if queue:
-            g15util.execute(REDRAW_QUEUE, "redraw", self._do_redraw, page, direction, transitions, redraw_content)
+            g15scheduler.execute(REDRAW_QUEUE, "redraw", self._do_redraw, page, direction, transitions, redraw_content)
         else:
             self._do_redraw(page, direction, transitions, redraw_content)
             
@@ -1216,7 +1220,7 @@ class G15Screen():
             self.first_page = self.conf_client.get_string("/apps/gnome15/%s/last_page" % self.device.uid)
             
             if delay != 0.0:
-                self.reconnect_timer = g15util.schedule("ReconnectTimer", delay, self.attempt_connection)
+                self.reconnect_timer = g15scheduler.schedule("ReconnectTimer", delay, self.attempt_connection)
                 return
                             
             try :
@@ -1249,7 +1253,7 @@ class G15Screen():
                 self.activate_profile()
                 self.last_error = None
                 for listener in self.screen_change_listeners:
-                    g15util.call_if_exists(listener, "driver_connected", self.driver)
+                    g15pythonlang.call_if_exists(listener, "driver_connected", self.driver)
                              
                 self.complete_loading()
 
@@ -1283,7 +1287,7 @@ class G15Screen():
         title           -- new title
         """
         for l in self.screen_change_listeners:
-            g15util.call_if_exists(l, "title_changed", page, title)
+            g15pythonlang.call_if_exists(l, "title_changed", page, title)
     
     '''
     Private functions
@@ -1334,7 +1338,7 @@ class G15Screen():
                         
                 self.resched_cycle()
                 for l in self.screen_change_listeners:
-                    g15util.call_if_exists(l, "page_changed", self.visible_page)
+                    g15pythonlang.call_if_exists(l, "page_changed", self.visible_page)
                 
             # Call the screen's painter
             if self.visible_page != None:
@@ -1553,10 +1557,10 @@ class G15Splash():
         self.screen = screen        
         self.progress = 0.0
         self.text = _("Starting up ..")
-        icon_path = g15util.get_icon_path("gnome15")
+        icon_path = g15icontools.get_icon_path("gnome15")
         if icon_path == None:
             icon_path = os.path.join(g15globals.icons_dir, "hicolor", "apps", "scalable", "gnome15.svg")
-        self.logo = g15util.load_surface_from_file(icon_path)
+        self.logo = g15cairo.load_surface_from_file(icon_path)
         self.page = g15theme.G15Page("Splash", self.screen, priority=PRI_EXCLUSIVE, thumbnail_painter=self._paint_thumbnail, \
                                          theme_properties_callback=self._get_properties, theme=g15theme.G15Theme(g15globals.image_dir, "background"))        
         self.screen.add_page(self.page)
@@ -1564,7 +1568,7 @@ class G15Splash():
     def complete(self):
         self.progress = 100
         self.screen.redraw(self.page)
-        g15util.queue(REDRAW_QUEUE, "ClearSplash", 2.0, self._hide)
+        g15scheduler.queue(REDRAW_QUEUE, "ClearSplash", 2.0, self._hide)
         
     def update_splash(self, value, max_value, text=None):
         self.progress = (float(value) / float(max_value)) * 100.0
@@ -1579,7 +1583,7 @@ class G15Splash():
                  }
         
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
-        return g15util.paint_thumbnail_image(allocated_size, self.logo, canvas)
+        return g15cairo.paint_thumbnail_image(allocated_size, self.logo, canvas)
         
     def _hide(self):
         self.screen.del_page(self.page)

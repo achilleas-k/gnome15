@@ -23,7 +23,11 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("notify-lcd", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15icontools as g15icontools
+import gnome15.util.g15markup as g15markup
 import gnome15.g15globals as pglobals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -97,17 +101,17 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "notify-lcd.glade"))
     dialog = widget_tree.get_object("NotifyLCDDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/respect_timeout", "RespectTimeout", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_actions", "AllowActions", False, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_cancel", "AllowCancel", True, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/on_keyboard_screen", "OnKeyboardScreen", True, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/on_desktop", "OnDesktop", True, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_keyboard_backlight", "BlinkKeyboardBacklight", True, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_memory_bank", "BlinkMemoryBank", True, widget_tree, True)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/change_keyboard_backlight_color", "ChangeKeyboardBacklightColor", False, widget_tree, True)
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/blink_delay", "DelayAdjustment", 500, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/enable_sounds", "EnableSounds", True, widget_tree, True)
-    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/keyboard_backlight_color", "KeyboardBacklightColor", ( 128, 128, 128 ), widget_tree, None)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/respect_timeout", "RespectTimeout", False, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_actions", "AllowActions", False, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_cancel", "AllowCancel", True, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/on_keyboard_screen", "OnKeyboardScreen", True, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/on_desktop", "OnDesktop", True, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_keyboard_backlight", "BlinkKeyboardBacklight", True, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/blink_memory_bank", "BlinkMemoryBank", True, widget_tree, True)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/change_keyboard_backlight_color", "ChangeKeyboardBacklightColor", False, widget_tree, True)
+    g15uigconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/blink_delay", "DelayAdjustment", 500, widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/enable_sounds", "EnableSounds", True, widget_tree, True)
+    g15uigconf.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/keyboard_backlight_color", "KeyboardBacklightColor", ( 128, 128, 128 ), widget_tree, None)
     
     set_available(None, widget_tree)
     widget_tree.get_object("ChangeKeyboardBacklightColor").connect("toggled", set_available, widget_tree)
@@ -181,7 +185,7 @@ class G15Message():
                 logger.warn("Failed to decode notification image")
                 
             if self.embedded_image == None and ( self.icon == None or self.icon == "" ):
-                self.icon = g15util.get_icon_path("dialog-information", 1024)
+                self.icon = g15icontools.get_icon_path("dialog-information", 1024)
     
     def close(self):
         if self.embedded_image != None:
@@ -249,17 +253,17 @@ class G15NotifyLCD():
         self.id = 1
         
     def _load_configuration(self):
-        self.respect_timeout = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/respect_timeout", False)
-        self.allow_actions = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_actions", False)
-        self.allow_cancel = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_cancel", True)
-        self.on_keyboard_screen = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_keyboard_screen", True)
-        self.on_desktop = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_desktop", True)
-        self.blink_keyboard_backlight = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/blink_keyboard_backlight", True)
-        self.blink_memory_bank = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/blink_memory_bank", True)
-        self.change_keyboard_backlight_color = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/change_keyboard_backlight_color", False)
-        self.enable_sounds = g15util.get_bool_or_default(self._gconf_client, self._gconf_key + "/enable_sounds", True)
-        self.blink_delay = g15util.get_int_or_default(self._gconf_client, self._gconf_key + "/blink_delay", 500)
-        self.keyboard_backlight_color  = g15util.get_rgb_or_default(self._gconf_client, self._gconf_key + "/keyboard_backlight_color", ( 128, 128, 128 ))
+        self.respect_timeout = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/respect_timeout", False)
+        self.allow_actions = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_actions", False)
+        self.allow_cancel = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/allow_cancel", True)
+        self.on_keyboard_screen = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_keyboard_screen", True)
+        self.on_desktop = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/on_desktop", True)
+        self.blink_keyboard_backlight = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/blink_keyboard_backlight", True)
+        self.blink_memory_bank = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/blink_memory_bank", True)
+        self.change_keyboard_backlight_color = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/change_keyboard_backlight_color", False)
+        self.enable_sounds = g15gconf.get_bool_or_default(self._gconf_client, self._gconf_key + "/enable_sounds", True)
+        self.blink_delay = g15gconf.get_int_or_default(self._gconf_client, self._gconf_key + "/blink_delay", 500)
+        self.keyboard_backlight_color  = g15gconf.get_rgb_or_default(self._gconf_client, self._gconf_key + "/keyboard_backlight_color", ( 128, 128, 128 ))
 
     def activate(self):
         self._last_variant = None
@@ -374,9 +378,9 @@ class G15NotifyLCD():
                     
                 # Strip markup
                 if body:
-                    body = g15util.strip_tags(body) 
+                    body = g15markup.strip_tags(body)
                 if summary:
-                    summary  = g15util.strip_tags(summary)
+                    summary  = g15markup.strip_tags(summary)
 
                 if id != 0 and not id in self._message_map:
                     if len(self._message_queue) > 0:
@@ -482,17 +486,17 @@ class G15NotifyLCD():
         properties["title"] = self._current_message.summary
         properties["message"] = self._current_message.body
         if self._current_message.icon != None and len(self._current_message.icon) > 0:
-            icon_path = g15util.get_icon_path(self._current_message.icon)
+            icon_path = g15icontools.get_icon_path(self._current_message.icon)
             
             # Workaround on Natty missing new email notification icon (from Evolution)?
             if icon_path == None and self._current_message.icon == "notification-message-email":
-                icon_path = g15util.get_icon_path([ "applications-email-pane", "mail_new", "mail-inbox", "mail-folder-inbox", "evolution-mail" ])
+                icon_path = g15icontools.get_icon_path([ "applications-email-pane", "mail_new", "mail-inbox", "mail-folder-inbox", "evolution-mail" ])
                 
             properties["icon"] = icon_path 
         elif self._current_message.embedded_image != None:
             properties["icon"] = self._current_message.embedded_image            
         if not "icon" in properties or properties["icon"] == None:
-            properties["icon"] = g15util.get_icon_path(["dialog-info", "stock_dialog-info", "messagebox_info" ])
+            properties["icon"] = g15icontools.get_icon_path(["dialog-info", "stock_dialog-info", "messagebox_info" ])
                     
         properties["next"] = len(self._message_queue) > 1
         action = 1
@@ -568,7 +572,7 @@ class G15NotifyLCD():
     def _do_redraw(self):
         if self._page != None:
             self._screen.redraw(self._page)
-            self._redraw_timer = g15util.schedule("Notification", self._screen.service.animation_delay, self._do_redraw)
+            self._redraw_timer = g15scheduler.schedule("Notification", self._screen.service.animation_delay, self._do_redraw)
           
     def _cancel_redraw(self):
         if self._redraw_timer != None:
@@ -605,5 +609,5 @@ class G15NotifyLCD():
         logger.debug("Starting hide timeout")
         self._cancel_timer() 
         self._displayed_notification = time.time()                       
-        self._timer = g15util.schedule("Notification", message.timeout, self._hide_notification)
+        self._timer = g15scheduler.schedule("Notification", message.timeout, self._hide_notification)
                    

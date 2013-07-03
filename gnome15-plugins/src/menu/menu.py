@@ -25,7 +25,7 @@ import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
 import gnome15.g15plugin as g15plugin
-from gnome15.g15util import find
+from gnome15.util.g15pythonlang import find
 import sys
 import cairo
 import traceback
@@ -43,7 +43,7 @@ copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.russo79.com/gnome15"
 has_preferences=False
 default_enabled=True
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Previous item"), 
          g15driver.NEXT_SELECTION : _("Next item"),

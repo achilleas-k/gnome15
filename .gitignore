@@ -4,6 +4,7 @@ config.log
 config.status
 gnome15-*.tar.gz
 py-compile
+compile
 missing
 install-sh
 autom4te.cache

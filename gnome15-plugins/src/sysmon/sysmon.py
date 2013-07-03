@@ -21,7 +21,11 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("sysmon", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import time
@@ -65,7 +69,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "sysmon.glade"))    
     dialog = widget_tree.get_object("SysmonDialog")
     dialog.set_transient_for(parent)    
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/show_cpu_on_panel", "ShowCPUUsageOnPanel", True, widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/show_cpu_on_panel", "ShowCPUUsageOnPanel", True, widget_tree)
     dialog.run()
     dialog.hide()
     
@@ -185,16 +189,16 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         self.only_refresh_when_visible = False
     
     def activate(self):
-        self._net_icon = g15util.get_icon_path([ "network-transmit-receive", 
+        self._net_icon = g15icontools.get_icon_path([ "network-transmit-receive",
                                                 "gnome-fs-network",
                                                 "network-server" ], 
                                                self.screen.height)
-        self._cpu_icon = g15util.get_icon_path( CPU_ICONS,  
+        self._cpu_icon = g15icontools.get_icon_path( CPU_ICONS,
                                                self.screen.height)
-        self._mem_icon = g15util.get_icon_path( [ "media-memory", 
+        self._mem_icon = g15icontools.get_icon_path( [ "media-memory",
                                                  "media-flash" ],  
                                                self.screen.height)
-        self._thumb_icon = g15util.load_surface_from_file(self._cpu_icon)
+        self._thumb_icon = g15cairo.load_surface_from_file(self._cpu_icon)
         
         self.variant = 0
         self.graphs = {}
@@ -326,7 +330,7 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         self._reschedule_refresh()
             
     def _set_panel(self, client = None, connection_id = None, entry = None, args = None):        
-        self.page.panel_painter = self._paint_panel if g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/show_cpu_on_panel", True) else None
+        self.page.panel_painter = self._paint_panel if g15gconf.get_bool_or_default(self.gconf_client, self.gconf_key + "/show_cpu_on_panel", True) else None
         
     def _refresh(self):
         if self.page is not None:
@@ -396,7 +400,7 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None and self._thumb_icon != None and self.screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
         if self.page != None and self.screen.driver.get_bpp() == 16:

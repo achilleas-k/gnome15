@@ -83,9 +83,6 @@ endif
 if ENABLE_SCREENSAVER_PLUGIN
     MAYBE_SCREENSAVER = screensaver
 endif
-if ENABLE_INDICATOR_ME_PLUGIN
-    MAYBE_INDICATOR_ME = indicator-me
-endif
 if ENABLE_INDICATOR_MESSAGES_PLUGIN
     MAYBE_INDICATOR_MESSAGES = indicator-messages
 endif
@@ -116,14 +113,17 @@ endif
 if ENABLE_DEBUG_PLUGIN
     MAYBE_DEBUG = debug
 endif
+if ENABLE_TRAFFIC_STATS_PLUGIN
+    MAYBE_TRAFFIC_STATS = trafficstats
+endif
 
 SUBDIRS = $(MAYBE_BACKGROUND) $(MAYBE_CAIRO_CLOCK) $(MAYBE_CLOCK) $(MAYBE_FX) $(MAYBE_MACRO_RECORDER) $(MAYBE_MACROS) $(MAYBE_MOUNTS) \
 	$(MAYBE_NOTIFY_LCD) $(MAYBE_IM) $(MAYBE_WEATHER) $(MAYBE_MPRIS) $(MAYBE_MENU) $(MAYBE_PANEL) $(MAYBE_MEDIAPLAYER) $(MAYBE_G15DAEMON_SERVER) \
-	$(MAYBE_STOPWATCH) $(MAYBE_SCREENSAVER) $(MAYBE_INDICATOR_ME) $(MAYBE_INDICATOR_MESSAGES) $(MAYBE_PROFILES) \
+	$(MAYBE_STOPWATCH) $(MAYBE_SCREENSAVER) $(MAYBE_INDICATOR_MESSAGES) $(MAYBE_PROFILES) \
 	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_CAL) $(MAYBE_CAL_EVOLUTION) $(MAYBE_CAL_GOOGLE) $(MAYBE_LCDBIFF) $(MAYBE_SENSE) \
 	$(MAYBE_LCDSHOT) $(MAYBE_TWEAK) $(MAYBE_TAILS) $(MAYBE_DISPLAY) $(MAYBE_VOIP) $(MAYBE_VOIP_TEAMSPEAK3) $(MAYBE_WEATHER_NOAA) \
-	$(MAYBE_WEATHER_YAHOO) $(MAYBE_GOOGLE_ANALYTICS) $(MAYBE_DEBUG)
+	$(MAYBE_WEATHER_YAHOO) $(MAYBE_GOOGLE_ANALYTICS) $(MAYBE_DEBUG) $(MAYBE_TRAFFIC_STATS)
 	
 DIST_SUBDIRS = background cairo-clock clock fx macro-recorder macros mounts notify-lcd im weather mpris menu panel mediaplayer g15daemon-server stopwatch \
-	profiles sysmon volume rss processes screensaver cal cal-evolution cal-google lcdbiff indicator-me indicator-messages sense lcdshot tweak tails display \
-	voip voip-teamspeak3 google-analytics weather-noaa weather-yahoo debug
+	profiles sysmon volume rss processes screensaver cal cal-evolution cal-google lcdbiff indicator-messages sense lcdshot tweak tails display \
+	voip voip-teamspeak3 google-analytics weather-noaa weather-yahoo debug trafficstats

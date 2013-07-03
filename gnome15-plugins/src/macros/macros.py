@@ -23,7 +23,8 @@ _ = g15locale.get_translation("macros", modfile = __file__).ugettext
 
 import gnome15.g15profile as g15profile
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
 import gnome15.g15globals as g15globals
 import gnome15.g15theme as g15theme
 import gnome15.g15screen as g15screen
@@ -60,7 +61,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "macros.glade"))
     dialog = widget_tree.get_object("MacrosDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/raise" % gconf_key, "RaisePageCheckbox", True, widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/raise" % gconf_key, "RaisePageCheckbox", True, widget_tree)
     dialog.run()
     dialog.hide()
 
@@ -76,7 +77,7 @@ class MacroMenuItem(g15theme.MenuItem):
         item_properties = g15theme.MenuItem.get_theme_properties(self)
         item_properties["item_name"] = self.macro.name
         item_properties["item_type"] = ""        
-        item_properties["item_key"] = ",".join(g15util.get_key_names(self.macro.keys))
+        item_properties["item_key"] = ",".join(g15driver.get_key_names(self.macro.keys))
         for r in range(0, len(self.macro.keys)):
             item_properties["icon%d" % (r + 1)] = os.path.join(g15globals.image_dir, "key-%s.png" % self.macro.keys[r])
         return item_properties
@@ -146,7 +147,7 @@ class G15Macros(g15plugin.G15MenuPlugin):
             
     def _reload_and_popup(self):
         self._reload()
-        if g15util.get_bool_or_default(self.gconf_client, "%s/raise" % self.gconf_key, True):
+        if g15gconf.get_bool_or_default(self.gconf_client, "%s/raise" % self.gconf_key, True):
             self._popup()
     
     def load_menu_items(self):
@@ -217,5 +218,5 @@ class MacrosScreenChangeAdapter(g15screen.ScreenChangeAdapter):
     def memory_bank_changed(self, new_bank_number):
         self.plugin._get_configuration()
         self.plugin._reload()
-        if g15util.get_bool_or_default(self.plugin.gconf_client, "%s/raise" % self.plugin.gconf_key, True):
+        if g15gconf.get_bool_or_default(self.plugin.gconf_client, "%s/raise" % self.plugin.gconf_key, True):
             self.plugin._popup()

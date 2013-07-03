@@ -51,9 +51,13 @@ import pango
 import g15driver
 import g15globals
 import g15screen
-import g15util
+import util.g15convert as g15convert
+import util.g15scheduler as g15scheduler
 import g15text
 import g15locale
+import util.g15cairo as g15cairo
+import util.g15svg as g15svg
+import util.g15icontools as g15icontools
 import xml.sax.saxutils as saxutils
 import base64
 import dbusmenu
@@ -499,7 +503,7 @@ class Component(object):
             self.view_element = theme.get_element(self.id) 
             if self.view_element is None:
                 self.view_element = theme.get_element()
-            self.view_bounds  = g15util.get_actual_bounds(self.view_element) if self.view_element is not None else None
+            self.view_bounds  = g15svg.get_actual_bounds(self.view_element) if self.view_element is not None else None
         
     def is_visible(self):
         return self.parent != None and self.parent.is_visible()
@@ -750,7 +754,7 @@ class G15Page(Component):
         self.back_context.set_line_width(line_width)
         
     def arc(self, x, y, radius, angle1, angle2, fill = False):
-        self.back_context.arc(x, y, radius, g15util.degrees_to_radians(angle1), g15util.degrees_to_radians(angle2))
+        self.back_context.arc(x, y, radius, g15convert.degrees_to_radians(angle1), g15convert.degrees_to_radians(angle2))
         if fill:
             self.back_context.fill()
         else:
@@ -796,7 +800,7 @@ class G15Page(Component):
         try:
             scroll = self.check_for_scroll()
             if scroll and self.theme_scroll_timer == None:
-                self.theme_scroll_timer = g15util.schedule("ScrollRedraw", self.screen.service.scroll_delay, self.scroll_and_reschedule)
+                self.theme_scroll_timer = g15scheduler.schedule("ScrollRedraw", self.screen.service.scroll_delay, self.scroll_and_reschedule)
             elif not scroll and self.theme_scroll_timer != None:
                 self.theme_scroll_timer.cancel()
                 self.theme_scroll_timer = None
@@ -906,8 +910,8 @@ class Scrollbar(Component):
         max_s, view_size, position = self.values_callback()
         knob = element.xpath('svg:*[@class=\'knob\']',namespaces=theme.nsmap)[0]
         track = element.xpath('svg:*[@class=\'track\']',namespaces=theme.nsmap)[0]
-        track_bounds = g15util.get_bounds(track)
-        knob_bounds = g15util.get_bounds(knob)
+        track_bounds = g15svg.get_bounds(track)
+        knob_bounds = g15svg.get_bounds(knob)
         scale = max(1.0, max_s / view_size)
         knob.set("y", str( int( knob_bounds[1] + ( position / max(scale, 0.01) ) ) ) )
         knob.set("height", str(int(track_bounds[3] / max(scale, 0.01) )))
@@ -1058,7 +1062,7 @@ class Menu(Component):
                 if self.scroll_timer is not None:
                     self.scroll_timer.cancel()
                 if self.get_screen().service.animated_menus:
-                    self.scroll_timer = g15util.schedule("ScrollTo", self.get_screen().service.animation_delay, self.get_root().redraw)
+                    self.scroll_timer = g15scheduler.schedule("ScrollTo", self.get_screen().service.animation_delay, self.get_root().redraw)
                 else:
                     self.get_root().redraw()
             
@@ -1325,7 +1329,7 @@ class DBusMenuItem(MenuItem):
         properties["item_alt"] = self.dbus_menu_entry.get_alt_label()
         icon_name = self.dbus_menu_entry.get_icon_name()
         if icon_name != None:
-            properties["item_icon"] = g15util.load_surface_from_file(g15util.get_icon_path(icon_name), self.theme.bounds[3])
+            properties["item_icon"] = g15cairo.load_surface_from_file(g15icontools.get_icon_path(icon_name), self.theme.bounds[3])
         else:
             properties["item_icon"] = self.dbus_menu_entry.get_icon()
         return properties 
@@ -1392,7 +1396,7 @@ class ErrorScreen(G15Page):
         self.theme_properties = { 
                            "title": title,
                            "text": text,
-                           "icon": g15util.get_icon_path(icon)
+                           "icon": g15icontools.get_icon_path(icon)
                       }               
         self.get_screen().add_page(self)
         self.redraw()
@@ -1557,7 +1561,7 @@ class G15Theme(object):
                     raise Exception("Must either supply theme directory or SVG text")
                     
                 self.process_svg()
-                self.bounds = g15util.get_bounds(self.document.getroot())
+                self.bounds = g15svg.get_bounds(self.document.getroot())
         finally:
             self.render_lock.release()
         
@@ -1841,7 +1845,7 @@ class G15Theme(object):
         properties  -- theme properties
         """ 
         for element in root.xpath('//svg:rect[@class=\'progress\']',namespaces=self.nsmap):
-            bounds = g15util.get_bounds(element)
+            bounds = g15svg.get_bounds(element)
             id = element.get("id")
             if id.endswith("_progress"):
                 property_key = id[:-9]
@@ -1952,8 +1956,8 @@ class G15Theme(object):
                 clip_path_rect_node = self.get_element_by_tag("rect", clip_path_node)
                 if clip_path_rect_node is None:
                     raise Exception("No svg:rect for clip %s" % str(clip_path_node))
-                clip_path_bounds = g15util.get_actual_bounds(clip_path_rect_node, element)
-                text_bounds = g15util.get_actual_bounds(element)
+                clip_path_bounds = g15svg.get_actual_bounds(clip_path_rect_node, element)
+                text_bounds = g15svg.get_actual_bounds(element)
                 
                 text_box = TextBox()            
                 text_box.text = Template(t_span_text).safe_substitute(properties) 
@@ -1992,7 +1996,7 @@ class G15Theme(object):
                 text_box.css = styles
                 text_box.wrap = True
                 text_boxes.append(text_box)
-                text_box.bounds = g15util.get_actual_bounds(element)
+                text_box.bounds = g15svg.get_actual_bounds(element)
                 text_box.clip = text_box.bounds
                 
                 # Remove the textnod SVG element
@@ -2124,7 +2128,7 @@ class G15Theme(object):
         self._update_text(text_box, text_box.wrap)
         
 #        if "fill" in text_css:
-#            rgb = g15util. css["fill"]
+#            rgb = g15convert. css["fill"]
 #        else:
 #            foreground = None
         
@@ -2146,7 +2150,7 @@ class G15Theme(object):
         list_transforms = [ cairo.Matrix(width, 0.0, 0.0, height, float(element.get("x")), float(element.get("y"))) ]
         el = element
         while el != None:
-            list_transforms += g15util.get_transforms(el)
+            list_transforms += g15svg.get_transforms(el)
             el = el.getparent()
         list_transforms.reverse()
         t = list_transforms[0]
@@ -2165,7 +2169,7 @@ class G15Theme(object):
             nw = "".join(font_size_css.split()).lower()                 
             if nw.endswith("px"):   
                 fs = float(font_size_css[:-2])
-                font_pt_size = int(g15util.approx_px_to_pt(fs))
+                font_pt_size = int(g15cairo.approx_px_to_pt(fs))
             elif nw.endswith("pt"):
                 font_pt_size = int(font_size_css[:-2])
                 
@@ -2214,7 +2218,7 @@ class G15Theme(object):
         
         for element in root.xpath('//svg:*[@class=\'%s\']' % id,namespaces=self.nsmap):
             clip_path_element = self._get_clip_path_element(element)
-            bounds = g15util.get_bounds(element)
+            bounds = g15svg.get_bounds(element)
             idx = 1
             for x in range(-1, 2):
                 for y in range(-1, 2):

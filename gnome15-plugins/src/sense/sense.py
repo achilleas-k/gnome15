@@ -24,7 +24,8 @@ _ = g15locale.get_translation("sensors", modfile = __file__).ugettext
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import gnome15.g15theme as g15theme
-import gnome15.g15util as g15util
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15svg as g15svg
 import os.path
 import dbus
 import sensors
@@ -114,7 +115,7 @@ class G15SensorsPreferences():
         
         # Lines
         self.interval_adjustment = widget_tree.get_object("IntervalAdjustment")
-        self.interval_adjustment.set_value(g15util.get_float_or_default(self._gconf_client, "%s/interval" % self._gconf_key, 10))
+        self.interval_adjustment.set_value(g15gconf.get_float_or_default(self._gconf_client, "%s/interval" % self._gconf_key, 10))
         
         # Connect to events
         self.interval_adjustment.connect("value-changed", self.interval_changed)
@@ -154,8 +155,8 @@ class G15SensorsPreferences():
             for sensor in sa:
                 sense_key = "%s/sensors/%s" % (self._gconf_key, gconf.escape_key(sensor.name, len(sensor.name)))
                 if sensor.sense_type in TYPE_NAMES:
-                    self.sensor_model.append([ sensor.name, g15util.get_bool_or_default(self._gconf_client, "%s/enabled" % (sense_key), True), 
-                                              g15util.get_string_or_default(self._gconf_client, "%s/label" % (sense_key), sensor.name), TYPE_NAMES[sensor.sense_type] ])
+                    self.sensor_model.append([ sensor.name, g15gconf.get_bool_or_default(self._gconf_client, "%s/enabled" % (sense_key), True),
+                                              g15gconf.get_string_or_default(self._gconf_client, "%s/label" % (sense_key), sensor.name), TYPE_NAMES[sensor.sense_type] ])
             source.stop()
             
 
@@ -360,7 +361,7 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
         for c in self.sensor_sources:
             for s in c.get_sensors():                
                 sense_key = "%s/sensors/%s" % (self.gconf_key, gconf.escape_key(s.name, len(s.name)))
-                if g15util.get_bool_or_default(self.gconf_client, "%s/enabled" % (sense_key), True):
+                if g15gconf.get_bool_or_default(self.gconf_client, "%s/enabled" % (sense_key), True):
                     enabled_sensors.append(s)
                     
               
@@ -381,7 +382,7 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
             for s in enabled_sensors:                
                 if s.sense_type in TYPE_NAMES:
                     sense_key = "%s/sensors/%s" % (self.gconf_key, gconf.escape_key(s.name, len(s.name)))
-                    sense_label = g15util.get_string_or_default(self.gconf_client, "%s/label" % (sense_key), s.name) 
+                    sense_label = g15gconf.get_string_or_default(self.gconf_client, "%s/label" % (sense_key), s.name)
                     menu_item = SensorMenuItem("menuitem-%d" % i, s, sense_label)
                     self.sensor_dict[s.name] = menu_item
                     self._menu.add_child(menu_item)
@@ -404,7 +405,7 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
         self._get_stats()
     
     def get_next_tick(self):
-        return g15util.get_float_or_default(self.gconf_client, "%s/interval" % self.gconf_key, 5.0)
+        return g15gconf.get_float_or_default(self.gconf_client, "%s/interval" % self.gconf_key, 5.0)
     
     ''' Private
     '''
@@ -455,7 +456,7 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
             This is a bit weak. It doesn't take transformations into account,
             so care is needed in the SVG.            
             """
-            center_bounds = g15util.get_bounds(needle_center)
+            center_bounds = g15svg.get_bounds(needle_center)
             needle.set("transform", "rotate(%f,%f,%f)" % (degr, center_bounds[0], center_bounds[1]) )
         
     def _get_stats(self):

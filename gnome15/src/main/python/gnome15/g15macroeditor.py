@@ -28,7 +28,9 @@ _ = g15locale.get_translation("gnome15").ugettext
 
 import g15globals
 import g15profile
-import g15util
+import util.g15scheduler as g15scheduler
+import util.g15gconf as g15gconf
+import util.g15icontools as g15icontools
 import g15uinput
 import g15devices
 import g15driver
@@ -131,7 +133,7 @@ class G15MacroEditor():
                 hbox = gtk.HBox()
                 hbox.set_spacing(4)
                 for key in row:
-                    key_name = g15util.get_key_names([ key ])
+                    key_name = g15driver.get_key_names([ key ])
                     g_button = gtk.ToggleButton(" ".join(key_name))
                     g_button.key = key
                     key_active = key in self.editing_macro.keys
@@ -345,7 +347,7 @@ class G15MacroEditor():
                                                      self.memory_number, keys, 
                                                      exclude=[self.editing_macro]):
             if self.__macro_name_field.get_text() == "" or self.__macro_name_field.get_text().startswith("Macro "):
-                new_name = " ".join(g15util.get_key_names(keys))
+                new_name = " ".join(g15driver.get_key_names(keys))
                 self.editing_macro.name = _("Macro %s") % new_name
                 self.__macro_name_field.set_text(self.editing_macro.name)
             macro.set_keys(keys)
@@ -410,7 +412,7 @@ class G15MacroEditor():
         if not self.adjusting:
             if self.__macro_save_timer is not None:
                 self.__macro_save_timer.cancel()
-            self.__macro_save_timer = g15util.schedule("SaveMacro", 2, self.__do_save_macro, macro)            
+            self.__macro_save_timer = g15scheduler.schedule("SaveMacro", 2, self.__do_save_macro, macro)
             
     def __do_save_macro(self, macro):
         """
@@ -662,8 +664,8 @@ class G15MacroScriptEditor():
         self.__widget_tree.connect_signals(self)
         
         # Configure defaults
-        self.__output_delays.set_active(g15util.get_bool_or_default(self.__gconf_client, "/apps/gnome15/script_editor/record_delays", True))
-        self.__emit_uinput.set_active(g15util.get_bool_or_default(self.__gconf_client, "/apps/gnome15/script_editor/emit_uinput", False))
+        self.__output_delays.set_active(g15gconf.get_bool_or_default(self.__gconf_client, "/apps/gnome15/script_editor/record_delays", True))
+        self.__emit_uinput.set_active(g15gconf.get_bool_or_default(self.__gconf_client, "/apps/gnome15/script_editor/emit_uinput", False))
         self.__recorder.output_delays = self.__output_delays.get_active()
         self.__recorder.emit_uinput = self.__emit_uinput.get_active()
         
@@ -683,7 +685,7 @@ class G15MacroScriptEditor():
                 val = " ".join(split[1:])                
                 if op in OP_ICONS:
                     icon = OP_ICONS[op]
-                    icon_path = g15util.get_icon_path(icon, 24)
+                    icon_path = g15icontools.get_icon_path(icon, 24)
                     self.__script_model.append([gtk.gdk.pixbuf_new_from_file(icon_path), val, op, True])
                     
         self._validate_script()

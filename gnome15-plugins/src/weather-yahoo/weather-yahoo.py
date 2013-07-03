@@ -49,7 +49,9 @@ _ = g15locale.get_translation("weather-yahoo", modfile = __file__).ugettext
 
 import gnome15.g15accounts as g15accounts
 import gnome15.g15globals as g15globals
-import gnome15.g15util as g15util
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15pythonlang as g15pythonlang
+import gnome15.util.g15gconf as g15gconf
 import weather
 import gtk
 import os
@@ -141,7 +143,7 @@ class YahooWeatherOptions(weather.WeatherOptions):
         self.widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "weather-yahoo.glade"))
         self.component = self.widget_tree.get_object("OptionPanel")
         
-        g15util.configure_text_from_gconf(gconf_client, "%s/location_id" % gconf_key, "LocationID", "", self.widget_tree)
+        g15uigconf.configure_text_from_gconf(gconf_client, "%s/location_id" % gconf_key, "LocationID", "", self.widget_tree)
 
 class YahooWeatherData(weather.WeatherData):
     
@@ -168,16 +170,16 @@ class YahooWeatherBackend(weather.WeatherBackend):
         handler.close()
         
     def _do_get_weather_data_xml(self):
-        location_id = g15util.get_string_or_default(self.gconf_client, "%s/location_id" % self.gconf_key, "2487956")
+        location_id = g15gconf.get_string_or_default(self.gconf_client, "%s/location_id" % self.gconf_key, "2487956")
         p = self._get_weather_from_yahoo(location_id)
         if p is None:
             return None
         
         # Get location
         location_el = p["location"]
-        location = g15util.append_if_exists(location_el, "city", "")
-        location = g15util.append_if_exists(location_el, "region", location)
-        location = g15util.append_if_exists(location_el, "country", location)
+        location = g15pythonlang.append_if_exists(location_el, "city", "")
+        location = g15pythonlang.append_if_exists(location_el, "region", location)
+        location = g15pythonlang.append_if_exists(location_el, "country", location)
         
         # Get current condition
         condition_el = p["condition"]
@@ -205,9 +207,9 @@ class YahooWeatherBackend(weather.WeatherBackend):
         today_low = None
         today_high = None
         for f in forecasts_el:        
-            condition_code = g15util.to_int_or_none(f["code"])
-            high = g15util.to_float_or_none(f["high"])
-            low = g15util.to_float_or_none(f["low"])
+            condition_code = g15pythonlang.to_int_or_none(f["code"])
+            high = g15pythonlang.to_float_or_none(f["high"])
+            low = g15pythonlang.to_float_or_none(f["low"])
             if today_low is None:
                 today_low = low
                 today_high = high
@@ -235,14 +237,14 @@ class YahooWeatherBackend(weather.WeatherBackend):
         if "atmosphere" in p:
             atmosphere = p["atmosphere"]
             if "pressure" in atmosphere:
-                pressure = g15util.to_float_or_none(atmosphere["pressure"])
+                pressure = g15pythonlang.to_float_or_none(atmosphere["pressure"])
             if "visibility" in atmosphere:
-                visibility = g15util.to_float_or_none(atmosphere["visibility"])
+                visibility = g15pythonlang.to_float_or_none(atmosphere["visibility"])
             if "humidity" in atmosphere:
-                humidity = g15util.to_float_or_none(atmosphere["humidity"])
+                humidity = g15pythonlang.to_float_or_none(atmosphere["humidity"])
         
         # Build data structure        
-        condition_code = g15util.to_int_or_none(condition_el["code"])
+        condition_code = g15pythonlang.to_int_or_none(condition_el["code"])
         data = {
             "location" : location,
             "forecasts" : forecasts,
@@ -259,7 +261,7 @@ class YahooWeatherBackend(weather.WeatherBackend):
                 "humidity" : humidity,
                 "low" : today_low,
                 "high" : today_high,
-                "temp_c" : g15util.to_float_or_none(condition_el["temp"]),
+                "temp_c" : g15pythonlang.to_float_or_none(condition_el["temp"]),
                 "icon" : self._translate_icon(condition_code),
                 "fallback_icon" : "http://l.yimg.com/a/i/us/we/52/%s.gif" % condition_code if condition_code is not None else None
             }

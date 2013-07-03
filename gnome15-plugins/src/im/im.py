@@ -29,7 +29,8 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("im", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -240,7 +241,7 @@ class ContactMenuItem(g15theme.MenuItem):
         item_properties["item_name"] = self.alias
         item_properties["item_alt"] = self._get_status_text(self.presence)
         item_properties["item_type"] = ""
-        item_properties["item_icon"] = g15util.get_icon_path(self._get_status_icon_name(self.presence))
+        item_properties["item_icon"] = g15icontools.get_icon_path(self._get_status_icon_name(self.presence))
         return item_properties
         
     def set_presence(self, presence):
@@ -539,8 +540,8 @@ class G15Im(g15plugin.G15MenuPlugin):
             connected = self.menu.is_connected(name)
             if new_owner == "" and connected:
                 logger.info("Removing %s" % name)
-                g15util.schedule("RemoveConnection", 5.0, self.menu.remove_connection, name)
+                g15scheduler.schedule("RemoveConnection", 5.0, self.menu.remove_connection, name)
             elif old_owner == "" and not connected:
                 logger.info("Adding %s" % name)
-                g15util.schedule("NewConnection", 5.0, self.menu.new_connection, name, self._session_bus)
+                g15scheduler.schedule("NewConnection", 5.0, self.menu.new_connection, name, self._session_bus)
         

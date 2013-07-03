@@ -22,7 +22,10 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("videoplayer", modfile = __file__).ugettext
 
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 from threading import Timer
 import gtk
@@ -45,7 +48,7 @@ author = "Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright = _("Copyright (C)2010 Brett Smith")
 site = "http://localhost"
 has_preferences = False
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Stop"), 
          g15driver.NEXT_SELECTION : _("Play"),
@@ -131,7 +134,7 @@ class G15VideoPage(g15theme.G15Page):
         self._active = True
         self._frame_index = 1
         self._frame_wait = 0.04
-        self._thumb_icon = g15util.load_surface_from_file(g15util.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player" ]))
+        self._thumb_icon = g15cairo.load_surface_from_file(g15icontools.get_icon_path(["media-video", "emblem-video", "emblem-videos", "video", "video-player" ]))
             
     def get_theme_properties(self):
         properties = g15theme.G15Page.get_theme_properties(self)
@@ -163,7 +166,7 @@ class G15VideoPage(g15theme.G15Page):
             if len(dir) > 1:
                 dir = dir[1:]
                 file = os.path.join(self._playing.temp_dir, dir[0])
-                self._surface = g15util.load_surface_from_file(file)
+                self._surface = g15cairo.load_surface_from_file(file)
                 for path in dir:
                     file = os.path.join(self._playing.temp_dir, path)
                     os.remove(file)
@@ -197,7 +200,7 @@ class G15VideoPage(g15theme.G15Page):
             self._sidebar_offset = 0 
             if self._hide_timer != None:
                 self._hide_timer.cancel()
-            self._hide_timer = g15util.schedule("HideSidebar", after, self._hide_sidebar)
+            self._hide_timer = g15scheduler.schedule("HideSidebar", after, self._hide_sidebar)
         
     def _open(self):
         dialog = gtk.FileChooserDialog("Open..",
@@ -285,7 +288,7 @@ class G15VideoPage(g15theme.G15Page):
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._thumb_icon != None and self._screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
 
         
 class G15VideoPlayer():

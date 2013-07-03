@@ -23,7 +23,9 @@ _ = g15locale.get_translation("screensaver", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 from threading import Timer
 import gtk
@@ -57,7 +59,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     dialog = widget_tree.get_object("ScreenSaverDialog")
     dialog.set_transient_for(parent)
 
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/dim_keyboard" % gconf_key,"DimKeyboardCheckbox", True, widget_tree)    
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/dim_keyboard" % gconf_key,"DimKeyboardCheckbox", True, widget_tree)
     
     if driver.get_bpp() == 0:
         widget_tree.get_object("MessageFrame").hide()
@@ -169,12 +171,12 @@ class G15ScreenSaver():
                 self._page.key_handlers.append(self)
                 self._screen.add_page(self._page)
                 self._screen.redraw(self._page)
-            if not self.dimmed and g15util.get_bool_or_default(self._gconf_client, "%s/dim_keyboard" % self._gconf_key, True):
+            if not self.dimmed and g15gconf.get_bool_or_default(self._gconf_client, "%s/dim_keyboard" % self._gconf_key, True):
                 self._dim_keyboard()
         else:
             if self._screen.driver.get_bpp() != 0:
                 self._remove_page()
-            if self.dimmed and g15util.get_bool_or_default(self._gconf_client,"%s/dim_keyboard" % self._gconf_key, True):
+            if self.dimmed and g15gconf.get_bool_or_default(self._gconf_client,"%s/dim_keyboard" % self._gconf_key, True):
                 self._light_keyboard()
         
     def _screensaver_changed_handler(self, value):
@@ -207,6 +209,6 @@ class G15ScreenSaver():
         properties = {}
         properties["title"] = _("Workstation Locked")
         properties["body"] = self._gconf_client.get_string(self._gconf_key + "/message_text")
-        properties["icon"] = g15util.get_icon_path("sleep", self._screen.height)
+        properties["icon"] = g15icontools.get_icon_path("sleep", self._screen.height)
         
         return properties

@@ -23,7 +23,10 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("mounts", modfile = __file__).ugettext
 
 import gnome15.g15plugin as g15plugin
-import gnome15.g15util as g15util
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
@@ -62,7 +65,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "mounts.glade"))
     dialog = widget_tree.get_object("MountsDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/raise" % gconf_key, "RaisePageCheckbox", True, widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/raise" % gconf_key, "RaisePageCheckbox", True, widget_tree)
     dialog.run()
     dialog.hide()
 
@@ -111,7 +114,7 @@ class MountMenuItem(g15theme.MenuItem):
             icon_names += icon.get_names()
             
         icon_names += "gnome-dev-harddisk"
-        item_properties["item_icon"] = g15util.get_icon_path(icon_names)
+        item_properties["item_icon"] = g15icontools.get_icon_path(icon_names)
         item_properties["disk_usage"] = self.disk_used_pc
         item_properties["sel_disk_usage"] = self.disk_used_pc
         item_properties["disk_used_mb"] =  "%4.2f" % (self.disk_used / 1024.0 / 1024.0 )
@@ -162,7 +165,7 @@ class VolumeMenuItem(g15theme.MenuItem):
         item_properties["item_alt"] = ""
         item_properties["item_type"] = ""
         
-        item_properties["item_icon"] = g15util.get_icon_path([ self.volume.get_icon().get_names()[0], "gnome-dev-harddisk" ])
+        item_properties["item_icon"] = g15icontools.get_icon_path([ self.volume.get_icon().get_names()[0], "gnome-dev-harddisk" ])
         return item_properties
     
     def activate(self):
@@ -209,7 +212,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         self.volume_monitor.connect("mount_removed", self._on_mount_removed)
         
         # Refresh disk etc space every minute
-        self._handle = g15util.schedule("DiskRefresh", 60.0, self._refresh)
+        self._handle = g15scheduler.schedule("DiskRefresh", 60.0, self._refresh)
         
     def deactivate(self):
         g15plugin.G15MenuPlugin.deactivate(self)
@@ -283,7 +286,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         self._popup()
                  
     def _popup(self): 
-        if not self.page.is_visible() and g15util.get_bool_or_default(self.gconf_client,"%s/raise" % self.gconf_key, True):
+        if not self.page.is_visible() and g15gconf.get_bool_or_default(self.gconf_client,"%s/raise" % self.gconf_key, True):
             self._raise_timer = self.screen.set_priority(self.page, g15screen.PRI_HIGH, revert_after = 4.0)
             self.screen.redraw(self.page)
                 

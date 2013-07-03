@@ -28,7 +28,10 @@ getting the default or active profile.
 
 import gconf
 import time
-import g15util
+import util.g15convert as g15convert
+import util.g15gconf as g15gconf
+import util.g15os as g15os
+import util.g15icontools as g15icontools
 import g15actions
 import g15devices
 import g15uinput
@@ -59,7 +62,7 @@ mask = pyinotify.IN_DELETE | pyinotify.IN_MODIFY | pyinotify.IN_CREATE | pyinoti
 
 # Create macro profiles directory
 conf_dir = os.path.expanduser("~/.config/gnome15/macro_profiles")
-g15util.mkdir_p(conf_dir)
+g15os.mkdir_p(conf_dir)
 
 class EventHandler(pyinotify.ProcessEvent):
     """
@@ -282,7 +285,7 @@ def is_locked(device):
     Keyword arguments:
     device        -- device associated with profile
     """
-    return g15util.get_bool_or_default(conf_client, "/apps/gnome15/%s/locked" % device.uid, False)
+    return g15gconf.get_bool_or_default(conf_client, "/apps/gnome15/%s/locked" % device.uid, False)
 
 def set_locked(device, locked):
     """
@@ -835,7 +838,7 @@ class G15Profile(object):
                     self.parser.add_section(section_name) 
                 col = self.mkey_color[i] if i in self.mkey_color else None
                 if col:
-                    self.parser.set(section_name, "backlight_color", g15util.rgb_to_string(col))
+                    self.parser.set(section_name, "backlight_color", g15convert.rgb_to_string(col))
                 elif self.parser.has_option(section_name, "backlight_color"):
                     self.parser.remove_option(section_name, "backlight_color")
                 
@@ -934,7 +937,7 @@ class G15Profile(object):
             if icon == None or icon == "":
                 icon = [ "preferences-desktop-keyboard-shortcuts", "preferences-desktop-keyboard" ]
             
-            return g15util.get_icon_path(icon, height)
+            return g15icontools.get_icon_path(icon, height)
         
         return path
         
@@ -1082,7 +1085,7 @@ class G15Profile(object):
                     section_name = "%s-%s" % ( section_name, activate_on ) 
                 if not self.parser.has_section(section_name):
                     self.parser.add_section(section_name)
-                self.mkey_color[i] = g15util.to_rgb(self.parser.get(section_name, "backlight_color")) if self.parser.has_option(section_name, "backlight_color") else None
+                self.mkey_color[i] = g15convert.to_rgb(self.parser.get(section_name, "backlight_color")) if self.parser.has_option(section_name, "backlight_color") else None
                 memory_macros = []
                 self.macros[activate_on].append(memory_macros)
                 for option in self.parser.options(section_name):

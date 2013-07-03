@@ -21,7 +21,9 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("processes", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -50,7 +52,7 @@ author="Brett Smith <tanktarta@blueyonder.co.uk>"
 copyright=_("Copyright (C)2010 Brett Smith")
 site="http://www.russo79.com/gnome15"
 has_preferences=False
-unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_Z10, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
+unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 reserved_keys = [ g15driver.G_KEY_SETTINGS ]
 actions={ 
          g15driver.PREVIOUS_SELECTION : _("Previous process"), 
@@ -93,7 +95,7 @@ class ProcessMenuItem(g15theme.MenuItem):
     def activate(self):
         kill_name = str(self.process_id) if isinstance(self.process_id, int) else self.process_name 
         self.plugin.confirm_screen = g15theme.ConfirmationScreen(self.get_screen(), _("Kill Process"), _("Are you sure you want to kill\n%s") % kill_name,  
-                                    g15util.get_icon_path("utilities-system-monitor"), self.plugin._kill_process, self.process_id,
+                                    g15icontools.get_icon_path("utilities-system-monitor"), self.plugin._kill_process, self.process_id,
                                     cancel_callback = self.plugin._cancel_kill)
                     
      
@@ -258,7 +260,7 @@ class G15Processes(g15plugin.G15MenuPlugin):
         return result
 
     def _reload_menu(self):
-        g15util.schedule("ReloadProcesses", 0, self._do_reload_menu)
+        g15scheduler.schedule("ReloadProcesses", 0, self._do_reload_menu)
         
     def _get_menu_item(self, pid):
         item = self.menu.get_child_by_id("process-%s" % pid)
@@ -287,9 +289,9 @@ class G15Processes(g15plugin.G15MenuPlugin):
         try:
             icon_name = view.Icon()
             if icon_name and len(icon_name) > 0:
-                icon_path = g15util.get_icon_path(icon_name, warning = False)
+                icon_path = g15icontools.get_icon_path(icon_name, warning = False)
                 if icon_path:
-                    item.icon = g15util.load_surface_from_file(icon_path, 32) 
+                    item.icon = g15cairo.load_surface_from_file(icon_path, 32)
         except dbus.DBusException:
             pass
                 
@@ -318,14 +320,9 @@ class G15Processes(g15plugin.G15MenuPlugin):
                         item = self._get_menu_item(pid)
                         item.process_name = window.get_name()
                         this_items[item.id] = item
-                        if window.has_icon_name():
-                            icon_path = g15util.get_icon_path(window.get_icon_name(), warning = False)
-                            if icon_path:
-                                item.icon = "file:" + icon_path
-                        if item.icon == None:
-                            pixbuf = window.get_icon()
-                            if pixbuf:               
-                                item.icon = g15util.pixbuf_to_surface(pixbuf)
+                        pixbuf = window.get_icon()
+                        if pixbuf:
+                            item.icon = g15cairo.pixbuf_to_surface(pixbuf)
                                 
         else:
             for process_id in gtop.proclist():
@@ -391,4 +388,4 @@ class G15Processes(g15plugin.G15MenuPlugin):
         events when BAMF is available
         """
         if not self._mode == "applications" or self.bamf_matcher is None:
-            self._timer = g15util.schedule("ProcessesRefresh", 5.0, self._refresh)
+            self._timer = g15scheduler.schedule("ProcessesRefresh", 5.0, self._refresh)

@@ -23,7 +23,12 @@ _ = g15locale.get_translation("cal", modfile = __file__).ugettext
 
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
 import gnome15.g15plugin as g15plugin
@@ -175,7 +180,7 @@ class EventMenuItem(g15theme.MenuItem):
         item_properties["item_alarm"] = self.event.alarm  
         if self.event.alarm:          
             if self.get_screen().device.bpp > 1:  
-                item_properties["item_icon"] = g15util.get_icon_path([ "stock_alarm", "alarm-clock", "alarm-timer", "dialog-warning" ])
+                item_properties["item_icon"] = g15icontools.get_icon_path([ "stock_alarm", "alarm-clock", "alarm-timer", "dialog-warning" ])
             else:  
                 item_properties["item_icon"] = os.path.join(os.path.dirname(__file__), 'bell.gif')
         if self.event.alt_icon:
@@ -246,7 +251,7 @@ class G15CalendarPreferences(g15accounts.G15AccountPreferences):
     def create_general_options(self):
         widget_tree = gtk.Builder()
         widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cal.glade"))
-        g15util.configure_checkbox_from_gconf(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, "TwentyFourHourTimes", True, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, "TwentyFourHourTimes", True, widget_tree)
         return widget_tree.get_object("OptionPanel")
         
 class G15Cal(g15plugin.G15Plugin):  
@@ -254,8 +259,8 @@ class G15Cal(g15plugin.G15Plugin):
     def __init__(self, gconf_key, gconf_client, screen):
         g15plugin.G15Plugin.__init__(self, gconf_client, gconf_key, screen)
         self._timer = None
-        self._icon_path = g15util.get_icon_path(["calendar", "evolution-calendar", "office-calendar", "stock_calendar" ])
-        self._thumb_icon = g15util.load_surface_from_file(self._icon_path)
+        self._icon_path = g15icontools.get_icon_path(["calendar", "evolution-calendar", "office-calendar", "stock_calendar" ])
+        self._thumb_icon = g15cairo.load_surface_from_file(self._icon_path)
         
     def activate(self):
         g15plugin.G15Plugin.activate(self)
@@ -297,7 +302,7 @@ class G15Cal(g15plugin.G15Plugin):
         self._page.add_child(self._calendar)
         self._page.add_child(g15theme.MenuScrollbar("viewScrollbar", self._menu))
         self.screen.add_page(self._page)
-        g15util.schedule("CalendarFirstLoad", 0, self._redraw)
+        g15scheduler.schedule("CalendarFirstLoad", 0, self._redraw)
         
         # Listen for changes in the network state
         self.screen.service.network_manager.listeners.append(self._network_state_changed)
@@ -379,7 +384,7 @@ class G15Cal(g15plugin.G15Plugin):
         properties = {}
         properties["icon"] = self._icon_path 
         properties["title"] = _('Calendar')
-        if g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True):
+        if g15gconf.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True):
             properties["time"] = g15locale.format_time_24hour(now, self.gconf_client, False)
             properties["full_time"] = g15locale.format_time_24hour(now, self.gconf_client, True)
         else:
@@ -486,7 +491,7 @@ class G15Cal(g15plugin.G15Plugin):
             Because the calendar page also displays a clock, we want to
             redraw at second zero of every minute
             """
-            self._timer = g15util.schedule("CalRedraw", 60 - time.gmtime().tm_sec, self._redraw)
+            self._timer = g15scheduler.schedule("CalRedraw", 60 - time.gmtime().tm_sec, self._redraw)
         
     def _on_shown(self):
         self._hidden = False
@@ -513,6 +518,6 @@ class G15Cal(g15plugin.G15Plugin):
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._page != None and self._thumb_icon != None and self.screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
         
 

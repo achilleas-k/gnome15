@@ -1,4 +1,5 @@
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15cairo as g15cairo
 import os
 import rsvg
 import cairo
@@ -28,8 +29,8 @@ def create_needle_surface(svg, degrees):
     surface = cairo.SVGSurface(None, svg_size[0] * 2,svg_size[1] *2)
     context = cairo.Context(surface)
     context.translate(svg_size[0], svg_size[1])
-    g15util.rotate(context, -180)
-    g15util.rotate(context, degrees)
+    g15cairo.rotate(context, -180)
+    g15cairo.rotate(context, degrees)
     svg.render_cairo(context)
     context.translate(-svg_size[0], -svg_size[1])
     return surface

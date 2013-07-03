@@ -18,7 +18,7 @@
 #        | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
 #        +-----------------------------------------------------------------------------+
 
-import gnome15.g15util as g15util
+import gnome15.util.g15uigconf as g15uigconf
 import gtk
 import os
 
@@ -32,46 +32,46 @@ class G15StopwatchPreferences():
         self.dialog.set_transient_for(parent)
 
         # Timer 1 settings
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer1_enabled",  "cb_timer1_enabled", False, widget_tree, True)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer1_enabled",  "cb_timer1_enabled", False, widget_tree, True)
 
         timer1_label = widget_tree.get_object("e_timer1_label")
         timer1_label.set_text(gconf_client.get_string(gconf_key + "/timer1_label") or "")
         timer1_label.connect("changed", self._label_changed, gconf_key + "/timer1_label", gconf_client)
 
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer1_mode_stopwatch", "rb_timer1_stopwatch_mode", True, widget_tree, True)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer1_mode_stopwatch", "rb_timer1_stopwatch_mode", True, widget_tree, True)
         rb_timer1_stopwatch = widget_tree.get_object("rb_timer1_stopwatch_mode")
         rb_timer1_stopwatch.connect("clicked", self._timer_timer_mode, widget_tree, "1", False)
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer1_mode_countdown", "rb_timer1_countdown_mode", False, widget_tree, True)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer1_mode_countdown", "rb_timer1_countdown_mode", False, widget_tree, True)
         rb_timer1_countdown = widget_tree.get_object("rb_timer1_countdown_mode")
         rb_timer1_countdown.connect("clicked", self._timer_timer_mode, widget_tree, "1", True)
 
-        g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer1_hours", "sb_timer1_hours", 0, widget_tree, False)
-        g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer1_minutes", "sb_timer1_minutes", 5, widget_tree, False)
-        g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer1_seconds", "sb_timer1_seconds", 0, widget_tree, False)
+        g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer1_hours", "sb_timer1_hours", 0, widget_tree, False)
+        g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer1_minutes", "sb_timer1_minutes", 5, widget_tree, False)
+        g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer1_seconds", "sb_timer1_seconds", 0, widget_tree, False)
 
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer1_loop", "cb_timer1_loop", False, widget_tree, True)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer1_loop", "cb_timer1_loop", False, widget_tree, True)
 
         # Timer 2 settings
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer2_enabled", "cb_timer2_enabled", False, widget_tree, True)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer2_enabled", "cb_timer2_enabled", False, widget_tree, True)
 
         timer2_label = widget_tree.get_object("e_timer2_label")
         timer2_label.set_text(gconf_client.get_string(gconf_key + "/timer2_label") or "")
         timer2_label.connect("changed", self._label_changed, gconf_key + "/timer2_label", gconf_client)
 
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer2_mode_stopwatch", "rb_timer2_stopwatch_mode", True, widget_tree, True)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer2_mode_stopwatch", "rb_timer2_stopwatch_mode", True, widget_tree, True)
         rb_timer2_stopwatch = widget_tree.get_object("rb_timer2_stopwatch_mode")
         rb_timer2_stopwatch.connect("clicked", self._timer_timer_mode, widget_tree, "2", False)
 
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer2_mode_countdown", "rb_timer2_countdown_mode", False, widget_tree, True)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer2_mode_countdown", "rb_timer2_countdown_mode", False, widget_tree, True)
         rb_timer2_countdown = widget_tree.get_object("rb_timer2_countdown_mode")
         rb_timer2_countdown.connect("clicked", self._timer_timer_mode, widget_tree, "2", True)
 
-        g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer2_hours", "sb_timer2_hours", 0, widget_tree, False)
-        g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer2_minutes", "sb_timer2_minutes", 5, widget_tree, False)
-        g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer2_seconds", "sb_timer2_seconds", 0, widget_tree, False)
+        g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer2_hours", "sb_timer2_hours", 0, widget_tree, False)
+        g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer2_minutes", "sb_timer2_minutes", 5, widget_tree, False)
+        g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/timer2_seconds", "sb_timer2_seconds", 0, widget_tree, False)
 
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer2_loop", "cb_timer2_loop", False, widget_tree, True)
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/keep_page_visible", "cb_keep_page_visible", True, widget_tree, True)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/timer2_loop", "cb_timer2_loop", False, widget_tree, True)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/keep_page_visible", "cb_keep_page_visible", True, widget_tree, True)
 
         # Refresh UI state
         self._timer_timer_mode(None, widget_tree, "1", rb_timer1_countdown.get_active())

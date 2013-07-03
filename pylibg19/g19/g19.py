@@ -272,6 +272,11 @@ class G19(object):
             self.__threadDisplay.join()
             self.__threadDisplay = None
 
+    def close(self):
+        logger.info("Closing G19")
+        self.stop_event_handling()
+        self.__usbDevice.close()
+
 
 class G19UsbController(object):
     '''Controller for accessing the G19 USB device.
@@ -382,6 +387,13 @@ class G19UsbController(object):
             logger.debug("Claiming multimedia interface")
             self.handleIfMM.claimInterface(1)
             logger.info("Claimed multimedia keys interface")
+
+
+    def close(self):
+        if self.enable_mm_keys:
+            self.handleIfMM.releaseInterface()
+        self.handleIf1.releaseInterface()
+        self.handleIf0.releaseInterface()
 
     @staticmethod
     def _find_device(idVendor, idProduct):

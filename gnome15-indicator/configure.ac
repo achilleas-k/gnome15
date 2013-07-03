@@ -1,4 +1,4 @@
-AC_INIT(gnome15-indicator, 0.9.1, https://projects.russo79.com/projects/gnome15/issues/new)
+AC_INIT(gnome15-indicator, 0.9.2, https://projects.russo79.com/projects/gnome15/issues/new)
 AC_CONFIG_SRCDIR([g15-indicator.desktop.in])
 AM_INIT_AUTOMAKE([tar-ustar])
 AM_MAINTAINER_MODE

@@ -24,7 +24,7 @@ _ = g15locale.get_translation("gnome15").ugettext
 import usb
 import g15driver
 import g15actions
-import g15util
+import util.g15pythonlang as g15pythonlang
 import g15drivermanager
 
 # Logging
@@ -35,7 +35,19 @@ logger = logging.getLogger("service")
 Keyboard layouts 
 '''
 
-z10_key_layout = []
+z10_key_layout = [
+                     [ g15driver.G_KEY_L1, g15driver.G_KEY_L2, g15driver.G_KEY_L3, g15driver.G_KEY_L4, g15driver.G_KEY_L5 ]
+                 ]
+
+z10_action_keys = { g15driver.NEXT_SELECTION: g15actions.ActionBinding(g15driver.NEXT_SELECTION, [ g15driver.G_KEY_L4 ], g15driver.KEY_STATE_UP),
+                    g15driver.PREVIOUS_SELECTION: g15actions.ActionBinding(g15driver.PREVIOUS_SELECTION, [ g15driver.G_KEY_L3 ], g15driver.KEY_STATE_UP),
+                    g15driver.SELECT: g15actions.ActionBinding(g15driver.SELECT, [ g15driver.G_KEY_L5 ], g15driver.KEY_STATE_UP),
+                    g15driver.MENU: g15actions.ActionBinding(g15driver.MENU, [ g15driver.G_KEY_L1 ], g15driver.KEY_STATE_UP),
+                    g15driver.CLEAR: g15actions.ActionBinding(g15driver.CLEAR, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_HELD),
+                    g15driver.VIEW: g15actions.ActionBinding(g15driver.VIEW, [ g15driver.G_KEY_L2 ], g15driver.KEY_STATE_UP),
+                    g15driver.NEXT_PAGE: g15actions.ActionBinding(g15driver.NEXT_PAGE, [ g15driver.G_KEY_L4 ], g15driver.KEY_STATE_HELD),
+                    g15driver.PREVIOUS_PAGE: g15actions.ActionBinding(g15driver.PREVIOUS_PAGE, [ g15driver.G_KEY_L3 ], g15driver.KEY_STATE_HELD)
+                  }
 
 g11_key_layout = [
                   [ g15driver.G_KEY_G1, g15driver.G_KEY_G2, g15driver.G_KEY_G3 ],
@@ -403,7 +415,7 @@ DeviceInfo(g15driver.MODEL_G15_V2,      (0x046d, 0xc227),       None,           
 DeviceInfo(g15driver.MODEL_G13,         (0x046d, 0xc21c),       None,               g13_key_layout,     1,  ( 160,  43 ),   True,   _("Logitech G13 Advanced Gameboard"),           g15_action_keys)
 DeviceInfo(g15driver.MODEL_G510,        [ (0x046d, 0xc22d), 
                                           (0x046d, 0xc22e) ],   None,               g510_key_layout,    1,  ( 160,  43 ),   True,   _("Logitech G510 Keyboard"),                    g15_action_keys)
-DeviceInfo(g15driver.MODEL_Z10,         (0x046d, 0x0a07),       None,               z10_key_layout,     1,  ( 160,  43 ),   False,  _("Logitech Z10 Speakers"),                     g19_action_keys)
+DeviceInfo(g15driver.MODEL_Z10,         (0x046d, 0x0a07),       None,               z10_key_layout,     1,  ( 160,  43 ),   False,  _("Logitech Z10 Speakers"),                     z10_action_keys)
 DeviceInfo(g15driver.MODEL_G110,        (0x046d, 0xc22b),       None,               g110_key_layout,    0,  ( 0,    0 ),    True,   _("Logitech G110 Keyboard"),                    g110_action_keys)
 DeviceInfo(g15driver.MODEL_GAMEPANEL,   (0x046d, 0xc251),       None,               g15v1_key_layout,   1,  ( 160,  43 ),   True,   _("Logitech GamePanel"),                        g15_action_keys)
 DeviceInfo(g15driver.MODEL_G930,        (0x046d, 0xa1f),        None,               g930_key_layout,    0,  ( 0,  0 ),      True,   _("Logitech G930 Headphones"),                  {})
@@ -419,7 +431,7 @@ device_removed_listeners = []
     
 def __device_added(observer, device):
     if "uevent" in device.attributes:
-        uevent = g15util.parse_as_properties(device.attributes["uevent"])
+        uevent = g15pythonlang.parse_as_properties(device.attributes["uevent"])
         if "PRODUCT" in uevent:
             if "subsystem" in device.attributes and device.attributes["subsystem"] == "usb":
                 major,minor,_ = uevent["PRODUCT"].split("/")

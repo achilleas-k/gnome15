@@ -23,7 +23,11 @@ _ = g15locale.get_translation("cal", modfile = __file__).ugettext
 
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
 import gnome15.g15globals as g15globals
@@ -141,8 +145,8 @@ class G15VisitsGraph(g15theme.Component):
         
     def create_plot(self, graph_surface):
         series_color, fill_color = self.get_colors()
-        alt_series_color = g15util.get_alt_color(series_color)
-        alt_fill_color = g15util.get_alt_color(fill_color)
+        alt_series_color = g15convert.get_alt_color(series_color)
+        alt_fill_color = g15convert.get_alt_color(fill_color)
         
         selected = self.plugin._menu.selected
         pie_data = {}
@@ -210,8 +214,8 @@ class G15GoogleAnalytics():
         self._gconf_client = gconf_client
         self._gconf_key = gconf_key
         self._timer = None
-        self._icon_path = g15util.get_icon_path([ "redhat-office", "package_office", "gnome-applications", "xfce-office", "baobab" ])
-        self._thumb_icon = g15util.load_surface_from_file(self._icon_path)
+        self._icon_path = g15icontools.get_icon_path([ "redhat-office", "package_office", "gnome-applications", "xfce-office", "baobab" ])
+        self._thumb_icon = g15cairo.load_surface_from_file(self._icon_path)
         self._timer = None
         
     def activate(self):
@@ -272,14 +276,14 @@ class G15GoogleAnalytics():
             self._load_site_data()
             self._page.redraw()
             self._schedule_refresh(get_update_time(self._gconf_client, self._gconf_key) * 60.0) 
-            selected = g15util.get_string_or_default(self._gconf_client, "%s/selected_site" % self._gconf_key, None)
+            selected = g15gconf.get_string_or_default(self._gconf_client, "%s/selected_site" % self._gconf_key, None)
             if selected:
                 for m in self._menu.get_children():
                     if m.id == selected:
                         self._menu.set_selected_item(m)
         
     def _schedule_refresh(self, time):
-        self._timer = g15util.schedule("AnalyticsRedraw", time, self._do_refresh)
+        self._timer = g15scheduler.schedule("AnalyticsRedraw", time, self._do_refresh)
     
     def _accounts_changed(self, account_manager):        
         self._cancel_refresh()
@@ -363,6 +367,6 @@ class G15GoogleAnalytics():
         
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self._page != None and self._thumb_icon != None and self._screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self._thumb_icon, canvas)
         
 

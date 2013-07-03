@@ -25,7 +25,7 @@ import dbus.service
 import os.path
 import g15devices
 import g15driver
-import g15util
+import util.g15scheduler as g15scheduler
 
 # Logging
 import logging
@@ -126,7 +126,7 @@ def get_value(filename):
         fd.close()
         
 def set_value(filename, value):
-    g15util.execute("System", "setValue", _do_set_value, filename, value);
+    g15scheduler.execute("System", "setValue", _do_set_value, filename, value);
         
 def _do_set_value(filename, value):
     logger.debug("Writing %s to %s" % (filename, value))

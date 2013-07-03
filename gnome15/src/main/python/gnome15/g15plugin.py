@@ -19,7 +19,9 @@
 #        +-----------------------------------------------------------------------------+
  
 import dbus
-import g15util
+import util.g15scheduler as g15scheduler
+import util.g15cairo as g15cairo
+import util.g15icontools as g15icontools
 import g15theme
 import g15screen
 import sys
@@ -119,10 +121,10 @@ class G15PagePlugin(G15Plugin):
         G15Plugin.__init__(self, gconf_client, gconf_key, screen)
         self.page_id = page_id
         self.hidden = False
-        self._icon_path = g15util.get_icon_path(icon)
+        self._icon_path = g15icontools.get_icon_path(icon)
         self._title = title
         self.page = None
-        self.thumb_icon = g15util.load_surface_from_file(self._icon_path)
+        self.thumb_icon = g15cairo.load_surface_from_file(self._icon_path)
         self.add_page_on_activate = True
         
     def activate(self):
@@ -180,7 +182,7 @@ class G15PagePlugin(G15Plugin):
     
     def _paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None and self.thumb_icon != None and self.screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
     
     def _paint_panel(self, canvas, allocated_size, horizontal):
         pass
@@ -282,7 +284,7 @@ class G15RefreshingPlugin(G15PagePlugin):
             if self.schedule_on_gobject:
                 self.timer = gobject.timeout_add(int(self.get_next_tick() * 1000), self._refresh)
             else:
-                self.timer = g15util.schedule("%s-Redraw" % self.page.id, self.get_next_tick(), self._refresh)
+                self.timer = g15scheduler.schedule("%s-Redraw" % self.page.id, self.get_next_tick(), self._refresh)
         
     def _refresh(self):
         self.refresh()
@@ -319,8 +321,8 @@ class G15MenuPlugin(G15Plugin):
         self.set_icon(menu_title_icon)
         
     def set_icon(self, icon):
-        self._icon_path = g15util.get_icon_path(icon)
-        self.thumb_icon = g15util.load_surface_from_file(self._icon_path)
+        self._icon_path = g15icontools.get_icon_path(icon)
+        self.thumb_icon = g15cairo.load_surface_from_file(self._icon_path)
 
     def activate(self):         
         G15Plugin.activate(self) 
@@ -420,5 +422,5 @@ class G15MenuPlugin(G15Plugin):
     
     def paint_thumbnail(self, canvas, allocated_size, horizontal):
         if self.page != None and self.thumb_icon != None and self.screen.driver.get_bpp() == 16:
-            return g15util.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
+            return g15cairo.paint_thumbnail_image(allocated_size, self.thumb_icon, canvas)
     

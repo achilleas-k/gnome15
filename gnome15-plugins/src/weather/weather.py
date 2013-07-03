@@ -24,7 +24,13 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("weather", modfile = __file__).ugettext
 
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15pythonlang as g15pythonlang
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
 import gnome15.g15text as g15text
@@ -133,19 +139,19 @@ class G15WeatherPreferences():
         for b in get_available_backends():
             l = [b, get_backend(b).backend_name ]
             self._sources_model.append(l)
-        g15util.configure_combo_from_gconf(gconf_client, "%s/source" % gconf_key, "Source", self._sources_model[0][0] if len(self._sources_model) > 0 else None, self._widget_tree)
+        g15uigconf.configure_combo_from_gconf(gconf_client, "%s/source" % gconf_key, "Source", self._sources_model[0][0] if len(self._sources_model) > 0 else None, self._widget_tree)
         self._load_options_for_source()
         
         update = self._widget_tree.get_object("UpdateAdjustment")
-        update.set_value(g15util.get_int_or_default(gconf_client, gconf_key + "/update", DEFAULT_UPDATE_INTERVAL))
+        update.set_value(g15gconf.get_int_or_default(gconf_client, gconf_key + "/update", DEFAULT_UPDATE_INTERVAL))
         update.connect("value-changed", self._value_changed, update, gconf_key + "/update")
         
         unit = self._widget_tree.get_object("UnitCombo")
         unit.set_active(gconf_client.get_int(gconf_key + "/units"))
         unit.connect("changed", self._unit_changed, unit, gconf_key + "/units")
         
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, self._widget_tree)
-        g15util.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, self._widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/use_theme_icons" % gconf_key, "UseThemeIcons", True, self._widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/twenty_four_hour_times" % gconf_key, "TwentyFourHourTimes", True, self._widget_tree)
         
         dialog.run()
         dialog.hide()
@@ -237,7 +243,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
     
     def refresh(self):        
         try :            
-            backend_type = g15util.get_string_or_default(self.gconf_client, "%s/source" % self.gconf_key, None)
+            backend_type = g15gconf.get_string_or_default(self.gconf_client, "%s/source" % self.gconf_key, None)
             if backend_type:
                 backend = get_backend(backend_type).create_backend(self.gconf_client, "%s/%s" % (self.gconf_key, backend_type) )
                 self._weather = backend.get_weather_data()
@@ -262,14 +268,14 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
     """
     
     def _load_config(self):        
-        val = g15util.get_int_or_default(self.gconf_client, self.gconf_key + "/update", DEFAULT_UPDATE_INTERVAL)
+        val = g15gconf.get_int_or_default(self.gconf_client, self.gconf_key + "/update", DEFAULT_UPDATE_INTERVAL)
         self.refresh_interval = val * 60.0
         
     def _loc_changed(self, client, connection_id, entry, args):
         if not entry.get_key().endswith("/theme") and not entry.get_key().endswith("/enabled"):
             if self._config_change_handle is not None:
                 self._config_change_handle.cancel()
-            self._config_change_handle = g15util.schedule("ApplyConfig", 3.0, self._config_changed)
+            self._config_change_handle = g15scheduler.schedule("ApplyConfig", 3.0, self._config_changed)
     
     def _config_changed(self):
         self.reload_theme()
@@ -286,7 +292,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
     def _build_properties(self):
         properties = {}
         attributes = {}
-        use_twenty_four_hour = g15util.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True)
+        use_twenty_four_hour = g15gconf.get_bool_or_default(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, True)
         if self._weather is None:            
             properties["message"] = _("No weather source configuration")
         else: 
@@ -305,24 +311,24 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 properties["message"] = ""
                 c_icon, f_icon, t_icon = self._get_icons(current)
                 if t_icon != None:
-                    attributes["icon"] = g15util.load_surface_from_file(t_icon)
-                    properties["icon"] = g15util.get_embedded_image_url(attributes["icon"]) 
+                    attributes["icon"] = g15cairo.load_surface_from_file(t_icon)
+                    properties["icon"] = g15icontools.get_embedded_image_url(attributes["icon"])
                 else:
                     logger.warning("No translated weather icon for %s" % c_icon)
                 mono_thumb = self._get_mono_thumb_icon(c_icon)        
                 if mono_thumb != None:
-                    attributes["mono_thumb_icon"] = g15util.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
+                    attributes["mono_thumb_icon"] = g15cairo.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))
                 properties["condition"] = current['condition']
                 
-                temp_c = g15util.to_float_or_none(current['temp_c'])
+                temp_c = g15pythonlang.to_float_or_none(current['temp_c'])
                 if temp_c is not None:
                     temp_f = c_to_f(temp_c)
                     temp_k = c_to_k(temp_c)
-                low_c = g15util.to_float_or_none(current['low']) if 'low' in current else None
+                low_c = g15pythonlang.to_float_or_none(current['low']) if 'low' in current else None
                 if low_c is not None :
                     low_f = c_to_f(low_c)
                     low_k = c_to_k(low_c)
-                high_c  = g15util.to_float_or_none(current['high']) if 'high' in current else None
+                high_c  = g15pythonlang.to_float_or_none(current['high']) if 'high' in current else None
                 if high_c is not None :
                     high_f  = c_to_f(high_c)
                     high_k = c_to_k(high_c)
@@ -365,21 +371,21 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                     
                 
                 # Wind
-                wind = g15util.append_if_exists(current, "wind_chill", "", "%sC")
-                wind = g15util.append_if_exists(current, "wind_speed", wind, "%sKph")
-                wind = g15util.append_if_exists(current, "wind_direction", wind, "%sdeg")
+                wind = g15pythonlang.append_if_exists(current, "wind_chill", "", "%sC")
+                wind = g15pythonlang.append_if_exists(current, "wind_speed", wind, "%sKph")
+                wind = g15pythonlang.append_if_exists(current, "wind_direction", wind, "%sdeg")
                 properties["wind"] =  wind 
                 
                 # Visibility
-                visibility = g15util.append_if_exists(current, "visibility", "", "%sM")
+                visibility = g15pythonlang.append_if_exists(current, "visibility", "", "%sM")
                 properties["visibility"] =  visibility
                 
                 # Pressure
-                pressure = g15util.append_if_exists(current, "pressure", "", "%smb")
+                pressure = g15pythonlang.append_if_exists(current, "pressure", "", "%smb")
                 properties["pressure"] =  pressure
                 
                 # Humidity
-                humidity = g15util.append_if_exists(current, "humidity", "", "%s%%")
+                humidity = g15pythonlang.append_if_exists(current, "humidity", "", "%s%%")
                 properties["humidity"] =  humidity
                 
                 # Sunrise                
@@ -415,11 +421,11 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                     for forecast in self._weather['forecasts']:        
                         properties["condition" + str(y)] = forecast['condition']
                         
-                        lo_c = g15util.to_float_or_none(forecast['low'])
+                        lo_c = g15pythonlang.to_float_or_none(forecast['low'])
                         if lo_c is not None:
                             lo_f = c_to_f(temp_c)
                             lo_k = c_to_k(temp_c)
-                        hi_c = g15util.to_float_or_none(forecast['high'])
+                        hi_c = g15pythonlang.to_float_or_none(forecast['high'])
                         if hi_c is not None:
                             hi_f = c_to_f(hi_c)
                             hi_k = c_to_k(hi_c)
@@ -438,7 +444,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                         properties["day_letter" + str(y)] = forecast['day_of_week'][:1]
                         
                         c_icon, f_icon, t_icon = self._get_icons(forecast)
-                        properties["icon" + str(y)] = g15util.get_embedded_image_url(g15util.load_surface_from_file(t_icon)) 
+                        properties["icon" + str(y)] = g15icontools.get_embedded_image_url(g15cairo.load_surface_from_file(t_icon))
                         
                         y += 1
         
@@ -476,18 +482,18 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
         if theme_icon == None or theme_icon == "":
             return None
         else:
-            if not g15util.get_bool_or_default(self.gconf_client, "%s/use_theme_icons" % self.gconf_key, True):
+            if not g15gconf.get_bool_or_default(self.gconf_client, "%s/use_theme_icons" % self.gconf_key, True):
                 return fallback_icon
             
         if theme_icon != None:
-            icon_path = g15util.get_icon_path(theme_icon, warning = False, include_missing = False)
+            icon_path = g15icontools.get_icon_path(theme_icon, warning = False, include_missing = False)
             if icon_path == None and theme_icon.endswith("-night"):
-                icon_path = g15util.get_icon_path(theme_icon[:len(theme_icon) - 6], include_missing = False)
+                icon_path = g15icontools.get_icon_path(theme_icon[:len(theme_icon) - 6], include_missing = False)
                 
             if icon_path != None:
                 return icon_path
              
-        return g15util.get_icon_path(icon)
+        return g15icontools.get_icon_path(icon)
         
     def _get_base_icon(self, icon):
         # Strips off URL path, image extension, size and weather prefix if present
@@ -505,7 +511,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
         self._text.set_canvas(canvas)
         if self.screen.driver.get_bpp() == 1:
             if "mono_thumb_icon" in self._page_attributes:
-                size = g15util.paint_thumbnail_image(allocated_size, self._page_attributes["mono_thumb_icon"], canvas)
+                size = g15cairo.paint_thumbnail_image(allocated_size, self._page_attributes["mono_thumb_icon"], canvas)
                 canvas.translate(size + 2, 0)
                 total_taken += size + 2
             if "temp_short" in self._page_properties:
@@ -519,7 +525,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
             rgb = self.screen.driver.get_color_as_ratios(g15driver.HINT_FOREGROUND, ( 0, 0, 0 ))
             canvas.set_source_rgb(rgb[0],rgb[1],rgb[2])
             if "icon" in self._page_attributes:
-                size = g15util.paint_thumbnail_image(allocated_size, self._page_attributes["icon"], canvas)
+                size = g15cairo.paint_thumbnail_image(allocated_size, self._page_attributes["icon"], canvas)
                 total_taken += size
             if "temp" in self._page_properties:
                 if horizontal:

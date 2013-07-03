@@ -1,5 +1,6 @@
 import gnome15.g15_theme as g15theme
-import gnome15.g15_util as g15util
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import os
 import time
 
@@ -40,7 +41,7 @@ class Theme():
             item_properties["item_type"] = item.get_type()
             icon_name = item.get_icon_name()
             if icon_name != None:
-                item_properties["item_icon"] = g15util.load_surface_from_file(g15util.get_icon_path(self.screen.applet.conf_client, icon_name))
+                item_properties["item_icon"] = g15cairo.load_surface_from_file(g15icontools.get_icon_path(self.screen.applet.conf_client, icon_name))
             else:
                 item_properties["item_icon"] = item.get_icon()
                 

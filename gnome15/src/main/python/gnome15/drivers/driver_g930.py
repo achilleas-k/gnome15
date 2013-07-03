@@ -20,7 +20,8 @@ from pyinputevent.pyinputevent import SimpleDevice
 import select 
 import pyinputevent.scancodes as S
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
 import gnome15.g15globals as g15globals
 import gnome15.g15uinput as g15uinput
 import gconf
@@ -71,7 +72,7 @@ class G930DriverPreferences():
         widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g930.glade"))
         
         self.grab_multimedia = widget_tree.get_object("GrabMultimedia")
-        g15util.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/grab_multimedia" % device.uid, "GrabMultimedia", False, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/grab_multimedia" % device.uid, "GrabMultimedia", False, widget_tree)
         
         self.component = widget_tree.get_object("DriverComponent")
         
@@ -243,7 +244,7 @@ class Driver(g15driver.AbstractDriver):
             raise Exception("Not connected")
         self._stop_receiving_keys()
         if self.on_close != None:
-            g15util.schedule("Close", 0, self.on_close, self)
+            g15scheduler.schedule("Close", 0, self.on_close, self)
             
     def _on_connect(self):
         self.notify_handles = []

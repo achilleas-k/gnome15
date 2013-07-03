@@ -21,7 +21,10 @@
 import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("background", modfile = __file__).ugettext
 
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15cairo as g15cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
 import gnome15.g15profile as g15profile
@@ -63,12 +66,12 @@ class G15BackgroundPreferences():
         # Widgets
         dialog = widget_tree.get_object("BackgroundDialog")
         dialog.set_transient_for(parent)        
-        g15util.configure_radio_from_gconf(gconf_client, gconf_key + "/type", [ "UseDesktop", "UseFile" ], [ "desktop", "file" ], "desktop", widget_tree, True)
-        g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/style", "StyleCombo", "zoom", widget_tree)
+        g15uigconf.configure_radio_from_gconf(gconf_client, gconf_key + "/type", [ "UseDesktop", "UseFile" ], [ "desktop", "file" ], "desktop", widget_tree, True)
+        g15uigconf.configure_combo_from_gconf(gconf_client, gconf_key + "/style", "StyleCombo", "zoom", widget_tree)
         widget_tree.get_object("UseDesktop").connect("toggled", self.set_available, widget_tree)
         widget_tree.get_object("UseFile").connect("toggled", self.set_available, widget_tree)
-        g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_profile_override", "AllowProfileOverride", True, widget_tree)
-        g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/brightness", "BrightnessAdjustment", 50, widget_tree)
+        g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/allow_profile_override", "AllowProfileOverride", True, widget_tree)
+        g15uigconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/brightness", "BrightnessAdjustment", 50, widget_tree)
         
         # Currently, only GNOME is supported for getting the desktop background
         if g15desktop.get_desktop() in [ "gnome", "gnome-shell" ]:
@@ -218,7 +221,7 @@ class G15Background():
         bg_style = self.gconf_client.get_string(self.gconf_key + "/style")
         if bg_style == None:
             bg_style = "zoom"
-        allow_profile_override = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/allow_profile_override", True)
+        allow_profile_override = g15gconf.get_bool_or_default(self.gconf_client, self.gconf_key + "/allow_profile_override", True)
         
         # See if the current profile has a background
         if allow_profile_override:
@@ -249,7 +252,7 @@ class G15Background():
         if self.bg_img != self.this_image or bg_style != self.current_style:
             self.this_image = self.bg_img
             self.current_style = bg_style
-            if g15util.is_url(self.bg_img) or os.path.exists(self.bg_img):
+            if g15cairo.is_url(self.bg_img) or os.path.exists(self.bg_img):
                 
                 """
                 TODO handle background themes and transitions from XML files properly
@@ -261,7 +264,7 @@ class G15Background():
                     if filet:
                         self.bg_img = filet                
                 
-                img_surface = g15util.load_surface_from_file(self.bg_img)
+                img_surface = g15cairo.load_surface_from_file(self.bg_img)
                 if img_surface is not None:
                     sx = float(screen_size[0]) / img_surface.get_width()
                     sy = float(screen_size[1]) / img_surface.get_height()  

@@ -23,7 +23,7 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("voip-teamspeak3", modfile = __file__).ugettext
 
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15icontools as g15icontools
 import ts3
 import traceback
 from threading import Thread
@@ -35,6 +35,7 @@ import os
 import base64
 import socket
 import errno
+import re
 
 # Plugin details 
 id="voip-teamspeak3"
@@ -64,9 +65,14 @@ def create_backend():
 
 def find_avatar(server_unique_identifier, client_unique_identifier):
     decoded = ""
-    for c in base64.b64decode(client_unique_identifier):
-        decoded += chr(((ord(c) & 0xf0) >> 4) + 97)
-        decoded += chr((ord(c) & 0x0f) + 97)
+    try:
+        for c in base64.b64decode(client_unique_identifier):
+            decoded += chr(((ord(c) & 0xf0) >> 4) + 97)
+            decoded += chr((ord(c) & 0x0f) + 97)
+    except TypeError:
+        # Sometimes the client_unique_identifier is not base64 encoded
+        decoded = client_unique_identifier
+
     return os.path.expanduser("~/.ts3client/cache/%s/clients/avatar_%s" % (base64.b64encode(server_unique_identifier), decoded))
 
 """
@@ -90,7 +96,7 @@ class Teamspeak3BuddyMenuItem(voip.BuddyMenuItem):
 class Teamspeak3ServerMenuItem(voip.ChannelMenuItem):
     
     def __init__(self, schandlerid, name, backend):
-        voip.ChannelMenuItem.__init__(self, "server-%s" % schandlerid, name, backend, icon=g15util.get_icon_path(['server', 'redhat-server', 'network-server', 'redhat-network-server', 'gnome-fs-server' ], include_missing=False))
+        voip.ChannelMenuItem.__init__(self, "server-%s" % schandlerid, name, backend, icon=g15icontools.get_icon_path(['server', 'redhat-server', 'network-server', 'redhat-network-server', 'gnome-fs-server' ], include_missing=False))
         self.schandlerid = schandlerid
         self.activatable = False
         self.radio = False
@@ -640,7 +646,7 @@ class Teamspeak3Backend(voip.VoipBackend):
             
     def _parse_notifytextmessage_reply(self, message):
         if 'invokername' in message.args and 'msg' in message.args:
-            self._plugin.message_received(message.args['invokername'], message.args['msg'])
+            self._plugin.message_received(message.args['invokername'], self._filter_formatting_tags(message.args['msg']))
         else:
             logger.warn("Got text messsage I didn't understand. %s" % str(message))
             
@@ -655,3 +661,12 @@ class Teamspeak3Backend(voip.VoipBackend):
                 self._plugin.menu.centre_on_selected()
             
             self._plugin.talking_status_changed(self.get_talking())
+
+    def _filter_formatting_tags(self, message):
+        filtered = message
+        for regex in ('\[B\](?P<filtered>.*?)\[/B\]', \
+                      '\[I\](?P<filtered>.*?)\[/I\]', \
+                      '\[U\](?P<filtered>.*?)\[/U\]', \
+                      '\[COLOR=#([0-9]|[a-f]).*?\](?P<filtered>.*?)\[/COLOR\]'):
+            filtered = re.sub(regex, '\g<filtered>', filtered, flags = re.IGNORECASE)
+        return filtered

@@ -26,7 +26,8 @@ keyboard
 
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
-import gnome15.g15util as g15util
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15scheduler as g15scheduler
 import gtk
 import os.path
 import socket
@@ -106,7 +107,7 @@ invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g
 def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15.glade"))
-    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/g15daemon_port" % device.uid, "Port", DEFAULT_PORT, widget_tree, False)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/g15daemon_port" % device.uid, "Port", DEFAULT_PORT, widget_tree, False)
     return widget_tree.get_object("DriverComponent")
 
 def fix_sans_style(root):
@@ -317,7 +318,7 @@ class Driver(g15driver.AbstractDriver):
     def config_changed(self, client, connection_id, entry, args):
         if self.change_timer != None:
             self.change_timer.cancel()
-        self.change_timer = g15util.schedule("ChangeG15DaemonConfiguration", 3.0, self.update_conf)
+        self.change_timer = g15scheduler.schedule("ChangeG15DaemonConfiguration", 3.0, self.update_conf)
         
     def update_conf(self):
         logger.info("Configuration changed")

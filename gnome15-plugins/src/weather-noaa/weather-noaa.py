@@ -24,7 +24,9 @@ _ = g15locale.get_translation("weather-noaa", modfile = __file__).ugettext
 
 import gnome15.g15accounts as g15accounts
 import gnome15.g15globals as g15globals
-import gnome15.g15util as g15util
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15pythonlang as g15pythonlang
+import gnome15.util.g15gconf as g15gconf
 import weather
 import gtk
 import os
@@ -71,7 +73,7 @@ class NOAAWeatherOptions(weather.WeatherOptions):
         self.widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "weather-noaa.glade"))
         self.component = self.widget_tree.get_object("OptionPanel")
         
-        g15util.configure_text_from_gconf(gconf_client, "%s/station_id" % gconf_key, "StationID", "KPEO", self.widget_tree)
+        g15uigconf.configure_text_from_gconf(gconf_client, "%s/station_id" % gconf_key, "StationID", "KPEO", self.widget_tree)
 
 class NOAAWeatherData(weather.WeatherData):
     
@@ -84,7 +86,7 @@ class NOAAWeatherBackend(weather.WeatherBackend):
         weather.WeatherBackend.__init__(self, gconf_client, gconf_key)
     
     def get_weather_data(self):
-        station_id = g15util.get_string_or_default(self.gconf_client, "%s/station_id" % self.gconf_key, "KPEO")
+        station_id = g15gconf.get_string_or_default(self.gconf_client, "%s/station_id" % self.gconf_key, "KPEO")
         p = pywapi.get_weather_from_noaa(station_id)
         
         tm = email.utils.parsedate_tz(p["observation_time_rfc822"])[:9]
@@ -92,8 +94,8 @@ class NOAAWeatherBackend(weather.WeatherBackend):
             "location" : p["location"],
             "datetime" : datetime.datetime.fromtimestamp(time.mktime(tm)),
             "current_conditions" : {
-                "wind_speed" : g15util.to_int_or_none(weather.mph_to_kph(float(p["wind_mph"]))) if "wind_mph" in p else None,
-                "wind_direction" : g15util.to_int_or_none(p["wind_degrees"]) if "wind_degrees" in p else None,
+                "wind_speed" : g15pythonlang.to_int_or_none(weather.mph_to_kph(float(p["wind_mph"]))) if "wind_mph" in p else None,
+                "wind_direction" : g15pythonlang.to_int_or_none(p["wind_degrees"]) if "wind_degrees" in p else None,
                 "pressure" : p["pressure_mb"] if "pressure_mb" in p else None,
                 "humidity" : p["relative_humidity"] if "relative_humidity" in p else None,
                 "condition" : p["weather"] if "weather" in p else None,

@@ -24,7 +24,7 @@ import cairo
 from gtk import gdk
 import gobject
 import g15globals
-import g15util
+import util.g15convert as g15convert
 import os
 
 COLORS_REDBLUE = [(0, 0, 0, 1), (255, 0, 0, 1), (255, 0, 255, 1), (0, 0, 255, 1)  ]
@@ -114,9 +114,9 @@ class ColorPreview(gtk.DrawingArea):
     def _show_picker(self, widget_tree):
         main_window = widget_tree.get_object("RGBPicker")
         c_widget = widget_tree.get_object("RGBColour")
-        c_widget.set_current_color(g15util.to_color(self.picker.color))
+        c_widget.set_current_color(g15convert.to_color(self.picker.color))
         def colour_picked(arg):
-            self.picker._select_color(g15util.color_to_rgb(c_widget.get_current_color()))
+            self.picker._select_color(g15convert.color_to_rgb(c_widget.get_current_color()))
         c_widget.connect("color-changed", colour_picked)
         main_window.set_transient_for(self.get_toplevel())
         main_window.run()            

@@ -30,7 +30,11 @@ import gnome15.g15locale as g15locale
 _ = g15locale.get_translation("voip", modfile=__file__).ugettext
 
 import gnome15.g15globals as g15globals
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
@@ -112,8 +116,8 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "voip.glade"))
     dialog = widget_tree.get_object("VoipDialog")
     dialog.set_transient_for(parent)
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/raise_on_talk_status_change" % gconf_key, "RaiseOnTalkStatusChange", False, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, "%s/raise_on_chat_message" % gconf_key, "RaiseOnChatMessage", False, widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/raise_on_talk_status_change" % gconf_key, "RaiseOnTalkStatusChange", False, widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/raise_on_chat_message" % gconf_key, "RaiseOnChatMessage", False, widget_tree)
     dialog.run()
     dialog.hide()
     
@@ -323,10 +327,10 @@ class BuddyMenuItem(g15theme.MenuItem):
             item_properties["item_output_muted_icon"] = MONO_SPKR_MUTED if self.output_muted else MONO_SPKR_UNMUTED
             item_properties["item_icon"] = MONO_ONLINE if not self.away else MONO_AWAY
         else:
-            item_properties["item_input_muted_icon"] = g15util.get_icon_path(MUTED_ICONS if self.input_muted else UNMUTED_ICONS)
-            item_properties["item_output_muted_icon"] = g15util.get_icon_path("audio-volume-muted" if self.output_muted else "audio-volume-high")
-            item_properties["item_icon"] = g15util.get_icon_path("user-available" if not self.away else "user-away")
-            item_properties["item_talking_icon"] = g15util.get_icon_path(RECORD_ICONS) if self.talking else ""
+            item_properties["item_input_muted_icon"] = g15icontools.get_icon_path(MUTED_ICONS if self.input_muted else UNMUTED_ICONS)
+            item_properties["item_output_muted_icon"] = g15icontools.get_icon_path("audio-volume-muted" if self.output_muted else "audio-volume-high")
+            item_properties["item_icon"] = g15icontools.get_icon_path("user-available" if not self.away else "user-away")
+            item_properties["item_talking_icon"] = g15icontools.get_icon_path(RECORD_ICONS) if self.talking else ""
         
         return item_properties
         
@@ -375,10 +379,10 @@ class G15Voip(g15plugin.G15MenuPlugin):
                 self.show_menu()
                 self._connected = True
             else:
-                self._connection_timer = g15util.schedule("ReconnectVoip", 5, self._attempt_connection)
+                self._connection_timer = g15scheduler.schedule("ReconnectVoip", 5, self._attempt_connection)
         except:          
             traceback.print_exc()
-            self._connection_timer = g15util.schedule("ReconnectVoip", 5, self._attempt_connection)
+            self._connection_timer = g15scheduler.schedule("ReconnectVoip", 5, self._attempt_connection)
             
     def create_menu(self):    
         return BuddyMenu()
@@ -452,7 +456,7 @@ class G15Voip(g15plugin.G15MenuPlugin):
         
         props["talking"] = talking_buddy.nickname if talking_buddy is not None else ""
         props["talking_avatar"] = talking_buddy.avatar if talking_buddy is not None else (me.avatar if me is not None and me.avatar is not None else self.backend.get_icon())
-        props["talking_avatar_icon"] = g15util.get_icon_path(RECORD_ICONS) if talking_buddy is not None else None 
+        props["talking_avatar_icon"] = g15icontools.get_icon_path(RECORD_ICONS) if talking_buddy is not None else None
         
         if self.screen.device.bpp == 1:
             props["talking_icon"] = MONO_RECORD_ICON if me is not None and me.talking else ""
@@ -460,10 +464,10 @@ class G15Voip(g15plugin.G15MenuPlugin):
             props["output_muted_icon"] = MONO_SPKR_MUTED if me is not None and me.output_muted else MONO_SPKR_UNMUTED
             props["status_icon"] = MONO_ONLINE if me is not None and not me.away else MONO_AWAY
         else:
-            props["status_icon"] = g15util.get_icon_path("user-available" if me is not None and not me.away else "user-away")
-            props["input_muted_icon"] = g15util.get_icon_path(MUTED_ICONS if me is not None and me.input_muted else UNMUTED_ICONS)
-            props["output_muted_icon"] = g15util.get_icon_path("audio-volume-muted" if me is not None and me.output_muted else "audio-volume-high")
-            props["talking_icon"] = g15util.get_icon_path(RECORD_ICONS) if me is not None and me.talking else ""
+            props["status_icon"] = g15icontools.get_icon_path("user-available" if me is not None and not me.away else "user-away")
+            props["input_muted_icon"] = g15icontools.get_icon_path(MUTED_ICONS if me is not None and me.input_muted else UNMUTED_ICONS)
+            props["output_muted_icon"] = g15icontools.get_icon_path("audio-volume-muted" if me is not None and me.output_muted else "audio-volume-high")
+            props["talking_icon"] = g15icontools.get_icon_path(RECORD_ICONS) if me is not None and me.talking else ""
          
         return props
     
@@ -499,7 +503,7 @@ class G15Voip(g15plugin.G15MenuPlugin):
             self.message_menu.add_child(MessageMenuItem(sender, message, highlight))
             self.message_menu.select_last_item()
             self.page.mark_dirty()  
-            if g15util.get_bool_or_default(self.gconf_client, "%s/raise_on_chat_message" % self.gconf_key, False):   
+            if g15gconf.get_bool_or_default(self.gconf_client, "%s/raise_on_chat_message" % self.gconf_key, False):
                 self._popup() 
             
     def activate_item(self, item):
@@ -599,14 +603,14 @@ class G15Voip(g15plugin.G15MenuPlugin):
                 self.screen.driver.release_control(self._backlight_acq)
                 self._backlight_acq = None
             if self._talking is not None:
-                hex_color = g15util.get_string_or_default(self.gconf_client, get_backlight_key(self.gconf_key, self._talking), "")
+                hex_color = g15gconf.get_string_or_default(self.gconf_client, get_backlight_key(self.gconf_key, self._talking), "")
                 if hex_color != "":
                     if self._backlight_acq is None:
                         self._backlight_acq = self.screen.driver.acquire_control(self._backlight_ctrl)
-                    self._backlight_acq.set_value(g15util.to_rgb(hex_color))
+                    self._backlight_acq.set_value(g15convert.to_rgb(hex_color))
                      
         self.redraw()   
-        if g15util.get_bool_or_default(self.gconf_client, "%s/raise_on_talk_status_change" % self.gconf_key, False):   
+        if g15gconf.get_bool_or_default(self.gconf_client, "%s/raise_on_talk_status_change" % self.gconf_key, False):
             self._popup()
         
     """
@@ -637,7 +641,7 @@ class BuddyActionMenuItem(g15theme.MenuItem):
     
 class KickBuddyMenuItem(BuddyActionMenuItem):    
     def __init__(self, buddy, backend):
-        BuddyActionMenuItem.__init__(self, 'kick', _('Kick'), buddy, backend, icon=g15util.get_icon_path(['force-exit', 'gnome-panel-force-quit'], include_missing=False))
+        BuddyActionMenuItem.__init__(self, 'kick', _('Kick'), buddy, backend, icon=g15icontools.get_icon_path(['force-exit', 'gnome-panel-force-quit'], include_missing=False))
         
     def _confirm(self, arg):
         self.backend.kick(self.buddy)
@@ -649,7 +653,7 @@ class KickBuddyMenuItem(BuddyActionMenuItem):
 
 class BanBuddyMenuItem(BuddyActionMenuItem):    
     def __init__(self, buddy, backend):
-        BuddyActionMenuItem.__init__(self, 'ban', _('Ban'), buddy, backend, icon=g15util.get_icon_path(['audio-volume-muted-blocked', 'mail_spam', 'stock_spam'], include_missing=False))
+        BuddyActionMenuItem.__init__(self, 'ban', _('Ban'), buddy, backend, icon=g15icontools.get_icon_path(['audio-volume-muted-blocked', 'mail_spam', 'stock_spam'], include_missing=False))
         
     def _confirm(self, arg):
         self.backend.ban(self.buddy)
@@ -662,7 +666,7 @@ class BanBuddyMenuItem(BuddyActionMenuItem):
       
 class SelectChannelMenuItem(g15theme.MenuItem):    
     def __init__(self, gconf_client, gconf_key, backend, plugin):
-        g15theme.MenuItem.__init__(self, 'channel', True, _('Select channel / server'), icon=g15util.get_icon_path(['addressbook', 'office-address-book', 'stcok_addressbook', 'x-office-address-book' ], include_missing=False))
+        g15theme.MenuItem.__init__(self, 'channel', True, _('Select channel / server'), icon=g15icontools.get_icon_path(['addressbook', 'office-address-book', 'stcok_addressbook', 'x-office-address-book' ], include_missing=False))
         self._gconf_client = gconf_client
         self._gconf_key = gconf_key
         self._backend = backend
@@ -673,7 +677,7 @@ class SelectChannelMenuItem(g15theme.MenuItem):
 
 class BuddyBacklightMenuItem(BuddyActionMenuItem):    
     def __init__(self, gconf_client, gconf_key, buddy, backend, ctrl, plugin):
-        BuddyActionMenuItem.__init__(self, 'color', _('Select backlight'), buddy, backend, icon=g15util.get_icon_path(['preferences-color', 'gtk-select-color', 'color-picker' ], include_missing=False))
+        BuddyActionMenuItem.__init__(self, 'color', _('Select backlight'), buddy, backend, icon=g15icontools.get_icon_path(['preferences-color', 'gtk-select-color', 'color-picker' ], include_missing=False))
         self._ctrl = ctrl
         self._gconf_client = gconf_client
         self._gconf_key = gconf_key
@@ -684,7 +688,7 @@ class BuddyBacklightMenuItem(BuddyActionMenuItem):
 
 class ReturnMenuItem(g15theme.MenuItem):    
     def __init__(self):
-        g15theme.MenuItem.__init__(self, 'return', True, _('Back to previous menu'), icon=g15util.get_icon_path(['back', 'gtk-go-back-ltr']))
+        g15theme.MenuItem.__init__(self, 'return', True, _('Back to previous menu'), icon=g15icontools.get_icon_path(['back', 'gtk-go-back-ltr']))
         
     def activate(self):
         self.get_root().delete()
@@ -700,7 +704,7 @@ class AudioInputMenuItem(g15theme.MenuItem):
         if self.get_screen().device.bpp == 1:
             p["item_icon"] = MONO_MIC_MUTED if me.input_muted else MONO_MIC_UNMUTED
         else:
-            p["item_icon"] = g15util.get_icon_path(MUTED_ICONS if me.input_muted else UNMUTED_ICONS)
+            p["item_icon"] = g15icontools.get_icon_path(MUTED_ICONS if me.input_muted else UNMUTED_ICONS)
         p["item_name"] = _("Un-mute audio input") if me.input_muted else _("Mute audio input")
         return p
     
@@ -719,7 +723,7 @@ class AudioOutputMenuItem(g15theme.MenuItem):
         if self.get_screen().device.bpp == 1:
             p["item_icon"] = MONO_SPKR_MUTED if me.output_muted else MONO_SPKR_UNMUTED
         else:
-            p["item_icon"] = g15util.get_icon_path("audio-volume-muted" if me.output_muted else "audio-volume-high")
+            p["item_icon"] = g15icontools.get_icon_path("audio-volume-muted" if me.output_muted else "audio-volume-high")
         p["item_name"] = _("Un-mute audio output") if me.output_muted else _("Mute audio output")
         return p
     
@@ -729,7 +733,7 @@ class AudioOutputMenuItem(g15theme.MenuItem):
         
 class AwayStatusMenuItem(g15theme.MenuItem):    
     def __init__(self, backend):
-        g15theme.MenuItem.__init__(self, 'away', False, _("Away"), icon=g15util.get_icon_path("user-away"))
+        g15theme.MenuItem.__init__(self, 'away', False, _("Away"), icon=g15icontools.get_icon_path("user-away"))
         self._backend = backend
         
     def get_theme_properties(self):
@@ -744,7 +748,7 @@ class AwayStatusMenuItem(g15theme.MenuItem):
         
 class OnLineStatusMenuItem(g15theme.MenuItem):    
     def __init__(self, backend):
-        g15theme.MenuItem.__init__(self, 'online', False, _("Online"), icon=g15util.get_icon_path("user-available"))
+        g15theme.MenuItem.__init__(self, 'online', False, _("Online"), icon=g15icontools.get_icon_path("user-available"))
         self._backend = backend
         
     def activate(self):    
@@ -768,7 +772,7 @@ class SelectModeMenuItem(g15theme.MenuItem):
     def get_theme_properties(self):
         p = g15theme.MenuItem.get_theme_properties(self)
         p["item_radio"] = True
-        p["item_radio_selected"] = self._mode == g15util.get_string_or_default(self._gconf_client, "%s/mode" % self._gconf_key, MODE_ONLINE)
+        p["item_radio_selected"] = self._mode == g15gconf.get_string_or_default(self._gconf_client, "%s/mode" % self._gconf_key, MODE_ONLINE)
         return p
         
     def activate(self):      
@@ -788,7 +792,7 @@ class ColorMenuItem(BuddyActionMenuItem):
         self._gconf_key = gconf_key
         
     def activate(self):
-        self._gconf_client.set_string(get_backlight_key(self._gconf_key, self.buddy), g15util.rgb_to_string(self.color))
+        self._gconf_client.set_string(get_backlight_key(self._gconf_key, self.buddy), g15convert.rgb_to_string(self.color))
         self.get_root().delete()
         
     def color_square(self, color, size, radius=0):
@@ -849,7 +853,7 @@ class BuddyBacklightMenu(g15theme.G15Page):
         self.ctrl = ctrl
         self.acq = None
         
-        sel_color = g15util.to_rgb(g15util.get_string_or_default(
+        sel_color = g15convert.to_rgb(g15gconf.get_string_or_default(
                 gconf_client, get_backlight_key(gconf_key, buddy),
                 "255,255,255"))
         for i, c in enumerate(colorpicker.COLORS_FULL):

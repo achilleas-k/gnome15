@@ -1,4 +1,4 @@
-AC_INIT(gnome15-plugins, 0.9.4, https://projects.russo79.com/projects/gnome15/issues/new)
+AC_INIT(gnome15-plugins, 0.9.5, https://projects.russo79.com/projects/gnome15/issues/new)
 AC_CONFIG_SRCDIR([src/cal/cal.py])
 AM_INIT_AUTOMAKE
 
@@ -285,16 +285,6 @@ AX_PYTHON_MODULE(appindicator, [])
 AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
 	  [have_indicator=yes],
 	  [have_indicator=no])
-AC_ARG_ENABLE([indicator-me],
-	[AS_HELP_STRING([--enable-indicator-me],
-		[Enable Indicator Me plugin.])],
-	[case "${enableval}" in
- 				yes)	indicator_me_plugin=yes ;;
- 				no)		indicator_me_plugin=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-indicator-me]) ;;
- 	esac],
-	[indicator_me_plugin=${have_indicator}])
-AM_CONDITIONAL([ENABLE_INDICATOR_ME_PLUGIN], [test x$indicator_me_plugin = xyes])
 
 dnl Indicator Messages Plugin (enable by default when appindicator module is installed, suggesting Ubuntu)
 AC_ARG_ENABLE([indicator-messages],
@@ -536,6 +526,18 @@ AC_ARG_ENABLE([voip-teamspeak3],
 	[voip_teamspeak3_plugin=yes])
 AM_CONDITIONAL([ENABLE_VOIP_TEAMSPEAK3_PLUGIN], [test x$voip_teamspeak3_plugin = xyes])
 
+dnl Traffic Stats Plugin
+AC_ARG_ENABLE([trafficstats],
+	[AS_HELP_STRING([--enable-trafficstats],
+		[Enable Traffic Stats plugin.])],
+	[case "${enableval}" in
+				yes)	trafficstats_plugin=yes ;;
+				no)	trafficstats_plugin=no ;;
+				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-trafficstats]) ;;
+	esac],
+	[trafficstats_plugin=yes])
+AM_CONDITIONAL([ENABLE_TRAFFIC_STATS_PLUGIN], [test x$trafficstats_plugin = xyes])
+
 
 AC_OUTPUT([
 Makefile
@@ -574,7 +576,6 @@ src/panel/Makefile
 src/profiles/Makefile
 src/processes/Makefile
 src/im/Makefile
-src/indicator-me/Makefile
 src/indicator-messages/Makefile
 src/lcdshot/Makefile
 src/notify-lcd/Makefile
@@ -611,6 +612,8 @@ src/voip-teamspeak3/Makefile
 src/voip-teamspeak3/ts3/Makefile
 src/google-analytics/Makefile
 src/google-analytics/default/Makefile
+src/trafficstats/Makefile
+src/trafficstats/default/Makefile
 ])
 
 
@@ -670,10 +673,6 @@ AS_IF([test "x$g15daemon_server_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("im                          - ")
 AS_IF([test "x$im_plugin" = "xyes" ],
-     [AS_ECHO("Enabled")],
-     [AS_ECHO("Disabled")])
-AS_ECHO_N("indicator-me                - ")
-AS_IF([test "x$indicator_me_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("indicator-messages          - ")
@@ -770,6 +769,10 @@ AS_IF([test "x$google_analytics_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("debug                       - ")
 AS_IF([test "x$debug_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("trafficstats                - ")
+AS_IF([test "x$trafficstats_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("")

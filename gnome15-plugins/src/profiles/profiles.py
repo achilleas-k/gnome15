@@ -25,10 +25,11 @@ import gnome15.g15profile as g15profile
 import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
 import gnome15.g15plugin as g15plugin
-import gnome15.g15util as g15util
+import gnome15.util.g15cairo as g15cairo
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15devices as g15devices
 import gnome15.g15actions as g15actions
-from gnome15.g15util import find
+from gnome15.util.g15pythonlang import find
 import os
 import logging
 logger = logging.getLogger("macros")
@@ -85,7 +86,7 @@ class ProfileMenuItem(g15theme.MenuItem):
         locked = self.profile.is_active() and g15profile.is_locked(self._plugin.screen.device)
         
         if self.get_screen().device.bpp > 1:
-            locked_icon = g15util.get_icon_path(["locked","gdu-encrypted-lock", 
+            locked_icon = g15icontools.get_icon_path(["locked","gdu-encrypted-lock",
                                                  "status_lock", "stock_lock" ]) 
         else:
             if self.parent.selected == self:
@@ -104,7 +105,7 @@ class ProfileMenuItem(g15theme.MenuItem):
     
     def on_configure(self): 
         g15theme.MenuItem.on_configure(self)
-        self._surface = g15util.load_surface_from_file(self.profile.get_profile_icon_path(16), self.theme.bounds[3])
+        self._surface = g15cairo.load_surface_from_file(self.profile.get_profile_icon_path(16), self.theme.bounds[3])
     
     def activate(self):
         locked = g15profile.is_locked(self._plugin.screen.device)

@@ -23,7 +23,7 @@
 import gnome15.g15theme as g15theme
 import gnome15.g15screen as g15screen
 import gnome15.g15driver as g15driver
-import gnome15.g15util as g15util
+import gnome15.util.g15icontools as g15icontools
 import gnome15.g15gtk  as g15gtk
 import gtk
 import gobject
@@ -73,7 +73,7 @@ class G15Backlight():
         color = backlight_control.value
         properties = {
                       "title" : "Set Backlight",
-                      "icon" : g15util.get_icon_path("system-config-display"),
+                      "icon" : g15icontools.get_icon_path("system-config-display"),
                       "r" : color[0],
                       "g" : color[1],
                       "b" : color[2]

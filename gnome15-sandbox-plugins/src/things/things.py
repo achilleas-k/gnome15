@@ -20,7 +20,8 @@
  
 import gnome15.g15driver as g15driver
 import gnome15.g15screen as g15screen
-import gnome15.g15util as g15util
+import gnome15.util.g15convert as g15convert
+import gnome15.util.g15scheduler as g15scheduler
 import logging
 logger = logging.getLogger("things")
 
@@ -63,7 +64,7 @@ class G15ThingOutputDevice(OutputDevice):
     
     def comeToLife(self, owner):
         self.owner = owner
-        g15util.schedule("ThingPaint", self.owner.speed / 1000.0, self._mainLoop)
+        g15scheduler.schedule("ThingPaint", self.owner.speed / 1000.0, self._mainLoop)
         
     ## This gives life to the whole show.
     def _mainLoop(self): 
@@ -78,7 +79,7 @@ class G15ThingOutputDevice(OutputDevice):
         self.owner._tick()
         self._screen.redraw()
         if not self.stack.quitApp:
-            g15util.schedule("ThingPaint", self.owner.speed / 1000.0, self._mainLoop)
+            g15scheduler.schedule("ThingPaint", self.owner.speed / 1000.0, self._mainLoop)
         
 class G15ThingPainter(g15screen.Painter):
     

@@ -29,7 +29,9 @@ from threading import RLock
 import cairo
 import gnome15.g15driver as g15driver
 import gnome15.g15globals as g15globals
-import gnome15.g15util as g15util
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
 import gnome15.g15uinput as g15uinput
 import gnome15.g15exceptions as g15exceptions
 import sys
@@ -142,9 +144,9 @@ def set_offset_depending_on_mode(widget, gconf_client, device, offset_widget):
     mode = gconf_client.get_string("/apps/gnome15/%s/joymode" % device.uid)
     offset_model = offset_widget.get_adjustment()
     if mode in [ "joystick", "mouse"]:
-        val = g15util.get_int_or_default(gconf_client, "/apps/gnome15/%s/analogue_offset" % device.uid, ANALOGUE_OFFSET)
+        val = g15gconf.get_int_or_default(gconf_client, "/apps/gnome15/%s/analogue_offset" % device.uid, ANALOGUE_OFFSET)
     else:
-        val = g15util.get_int_or_default(gconf_client, "/apps/gnome15/%s/digital_offset" % device.uid, DIGITAL_OFFSET)
+        val = g15gconf.get_int_or_default(gconf_client, "/apps/gnome15/%s/digital_offset" % device.uid, DIGITAL_OFFSET)
     offset_model.set_value(val)
         
 def show_preferences(device, parent, gconf_client):
@@ -152,7 +154,7 @@ def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
     widget_tree.set_translation_domain("driver_g15direct")
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15direct.glade"))  
-    g15util.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
     if not device.model_id == g15driver.MODEL_G13:
         widget_tree.get_object("JoyModeCombo").destroy()
         widget_tree.get_object("JoyModeLabel").destroy()
@@ -160,7 +162,7 @@ def show_preferences(device, parent, gconf_client):
         widget_tree.get_object("OffsetLabel").destroy()
         widget_tree.get_object("OffsetDescription").destroy()
     else:  
-        g15util.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
+        g15uigconf.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
         # We have separate offset values for digital / analogue, so swap between them based on configuration 
         offset_widget = widget_tree.get_object("Offset")    
         set_offset_depending_on_mode(None, gconf_client, device, offset_widget)
@@ -248,7 +250,7 @@ class Driver(g15driver.AbstractDriver):
     def get_model_names(self):
         return [ g15driver.MODEL_G11, g15driver.MODEL_G15_V1, \
                 g15driver.MODEL_G15_V2, g15driver.MODEL_G110, \
-                g15driver.MODEL_G510, \
+                g15driver.MODEL_G510, g15driver.MODEL_Z10, \
                 g15driver.MODEL_G13 ]
     
     def get_model_name(self):
@@ -259,7 +261,7 @@ class Driver(g15driver.AbstractDriver):
         self.last_keys = None
         self.last_ext_keys = None      
         self.thread = pylibg15.grab_keyboard(self._handle_key_event, \
-                g15util.get_int_or_default(self.conf_client, "/apps/gnome15/usb_key_read_timeout", 100),
+                g15gconf.get_int_or_default(self.conf_client, "/apps/gnome15/usb_key_read_timeout", 100),
                 self._on_error)
         self.thread.on_unplug = self._keyboard_unplugged
         
@@ -375,8 +377,8 @@ class Driver(g15driver.AbstractDriver):
         
     def _load_configuration(self):
         self.joy_mode = self.conf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
-        self.digital_calibration = g15util.get_int_or_default(self.conf_client, "/apps/gnome15/%s/digital_offset" % self.device.uid, 63)
-        self.analogue_calibration = g15util.get_int_or_default(self.conf_client, "/apps/gnome15/%s/analogue_offset" % self.device.uid, 20)
+        self.digital_calibration = g15gconf.get_int_or_default(self.conf_client, "/apps/gnome15/%s/digital_offset" % self.device.uid, 63)
+        self.analogue_calibration = g15gconf.get_int_or_default(self.conf_client, "/apps/gnome15/%s/analogue_offset" % self.device.uid, 20)
             
     def _config_changed(self, client, connection_id, entry, args):
         self._load_configuration()
@@ -614,7 +616,7 @@ class Driver(g15driver.AbstractDriver):
                 g15uinput.emit(g15uinput.MOUSE, g15uinput.REL_X, self.move_x)        
             if self.move_y != 0:
                 g15uinput.emit(g15uinput.MOUSE, g15uinput.REL_Y, self.move_y)
-            self.timer = g15util.schedule("MouseMove", 0.05, self._mouse_move)
+            self.timer = g15scheduler.schedule("MouseMove", 0.05, self._mouse_move)
         
     def _do_update_control(self, control):
         level = control.value

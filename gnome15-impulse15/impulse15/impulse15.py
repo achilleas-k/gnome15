@@ -19,7 +19,10 @@
 #        +-----------------------------------------------------------------------------+
  
 import gnome15.g15screen as g15screen  
-import gnome15.g15util as g15util  
+import gnome15.util.g15scheduler as g15scheduler
+import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
+import gnome15.util.g15os as g15os
 import gnome15.g15driver as g15driver
 import gnome15.g15theme as g15theme
 import gobject
@@ -42,7 +45,7 @@ unsupported_models = [ g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 has_preferences=True
 
 def get_source_index(source_name):
-    status, output = g15util.execute_for_output("pacmd list-sources")
+    status, output = g15os.get_command_output("pacmd list-sources")
     if status == 0 and len(output) > 0:
         i = 0
         for line in output.split("\n"):
@@ -66,7 +69,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     
     # Set up the audio source model  
     audio_source_model = widget_tree.get_object("AudioSourceModel")
-    status, output = g15util.execute_for_output("pacmd list-sources")
+    status, output = g15os.get_command_output("pacmd list-sources")
     source_name = "0"
     if status == 0 and len(output) > 0:
         i = 0
@@ -83,20 +86,20 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
         for i in range(0, 9):
             audio_source_model.append((str(i), "Source %d" % i))
 
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/disco", "Disco", False, widget_tree)
-    g15util.configure_checkbox_from_gconf(gconf_client, gconf_key + "/animate_mkeys", "AnimateMKeys", False, widget_tree)
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/mode", "ModeCombo", "spectrum", widget_tree)
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/paint", "PaintCombo", "screen", widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bars", "BarsSpinner", 16, widget_tree)
-    g15util.configure_combo_from_gconf(gconf_client, gconf_key + "/audio_source_name", "AudioSource", source_name, widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_width", "BarWidthSpinner", 16, widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/spacing", "SpacingSpinner", 0, widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/rows", "RowsSpinner", 16, widget_tree)
-    g15util.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_height", "BarHeightSpinner", 2, widget_tree)
-    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col1", "Color1", ( 255, 0, 0 ), widget_tree, default_alpha = 255)
-    g15util.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col2", "Color2", ( 0, 0, 255 ), widget_tree, default_alpha = 255)
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/frame_rate", "FrameRateAdjustment", 10.0, widget_tree)
-    g15util.configure_adjustment_from_gconf(gconf_client, gconf_key + "/gain", "GainAdjustment", 1.0, widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/disco", "Disco", False, widget_tree)
+    g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/animate_mkeys", "AnimateMKeys", False, widget_tree)
+    g15uigconf.configure_combo_from_gconf(gconf_client, gconf_key + "/mode", "ModeCombo", "spectrum", widget_tree)
+    g15uigconf.configure_combo_from_gconf(gconf_client, gconf_key + "/paint", "PaintCombo", "screen", widget_tree)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/bars", "BarsSpinner", 16, widget_tree)
+    g15uigconf.configure_combo_from_gconf(gconf_client, gconf_key + "/audio_source_name", "AudioSource", source_name, widget_tree)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_width", "BarWidthSpinner", 16, widget_tree)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/spacing", "SpacingSpinner", 0, widget_tree)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/rows", "RowsSpinner", 16, widget_tree)
+    g15uigconf.configure_spinner_from_gconf(gconf_client, gconf_key + "/bar_height", "BarHeightSpinner", 2, widget_tree)
+    g15uigconf.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col1", "Color1", ( 255, 0, 0 ), widget_tree, default_alpha = 255)
+    g15uigconf.configure_colorchooser_from_gconf(gconf_client, gconf_key + "/col2", "Color2", ( 0, 0, 255 ), widget_tree, default_alpha = 255)
+    g15uigconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/frame_rate", "FrameRateAdjustment", 10.0, widget_tree)
+    g15uigconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/gain", "GainAdjustment", 1.0, widget_tree)
     
     if driver.get_bpp() == 0:
         widget_tree.get_object("LCDTable").set_visible(False)
@@ -260,7 +263,7 @@ class G15Impulse():
         if self.timer != None:
             self.timer.cancel()
             self.timer = None
-        g15util.clear_jobs("impulseQueue")
+        g15scheduler.clear_jobs("impulseQueue")
         
     def destroy(self):
         pass
@@ -304,12 +307,12 @@ class G15Impulse():
             next_tick = self.refresh_interval
             if self.painter.is_idle():
                 next_tick = 1.0
-            self.timer = g15util.queue("impulseQueue", "ImpulseRedraw", next_tick, self.redraw)
+            self.timer = g15scheduler.queue("impulseQueue", "ImpulseRedraw", next_tick, self.redraw)
         
     def _config_changed(self, client, connection_id, entry, args):
         if self.config_change_timer is not None:
             self.config_change_timer.cancel()
-        self.config_change_timer = g15util.schedule("ConfigReload", 1, self._do_config_changed)
+        self.config_change_timer = g15scheduler.schedule("ConfigReload", 1, self._do_config_changed)
         
     def _do_config_changed(self):
         self.stop_redraw()
@@ -335,11 +338,11 @@ class G15Impulse():
         self.audio_source_index = get_source_index(self.gconf_client.get_string(self.gconf_key + "/audio_source_name"))
         gobject.idle_add(self.set_audio_source)
         self.mode = self.gconf_client.get_string(self.gconf_key + "/mode")
-        self.disco = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/disco", False)
-        self.refresh_interval = 1.0 / g15util.get_float_or_default(self.gconf_client, self.gconf_key + "/frame_rate", 25.0)
-        self.gain = g15util.get_float_or_default(self.gconf_client, self.gconf_key + "/gain", 1.0)
+        self.disco = g15gconf.get_bool_or_default(self.gconf_client, self.gconf_key + "/disco", False)
+        self.refresh_interval = 1.0 / g15gconf.get_float_or_default(self.gconf_client, self.gconf_key + "/frame_rate", 25.0)
+        self.gain = g15gconf.get_float_or_default(self.gconf_client, self.gconf_key + "/gain", 1.0)
         logger.info("Refresh interval is %f" % self.refresh_interval)
-        self.animate_mkeys = g15util.get_bool_or_default(self.gconf_client, self.gconf_key + "/animate_mkeys", False)
+        self.animate_mkeys = g15gconf.get_bool_or_default(self.gconf_client, self.gconf_key + "/animate_mkeys", False)
         if self.mode == None or self.mode == "" or self.mode == "spectrum" or self.mode == "scope":
             self.mode = "default"
         self.paint_mode = self.gconf_client.get_string(self.gconf_key + "/paint")
@@ -360,8 +363,8 @@ class G15Impulse():
         if self.rows == 0:
             self.rows = 16
         self.spacing = self.gconf_client.get_int(self.gconf_key + "/spacing")
-        self.col1 = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/col1", ( 255, 0, 0, 255 )) 
-        self.col2 = g15util.to_cairo_rgba(self.gconf_client, self.gconf_key + "/col2", ( 0, 0, 255, 255 ))
+        self.col1 = g15gconf.get_cairo_rgba_or_default(self.gconf_client, self.gconf_key + "/col1", ( 255, 0, 0, 255 ))
+        self.col2 = g15gconf.get_cairo_rgba_or_default(self.gconf_client, self.gconf_key + "/col2", ( 0, 0, 255, 255 ))
             
         self.peak_heights = [ 0 for i in range( self.bars ) ]
 
