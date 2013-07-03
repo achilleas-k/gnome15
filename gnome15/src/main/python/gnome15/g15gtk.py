@@ -25,7 +25,7 @@ import gtk
 import gobject
 import g15driver as g15driver
 import util.g15cairo as g15cairo
-import util.g15pythonlang as g15pythonlang as g15pythonlang
+import util.g15pythonlang as g15pythonlang
 from threading import Lock
 from threading import Semaphore
 import g15theme
