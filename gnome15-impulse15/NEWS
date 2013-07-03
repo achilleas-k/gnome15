@@ -1,3 +1,22 @@
+gnome15-impulse15 0.0.15 (2013-07-03)
+=====================================
+
+This is an "unofficial" release of Gnome15 Impulse15 plugin.
+There was no news from the original author since almost
+seven months now.
+
+Changes since 0.0.14:
+
+* None
+
+Bugs fixed in this release:
+
+* None
+
+Under the hood changes for this release:
+
+* Update imports due to the split of g15util.py
+
 gnome15-impulse15 0.0.14 (2013-04-29)
 =====================================
 
