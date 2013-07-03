@@ -30,6 +30,7 @@ gnome15_PYTHON = 		\
 	g15system.py \
 	g15theme.py \
 	g15text.py \
+	g15util.py \
 	g15upgrade.py \
 	g15uinput.py \
 	objgraph.py \
