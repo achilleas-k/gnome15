@@ -22,6 +22,6 @@ all-local:
 
 install-exec-hook:
 	for M_LOCALE in @BUILD_LOCALES@; do \
-		mkdir -p $(DESTDIR)$(datadir)/gnome15/plugins/itrafficstats/default/i18n; \
+		mkdir -p $(DESTDIR)$(datadir)/gnome15/plugins/trafficstats/default/i18n; \
 		cp -pR i18n/$$M_LOCALE $(DESTDIR)$(datadir)/gnome15/plugins/trafficstats/default/i18n; \
 	done
