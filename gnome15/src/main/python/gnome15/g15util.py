@@ -22,7 +22,7 @@ import util.g15convert as g15convert
 import util.g15gconf as g15gconf
 import util.g15icontools as g15icontools
 import util.g15markup as g15markup
-import util.g115os as g15os
+import util.g15os as g15os
 import util.g15pythonlang as g15pythonlang
 import util.g15scheduler as g15scheduler
 import util.g15svg as g15svg
