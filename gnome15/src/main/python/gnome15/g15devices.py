@@ -384,7 +384,7 @@ def find_all_devices(do_cache = True):
     If the GTK driver is installed, add a virtual device as well
     """
     if g15drivermanager.get_driver_mod("gtk"): 
-        devices.append(Device(None, None, None, 0, device_list['virtual']))
+        devices.append(Device((0x0000, 0x0000), (0x0000, 0x0000), None, 0, device_list['virtual']))
     
     # If we have pydev, we can cache the devices
     if have_udev and do_cache:
