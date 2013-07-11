@@ -21,7 +21,7 @@ import g15cairo
 import gtk.gdk
 import os
 import cairo
-import Image
+from PIL import Image
 import urllib
 import base64
 

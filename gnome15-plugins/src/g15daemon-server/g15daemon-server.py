@@ -19,9 +19,9 @@
 #        +-----------------------------------------------------------------------------+
  
 from threading import Thread
-import Image
-import ImageMath
-import ImageOps
+from PIL import Image
+from PIL import ImageMath
+from PIL import ImageOps
 import array
 import asyncore
 import cairo

@@ -33,8 +33,8 @@ import os.path
 import socket
 import cairo
 import gconf
-import ImageMath
-import Image
+from PIL import ImageMath
+from PIL import Image
 from threading import Thread
 from threading import Lock
 import struct

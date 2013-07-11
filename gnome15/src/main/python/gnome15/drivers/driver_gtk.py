@@ -27,8 +27,8 @@ import gtk.gdk
 import gobject
 import cairo
 
-import Image
-import ImageMath
+from PIL import Image
+from PIL import ImageMath
 import logging
 logger = logging.getLogger("driver") 
 

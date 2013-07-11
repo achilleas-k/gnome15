@@ -28,7 +28,7 @@ import dbus.service
 import dbus.exceptions
 import gtk
 import gtk.gdk
-import Image
+from PIL import Image
 import subprocess
 import traceback
 import tempfile

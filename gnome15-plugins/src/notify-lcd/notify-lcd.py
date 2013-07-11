@@ -40,7 +40,7 @@ import dbus.exceptions
 import os
 import gtk
 import gtk.gdk
-import Image
+from PIL import Image
 import subprocess
 import traceback
 import tempfile

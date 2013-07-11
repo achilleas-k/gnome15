@@ -35,8 +35,8 @@ import cairo
 import re
 import usb
 import fb
-import Image
-import ImageMath
+from PIL import Image
+from PIL import ImageMath
 import array
 import dbus
 import gobject

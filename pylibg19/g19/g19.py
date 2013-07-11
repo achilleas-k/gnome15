@@ -4,7 +4,7 @@ import sys
 import threading
 import time
 import usb
-import Image as Img
+from PIL import Image as Img
 import logging
 import array
 logger = logging.getLogger()

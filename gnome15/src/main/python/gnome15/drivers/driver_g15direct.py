@@ -40,8 +40,8 @@ import gconf
 import gtk
 import traceback 
 import logging
-import ImageMath
-import Image
+from PIL import ImageMath
+from PIL import Image
 import array
 load_error = None
 try :

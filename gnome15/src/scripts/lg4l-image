@@ -30,8 +30,8 @@ import os
 import glib
 import cairo
 import array
-import Image
-import ImageMath
+from PIL import Image
+from PIL import ImageMath
 from cStringIO import StringIO
 
 # Allow running from local path

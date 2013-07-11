@@ -36,7 +36,7 @@ import time
 import dbus
 import os
 import gtk
-import Image
+from PIL import Image
 import gnome15.dbusmenu as dbusmenu
 
 from lxml import etree
