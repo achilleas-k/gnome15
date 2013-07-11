@@ -672,6 +672,9 @@ class G15DesktopComponent():
         # Connect to DBus and GConf
         self.conf_client = gconf.client_get_default()
         self.session_bus = dbus.SessionBus()
+
+        # Enable monitoring of Gnome15 GConf settings
+        self.conf_client.add_dir("/apps/gnome15", gconf.CLIENT_PRELOAD_NONE)
         
         # Initialise desktop component
         self.initialise_desktop_component()     
