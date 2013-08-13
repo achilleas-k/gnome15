@@ -22,7 +22,6 @@ libtool.m4
 *.pyc
 gnome15-impulse15/libtool
 ltmain.sh
-site/pyinputevent-*
 gnome15-impulse15/m4
 gnome15-impulse15/m4/*
 gnome15-java-bindings/*/target
