@@ -23,8 +23,6 @@ libtool.m4
 gnome15-impulse15/libtool
 ltmain.sh
 site/pyinputevent-*
-lgsetled/lgsetled
-lgsetled/m4
 gnome15-impulse15/m4
 gnome15-impulse15/m4/*
 gnome15-java-bindings/*/target
@@ -38,7 +36,6 @@ pylibg19/build
 *.kdev4
 gnome15-kde-plugins/window-thumbnail/build
 .libs
-lgsetled*.tar.gz
 en_GB
 gnome15/src/udev/*.rules
 gnome15/src/main/python/gnome15/g15globals.py
