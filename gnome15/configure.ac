@@ -39,19 +39,15 @@ AC_ARG_ENABLE([kernel-driver],
 	[kernel_driver=${pyinputevent}])
 AM_CONDITIONAL([ENABLE_DRIVER_KERNEL], [test x$kernel_driver = xyes])
      
-dnl Determine if pylibg19 is available. If it is, g19direct driver can be built
-AX_PYTHON_MODULE(g19, [])
-AS_IF([test "x${HAVE_PYMOD_G19}" = "xyes"],
-     [pylibg19=yes])
 AC_ARG_ENABLE([g19direct-driver],
 	[AS_HELP_STRING([--enable-g19direct-driver],
-		[Enable G19Direct driver support (requires pylibg19).])],
+		[Enable G19Direct driver support.])],
 	[case "${enableval}" in
- 				yes)	g19direct_driver=${pylibg19} ;;
- 				no)		g19direct_driver=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-g19direct-driver]) ;;
+		yes)	g19direct_driver=yes ;;
+		no)	g19direct_driver=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-g19direct-driver]) ;;
  	esac],
-	[g19direct_driver=${pylibg19}])
+	[g19direct_driver=yes])
 AM_CONDITIONAL([ENABLE_DRIVER_G19DIRECT], [test x$g19direct_driver = xyes])
 
 AC_ARG_ENABLE([g930-driver],
@@ -207,6 +203,8 @@ AC_SUBST(PYGTK_LIBS)
 
 AC_OUTPUT([ 
 Makefile
+pylibg19/Makefile
+pylibg19/g19/Makefile
 src/Makefile
 src/i18n/Makefile
 src/scripts/Makefile
