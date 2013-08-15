@@ -1,2 +1,8 @@
 Brett Smith <tanktarta@blueyonder.co.uk>
 Nuno Araujo <nuno.araujo@russo79.com>
+
+Contains work based on "Logitech-G19-Linux-Daemon" [1], written by
+"MultiCoreNop" [2].
+
+[1] http://github.com/MultiCoreNop/Logitech-G19-Linux-Daemon
+[2] http://github.com/MultiCoreNop

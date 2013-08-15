@@ -1,7 +1,14 @@
-Gnome15 0.1
-============
+Gnome15
+=======
 
 A set of tools for configuring the Logitech G15 keyboard.
+
+Contains pylibg19, a library providing support for the Logitech G19 until there
+is kernel support available. It was based "Logitech-G19-Linux-Daemon" [1],
+the work of "MultiCoreNop" [2].
+
+[1] http://github.com/MultiCoreNop/Logitech-G19-Linux-Daemon
+[2] http://github.com/MultiCoreNop
 
 Installation
 ============
@@ -11,4 +18,13 @@ See the 'INSTALL' file.
 How to report bugs
 ==================
 
-For now, just send an email to tanktarta@blueyonder.co.uk.
+Issues can be submited on the contributors website [3].
+
+[3] https://projects.russo79.com/projects/gnome15
+
+Requirements
+============
+
+Python 2.6
+PyUSB 0.4
+PIL (Python Image Library, just about any version should be ok)
