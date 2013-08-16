@@ -1,7 +1,7 @@
 #!/bin/bash
 DIR=$(dirname $0)
 cd "${DIR}"
-export G15_PLUGINS=../gnome15-plugins/src
+#export G15_PLUGINS=./src/plugins
 if [ $# -eq 0 ]; then
   args=restart
 else

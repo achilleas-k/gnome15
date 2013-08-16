@@ -31,7 +31,6 @@ endif
 if ENABLE_CLOCK_PLUGIN
     MAYBE_CLOCK = clock
 endif
-
 if ENABLE_FX_PLUGIN
     MAYBE_FX = fx
 endif
