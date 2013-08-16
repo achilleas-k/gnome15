@@ -1,11 +1,9 @@
-SUBDIRS = default 
-
-plugindir = $(datadir)/gnome15/plugins/game-nexuiz
-plugin_DATA = clock.glade \
-	clock.py
+themedir = $(datadir)/gnome15/plugins/game-nexuiz/default
+theme_DATA = default.svg \
+	g19.svg
 
 EXTRA_DIST =  			\
-	$(plugin_DATA)
+	$(theme_DATA)
 
 all-local:
 	for M_LOCALE in @BUILD_LOCALES@; do \
@@ -22,6 +20,6 @@ all-local:
 	
 install-exec-hook:
 	for M_LOCALE in @BUILD_LOCALES@; do \
-		mkdir -p $(DESTDIR)$(datadir)/gnome15/plugins/clock/i18n; \
-		cp -pR i18n/$$M_LOCALE $(DESTDIR)$(datadir)/gnome15/plugins/clock/i18n; \
+		mkdir -p $(DESTDIR)$(datadir)/gnome15/plugins/clock/default/i18n; \
+		cp -pR i18n/$$M_LOCALE $(DESTDIR)$(datadir)/gnome15/plugins/clock/default/i18n; \
 	done

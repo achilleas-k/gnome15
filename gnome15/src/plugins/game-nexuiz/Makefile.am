@@ -1,13 +1,12 @@
-themedir = $(datadir)/gnome15/plugins/clock/default
-theme_DATA = default.svg \
-	default-with-date.svg \
-	g19.svg \
-	mx5500.svg \
-	mx5500-with-date.svg \
-	g19-with-date.svg
+SUBDIRS = default resources
+
+plugindir = $(datadir)/gnome15/plugins/game-nexuiz
+plugin_DATA = game-nexuiz.py \
+	game-nexuiz.g13.macros \
+	game-nexuiz.g19.macros
 
 EXTRA_DIST =  			\
-	$(theme_DATA)
+	$(plugin_DATA)
 
 all-local:
 	for M_LOCALE in @BUILD_LOCALES@; do \
@@ -24,6 +23,6 @@ all-local:
 	
 install-exec-hook:
 	for M_LOCALE in @BUILD_LOCALES@; do \
-		mkdir -p $(DESTDIR)$(datadir)/gnome15/plugins/clock/default/i18n; \
-		cp -pR i18n/$$M_LOCALE $(DESTDIR)$(datadir)/gnome15/plugins/clock/default/i18n; \
+		mkdir -p $(DESTDIR)$(datadir)/gnome15/plugins/clock/i18n; \
+		cp -pR i18n/$$M_LOCALE $(DESTDIR)$(datadir)/gnome15/plugins/clock/i18n; \
 	done

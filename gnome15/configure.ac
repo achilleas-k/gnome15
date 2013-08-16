@@ -713,6 +713,18 @@ AC_ARG_ENABLE([trafficstats],
 	[trafficstats_plugin=yes])
 AM_CONDITIONAL([ENABLE_TRAFFIC_STATS_PLUGIN], [test x$trafficstats_plugin = xyes])
 
+dnl Nexuiz plugin
+AC_ARG_ENABLE([game-nexuiz],
+	[AS_HELP_STRING([--enable-game-nexuiz],
+		[Enable Nexuiz plugin.])],
+	[case "${enableval}" in
+		yes)	game_nexuiz_plugin=yes ;;
+		no)	game_nexuiz_plugin=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-game-nexuiz]) ;;
+	esac],
+	[game_nexuiz_plugin=no])
+AM_CONDITIONAL([ENABLE_GAME_NEXUIZ_PLUGIN], [test x$game_nexuiz_plugin = xyes])
+
 AC_OUTPUT([ 
 Makefile
 pylibg19/Makefile
@@ -839,6 +851,9 @@ src/plugins/google-analytics/Makefile
 src/plugins/google-analytics/default/Makefile
 src/plugins/trafficstats/Makefile
 src/plugins/trafficstats/default/Makefile
+src/plugins/game-nexuiz/Makefile
+src/plugins/game-nexuiz/default/Makefile
+src/plugins/game-nexuiz/resources/Makefile
 ])
 
 AS_ECHO("Available features :-")
@@ -1029,6 +1044,10 @@ AS_IF([test "x$debug_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("trafficstats                - ")
 AS_IF([test "x$trafficstats_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("game-nexuiz                 - ")
+AS_IF([test "x$game_nexuiz_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("See ./configure --help for descriptions of these plugins and options to enable and disable them.")

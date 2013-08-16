@@ -115,14 +115,18 @@ endif
 if ENABLE_TRAFFIC_STATS_PLUGIN
     MAYBE_TRAFFIC_STATS = trafficstats
 endif
+if ENABLE_GAME_NEXUIZ_PLUGIN
+    MAYBE_GAME_NEXUIZ = game-nexuiz
+endif
 
 SUBDIRS = $(MAYBE_BACKGROUND) $(MAYBE_CAIRO_CLOCK) $(MAYBE_CLOCK) $(MAYBE_FX) $(MAYBE_MACRO_RECORDER) $(MAYBE_MACROS) $(MAYBE_MOUNTS) \
 	$(MAYBE_NOTIFY_LCD) $(MAYBE_IM) $(MAYBE_WEATHER) $(MAYBE_MPRIS) $(MAYBE_MENU) $(MAYBE_PANEL) $(MAYBE_MEDIAPLAYER) $(MAYBE_G15DAEMON_SERVER) \
 	$(MAYBE_STOPWATCH) $(MAYBE_SCREENSAVER) $(MAYBE_INDICATOR_MESSAGES) $(MAYBE_PROFILES) \
 	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_CAL) $(MAYBE_CAL_EVOLUTION) $(MAYBE_CAL_GOOGLE) $(MAYBE_LCDBIFF) $(MAYBE_SENSE) \
 	$(MAYBE_LCDSHOT) $(MAYBE_TWEAK) $(MAYBE_TAILS) $(MAYBE_DISPLAY) $(MAYBE_VOIP) $(MAYBE_VOIP_TEAMSPEAK3) $(MAYBE_WEATHER_NOAA) \
-	$(MAYBE_WEATHER_YAHOO) $(MAYBE_GOOGLE_ANALYTICS) $(MAYBE_DEBUG) $(MAYBE_TRAFFIC_STATS)
+	$(MAYBE_WEATHER_YAHOO) $(MAYBE_GOOGLE_ANALYTICS) $(MAYBE_DEBUG) $(MAYBE_TRAFFIC_STATS) $(MAYBE_GAME_NEXUIZ)
 	
 DIST_SUBDIRS = background cairo-clock clock fx macro-recorder macros mounts notify-lcd im weather mpris menu panel mediaplayer g15daemon-server stopwatch \
 	profiles sysmon volume rss processes screensaver cal cal-evolution cal-google lcdbiff indicator-messages sense lcdshot tweak tails display \
-	voip voip-teamspeak3 google-analytics weather-noaa weather-yahoo debug trafficstats
+	voip voip-teamspeak3 google-analytics weather-noaa weather-yahoo debug trafficstats \
+	game-nexuiz
