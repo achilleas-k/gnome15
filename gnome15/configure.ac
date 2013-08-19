@@ -725,6 +725,90 @@ AC_ARG_ENABLE([game-nexuiz],
 	[game_nexuiz_plugin=no])
 AM_CONDITIONAL([ENABLE_GAME_NEXUIZ_PLUGIN], [test x$game_nexuiz_plugin = xyes])
 
+dnl Backlight plugin
+AC_ARG_ENABLE([backlight],
+	[AS_HELP_STRING([--enable-backlight],
+		[Enable Backlight plugin.])],
+	[case "${enableval}" in
+		yes)	backlight_plugin=yes ;;
+		no)	backlight_plugin=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-backlight]) ;;
+	esac],
+	[backlight_plugin=no])
+AM_CONDITIONAL([ENABLE_BACKLIGHT_PLUGIN], [test x$backlight_plugin = xyes])
+
+dnl Notify 2 plugin
+AC_ARG_ENABLE([notify-lcd2],
+	[AS_HELP_STRING([--enable-notify-lcd2],
+		[Enable Notify LCD plugin. Takes over as notification daemon and displays messages on LCD, blinks keyboard])],
+	[case "${enableval}" in
+		yes)	notify_lcd2_plugin=yes ;;
+		no)	notify_lcd2_plugin=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-notify-lcd2]) ;;
+	esac],
+	[notify_lcd2_plugin=no])
+AM_CONDITIONAL([ENABLE_NOTIFY_LCD2_PLUGIN], [test x$notify_lcd2_plugin = xyes])
+
+dnl PPAStats plugin
+AC_ARG_ENABLE([ppastats],
+	[AS_HELP_STRING([--enable-ppastats],
+		[Enable PPAStats plugin.])],
+	[case "${enableval}" in
+		yes)	ppastats_plugin=yes ;;
+		no)	ppaststs_plugin=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-ppastats]) ;;
+	esac],
+	[ppastats_plugin=no])
+AM_CONDITIONAL([ENABLE_PPASTATS_PLUGIN], [test x$ppastats_plugin = xyes])
+
+dnl NM plugin
+AC_ARG_ENABLE([nm],
+	[AS_HELP_STRING([--enable-nm],
+		[Enable NM (Network Manager) plugin.])],
+	[case "${enableval}" in
+		yes)	nm_plugin=yes ;;
+		no)	nm_plugin=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-nm]) ;;
+	esac],
+	[nm_plugin=no])
+AM_CONDITIONAL([ENABLE_NM_PLUGIN], [test x$nm_plugin = xyes])
+
+dnl Lens plugin
+AC_ARG_ENABLE([lens],
+	[AS_HELP_STRING([--enable-lens],
+		[Enable Unity Lens plugin.])],
+	[case "${enableval}" in
+		yes)	lens_plugin=yes ;;
+		no)	lens_plugin=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-lens]) ;;
+	esac],
+	[lens_plugin=no])
+AM_CONDITIONAL([ENABLE_LENS_PLUGIN], [test x$lens_plugin = xyes])
+
+dnl WebKit browser plugin
+AC_ARG_ENABLE([webkit-browser],
+	[AS_HELP_STRING([--enable-webkit-browser],
+		[Enable Webkit browser plugin.])],
+	[case "${enableval}" in
+		yes)	webkitbrowser_plugin=yes ;;
+		no)	webkitbrowser_plugin=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-webkit-browser]) ;;
+	esac],
+	[webkitbrowser_plugin=no])
+AM_CONDITIONAL([ENABLE_WEBKIT_BROWSER_PLUGIN], [test x$webkitbrowser_plugin = xyes])
+
+dnl Things plugin
+AC_ARG_ENABLE([things],
+	[AS_HELP_STRING([--enable-things],
+		[Enable Things python animation API plugin.])],
+	[case "${enableval}" in
+		yes)	things_plugin=yes ;;
+		no)	things_plugin=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-things]) ;;
+	esac],
+	[things_plugin=no])
+AM_CONDITIONAL([ENABLE_THINGS_PLUGIN], [test x$things_plugin = xyes])
+
 AC_OUTPUT([ 
 Makefile
 pylibg19/Makefile
@@ -854,6 +938,20 @@ src/plugins/trafficstats/default/Makefile
 src/plugins/game-nexuiz/Makefile
 src/plugins/game-nexuiz/default/Makefile
 src/plugins/game-nexuiz/resources/Makefile
+src/plugins/backlight/Makefile
+src/plugins/backlight/default/Makefile
+src/plugins/notify-lcd2/Makefile
+src/plugins/notify-lcd2/default/Makefile
+src/plugins/ppastats/Makefile
+src/plugins/ppastats/default/Makefile
+src/plugins/nm/Makefile
+src/plugins/nm/default/Makefile
+src/plugins/lens/Makefile
+src/plugins/webkitbrowser/Makefile
+src/plugins/webkitbrowser/default/Makefile
+src/plugins/things/Makefile
+src/plugins/things/cg.stuff/Makefile
+src/plugins/things/clouds.stuff/Makefile
 ])
 
 AS_ECHO("Available features :-")
@@ -1048,6 +1146,34 @@ AS_IF([test "x$trafficstats_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("game-nexuiz                 - ")
 AS_IF([test "x$game_nexuiz_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("backlight                   - ")
+AS_IF([test "x$backlight_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("notify-lcd2                 - ")
+AS_IF([test "x$notify_lcd2_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("ppastats                    - ")
+AS_IF([test "x$ppastats_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("nm                          - ")
+AS_IF([test "x$nm_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("lens                        - ")
+AS_IF([test "x$lens_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("webkitbrowser               - ")
+AS_IF([test "x$webkitbrowser_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("things                      - ")
+AS_IF([test "x$things_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("See ./configure --help for descriptions of these plugins and options to enable and disable them.")
