@@ -4,5 +4,10 @@ Nuno Araujo <nuno.araujo@russo79.com>
 Contains work based on "Logitech-G19-Linux-Daemon" [1], written by
 "MultiCoreNop" [2].
 
+Contains work based on Impulse [3], written by Ian Halpern [4].
+
 [1] http://github.com/MultiCoreNop/Logitech-G19-Linux-Daemon
 [2] http://github.com/MultiCoreNop
+[3] http://impulse.ian-halpern.com/
+[4] <ian@ian-halpern.com>
+

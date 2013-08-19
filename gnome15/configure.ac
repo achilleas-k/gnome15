@@ -3,8 +3,14 @@ AC_CONFIG_SRCDIR([src/main/python/gnome15/g15service.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 AM_MAINTAINER_MODE
 
+AC_CONFIG_MACRO_DIR([m4])
+
+AC_PROG_LIBTOOL
+AC_PROG_CC
+
 dnl check for python
 AM_PATH_PYTHON
+AX_PYTHON_DEVEL([2.6])
 
 dnl Build locales
 AC_ARG_ENABLE([locales],
@@ -713,6 +719,29 @@ AC_ARG_ENABLE([trafficstats],
 	[trafficstats_plugin=yes])
 AM_CONDITIONAL([ENABLE_TRAFFIC_STATS_PLUGIN], [test x$trafficstats_plugin = xyes])
 
+dnl impulse15 plugin
+AC_CHECK_HEADER(fftw3.h,
+	AC_CHECK_LIB([fftw3], fftw_execute,,
+		AC_MSG_ERROR([*** Could not find libfftw3. ***])),
+	AC_MSG_ERROR([*** Header file fftw3.h. ***]))
+
+AC_CHECK_LIB(pulse, pa_stream_new)
+
+AC_ARG_ENABLE([impulse15],
+	[AS_HELP_STRING([--enable-impulse15],
+		[Enable Impulse15 plugin.])],
+	[case "${enableval}" in
+		yes)	impulse15_plugin=yes ;;
+		no)	impulse15_plugin=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-impulse15]) ;;
+	esac],
+	[impulse15_plugin=yes])
+AM_CONDITIONAL([ENABLE_IMPULSE15_PLUGIN], [test x$impulse15_plugin = xyes])
+
+dnl
+dnl Experimental (under development) plugins
+dnl
+
 dnl Nexuiz plugin
 AC_ARG_ENABLE([game-nexuiz],
 	[AS_HELP_STRING([--enable-game-nexuiz],
@@ -952,6 +981,13 @@ src/plugins/webkitbrowser/default/Makefile
 src/plugins/things/Makefile
 src/plugins/things/cg.stuff/Makefile
 src/plugins/things/clouds.stuff/Makefile
+src/plugins/impulse15/Makefile
+src/plugins/impulse15/themes/Makefile
+src/plugins/impulse15/themes/default/Makefile
+src/plugins/impulse15/themes/circlelcd/Makefile
+src/plugins/impulse15/themes/circleline/Makefile
+src/plugins/impulse15/themes/original/Makefile
+libimpulse/Makefile
 ])
 
 AS_ECHO("Available features :-")
@@ -1174,6 +1210,10 @@ AS_IF([test "x$webkitbrowser_plugin" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("things                      - ")
 AS_IF([test "x$things_plugin" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("impulse15                   - ")
+AS_IF([test "x$impulse15_plugin" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("See ./configure --help for descriptions of these plugins and options to enable and disable them.")

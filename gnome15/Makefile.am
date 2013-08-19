@@ -1,9 +1,12 @@
 if ENABLE_DRIVER_G19DIRECT
     MAYBE_PYLIBG19 = pylibg19
 endif
-SUBDIRS = src $(MAYBE_PYLIBG19)
+if ENABLE_IMPULSE15_PLUGIN
+    MAYBE_LIBIMPULSE = libimpulse
+endif
+SUBDIRS = src $(MAYBE_PYLIBG19) $(MAYBE_LIBIMPULSE)
 
-DIST_SUBDIRS = src pylibg19
+DIST_SUBDIRS = src pylibg19 libimpulse
 
 # For Python autoconf macros
 ACLOCAL_AMFLAGS = -I m4

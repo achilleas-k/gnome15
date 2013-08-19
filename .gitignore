@@ -13,6 +13,10 @@ GNOME_G15Applet.server
 g15-config.desktop
 g15-macros.desktop
 gnome15.desktop
+ltoptions.m4
+ltsugar.m4
+ltversion.m4
+lt~obsolete.m4
 aclocal.m4
 libtool.m4
 *.o
@@ -20,10 +24,7 @@ libtool.m4
 *.lo
 .deps
 *.pyc
-gnome15-impulse15/libtool
 ltmain.sh
-gnome15-impulse15/m4
-gnome15-impulse15/m4/*
 gnome15-java-bindings/*/target
 libtool
 depcomp
