@@ -207,6 +207,31 @@ PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
 AC_SUBST(PYGTK_CFLAGS)
 AC_SUBST(PYGTK_LIBS)
 
+
+dnl Icons
+
+AC_ARG_ENABLE([icons-awoken],
+	[AS_HELP_STRING([--enable-icons-awoken],
+		[Build and deploy awoken icons.])],
+	[case "${enableval}" in
+		yes)	icons_awoken=yes ;;
+		no)	icons_awoken=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-icons-awoken]) ;;
+	esac],
+	[icons_awoken=no])
+AM_CONDITIONAL([ENABLE_ICONS_AWOKEN], [test x$icons_awoken = xyes])
+
+AC_ARG_ENABLE([icons-mono],
+	[AS_HELP_STRING([--enable-icons-mono],
+		[Build and deploy monochrome icons.])],
+	[case "${enableval}" in
+		yes)	icons_mono=yes ;;
+		no)	icons_mono=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-icons-mono]) ;;
+	esac],
+	[icons_mono=yes])
+AM_CONDITIONAL([ENABLE_ICONS_MONO], [test x$icons_mono = xyes])
+
 dnl Dependencies for plugins. Each plugin by default is only enabled
 dnl if dependencies are available. Each plugin may also be
 dnl individually enabled / disabled using configure options
@@ -887,6 +912,31 @@ src/main/resources/icons/hicolor/scalable/Makefile
 src/main/resources/icons/hicolor/scalable/apps/Makefile
 src/main/resources/icons/hicolor/scalable/status/Makefile
 src/main/resources/icons/hicolor/scalable/devices/Makefile
+src/main/resources/icons/AwOken/Makefile
+src/main/resources/icons/AwOken/status/Makefile
+src/main/resources/icons/AwOken/status/16/Makefile
+src/main/resources/icons/AwOken/status/22/Makefile
+src/main/resources/icons/AwOken/status/24/Makefile
+src/main/resources/icons/AwOken/status/48/Makefile
+src/main/resources/icons/AwOken/status/64/Makefile
+src/main/resources/icons/AwOken/status/128/Makefile
+src/main/resources/icons/AwOken/apps/Makefile
+src/main/resources/icons/AwOken/apps/16/Makefile
+src/main/resources/icons/AwOken/apps/22/Makefile
+src/main/resources/icons/AwOken/apps/24/Makefile
+src/main/resources/icons/AwOken/apps/48/Makefile
+src/main/resources/icons/AwOken/apps/64/Makefile
+src/main/resources/icons/AwOken/apps/128/Makefile
+src/main/resources/icons/ubuntu-mono-dark/Makefile
+src/main/resources/icons/ubuntu-mono-dark/status/Makefile
+src/main/resources/icons/ubuntu-mono-dark/status/16/Makefile
+src/main/resources/icons/ubuntu-mono-dark/status/22/Makefile
+src/main/resources/icons/ubuntu-mono-dark/status/24/Makefile
+src/main/resources/icons/ubuntu-mono-light/Makefile
+src/main/resources/icons/ubuntu-mono-light/status/Makefile
+src/main/resources/icons/ubuntu-mono-light/status/16/Makefile
+src/main/resources/icons/ubuntu-mono-light/status/22/Makefile
+src/main/resources/icons/ubuntu-mono-light/status/24/Makefile
 src/main/resources/images/Makefile
 src/main/resources/glade/Makefile
 src/main/resources/ukeys/Makefile
@@ -1019,6 +1069,17 @@ AS_IF([test "x$g19direct_driver" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("driver_kernel               - ")
 AS_IF([test "x$kernel_driver" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO("")
+AS_ECHO("Icons")
+AS_ECHO("-----")
+AS_ECHO_N("icons-awoken                - ")
+AS_IF([test "x$icons_awoken" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("icons-mono                  - ")
+AS_IF([test "x$icons_mono" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("")
