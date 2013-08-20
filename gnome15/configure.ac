@@ -220,6 +220,18 @@ AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
 	  [indicator=no])
 AM_CONDITIONAL([ENABLE_INDICATOR], [test x$indicator = xyes])
 
+dnl Gnome Shell Extension
+AC_ARG_ENABLE([gnome-shell-extension],
+	[AS_HELP_STRING([--enable-gnome-shell-extension],
+		[Enable Gnome Shell extension.])],
+	[case "${enableval}" in
+		yes)	gnome_shell_extension=yes ;;
+		no)	gnome_shell_extension=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-gnome-shell-extension]) ;;
+	esac],
+	gnome_shell_extension=yes)
+AM_CONDITIONAL([ENABLE_GNOME_SHELL_EXTENSION], [test x$gnome_shell_extension = xyes])
+
 AX_PYTHON_MODULE(gnomeapplet, [])
 AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xyes"],
 	  [applet=$applet],
@@ -906,6 +918,8 @@ src/gnome/applet/Makefile
 src/gnome/applet/GNOME_G15Applet.server
 src/indicator/Makefile
 src/indicator/g15-indicator.desktop
+src/gnome-shell-extension/Makefile
+src/gnome-shell-extension/icons/Makefile
 src/gnome/applications/Makefile
 src/gnome/applications/g15-config.desktop
 src/gnome/autostart/Makefile
@@ -1079,6 +1093,10 @@ AS_IF([test "x$applet" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("Indicator                   - ")
 AS_IF([test "x$indicator" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("gnome-shell-extension       - ")
+AS_IF([test "x$gnome_shell_extension" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("")

@@ -49,10 +49,12 @@ Bugs fixed in this release:
 * https://projects.russo79.com/issues/162
 * https://projects.russo79.com/issues/167
 * https://projects.russo79.com/issues/174
+* https://projects.russo79.com/issues/181
 * https://projects.russo79.com/issues/183
 * https://projects.russo79.com/issues/186
 * https://projects.russo79.com/issues/187
 * https://projects.russo79.com/issues/188
+* https://projects.russo79.com/issues/189
 * https://projects.russo79.com/issues/191
 * https://projects.russo79.com/issues/192
 * https://projects.russo79.com/issues/194
@@ -85,6 +87,7 @@ Bugs fixed in this release:
 * https://projects.russo79.com/issues/162
 * https://projects.russo79.com/issues/163
 * https://projects.russo79.com/issues/167
+* https://projects.russo79.com/issues/170
 
 gnome15 0.5.0 (2011-03-09)
 
@@ -95,4 +98,4 @@ gnome15 0.5.0 (2011-03-09)
     Macro creation and editing in the configuration UI is now
     possible.
     
-    Lots of bug fixes as well (see the changelog). 
+    Lots of bug fixes as well (see the changelog).

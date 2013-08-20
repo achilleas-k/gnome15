@@ -4,6 +4,10 @@ if ENABLE_INDICATOR
 SUBDIRS += indicator
 endif
 
+if ENABLE_GNOME_SHELL_EXTENSION
+SUBDIRS += gnome-shell-extension
+endif
+
 all-local:
 	for PLUGIN in `ls plugins`; do \
 		PLUGIN_DIR=plugins/$$PLUGIN; \
