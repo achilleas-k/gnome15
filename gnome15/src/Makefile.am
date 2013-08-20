@@ -1,5 +1,9 @@
 SUBDIRS = scripts gnome main man themes udev i18n plugins
 
+if ENABLE_INDICATOR
+SUBDIRS += indicator
+endif
+
 all-local:
 	for PLUGIN in `ls plugins`; do \
 		PLUGIN_DIR=plugins/$$PLUGIN; \

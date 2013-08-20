@@ -203,6 +203,29 @@ AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xyes"],
 	  [applet=no])
 AM_CONDITIONAL([ENABLE_APPLET], [test x$applet = xyes])
 
+dnl Ubuntu Indicator
+AX_PYTHON_MODULE(appindicator, [])
+
+AC_ARG_ENABLE([indicator],
+	[AS_HELP_STRING([--enable-indicator],
+		[Enable Ubuntu Indicator integration.])],
+	[case "${enableval}" in
+		yes)	indicator=yes ;;
+ 		no)	indicator=no ;;
+		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-indicator]) ;;
+ 	esac],
+	indicator=yes)
+AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
+	  [indicator=$indicator],
+	  [indicator=no])
+AM_CONDITIONAL([ENABLE_INDICATOR], [test x$indicator = xyes])
+
+AX_PYTHON_MODULE(gnomeapplet, [])
+AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xyes"],
+	  [applet=$applet],
+	  [applet=no])
+AM_CONDITIONAL([ENABLE_APPLET], [test x$applet = xyes])
+
 PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
 AC_SUBST(PYGTK_CFLAGS)
 AC_SUBST(PYGTK_LIBS)
@@ -881,6 +904,8 @@ src/udev/99-gnome15-g930.rules
 src/gnome/Makefile
 src/gnome/applet/Makefile
 src/gnome/applet/GNOME_G15Applet.server
+src/indicator/Makefile
+src/indicator/g15-indicator.desktop
 src/gnome/applications/Makefile
 src/gnome/applications/g15-config.desktop
 src/gnome/autostart/Makefile
@@ -1050,6 +1075,10 @@ AS_IF([test "x$systemtray" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("GNOME panel applet          - ")
 AS_IF([test "x$applet" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("Indicator                   - ")
+AS_IF([test "x$indicator" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("")
