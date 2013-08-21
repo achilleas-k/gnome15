@@ -1,5 +1,0 @@
-if ENABLE_APPLET
-    MAYBE_APPLET = applet
-endif
-
-SUBDIRS = $(MAYBE_APPLET)

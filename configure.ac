@@ -185,24 +185,6 @@ AC_ARG_ENABLE([systemtray],
 	systemtray=yes)
 AM_CONDITIONAL([ENABLE_SYSTEMTRAY], [test x$systemtray = xyes])
 
-AC_ARG_ENABLE([applet],
-	[AS_HELP_STRING([--enable-applet],
-		[Enable GNOME panel applet integration.])],
-	[case "${enableval}" in
- 				yes)	applet=yes ;;
- 				no)		applet=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-applet]) ;;
- 	esac],
- 	[case "${systemtray}" in
- 				"no")	applet=yes ;;
- 				  *)	applet=no ;;
- 	esac])
-AX_PYTHON_MODULE(gnomeapplet, [])
-AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xyes"],
-	  [applet=$applet],
-	  [applet=no])
-AM_CONDITIONAL([ENABLE_APPLET], [test x$applet = xyes])
-
 dnl Ubuntu Indicator
 AX_PYTHON_MODULE(appindicator, [])
 
@@ -231,12 +213,6 @@ AC_ARG_ENABLE([gnome-shell-extension],
 	esac],
 	gnome_shell_extension=yes)
 AM_CONDITIONAL([ENABLE_GNOME_SHELL_EXTENSION], [test x$gnome_shell_extension = xyes])
-
-AX_PYTHON_MODULE(gnomeapplet, [])
-AS_IF([test "x${HAVE_PYMOD_GNOMEAPPLET}" = "xyes"],
-	  [applet=$applet],
-	  [applet=no])
-AM_CONDITIONAL([ENABLE_APPLET], [test x$applet = xyes])
 
 PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
 AC_SUBST(PYGTK_CFLAGS)
@@ -913,9 +889,6 @@ src/udev/99-gnome15-kernel.rules
 src/udev/99-gnome15-g15direct.rules
 src/udev/99-gnome15-g19direct.rules
 src/udev/99-gnome15-g930.rules
-src/gnome/Makefile
-src/gnome/applet/Makefile
-src/gnome/applet/GNOME_G15Applet.server
 src/indicator/Makefile
 src/indicator/g15-indicator.desktop
 src/gnome-shell-extension/Makefile
@@ -1086,10 +1059,6 @@ AS_ECHO("Panel Integration")
 AS_ECHO("-----------------")
 AS_ECHO_N("systemtray                  - ")
 AS_IF([test "x$systemtray" = "xyes" ],
-     [AS_ECHO("Enabled")],
-     [AS_ECHO("Disabled")])
-AS_ECHO_N("GNOME panel applet          - ")
-AS_IF([test "x$applet" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("Indicator                   - ")
