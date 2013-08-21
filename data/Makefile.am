@@ -1,5 +1,6 @@
 SUBDIRS = \
 	applications \
 	autostart \
-	dbus
+	dbus \
+	udev
 

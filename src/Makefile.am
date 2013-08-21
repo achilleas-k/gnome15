@@ -1,4 +1,4 @@
-SUBDIRS = scripts main man themes udev i18n plugins
+SUBDIRS = scripts main man themes i18n plugins
 
 if ENABLE_INDICATOR
 SUBDIRS += indicator
