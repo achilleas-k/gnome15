@@ -920,8 +920,9 @@ src/indicator/Makefile
 src/indicator/g15-indicator.desktop
 src/gnome-shell-extension/Makefile
 src/gnome-shell-extension/icons/Makefile
-src/gnome/applications/Makefile
-src/gnome/applications/g15-config.desktop
+data/Makefile
+data/applications/Makefile
+data/applications/g15-config.desktop
 src/gnome/autostart/Makefile
 src/gnome/autostart/gnome15.desktop
 src/gnome/autostart/g15-systemtray.desktop

@@ -4,9 +4,9 @@ endif
 if ENABLE_IMPULSE15_PLUGIN
     MAYBE_LIBIMPULSE = libimpulse
 endif
-SUBDIRS = src $(MAYBE_PYLIBG19) $(MAYBE_LIBIMPULSE)
+SUBDIRS = src $(MAYBE_PYLIBG19) $(MAYBE_LIBIMPULSE) data
 
-DIST_SUBDIRS = src pylibg19 libimpulse
+DIST_SUBDIRS = src pylibg19 libimpulse data
 
 # For Python autoconf macros
 ACLOCAL_AMFLAGS = -I m4
