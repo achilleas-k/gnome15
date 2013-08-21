@@ -29,11 +29,11 @@ libtool
 depcomp
 config.sub
 config.guess
-gnome15/pylibg19/dist
-gnome15/pylibg19/MANIFEST
-gnome15/pylibg19/build
+pylibg19/dist
+pylibg19/MANIFEST
+pylibg19/build
 .libs
 en_GB
-gnome15/src/udev/*.rules
-gnome15/src/main/python/gnome15/g15globals.py
-gnome15/src/indicator/g15-indicator.desktop
+src/udev/*.rules
+src/main/python/gnome15/g15globals.py
+src/indicator/g15-indicator.desktop
