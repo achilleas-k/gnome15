@@ -3,5 +3,6 @@ SUBDIRS = \
 	autostart \
 	dbus \
 	udev \
-	themes
+	themes \
+	images
 
