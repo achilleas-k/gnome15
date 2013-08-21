@@ -4,5 +4,6 @@ SUBDIRS = \
 	dbus \
 	udev \
 	themes \
-	images
+	images \
+	ukeys
 

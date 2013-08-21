@@ -952,7 +952,7 @@ src/main/resources/icons/ubuntu-mono-light/status/22/Makefile
 src/main/resources/icons/ubuntu-mono-light/status/24/Makefile
 data/images/Makefile
 src/main/resources/glade/Makefile
-src/main/resources/ukeys/Makefile
+data/ukeys/Makefile
 man/Makefile
 src/plugins/Makefile
 src/plugins/cal/Makefile
