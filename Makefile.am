@@ -4,7 +4,7 @@ endif
 if ENABLE_IMPULSE15_PLUGIN
     MAYBE_LIBIMPULSE = libimpulse
 endif
-SUBDIRS = src $(MAYBE_PYLIBG19) $(MAYBE_LIBIMPULSE) data
+SUBDIRS = src $(MAYBE_PYLIBG19) $(MAYBE_LIBIMPULSE) data man
 
 DIST_SUBDIRS = src pylibg19 libimpulse data
 
