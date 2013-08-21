@@ -32,8 +32,6 @@ config.guess
 gnome15/pylibg19/dist
 gnome15/pylibg19/MANIFEST
 gnome15/pylibg19/build
-*.kdev4
-gnome15-kde-plugins/window-thumbnail/build
 .libs
 en_GB
 gnome15/src/udev/*.rules
