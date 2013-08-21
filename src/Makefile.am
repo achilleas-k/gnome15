@@ -1,4 +1,4 @@
-SUBDIRS = scripts main themes i18n plugins
+SUBDIRS = scripts main i18n plugins
 
 if ENABLE_INDICATOR
 SUBDIRS += indicator

@@ -881,8 +881,8 @@ pylibg19/g19/Makefile
 src/Makefile
 src/i18n/Makefile
 src/scripts/Makefile
-src/themes/Makefile
-src/themes/default/Makefile
+data/themes/Makefile
+data/themes/default/Makefile
 data/udev/Makefile
 data/udev/98-gnome15.rules
 data/udev/99-gnome15-kernel.rules

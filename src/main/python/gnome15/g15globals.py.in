@@ -11,11 +11,10 @@ if os.path.exists(image_dir):
 	glade_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "glade"))
 	font_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "fonts"))
 	icons_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "icons"))
-	themes_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "themes"))
 	ukeys_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "ukeys"))
 	plugin_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "plugins"))
 	scripts_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "scripts"))
-	themes_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "themes"))
+	themes_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "..", "data", "themes"))
 	i18n_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "i18n"))
 else: 
 	image_dir = "@prefix@/share/gnome15/images"
