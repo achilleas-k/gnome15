@@ -1,4 +1,5 @@
 SUBDIRS = \
 	applications \
-	autostart
+	autostart \
+	dbus
 

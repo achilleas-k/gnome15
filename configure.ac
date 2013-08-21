@@ -926,7 +926,7 @@ data/applications/g15-config.desktop
 data/autostart/Makefile
 data/autostart/gnome15.desktop
 data/autostart/g15-systemtray.desktop
-src/gnome/dbus/Makefile
+data/dbus/Makefile
 src/main/Makefile
 src/main/python/Makefile
 src/main/python/gnome15/Makefile
