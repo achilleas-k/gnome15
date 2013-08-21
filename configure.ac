@@ -923,9 +923,9 @@ src/gnome-shell-extension/icons/Makefile
 data/Makefile
 data/applications/Makefile
 data/applications/g15-config.desktop
-src/gnome/autostart/Makefile
-src/gnome/autostart/gnome15.desktop
-src/gnome/autostart/g15-systemtray.desktop
+data/autostart/Makefile
+data/autostart/gnome15.desktop
+data/autostart/g15-systemtray.desktop
 src/gnome/dbus/Makefile
 src/main/Makefile
 src/main/python/Makefile

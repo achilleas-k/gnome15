@@ -1,2 +1,4 @@
-SUBDIRS = applications
+SUBDIRS = \
+	applications \
+	autostart
 
