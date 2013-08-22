@@ -906,7 +906,6 @@ src/main/python/gnome15/Makefile
 src/main/python/gnome15/g15globals.py
 src/main/python/gnome15/drivers/Makefile
 src/main/python/gnome15/util/Makefile
-src/main/resources/Makefile
 data/icons/Makefile
 data/icons/hicolor/Makefile
 data/icons/hicolor/16x16/Makefile

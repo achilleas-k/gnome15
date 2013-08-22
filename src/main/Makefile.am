@@ -1,1 +1,1 @@
-SUBDIRS = python resources
+SUBDIRS = python
