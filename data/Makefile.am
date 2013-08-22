@@ -5,5 +5,6 @@ SUBDIRS = \
 	udev \
 	themes \
 	images \
-	ukeys
+	ukeys \
+	glade
 

@@ -1,1 +1,1 @@
-SUBDIRS = glade icons
+SUBDIRS = icons
