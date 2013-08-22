@@ -10,7 +10,7 @@ if os.path.exists(image_dir):
 	dev = True 
 	glade_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "..", "data", "glade"))
 	font_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "..", "data", "fonts"))
-	icons_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "resources", "icons"))
+	icons_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "..", "data", "icons"))
 	ukeys_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "..", "data", "ukeys"))
 	plugin_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "plugins"))
 	scripts_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "..", "scripts"))

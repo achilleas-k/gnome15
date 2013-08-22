@@ -6,5 +6,6 @@ SUBDIRS = \
 	themes \
 	images \
 	ukeys \
-	glade
+	glade \
+	icons
 
