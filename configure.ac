@@ -900,8 +900,6 @@ data/autostart/Makefile
 data/autostart/gnome15.desktop
 data/autostart/g15-systemtray.desktop
 data/dbus/Makefile
-src/main/Makefile
-src/main/python/Makefile
 src/gnome15/Makefile
 src/gnome15/g15globals.py
 src/gnome15/drivers/Makefile

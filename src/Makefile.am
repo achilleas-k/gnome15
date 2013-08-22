@@ -1,4 +1,4 @@
-SUBDIRS = scripts main i18n plugins gnome15
+SUBDIRS = scripts i18n plugins gnome15
 
 if ENABLE_INDICATOR
 SUBDIRS += indicator
