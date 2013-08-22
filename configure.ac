@@ -1,5 +1,5 @@
 AC_INIT(gnome15, 0.9.5, https://projects.russo79.com/projects/gnome15/issues/new)
-AC_CONFIG_SRCDIR([src/main/python/gnome15/g15service.py])
+AC_CONFIG_SRCDIR([src/gnome15/g15service.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 AM_MAINTAINER_MODE
 
@@ -902,10 +902,10 @@ data/autostart/g15-systemtray.desktop
 data/dbus/Makefile
 src/main/Makefile
 src/main/python/Makefile
-src/main/python/gnome15/Makefile
-src/main/python/gnome15/g15globals.py
-src/main/python/gnome15/drivers/Makefile
-src/main/python/gnome15/util/Makefile
+src/gnome15/Makefile
+src/gnome15/g15globals.py
+src/gnome15/drivers/Makefile
+src/gnome15/util/Makefile
 data/icons/Makefile
 data/icons/hicolor/Makefile
 data/icons/hicolor/16x16/Makefile

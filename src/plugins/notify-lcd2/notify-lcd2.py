@@ -54,7 +54,7 @@ if __name__ == "__main__":
     loop = gobject.MainLoop()
     
     # Allow running from local path
-    path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..", "..", "main", "python")
+    path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..", "..")
     if os.path.exists(path):
         print "Adding",path,"to python path"
         sys.path.insert(0, path)

@@ -35,5 +35,5 @@ pylibg19/build
 .libs
 en_GB
 data/udev/*.rules
-src/main/python/gnome15/g15globals.py
+src/gnome15/g15globals.py
 src/indicator/g15-indicator.desktop

@@ -1,1 +1,1 @@
-SUBDIRS = gnome15
+SUBDIRS = $(NULL)

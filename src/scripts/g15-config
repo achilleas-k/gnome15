@@ -46,7 +46,7 @@ dbus.mainloop.glib.threads_init()
 DBusGMainLoop(set_as_default=True)
 
 # Allow running from local path
-path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..","main", "python")
+path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..")
 if os.path.exists(path):
     sys.path.insert(0, path)
 
