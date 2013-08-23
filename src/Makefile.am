@@ -1,4 +1,4 @@
-SUBDIRS = scripts i18n plugins gnome15
+SUBDIRS = scripts plugins gnome15
 
 if ENABLE_DRIVER_G19DIRECT
 SUBDIRS += pylibg19

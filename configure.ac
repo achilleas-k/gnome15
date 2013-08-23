@@ -879,7 +879,7 @@ Makefile
 src/pylibg19/Makefile
 src/pylibg19/g19/Makefile
 src/Makefile
-src/i18n/Makefile
+i18n/Makefile
 src/scripts/Makefile
 data/themes/Makefile
 data/themes/default/Makefile
