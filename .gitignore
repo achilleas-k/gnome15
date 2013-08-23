@@ -29,9 +29,9 @@ libtool
 depcomp
 config.sub
 config.guess
-pylibg19/dist
-pylibg19/MANIFEST
-pylibg19/build
+src/pylibg19/dist
+src/pylibg19/MANIFEST
+src/pylibg19/build
 .libs
 en_GB
 data/udev/*.rules

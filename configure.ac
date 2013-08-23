@@ -876,8 +876,8 @@ AM_CONDITIONAL([ENABLE_THINGS_PLUGIN], [test x$things_plugin = xyes])
 
 AC_OUTPUT([ 
 Makefile
-pylibg19/Makefile
-pylibg19/g19/Makefile
+src/pylibg19/Makefile
+src/pylibg19/g19/Makefile
 src/Makefile
 src/i18n/Makefile
 src/scripts/Makefile
@@ -1047,7 +1047,7 @@ src/plugins/impulse15/themes/default/Makefile
 src/plugins/impulse15/themes/circlelcd/Makefile
 src/plugins/impulse15/themes/circleline/Makefile
 src/plugins/impulse15/themes/original/Makefile
-libimpulse/Makefile
+src/libimpulse/Makefile
 ])
 
 AS_ECHO("Available features :-")

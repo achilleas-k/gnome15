@@ -52,7 +52,7 @@ logger = logging.getLogger("driver")
 
 # Import from local version of pylibg19 if available
 if g15globals.dev:
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", "pylibg19"))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "pylibg19"))
 
 # Driver information (used by driver selection UI)
 name=_("G15 Direct")
