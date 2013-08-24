@@ -3,6 +3,7 @@
 cd $(dirname $0)
 
 # Python
+xgettext --from-code=UTF-8 --language=Python --keyword=N_ --keyword=_ --output=gnome15-drivers.pot ../src/gnome15/util/*.py
 xgettext --from-code=UTF-8 --language=Python --keyword=N_ --keyword=_ --output=gnome15-drivers.pot ../src/gnome15/drivers/*.py
 xgettext --from-code=UTF-8 --language=Python --keyword=N_ --keyword=_ --output=gnome15.pot ../src/gnome15/*.py
 
