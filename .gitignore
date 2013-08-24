@@ -13,6 +13,7 @@ GNOME_G15Applet.server
 g15-config.desktop
 g15-macros.desktop
 gnome15.desktop
+g15-indicator.desktop
 ltoptions.m4
 ltsugar.m4
 ltversion.m4
@@ -36,4 +37,3 @@ src/pylibg19/build
 en_GB
 data/udev/*.rules
 src/gnome15/g15globals.py
-src/indicator/g15-indicator.desktop

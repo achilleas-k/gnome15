@@ -8,10 +8,6 @@ if ENABLE_IMPULSE15_PLUGIN
 SUBDIRS += libimpulse
 endif
 
-if ENABLE_INDICATOR
-SUBDIRS += indicator
-endif
-
 if ENABLE_GNOME_SHELL_EXTENSION
 SUBDIRS += gnome-shell-extension
 endif

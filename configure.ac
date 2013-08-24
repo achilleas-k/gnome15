@@ -889,8 +889,6 @@ data/udev/99-gnome15-kernel.rules
 data/udev/99-gnome15-g15direct.rules
 data/udev/99-gnome15-g19direct.rules
 data/udev/99-gnome15-g930.rules
-src/indicator/Makefile
-src/indicator/g15-indicator.desktop
 src/gnome-shell-extension/Makefile
 src/gnome-shell-extension/icons/Makefile
 data/Makefile
@@ -899,6 +897,7 @@ data/applications/g15-config.desktop
 data/autostart/Makefile
 data/autostart/gnome15.desktop
 data/autostart/g15-systemtray.desktop
+data/autostart/g15-indicator.desktop
 data/dbus/Makefile
 src/gnome15/Makefile
 src/gnome15/g15globals.py
