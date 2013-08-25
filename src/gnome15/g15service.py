@@ -498,14 +498,14 @@ class MacroScriptExecution(object):
                         if self.down > 0:
                             self.handler.release_delay(self.macro)
                         self.down += 1
-                        self.handler.send_uinput(split[2], val, 1)
+                        self._send_uinput(split[2], val, 1)
                         self.handler.press_delay(self.macro)
                 elif op == "urelease":
                     if len(split) < 3:                        
                         logger.error("Invalid operation in macro script. '%s'" % macro_text)
                     else:
                         self.down -= 1
-                        self.handler.send_uinput(split[2], val, 0)
+                        self._send_uinput(split[2], val, 0)
                 elif op == "wait":
                     if self.all_keys_up:
                         logger.warn("All keys for the macro %s are already up, the rest of the script will be ignored" % self.macro.name)
