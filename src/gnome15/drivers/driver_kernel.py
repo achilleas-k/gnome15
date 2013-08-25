@@ -432,7 +432,7 @@ class DeviceInfo:
         self.mm_pattern = mm_pattern
         
 device_info = {
-               g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", r"usb-Logitech_G19_Gaming_Keyboard-event-if.*", r"usb-Logitech_G19_Gaming_Keyboard-event-kbd.*", r"usb-046d_G19_Gaming_Keyboard-event-if.*"), 
+               g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", r"usb-Logitech_G19_Gaming_Keyboard-event-if.*", r"usb-Logitech_G19_Gaming_Keyboard-.*event-kbd.*", r"usb-046d_G19_Gaming_Keyboard-event-if.*"), 
                g15driver.MODEL_G11: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g11_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if"), 
                g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if", r"G15_Keyboard_G15.*kbd", r"usb-Logitech_Logitech_Gaming_Keyboard-event-if.*"),
                g15driver.MODEL_G15_V2: DeviceInfo(["red:m1", "red:m2", "red:m3", "blue:mr" ], g15_controls, g15v2_key_map, "g15v2", r"G15_GamePanel_LCD-event-if.*", r"G15_GamePanel_LCD-event-kdb.*"),
