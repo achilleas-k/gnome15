@@ -13,7 +13,7 @@
    height="43"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.4 r9939"
    sodipodi:docname="default-with-date.svg">
   <defs
      id="defs4" />
@@ -24,16 +24,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6"
-     inkscape:cx="75.053114"
-     inkscape:cy="25.662595"
+     inkscape:zoom="1.979899"
+     inkscape:cx="42.376627"
+     inkscape:cy="-35.611468"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="832"
+     inkscape:window-x="520"
      inkscape:window-y="147"
      inkscape:window-maximized="0">
     <inkscape:grid
@@ -59,33 +59,30 @@
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     id="layer1"
-     transform="translate(0,-1009.3622)">
+     id="layer1">
     <text
        xml:space="preserve"
-       style="font-size:22.00004959px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="71.725464"
-       y="1151.2212"
+       style="font-size:22px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="80"
+       y="36"
        id="text4014"
        sodipodi:linespacing="125%"
-       transform="scale(1.1153672,0.89656571)"
        class="shadow"><tspan
          sodipodi:role="line"
          id="tspan4016"
-         x="71.725464"
-         y="1151.2212">${time}</tspan></text>
+         x="80"
+         y="36">${time}</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
-       x="71.725418"
-       y="1169.7167"
+       x="80"
+       y="20"
        id="text4014-7"
        sodipodi:linespacing="125%"
-       transform="scale(1.1153647,0.89656774)"
        class="shadow"><tspan
          sodipodi:role="line"
          id="tspan4016-9"
-         x="71.725418"
-         y="1169.7167">${date}</tspan></text>
+         x="80"
+         y="20">${date}</tspan></text>
   </g>
 </svg>

@@ -14,21 +14,10 @@
    height="43"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.3.1 r9886"
+   inkscape:version="0.48.4 r9939"
    sodipodi:docname="default.svg">
   <defs
      id="defs4">
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
-       id="clipPath3833">
-      <rect
-         style="opacity:0.5;fill:#ff4500;fill-opacity:1"
-         id="rect3835"
-         width="62.057159"
-         height="9.2817659"
-         x="0"
-         y="1076.027" />
-    </clipPath>
     <clipPath
        clipPathUnits="userSpaceOnUse"
        id="clipPath3833-2">
@@ -51,6 +40,17 @@
          x="0"
          y="1076.027" />
     </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3015">
+      <rect
+         y="1076.027"
+         x="0"
+         height="9.2817659"
+         width="56.2393"
+         id="rect3017"
+         style="opacity:0.5;fill:#ff4500;fill-opacity:1" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -60,7 +60,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
-     inkscape:cx="82.849888"
+     inkscape:cx="68.921317"
      inkscape:cy="30.922569"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -68,8 +68,8 @@
      borderlayer="false"
      inkscape:window-width="1398"
      inkscape:window-height="755"
-     inkscape:window-x="1973"
-     inkscape:window-y="21"
+     inkscape:window-x="588"
+     inkscape:window-y="111"
      inkscape:window-maximized="0"
      inkscape:snap-global="false">
     <inkscape:grid
@@ -100,13 +100,13 @@
      style="display:inline"
      title="del message">
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/weather/default/${icon}"
+       sodipodi:absref="/home/tanktarta/Documents/Git/gnome15/gnome15-plugins/src/weather/default/${icon}"
        xlink:href="${icon}"
-       y="1009.4643"
-       x="0"
-       height="43"
+       id="image3051"
        width="43"
-       id="image3051" />
+       height="43"
+       x="0"
+       y="1009.4643" />
     <text
        xml:space="preserve"
        style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:center;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;baseline-shift:baseline;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.5;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Sans;-inkscape-font-specification:Sans"
@@ -140,7 +140,7 @@
        sodipodi:linespacing="125%"
        transform="scale(1.0313073,0.9696431)"
        class="shadow"
-       clip-path="url(#clipPath3833)"><tspan
+       clip-path="url(#clipPath3015)"><tspan
          sodipodi:role="line"
          id="tspan3776-9-9-6-3-0"
          x="32.264141"
