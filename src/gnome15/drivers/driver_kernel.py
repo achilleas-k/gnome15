@@ -423,6 +423,31 @@ K_KEYMAPS = {
 
 class DeviceInfo:
     def __init__(self, leds, controls, key_map, led_prefix, keydev_pattern, sink_pattern = None, mm_pattern = None):
+
+        """
+        This object describes the device specific details this driver needs to know. Mainly
+        the file names that are created by the kernel driver and the maps for converting the
+        uinput keys codes from the driver into Gnome15 key code.
+
+        Keyword arguments:
+        leds             --    a list containing the files names of the 'Memory' keys (M1, M2, M3 and MR).
+                               These names match files in /sys/class/leds, prefixed with the value of
+                               led_prefix (see below)
+        controls         --    a list g15driver.Control objects supported by this device
+        key_map          --    a dictionary of UINPUT -> Gnome15 key codes
+        led_prefix       --    Each LED file in /sys/class/leds is prefixed by this short model name.  
+        keydev_pattern   --    A regular expression that matches the filename of the 'if01' device in 
+                               /dev/input/by-id. 'G' Keys, 'M' Keys and 'D' Pad Keys are read from this device.
+        sink_pattern     --    Optional. When specified, is a regular expression that matches the filename
+                               of the 'keyboard' device in /dev/input/by-id. When specified, the driver
+                               will open the device and just ignore any events from it. This fixes the problem
+                               of 'F' keys being emitted when keys are pressed.
+        mm_pattern       --    Optional. When specified, is a regular expression that matches the filename
+                               of the 'multimedia keys' device in /dev/input/by-id. When specified, the driver
+                               can open the device to intercept the multimedia keys and interpret them as 
+                               Gnome15 macro keys.
+        """
+
         self.leds = leds
         self.controls = controls
         self.key_map = key_map
@@ -430,16 +455,56 @@ class DeviceInfo:
         self.sink_pattern = sink_pattern
         self.keydev_pattern = keydev_pattern
         self.mm_pattern = mm_pattern
-        
+
+"""
+This dictionary keeps all the device specific details this
+drivers needs to know. The key is the model code, the
+value is a DeviceInfo object that contains the actual
+details
+"""
 device_info = {
-               g15driver.MODEL_G19: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g19_controls, g19_key_map, "g19", r"usb-Logitech_G19_Gaming_Keyboard-event-if.*", r"usb-Logitech_G19_Gaming_Keyboard-.*event-kbd.*", r"usb-046d_G19_Gaming_Keyboard-event-if.*"), 
-               g15driver.MODEL_G11: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g11_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if"), 
-               g15driver.MODEL_G15_V1: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "blue:mr" ], g15_controls, g15_key_map, "g15", r"G15_Keyboard_G15.*if", r"G15_Keyboard_G15.*kbd", r"usb-Logitech_Logitech_Gaming_Keyboard-event-if.*"),
-               g15driver.MODEL_G15_V2: DeviceInfo(["red:m1", "red:m2", "red:m3", "blue:mr" ], g15_controls, g15v2_key_map, "g15v2", r"G15_GamePanel_LCD-event-if.*", r"G15_GamePanel_LCD-event-kdb.*"),
-               g15driver.MODEL_G13: DeviceInfo(["red:m1", "red:m2", "red:m3", "red:mr" ], g13_controls, g13_key_map, "g13", r"_G13-event-mouse"),
-               g15driver.MODEL_G110: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g110_controls, g110_key_map, "g110", r"usb-LOGITECH_G110_G-keys-event-if.*", r"usb-LOGITECH_G110_G-keys-event-kbd.*"),
-               g15driver.MODEL_G510: DeviceInfo(["orange:m1", "orange:m2", "orange:m3", "red:mr" ], g13_controls, g510_key_map, "g510", r"G510_Gaming_Keyboard.*event-if.*", r"G510_Gaming_Keyboard.*event.*kbd.*"),
-               }
+       g15driver.MODEL_G19: DeviceInfo(
+            ["orange:m1", "orange:m2", "orange:m3", "red:mr" ],
+            g19_controls, g19_key_map, "g19",
+            r"usb-Logitech_G19_Gaming_Keyboard-event-if.*",
+            r"usb-Logitech_G19_Gaming_Keyboard-.*event-kbd.*",
+            r"usb-046d_G19_Gaming_Keyboard-event-if.*"),
+
+       g15driver.MODEL_G11: DeviceInfo(
+            ["orange:m1", "orange:m2", "orange:m3", "blue:mr" ],
+            g11_controls, g15_key_map, "g15",
+            r"G15_Keyboard_G15.*if"),
+
+       g15driver.MODEL_G15_V1: DeviceInfo(
+            ["orange:m1", "orange:m2", "orange:m3", "blue:mr" ],
+            g15_controls, g15_key_map, "g15",
+            r"G15_Keyboard_G15.*if",
+            r"G15_Keyboard_G15.*kbd",
+            r"usb-Logitech_Logitech_Gaming_Keyboard-event-if.*"),
+
+       g15driver.MODEL_G15_V2: DeviceInfo(
+            ["red:m1", "red:m2", "red:m3", "blue:mr" ],
+            g15_controls, g15v2_key_map, "g15v2",
+            r"G15_GamePanel_LCD-event-if.*",
+            r"G15_GamePanel_LCD-event-kdb.*"),
+
+       g15driver.MODEL_G13: DeviceInfo(
+            ["red:m1", "red:m2", "red:m3", "red:mr" ],
+            g13_controls, g13_key_map, "g13",
+            r"_G13-event-mouse"),
+
+       g15driver.MODEL_G110: DeviceInfo(
+            ["orange:m1", "orange:m2", "orange:m3", "red:mr" ],
+            g110_controls, g110_key_map, "g110",
+            r"usb-LOGITECH_G110_G-keys-event-if.*",
+            r"usb-LOGITECH_G110_G-keys-event-kbd.*"),
+
+       g15driver.MODEL_G510: DeviceInfo(
+            ["orange:m1", "orange:m2", "orange:m3", "red:mr" ],
+            g13_controls, g510_key_map, "g510",
+            r"G510_Gaming_Keyboard.*event-if.*",
+            r"G510_Gaming_Keyboard.*event.*kbd.*"),
+       }
         
 
 # Other constants
