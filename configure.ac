@@ -94,7 +94,8 @@ AS_IF([test "x${HAVE_PYUDEV}" = "xno"],
 dnl Python modules (mandatory for some drivers)
 AX_PYTHON_MODULE(pyinputevent, [])
 AS_IF([test "x${HAVE_PYMOD_PYINPUTEVENT}" = "xyes"],
-	[pyinputevent=yes])
+	[have_pyinputevent=yes],
+	[have_pyinputevent=no])
 
 dnl Python modules (mandatory for some plugins)
 AX_PYTHON_MODULE(gst, [])
@@ -104,8 +105,8 @@ AS_IF([test "x${HAVE_PYMOD_GST}" = "xyes"],
 
 AX_PYTHON_MODULE(appindicator, [])
 AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
-	[have_indicator=yes],
-	[have_indicator=no])
+	[have_appindicator=yes],
+	[have_appindicator=no])
 
 AX_PYTHON_MODULE(telepathy, [])
 AS_IF([test "x${HAVE_PYMOD_TELEPATHY}" = "xyes"],
@@ -124,33 +125,33 @@ AS_IF([test "x${HAVE_PYMOD_FEEDPARSER}" = "xyes"],
 
 AX_PYTHON_MODULE(vobject, [])
 AS_IF([test "x${HAVE_PYMOD_VOBJECT}" = "xyes" ],
-	[have_calendar_evolution_modules=yes],
-	[have_calendar_evolution_modules=no])
+	[have_vobject=yes],
+	[have_vobject=no])
 
 AX_PYTHON_MODULE(gdata.calendar, [])
 AS_IF([test "x${HAVE_PYMOD_GDATA_CALENDAR}" = "xyes" ],
-	[have_calendar_google_modules=yes],
-	[have_calendar_google_modules=no])
+	[have_gdata_calendar=yes],
+	[have_gdata_calendar=no])
 
 AX_PYTHON_MODULE(gdata.analytics, [])
 AS_IF([test "x${HAVE_PYMOD_GDATA_ANALYTICS}" = "xyes" ],
-	[have_google_analytics_modules=yes],
-	[have_google_analytics_modules=no])
+	[have_gdata_analytics=yes],
+	[have_gdata_analytics=no])
 
 AX_PYTHON_MODULE(cairoplot, [])
 AS_IF([test "x${HAVE_PYMOD_CAIROPLOT}" = "xyes" ],
-	[have_cairoplot_modules=yes],
-	[have_cairoplot_modules=no])
+	[have_cairoplot=yes],
+	[have_cairoplot=no])
 
 AX_PYTHON_MODULE(sensors, [])
 AS_IF([test "x${HAVE_PYMOD_SENSORS}" = "xyes" ],
-	[have_sensors_modules=yes],
-	[have_sensors_modules=no])
+	[have_sensors=yes],
+	[have_sensors=no])
 
 dnl libg15 (Gnome15 version)
 AC_SEARCH_LIBS(initLibG15, g15,
-	[libg15=yes],
-	[libg15=no])
+	[have_libg15=yes],
+	[have_libg15=no])
 
 dnl fftw
 AC_CHECK_HEADER(fftw3.h,
@@ -186,11 +187,11 @@ AC_ARG_ENABLE([kernel-driver],
 	[AS_HELP_STRING([--enable-kernel-driver],
 		[Enable Kernel driver support (requires pyinputevent and lg4l kernel drivers).])],
 	[case "${enableval}" in
- 				yes)	kernel_driver=${pyinputevent} ;;
+				yes)	kernel_driver=${have_pyinputevent} ;;
  				no)		kernel_driver=no ;;
  				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-kernel-driver]) ;;
  	esac],
-	[kernel_driver=${pyinputevent}])
+	[kernel_driver=${have_pyinputevent}])
 AM_CONDITIONAL([ENABLE_DRIVER_KERNEL], [test x$kernel_driver = xyes])
      
 AC_ARG_ENABLE([g19direct-driver],
@@ -223,7 +224,7 @@ AC_ARG_ENABLE([g15direct-driver],
  				no)		g15direct_driver=no ;;
  				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-g15direct-driver]) ;;
  	esac],
-	[g15direct_driver=${libg15}])
+	[g15direct_driver=${have_libg15}])
 AM_CONDITIONAL([ENABLE_DRIVER_G15DIRECT], [test x$g15direct_driver = xyes])
      
 dnl Allow udev files to be installed
@@ -567,7 +568,7 @@ AC_ARG_ENABLE([indicator-messages],
 		no)	indicator_messages_plugin=no ;;
 		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-indicator-messages]) ;;
 	esac],
-	[indicator_messages_plugin=${have_indicator}])
+	[indicator_messages_plugin=${have_appindicator}])
 AM_CONDITIONAL([ENABLE_INDICATOR_MESSAGES_PLUGIN], [test x$indicator_messages_plugin = xyes])
 
 dnl ALSA Volume Monitor Plugin
@@ -651,7 +652,7 @@ AC_ARG_ENABLE([cal-evolution],
 		no)	cal_evolution_plugin=no ;;
 		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-cal-evolution]) ;;
 	esac],
-	[cal_evolution_plugin=${have_calendar_evolution_modules}])
+	[cal_evolution_plugin=${have_vobject}])
 AM_CONDITIONAL([ENABLE_CAL_EVOLUTION_PLUGIN], [test x$cal_evolution_plugin = xyes])
 
 dnl Google Calendar plugin
@@ -663,11 +664,11 @@ AC_ARG_ENABLE([cal-google],
 		no)	cal_google_plugin=no ;;
 		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-cal-google]) ;;
 	esac],
-	[cal_google_plugin=${have_calendar_google_modules}])
+	[cal_google_plugin=${have_gdata_calendar}])
 AM_CONDITIONAL([ENABLE_CAL_GOOGLE_PLUGIN], [test x$cal_google_plugin = xyes])
 
 dnl Google Analytics plugin
-AS_IF([test "x${have_google_analytics_modules}" = "xyes" -a "x${have_cairoplot_modules}" = "xyes" ],
+AS_IF([test "x${have_gdata_analytics}" = "xyes" -a "x${have_cairoplot}" = "xyes" ],
 	  [deps_plugin_google_analytics=yes],
 	  [deps_plugin_google_analytics=no])
 AC_ARG_ENABLE([google-analytics],
@@ -678,7 +679,7 @@ AC_ARG_ENABLE([google-analytics],
 		no)	google_analytics_plugin=no ;;
 		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-google-analytics]) ;;
 	esac],
-	[google_analytics_plugin=${deps_plugin_google_anylitics}])
+	[google_analytics_plugin=${deps_plugin_google_analytics}])
 AM_CONDITIONAL([ENABLE_GOOGLE_ANALYTICS_PLUGIN], [test x$google_analytics_plugin = xyes])
 
 dnl POP3/IMAP Email Checker plugin
@@ -702,7 +703,7 @@ AC_ARG_ENABLE([sense],
 		no)	sense_plugin=no ;;
 		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-sense]) ;;
 	esac],
-	[sense_plugin=${have_sensors_modules}])
+	[sense_plugin=${have_sensors}])
 AM_CONDITIONAL([ENABLE_SENSE_PLUGIN], [test x$sense_plugin = xyes])
 
 dnl LCDShot plugin
