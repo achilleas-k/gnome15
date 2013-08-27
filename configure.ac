@@ -5,12 +5,165 @@ AM_MAINTAINER_MODE
 
 AC_CONFIG_MACRO_DIR([m4])
 
+dnl
+dnl Dependencies
+dnl
+
+dnl C compiler toolchain
 AC_PROG_LIBTOOL
 AC_PROG_CC
 
-dnl check for python
+dnl Python
 AM_PATH_PYTHON
 AX_PYTHON_DEVEL([2.6])
+
+dnl Python modules (mandatory)
+PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
+AC_SUBST(PYGTK_CFLAGS)
+AC_SUBST(PYGTK_LIBS)
+
+AX_PYTHON_MODULE(keyring, [])
+AS_IF([test "x${HAVE_PYMOD_KEYRING}" = "xno"],
+	[AC_MSG_ERROR([Requires Python Keyring Library])])
+
+AX_PYTHON_MODULE(virtkey, [])
+AS_IF([test "x${HAVE_PYMOD_VIRTKEY}" = "xno"],
+	[AC_MSG_ERROR([Requires Python Virtkey Library])])
+
+AX_PYTHON_MODULE(Image, [])
+AS_IF([test "x${HAVE_PYMOD_IMAGE}" = "xno"],
+	[AC_MSG_ERROR([Requires Python Image Library])])
+
+AX_PYTHON_MODULE(cairo, [])
+AS_IF([test "x${HAVE_PYMOD_CAIRO}" = "xno"],
+	[AC_MSG_ERROR([Requires Python bindings for the Cairo vector graphics library])])
+
+AX_PYTHON_MODULE(dbus, [])
+AS_IF([test "x${HAVE_PYMOD_DBUS}" = "xno"],
+	[AC_MSG_ERROR([Requires DBUS bindings for Python])])
+
+AX_PYTHON_MODULE(pyinotify, [])
+AS_IF([test "x${HAVE_PYMOD_PYINOTIFY}" = "xno"],
+	[AC_MSG_ERROR([Requires Pyinotify bindings for Python])])
+
+AX_PYTHON_MODULE(lxml, [])
+AS_IF([test "x${HAVE_PYMOD_LXML}" = "xno"],
+	[AC_MSG_ERROR([Requires LXML bindings for Python])])
+
+AX_PYTHON_MODULE(gobject, [])
+AS_IF([test "x${HAVE_PYMOD_GOBJECT}" = "xno"],
+	[AC_MSG_ERROR([Requires GObject for Python])])
+
+AX_PYTHON_MODULE(xdg, [])
+AS_IF([test "x${HAVE_PYMOD_XDG}" = "xno"],
+	[AC_MSG_ERROR([Requires Python XDG])])
+
+AX_PYTHON_MODULE(usb, [])
+AS_IF([test "x${HAVE_PYMOD_USB}" = "xno"],
+	[AC_MSG_ERROR([Requires PyUSB, python bindings for libusb])])
+
+AX_PYTHON_MODULE(gconf, [])
+AS_IF([test "x${HAVE_PYMOD_GCONF}" = "xno"],
+	[AC_MSG_ERROR([Requires GConf bindings for Python])])
+
+AX_PYTHON_MODULE(rsvg, [])
+AS_IF([test "x${HAVE_PYMOD_RSVG}" = "xno"],
+	[AC_MSG_ERROR([Requires RSVG for Python])])
+
+AX_PYTHON_MODULE(pango, [])
+AS_IF([test "x${HAVE_PYMOD_PANGO}" = "xno"],
+	[AC_MSG_ERROR([Requires Pango for Python])])
+
+AX_PYTHON_MODULE(uinput, [])
+AS_IF([test "x${HAVE_PYMOD_UINPUT}" = "xno"],
+	[AC_MSG_ERROR([Requires Python uinput and libsuinput])])
+
+AX_PYTHON_MODULE(Xlib, [])
+AS_IF([test "x${HAVE_PYMOD_XLIB}" = "xno"],
+	[AC_MSG_ERROR([Requires Python Xlib - Python Xlib bindings])])
+
+dnl Python modules (optional)
+AX_PYTHON_MODULE(setproctitle, [])
+AS_IF([test "x${HAVE_PYMOD_SETPROCTITLE}" = "xno"],
+	[AC_MSG_WARN([It is recommend that setproctitle is installed])])
+
+AX_PYTHON_MODULE(pyudev, [])
+AS_IF([test "x${HAVE_PYUDEV}" = "xno"],
+	[AC_MSG_WARN([It is recommended that PyUdev is installed. Without this, there will be no hot-plugging support])])
+
+dnl Python modules (mandatory for some drivers)
+AX_PYTHON_MODULE(pyinputevent, [])
+AS_IF([test "x${HAVE_PYMOD_PYINPUTEVENT}" = "xyes"],
+	[pyinputevent=yes])
+
+dnl Python modules (mandatory for some plugins)
+AX_PYTHON_MODULE(gst, [])
+AS_IF([test "x${HAVE_PYMOD_GST}" = "xyes"],
+	[have_gst=yes],
+	[have_gst=no])
+
+AX_PYTHON_MODULE(appindicator, [])
+AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
+	[have_indicator=yes],
+	[have_indicator=no])
+
+AX_PYTHON_MODULE(telepathy, [])
+AS_IF([test "x${HAVE_PYMOD_TELEPATHY}" = "xyes"],
+	[have_telepathy=yes],
+	[have_telepathy=no])
+
+AX_PYTHON_MODULE(alsaaudio, [])
+AS_IF([test "x${HAVE_PYMOD_ALSAAUDIO}" = "xyes"],
+	[have_alsaaudio=yes],
+	[have_alsaaudio=no])
+
+AX_PYTHON_MODULE(feedparser, [])
+AS_IF([test "x${HAVE_PYMOD_FEEDPARSER}" = "xyes"],
+	[have_feedparser=yes],
+	[have_feedparser=no])
+
+AX_PYTHON_MODULE(vobject, [])
+AS_IF([test "x${HAVE_PYMOD_VOBJECT}" = "xyes" ],
+	[have_calendar_evolution_modules=yes],
+	[have_calendar_evolution_modules=no])
+
+AX_PYTHON_MODULE(gdata.calendar, [])
+AS_IF([test "x${HAVE_PYMOD_GDATA_CALENDAR}" = "xyes" ],
+	[have_calendar_google_modules=yes],
+	[have_calendar_google_modules=no])
+
+AX_PYTHON_MODULE(gdata.analytics, [])
+AS_IF([test "x${HAVE_PYMOD_GDATA_ANALYTICS}" = "xyes" ],
+	[have_google_analytics_modules=yes],
+	[have_google_analytics_modules=no])
+
+AX_PYTHON_MODULE(cairoplot, [])
+AS_IF([test "x${HAVE_PYMOD_CAIROPLOT}" = "xyes" ],
+	[have_cairoplot_modules=yes],
+	[have_cairoplot_modules=no])
+
+AX_PYTHON_MODULE(sensors, [])
+AS_IF([test "x${HAVE_PYMOD_SENSORS}" = "xyes" ],
+	[have_sensors_modules=yes],
+	[have_sensors_modules=no])
+
+dnl libg15 (Gnome15 version)
+AC_SEARCH_LIBS(initLibG15, g15,
+	[libg15=yes],
+	[libg15=no])
+
+dnl fftw
+AC_CHECK_HEADER(fftw3.h,
+	AC_CHECK_LIB([fftw3], fftw_execute,,
+		AC_MSG_ERROR([*** Could not find libfftw3. ***])),
+	AC_MSG_ERROR([*** Header file fftw3.h. ***]))
+
+dnl libpulse
+AC_CHECK_LIB(pulse, pa_stream_new)
+
+dnl
+dnl Parse configure arguments
+dnl
 
 dnl Build locales
 AC_ARG_ENABLE([locales],
@@ -28,12 +181,7 @@ AC_ARG_ENABLE([fixed-size-font],
 	[fixed_size_font=Fixed])
 AC_SUBST(FIXED_SIZE_FONT, ${fixed_size_font})
 
-dnl Dependencies for core applet and tools
-
-dnl Determine if pyinputevent is available. If it is, kernel driver can be built
-AX_PYTHON_MODULE(pyinputevent, [])
-AS_IF([test "x${HAVE_PYMOD_PYINPUTEVENT}" = "xyes"],
-     [pyinputevent=yes])     
+dnl Drivers
 AC_ARG_ENABLE([kernel-driver],
 	[AS_HELP_STRING([--enable-kernel-driver],
 		[Enable Kernel driver support (requires pyinputevent and lg4l kernel drivers).])],
@@ -67,7 +215,6 @@ AC_ARG_ENABLE([g930-driver],
 	[g930_driver=yes])
 AM_CONDITIONAL([ENABLE_DRIVER_G930], [test x$g930_driver = xyes])
 
-AC_SEARCH_LIBS(initLibG15, g15, [libg15=yes],[libg15=no])
 AC_ARG_ENABLE([g15direct-driver],
 	[AS_HELP_STRING([--enable-g15direct-driver],
 		[Enable G15 direct driver support (requires libg15).])],
@@ -102,78 +249,7 @@ AC_ARG_ENABLE([udevmode],
 	[devicemode=0660])
 AC_SUBST(DEVICEMODE, $devicemode)
 
-dnl Required modules
-AX_PYTHON_MODULE(keyring, [])
-AS_IF([test "x${HAVE_PYMOD_KEYRING}" = "xno"],
-     [AC_MSG_ERROR([Requires Python Keyring Library])])
-
-dnl Required modules
-AX_PYTHON_MODULE(virtkey, [])
-AS_IF([test "x${HAVE_PYMOD_VIRTKEY}" = "xno"],
-     [AC_MSG_ERROR([Requires Python Virtkey Library])])
-     
-AX_PYTHON_MODULE(Image, [])
-AS_IF([test "x${HAVE_PYMOD_IMAGE}" = "xno"],
-     [AC_MSG_ERROR([Requires Python Image Library])])
-     
-AX_PYTHON_MODULE(cairo, [])
-AS_IF([test "x${HAVE_PYMOD_CAIRO}" = "xno"],
-     [AC_MSG_ERROR([Requires Python bindings for the Cairo vector graphics library])])
-
-AX_PYTHON_MODULE(dbus, [])
-AS_IF([test "x${HAVE_PYMOD_DBUS}" = "xno"],
-     [AC_MSG_ERROR([Requires DBUS bindings for Python])])
-
-AX_PYTHON_MODULE(pyinotify, [])
-AS_IF([test "x${HAVE_PYMOD_PYINOTIFY}" = "xno"],
-     [AC_MSG_ERROR([Requires Pyinotify bindings for Python])])
-     
-AX_PYTHON_MODULE(lxml, [])
-AS_IF([test "x${HAVE_PYMOD_LXML}" = "xno"],
-     [AC_MSG_ERROR([Requires LXML bindings for Python])])
-     
-AX_PYTHON_MODULE(gobject, [])
-AS_IF([test "x${HAVE_PYMOD_GOBJECT}" = "xno"],
-     [AC_MSG_ERROR([Requires GObject for Python])])
-     
-AX_PYTHON_MODULE(xdg, [])
-AS_IF([test "x${HAVE_PYMOD_XDG}" = "xno"],
-     [AC_MSG_ERROR([Requires Python XDG])])
-     
-AX_PYTHON_MODULE(usb, [])
-AS_IF([test "x${HAVE_PYMOD_USB}" = "xno"],
-     [AC_MSG_ERROR([Requires PyUSB, python bindings for libusb])])
-     
-AX_PYTHON_MODULE(gconf, [])
-AS_IF([test "x${HAVE_PYMOD_GCONF}" = "xno"],
-     [AC_MSG_ERROR([Requires GConf bindings for Python])])
-     
-AX_PYTHON_MODULE(rsvg, [])
-AS_IF([test "x${HAVE_PYMOD_RSVG}" = "xno"],
-     [AC_MSG_ERROR([Requires RSVG for Python])])
-
-AX_PYTHON_MODULE(pango, [])
-AS_IF([test "x${HAVE_PYMOD_PANGO}" = "xno"],
-     [AC_MSG_ERROR([Requires Pango for Python])])
-
-AX_PYTHON_MODULE(uinput, [])
-AS_IF([test "x${HAVE_PYMOD_UINPUT}" = "xno"],
-     [AC_MSG_ERROR([Requires Python uinput and libsuinput])])
-     
-AX_PYTHON_MODULE(Xlib, [])
-AS_IF([test "x${HAVE_PYMOD_XLIB}" = "xno"],
-     [AC_MSG_ERROR([Requires Python Xlib - Python Xlib bindings])])
-
-AX_PYTHON_MODULE(setproctitle, [])
-AS_IF([test "x${HAVE_PYMOD_SETPROCTITLE}" = "xno"],
-     [AC_MSG_WARN([It is recommend that setproctitle is installed])])
-
-AX_PYTHON_MODULE(pyudev, [])
-AS_IF([test "x${HAVE_PYUDEV}" = "xno"],
-     [AC_MSG_WARN([It is recommended that PyUdev is installed. Without this, there will be no hot-plugging support])])
-     
-dnl Dependencies for panel integration components
-
+dnl System Tray
 AC_ARG_ENABLE([systemtray],
 	[AS_HELP_STRING([--enable-systemtray],
 		[Enable System Tray panel integration.])],
@@ -186,8 +262,6 @@ AC_ARG_ENABLE([systemtray],
 AM_CONDITIONAL([ENABLE_SYSTEMTRAY], [test x$systemtray = xyes])
 
 dnl Ubuntu Indicator
-AX_PYTHON_MODULE(appindicator, [])
-
 AC_ARG_ENABLE([indicator],
 	[AS_HELP_STRING([--enable-indicator],
 		[Enable Ubuntu Indicator integration.])],
@@ -214,11 +288,6 @@ AC_ARG_ENABLE([gnome-shell-extension],
 	gnome_shell_extension=yes)
 AM_CONDITIONAL([ENABLE_GNOME_SHELL_EXTENSION], [test x$gnome_shell_extension = xyes])
 
-PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
-AC_SUBST(PYGTK_CFLAGS)
-AC_SUBST(PYGTK_LIBS)
-
-
 dnl Icons
 
 AC_ARG_ENABLE([icons-awoken],
@@ -243,11 +312,13 @@ AC_ARG_ENABLE([icons-mono],
 	[icons_mono=yes])
 AM_CONDITIONAL([ENABLE_ICONS_MONO], [test x$icons_mono = xyes])
 
-dnl Dependencies for plugins. Each plugin by default is only enabled
+dnl
+dnl Plugins
+dnl
+
+dnl Each plugin by default is only enabled
 dnl if dependencies are available. Each plugin may also be
 dnl individually enabled / disabled using configure options
-
-dnl Plugins that only depend on Gnome15 or its dependencies
 
 dnl Background plugin
 AC_ARG_ENABLE([background],
@@ -310,11 +381,6 @@ AC_ARG_ENABLE([g15daemon-server],
 AM_CONDITIONAL([ENABLE_G15DAEMON_SERVER_PLUGIN], [test x$g15daemon_server_plugin = xyes])
 
 dnl Instant Messenger plugin
-
-AX_PYTHON_MODULE(telepathy, [])
-AS_IF([test "x${HAVE_PYMOD_TELEPATHY}" = "xyes"],
-	  [have_telepathy=yes],
-	  [have_telepathy=no])
 AC_ARG_ENABLE([im],
 	[AS_HELP_STRING([--enable-im],
 		[Enable Instant Messenger plugin. Displays current contact list and status (currently works with Telepathy framework based clients).])],
@@ -447,11 +513,6 @@ AC_ARG_ENABLE([stopwatch],
 AM_CONDITIONAL([ENABLE_STOPWATCH_PLUGIN], [test x$stopwatch_plugin = xyes])
 
 dnl Media Player plugin
-
-AX_PYTHON_MODULE(gst, [])
-AS_IF([test "x${HAVE_PYMOD_GST}" = "xyes"],
-	  [have_gst=yes],
-	  [have_gst=no])
 AC_ARG_ENABLE([mediaplayer],
 	[AS_HELP_STRING([--enable-mediaplayer],
 		[Enable Media Player plugin. Requires GStreamer])],
@@ -474,6 +535,7 @@ AC_ARG_ENABLE([weather],
 	esac],
 	[weather_plugin=yes])
 AM_CONDITIONAL([ENABLE_WEATHER_PLUGIN], [test x$weather_plugin = xyes])
+
 AC_ARG_ENABLE([weather-noaa],
 	[AS_HELP_STRING([--enable-weather-noaa],
 		[Enable NOAA support for the Weather plugin.])],
@@ -484,6 +546,7 @@ AC_ARG_ENABLE([weather-noaa],
 	esac],
 	[weather_noaa_plugin=yes])
 AM_CONDITIONAL([ENABLE_WEATHER_NOAA_PLUGIN], [test x$weather_noaa_plugin = xyes])
+
 AC_ARG_ENABLE([weather-yahoo],
 	[AS_HELP_STRING([--enable-weather-yahoo],
 		[Enable Yahoo support for the Weather plugin.])],
@@ -495,15 +558,7 @@ AC_ARG_ENABLE([weather-yahoo],
 	[weather_yahoo_plugin=yes])
 AM_CONDITIONAL([ENABLE_WEATHER_YAHOO_PLUGIN], [test x$weather_yahoo_plugin = xyes])
 
-dnl Plugins that have additional dependencies
-
-dnl Indicator Me Plugin (enable by default when appindicator module is installed, suggesting Ubuntu)
-AX_PYTHON_MODULE(appindicator, [])
-AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
-	  [have_indicator=yes],
-	  [have_indicator=no])
-
-dnl Indicator Messages Plugin (enable by default when appindicator module is installed, suggesting Ubuntu)
+dnl Indicator Messages Plugin
 AC_ARG_ENABLE([indicator-messages],
 	[AS_HELP_STRING([--enable-indicator-messages],
 		[Enable Indicator Messages plugin.])],
@@ -516,10 +571,6 @@ AC_ARG_ENABLE([indicator-messages],
 AM_CONDITIONAL([ENABLE_INDICATOR_MESSAGES_PLUGIN], [test x$indicator_messages_plugin = xyes])
 
 dnl ALSA Volume Monitor Plugin
-AX_PYTHON_MODULE(alsaaudio, [])
-AS_IF([test "x${HAVE_PYMOD_ALSAAUDIO}" = "xyes"],
-	  [have_alsaaudio=yes],
-	  [have_alsaaudio=no])
 AC_ARG_ENABLE([volume],
 	[AS_HELP_STRING([--enable-volume],
 		[Enable ALSA volume monitor plugin. Requires python-alsaaudio])],
@@ -532,10 +583,6 @@ AC_ARG_ENABLE([volume],
 AM_CONDITIONAL([ENABLE_VOLUME_PLUGIN], [test x$volume_plugin = xyes])
 
 dnl RSS Plugin
-AX_PYTHON_MODULE(feedparser, [])
-AS_IF([test "x${HAVE_PYMOD_FEEDPARSER}" = "xyes"],
-	  [have_feedparser=yes],
-	  [have_feedparser=no])
 AC_ARG_ENABLE([rss],
 	[AS_HELP_STRING([--enable-rss],
 		[Enable RSS feed plugin. Requires python feedparser])],
@@ -596,10 +643,6 @@ AC_ARG_ENABLE([cal],
 AM_CONDITIONAL([ENABLE_CAL_PLUGIN], [test x$cal_plugin = xyes])
 
 dnl Evolution Calendar plugin
-AX_PYTHON_MODULE(vobject, [])
-AS_IF([test "x${HAVE_PYMOD_VOBJECT}" = "xyes" ],
-	  [have_calendar_evolution_modules=yes],
-	  [have_calendar_evolution_modules=no])
 AC_ARG_ENABLE([cal-evolution],
 	[AS_HELP_STRING([--enable-cal-evolution],
 		[Enable Evolution calendar plugin. Requires python vobject])],
@@ -612,10 +655,6 @@ AC_ARG_ENABLE([cal-evolution],
 AM_CONDITIONAL([ENABLE_CAL_EVOLUTION_PLUGIN], [test x$cal_evolution_plugin = xyes])
 
 dnl Google Calendar plugin
-AX_PYTHON_MODULE(gdata.calendar, [])
-AS_IF([test "x${HAVE_PYMOD_GDATA_CALENDAR}" = "xyes" ],
-	  [have_calendar_google_modules=yes],
-	  [have_calendar_google_modules=no])
 AC_ARG_ENABLE([cal-google],
 	[AS_HELP_STRING([--enable-cal-google],
 		[Enable Google calendar plugin. Requires calendar plugin, python gdata])],
@@ -628,11 +667,9 @@ AC_ARG_ENABLE([cal-google],
 AM_CONDITIONAL([ENABLE_CAL_GOOGLE_PLUGIN], [test x$cal_google_plugin = xyes])
 
 dnl Google Analytics plugin
-AX_PYTHON_MODULE(gdata.analytics, [])
-AX_PYTHON_MODULE(cairoplot, [])
-AS_IF([test "x${HAVE_PYMOD_GDATA_ANALYTICS}" = "xyes" -a "x${HAVE_PYMOD_CAIROPLOT}" = "xyes" ],
-	  [have_google_analytics_modules=yes],
-	  [have_google_analytics_modules=no])
+AS_IF([test "x${have_google_analytics_modules}" = "xyes" -a "x${have_cairoplot_modules}" = "xyes" ],
+	  [deps_plugin_google_analytics=yes],
+	  [deps_plugin_google_analytics=no])
 AC_ARG_ENABLE([google-analytics],
 	[AS_HELP_STRING([--enable-google-analytics],
 		[Enable Google Analytics plugin. Requires python gdata and cairoplot])],
@@ -641,7 +678,7 @@ AC_ARG_ENABLE([google-analytics],
 		no)	google_analytics_plugin=no ;;
 		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-google-analytics]) ;;
 	esac],
-	[google_analytics_plugin=${have_google_analytics_modules}])
+	[google_analytics_plugin=${deps_plugin_google_anylitics}])
 AM_CONDITIONAL([ENABLE_GOOGLE_ANALYTICS_PLUGIN], [test x$google_analytics_plugin = xyes])
 
 dnl POP3/IMAP Email Checker plugin
@@ -657,10 +694,6 @@ AC_ARG_ENABLE([lcdbiff],
 AM_CONDITIONAL([ENABLE_LCDBIFF_PLUGIN], [test x$lcdbiff_plugin = xyes])
 
 dnl Sensors plugin
-AX_PYTHON_MODULE(sensors, [])
-AS_IF([test "x${HAVE_PYMOD_SENSORS}" = "xyes" ],
-	  [have_sensors_modules=yes],
-	  [have_sensors_modules=no])
 AC_ARG_ENABLE([sense],
 	[AS_HELP_STRING([--enable-sense],
 		[Enable Sense plugin. Requires pysensors])],
@@ -756,13 +789,6 @@ AC_ARG_ENABLE([trafficstats],
 AM_CONDITIONAL([ENABLE_TRAFFIC_STATS_PLUGIN], [test x$trafficstats_plugin = xyes])
 
 dnl impulse15 plugin
-AC_CHECK_HEADER(fftw3.h,
-	AC_CHECK_LIB([fftw3], fftw_execute,,
-		AC_MSG_ERROR([*** Could not find libfftw3. ***])),
-	AC_MSG_ERROR([*** Header file fftw3.h. ***]))
-
-AC_CHECK_LIB(pulse, pa_stream_new)
-
 AC_ARG_ENABLE([impulse15],
 	[AS_HELP_STRING([--enable-impulse15],
 		[Enable Impulse15 plugin.])],
