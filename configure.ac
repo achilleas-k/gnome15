@@ -182,49 +182,53 @@ AS_IF([test -z "${FIXED_SIZE_FONT}"],
 	AC_SUBST([FIXED_SIZE_FONT], [Fixed]))
 
 dnl Drivers
-AC_ARG_ENABLE([kernel-driver],
-	[AS_HELP_STRING([--enable-kernel-driver],
+AC_ARG_ENABLE([driver-kernel],
+	[AS_HELP_STRING([--enable-driver-kernel],
 		[Enable Kernel driver support (requires pyinputevent and lg4l kernel drivers).])],
 	[case "${enableval}" in
-				yes)	kernel_driver=${have_pyinputevent} ;;
- 				no)		kernel_driver=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-kernel-driver]) ;;
- 	esac],
-	[kernel_driver=${have_pyinputevent}])
-AM_CONDITIONAL([ENABLE_DRIVER_KERNEL], [test x$kernel_driver = xyes])
+		yes) driver_kernel=yes ;;
+		no)  driver_kernel=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-driver-kernel]) ;;
+	esac],
+	[driver_kernel=${have_pyinputevent}])
+AS_IF([test "x${driver_kernel}" = "xyes" -a "x$have_pyinputevent" = "xno"],
+	[AC_MSG_ERROR([kernel driver cannot be built without pyinputevent])])
+AM_CONDITIONAL([ENABLE_DRIVER_KERNEL], [test x$driver_kernel = xyes])
      
-AC_ARG_ENABLE([g19direct-driver],
-	[AS_HELP_STRING([--enable-g19direct-driver],
+AC_ARG_ENABLE([driver-g19direct],
+	[AS_HELP_STRING([--enable-driver-g19direct],
 		[Enable G19Direct driver support.])],
 	[case "${enableval}" in
-		yes)	g19direct_driver=yes ;;
-		no)	g19direct_driver=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-g19direct-driver]) ;;
- 	esac],
-	[g19direct_driver=yes])
-AM_CONDITIONAL([ENABLE_DRIVER_G19DIRECT], [test x$g19direct_driver = xyes])
+		yes) driver_g19direct=yes ;;
+		no)  driver_g19direct=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-driver-g19direct]) ;;
+	esac],
+	[driver_g19direct=yes])
+AM_CONDITIONAL([ENABLE_DRIVER_G19DIRECT], [test x$driver_g19direct = xyes])
 
-AC_ARG_ENABLE([g930-driver],
-	[AS_HELP_STRING([--enable-g930-driver],
+AC_ARG_ENABLE([driver-g930],
+	[AS_HELP_STRING([--enable-driver-g930],
 		[Enable G930 headset driver support])],
 	[case "${enableval}" in
- 				yes)	g930_driver=yes ;;
- 				no)		g930_driver=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-930-driver]) ;;
+		yes) driver_g930=yes ;;
+		no)  driver_g930=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-driver-g930]) ;;
  	esac],
-	[g930_driver=yes])
-AM_CONDITIONAL([ENABLE_DRIVER_G930], [test x$g930_driver = xyes])
+	[driver_g930=yes])
+AM_CONDITIONAL([ENABLE_DRIVER_G930], [test x$driver_g930 = xyes])
 
-AC_ARG_ENABLE([g15direct-driver],
-	[AS_HELP_STRING([--enable-g15direct-driver],
+AC_ARG_ENABLE([driver-g15direct],
+	[AS_HELP_STRING([--enable-driver-g15direct],
 		[Enable G15 direct driver support (requires libg15).])],
 	[case "${enableval}" in
- 				yes)	g15direct_driver=yes ;;
- 				no)		g15direct_driver=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-g15direct-driver]) ;;
- 	esac],
-	[g15direct_driver=${have_libg15}])
-AM_CONDITIONAL([ENABLE_DRIVER_G15DIRECT], [test x$g15direct_driver = xyes])
+		yes) driver_g15direct=yes ;;
+		no)  driver_g15direct=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-driver-g15direct]) ;;
+	esac],
+	[driver_g15direct=${have_libg15}])
+AS_IF([test "x${driver_g15direct}" = "xyes" -a "x$have_libg15" = "xno"],
+	[AC_MSG_ERROR([g5direct driver cannot be built without libg15])])
+AM_CONDITIONAL([ENABLE_DRIVER_G15DIRECT], [test x$driver_g15direct = xyes])
      
 dnl Allow udev files to be installed
 AC_ARG_VAR(UDEV_RULES_PATH, [Path for udev rules. Defaults to /lib/udev/rules.d])
@@ -1087,20 +1091,20 @@ AS_IF([test "x$gnome_shell_extension" = "xyes" ],
 AS_ECHO("")
 AS_ECHO("Drivers")
 AS_ECHO("-------")
-AS_ECHO_N("driver_g15direct (libg15)   - ")
-AS_IF([test "x$g15direct_driver" = "xyes" ],
+AS_ECHO_N("g15direct                   - ")
+AS_IF([test "x$driver_g15direct" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
-AS_ECHO_N("driver_g930                 - ")
-AS_IF([test "x$g930_driver" = "xyes" ],
+AS_ECHO_N("g930                        - ")
+AS_IF([test "x$driver_g930" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
-AS_ECHO_N("driver_g19direct            - ")
-AS_IF([test "x$g19direct_driver" = "xyes" ],
+AS_ECHO_N("g19direct                   - ")
+AS_IF([test "x$driver_g19direct" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
-AS_ECHO_N("driver_kernel               - ")
-AS_IF([test "x$kernel_driver" = "xyes" ],
+AS_ECHO_N("Kernel                      - ")
+AS_IF([test "x$driver_kernel" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("")
