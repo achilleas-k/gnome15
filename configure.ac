@@ -285,9 +285,9 @@ AC_ARG_ENABLE([icons-awoken],
 	[AS_HELP_STRING([--enable-icons-awoken],
 		[Build and deploy awoken icons.])],
 	[case "${enableval}" in
-		yes)	icons_awoken=yes ;;
-		no)	icons_awoken=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-icons-awoken]) ;;
+		yes) icons_awoken=yes ;;
+		no)  icons_awoken=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-icons-awoken]) ;;
 	esac],
 	[icons_awoken=no])
 AM_CONDITIONAL([ENABLE_ICONS_AWOKEN], [test x$icons_awoken = xyes])
@@ -296,9 +296,9 @@ AC_ARG_ENABLE([icons-mono],
 	[AS_HELP_STRING([--enable-icons-mono],
 		[Build and deploy monochrome icons.])],
 	[case "${enableval}" in
-		yes)	icons_mono=yes ;;
-		no)	icons_mono=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-icons-mono]) ;;
+		yes) icons_mono=yes ;;
+		no)  icons_mono=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-icons-mono]) ;;
 	esac],
 	[icons_mono=yes])
 AM_CONDITIONAL([ENABLE_ICONS_MONO], [test x$icons_mono = xyes])
