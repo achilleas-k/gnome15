@@ -43,6 +43,6 @@ else:
 	icons_dir = "@prefix@/share/icons"
 	scripts_dir = "@prefix@/bin"
 
-# Differs from distro to distro, and so is a ./configure option. See
-# --enable-fixed-size-font=[name] 
+# Differs from distro to distro, so it can changed as a ./configure option
+# by setting the FIXED_SIZE_FONT environment variable.
 fixed_size_font_name = "@FIXED_SIZE_FONT@"

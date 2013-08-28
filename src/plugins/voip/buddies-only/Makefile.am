@@ -12,7 +12,7 @@ EXTRA_DIST = \
 
 	
 all-local:
-	for M_LOCALE in @BUILD_LOCALES@; do \
+	for M_LOCALE in @ENABLED_LOCALES@; do \
 		mkdir -p i18n/$$M_LOCALE/LC_MESSAGES ; \
         if [ `ls i18n/*.po 2>/dev/null|wc -l` -gt 0 ]; then \
 			for M_PO in i18n/*.po; do \
@@ -25,7 +25,7 @@ all-local:
 	done
 	
 install-exec-hook:
-	for M_LOCALE in @BUILD_LOCALES@; do \
+	for M_LOCALE in @ENABLED_LOCALES@; do \
 		mkdir -p $(DESTDIR)$(datadir)/gnome15/plugins/im/default/i18n; \
 		cp -pR i18n/$$M_LOCALE $(DESTDIR)$(datadir)/gnome15/plugins/im/default/i18n; \
 	done

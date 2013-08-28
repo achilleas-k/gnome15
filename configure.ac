@@ -171,21 +171,15 @@ dnl
 dnl Parse configure arguments
 dnl
 
-dnl Build locales
-AC_ARG_ENABLE([locales],
-	[AS_HELP_STRING([--enable-locales=list-of-locales],
-		[List of locales to build for])],
-	[build_locales=${enableval}],
-	[build_locales=en_GB])	
-AC_SUBST(BUILD_LOCALES, $build_locales)
+dnl Enabled locales
+AC_ARG_VAR(ENABLED_LOCALES, [List of locales to enable])
+AS_IF([test -z "${ENABLED_LOCALES}"],
+	AC_SUBST([ENABLED_LOCALES], [en_GB]))
 
 dnl Name of Fixed size font
-AC_ARG_ENABLE([fixed-size-font],
-	[AS_HELP_STRING([--with-fixed-size-font=fixed size font name],
-		[Set the font size to use for fixed size fonts. Defaults to Misc])],
-	[fixed_size_font=${enableval}],
-	[fixed_size_font=Fixed])
-AC_SUBST(FIXED_SIZE_FONT, ${fixed_size_font})
+AC_ARG_VAR(FIXED_SIZE_FONT, [Font to use for fixed fonts. Defaults to Fixed])
+AS_IF([test -z "${FIXED_SIZE_FONT}"],
+	AC_SUBST([FIXED_SIZE_FONT], [Fixed]))
 
 dnl Drivers
 AC_ARG_ENABLE([kernel-driver],
@@ -233,27 +227,15 @@ AC_ARG_ENABLE([g15direct-driver],
 AM_CONDITIONAL([ENABLE_DRIVER_G15DIRECT], [test x$g15direct_driver = xyes])
      
 dnl Allow udev files to be installed
-AC_ARG_ENABLE([udev],
-	[AS_HELP_STRING([--enable-udev=path-to-rules-directory],
-		[Install udev rules to set permissions of various keyboard input and output devices])],
-	[udev_rules_path=${enableval}],
-	[udev_rules_path=no])	
-AM_CONDITIONAL([ENABLE_UDEV], [test x$udev_rules_path != xno])
-AC_SUBST(UDEV_RULES_PATH, $udev_rules_path)
-AS_IF([test "x${udev_rules_path}" = "xno"],
- 	[AC_MSG_ERROR([You must also provide the location of your distributions udev rules using --enable-udev=path-to-rules-directory])])
-AC_ARG_ENABLE([udevgroup],
-	[AS_HELP_STRING([--enable-udevgroup=group-id-or-name],
-		[Set the group that the devices will be owned by. Defaults to plugdev])],
-	[devicegroup=${enableval}],
-	[devicegroup=plugdev])
-AC_SUBST(DEVICEGROUP, $devicegroup)
-AC_ARG_ENABLE([udevmode],
-	[AS_HELP_STRING([--enable-udevmode=mode],
-		[Set the permissions of the devices. Defaults to 0660])],
-	[devicemode=${enableval}],
-	[devicemode=0660])
-AC_SUBST(DEVICEMODE, $devicemode)
+AC_ARG_VAR(UDEV_RULES_PATH, [Path for udev rules. Defaults to /lib/udev/rules.d])
+AS_IF([test -z "${UDEV_RULES_PATH}"],
+	AC_SUBST([UDEV_RULES_PATH], [/lib/udev/rules.d]))
+AC_ARG_VAR(DEVICEGROUP, [Group that the devices will be owned by. Defaults to plugdev])
+AS_IF([test -z "${DEVICEGROUP}"],
+	AC_SUBST([DEVICEGROUP], [plugdev]))
+AC_ARG_VAR(DEVICEMODE, [Permissions of the devices. Defaults to 0660])
+AS_IF([test -z "${DEVICEMODE}"],
+	AC_SUBST([DEVICEMODE], [0660]))
 
 dnl System Tray
 AC_ARG_ENABLE([systemtray],
@@ -1331,13 +1313,14 @@ AS_ECHO("See ./configure --help for descriptions of these plugins and options to
 AS_ECHO("")
 AS_ECHO("Other Configuration")
 AS_ECHO("-------------------")
-AS_ECHO("Fixed size font name        - $fixed_size_font")
-AS_ECHO("Device group                - $devicegroup")
-AS_ECHO("Device mode                 - $devicemode")
+AS_ECHO("Fixed size font name        - ${FIXED_SIZE_FONT}")
+AS_ECHO("udev rules path             - ${UDEV_RULES_PATH}")
+AS_ECHO("Device group                - ${DEVICEGROUP}")
+AS_ECHO("Device mode                 - ${DEVICEMODE}")
 AS_ECHO_N("Hotplugging support         - ")
 AS_IF([test "x${HAVE_PYUDEV}" = "xno"],
      [AS_ECHO("No")],
      [AS_ECHO("Yes")])
 AS_ECHO("")
-AS_ECHO("Building i18n for locales: $build_locales")
+AS_ECHO("Building i18n for locales: ${ENABLED_LOCALES}")
 AS_ECHO("")

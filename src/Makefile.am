@@ -17,7 +17,7 @@ all-local:
 		PLUGIN_DIR=plugins/$$PLUGIN; \
 		if [ -d $$PLUGIN_DIR ]; then \
 			pushd $$PLUGIN_DIR; \
-			for M_LOCALE in @BUILD_LOCALES@; do \
+			for M_LOCALE in @ENABLED_LOCALES@; do \
 				mkdir -p i18n/$$M_LOCALE/LC_MESSAGES ; \
 		        if [ `ls i18n/*.po 2>/dev/null|wc -l` -gt 0 ]; then \
 					for M_PO in i18n/*.po; do \
@@ -54,7 +54,7 @@ clean-local:
 		PLUGIN_DIR=plugins/$$PLUGIN; \
 		if [ -d $$PLUGIN_DIR ]; then \
 			pushd $$PLUGIN_DIR; \
-			for M_LOCALE in  @BUILD_LOCALES@; do \
+			for M_LOCALE in  @ENABLED_LOCALES@; do \
 				if [ -d i18n/$$M_LOCALE ]; then \
 					rm -fr i18n/$$M_LOCALE; \
 				fi; \
@@ -75,14 +75,14 @@ install-exec-hook:
 		PLUGIN_DIR=plugins/$$PLUGIN; \
 		if [ -d $(DESTDIR)$(datadir)/gnome15/plugins/$$PLUGIN ]; then \
 			pushd $$PLUGIN_DIR; \
-			for M_LOCALE in  @BUILD_LOCALES@; do \
+			for M_LOCALE in  @ENABLED_LOCALES@; do \
 				mkdir -p $(DESTDIR)$(datadir)/gnome15/plugins/$$PLUGIN/i18n; \
 				cp -pR i18n/$$M_LOCALE $(DESTDIR)$(datadir)/gnome15/plugins/$$PLUGIN/i18n; \
 			done; \
 			for THEME_DIR in *; do \
 				if [ -d $$THEME_DIR -a -d $$THEME_DIR/i18n ]; then \
 					pushd $$THEME_DIR; \
-					for M_LOCALE in @BUILD_LOCALES@; do \
+					for M_LOCALE in @ENABLED_LOCALES@; do \
 						mkdir -p $(DESTDIR)$(datadir)/gnome15/plugins/$$PLUGIN/$$THEME_DIR/i18n; \
 						cp -pR i18n/$$M_LOCALE $(DESTDIR)$(datadir)/gnome15/plugins/$$PLUGIN/$$THEME_DIR/i18n; \
 					done; \
