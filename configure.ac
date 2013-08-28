@@ -181,6 +181,17 @@ AC_ARG_VAR(FIXED_SIZE_FONT, [Font to use for fixed fonts. Defaults to Fixed])
 AS_IF([test -z "${FIXED_SIZE_FONT}"],
 	AC_SUBST([FIXED_SIZE_FONT], [Fixed]))
 
+dnl udev file path and settings
+AC_ARG_VAR(UDEV_RULES_PATH, [Path for udev rules. Defaults to /lib/udev/rules.d])
+AS_IF([test -z "${UDEV_RULES_PATH}"],
+	AC_SUBST([UDEV_RULES_PATH], [/lib/udev/rules.d]))
+AC_ARG_VAR(DEVICEGROUP, [Group that the devices will be owned by. Defaults to plugdev])
+AS_IF([test -z "${DEVICEGROUP}"],
+	AC_SUBST([DEVICEGROUP], [plugdev]))
+AC_ARG_VAR(DEVICEMODE, [Permissions of the devices. Defaults to 0660])
+AS_IF([test -z "${DEVICEMODE}"],
+	AC_SUBST([DEVICEMODE], [0660]))
+
 dnl Drivers
 AC_ARG_ENABLE([driver-kernel],
 	[AS_HELP_STRING([--enable-driver-kernel],
@@ -230,17 +241,6 @@ AS_IF([test "x${driver_g15direct}" = "xyes" -a "x$have_libg15" = "xno"],
 	[AC_MSG_ERROR([g5direct driver cannot be built without libg15])])
 AM_CONDITIONAL([ENABLE_DRIVER_G15DIRECT], [test x$driver_g15direct = xyes])
      
-dnl Allow udev files to be installed
-AC_ARG_VAR(UDEV_RULES_PATH, [Path for udev rules. Defaults to /lib/udev/rules.d])
-AS_IF([test -z "${UDEV_RULES_PATH}"],
-	AC_SUBST([UDEV_RULES_PATH], [/lib/udev/rules.d]))
-AC_ARG_VAR(DEVICEGROUP, [Group that the devices will be owned by. Defaults to plugdev])
-AS_IF([test -z "${DEVICEGROUP}"],
-	AC_SUBST([DEVICEGROUP], [plugdev]))
-AC_ARG_VAR(DEVICEMODE, [Permissions of the devices. Defaults to 0660])
-AS_IF([test -z "${DEVICEMODE}"],
-	AC_SUBST([DEVICEMODE], [0660]))
-
 dnl System Tray
 AC_ARG_ENABLE([systemtray],
 	[AS_HELP_STRING([--enable-systemtray],
