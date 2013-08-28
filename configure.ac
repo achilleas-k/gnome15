@@ -246,10 +246,10 @@ AC_ARG_ENABLE([systemtray],
 	[AS_HELP_STRING([--enable-systemtray],
 		[Enable System Tray panel integration.])],
 	[case "${enableval}" in
- 				yes)	systemtray=yes ;;
- 				no)		systemtray=no ;;
- 				*)		AC_MSG_ERROR([bad value ${enableval} for --enable-systemtray]) ;;
- 	esac],
+		yes) systemtray=yes ;;
+		no)  systemtray=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-systemtray]) ;;
+	esac],
 	systemtray=yes)
 AM_CONDITIONAL([ENABLE_SYSTEMTRAY], [test x$systemtray = xyes])
 
@@ -258,14 +258,13 @@ AC_ARG_ENABLE([indicator],
 	[AS_HELP_STRING([--enable-indicator],
 		[Enable Ubuntu Indicator integration.])],
 	[case "${enableval}" in
-		yes)	indicator=yes ;;
- 		no)	indicator=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-indicator]) ;;
- 	esac],
+		yes) indicator=yes ;;
+		no)  indicator=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-indicator]) ;;
+	esac],
 	indicator=yes)
-AS_IF([test "x${HAVE_PYMOD_APPINDICATOR}" = "xyes"],
-	  [indicator=$indicator],
-	  [indicator=no])
+AS_IF([test "x${indicator}" = "xyes" -a "x$have_appindicator" = "xno"],
+	[AC_MSG_ERROR([Ubuntu indicator cannot be built without appindicator python module])])
 AM_CONDITIONAL([ENABLE_INDICATOR], [test x$indicator = xyes])
 
 dnl Gnome Shell Extension
@@ -273,9 +272,9 @@ AC_ARG_ENABLE([gnome-shell-extension],
 	[AS_HELP_STRING([--enable-gnome-shell-extension],
 		[Enable Gnome Shell extension.])],
 	[case "${enableval}" in
-		yes)	gnome_shell_extension=yes ;;
-		no)	gnome_shell_extension=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-gnome-shell-extension]) ;;
+		yes) gnome_shell_extension=yes ;;
+		no)  gnome_shell_extension=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-gnome-shell-extension]) ;;
 	esac],
 	gnome_shell_extension=yes)
 AM_CONDITIONAL([ENABLE_GNOME_SHELL_EXTENSION], [test x$gnome_shell_extension = xyes])
