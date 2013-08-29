@@ -312,472 +312,508 @@ dnl if dependencies are available. Each plugin may also be
 dnl individually enabled / disabled using configure options
 
 dnl Background plugin
-AC_ARG_ENABLE([background],
-	[AS_HELP_STRING([--enable-background],
+AC_ARG_ENABLE([plugin-background],
+	[AS_HELP_STRING([--enable-plugin-background],
 		[Enable Background plugin.])],
 	[case "${enableval}" in
-		yes)	background_plugin=yes ;;
-		no)	background_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-background]) ;;
+		yes) plugin_background=yes ;;
+		no)  plugin_background=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-background]) ;;
 	esac],
-	[background_plugin=yes])
-AM_CONDITIONAL([ENABLE_BACKGROUND_PLUGIN], [test x$background_plugin = xyes])
+	[plugin_background=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_BACKGROUND], [test x$plugin_background = xyes])
 
 dnl Cairo Clock plugin
-AC_ARG_ENABLE([cairo-clock],
-	[AS_HELP_STRING([--enable-cairo-clock],
+AC_ARG_ENABLE([plugin-cairo-clock],
+	[AS_HELP_STRING([--enable-plugin-cairo-clock],
 		[Enable Cairo Clock plugin.])],
 	[case "${enableval}" in
-		yes)	cairo_clock_plugin=yes ;;
-		no)	cairo_clock_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-cairo-clock]) ;;
+		yes) plugin_cairo_clock=yes ;;
+		no)  plugin_cairo_clock=no ;;
+		*)  AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-cairo-clock]) ;;
 	esac],
-	[cairo_clock_plugin=yes])
-AM_CONDITIONAL([ENABLE_CAIRO_CLOCK_PLUGIN], [test x$cairo_clock_plugin = xyes])
+	[plugin_cairo_clock=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_CAIRO_CLOCK], [test x$plugin_cairo_clock = xyes])
 
 dnl Clock plugin
-AC_ARG_ENABLE([clock],
-	[AS_HELP_STRING([--enable-clock],
+AC_ARG_ENABLE([plugin-clock],
+	[AS_HELP_STRING([--enable-plugin-clock],
 		[Enable Simple Clock plugin (plugin used in website example).])],
 	[case "${enableval}" in
-		yes)	clock_plugin=yes ;;
-		no)	clock_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-clock]) ;;
+		yes) plugin_clock=yes ;;
+		no)  plugin_clock=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-clock]) ;;
 	esac],
-	[clock_plugin=yes])
-AM_CONDITIONAL([ENABLE_CLOCK_PLUGIN], [test x$clock_plugin = xyes])
+	[plugin_clock=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_CLOCK], [test x$plugin_clock = xyes])
 
 dnl Special effects plugin
-AC_ARG_ENABLE([fx],
-	[AS_HELP_STRING([--enable-fx],
+AC_ARG_ENABLE([plugin-fx],
+	[AS_HELP_STRING([--enable-plugin-fx],
 		[Enable Special Effects plugin.])],
 	[case "${enableval}" in
-		yes)	fx_plugin=yes ;;
-		no)	fx_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-fx]) ;;
+		yes) plugin_fx=yes ;;
+		no)  plugin_fx=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-fx]) ;;
 	esac],
-	[fx_plugin=yes])
-AM_CONDITIONAL([ENABLE_FX_PLUGIN], [test x$fx_plugin = xyes])
+	[plugin_fx=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_FX], [test x$plugin_fx = xyes])
 
 dnl G15daemon Server plugin
-AC_ARG_ENABLE([g15daemon-server],
-	[AS_HELP_STRING([--enable-g15daemon-server],
+AC_ARG_ENABLE([plugin-g15daemon-server],
+	[AS_HELP_STRING([--enable-plugin-g15daemon-server],
 		[Enable G15Daemon Server plugin (network server with protocol compatible with g15daemon, allows g15daemon scripts to be used when it is not installed).])],
 	[case "${enableval}" in
-		yes)	g15daemon_server_plugin=yes ;;
-		no)	g15daemon_server_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-g15daemon-server]) ;;
+		yes) plugin_g15daemon_server=yes ;;
+		no)  plugin_g15daemon_server=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-g15daemon-server]) ;;
 	esac],
-	[g15daemon_server_plugin=yes])
-AM_CONDITIONAL([ENABLE_G15DAEMON_SERVER_PLUGIN], [test x$g15daemon_server_plugin = xyes])
+	[plugin_g15daemon_server=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_G15DAEMON_SERVER], [test x$plugin_g15daemon_server = xyes])
 
 dnl Instant Messenger plugin
-AC_ARG_ENABLE([im],
-	[AS_HELP_STRING([--enable-im],
+AC_ARG_ENABLE([plugin-im],
+	[AS_HELP_STRING([--enable-plugin-im],
 		[Enable Instant Messenger plugin. Displays current contact list and status (currently works with Telepathy framework based clients).])],
 	[case "${enableval}" in
-		yes)	im_plugin=yes ;;
-		no)	im_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-im]) ;;
+		yes) plugin_im=yes ;;
+		no)  plugin_im=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-im]) ;;
 	esac],
-	[im_plugin=${have_telepathy}])
-AM_CONDITIONAL([ENABLE_IM_PLUGIN], [test x$im_plugin = xyes])
+	[plugin_im=${have_telepathy}])
+AS_IF([test "x${plugin_im}" = "xyes" -a "x$have_telepathy" = "xno"],
+	[AC_MSG_ERROR([Plugin Instant Messenger cannot be built without telepathy python module])])
+AM_CONDITIONAL([ENABLE_PLUGIN_IM], [test x$plugin_im = xyes])
 
 dnl Macro Recorder plugin
-AC_ARG_ENABLE([macro-recorder],
-	[AS_HELP_STRING([--enable-macro-recorder],
+AC_ARG_ENABLE([plugin-macro-recorder],
+	[AS_HELP_STRING([--enable-plugin-macro-recorder],
 		[Enable Macro Recorder plugin.])],
 	[case "${enableval}" in
-		yes)	macro_recorder_plugin=yes ;;
-		no)	macro_recorder_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-macro-recorder]) ;;
+		yes) plugin_macro_recorder=yes ;;
+		no)  plugin_macro_recorder=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-macro-recorder]) ;;
 	esac],
-	[macro_recorder_plugin=yes])
-AM_CONDITIONAL([ENABLE_MACRO_RECORDER_PLUGIN], [test x$macro_recorder_plugin = xyes])
+	[plugin_macro_recorder=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_MACRO_RECORDER], [test x$plugin_macro_recorder = xyes])
 
 dnl Macro Display plugin
-AC_ARG_ENABLE([macros],
-	[AS_HELP_STRING([--enable-macros],
+AC_ARG_ENABLE([plugin-macros],
+	[AS_HELP_STRING([--enable-plugin-macros],
 		[Enable Macro Display plugin.])],
 	[case "${enableval}" in
-		yes)	macros_plugin=yes ;;
-		no)	macros_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-macros]) ;;
+		yes) plugin_macros=yes ;;
+		no)  plugin_macros=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-macros]) ;;
 	esac],
-	[macros_plugin=yes])
-AM_CONDITIONAL([ENABLE_MACROS_PLUGIN], [test x$macros_plugin = xyes])
+	[plugin_macros=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_MACROS], [test x$plugin_macros = xyes])
 
 dnl Profile selection plugin
-AC_ARG_ENABLE([profiles],
-	[AS_HELP_STRING([--enable-profiles],
+AC_ARG_ENABLE([plugin-profiles],
+	[AS_HELP_STRING([--enable-plugin-profiles],
 		[Enable profile selector plugin.])],
 	[case "${enableval}" in
-		yes)	profiles_plugin=yes ;;
-		no)	profiles_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-profiles]) ;;
+		yes) plugin_profiles=yes ;;
+		no)  plugin_profiles=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-profiles]) ;;
 	esac],
-	[profiles_plugin=yes])
-AM_CONDITIONAL([ENABLE_PROFILES_PLUGIN], [test x$profiles_plugin = xyes])
+	[plugin_profiles=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_PROFILES], [test x$plugin_profiles = xyes])
 
 dnl Menu plugin
-AC_ARG_ENABLE([menu],
-	[AS_HELP_STRING([--enable-menu],
+AC_ARG_ENABLE([plugin-menu],
+	[AS_HELP_STRING([--enable-plugin-menu],
 		[Enable Menu plugin.])],
 	[case "${enableval}" in
-		yes)	menu_plugin=yes ;;
-		no)	menu_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-menu]) ;;
+		yes) plugin_menu=yes ;;
+		no)  plugin_menu=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-menu]) ;;
 	esac],
-	[menu_plugin=yes])
-AM_CONDITIONAL([ENABLE_MENU_PLUGIN], [test x$menu_plugin = xyes])
+	[plugin_menu=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_MENU], [test x$plugin_menu = xyes])
 
 dnl Mounts plugin
-AC_ARG_ENABLE([mounts],
-	[AS_HELP_STRING([--enable-mounts],
+AC_ARG_ENABLE([plugin-mounts],
+	[AS_HELP_STRING([--enable-plugin-mounts],
 		[Enable Mounts plugin.])],
 	[case "${enableval}" in
-		yes)	mounts_plugin=yes ;;
-		no)	mounts_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-mounts]) ;;
+		yes) plugin_mounts=yes ;;
+		no)  plugin_mounts=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-mounts]) ;;
 	esac],
-	[mounts_plugin=yes])
-AM_CONDITIONAL([ENABLE_MOUNTS_PLUGIN], [test x$mounts_plugin = xyes])
+	[plugin_mounts=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_MOUNTS], [test x$plugin_mounts = xyes])
 
 dnl MPRIS plugin
-AC_ARG_ENABLE([mpris],
-	[AS_HELP_STRING([--enable-mpris],
+AC_ARG_ENABLE([plugin-mpris],
+	[AS_HELP_STRING([--enable-plugin-mpris],
 		[Enable MPRIS plugin. Displays currently playing media players that support MPRIS])],
 	[case "${enableval}" in
-		yes)	mpris_plugin=yes ;;
-		no)	mpris_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-mpris]) ;;
+		yes) plugin_mpris=yes ;;
+		no)  plugin_mpris=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-mpris]) ;;
 	esac],
-	[mpris_plugin=yes])
-AM_CONDITIONAL([ENABLE_MPRIS_PLUGIN], [test x$mpris_plugin = xyes])
+	[plugin_mpris=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_MPRIS], [test x$plugin_mpris = xyes])
 
 dnl Notify plugin
-AC_ARG_ENABLE([notify-lcd],
-	[AS_HELP_STRING([--enable-notify-lcd],
+AC_ARG_ENABLE([plugin-notify-lcd],
+	[AS_HELP_STRING([--enable-plugin-notify-lcd],
 		[Enable Notify LCD plugin. Takes over as notification daemon and displays messages on LCD, blinks keyboard])],
 	[case "${enableval}" in
-		yes)	notify_lcd_plugin=yes ;;
-		no)	notify_lcd_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-notify-lcd]) ;;
+		yes) plugin_notify_lcd=yes ;;
+		no)  plugin_notify_lcd=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-notify-lcd]) ;;
 	esac],
-	[notify_lcd_plugin=yes])
-AM_CONDITIONAL([ENABLE_NOTIFY_LCD_PLUGIN], [test x$notify_lcd_plugin = xyes])
+	[plugin_notify_lcd=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_NOTIFY_LCD], [test x$plugin_notify_lcd = xyes])
 
 dnl Panel plugin
-AC_ARG_ENABLE([panel],
-	[AS_HELP_STRING([--enable-panel],
+AC_ARG_ENABLE([plugin-panel],
+	[AS_HELP_STRING([--enable-plugin-panel],
 		[Enable Panel plugin. Reserves area of screen for other plugins to display permanent information])],
 	[case "${enableval}" in
-		yes)	panel_plugin=yes ;;
-		no)	panel_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-panel]) ;;
+		yes) plugin_panel=yes ;;
+		no)  plugin_panel=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-panel]) ;;
 	esac],
-	[panel_plugin=yes])
-AM_CONDITIONAL([ENABLE_PANEL_PLUGIN], [test x$panel_plugin = xyes])
+	[plugin_panel=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_PANEL], [test x$plugin_panel = xyes])
 
 dnl Screensaver plugin
-AC_ARG_ENABLE([screensaver],
-	[AS_HELP_STRING([--enable-screensaver],
+AC_ARG_ENABLE([plugin-screensaver],
+	[AS_HELP_STRING([--enable-plugin-screensaver],
 		[Enable Screensaver plugin. Displays mesage and dims keyboard when desktop screesaver is activated])],
 	[case "${enableval}" in
-		yes)	screensaver_plugin=yes ;;
-		no)	screensaver_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-screensaver]) ;;
+		yes) plugin_screensaver=yes ;;
+		no)  plugin_screensaver=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-screensaver]) ;;
 	esac],
-	[screensaver_plugin=yes])
-AM_CONDITIONAL([ENABLE_SCREENSAVER_PLUGIN], [test x$screensaver_plugin = xyes])
+	[plugin_screensaver=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_SCREENSAVER], [test x$plugin_screensaver = xyes])
 
 dnl Stopwatch plugin
-AC_ARG_ENABLE([stopwatch],
-	[AS_HELP_STRING([--enable-stopwatch],
+AC_ARG_ENABLE([plugin-stopwatch],
+	[AS_HELP_STRING([--enable-plugin-stopwatch],
 		[Enable Stopwatch plugin. Dual mode, dual timer stopwatch])],
 	[case "${enableval}" in
-		yes)	stopwatch_plugin=yes ;;
-		no)	stopwatch_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-stopwatch]) ;;
+		yes) plugin_stopwatch=yes ;;
+		no)  plugin_stopwatch=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-stopwatch]) ;;
 	esac],
-	[stopwatch_plugin=yes])
-AM_CONDITIONAL([ENABLE_STOPWATCH_PLUGIN], [test x$stopwatch_plugin = xyes])
+	[plugin_stopwatch=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_STOPWATCH], [test x$plugin_stopwatch = xyes])
 
 dnl Media Player plugin
-AC_ARG_ENABLE([mediaplayer],
-	[AS_HELP_STRING([--enable-mediaplayer],
+AC_ARG_ENABLE([plugin-mediaplayer],
+	[AS_HELP_STRING([--enable-plugin-mediaplayer],
 		[Enable Media Player plugin. Requires GStreamer])],
 	[case "${enableval}" in
-		yes)	mediaplayer_plugin=yes ;;
-		no)	mediaplayer_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-mediaplayer]) ;;
+		yes) plugin_mediaplayer=yes ;;
+		no)  plugin_mediaplayer=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-mediaplayer]) ;;
 	esac],
-	[mediaplayer_plugin=${have_gst}])
-AM_CONDITIONAL([ENABLE_MEDIAPLAYER_PLUGIN], [test x$mediaplayer_plugin = xyes])
+	[plugin_mediaplayer=${have_gst}])
+AS_IF([test "x${plugin_mediaplayer}" = "xyes" -a "x$have_gst" = "xno"],
+	[AC_MSG_ERROR([Plugin Mediaplayer cannot be built without gst python module])])
+AM_CONDITIONAL([ENABLE_PLUGIN_MEDIAPLAYER], [test x$plugin_mediaplayer = xyes])
 
 dnl Weather plugin
-AC_ARG_ENABLE([weather],
-	[AS_HELP_STRING([--enable-weather],
+AC_ARG_ENABLE([plugin-weather],
+	[AS_HELP_STRING([--enable-plugin-weather],
 		[Enable Weather plugin. Requires additional backend plugin such as weather-noaa])],
 	[case "${enableval}" in
-		yes)	weather_plugin=yes ;;
-		no)	weather_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-weather]) ;;
+		yes) plugin_weather=yes ;;
+		no)  plugin_weather=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-weather]) ;;
 	esac],
-	[weather_plugin=yes])
-AM_CONDITIONAL([ENABLE_WEATHER_PLUGIN], [test x$weather_plugin = xyes])
+	[plugin_weather=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_WEATHER], [test x$plugin_weather = xyes])
 
-AC_ARG_ENABLE([weather-noaa],
-	[AS_HELP_STRING([--enable-weather-noaa],
+AC_ARG_ENABLE([plugin-weather-noaa],
+	[AS_HELP_STRING([--enable-plugin-weather-noaa],
 		[Enable NOAA support for the Weather plugin.])],
 	[case "${enableval}" in
-		yes)	weather_noaa_plugin=yes ;;
-		no)	weather_noaa_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-weather-noaa]) ;;
+		yes) plugin_weather_noaa=yes ;;
+		no)  plugin_weather_noaa=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-weather-noaa]) ;;
 	esac],
-	[weather_noaa_plugin=yes])
-AM_CONDITIONAL([ENABLE_WEATHER_NOAA_PLUGIN], [test x$weather_noaa_plugin = xyes])
+	[plugin_weather_noaa=${plugin_weather}])
+AS_IF([test "x${plugin_weather_noaa}" = "xyes" -a "x$plugin_weather" = "xno"],
+	[AC_MSG_ERROR([Weather NOAA backend plugin cannot be built without Weather plugin])])
+AM_CONDITIONAL([ENABLE_PLUGIN_WEATHER_NOAA], [test x$plugin_weather_noaa = xyes])
 
-AC_ARG_ENABLE([weather-yahoo],
-	[AS_HELP_STRING([--enable-weather-yahoo],
+AC_ARG_ENABLE([plugin-weather-yahoo],
+	[AS_HELP_STRING([--enable-plugin-weather-yahoo],
 		[Enable Yahoo support for the Weather plugin.])],
 	[case "${enableval}" in
-		yes)	weather_yahoo_plugin=yes ;;
-		no)	weather_yahoo_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-weather-yahoo]) ;;
+		yes) plugin_weather_yahoo=yes ;;
+		no)  plugin_weather_yahoo=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-weather-yahoo]) ;;
 	esac],
-	[weather_yahoo_plugin=yes])
-AM_CONDITIONAL([ENABLE_WEATHER_YAHOO_PLUGIN], [test x$weather_yahoo_plugin = xyes])
+	[plugin_weather_yahoo=${plugin_weather}])
+AS_IF([test "x${plugin_weather_yahoo}" = "xyes" -a "x$plugin_weather" = "xno"],
+	[AC_MSG_ERROR([Weather Yahoo backend plugin cannot be built without Weather plugin])])
+AM_CONDITIONAL([ENABLE_PLUGIN_WEATHER_YAHOO], [test x$plugin_weather_yahoo = xyes])
 
 dnl Indicator Messages Plugin
-AC_ARG_ENABLE([indicator-messages],
-	[AS_HELP_STRING([--enable-indicator-messages],
+AC_ARG_ENABLE([plugin-indicator-messages],
+	[AS_HELP_STRING([--enable-plugin-indicator-messages],
 		[Enable Indicator Messages plugin.])],
 	[case "${enableval}" in
-		yes)	indicator_messages_plugin=yes ;;
-		no)	indicator_messages_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-indicator-messages]) ;;
+		yes) plugin_indicator_messages=yes ;;
+		no)  plugin_indicator_messages=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-indicator-messages]) ;;
 	esac],
-	[indicator_messages_plugin=${have_appindicator}])
-AM_CONDITIONAL([ENABLE_INDICATOR_MESSAGES_PLUGIN], [test x$indicator_messages_plugin = xyes])
+	[plugin_indicator_messages=${have_appindicator}])
+AS_IF([test "x${plugin_indicator_messages}" = "xyes" -a "x$have_appindicator" = "xno"],
+	[AC_MSG_ERROR([Plugin Indicator Messages cannot be built without appindicator python module])])
+AM_CONDITIONAL([ENABLE_PLUGIN_INDICATOR_MESSAGES], [test x$plugin_indicator_messages = xyes])
 
 dnl ALSA Volume Monitor Plugin
-AC_ARG_ENABLE([volume],
+AC_ARG_ENABLE([plugin-volume],
 	[AS_HELP_STRING([--enable-volume],
 		[Enable ALSA volume monitor plugin. Requires python-alsaaudio])],
 	[case "${enableval}" in
-		yes)	volume_plugin=yes ;;
-		no)	volume_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-volume]) ;;
+		yes) plugin_volume=yes ;;
+		no)  plugin_volume=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-volume]) ;;
 	esac],
-	[volume_plugin=${have_alsaaudio}])
-AM_CONDITIONAL([ENABLE_VOLUME_PLUGIN], [test x$volume_plugin = xyes])
+	[plugin_volume=${have_alsaaudio}])
+AS_IF([test "x${plugin_volume}" = "xyes" -a "x$have_alsaaudio" = "xno"],
+	[AC_MSG_ERROR([Plugin Volume cannot be built without alsaaudio python module])])
+AM_CONDITIONAL([ENABLE_PLUGIN_VOLUME], [test x$plugin_volume = xyes])
 
 dnl RSS Plugin
-AC_ARG_ENABLE([rss],
-	[AS_HELP_STRING([--enable-rss],
+AC_ARG_ENABLE([plugin-rss],
+	[AS_HELP_STRING([--enable-plugin-rss],
 		[Enable RSS feed plugin. Requires python feedparser])],
 	[case "${enableval}" in
-		yes)	rss_plugin=yes ;;
-		no)	rss_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-rss]) ;;
+		yes) plugin_rss=yes ;;
+		no)  plugin_rss=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-rss]) ;;
 	esac],
-	[rss_plugin=${have_feedparser}])
-AM_CONDITIONAL([ENABLE_RSS_PLUGIN], [test x$rss_plugin = xyes])
+	[plugin_rss=${have_feedparser}])
+AS_IF([test "x${plugin_rss}" = "xyes" -a "x$have_feedparser" = "xno"],
+	[AC_MSG_ERROR([Plugin RSS cannot be built without feedparser python module])])
+AM_CONDITIONAL([ENABLE_PLUGIN_RSS], [test x$plugin_rss = xyes])
 
 dnl System Monitor Plugin
-AC_ARG_ENABLE([sysmon],
-	[AS_HELP_STRING([--enable-sysmon],
+AC_ARG_ENABLE([plugin-sysmon],
+	[AS_HELP_STRING([--enable-plugin-sysmon],
 		[Enable System Monitor plugin. Recommends python gtop])],
 	[case "${enableval}" in
-		yes)	sysmon_plugin=yes ;;
-		no)	sysmon_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-sysmon]) ;;
+		yes) plugin_sysmon=yes ;;
+		no)  plugin_sysmon=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-sysmon]) ;;
 	esac],
-	[sysmon_plugin=yes])
-AM_CONDITIONAL([ENABLE_SYSMON_PLUGIN], [test x$sysmon_plugin = xyes])
+	[plugin_sysmon=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_SYSMON], [test x$plugin_sysmon = xyes])
 
 dnl Processes Plugin
-AC_ARG_ENABLE([processes],
-	[AS_HELP_STRING([--enable-processes],
+AC_ARG_ENABLE([plugin-processes],
+	[AS_HELP_STRING([--enable-plugin-processes],
 		[Enable Processes plugin. Recommends python gtop])],
 	[case "${enableval}" in
-		yes)	processes_plugin=yes ;;
-		no)	processes_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-processes]) ;;
+		yes) plugin_processes=yes ;;
+		no)  plugin_processes=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-processes]) ;;
 	esac],
-	[processes_plugin=yes])
-AM_CONDITIONAL([ENABLE_PROCESSES_PLUGIN], [test x$processes_plugin = xyes])
+	[plugin_processes=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_PROCESSES], [test x$plugin_processes = xyes])
 
 dnl Debug Plugin
-AC_ARG_ENABLE([debug],
-	[AS_HELP_STRING([--enable-debug],
+AC_ARG_ENABLE([plugin-debug],
+	[AS_HELP_STRING([--enable-plugin-debug],
 		[Enable Debug plugin.])],
 	[case "${enableval}" in
-		yes)	debug_plugin=yes ;;
-		no)	debug_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+		yes) plugin_debug=yes ;;
+		no)  plugin_debug=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-debug]) ;;
 	esac],
-	[debug_plugin=no])
-AM_CONDITIONAL([ENABLE_DEBUG_PLUGIN], [test x$debug_plugin = xyes])
+	[plugin_debug=no])
+AM_CONDITIONAL([ENABLE_PLUGIN_DEBUG], [test x$plugin_debug = xyes])
 
 dnl Calendar plugin (base)
-AC_ARG_ENABLE([cal],
-	[AS_HELP_STRING([--enable-cal],
+AC_ARG_ENABLE([plugin-cal],
+	[AS_HELP_STRING([--enable-plugin-cal],
 		[Enable calendar plugin. (required for any calendar support)])],
 	[case "${enableval}" in
-		yes)	cal_plugin=yes ;;
-		no)	cal_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-cal]) ;;
+		yes) plugin_cal=yes ;;
+		no)  plugin_cal=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-cal]) ;;
 	esac],
-	[cal_plugin=yes])
-AM_CONDITIONAL([ENABLE_CAL_PLUGIN], [test x$cal_plugin = xyes])
+	[plugin_cal=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_CAL], [test x$plugin_cal = xyes])
 
 dnl Evolution Calendar plugin
-AC_ARG_ENABLE([cal-evolution],
-	[AS_HELP_STRING([--enable-cal-evolution],
+AS_IF([test "x${plugin_cal}" = "xyes" -a "x${have_vobject}" = "xyes" ],
+	  [deps_plugin_cal_evolution=yes],
+	  [deps_plugin_cal_evolution=no])
+AC_ARG_ENABLE([plugin-cal-evolution],
+	[AS_HELP_STRING([--enable-plugin-cal-evolution],
 		[Enable Evolution calendar plugin. Requires python vobject])],
 	[case "${enableval}" in
-		yes)	cal_evolution_plugin=yes ;;
-		no)	cal_evolution_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-cal-evolution]) ;;
+		yes) plugin_cal_evolution=yes ;;
+		no)  plugin_cal_evolution=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-cal-evolution]) ;;
 	esac],
-	[cal_evolution_plugin=${have_vobject}])
-AM_CONDITIONAL([ENABLE_CAL_EVOLUTION_PLUGIN], [test x$cal_evolution_plugin = xyes])
+	[plugin_cal_evolution=${deps_plugin_cal_evolution}])
+AS_IF([test "x${plugin_cal_evolution}" = "xyes" -a "x$plugin_cal" = "xno"],
+	[AC_MSG_ERROR([Plugin Evolution calendar cannot be built without Calendar plugin])])
+AS_IF([test "x${plugin_cal_evolution}" = "xyes" -a "x$have_vobject" = "xno"],
+	[AC_MSG_ERROR([Plugin Evolution calendar cannot be built without vobject python module])])
+AM_CONDITIONAL([ENABLE_PLUGIN_CAL_EVOLUTION], [test x$plugin_cal_evolution = xyes])
 
 dnl Google Calendar plugin
-AC_ARG_ENABLE([cal-google],
-	[AS_HELP_STRING([--enable-cal-google],
+AS_IF([test "x${plugin_cal}" = "xyes" -a "x${have_gdata_calendar}" = "xyes" ],
+	  [deps_plugin_cal_google=yes],
+	  [deps_plugin_cal_google=no])
+AC_ARG_ENABLE([plugin-cal-google],
+	[AS_HELP_STRING([--enable-plugin-cal-google],
 		[Enable Google calendar plugin. Requires calendar plugin, python gdata])],
 	[case "${enableval}" in
-		yes)	cal_google_plugin=yes ;;
-		no)	cal_google_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-cal-google]) ;;
+		yes) plugin_cal_google=yes ;;
+		no)  plugin_cal_google=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-cal-google]) ;;
 	esac],
-	[cal_google_plugin=${have_gdata_calendar}])
-AM_CONDITIONAL([ENABLE_CAL_GOOGLE_PLUGIN], [test x$cal_google_plugin = xyes])
+	[plugin_cal_google=${deps_plugin_cal_google}])
+AS_IF([test "x${plugin_cal_google}" = "xyes" -a "x$plugin_cal" = "xno"],
+	[AC_MSG_ERROR([Plugin Google calendar cannot be built without Calendar plugin])])
+AS_IF([test "x${plugin_cal_google}" = "xyes" -a "x$have_gdata_calendar" = "xno"],
+	[AC_MSG_ERROR([Plugin Google calendar cannot be built without gdata python modules])])
+AM_CONDITIONAL([ENABLE_PLUGIN_CAL_GOOGLE], [test x$plugin_cal_google = xyes])
 
 dnl Google Analytics plugin
 AS_IF([test "x${have_gdata_analytics}" = "xyes" -a "x${have_cairoplot}" = "xyes" ],
 	  [deps_plugin_google_analytics=yes],
 	  [deps_plugin_google_analytics=no])
-AC_ARG_ENABLE([google-analytics],
-	[AS_HELP_STRING([--enable-google-analytics],
+AC_ARG_ENABLE([plugin-google-analytics],
+	[AS_HELP_STRING([--enable-plugin-google-analytics],
 		[Enable Google Analytics plugin. Requires python gdata and cairoplot])],
 	[case "${enableval}" in
-		yes)	google_analytics_plugin=yes ;;
-		no)	google_analytics_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-google-analytics]) ;;
+		yes) plugin_google_analytics=yes ;;
+		no)  plugin_google_analytics=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-google-analytics]) ;;
 	esac],
-	[google_analytics_plugin=${deps_plugin_google_analytics}])
-AM_CONDITIONAL([ENABLE_GOOGLE_ANALYTICS_PLUGIN], [test x$google_analytics_plugin = xyes])
+	[plugin_google_analytics=${deps_plugin_google_analytics}])
+AS_IF([test "x${plugin_google_analytics}" = "xyes" -a "x$have_gdata_analytics" = "xno"],
+	[AC_MSG_ERROR([Plugin Google analytics cannot be built without gdata python modules])])
+AS_IF([test "x${plugin_google_analytics}" = "xyes" -a "x$have_cairoplot" = "xno"],
+	[AC_MSG_ERROR([Plugin Google analytics cannot be built without cairoplot python modules])])
+AM_CONDITIONAL([ENABLE_PLUGIN_GOOGLE_ANALYTICS], [test x$plugin_google_analytics = xyes])
 
 dnl POP3/IMAP Email Checker plugin
-AC_ARG_ENABLE([lcdbiff],
-	[AS_HELP_STRING([--enable-lcdbiff],
+AC_ARG_ENABLE([plugin-lcdbiff],
+	[AS_HELP_STRING([--enable-plugin-lcdbiff],
 		[Enable POP3 / IMAP email checker.])],
 	[case "${enableval}" in
-		yes)	lcdbiff_plugin=yes ;;
-		no)	lcdbiff_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-lcdbiff]) ;;
+		yes) plugin_lcdbiff=yes ;;
+		no)  plugin_lcdbiff=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-lcdbiff]) ;;
 	esac],
-	[lcdbiff_plugin=yes])
-AM_CONDITIONAL([ENABLE_LCDBIFF_PLUGIN], [test x$lcdbiff_plugin = xyes])
+	[plugin_lcdbiff=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_LCDBIFF], [test x$plugin_lcdbiff = xyes])
 
 dnl Sensors plugin
-AC_ARG_ENABLE([sense],
-	[AS_HELP_STRING([--enable-sense],
+AC_ARG_ENABLE([plugin-sense],
+	[AS_HELP_STRING([--enable-plugin-sense],
 		[Enable Sense plugin. Requires pysensors])],
 	[case "${enableval}" in
-		yes)	sense_plugin=yes ;;
-		no)	sense_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-sense]) ;;
+		yes) plugin_sense=yes ;;
+		no)  plugin_sense=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-sense]) ;;
 	esac],
-	[sense_plugin=${have_sensors}])
-AM_CONDITIONAL([ENABLE_SENSE_PLUGIN], [test x$sense_plugin = xyes])
+	[plugin_sense=${have_sensors}])
+AS_IF([test "x${plugin_sense}" = "xyes" -a "x$have_sensors" = "xno"],
+	[AC_MSG_ERROR([Plugin Sense cannot be built without sensors python modules])])
+AM_CONDITIONAL([ENABLE_PLUGIN_SENSE], [test x$plugin_sense = xyes])
 
 dnl LCDShot plugin
-AC_ARG_ENABLE([lcdshot],
-	[AS_HELP_STRING([--enable-lcdshot],
+AC_ARG_ENABLE([plugin-lcdshot],
+	[AS_HELP_STRING([--enable-plugin-lcdshot],
 		[Enable LCDShot plugin. Take a picture of whatever is on the LCD])],
 	[case "${enableval}" in
-		yes)	lcdshot_plugin=yes ;;
-		no)	lcdshot_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-lcdshot]) ;;
+		yes) plugin_lcdshot=yes ;;
+		no)  plugin_lcdshot=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-lcdshot]) ;;
 	esac],
-	[lcdshot_plugin=yes])
-AM_CONDITIONAL([ENABLE_LCDSHOT_PLUGIN], [test x$lcdshot_plugin = xyes])
+	[plugin_lcdshot=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_LCDSHOT], [test x$plugin_lcdshot = xyes])
 
 dnl Tweak plugin
-AC_ARG_ENABLE([tweak],
-	[AS_HELP_STRING([--enable-tweak],
+AC_ARG_ENABLE([plugin-tweak],
+	[AS_HELP_STRING([--enable-plugin-tweak],
 		[Enable Tweak plugin.])],
 	[case "${enableval}" in
-		yes)	tweak_plugin=yes ;;
-		no)	tweak_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-tweak]) ;;
+		yes) plugin_tweak=yes ;;
+		no)  plugin_tweak=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-tweak]) ;;
 	esac],
-	[tweak_plugin=yes])
-AM_CONDITIONAL([ENABLE_TWEAK_PLUGIN], [test x$tweak_plugin = xyes])
+	[plugin_tweak=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_TWEAK], [test x$plugin_tweak = xyes])
 
-dnl Tails  plugin
-AC_ARG_ENABLE([tails],
-	[AS_HELP_STRING([--enable-tails],
+dnl Tails plugin
+AC_ARG_ENABLE([plugin-tails],
+	[AS_HELP_STRING([--enable-plugin-tails],
 		[Enable Tails.])],
 	[case "${enableval}" in
-		yes)	tails_plugin=yes ;;
-		no)	tails_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-tails]) ;;
+		yes) plugin_tails=yes ;;
+		no)  plugin_tails=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-tails]) ;;
 	esac],
-	[tails_plugin=yes])
-AM_CONDITIONAL([ENABLE_TAILS_PLUGIN], [test x$tails_plugin = xyes])
+	[plugin_tails=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_TAILS], [test x$plugin_tails = xyes])
 
-dnl XRandR
-AC_ARG_ENABLE([display],
-	[AS_HELP_STRING([--enable-display],
+dnl Display plugin
+AC_ARG_ENABLE([plugin-display],
+	[AS_HELP_STRING([--enable-plugin-display],
 		[Enable Display (XRandR for resolutions and rotation).])],
 	[case "${enableval}" in
-		yes)	display_plugin=yes ;;
-		no)	display_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-display]) ;;
+		yes) plugin_display=yes ;;
+		no)  plugin_display=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-display]) ;;
 	esac],
-	[display_plugin=yes])
-AM_CONDITIONAL([ENABLE_DISPLAY_PLUGIN], [test x$display_plugin = xyes])
+	[plugin_display=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_DISPLAY], [test x$plugin_display = xyes])
 
 dnl Voip
-AC_ARG_ENABLE([voip],
-	[AS_HELP_STRING([--enable-voip],
+AC_ARG_ENABLE([plugin-voip],
+	[AS_HELP_STRING([--enable-plugin-voip],
 		[Enable Voip plugin. Integrate with Voip apps. Requires backend plugin as well (e.g. voip-teamspeak3)])],
 	[case "${enableval}" in
-		yes)	voip_plugin=yes ;;
-		no)	voip_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-voip]) ;;
+		yes) plugin_voip=yes ;;
+		no)  plugin_voip=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-voip]) ;;
 	esac],
-	[voip_plugin=yes])
-AM_CONDITIONAL([ENABLE_VOIP_PLUGIN], [test x$voip_plugin = xyes])
+	[plugin_voip=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_VOIP], [test x$plugin_voip = xyes])
 
-AC_ARG_ENABLE([voip-teamspeak3],
-	[AS_HELP_STRING([--enable-voip-teamspeak3],
+AC_ARG_ENABLE([plugin-voip-teamspeak3],
+	[AS_HELP_STRING([--enable-plugin-voip-teamspeak3],
 		[Enable Teamspeak3 plugin. Requires Voip plugin as well])],
 	[case "${enableval}" in
-		yes)	voip_teamspeak3_plugin=yes ;;
-		no)	voip_teamspeak3_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-voip-teamspeak3]) ;;
+		yes) plugin_voip_teamspeak3=yes ;;
+		no)  plugin_voip_teamspeak3=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-voip-teamspeak3]) ;;
 	esac],
-	[voip_teamspeak3_plugin=yes])
-AM_CONDITIONAL([ENABLE_VOIP_TEAMSPEAK3_PLUGIN], [test x$voip_teamspeak3_plugin = xyes])
+	[plugin_voip_teamspeak3=${plugin_voip}])
+AS_IF([test "x${plugin_voip_teamspeak3}" = "xyes" -a "x$plugin_voip" = "xno"],
+	[AC_MSG_ERROR([Plugin Teamspeak3 cannot be built without Voip plugin])])
+AM_CONDITIONAL([ENABLE_PLUGIN_VOIP_TEAMSPEAK3], [test x$plugin_voip_teamspeak3 = xyes])
 
 dnl Traffic Stats Plugin
-AC_ARG_ENABLE([trafficstats],
-	[AS_HELP_STRING([--enable-trafficstats],
+AC_ARG_ENABLE([plugin-trafficstats],
+	[AS_HELP_STRING([--enable-plugin-trafficstats],
 		[Enable Traffic Stats plugin.])],
 	[case "${enableval}" in
-		yes)	trafficstats_plugin=yes ;;
-		no)	trafficstats_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-trafficstats]) ;;
+		yes) plugin_trafficstats=yes ;;
+		no)  plugin_trafficstats=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-trafficstats]) ;;
 	esac],
-	[trafficstats_plugin=yes])
-AM_CONDITIONAL([ENABLE_TRAFFIC_STATS_PLUGIN], [test x$trafficstats_plugin = xyes])
+	[plugin_trafficstats=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_TRAFFIC_STATS], [test x$plugin_trafficstats = xyes])
 
 dnl impulse15 plugin
 AS_IF([test "x${have_fftw3_header}" = "xyes" \
@@ -785,116 +821,122 @@ AS_IF([test "x${have_fftw3_header}" = "xyes" \
        -a "x${have_pulse}" = "xyes"],
 	  [deps_plugin_impulse15=yes],
 	  [deps_plugin_impulse15=no])
-AC_ARG_ENABLE([impulse15],
-	[AS_HELP_STRING([--enable-impulse15],
+AC_ARG_ENABLE([plugin-impulse15],
+	[AS_HELP_STRING([--enable-plugin-impulse15],
 		[Enable Impulse15 plugin.])],
 	[case "${enableval}" in
-		yes)	impulse15_plugin=${deps_plugin_impulse15} ;;
-		no)	impulse15_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-impulse15]) ;;
+		yes) plugin_impulse15=yes ;;
+		no)  plugin_impulse15=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-impulse15]) ;;
 	esac],
-	[impulse15_plugin=${deps_plugin_impulse15}])
-AM_CONDITIONAL([ENABLE_IMPULSE15_PLUGIN], [test x$impulse15_plugin = xyes])
+	[plugin_impulse15=${deps_plugin_impulse15}])
+AS_IF([test "x${plugin_impulse15}" = "xyes" -a "x$have_fftw3_header" = "xno"],
+	[AC_MSG_ERROR([Plugin Impulse15 cannot be built without fftw3 headers])])
+AS_IF([test "x${plugin_impulse15}" = "xyes" -a "x$have_fftw3" = "xno"],
+	[AC_MSG_ERROR([Plugin Impulse15 cannot be built without fftw3])])
+AS_IF([test "x${plugin_impulse15}" = "xyes" -a "x$have_pulse" = "xno"],
+	[AC_MSG_ERROR([Plugin Impulse15 cannot be built without pulse library])])
+AM_CONDITIONAL([ENABLE_PLUGIN_IMPULSE15], [test x$plugin_impulse15 = xyes])
 
 dnl
 dnl Experimental (under development) plugins
 dnl
 
 dnl Nexuiz plugin
-AC_ARG_ENABLE([game-nexuiz],
-	[AS_HELP_STRING([--enable-game-nexuiz],
+AC_ARG_ENABLE([plugin-game-nexuiz],
+	[AS_HELP_STRING([--enable-plugin-game-nexuiz],
 		[Enable Nexuiz plugin.])],
 	[case "${enableval}" in
-		yes)	game_nexuiz_plugin=yes ;;
-		no)	game_nexuiz_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-game-nexuiz]) ;;
+		yes) plugin_game_nexuiz=yes ;;
+		no)  plugin_game_nexuiz=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-game-nexuiz]) ;;
 	esac],
-	[game_nexuiz_plugin=no])
-AM_CONDITIONAL([ENABLE_GAME_NEXUIZ_PLUGIN], [test x$game_nexuiz_plugin = xyes])
+	[plugin_game_nexuiz=no])
+AM_CONDITIONAL([ENABLE_PLUGIN_GAME_NEXUIZ], [test x$plugin_game_nexuiz = xyes])
 
 dnl Backlight plugin
-AC_ARG_ENABLE([backlight],
-	[AS_HELP_STRING([--enable-backlight],
+AC_ARG_ENABLE([plugin-backlight],
+	[AS_HELP_STRING([--enable-plugin-backlight],
 		[Enable Backlight plugin.])],
 	[case "${enableval}" in
-		yes)	backlight_plugin=yes ;;
-		no)	backlight_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-backlight]) ;;
+		yes) plugin_backlight=yes ;;
+		no)  plugin_backlight=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-backlight]) ;;
 	esac],
-	[backlight_plugin=no])
-AM_CONDITIONAL([ENABLE_BACKLIGHT_PLUGIN], [test x$backlight_plugin = xyes])
+	[plugin_backlight=no])
+AM_CONDITIONAL([ENABLE_PLUGIN_BACKLIGHT], [test x$plugin_backlight = xyes])
 
 dnl Notify 2 plugin
-AC_ARG_ENABLE([notify-lcd2],
-	[AS_HELP_STRING([--enable-notify-lcd2],
+AC_ARG_ENABLE([plugin-notify-lcd2],
+	[AS_HELP_STRING([--enable-plugin-notify-lcd2],
 		[Enable Notify LCD plugin. Takes over as notification daemon and displays messages on LCD, blinks keyboard])],
 	[case "${enableval}" in
-		yes)	notify_lcd2_plugin=yes ;;
-		no)	notify_lcd2_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-notify-lcd2]) ;;
+		yes) plugin_notify_lcd2=yes ;;
+		no)  plugin_notify_lcd2=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-notify-lcd2]) ;;
 	esac],
-	[notify_lcd2_plugin=no])
-AM_CONDITIONAL([ENABLE_NOTIFY_LCD2_PLUGIN], [test x$notify_lcd2_plugin = xyes])
+	[plugin_notify_lcd2=no])
+AM_CONDITIONAL([ENABLE_PLUGIN_NOTIFY_LCD2], [test x$plugin_notify_lcd2 = xyes])
 
 dnl PPAStats plugin
-AC_ARG_ENABLE([ppastats],
-	[AS_HELP_STRING([--enable-ppastats],
+AC_ARG_ENABLE([plugin-ppastats],
+	[AS_HELP_STRING([--enable-plugin-ppastats],
 		[Enable PPAStats plugin.])],
 	[case "${enableval}" in
-		yes)	ppastats_plugin=yes ;;
-		no)	ppaststs_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-ppastats]) ;;
+		yes) plugin_ppastats=yes ;;
+		no)  plugin_ppastats=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-ppastats]) ;;
 	esac],
-	[ppastats_plugin=no])
-AM_CONDITIONAL([ENABLE_PPASTATS_PLUGIN], [test x$ppastats_plugin = xyes])
+	[plugin_ppastats=no])
+AM_CONDITIONAL([ENABLE_PLUGIN_PPASTATS], [test x$plugin_ppastats = xyes])
 
 dnl NM plugin
-AC_ARG_ENABLE([nm],
-	[AS_HELP_STRING([--enable-nm],
+AC_ARG_ENABLE([plugin-nm],
+	[AS_HELP_STRING([--enable-plugin-nm],
 		[Enable NM (Network Manager) plugin.])],
 	[case "${enableval}" in
-		yes)	nm_plugin=yes ;;
-		no)	nm_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-nm]) ;;
+		yes) plugin_nm=yes ;;
+		no)  plugin_nm=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-nm]) ;;
 	esac],
-	[nm_plugin=no])
-AM_CONDITIONAL([ENABLE_NM_PLUGIN], [test x$nm_plugin = xyes])
+	[plugin_nm=no])
+AM_CONDITIONAL([ENABLE_PLUGIN_NM], [test x$plugin_nm = xyes])
 
 dnl Lens plugin
-AC_ARG_ENABLE([lens],
-	[AS_HELP_STRING([--enable-lens],
+AC_ARG_ENABLE([plugin-lens],
+	[AS_HELP_STRING([--enable-plugin-lens],
 		[Enable Unity Lens plugin.])],
 	[case "${enableval}" in
-		yes)	lens_plugin=yes ;;
-		no)	lens_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-lens]) ;;
+		yes) plugin_lens=yes ;;
+		no)  plugin_lens=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-lens]) ;;
 	esac],
-	[lens_plugin=no])
-AM_CONDITIONAL([ENABLE_LENS_PLUGIN], [test x$lens_plugin = xyes])
+	[plugin_lens=no])
+AM_CONDITIONAL([ENABLE_PLUGIN_LENS], [test x$plugin_lens = xyes])
 
 dnl WebKit browser plugin
-AC_ARG_ENABLE([webkit-browser],
-	[AS_HELP_STRING([--enable-webkit-browser],
+AC_ARG_ENABLE([plugin-webkit-browser],
+	[AS_HELP_STRING([--enable-plugin-webkit-browser],
 		[Enable Webkit browser plugin.])],
 	[case "${enableval}" in
-		yes)	webkitbrowser_plugin=yes ;;
-		no)	webkitbrowser_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-webkit-browser]) ;;
+		yes) plugin_webkit_browser=yes ;;
+		no)  plugin_webkit_browser=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-webkit-browser]) ;;
 	esac],
-	[webkitbrowser_plugin=no])
-AM_CONDITIONAL([ENABLE_WEBKIT_BROWSER_PLUGIN], [test x$webkitbrowser_plugin = xyes])
+	[plugin_webkit_browser=no])
+AM_CONDITIONAL([ENABLE_PLUGIN_WEBKIT_BROWSER], [test x$plugin_webkit_browser = xyes])
 
 dnl Things plugin
-AC_ARG_ENABLE([things],
-	[AS_HELP_STRING([--enable-things],
+AC_ARG_ENABLE([plugin-things],
+	[AS_HELP_STRING([--enable-plugin-things],
 		[Enable Things python animation API plugin.])],
 	[case "${enableval}" in
-		yes)	things_plugin=yes ;;
-		no)	things_plugin=no ;;
-		*)	AC_MSG_ERROR([bad value ${enableval} for --enable-things]) ;;
+		yes) plugin_things=yes ;;
+		no)  plugin_things=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-things]) ;;
 	esac],
-	[things_plugin=no])
-AM_CONDITIONAL([ENABLE_THINGS_PLUGIN], [test x$things_plugin = xyes])
+	[plugin_things=no])
+AM_CONDITIONAL([ENABLE_PLUGIN_THINGS], [test x$plugin_things = xyes])
 
 AC_OUTPUT([ 
 Makefile
@@ -1121,195 +1163,195 @@ AS_ECHO("")
 AS_ECHO("Enabled Plugins")
 AS_ECHO("---------------")
 AS_ECHO_N("volume                      - ")
-AS_IF([test "x$volume_plugin" = "xyes" ],
+AS_IF([test "x$plugin_volume" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("rss                         - ")
-AS_IF([test "x$rss_plugin" = "xyes" ],
+AS_IF([test "x$plugin_rss" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("processes                   - ")
-AS_IF([test "x$processes_plugin" = "xyes" ],
+AS_IF([test "x$plugin_processes" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("sysmon                      - ")
-AS_IF([test "x$sysmon_plugin" = "xyes" ],
+AS_IF([test "x$plugin_sysmon" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("cal                         - ")
-AS_IF([test "x$cal_plugin" = "xyes" ],
+AS_IF([test "x$plugin_cal" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("cal-evolution               - ")
-AS_IF([test "x$cal_evolution_plugin" = "xyes" ],
+AS_IF([test "x$plugin_cal_evolution" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("cal-google                  - ")
-AS_IF([test "x$cal_google_plugin" = "xyes" ],
+AS_IF([test "x$plugin_cal_google" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("lcdbiff                     - ")
-AS_IF([test "x$lcdbiff_plugin" = "xyes" ],
+AS_IF([test "x$plugin_lcdbiff" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("background                  - ")
-AS_IF([test "x$background_plugin" = "xyes" ],
+AS_IF([test "x$plugin_background" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("cairo-clock                 - ")
-AS_IF([test "x$cairo_clock_plugin" = "xyes" ],
+AS_IF([test "x$plugin_cairo_clock" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("clock                       - ")
-AS_IF([test "x$clock_plugin" = "xyes" ],
+AS_IF([test "x$plugin_clock" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("fx                          - ")
-AS_IF([test "x$fx_plugin" = "xyes" ],
+AS_IF([test "x$plugin_fx" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("g15daemon-server            - ")
-AS_IF([test "x$g15daemon_server_plugin" = "xyes" ],
+AS_IF([test "x$plugin_g15daemon_server" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("im                          - ")
-AS_IF([test "x$im_plugin" = "xyes" ],
+AS_IF([test "x$plugin_im" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("indicator-messages          - ")
-AS_IF([test "x$indicator_messages_plugin" = "xyes" ],
+AS_IF([test "x$plugin_indicator_messages" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("lcdshot                     - ")
-AS_IF([test "x$lcdshot_plugin" = "xyes" ],
+AS_IF([test "x$plugin_lcdshot" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("macro-recorder              - ")
-AS_IF([test "x$macro_recorder_plugin" = "xyes" ],
+AS_IF([test "x$plugin_macro_recorder" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("macros                      - ")
-AS_IF([test "x$macros_plugin" = "xyes" ],
+AS_IF([test "x$plugin_macros" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("profiles                    - ")
-AS_IF([test "x$profiles_plugin" = "xyes" ],
+AS_IF([test "x$plugin_profiles" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("menu                        - ")
-AS_IF([test "x$menu_plugin" = "xyes" ],
+AS_IF([test "x$plugin_menu" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("mounts                      - ")
-AS_IF([test "x$mounts_plugin" = "xyes" ],
+AS_IF([test "x$plugin_mounts" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("mpris                       - ")
-AS_IF([test "x$mpris_plugin" = "xyes" ],
+AS_IF([test "x$plugin_mpris" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("notify-lcd                  - ")
-AS_IF([test "x$notify_lcd_plugin" = "xyes" ],
+AS_IF([test "x$plugin_notify_lcd" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("panel                       - ")
-AS_IF([test "x$panel_plugin" = "xyes" ],
+AS_IF([test "x$plugin_panel" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("screensaver                 - ")
-AS_IF([test "x$screensaver_plugin" = "xyes" ],
+AS_IF([test "x$plugin_screensaver" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("stopwatch                   - ")
-AS_IF([test "x$stopwatch_plugin" = "xyes" ],
+AS_IF([test "x$plugin_stopwatch" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("tweak                       - ")
-AS_IF([test "x$tweak_plugin" = "xyes" ],
+AS_IF([test "x$plugin_tweak" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("mediaplayer                 - ")
-AS_IF([test "x$mediaplayer_plugin" = "xyes" ],
+AS_IF([test "x$plugin_mediaplayer" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("weather                     - ")
-AS_IF([test "x$weather_plugin" = "xyes" ],
+AS_IF([test "x$plugin_weather" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("weather-noaa                - ")
-AS_IF([test "x$weather_noaa_plugin" = "xyes" ],
+AS_IF([test "x$plugin_weather_noaa" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("weather-yahoo               - ")
-AS_IF([test "x$weather_yahoo_plugin" = "xyes" ],
+AS_IF([test "x$plugin_weather_yahoo" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("sense                       - ")
-AS_IF([test "x$sense_plugin" = "xyes" ],
+AS_IF([test "x$plugin_sense" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("tails                       - ")
-AS_IF([test "x$tails_plugin" = "xyes" ],
+AS_IF([test "x$plugin_tails" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("display                     - ")
-AS_IF([test "x$display_plugin" = "xyes" ],
+AS_IF([test "x$plugin_display" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("voip                        - ")
-AS_IF([test "x$voip_plugin" = "xyes" ],
+AS_IF([test "x$plugin_voip" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("voip-teamspeak3             - ")
-AS_IF([test "x$voip_teamspeak3_plugin" = "xyes" ],
+AS_IF([test "x$plugin_voip_teamspeak3" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("google-analytics            - ")
-AS_IF([test "x$google_analytics_plugin" = "xyes" ],
+AS_IF([test "x$plugin_google_analytics" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("debug                       - ")
-AS_IF([test "x$debug_plugin" = "xyes" ],
+AS_IF([test "x$plugin_debug" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("trafficstats                - ")
-AS_IF([test "x$trafficstats_plugin" = "xyes" ],
+AS_IF([test "x$plugin_trafficstats" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("game-nexuiz                 - ")
-AS_IF([test "x$game_nexuiz_plugin" = "xyes" ],
+AS_IF([test "x$plugin_game_nexuiz" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("backlight                   - ")
-AS_IF([test "x$backlight_plugin" = "xyes" ],
+AS_IF([test "x$plugin_backlight" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("notify-lcd2                 - ")
-AS_IF([test "x$notify_lcd2_plugin" = "xyes" ],
+AS_IF([test "x$plugin_notify_lcd2" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("ppastats                    - ")
-AS_IF([test "x$ppastats_plugin" = "xyes" ],
+AS_IF([test "x$plugin_ppastats" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("nm                          - ")
-AS_IF([test "x$nm_plugin" = "xyes" ],
+AS_IF([test "x$plugin_nm" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("lens                        - ")
-AS_IF([test "x$lens_plugin" = "xyes" ],
+AS_IF([test "x$plugin_lens" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("webkitbrowser               - ")
-AS_IF([test "x$webkitbrowser_plugin" = "xyes" ],
+AS_IF([test "x$plugin_webkit_browser" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("things                      - ")
-AS_IF([test "x$things_plugin" = "xyes" ],
+AS_IF([test "x$plugin_things" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("impulse15                   - ")
-AS_IF([test "x$impulse15_plugin" = "xyes" ],
+AS_IF([test "x$plugin_impulse15" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO("See ./configure --help for descriptions of these plugins and options to enable and disable them.")
