@@ -1061,14 +1061,6 @@ class Driver(g15driver.AbstractDriver):
                         # Full byte
                         b = 1          
                         i = row * fixed.line_length + col / 8
-                        
-                        if row > 7 and col < 96:
-                            '''
-                            ????? This was discovered more by trial and error rather than any 
-                            understanding of what is going on
-                            '''
-                            i -= 12 + ( 7 * fixed.line_length )
-                            
                         arrbuf[i] = v   
                         v = 0 
             buf = arrbuf.tostring()
