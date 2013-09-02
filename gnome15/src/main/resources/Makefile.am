@@ -1,1 +1,0 @@
-SUBDIRS = glade images icons ukeys

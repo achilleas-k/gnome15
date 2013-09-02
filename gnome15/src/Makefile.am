@@ -1,1 +1,0 @@
-SUBDIRS = scripts gnome main man themes udev i18n

@@ -1,0 +1,41 @@
+Brett Smith <tanktarta@blueyonder.co.uk>
+Nuno Araujo <nuno.araujo@russo79.com>
+NoXPhasma <noxphasma@live.de>
+
+Contains work based on "Logitech-G19-Linux-Daemon" [1], written by
+"MultiCoreNop" [2].
+
+Contains work based on Impulse [3], written by Ian Halpern [4].
+
+Contains code taken from Pitivi [5], authored by Edward Hervey [6].
+
+Contains objgraph [7], written by Marius Gedminas [8], released under
+the MIT license.
+
+Contains code from tailer [9], written by Mike Thornton, released under
+the MIT license.
+
+Contains code from Things [10], written by Donn. C. Ingle [11].
+
+Contains code from python-teamspeak3 [12], written by Adam
+Coddington, released under the MIT license.
+
+Contains code from pywapi [13], written by Eugene Kaznacheev [14],
+released under the MIT license.
+
+Some of the graphical work was made by Andrea Calabrò.
+
+[1]  http://github.com/MultiCoreNop/Logitech-G19-Linux-Daemon
+[2]  http://github.com/MultiCoreNop
+[3]  http://impulse.ian-halpern.com/
+[4]  <ian@ian-halpern.com>
+[5]  http://www.pitivi.org
+[6]  Edward Hervey <bilboed@bilboed.com>
+[7]  http://mg.pov.lt/objgraph/
+[8]  Marius Gedminas <marius@pov.lt>
+[9]  http://github.com/six8/pytailer
+[10] https://savannah.nongnu.org/projects/things/
+[11] Donn.C.Ingle <donn.ingle@gmail.com>
+[12] https://bitbucket.org/latestrevision/python-teamspeak3/
+[13] https://code.google.com/p/python-weather-api/
+[14] Eugene Kaznacheev <qetzal@gmail.com>

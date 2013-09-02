@@ -1,0 +1,160 @@
+if ENABLE_PLUGIN_VOLUME
+    MAYBE_VOLUME = volume
+endif
+if ENABLE_PLUGIN_RSS
+    MAYBE_RSS = rss
+endif
+if ENABLE_PLUGIN_SYSMON
+    MAYBE_SYSMON = sysmon
+endif
+if ENABLE_PLUGIN_PROCESSES
+    MAYBE_PROCESSES = processes
+endif
+if ENABLE_PLUGIN_CAL
+    MAYBE_CAL = cal
+endif
+if ENABLE_PLUGIN_CAL_EVOLUTION
+    MAYBE_CAL_EVOLUTION = cal-evolution
+endif
+if ENABLE_PLUGIN_CAL_GOOGLE
+    MAYBE_CAL_GOOGLE = cal-google
+endif
+if ENABLE_PLUGIN_LCDBIFF
+    MAYBE_LCDBIFF = lcdbiff
+endif
+if ENABLE_PLUGIN_BACKGROUND
+    MAYBE_BACKGROUND = background
+endif
+if ENABLE_PLUGIN_CAIRO_CLOCK
+    MAYBE_CAIRO_CLOCK = cairo-clock
+endif
+if ENABLE_PLUGIN_CLOCK
+    MAYBE_CLOCK = clock
+endif
+if ENABLE_PLUGIN_FX
+    MAYBE_FX = fx
+endif
+if ENABLE_PLUGIN_MACRO_RECORDER
+    MAYBE_MACRO_RECORDER = macro-recorder
+endif
+if ENABLE_PLUGIN_MACROS
+    MAYBE_MACROS = macros
+endif
+if ENABLE_PLUGIN_PROFILES
+    MAYBE_PROFILES = profiles
+endif
+if ENABLE_PLUGIN_MOUNTS
+    MAYBE_MOUNTS = mounts
+endif
+if ENABLE_PLUGIN_NOTIFY_LCD
+    MAYBE_NOTIFY_LCD = notify-lcd
+endif
+if ENABLE_PLUGIN_IM
+    MAYBE_IM = im
+endif
+if ENABLE_PLUGIN_WEATHER
+    MAYBE_WEATHER = weather
+endif
+if ENABLE_PLUGIN_WEATHER_NOAA
+    MAYBE_WEATHER_NOAA = weather-noaa
+endif
+if ENABLE_PLUGIN_WEATHER_YAHOO
+    MAYBE_WEATHER_YAHOO = weather-yahoo
+endif
+if ENABLE_PLUGIN_MPRIS
+    MAYBE_MPRIS = mpris
+endif
+if ENABLE_PLUGIN_MENU
+    MAYBE_MENU = menu
+endif
+if ENABLE_PLUGIN_PANEL
+    MAYBE_PANEL = panel
+endif
+if ENABLE_PLUGIN_MEDIAPLAYER
+    MAYBE_MEDIAPLAYER = mediaplayer
+endif
+if ENABLE_PLUGIN_G15DAEMON_SERVER
+    MAYBE_G15DAEMON_SERVER = g15daemon-server
+endif
+if ENABLE_PLUGIN_STOPWATCH
+    MAYBE_STOPWATCH = stopwatch
+endif
+if ENABLE_PLUGIN_SCREENSAVER
+    MAYBE_SCREENSAVER = screensaver
+endif
+if ENABLE_PLUGIN_INDICATOR_MESSAGES
+    MAYBE_INDICATOR_MESSAGES = indicator-messages
+endif
+if ENABLE_PLUGIN_SENSE
+    MAYBE_SENSE = sense
+endif
+if ENABLE_PLUGIN_LCDSHOT
+    MAYBE_LCDSHOT = lcdshot
+endif
+if ENABLE_PLUGIN_TWEAK
+    MAYBE_TWEAK = tweak
+endif
+if ENABLE_PLUGIN_TAILS
+    MAYBE_TAILS = tails
+endif
+if ENABLE_PLUGIN_DISPLAY
+    MAYBE_DISPLAY = display
+endif
+if ENABLE_PLUGIN_VOIP
+    MAYBE_VOIP = voip
+endif
+if ENABLE_PLUGIN_VOIP_TEAMSPEAK3
+    MAYBE_VOIP_TEAMSPEAK3 = voip-teamspeak3
+endif
+if ENABLE_PLUGIN_GOOGLE_ANALYTICS
+    MAYBE_GOOGLE_ANALYTICS = google-analytics
+endif
+if ENABLE_PLUGIN_DEBUG
+    MAYBE_DEBUG = debug
+endif
+if ENABLE_PLUGIN_TRAFFIC_STATS
+    MAYBE_TRAFFIC_STATS = trafficstats
+endif
+if ENABLE_PLUGIN_GAME_NEXUIZ
+    MAYBE_GAME_NEXUIZ = game-nexuiz
+endif
+if ENABLE_PLUGIN_BACKLIGHT
+    MAYBE_BACKLIGHT = backlight
+endif
+if ENABLE_PLUGIN_NOTIFY_LCD2
+    MAYBE_NOTIFY_LCD2 = notify-lcd2
+endif
+if ENABLE_PLUGIN_PPASTATS
+    MAYBE_PPASTATS = ppastats
+endif
+if ENABLE_PLUGIN_NM
+    MAYBE_NM = nm
+endif
+if ENABLE_PLUGIN_LENS
+    MAYBE_LENS = lens
+endif
+if ENABLE_PLUGIN_WEBKIT_BROWSER
+    MAYBE_WEBKIT_BROWSER = webkitbrowser
+endif
+if ENABLE_PLUGIN_THINGS
+    MAYBE_THINGS = things
+endif
+if ENABLE_PLUGIN_IMPULSE15
+    MAYBE_IMPULSE15 = impulse15
+endif
+
+
+SUBDIRS = $(MAYBE_BACKGROUND) $(MAYBE_CAIRO_CLOCK) $(MAYBE_CLOCK) $(MAYBE_FX) $(MAYBE_MACRO_RECORDER) $(MAYBE_MACROS) $(MAYBE_MOUNTS) \
+	$(MAYBE_NOTIFY_LCD) $(MAYBE_IM) $(MAYBE_WEATHER) $(MAYBE_MPRIS) $(MAYBE_MENU) $(MAYBE_PANEL) $(MAYBE_MEDIAPLAYER) $(MAYBE_G15DAEMON_SERVER) \
+	$(MAYBE_STOPWATCH) $(MAYBE_SCREENSAVER) $(MAYBE_INDICATOR_MESSAGES) $(MAYBE_PROFILES) \
+	$(MAYBE_SYSMON) $(MAYBE_VOLUME) $(MAYBE_RSS) $(MAYBE_PROCESSES) $(MAYBE_CAL) $(MAYBE_CAL_EVOLUTION) $(MAYBE_CAL_GOOGLE) $(MAYBE_LCDBIFF) $(MAYBE_SENSE) \
+	$(MAYBE_LCDSHOT) $(MAYBE_TWEAK) $(MAYBE_TAILS) $(MAYBE_DISPLAY) $(MAYBE_VOIP) $(MAYBE_VOIP_TEAMSPEAK3) $(MAYBE_WEATHER_NOAA) \
+	$(MAYBE_WEATHER_YAHOO) $(MAYBE_GOOGLE_ANALYTICS) $(MAYBE_DEBUG) $(MAYBE_TRAFFIC_STATS) $(MAYBE_GAME_NEXUIZ) \
+	$(MAYBE_BACKLIGHT) $(MAYBE_NOTIFY_LCD2) $(MAYBE_PPASTATS) $(MAYBE_NM) $(MAYBE_LENS) \
+	$(MAYBE_WEBKIT_BROWSER) $(MAYBE_THINGS) $(MAYBE_IMPULSE15)
+	
+DIST_SUBDIRS = background cairo-clock clock fx macro-recorder macros mounts notify-lcd im weather mpris menu panel mediaplayer g15daemon-server stopwatch \
+	profiles sysmon volume rss processes screensaver cal cal-evolution cal-google lcdbiff indicator-messages sense lcdshot tweak tails display \
+	voip voip-teamspeak3 google-analytics weather-noaa weather-yahoo debug trafficstats \
+	game-nexuiz backlight notify-lcd2 ppastats nm lens webkitbrowser things impulse15
+
