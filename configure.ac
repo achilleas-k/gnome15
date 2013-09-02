@@ -1,4 +1,4 @@
-AC_INIT(gnome15, 0.9.5, https://projects.russo79.com/projects/gnome15/issues/new)
+AC_INIT(gnome15, 0.9.6, https://projects.russo79.com/projects/gnome15/issues/new)
 AC_CONFIG_SRCDIR([src/gnome15/g15service.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 AM_MAINTAINER_MODE

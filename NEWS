@@ -1,3 +1,71 @@
+gnome15 0.9.6 (2013-09-01)
+==========================
+
+Gnome15 is a suite of tools for the Logitech G series keyboards and
+headsets, including the G15, G19, G13, G930, G35, G510, G11, G110 and
+the Z-10 speakers aiming to provide the best integration possible with
+the Linux Desktop.
+
+Gnome15 provides:
+* A panel indicator (or applet)
+* A configuration tool
+* A macro system
+* A set of plugins
+
+Developers can extend Gnome15 by writing plugins in the Python
+programming language, or they can use the provided D-Bus API.
+Gnome15 uses GNOME technologies, while staying well integrated with
+other desktops such as Ubuntu Unity and XFCE. It should also work with
+KDE.
+
+About this release
+------------------
+
+Release 0.9.6 was focused on simplifying and cleaning up the source
+code tree as well as the build system.
+The new structure has less levels of depth and should be simpler to
+maintain on the long term.
+Most of the previous sub-projects that were maintained separatedly are
+now aggregated into a single tree.
+Besides some external dependencies, gnome15 can now be build by
+issuing a single './configure; make; make install' command.
+
+The kernel modules have also been updated with the latest upstream
+changes.
+
+Of course, some bugs were also fixed.
+
+This is also the first release of Gnome15 to be a 'official' one.
+Brett Smith, the original maintainer has decided to retire himself from
+the project, and he supports what was until now a unofficial fork of
+Gnome15.
+
+He will however keep contributing to the project.
+
+Changes since 0.9.5
+-------------------
+
+* https://projects.russo79.com/issues/256
+
+Bugs fixed in this release
+--------------------------
+
+* https://projects.russo79.com/issues/130
+* https://projects.russo79.com/issues/242
+* https://projects.russo79.com/issues/246
+* https://projects.russo79.com/issues/247
+* https://projects.russo79.com/issues/248
+* https://projects.russo79.com/issues/250
+* https://projects.russo79.com/issues/253
+* https://projects.russo79.com/issues/254
+
+Under the hood changes for this release
+---------------------------------------
+
+* https://projects.russo79.com/issues/171
+* https://projects.russo79.com/issues/219
+* https://projects.russo79.com/issues/245
+
 gnome15 0.9.5 (2013-07-03)
 ==========================
 
