@@ -262,7 +262,7 @@ AC_ARG_ENABLE([indicator],
 		no)  indicator=no ;;
 		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-indicator]) ;;
 	esac],
-	indicator=yes)
+	indicator=${have_appindicator})
 AS_IF([test "x${indicator}" = "xyes" -a "x$have_appindicator" = "xno"],
 	[AC_MSG_ERROR([Ubuntu indicator cannot be built without appindicator python module])])
 AM_CONDITIONAL([ENABLE_INDICATOR], [test x$indicator = xyes])
