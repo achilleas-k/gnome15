@@ -119,16 +119,19 @@ class G15ScreenSaver():
             
             for dbus_name, interface, path in screensavers:
                 try :
+                    logger.debug("Searching for screensaver. dbus_name: %s, dbus_interface: %s, dbus_object: %s" % (dbus_name, interface, path))
                     screen_saver = dbus.Interface(self._session_bus.get_object(dbus_name, path), interface)
                     self._dbus_interface = interface
                     self._dbus_name = dbus_name
+                    self._session_bus.add_signal_receiver(self._screensaver_changed_handler, dbus_interface = self._dbus_interface, signal_name = "ActiveChanged")
+                    self._in_screensaver = screen_saver.GetActive()
+                    break
                 except Exception as e:
+                    screen_saver = None
                     pass
                 
             if screen_saver is None:
                 raise Exception("No supported DBUS screen saver interface found.")
-            self._session_bus.add_signal_receiver(self._screensaver_changed_handler, dbus_interface = self._dbus_interface, signal_name = "ActiveChanged")
-            self._in_screensaver = screen_saver.GetActive()
             
         self._activated = True
         self._check_page()
