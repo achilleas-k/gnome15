@@ -113,6 +113,7 @@ class G15ScreenSaver():
             # Paths vary from desktop to desktop
             screensavers = [
                             ("org.gnome.ScreenSaver", "org.gnome.ScreenSaver", "/"),
+                            ("org.gnome.ScreenSaver", "org.gnome.ScreenSaver", "/org/gnome/ScreenSaver"),
                             ("org.kde.screensaver", "org.freedesktop.ScreenSaver", "/ScreenSaver"),
                             ("org.mate.ScreenSaver", "org.mate.ScreenSaver", "/"),
                             ]
