@@ -30,7 +30,7 @@ AX_PYTHON_MODULE(virtkey, [])
 AS_IF([test "x${HAVE_PYMOD_VIRTKEY}" = "xno"],
 	[AC_MSG_ERROR([Requires Python Virtkey Library])])
 
-AX_PYTHON_MODULE(Image, [])
+AX_PYTHON_MODULE(PIL.Image, [])
 AS_IF([test "x${HAVE_PYMOD_IMAGE}" = "xno"],
 	[AC_MSG_ERROR([Requires Python Image Library])])
 
