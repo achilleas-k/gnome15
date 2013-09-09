@@ -86,7 +86,13 @@ def get_sensor_sources():
     sensor_sources = []
     for c in [ LibsensorsSource(), NvidiaSource(), UDisksSource() ]:
         logger.info("Testing if '%s' is a valid sensor source" % c.name)
-        if c.is_valid():
+        try:
+            is_valid = c.is_valid()
+        except:
+            is_valid = False
+            pass
+
+        if is_valid:
             logger.info("Adding '%s' as a sensor source" % c.name)
             sensor_sources.append(c)
         else:
