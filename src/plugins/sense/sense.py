@@ -1,5 +1,7 @@
 #  Gnome15 - Suite of tools for the Logitech G series keyboards and headsets
 #  Copyright (C) 2011 Brett Smith <tanktarta@blueyonder.co.uk>
+#  Copyright (C) 2013 Brett Smith <tanktarta@blueyonder.co.uk>
+#                     Nuno Araujo <nuno.araujo@russo79.com>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -59,6 +61,7 @@ actions={
  
 UDISKS_DEVICE_NAME = "org.freedesktop.UDisks.Device"
 UDISKS_BUS_NAME= "org.freedesktop.UDisks"
+UDISKS2_BUS_NAME= "org.freedesktop.UDisks2"
 
 '''
 Sensor types
@@ -245,6 +248,74 @@ class UDisksSource():
                         
                     self.sensors[sensor.name] = sensor
                 
+class UDisks2Source():
+
+    def __init__(self):
+        self.name = "UDisks2"
+
+        self.udisks = None
+        self.system_bus = None
+        self.udisks_data = None
+        self.sensors = {}
+        self.lock = Lock()
+
+    def get_sensors(self):
+        def is_a_drive(device_path):
+            return device_path.find('/org/freedesktop/UDisks2/drives/') != -1
+        def is_a_ata_drive_supporting_SMART(drive):
+            if 'org.freedesktop.UDisks2.Drive.Ata' in drive:
+                return drive['org.freedesktop.UDisks2.Drive.Ata']['SmartSupported']
+            else:
+                return False
+        def find_valid_sensor_name(drive):
+            model = drive['org.freedesktop.UDisks2.Drive']['Model']
+            serial = drive['org.freedesktop.UDisks2.Drive']['Serial']
+            if not model in self.sensors:
+                return model
+            else:
+                return "(%s) (%s)" % (model, serial)
+        def kelvin_to_celsius(kelvin):
+            return kelvin - 273.15
+        def drive_temperature(drive):
+            if drive['org.freedesktop.UDisks2.Drive.Ata']['SmartUpdated'] > 0:
+                return kelvin_to_celsius(drive['org.freedesktop.UDisks2.Drive.Ata']['SmartTemperature'])
+            else:
+                return 0
+
+        logger.debug("Refreshing disk drives temperatures")
+        self.sensors = {}
+        self.udisks_data = self.udisks.GetManagedObjects()
+        for device in self.udisks_data:
+            if not is_a_drive(device):
+                continue
+            if not is_a_ata_drive_supporting_SMART(self.udisks_data[device]):
+                logger.debug('SMART is disabled or unsupported by drive %s.' % device)
+                continue
+            sensor_name = find_valid_sensor_name(self.udisks_data[device])
+            logger.debug('Found sensor %s for drive %s.' % (sensor_name, device))
+            sensor = Sensor(TEMPERATURE, sensor_name, 0.0)
+            try:
+                sensor.value = drive_temperature(self.udisks_data[device])
+                logger.debug('Temperature of drive %s is %f.' % (sensor_name,sensor.value))
+            except ValueError:
+                logger.warn("Invalid temperature for device %s." % ( sensor_name ) )
+                sensor.value = 0
+            self.sensors[sensor.name] = sensor
+
+        return self.sensors.values()
+
+    def is_valid(self):
+        if self.udisks == None:
+            self.system_bus = dbus.SystemBus()
+            udisks_object = self.system_bus.get_object(UDISKS2_BUS_NAME, '/org/freedesktop/UDisks2')
+            self.udisks = dbus.Interface(udisks_object, 'org.freedesktop.DBus.ObjectManager')
+            dbus_peer = dbus.Interface(udisks_object, 'org.freedesktop.DBus.Peer')
+            dbus_peer.Ping()
+
+        return self.udisks is not None
+
+    def stop(self):
+        pass
 
 class LibsensorsSource():
     def __init__(self):
