@@ -197,60 +197,60 @@ class UDisksSource():
         self.lock = Lock()
         
     def get_sensors(self):
-        self._check_dbus_connection()
+        self.sensors = {}
+        for device in self.udisks.EnumerateDevices():
+            udisk_object = self.system_bus.get_object(UDISKS_BUS_NAME, device)
+            udisk_properties = dbus.Interface(udisk_object, 'org.freedesktop.DBus.Properties')
+
+            if udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartIsAvailable"):
+                sensor_name = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveModel")
+                if sensor_name in self.sensors:
+                    # TODO get something else unique?
+                    n = udisk_properties.Get(UDISKS_DEVICE_NAME, "DeviceFile")
+                    if n:
+                        sensor_name += " (%s)" % n
+                    else:
+                        n = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveSerial")
+                        if n:
+                            sensor_name += " (%s)" % n
+                sensor = Sensor(TEMPERATURE, sensor_name, 0.0)
+                device_file = str(udisk_properties.Get(UDISKS_DEVICE_NAME, "DeviceFile"))
+                if int(udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartTimeCollected")) > 0:
+                    # Only get the temperature if SMART data is collected to avoid spinning up disk
+                    smart_blob = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartBlob", byte_arrays=True)
+                    smart_blob_str = str(smart_blob)
+                    process = subprocess.Popen(['skdump', '--temperature', '--load=-'], shell = False, stdout = subprocess.PIPE, stdin = subprocess.PIPE)
+                    result, stderrdata = process.communicate(smart_blob_str)
+                    process.wait()
+                    if len(result) > 0:
+                        try:
+                            kelvin = int(result)
+                            kelvin /= 1000;
+                            temp_c = kelvin - 273.15
+                            sensor.value = temp_c
+                        except ValueError:
+                            logger.warn("Invalid temperature for device %s, %s." % ( sensor_name, result ))
+                            sensor.value = 0
+                    else:
+                        sensor.value = 0
+
+                self.sensors[sensor.name] = sensor
         return self.sensors.values()
     
     def is_valid(self):
-        self._check_dbus_connection()
-        return self.udisks is not None
-    
-    def stop(self):
-        pass
-    
-    def _check_dbus_connection(self):
         if self.udisks == None:
             self.system_bus = dbus.SystemBus()
             udisks_object = self.system_bus.get_object(UDISKS_BUS_NAME, '/org/freedesktop/UDisks')     
+            # Easier way found to ensure that we can communicate with udisks
+            properties  = dbus.Interface(udisks_object, 'org.freedesktop.DBus.Properties')
+            properties.Get(UDISKS_BUS_NAME, 'DaemonVersion')
             self.udisks = dbus.Interface(udisks_object, UDISKS_BUS_NAME)
-            self.sensors = {}
-            for device in self.udisks.EnumerateDevices():
-                udisk_object = self.system_bus.get_object(UDISKS_BUS_NAME, device)
-                udisk_properties = dbus.Interface(udisk_object, 'org.freedesktop.DBus.Properties')
                 
-                if udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartIsAvailable"):
-                    sensor_name = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveModel")
-                    if sensor_name in self.sensors:
-                        # TODO get something else unique?
-                        n = udisk_properties.Get(UDISKS_DEVICE_NAME, "DeviceFile")
-                        if n: 
-                            sensor_name += " (%s)" % n 
-                        else:
-                            n = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveSerial")
-                            if n: 
-                                sensor_name += " (%s)" % n
-                    sensor = Sensor(TEMPERATURE, sensor_name, 0.0)
-                    device_file = str(udisk_properties.Get(UDISKS_DEVICE_NAME, "DeviceFile"))
-                    if int(udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartTimeCollected")) > 0:
-                        # Only get the temperature if SMART data is collected to avoid spinning up disk
-                        smart_blob = udisk_properties.Get(UDISKS_DEVICE_NAME, "DriveAtaSmartBlob", byte_arrays=True)
-                        smart_blob_str = str(smart_blob)
-                        process = subprocess.Popen(['skdump', '--temperature', '--load=-'], shell = False, stdout = subprocess.PIPE, stdin = subprocess.PIPE)
-                        result, stderrdata = process.communicate(smart_blob_str)
-                        process.wait()
-                        if len(result) > 0:
-                            try:
-                                kelvin = int(result) 
-                                kelvin /= 1000;
-                                temp_c = kelvin - 273.15
-                                sensor.value = temp_c
-                            except ValueError:
-                                logger.warn("Invalid temperature for device %s, %s." % ( sensor_name, result ) )
-                                sensor.value = 0
-                        else:
-                            sensor.value = 0 
-                        
-                    self.sensors[sensor.name] = sensor
-                
+        return self.udisks is not None
+
+    def stop(self):
+        pass
+
 class UDisks2Source():
 
     def __init__(self):
