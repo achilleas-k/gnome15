@@ -36,7 +36,7 @@ from threading import Lock
 
 # Logging
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger("sense")
 
 id = "sense"
 name = _("Sensors")
