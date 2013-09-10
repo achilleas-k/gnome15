@@ -86,19 +86,19 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     G15SensorsPreferences(parent, driver, gconf_client, gconf_key)
     
 def get_sensor_sources():
-    possible_sensor_sources = [[LibsensorsSource()], \
-                               [NvidiaSource()], \
-                               [UDisks2Source(), UDisksSource()]]
+    available_sensor_sources = [[LibsensorsSource()], \
+                                [NvidiaSource()], \
+                                [UDisks2Source(), UDisksSource()]]
     sensor_sources = []
-    for sensor_source_group in possible_sensor_sources:
-        for possible_sensor_source in sensor_source_group:
-            logger.info("Testing if '%s' is a valid sensor source" % possible_sensor_source.name)
+    for sensor_source_group in available_sensor_sources:
+        for candidade in sensor_source_group:
+            logger.info("Testing if '%s' is a valid sensor source" % candidade.name)
             try:
-                if possible_sensor_source.is_valid():
-                    logger.info("Adding '%s' as a sensor source" % possible_sensor_source.name)
-                    sensor_sources.append(possible_sensor_source)
+                if candidade.is_valid():
+                    logger.info("Adding '%s' as a sensor source" % candidade.name)
+                    sensor_sources.append(candidade)
                 else:
-                    possible_sensor_source.stop()
+                    candidade.stop()
                 break
             except:
                 pass
