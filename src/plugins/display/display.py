@@ -96,17 +96,14 @@ class G15XRandR(g15plugin.G15MenuPlugin):
         g15plugin.G15MenuPlugin.__init__(self, gconf_client, gconf_key, screen, ICONS, id, _("Display"))
     
     def activate(self):
-        self._timer = None
         self._current_active = None
         self._last_items = -1
         g15plugin.G15MenuPlugin.activate(self)
         
     def deactivate(self): 
-        self._cancel_timer()
         g15plugin.G15MenuPlugin.deactivate(self)
         
     def load_menu_items(self):
-        self._cancel_timer()
         items = []
         display = "Default"
         i = 0
@@ -163,12 +160,6 @@ class G15XRandR(g15plugin.G15MenuPlugin):
                         return True
             except StopIteration:
                 return True
-        
-        
-    def _cancel_timer(self):
-        if self._timer is not None:
-            self._timer.cancel()
-            self._timer = None
         
     def _schedule_check(self):
         g15scheduler.schedule("CheckResolution", 10.0, self.load_menu_items)
