@@ -162,7 +162,8 @@ class G15XRandR(g15plugin.G15MenuPlugin):
                 return True
         
     def _schedule_check(self):
-        g15scheduler.schedule("CheckResolution", 10.0, self.load_menu_items)
+        if self.active == True:
+            g15scheduler.schedule("CheckResolution", 10.0, self.load_menu_items)
         
     def _parse_size(self, line):
         arr = line.split("x")
