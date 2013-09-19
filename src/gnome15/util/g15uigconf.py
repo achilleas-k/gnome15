@@ -222,7 +222,8 @@ def configure_radio_from_gconf(gconf_client, gconf_key, widget_ids, gconf_values
                    the value of the gconf key changes.
     """
     entry = gconf_client.get(gconf_key)
-    handles = []
+    handler_ids = []
+    connection_ids = []
     sel_entry = entry.get_string() if entry else None
     for i in range(0, len(widget_ids)):
         gconf_value = gconf_values[i]
@@ -231,10 +232,12 @@ def configure_radio_from_gconf(gconf_client, gconf_key, widget_ids, gconf_values
 
     for i in range(0, len(widget_ids)):
         widget = widget_tree.get_object(widget_ids[i])
-        handler_id = widget.connect("toggled", radio_changed, gconf_key, gconf_client, gconf_values[i])
+        handler_ids.append(widget.connect("toggled", radio_changed, gconf_key, gconf_client, gconf_values[i]))
         if watch_changes:
-            handles.append(gconf_client.notify_add(gconf_key, radio_conf_value_change,( widget, gconf_key, gconf_values[i] )))
-    return (handler_id, handles)
+            connection_ids.append(gconf_client.notify_add(gconf_key, radio_conf_value_change,( widget, gconf_key, gconf_values[i] )))
+        else:
+            connection_ids.append(None)
+    return (handler_ids, connection_ids)
 
 def radio_conf_value_change(client, connection_id, entry, args):
     widget, key, gconf_value = args
