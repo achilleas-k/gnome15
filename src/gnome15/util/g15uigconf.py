@@ -157,6 +157,7 @@ def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_va
     """
     widget = widget_tree.get_object(widget_id)
     entry = gconf_client.get(gconf_key)
+    connection_id = None
     if entry != None:
         widget.set_active(entry.get_bool())
     else:
@@ -188,6 +189,7 @@ def configure_text_from_gconf(gconf_client, gconf_key, widget_id, default_value,
     """
     widget = widget_tree.get_object(widget_id)
     entry = gconf_client.get(gconf_key)
+    connection_id = None
     if entry != None:
         widget.set_text(entry.get_string())
     else:
