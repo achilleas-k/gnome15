@@ -50,7 +50,8 @@ def configure_colorchooser_from_gconf(gconf_client, gconf_key, widget_id, defaul
     else:
         widget.set_use_alpha(False)
     widget.set_color(col)
-    widget.connect("color-set", color_changed, gconf_client, gconf_key)
+    handler_id = widget.connect("color-set", color_changed, gconf_client, gconf_key)
+    return handler_id
 
 def color_changed(widget, gconf_client, key):
     val = widget.get_color()
@@ -82,7 +83,9 @@ def configure_spinner_from_gconf(gconf_client, gconf_key, widget_id, default_val
         else:
             val = entry.get_int()
     model.set_value(val)
-    widget.connect("value-changed", spinner_changed, gconf_client, gconf_key, model)
+    handler_id = widget.connect("value-changed", spinner_changed, gconf_client, gconf_key, model)
+    return handler_id
+
 
 def spinner_changed(widget, gconf_client, key, model, decimal = False):
     if decimal:
@@ -109,7 +112,7 @@ def configure_combo_from_gconf(gconf_client, gconf_key, widget_id, default_value
     if widget == None:
         raise Exception("No widget with id %s." % widget_id)
     model = widget.get_model()
-    widget.connect("changed", combo_box_changed, gconf_client, gconf_key, model, default_value)
+    handler_id = widget.connect("changed", combo_box_changed, gconf_client, gconf_key, model, default_value)
 
     if isinstance(default_value, int):
         e = gconf_client.get(gconf_key)
@@ -130,6 +133,8 @@ def configure_combo_from_gconf(gconf_client, gconf_key, widget_id, default_value
         if row_val == val:
             widget.set_active(idx)
         idx += 1
+
+    return handler_id
 
 def combo_box_changed(widget, gconf_client, key, model, default_value):
     if isinstance(default_value, int):
@@ -156,9 +161,10 @@ def configure_checkbox_from_gconf(gconf_client, gconf_key, widget_id, default_va
         widget.set_active(entry.get_bool())
     else:
         widget.set_active(default_value)
-    widget.connect("toggled", checkbox_changed, gconf_key, gconf_client)
+    handler_id = widget.connect("toggled", checkbox_changed, gconf_key, gconf_client)
     if watch_changes:
-        return gconf_client.notify_add(gconf_key, boolean_conf_value_change,( widget, gconf_key ));
+        connection_id = gconf_client.notify_add(gconf_key, boolean_conf_value_change,( widget, gconf_key ));
+    return (handler_id, connection_id)
 
 def boolean_conf_value_change(client, connection_id, entry, args):
     widget, key = args
@@ -186,9 +192,10 @@ def configure_text_from_gconf(gconf_client, gconf_key, widget_id, default_value,
         widget.set_text(entry.get_string())
     else:
         widget.set_text(default_value)
-    widget.connect("changed", text_changed, gconf_key, gconf_client)
+    handler_id = widget.connect("changed", text_changed, gconf_key, gconf_client)
     if watch_changes:
-        return gconf_client.notify_add(gconf_key, text_conf_value_change,( widget, gconf_key ));
+        connection_id = gconf_client.notify_add(gconf_key, text_conf_value_change,( widget, gconf_key ));
+    return (handler_id, connection_id)
 
 def text_conf_value_change(client, connection_id, entry, args):
     widget, key = args
@@ -222,10 +229,10 @@ def configure_radio_from_gconf(gconf_client, gconf_key, widget_ids, gconf_values
 
     for i in range(0, len(widget_ids)):
         widget = widget_tree.get_object(widget_ids[i])
-        widget.connect("toggled", radio_changed, gconf_key, gconf_client, gconf_values[i])
+        handler_id = widget.connect("toggled", radio_changed, gconf_key, gconf_client, gconf_values[i])
         if watch_changes:
             handles.append(gconf_client.notify_add(gconf_key, radio_conf_value_change,( widget, gconf_key, gconf_values[i] )))
-    return handles
+    return (handler_id, handles)
 
 def radio_conf_value_change(client, connection_id, entry, args):
     widget, key, gconf_value = args
@@ -255,7 +262,8 @@ def configure_adjustment_from_gconf(gconf_client, gconf_key, widget_id, default_
             adj.set_value(entry.get_float())
     else:
         adj.set_value(default_value)
-    adj.connect("value-changed", adjustment_changed, gconf_key, gconf_client, isinstance(default_value, int))
+    handler_id = adj.connect("value-changed", adjustment_changed, gconf_key, gconf_client, isinstance(default_value, int))
+    return handler_id
 
 def adjustment_changed(adjustment, key, gconf_client, integer = True):
     if integer:
