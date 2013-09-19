@@ -82,16 +82,16 @@ def create(gconf_key, gconf_client, screen):
 
 def show_preferences(parent, driver, gconf_client, gconf_key):
     def refresh_devices(widget):
-        new_card_name = soundcard[widget.get_active()][0]
-        new_card_index = alsa_soundcards.index(new_card_name)
+        new_soundcard_name = soundcard_model[widget.get_active()][0]
+        new_soundcard_index = alsa_soundcards.index(new_soundcard_name)
         '''
         We temporarily block the handler for the mixer_combo 'changed' signal, since we are going
         to change the combobox contents.
         '''
         mixer_combo.handler_block(changed_handler_id)
-        model.clear()
-        for mixer in alsaaudio.mixers(new_card_index):
-            model.append([mixer])
+        mixer_model.clear()
+        for mixer in alsaaudio.mixers(new_soundcard_index):
+            mixer_model.append([mixer])
         # Now we can unblock the handler
         mixer_combo.handler_unblock(changed_handler_id)
         # And since the list of mixers has changed, we select the first one by default
@@ -100,32 +100,32 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
     widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "volume.glade"))    
     dialog = widget_tree.get_object("VolumeDialog") 
-    soundcard_combo = widget_tree.get_object('CardCombo')
-    mixer_combo = widget_tree.get_object('DeviceCombo')
-    soundcard = widget_tree.get_object("SoundCard")
-    model = widget_tree.get_object("DeviceModel")   
+    soundcard_combo = widget_tree.get_object('SoundcardCombo')
+    mixer_combo = widget_tree.get_object('MixerCombo')
+    soundcard_model = widget_tree.get_object("SoundcardModel")
+    mixer_model = widget_tree.get_object("MixerModel")
     alsa_soundcards = alsaaudio.cards()
-    current_card_name = g15gconf.get_string_or_default(gconf_client,
-                                                       gconf_key + "/soundcard",
-                                                       str(alsa_soundcards[0]))
-    current_card_index = alsa_soundcards.index(current_card_name)
-    current_card_mixers = alsaaudio.mixers(current_card_index)
+    soundcard_name = g15gconf.get_string_or_default(gconf_client,
+                                                    gconf_key + "/soundcard",
+                                                    str(alsa_soundcards[0]))
+    soundcard_index = alsa_soundcards.index(soundcard_name)
+    soundcard_mixers = alsaaudio.mixers(soundcard_index)
 
     for card in alsa_soundcards:
-        soundcard.append([card])
-    for mixer in current_card_mixers:
-        model.append([mixer])
+        soundcard_model.append([card])
+    for mixer in soundcard_mixers:
+        mixer_model.append([mixer])
 
     g15uigconf.configure_combo_from_gconf(gconf_client, \
                                           gconf_key + "/soundcard", \
-                                          "CardCombo", \
+                                          "SoundcardCombo", \
                                           str(alsa_soundcards[0]), \
                                           widget_tree)
 
     changed_handler_id = g15uigconf.configure_combo_from_gconf(gconf_client, \
                                                                gconf_key + "/mixer", \
-                                                               "DeviceCombo", \
-                                                                str(current_card_mixers[0]), \
+                                                               "MixerCombo", \
+                                                                str(soundcard_mixers[0]), \
                                                                 widget_tree)
     soundcard_combo.connect('changed', refresh_devices)
 

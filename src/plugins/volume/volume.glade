@@ -2,15 +2,15 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkListStore" id="DeviceModel">
+  <object class="GtkListStore" id="MixerModel">
     <columns>
-      <!-- column-name TransitionName -->
+      <!-- column-name Mixer -->
       <column type="gchararray"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="SoundCard">
+  <object class="GtkListStore" id="SoundcardModel">
     <columns>
-      <!-- column-name TransitionName -->
+      <!-- column-name SoundCard -->
       <column type="gchararray"/>
     </columns>
   </object>
@@ -75,10 +75,10 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkComboBox" id="CardCombo">
+                          <object class="GtkComboBox" id="SoundcardCombo">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="model">SoundCard</property>
+                            <property name="model">SoundcardModel</property>
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderertext2"/>
                               <attributes>
@@ -127,10 +127,10 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkComboBox" id="DeviceCombo">
+                          <object class="GtkComboBox" id="MixerCombo">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="model">DeviceModel</property>
+                            <property name="model">MixerModel</property>
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderertext1"/>
                               <attributes>
@@ -152,7 +152,7 @@
                   <object class="GtkLabel" id="label2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Device&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">&lt;b&gt;Mixer&lt;/b&gt;</property>
                     <property name="use_markup">True</property>
                   </object>
                 </child>
