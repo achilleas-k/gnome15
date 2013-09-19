@@ -31,7 +31,6 @@ import alsaaudio
 import select
 import os
 import gtk
-import time
 import logging
 logger = logging.getLogger("volume")
 
@@ -239,7 +238,6 @@ class G15Volume():
     def _restart_monitoring(self):
         self._stop_monitoring()
         self._read_config()
-        time.sleep(1.0)
         self._start_monitoring()
 
     def _read_config(self):
@@ -259,6 +257,7 @@ class G15Volume():
     def _stop_monitoring(self):
         if self._volthread != None:
             self._volthread._stop_monitoring()
+            self._volthread.join(1.0)
         
     def _get_theme_properties(self):
         properties = {}
