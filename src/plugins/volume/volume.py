@@ -144,6 +144,7 @@ class G15Volume():
         self._mute = False
         self._light_controls = None
         self._lights_timer = None
+        self._reload_config_timer = None
 
     def activate(self):
         self._screen.key_handler.action_listeners.append(self) 
@@ -212,6 +213,30 @@ class G15Volume():
         self._volthread.start()
     
     def _config_changed(self, client, connection_id, entry, args):    
+        '''
+        If the user changes the soundcard on the preferences dialog this method
+        would be called two times. A first time for the soundcard change, and a
+        second time because the first mixer of the newly selected soundcard is
+        automatically selected.
+        The volume monitoring would then be restarted twice, which makes no sense.
+        Instead of restarting the monitoring as soon as this method is called,
+        we put it as a task on a queue for 1 second. If during that time, any
+        other change happens to the configuration, the previous restart request
+        is cancelled, and another one takes it's place.
+        This way, the monitoring is only restarted once when the user selects another
+        sound card.
+        '''
+        if self._reload_config_timer is not None:
+           if not self._reload_config_timer.is_complete():
+               self._reload_config_timer.cancel()
+           self._reload_config_timer = None
+
+        self._reload_config_timer = g15scheduler.queue('VolumeMonitorQueue',
+                                                       'RestartVolumeMonitoring',
+                                                       1.0,
+                                                       self._restart_monitoring)
+
+    def _restart_monitoring(self):
         self._stop_monitoring()
         self._read_config()
         time.sleep(1.0)
