@@ -393,6 +393,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     
     @dbus.service.method(SCREEN_IF_NAME, in_signature='n', out_signature='as')
     def GetPagesBelowPriority(self, priority):
+        logger.warning("The GetPagesBelowPriority is deprecated. Use GetPages instead.")
         l = []
         for page in self._dbus_pages.values():
             if page._page.priority >= priority:

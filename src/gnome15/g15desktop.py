@@ -1252,7 +1252,7 @@ class G15DesktopComponent():
                 logger.debug("Adding %s" % screen_path)
                 self._add_screen(screen_path)
                 remote_screen = self.session_bus.get_object('org.gnome15.Gnome15', screen_path)
-                for page_path in remote_screen.GetPagesBelowPriority(g15screen.PRI_LOW):
+                for page_path in remote_screen.GetPages():
                     page = self.session_bus.get_object('org.gnome15.Gnome15', page_path)
                     if page.GetPriority() >= g15screen.PRI_LOW and page.GetPriority() < g15screen.PRI_HIGH:
                         self._add_page(screen_path, page_path, page)
