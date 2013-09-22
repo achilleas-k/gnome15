@@ -3120,7 +3120,6 @@ g15-launch matches the following pattern</property>
   <object class="GtkMenu" id="ProfileContextMenu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="ubuntu_local">True</property>
     <child>
       <object class="GtkImageMenuItem" id="ContextRemoveProfile">
         <property name="label">gtk-remove</property>
