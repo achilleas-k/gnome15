@@ -71,7 +71,12 @@ EV_REL = 0x02
 EV_ABS = 0x03
 
 """
-special virtual keys that are actually joystick movement
+special virtual keys that are actually joystick movement.
+
+These 'virtual' uinput codes are created so that the user can assign macros to the left, right, up
+and down directions of the joystick.
+By default uinput only has two codes (ABS_X and ABS_Y) that specify the axis, the direction being
+determinated by the value passed to uinput.emit.
 """
 JS = 0x9999
 JS_LEFT = 0x9701
@@ -262,6 +267,7 @@ def emit(target, code, value, syn=True):
                 logger.debug("UINPUT mouse event at %s, code = %s, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
             code = ( EV_REL, code )            
         elif ( target == JOYSTICK or target == DIGITAL_JOYSTICK ):
+            """ We translate the 'virtual' uinput codes into real uinput ones """
             if code == JS_LEFT:
                 value = 0 if value > 0 else 128
                 code = ABS_X
@@ -274,7 +280,9 @@ def emit(target, code, value, syn=True):
             elif code == JS_DOWN:
                 value = 255 if value > 0 else 128
                 code = ABS_Y
-            code = (EV_ABS, code)
+            else:
+                """ If we are simulating a bouton press, then the event is of type EV_KEY """
+                code = (EV_KEY, code)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("UINPUT joystick event at %s, code = %s, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
         else: 
