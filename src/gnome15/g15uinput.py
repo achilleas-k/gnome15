@@ -35,16 +35,23 @@ DIGITAL_JOYSTICK = "digital-joystick"
 KEYBOARD = "keyboard"
 DEVICE_TYPES = [ MOUSE, KEYBOARD, JOYSTICK, DIGITAL_JOYSTICK ]
 
+"""
+Joystick calibration values
+"""
+JOYSTICK_MIN    = -127
+JOYSTICK_MAX    = 127
+JOYSTICK_CENTER = 0
+
 #capabilities = uinput.capabilities.CAPABILITIES
 capabilities = uinput.ev.__dict__
 registered_parameters = { MOUSE: {}, 
                    JOYSTICK:  {
-                    uinput.ABS_X: (0, 255, 0, 0),
-                    uinput.ABS_Y: (0, 255, 0, 0),
+                    uinput.ABS_X: (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0),
+                    uinput.ABS_Y: (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0),
                              }, 
                    DIGITAL_JOYSTICK:  {
-                    uinput.ABS_X: (0, 255, 0, 0),
-                    uinput.ABS_Y: (0, 255, 0, 0),
+                    uinput.ABS_X: (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0),
+                    uinput.ABS_Y: (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0),
                              }, 
                    KEYBOARD: {} }
 uinput_devices = {}
@@ -269,16 +276,16 @@ def emit(target, code, value, syn=True):
         elif ( target == JOYSTICK or target == DIGITAL_JOYSTICK ):
             """ We translate the 'virtual' uinput codes into real uinput ones """
             if code == JS_LEFT:
-                value = 0 if value > 0 else 128
+                value = JOYSTICK_MIN if value > 0 else JOYSTICK_CENTER
                 code = ABS_X
             elif code == JS_RIGHT:
-                value = 255 if value > 0 else 128
+                value = JOYSTICK_MAX if value > 0 else JOYSTICK_CENTER
                 code = ABS_X
             elif code == JS_UP:
-                value = 0 if value > 0 else 128
+                value = JOYSTICK_MIN if value > 0 else JOYSTICK_CENTER
                 code = ABS_Y
             elif code == JS_DOWN:
-                value = 255 if value > 0 else 128
+                value = JOYSTICK_MAX if value > 0 else JOYSTICK_CENTER
                 code = ABS_Y
             else:
                 """ If we are simulating a bouton press, then the event is of type EV_KEY """
@@ -339,12 +346,12 @@ def __check_devices():
                 keys.append((REL_Y[0], REL_Y[1], 0, 255, 0, 0))
             elif device_type == JOYSTICK:
                 virtual_product_id = GNOME15_JOYSTICK_PRODUCT_ID
-                keys.append((ABS_X[0], ABS_X[1], 0, 255, 0, 0))
-                keys.append((ABS_Y[0], ABS_Y[1], 0, 255, 0, 0))
+                keys.append(ABS_X + (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0))
+                keys.append(ABS_Y + (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0))
             elif device_type == DIGITAL_JOYSTICK:
                 virtual_product_id = GNOME15_JOYSTICK_PRODUCT_ID
-                keys.append((ABS_X[0], ABS_X[1], 0, 255, 0, 0))
-                keys.append((ABS_Y[0], ABS_Y[1], 0, 255, 0, 0))
+                keys.append(ABS_X + (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0))
+                keys.append(ABS_Y + (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0))
             else:
                 virtual_product_id = GNOME15_KEYBOARD_PRODUCT_ID
                 
@@ -359,8 +366,8 @@ def __check_devices():
             if device_type == JOYSTICK or device_type == DIGITAL_JOYSTICK:
                 syn(device_type)
                 load_calibration(device_type)
-                emit(device_type, ABS_X, 128, False)
-                emit(device_type, ABS_Y, 128, False)
+                emit(device_type, ABS_X, JOYSTICK_CENTER, False)
+                emit(device_type, ABS_Y, JOYSTICK_CENTER, False)
                 syn(device_type)
             else:
                 emit(device_type, 0, 0)
