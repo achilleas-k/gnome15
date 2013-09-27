@@ -872,43 +872,43 @@ class ForwardDevice(AbstractInputDevice):
             if val < low_val and not "l" in self.digital_down:
                 self.digital_down.append("l")
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK,
-                               g15uinput.REL_X,
+                               g15uinput.ABS_X,
                                g15uinput.JOYSTICK_MIN)
             elif val > high_val and not "r" in self.digital_down:
                 self.digital_down.append("r")
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK,
-                               g15uinput.REL_X,
+                               g15uinput.ABS_X,
                                g15uinput.JOYSTICK_MAX)
             elif val >= low_val and val <= high_val and "l" in self.digital_down:
                 self.digital_down.remove("l")
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK,
-                               g15uinput.REL_X,
+                               g15uinput.ABS_X,
                                g15uinput.JOYSTICK_CENTER)
             elif val >= low_val and val <= high_val and "r" in self.digital_down:
                 self.digital_down.remove("r")
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK,
-                               g15uinput.REL_X,
+                               g15uinput.ABS_X,
                                g15uinput.JOYSTICK_CENTER)
         if event.ecode == S.REL_Y:
             if val < low_val and not "u" in self.digital_down:
                 self.digital_down.append("u")
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK,
-                               g15uinput.REL_Y,
+                               g15uinput.ABS_Y,
                                g15uinput.JOYSTICK_MIN)
             elif val > high_val and not "d" in self.digital_down:
                 self.digital_down.append("d")
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK,
-                               g15uinput.REL_Y,
+                               g15uinput.ABS_Y,
                                g15uinput.JOYSTICK_MAX)
             if val >= low_val and val <= high_val and "u" in self.digital_down:
                 self.digital_down.remove("u")
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK,
-                               g15uinput.REL_Y,
+                               g15uinput.ABS_Y,
                                g15uinput.JOYSTICK_CENTER)
             elif val >= low_val and val <= high_val and "d" in self.digital_down:
                 self.digital_down.remove("d")
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK,
-                               g15uinput.REL_Y,
+                               g15uinput.ABS_Y,
                                g15uinput.JOYSTICK_CENTER)
 
 class Driver(g15driver.AbstractDriver):
