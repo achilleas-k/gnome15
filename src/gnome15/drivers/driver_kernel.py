@@ -821,7 +821,7 @@ class ForwardDevice(AbstractInputDevice):
         """
         low_val, high_val = self._compute_bounds()
         val = event.evalue - g15uinput.DEVICE_JOYSTICK_CENTER
-        if event.ecode == S.REL_X:
+        if event.ecode == S.ABS_X:
             if val < low_val:
                 self._release_keys([g15driver.G_KEY_RIGHT])
                 if not g15driver.G_KEY_LEFT in self.held_keys:
@@ -834,7 +834,7 @@ class ForwardDevice(AbstractInputDevice):
                     self.held_keys.append(g15driver.G_KEY_RIGHT)
             else:                                         
                 self._release_keys([g15driver.G_KEY_LEFT,g15driver.G_KEY_RIGHT])    
-        if event.ecode == S.REL_Y:
+        if event.ecode == S.ABS_Y:
             if val < low_val:
                 self._release_keys([g15driver.G_KEY_DOWN])
                 if not g15driver.G_KEY_UP in self.held_keys:
@@ -868,7 +868,7 @@ class ForwardDevice(AbstractInputDevice):
     def _digital_joystick(self, event):
         low_val, high_val = self._compute_bounds()
         val = event.evalue - g15uinput.DEVICE_JOYSTICK_CENTER
-        if event.ecode == S.REL_X:
+        if event.ecode == S.ABS_X:
             if val < low_val and not "l" in self.digital_down:
                 self.digital_down.append("l")
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK,
@@ -889,7 +889,7 @@ class ForwardDevice(AbstractInputDevice):
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK,
                                g15uinput.ABS_X,
                                g15uinput.JOYSTICK_CENTER)
-        if event.ecode == S.REL_Y:
+        if event.ecode == S.ABS_Y:
             if val < low_val and not "u" in self.digital_down:
                 self.digital_down.append("u")
                 g15uinput.emit(g15uinput.DIGITAL_JOYSTICK,
