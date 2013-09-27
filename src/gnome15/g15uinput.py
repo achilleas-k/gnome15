@@ -42,6 +42,11 @@ JOYSTICK_MIN    = -127
 JOYSTICK_MAX    = 127
 JOYSTICK_CENTER = 0
 
+"""
+Value sent by the hardware when the joystick is at the center
+"""
+DEVICE_JOYSTICK_CENTER=128
+
 #capabilities = uinput.capabilities.CAPABILITIES
 capabilities = uinput.ev.__dict__
 registered_parameters = { MOUSE: {}, 

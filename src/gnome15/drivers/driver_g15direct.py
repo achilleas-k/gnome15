@@ -458,11 +458,20 @@ class Driver(g15driver.AbstractDriver):
         if self.get_model_name() == g15driver.MODEL_G13:
             c = self.analogue_calibration if self.joy_mode in [ "joystick", "mouse" ] else self.digital_calibration
             
-            low_val = 128 - c
-            high_val = 128 + c
+            low_val = g15uinput.JOYSTICK_CENTER - c
+            high_val = g15uinput.JOYSTICK_CENTER + c
             max_step = 5
                 
             pos = pylibg15.get_joystick_position()
+            """
+            The device itself gives us joystick position values between 0 and 255.
+            The center is at 128.
+            The virtual joysticks are set to give values between -127 and 127.
+            The center is at 0.
+            So we adapt the received values.
+            """
+            pos = (pos[0] - g15uinput.DEVICE_JOYSTICK_CENTER,
+                   pos[1] - g15uinput.DEVICE_JOYSTICK_CENTER)
             
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Joystick at %s" % str(pos))
