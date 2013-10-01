@@ -373,6 +373,8 @@ class G15Config:
         self.enabled_profile_plugins_model = self.widget_tree.get_object("EnabledProfilePluginsModel")
         self.enabled_profile_plugins = self.widget_tree.get_object("EnabledProfilePlugins")
         self.enabled_profile_plugins_renderer = self.widget_tree.get_object("EnabledProfilePluginsRenderer")
+        self.device_settings = self.widget_tree.get_object("DeviceSettings")
+        self.no_device_selected = self.widget_tree.get_object("NoDeviceSelected")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -523,9 +525,9 @@ class G15Config:
         ''' Set up everything and display the window
         '''
         if len(self.devices) > 1:
-            self.main_window.set_size_request(800, -1)
+            self.main_window.set_size_request(800, 600)
         else:            
-            self.main_window.set_size_request(640, -1)
+            self.main_window.set_size_request(640, 600)
         self.id = None
         while True:
             opt = self.main_window.run()
@@ -1137,6 +1139,11 @@ class G15Config:
         self._load_device()
         if self.selected_device:
             self.conf_client.set_string("/apps/gnome15/config_device_name", self.selected_device.uid)
+            self.device_settings.set_visible(True)
+            self.no_device_selected.set_visible(False)
+        else:
+            self.device_settings.set_visible(False)
+            self.no_device_selected.set_visible(True)
     
     def _load_device(self):
         sel_items = self.device_view.get_selected_items()
@@ -1595,7 +1602,10 @@ class G15Config:
             else:
                 self.widget_tree.get_object("MainScrolledWindow").set_visible(True)
                 self.widget_tree.get_object("DeviceDetails").set_visible(True)
-            
+        # Hide the device settings if no device is selected
+        if sel_device_name is None:
+            self.device_settings.set_visible(False)
+            self.no_device_selected.set_visible(True)
         
     def _load_profile_list(self):
         current_selection = self.selected_profile
