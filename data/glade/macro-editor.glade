@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="2.16"/>
+  <requires lib="gtk+" version="2.24"/>
   <!-- interface-naming-policy toplevel-contextual -->
   <object class="GtkListStore" id="ActionModel">
     <columns>
@@ -36,6 +36,56 @@
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <property name="stock">gtk-clear</property>
+  </object>
+  <object class="GtkListStore" id="MapTypeModel">
+    <columns>
+      <!-- column-name MapType -->
+      <column type="gchararray"/>
+      <!-- column-name MapTypeDescription -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">mouse</col>
+        <col id="1" translatable="yes">Mouse Button</col>
+      </row>
+      <row>
+        <col id="0">keyboard</col>
+        <col id="1" translatable="yes">Keyboard Key</col>
+      </row>
+      <row>
+        <col id="0">joystick</col>
+        <col id="1" translatable="yes">Joystick Button</col>
+      </row>
+      <row>
+        <col id="0">digital-joystick</col>
+        <col id="1" translatable="yes">Digital Joystick</col>
+      </row>
+      <row>
+        <col id="0">command</col>
+        <col id="1" translatable="yes">Run Command</col>
+      </row>
+      <row>
+        <col id="0">simple</col>
+        <col id="1" translatable="yes">Simple Macro</col>
+      </row>
+      <row>
+        <col id="0">script</col>
+        <col id="1" translatable="yes">Macro Script</col>
+      </row>
+      <row>
+        <col id="0">action</col>
+        <col id="1" translatable="yes">Action</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="MappedKeyModel">
+    <columns>
+      <!-- column-name InputKey -->
+      <column type="gchararray"/>
+      <!-- column-name InputCode -->
+      <column type="gint"/>
+    </columns>
   </object>
   <object class="GtkDialog" id="EditMacroDialog">
     <property name="height_request">580</property>
@@ -77,7 +127,6 @@
                 <property name="can_default">True</property>
                 <property name="has_default">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -140,7 +189,6 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
-                    <property name="use_action_appearance">False</property>
                     <property name="draw_indicator">True</property>
                     <signal name="toggled" handler="_allow_combination_changed" swapped="no"/>
                   </object>
@@ -357,7 +405,6 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="image">ClearImage</property>
                             <signal name="clicked" handler="_clear_filter" swapped="no"/>
                           </object>
@@ -451,7 +498,6 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="use_underline">True</property>
                             <signal name="clicked" handler="_browse_for_command" swapped="no"/>
                           </object>
@@ -474,7 +520,6 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">False</property>
-                        <property name="use_action_appearance">False</property>
                         <property name="draw_indicator">True</property>
                         <signal name="toggled" handler="_run_in_background_changed" swapped="no"/>
                       </object>
@@ -578,7 +623,6 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
-                            <property name="use_action_appearance">False</property>
                             <signal name="clicked" handler="_show_script_editor" swapped="no"/>
                           </object>
                           <packing>
@@ -716,7 +760,6 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
-                                <property name="use_action_appearance">False</property>
                                 <property name="draw_indicator">True</property>
                                 <signal name="toggled" handler="_override_default_repeat_changed" swapped="no"/>
                               </object>
@@ -808,56 +851,6 @@
     <action-widgets>
       <action-widget response="1">MacroEditCloseButton</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkListStore" id="MapTypeModel">
-    <columns>
-      <!-- column-name MapType -->
-      <column type="gchararray"/>
-      <!-- column-name MapTypeDescription -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">mouse</col>
-        <col id="1" translatable="yes">Mouse Button</col>
-      </row>
-      <row>
-        <col id="0">keyboard</col>
-        <col id="1" translatable="yes">Keyboard Key</col>
-      </row>
-      <row>
-        <col id="0">joystick</col>
-        <col id="1" translatable="yes">Joystick Button</col>
-      </row>
-      <row>
-        <col id="0">digital-joystick</col>
-        <col id="1" translatable="yes">Digital Joystick</col>
-      </row>
-      <row>
-        <col id="0">command</col>
-        <col id="1" translatable="yes">Run Command</col>
-      </row>
-      <row>
-        <col id="0">simple</col>
-        <col id="1" translatable="yes">Simple Macro</col>
-      </row>
-      <row>
-        <col id="0">script</col>
-        <col id="1" translatable="yes">Macro Script</col>
-      </row>
-      <row>
-        <col id="0">action</col>
-        <col id="1" translatable="yes">Action</col>
-      </row>
-    </data>
-  </object>
-  <object class="GtkListStore" id="MappedKeyModel">
-    <columns>
-      <!-- column-name InputKey -->
-      <column type="gchararray"/>
-      <!-- column-name InputCode -->
-      <column type="gint"/>
-    </columns>
   </object>
   <object class="GtkListStore" id="RepeatModel">
     <columns>

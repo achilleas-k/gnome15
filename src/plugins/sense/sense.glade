@@ -1,11 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="2.16"/>
+  <requires lib="gtk+" version="2.24"/>
   <!-- interface-naming-policy project-wide -->
   <object class="GtkAdjustment" id="IntervalAdjustment">
     <property name="upper">9999</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
+  </object>
+  <object class="GtkListStore" id="SensorModel">
+    <columns>
+      <!-- column-name Name -->
+      <column type="gchararray"/>
+      <!-- column-name Enabled -->
+      <column type="gboolean"/>
+      <!-- column-name Label -->
+      <column type="gchararray"/>
+      <!-- column-name Type -->
+      <column type="gchararray"/>
+    </columns>
   </object>
   <object class="GtkDialog" id="SenseDialog">
     <property name="width_request">320</property>
@@ -33,7 +45,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -202,17 +213,5 @@
     <action-widgets>
       <action-widget response="0">button1</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkListStore" id="SensorModel">
-    <columns>
-      <!-- column-name Name -->
-      <column type="gchararray"/>
-      <!-- column-name Enabled -->
-      <column type="gboolean"/>
-      <!-- column-name Label -->
-      <column type="gchararray"/>
-      <!-- column-name Type -->
-      <column type="gchararray"/>
-    </columns>
   </object>
 </interface>

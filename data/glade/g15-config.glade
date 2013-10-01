@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="2.16"/>
+  <requires lib="gtk+" version="2.24"/>
   <!-- interface-naming-policy toplevel-contextual -->
   <object class="GtkDialog" id="AboutPluginDialog">
     <property name="can_focus">False</property>
@@ -24,7 +24,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -151,7 +150,6 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
-                    <property name="use_action_appearance">False</property>
                     <property name="relief">none</property>
                     <property name="xalign">0</property>
                     <property name="uri">http://glade.gnome.org</property>
@@ -210,7 +208,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -225,7 +222,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -277,7 +273,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -292,7 +287,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -344,7 +338,6 @@
                 <property name="can_default">True</property>
                 <property name="has_default">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -359,7 +352,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -486,7 +478,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -514,7 +505,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="use_action_appearance">False</property>
                 <property name="xalign">0.54000002145767212</property>
                 <property name="draw_indicator">True</property>
               </object>
@@ -530,7 +520,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="use_action_appearance">False</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -545,7 +534,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="use_action_appearance">False</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -560,7 +548,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="use_action_appearance">False</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -575,7 +562,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="use_action_appearance">False</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -744,7 +730,6 @@
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="use_action_appearance">False</property>
                                     <property name="use_stock">True</property>
                                   </object>
                                   <packing>
@@ -759,7 +744,6 @@
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="use_action_appearance">False</property>
                                     <property name="use_stock">True</property>
                                   </object>
                                   <packing>
@@ -827,6 +811,56 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkMessageDialog" id="ImportProfileError">
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="modal">True</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="type_hint">normal</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="transient_for">MainWindow</property>
+    <property name="message_type">error</property>
+    <property name="text" translatable="yes">Error importing profile</property>
+    <property name="secondary_text" translatable="yes">Error message to display</property>
+    <property name="secondary_use_markup">True</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox16">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area16">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="ImportProfileErrorCloseButton">
+                <property name="label">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">ImportProfileErrorCloseButton</action-widget>
+    </action-widgets>
+  </object>
   <object class="GtkListStore" id="MacroModel">
     <columns>
       <!-- column-name KeyName -->
@@ -840,6 +874,130 @@
       <!-- column-name MacroActivateOn -->
       <column type="guint"/>
       <!-- column-name MacroActivateOnText -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkDialog" id="NewProfileDialog">
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">New Profile</property>
+    <property name="modal">True</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="default_width">320</property>
+    <property name="default_height">98</property>
+    <property name="type_hint">normal</property>
+    <property name="transient_for">MainWindow</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox13">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area13">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="button2">
+                <property name="label">gtk-ok</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="has_default">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button4">
+                <property name="label">gtk-cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkHBox" id="hbox6x">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkLabel" id="label15">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">Profile Name:</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="NewProfileName">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="invisible_char">●</property>
+                <property name="activates_default">True</property>
+                <property name="primary_icon_activatable">False</property>
+                <property name="secondary_icon_activatable">False</property>
+                <property name="primary_icon_sensitive">True</property>
+                <property name="secondary_icon_sensitive">True</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="1">button2</action-widget>
+      <action-widget response="0">button4</action-widget>
+    </action-widgets>
+  </object>
+  <object class="GtkListStore" id="ParentProfileModel">
+    <columns>
+      <!-- column-name ParentProfileId -->
+      <column type="gchararray"/>
+      <!-- column-name ParentProfileName -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="PluginModel">
+    <columns>
+      <!-- column-name PluginEnabled -->
+      <column type="gboolean"/>
+      <!-- column-name PluginName -->
+      <column type="gchararray"/>
+      <!-- column-name PluginId -->
       <column type="gchararray"/>
     </columns>
   </object>
@@ -881,7 +1039,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -898,7 +1055,6 @@
                 <property name="can_default">True</property>
                 <property name="has_default">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -913,7 +1069,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1008,7 +1163,6 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
-                            <property name="use_action_appearance">False</property>
                             <property name="draw_indicator">True</property>
                           </object>
                           <packing>
@@ -1144,7 +1298,6 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
                                             <property name="receives_default">False</property>
-                                            <property name="use_action_appearance">False</property>
                                             <property name="draw_indicator">True</property>
                                           </object>
                                           <packing>
@@ -1283,7 +1436,6 @@
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
                                                     <property name="receives_default">True</property>
-                                                    <property name="use_action_appearance">False</property>
                                                     <property name="use_stock">True</property>
                                                   </object>
                                                   <packing>
@@ -1298,7 +1450,6 @@
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
                                                     <property name="receives_default">True</property>
-                                                    <property name="use_action_appearance">False</property>
                                                   </object>
                                                   <packing>
                                                     <property name="expand">True</property>
@@ -1408,7 +1559,6 @@
                                               <object class="GtkToolButton" id="NewMacroButton">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="use_action_appearance">False</property>
                                                 <property name="label" translatable="yes">toolbutton2</property>
                                                 <property name="use_underline">True</property>
                                                 <property name="stock_id">gtk-new</property>
@@ -1422,7 +1572,6 @@
                                               <object class="GtkToolButton" id="DeleteMacroButton">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="use_action_appearance">False</property>
                                                 <property name="label" translatable="yes">toolbutton1</property>
                                                 <property name="use_underline">True</property>
                                                 <property name="stock_id">gtk-delete</property>
@@ -1436,7 +1585,6 @@
                                               <object class="GtkToolButton" id="MacroPropertiesButton">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="use_action_appearance">False</property>
                                                 <property name="label" translatable="yes">toolbutton2</property>
                                                 <property name="use_underline">True</property>
                                                 <property name="stock_id">gtk-properties</property>
@@ -1540,7 +1688,6 @@
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="receives_default">False</property>
-                                                            <property name="use_action_appearance">False</property>
                                                             <property name="active">True</property>
                                                             <property name="draw_indicator">True</property>
                                                           </object>
@@ -1556,7 +1703,6 @@
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="receives_default">False</property>
-                                                            <property name="use_action_appearance">False</property>
                                                             <property name="draw_indicator">True</property>
                                                             <property name="group">M1</property>
                                                           </object>
@@ -1572,7 +1718,6 @@
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="receives_default">False</property>
-                                                            <property name="use_action_appearance">False</property>
                                                             <property name="draw_indicator">True</property>
                                                             <property name="group">M1</property>
                                                           </object>
@@ -1641,7 +1786,6 @@ active</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">False</property>
-                                                <property name="use_action_appearance">False</property>
                                                 <property name="xalign">0</property>
                                                 <property name="draw_indicator">True</property>
                                               </object>
@@ -1659,7 +1803,6 @@ the following title has focus</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">False</property>
-                                                <property name="use_action_appearance">False</property>
                                                 <property name="xalign">0</property>
                                                 <property name="draw_indicator">True</property>
                                               </object>
@@ -1714,7 +1857,6 @@ the following title has focus</property>
                                                     <property name="can_focus">True</property>
                                                     <property name="receives_default">True</property>
                                                     <property name="tooltip_text" translatable="yes">Select a window from those active</property>
-                                                    <property name="use_action_appearance">False</property>
                                                     <property name="image">WindowSelectImage</property>
                                                   </object>
                                                   <packing>
@@ -1738,7 +1880,6 @@ g15-launch matches the following pattern</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">False</property>
-                                                <property name="use_action_appearance">False</property>
                                                 <property name="draw_indicator">True</property>
                                               </object>
                                               <packing>
@@ -1898,7 +2039,6 @@ g15-launch matches the following pattern</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">False</property>
-                                                <property name="use_action_appearance">False</property>
                                                 <property name="xalign">0</property>
                                                 <property name="draw_indicator">True</property>
                                               </object>
@@ -1914,7 +2054,6 @@ g15-launch matches the following pattern</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">False</property>
-                                                <property name="use_action_appearance">False</property>
                                                 <property name="xalign">0</property>
                                                 <property name="draw_indicator">True</property>
                                               </object>
@@ -2052,6 +2191,12 @@ g15-launch matches the following pattern</property>
                                                 <property name="n_rows">2</property>
                                                 <property name="n_columns">2</property>
                                                 <child>
+                                                  <placeholder/>
+                                                </child>
+                                                <child>
+                                                  <placeholder/>
+                                                </child>
+                                                <child>
                                                   <object class="GtkLabel" id="label1011">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">False</property>
@@ -2074,12 +2219,6 @@ g15-launch matches the following pattern</property>
                                                     <property name="left_attach">1</property>
                                                     <property name="right_attach">2</property>
                                                   </packing>
-                                                </child>
-                                                <child>
-                                                  <placeholder/>
-                                                </child>
-                                                <child>
-                                                  <placeholder/>
                                                 </child>
                                               </object>
                                               <packing>
@@ -2120,7 +2259,6 @@ g15-launch matches the following pattern</property>
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="receives_default">True</property>
-                                                            <property name="use_action_appearance">False</property>
                                                             <child>
                                                             <object class="GtkImage" id="ProfileIcon">
                                                             <property name="width_request">48</property>
@@ -2135,8 +2273,8 @@ g15-launch matches the following pattern</property>
                                                             <packing>
                                                             <property name="left_attach">1</property>
                                                             <property name="right_attach">2</property>
-                                                            <property name="x_options"></property>
-                                                            <property name="y_options"></property>
+                                                            <property name="x_options"/>
+                                                            <property name="y_options"/>
                                                             </packing>
                                                             </child>
                                                             <child>
@@ -2144,7 +2282,6 @@ g15-launch matches the following pattern</property>
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="receives_default">True</property>
-                                                            <property name="use_action_appearance">False</property>
                                                             <child>
                                                             <object class="GtkImage" id="Background">
                                                             <property name="width_request">48</property>
@@ -2161,8 +2298,8 @@ g15-launch matches the following pattern</property>
                                                             <property name="right_attach">2</property>
                                                             <property name="top_attach">1</property>
                                                             <property name="bottom_attach">2</property>
-                                                            <property name="x_options"></property>
-                                                            <property name="y_options"></property>
+                                                            <property name="x_options"/>
+                                                            <property name="y_options"/>
                                                             </packing>
                                                             </child>
                                                             <child>
@@ -2171,14 +2308,13 @@ g15-launch matches the following pattern</property>
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="receives_default">True</property>
-                                                            <property name="use_action_appearance">False</property>
                                                             <property name="xalign">0</property>
                                                             </object>
                                                             <packing>
                                                             <property name="left_attach">2</property>
                                                             <property name="right_attach">3</property>
-                                                            <property name="x_options"></property>
-                                                            <property name="y_options"></property>
+                                                            <property name="x_options"/>
+                                                            <property name="y_options"/>
                                                             </packing>
                                                             </child>
                                                             <child>
@@ -2187,7 +2323,6 @@ g15-launch matches the following pattern</property>
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">True</property>
                                                             <property name="receives_default">True</property>
-                                                            <property name="use_action_appearance">False</property>
                                                             <property name="xalign">0</property>
                                                             </object>
                                                             <packing>
@@ -2195,8 +2330,8 @@ g15-launch matches the following pattern</property>
                                                             <property name="right_attach">3</property>
                                                             <property name="top_attach">1</property>
                                                             <property name="bottom_attach">2</property>
-                                                            <property name="x_options"></property>
-                                                            <property name="y_options"></property>
+                                                            <property name="x_options"/>
+                                                            <property name="y_options"/>
                                                             </packing>
                                                             </child>
                                                             <child>
@@ -2208,7 +2343,7 @@ g15-launch matches the following pattern</property>
                                                             </object>
                                                             <packing>
                                                             <property name="x_options">GTK_FILL</property>
-                                                            <property name="y_options"></property>
+                                                            <property name="y_options"/>
                                                             </packing>
                                                             </child>
                                                             <child>
@@ -2222,7 +2357,7 @@ g15-launch matches the following pattern</property>
                                                             <property name="top_attach">1</property>
                                                             <property name="bottom_attach">2</property>
                                                             <property name="x_options">GTK_FILL</property>
-                                                            <property name="y_options"></property>
+                                                            <property name="y_options"/>
                                                             </packing>
                                                             </child>
                                                           </object>
@@ -2269,7 +2404,6 @@ g15-launch matches the following pattern</property>
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">True</property>
                                                         <property name="receives_default">True</property>
-                                                        <property name="use_action_appearance">False</property>
                                                         <property name="relief">none</property>
                                                         <property name="uri">http://www.russo79.com/forum/gnome-15/macro-profiles</property>
                                                       </object>
@@ -2292,7 +2426,6 @@ g15-launch matches the following pattern</property>
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">True</property>
                                                     <property name="receives_default">True</property>
-                                                    <property name="use_action_appearance">False</property>
                                                   </object>
                                                   <packing>
                                                     <property name="expand">False</property>
@@ -2693,7 +2826,7 @@ g15-launch matches the following pattern</property>
                                                       <packing>
                                                         <property name="left_attach">1</property>
                                                         <property name="right_attach">2</property>
-                                                        <property name="x_options"></property>
+                                                        <property name="x_options"/>
                                                       </packing>
                                                     </child>
                                                     <child>
@@ -2715,7 +2848,7 @@ g15-launch matches the following pattern</property>
                                                         <property name="label" translatable="yes">label</property>
                                                       </object>
                                                       <packing>
-                                                        <property name="x_options"></property>
+                                                        <property name="x_options"/>
                                                       </packing>
                                                     </child>
                                                   </object>
@@ -2748,7 +2881,6 @@ g15-launch matches the following pattern</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">False</property>
-                                                <property name="use_action_appearance">False</property>
                                                 <property name="use_stock">True</property>
                                               </object>
                                               <packing>
@@ -2763,7 +2895,6 @@ g15-launch matches the following pattern</property>
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">True</property>
-                                                <property name="use_action_appearance">False</property>
                                                 <property name="use_stock">True</property>
                                               </object>
                                               <packing>
@@ -2986,132 +3117,6 @@ g15-launch matches the following pattern</property>
       <action-widget response="2">GlobalOptionsButton</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkDialog" id="NewProfileDialog">
-    <property name="can_focus">False</property>
-    <property name="border_width">5</property>
-    <property name="title" translatable="yes">New Profile</property>
-    <property name="modal">True</property>
-    <property name="window_position">center-on-parent</property>
-    <property name="default_width">320</property>
-    <property name="default_height">98</property>
-    <property name="type_hint">normal</property>
-    <property name="transient_for">MainWindow</property>
-    <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox13">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area13">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="button2">
-                <property name="label">gtk-ok</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="can_default">True</property>
-                <property name="has_default">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button4">
-                <property name="label">gtk-cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkHBox" id="hbox6x">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <child>
-              <object class="GtkLabel" id="label15">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="xalign">0</property>
-                <property name="label" translatable="yes">Profile Name:</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkEntry" id="NewProfileName">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="invisible_char">●</property>
-                <property name="activates_default">True</property>
-                <property name="primary_icon_activatable">False</property>
-                <property name="secondary_icon_activatable">False</property>
-                <property name="primary_icon_sensitive">True</property>
-                <property name="secondary_icon_sensitive">True</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-    <action-widgets>
-      <action-widget response="1">button2</action-widget>
-      <action-widget response="0">button4</action-widget>
-    </action-widgets>
-  </object>
-  <object class="GtkListStore" id="ParentProfileModel">
-    <columns>
-      <!-- column-name ParentProfileId -->
-      <column type="gchararray"/>
-      <!-- column-name ParentProfileName -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
-  <object class="GtkListStore" id="PluginModel">
-    <columns>
-      <!-- column-name PluginEnabled -->
-      <column type="gboolean"/>
-      <!-- column-name PluginName -->
-      <column type="gchararray"/>
-      <!-- column-name PluginId -->
-      <column type="gchararray"/>
-    </columns>
-  </object>
   <object class="GtkAdjustment" id="PressDelayAdjustment">
     <property name="upper">100</property>
     <property name="step_increment">0.050000000000000003</property>
@@ -3125,7 +3130,6 @@ g15-launch matches the following pattern</property>
         <property name="label">gtk-remove</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="use_action_appearance">False</property>
         <property name="use_underline">True</property>
         <property name="use_stock">True</property>
       </object>
@@ -3136,7 +3140,6 @@ g15-launch matches the following pattern</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Export this profile as an .mzip archive.</property>
-        <property name="use_action_appearance">False</property>
         <property name="image">image2</property>
         <property name="use_stock">False</property>
       </object>
@@ -3146,7 +3149,6 @@ g15-launch matches the following pattern</property>
         <property name="label" translatable="yes">Duplicate</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="use_action_appearance">False</property>
         <property name="image">image3</property>
         <property name="use_stock">False</property>
       </object>
@@ -3155,7 +3157,6 @@ g15-launch matches the following pattern</property>
       <object class="GtkSeparatorMenuItem" id="menuitem1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="use_action_appearance">False</property>
       </object>
     </child>
     <child>
@@ -3163,7 +3164,6 @@ g15-launch matches the following pattern</property>
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Make this profile the currently active one</property>
-        <property name="use_action_appearance">False</property>
         <property name="label" translatable="yes">Activate</property>
         <property name="use_underline">True</property>
       </object>
@@ -3172,7 +3172,6 @@ g15-launch matches the following pattern</property>
       <object class="GtkMenuItem" id="LockProfile">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="use_action_appearance">False</property>
         <property name="label" translatable="yes">Lock</property>
         <property name="use_underline">True</property>
       </object>
@@ -3181,7 +3180,6 @@ g15-launch matches the following pattern</property>
       <object class="GtkMenuItem" id="UnlockProfile">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="use_action_appearance">False</property>
         <property name="label" translatable="yes">Unlock</property>
         <property name="use_underline">True</property>
       </object>
@@ -3216,58 +3214,6 @@ choose another name.</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-    <action-widgets>
-      <action-widget response="0">button5</action-widget>
-    </action-widgets>
-  </object>
-  <object class="GtkMessageDialog" id="ImportProfileError">
-    <property name="can_focus">False</property>
-    <property name="border_width">5</property>
-    <property name="modal">True</property>
-    <property name="window_position">center-on-parent</property>
-    <property name="type_hint">normal</property>
-    <property name="skip_taskbar_hint">True</property>
-    <property name="transient_for">MainWindow</property>
-    <property name="message_type">error</property>
-    <property name="text" translatable="yes">Error importing profile</property>
-    <property name="secondary_text" translatable="yes">Error message to display</property>
-    <property name="secondary_use_markup">True</property>
-    <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox16">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area16">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="ImportProfileErrorCloseButton">
-                <property name="label">gtk-close</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -3343,7 +3289,6 @@ choose another name.</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
                 <property name="image_position">right</property>
               </object>

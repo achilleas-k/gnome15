@@ -1,12 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="2.16"/>
+  <requires lib="gtk+" version="2.24"/>
   <!-- interface-naming-policy project-wide -->
   <object class="GtkAdjustment" id="AnimationSpeedAdjustment">
     <property name="upper">50</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
     <property name="page_size">5</property>
+  </object>
+  <object class="GtkListStore" id="TransitionModel">
+    <columns>
+      <!-- column-name TransitionName -->
+      <column type="gchararray"/>
+      <!-- column-name TransitionDescription -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">horizontal-scroll</col>
+        <col id="1" translatable="yes">Horizontal Slide</col>
+      </row>
+      <row>
+        <col id="0">vertical-scroll</col>
+        <col id="1" translatable="yes">Vertical Slide</col>
+      </row>
+      <row>
+        <col id="0">fade</col>
+        <col id="1" translatable="yes">Fade</col>
+      </row>
+      <row>
+        <col id="0">zoom</col>
+        <col id="1" translatable="yes">Zoom</col>
+      </row>
+      <row>
+        <col id="0">random</col>
+        <col id="1" translatable="yes">Random</col>
+      </row>
+      <row>
+        <col id="0">none</col>
+        <col id="1" translatable="yes">None</col>
+      </row>
+    </data>
   </object>
   <object class="GtkDialog" id="FxDialog">
     <property name="width_request">320</property>
@@ -33,7 +67,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -155,39 +188,5 @@
     <action-widgets>
       <action-widget response="0">button9</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkListStore" id="TransitionModel">
-    <columns>
-      <!-- column-name TransitionName -->
-      <column type="gchararray"/>
-      <!-- column-name TransitionDescription -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">horizontal-scroll</col>
-        <col id="1" translatable="yes">Horizontal Slide</col>
-      </row>
-      <row>
-        <col id="0">vertical-scroll</col>
-        <col id="1" translatable="yes">Vertical Slide</col>
-      </row>
-      <row>
-        <col id="0">fade</col>
-        <col id="1" translatable="yes">Fade</col>
-      </row>
-      <row>
-        <col id="0">zoom</col>
-        <col id="1" translatable="yes">Zoom</col>
-      </row>
-      <row>
-        <col id="0">random</col>
-        <col id="1" translatable="yes">Random</col>
-      </row>
-      <row>
-        <col id="0">none</col>
-        <col id="1" translatable="yes">None</col>
-      </row>
-    </data>
   </object>
 </interface>

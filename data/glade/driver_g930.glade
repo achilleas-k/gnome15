@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="2.16"/>
+  <requires lib="gtk+" version="2.24"/>
   <!-- interface-naming-policy toplevel-contextual -->
   <object class="GtkAction" id="action1"/>
   <object class="GtkVBox" id="DriverComponent">
@@ -25,7 +25,6 @@
                 <property name="tooltip_text" translatable="yes">Also tries to grab the multimedia keys
 and make them available for mapping to
 macros.	</property>
-                <property name="use_action_appearance">False</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>

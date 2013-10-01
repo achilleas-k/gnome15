@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="2.16"/>
+  <requires lib="gtk+" version="2.24"/>
   <!-- interface-naming-policy project-wide -->
+  <object class="GtkListStore" id="AccountModel">
+    <columns>
+      <!-- column-name URL -->
+      <column type="gchararray"/>
+      <!-- column-name Editable -->
+      <column type="gboolean"/>
+    </columns>
+  </object>
   <object class="GtkDialog" id="AccountDialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -26,7 +34,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -78,7 +85,6 @@
                                       <object class="GtkToolButton" id="NewAccount">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
-                                        <property name="use_action_appearance">False</property>
                                         <property name="label" translatable="yes">toolbutton1</property>
                                         <property name="use_underline">True</property>
                                         <property name="stock_id">gtk-add</property>
@@ -92,7 +98,6 @@
                                       <object class="GtkToolButton" id="RemoveAccount">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
-                                        <property name="use_action_appearance">False</property>
                                         <property name="label" translatable="yes">toolbutton2</property>
                                         <property name="use_underline">True</property>
                                         <property name="stock_id">gtk-remove</property>
@@ -375,14 +380,6 @@
     <action-widgets>
       <action-widget response="0">button9</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkListStore" id="AccountModel">
-    <columns>
-      <!-- column-name URL -->
-      <column type="gchararray"/>
-      <!-- column-name Editable -->
-      <column type="gboolean"/>
-    </columns>
   </object>
   <object class="GtkListStore" id="TypeModel">
     <columns>

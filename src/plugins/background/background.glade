@@ -1,7 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="2.16"/>
+  <requires lib="gtk+" version="2.24"/>
   <!-- interface-naming-policy project-wide -->
+  <object class="GtkAdjustment" id="BrightnessAdjustment">
+    <property name="lower">-100</property>
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkFileFilter" id="ImageFilter"/>
+  <object class="GtkListStore" id="StyleModel">
+    <columns>
+      <!-- column-name Style -->
+      <column type="gchararray"/>
+      <!-- column-name StyleName -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">zoom</col>
+        <col id="1" translatable="yes">Zoom</col>
+      </row>
+      <row>
+        <col id="0">tile</col>
+        <col id="1" translatable="yes">Tile</col>
+      </row>
+      <row>
+        <col id="0">center</col>
+        <col id="1" translatable="yes">Center</col>
+      </row>
+      <row>
+        <col id="0">scale</col>
+        <col id="1" translatable="yes">Scale</col>
+      </row>
+      <row>
+        <col id="0">stretch</col>
+        <col id="1" translatable="yes">Stretch</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkDialog" id="BackgroundDialog">
     <property name="width_request">460</property>
     <property name="can_focus">False</property>
@@ -27,7 +64,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
               </object>
               <packing>
@@ -55,7 +91,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_underline">True</property>
                 <property name="active">True</property>
                 <property name="draw_indicator">True</property>
@@ -72,7 +107,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="use_action_appearance">False</property>
                 <property name="use_underline">True</property>
                 <property name="active">True</property>
                 <property name="draw_indicator">True</property>
@@ -172,7 +206,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
-                <property name="use_action_appearance">False</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -231,42 +264,5 @@
     <action-widgets>
       <action-widget response="0">button9</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkAdjustment" id="BrightnessAdjustment">
-    <property name="lower">-100</property>
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-  </object>
-  <object class="GtkFileFilter" id="ImageFilter"/>
-  <object class="GtkListStore" id="StyleModel">
-    <columns>
-      <!-- column-name Style -->
-      <column type="gchararray"/>
-      <!-- column-name StyleName -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">zoom</col>
-        <col id="1" translatable="yes">Zoom</col>
-      </row>
-      <row>
-        <col id="0">tile</col>
-        <col id="1" translatable="yes">Tile</col>
-      </row>
-      <row>
-        <col id="0">center</col>
-        <col id="1" translatable="yes">Center</col>
-      </row>
-      <row>
-        <col id="0">scale</col>
-        <col id="1" translatable="yes">Scale</col>
-      </row>
-      <row>
-        <col id="0">stretch</col>
-        <col id="1" translatable="yes">Stretch</col>
-      </row>
-    </data>
   </object>
 </interface>

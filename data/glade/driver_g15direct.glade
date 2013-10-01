@@ -1,7 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="2.16"/>
+  <requires lib="gtk+" version="2.24"/>
   <!-- interface-naming-policy project-wide -->
+  <object class="GtkListStore" id="JoyModeModel">
+    <columns>
+      <!-- column-name JoyModeId -->
+      <column type="gchararray"/>
+      <!-- column-name JoyModeName -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">macro</col>
+        <col id="1" translatable="yes">Emit macro keys</col>
+      </row>
+      <row>
+        <col id="0">joystick</col>
+        <col id="1" translatable="yes">Analogue Joystick</col>
+      </row>
+      <row>
+        <col id="0">mouse</col>
+        <col id="1" translatable="yes">Mouse</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkAdjustment" id="OffsetAdjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
   <object class="GtkVBox" id="DriverComponent">
     <property name="width_request">300</property>
     <property name="visible">True</property>
@@ -15,6 +42,9 @@
         <property name="n_columns">3</property>
         <property name="column_spacing">4</property>
         <property name="row_spacing">4</property>
+        <child>
+          <placeholder/>
+        </child>
         <child>
           <object class="GtkSpinButton" id="Timeout">
             <property name="visible">True</property>
@@ -138,9 +168,6 @@ lose accuracy. </property>
             <property name="bottom_attach">3</property>
           </packing>
         </child>
-        <child>
-          <placeholder/>
-        </child>
       </object>
       <packing>
         <property name="expand">True</property>
@@ -148,33 +175,6 @@ lose accuracy. </property>
         <property name="position">0</property>
       </packing>
     </child>
-  </object>
-  <object class="GtkListStore" id="JoyModeModel">
-    <columns>
-      <!-- column-name JoyModeId -->
-      <column type="gchararray"/>
-      <!-- column-name JoyModeName -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0">macro</col>
-        <col id="1" translatable="yes">Emit macro keys</col>
-      </row>
-      <row>
-        <col id="0">joystick</col>
-        <col id="1" translatable="yes">Analogue Joystick</col>
-      </row>
-      <row>
-        <col id="0">mouse</col>
-        <col id="1" translatable="yes">Mouse</col>
-      </row>
-    </data>
-  </object>
-  <object class="GtkAdjustment" id="OffsetAdjustment">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="ResetWaitAdjustment">
     <property name="upper">1000000</property>
