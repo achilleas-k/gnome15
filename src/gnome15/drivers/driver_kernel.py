@@ -523,7 +523,7 @@ class KernelDriverPreferences():
         self.device = device
         
         widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_kernel.ui"))
+        widget_tree.add_from_file(os.path.join(g15globals.ui_dir, "driver_kernel.ui"))
         self.window = widget_tree.get_object("KernelDriverSettings")
         self.window.set_transient_for(parent)
         

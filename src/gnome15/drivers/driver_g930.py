@@ -72,7 +72,7 @@ class G930DriverPreferences():
         self.device = device
         
         widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g930.ui"))
+        widget_tree.add_from_file(os.path.join(g15globals.ui_dir, "driver_g930.ui"))
         self.window = widget_tree.get_object("G930DriverSettings")
         self.window.set_transient_for(parent)
         

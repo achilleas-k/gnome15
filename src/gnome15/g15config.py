@@ -254,7 +254,7 @@ class G15Config:
         
         # Load main Glade file
         g15locale.get_translation("g15-config")
-        g15Config = os.path.join(g15globals.glade_dir, 'g15-config.ui')
+        g15Config = os.path.join(g15globals.ui_dir, 'g15-config.ui')
         self.widget_tree = gtk.Builder()
         self.widget_tree.set_translation_domain("g15-config")
         self.widget_tree.add_from_file(g15Config)
