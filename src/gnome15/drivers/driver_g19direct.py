@@ -109,16 +109,19 @@ background_control = g15driver.Control("background", _("Default LCD Background")
 highlight_control = g15driver.Control("highlight", _("Default Highlight Color"), (255, 0, 0), hint=g15driver.HINT_HIGHLIGHT | g15driver.HINT_VIRTUAL)
 controls = [ mkeys_control, keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control, highlight_control ]
 
-def show_preferences(device, parent, gconf_client):    
+def show_preferences(device, parent, gconf_client):
     g15locale.get_translation("driver_g19direct")
     widget_tree = gtk.Builder()
     widget_tree.set_translation_domain("driver_g19direct")
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.glade"))
+    window = widget_tree.get_object("G19DirectDriverSettings")
+    window.set_transient_for(parent)
     
     g15uigconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/reset_usb" % device.uid, "Reset", False, widget_tree, True)
     g15uigconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
     g15uigconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/reset_wait" % device.uid, "ResetWait", 0, widget_tree, False)
-    return widget_tree.get_object("DriverComponent")
+    window.run()
+    window.hide()
 
 class Driver(g15driver.AbstractDriver):
 

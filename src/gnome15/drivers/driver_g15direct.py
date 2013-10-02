@@ -150,6 +150,8 @@ def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
     widget_tree.set_translation_domain("driver_g15direct")
     widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15direct.glade"))  
+    window = widget_tree.get_object("G15DirectDriverSettings")
+    window.set_transient_for(parent)
     g15uigconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
     if not device.model_id == g15driver.MODEL_G13:
         widget_tree.get_object("JoyModeCombo").destroy()
@@ -171,7 +173,8 @@ def show_preferences(device, parent, gconf_client):
                 gconf_client.set_int("/apps/gnome15/%s/digital_offset" % device.uid, int(widget.get_value()))
         offset_widget.connect("value-changed", spinner_changed)
     
-    return widget_tree.get_object("DriverComponent")
+    window.run()
+    window.hide()
 
 def fix_sans_style(root):
     for element in root.iter():

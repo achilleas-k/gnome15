@@ -514,16 +514,18 @@ device_info = {
 EVIOCGRAB = 0x40044590
 
 def show_preferences(device, parent, gconf_client):
-    prefs = KernelDriverPreferences(device, gconf_client)
-    return prefs.component
+    prefs = KernelDriverPreferences(device, parent, gconf_client)
+    prefs.run()
 
 class KernelDriverPreferences():
     
-    def __init__(self, device, gconf_client):
+    def __init__(self, device, parent, gconf_client):
         self.device = device
         
         widget_tree = gtk.Builder()
         widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_kernel.glade"))
+        self.window = widget_tree.get_object("KernelDriverSettings")
+        self.window.set_transient_for(parent)
         
         self.joy_mode_label = widget_tree.get_object("JoyModeLabel")
         self.joy_mode_combo = widget_tree.get_object("JoyModeCombo")
@@ -549,9 +551,12 @@ class KernelDriverPreferences():
         self.joy_mode_combo.connect("changed", self._set_available_options)        
         self.joy_calibrate.connect("clicked", self._do_calibrate)
             
-        self.component = widget_tree.get_object("DriverComponent")
         self._set_available_options()
         
+    def run(self):
+        self.window.run()
+        self.window.hide()
+
     def _set_available_options(self, widget = None):
         self.joy_mode_label.set_sensitive(self.device.model_id == g15driver.MODEL_G13)
         self.joy_mode_combo.set_sensitive(self.device.model_id == g15driver.MODEL_G13)
