@@ -8,7 +8,7 @@ xgettext --from-code=UTF-8 --language=Python --keyword=N_ --keyword=_ --output=g
 xgettext --from-code=UTF-8 --language=Python --keyword=N_ --keyword=_ --output=gnome15.pot ../src/gnome15/*.py
 
 # .ui files
-for i in ../data/glade/*.ui; do
+for i in ../data/ui/*.ui; do
 	intltool-extract --type=gettext/glade $i
         mv ${i}.h .
 done

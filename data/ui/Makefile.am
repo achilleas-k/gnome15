@@ -1,5 +1,5 @@
-gladedir = $(datadir)/gnome15/glade
-glade_DATA = driver_gtk.ui \
+uidir = $(datadir)/gnome15/ui
+ui_DATA = driver_gtk.ui \
 	driver_kernel.ui \
 	driver_g19direct.ui \
 	driver_g15direct.ui \
@@ -13,4 +13,4 @@ glade_DATA = driver_gtk.ui \
 	redblue.png
 
 EXTRA_DIST =  			\
-	$(glade_DATA)
+	$(ui_DATA)

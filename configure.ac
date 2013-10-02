@@ -947,7 +947,6 @@ data/autostart/gnome15.desktop
 data/autostart/g15-systemtray.desktop
 data/autostart/g15-indicator.desktop
 data/dbus/Makefile
-data/glade/Makefile
 data/icons/Makefile
 data/icons/hicolor/Makefile
 data/icons/hicolor/16x16/Makefile
@@ -1001,6 +1000,7 @@ data/udev/99-gnome15-g15direct.rules
 data/udev/99-gnome15-g19direct.rules
 data/udev/99-gnome15-g930.rules
 data/ukeys/Makefile
+data/ui/Makefile
 i18n/Makefile
 man/Makefile
 src/Makefile
