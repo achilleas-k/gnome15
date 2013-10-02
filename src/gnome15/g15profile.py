@@ -270,7 +270,7 @@ def get_active_profile(device):
         
     if profile is None:
         profile = create_default(device)
-        conf_client.set_string("/apps/gnome15/%s/active_profile" % device.uid, profile.id)
+        profile.make_active()
     
     return profile
 
