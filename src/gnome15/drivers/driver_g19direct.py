@@ -110,18 +110,41 @@ highlight_control = g15driver.Control("highlight", _("Default Highlight Color"),
 controls = [ mkeys_control, keyboard_backlight_control, default_keyboard_backlight_control, lcd_brightness_control, foreground_control, background_control, highlight_control ]
 
 def show_preferences(device, parent, gconf_client):
-    g15locale.get_translation("driver_g19direct")
-    widget_tree = gtk.Builder()
-    widget_tree.set_translation_domain("driver_g19direct")
-    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.glade"))
-    window = widget_tree.get_object("G19DirectDriverSettings")
-    window.set_transient_for(parent)
-    
-    g15uigconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/reset_usb" % device.uid, "Reset", False, widget_tree, True)
-    g15uigconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
-    g15uigconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/reset_wait" % device.uid, "ResetWait", 0, widget_tree, False)
-    window.run()
-    window.hide()
+    prefs = G19DriverPreferences(device, parent, gconf_client)
+    prefs.run()
+
+class G19DriverPreferences():
+
+    def __init__(self, device, parent, gconf_client):
+        g15locale.get_translation("driver_g19direct")
+        widget_tree = gtk.Builder()
+        widget_tree.set_translation_domain("driver_g19direct")
+        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.glade"))
+        self.window = widget_tree.get_object("G19DirectDriverSettings")
+        self.window.set_transient_for(parent)
+
+        g15uigconf.configure_checkbox_from_gconf(gconf_client,
+                                                 "/apps/gnome15/%s/reset_usb" % device.uid,
+                                                 "Reset",
+                                                 False,
+                                                 widget_tree,
+                                                 True)
+        g15uigconf.configure_spinner_from_gconf(gconf_client,
+                                                "/apps/gnome15/%s/timeout" % device.uid,
+                                                "Timeout",
+                                                10000,
+                                                widget_tree,
+                                                False)
+        g15uigconf.configure_spinner_from_gconf(gconf_client,
+                                                "/apps/gnome15/%s/reset_wait" % device.uid,
+                                                "ResetWait",
+                                                0,
+                                                widget_tree,
+                                                False)
+
+    def run(self):
+        self.window.run()
+        self.window.hide()
 
 class Driver(g15driver.AbstractDriver):
 

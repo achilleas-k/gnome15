@@ -136,45 +136,74 @@ controls = {
 ANALOGUE_OFFSET = 20
 DIGITAL_OFFSET = 64
 
-def set_offset_depending_on_mode(widget, gconf_client, device, offset_widget):
-    mode = gconf_client.get_string("/apps/gnome15/%s/joymode" % device.uid)
-    offset_model = offset_widget.get_adjustment()
-    if mode in [ "joystick", "mouse"]:
-        val = g15gconf.get_int_or_default(gconf_client, "/apps/gnome15/%s/analogue_offset" % device.uid, ANALOGUE_OFFSET)
-    else:
-        val = g15gconf.get_int_or_default(gconf_client, "/apps/gnome15/%s/digital_offset" % device.uid, DIGITAL_OFFSET)
-    offset_model.set_value(val)
-        
 def show_preferences(device, parent, gconf_client):
-    g15locale.get_translation("driver_g15direct")
-    widget_tree = gtk.Builder()
-    widget_tree.set_translation_domain("driver_g15direct")
-    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15direct.glade"))  
-    window = widget_tree.get_object("G15DirectDriverSettings")
-    window.set_transient_for(parent)
-    g15uigconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
-    if not device.model_id == g15driver.MODEL_G13:
-        widget_tree.get_object("JoyModeCombo").destroy()
-        widget_tree.get_object("JoyModeLabel").destroy()
-        widget_tree.get_object("Offset").destroy()
-        widget_tree.get_object("OffsetLabel").destroy()
-        widget_tree.get_object("OffsetDescription").destroy()
-    else:  
-        g15uigconf.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
-        # We have separate offset values for digital / analogue, so swap between them based on configuration 
-        offset_widget = widget_tree.get_object("Offset")    
-        set_offset_depending_on_mode(None, gconf_client, device, offset_widget)
-        widget_tree.get_object("JoyModeCombo").connect("changed", set_offset_depending_on_mode, gconf_client, device, offset_widget)
-        def spinner_changed(widget):
-            mode = gconf_client.get_string("/apps/gnome15/%s/joymode" % device.uid)
-            if mode in [ "joystick", "mouse"]:
-                gconf_client.set_int("/apps/gnome15/%s/analogue_offset" % device.uid, int(widget.get_value()))
-            else:
-                gconf_client.set_int("/apps/gnome15/%s/digital_offset" % device.uid, int(widget.get_value()))
-        offset_widget.connect("value-changed", spinner_changed)
-    
-    window.run()
-    window.hide()
+    prefs = G15DirectDriverPreferences(device, parent, gconf_client)
+    prefs.run()
+
+class G15DirectDriverPreferences():
+
+    def __init__(self, device, parent, gconf_client):
+        self.gconf_client = gconf_client
+        self.device = device
+
+        g15locale.get_translation("driver_g15direct")
+        widget_tree = gtk.Builder()
+        widget_tree.set_translation_domain("driver_g15direct")
+        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15direct.glade"))
+        self.window = widget_tree.get_object("G15DirectDriverSettings")
+        self.window.set_transient_for(parent)
+
+        g15uigconf.configure_spinner_from_gconf(gconf_client,
+                                                "/apps/gnome15/%s/timeout" % device.uid,
+                                                "Timeout",
+                                                10000,
+                                                widget_tree,
+                                                False)
+        if not device.model_id == g15driver.MODEL_G13:
+            widget_tree.get_object("JoyModeCombo").destroy()
+            widget_tree.get_object("JoyModeLabel").destroy()
+            widget_tree.get_object("Offset").destroy()
+            widget_tree.get_object("OffsetLabel").destroy()
+            widget_tree.get_object("OffsetDescription").destroy()
+        else:
+            g15uigconf.configure_combo_from_gconf(gconf_client,
+                                                  "/apps/gnome15/%s/joymode" % device.uid,
+                                                  "JoyModeCombo",
+                                                  "macro",
+                                                  widget_tree)
+            # We have separate offset values for digital / analogue,
+            # so swap between them based on configuration
+            self.offset_widget = widget_tree.get_object("Offset")
+            self._set_offset_depending_on_mode(None)
+            widget_tree.get_object("JoyModeCombo").connect("changed",
+                                                           self._set_offset_depending_on_mode)
+            self.offset_widget.connect("value-changed", self._spinner_changed)
+
+    def run(self):
+        self.window.run()
+        self.window.hide()
+
+    def _set_offset_depending_on_mode(self, widget):
+        mode = self.gconf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
+        offset_model = self.offset_widget.get_adjustment()
+        if mode in [ "joystick", "mouse"]:
+            val = g15gconf.get_int_or_default(self.gconf_client,
+                                              "/apps/gnome15/%s/analogue_offset" % self.device.uid,
+                                              ANALOGUE_OFFSET)
+        else:
+            val = g15gconf.get_int_or_default(self.gconf_client,
+                                              "/apps/gnome15/%s/digital_offset" % self.device.uid,
+                                              DIGITAL_OFFSET)
+        offset_model.set_value(val)
+
+    def _spinner_changed(self, widget):
+        mode = self.gconf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
+        if mode in [ "joystick", "mouse"]:
+            self.gconf_client.set_int("/apps/gnome15/%s/analogue_offset" % self.device.uid,
+                                      int(widget.get_value()))
+        else:
+            self.gconf_client.set_int("/apps/gnome15/%s/digital_offset" % self.device.uid,
+                                      int(widget.get_value()))
 
 def fix_sans_style(root):
     for element in root.iter():
