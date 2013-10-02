@@ -2,7 +2,7 @@ SUBDIRS = default
 
 plugindir = $(datadir)/gnome15/plugins/stopwatch
 plugin_DATA = \
-	stopwatch.glade \
+	stopwatch.ui \
 	stopwatch.py \
 	timer.py \
 	preferences.py

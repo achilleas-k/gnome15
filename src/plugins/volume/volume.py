@@ -97,7 +97,7 @@ def show_preferences(parent, driver, gconf_client, gconf_key):
         mixer_combo.set_active(0)
 
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "volume.glade"))    
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "volume.ui"))
     dialog = widget_tree.get_object("VolumeDialog") 
     soundcard_combo = widget_tree.get_object('SoundcardCombo')
     mixer_combo = widget_tree.get_object('MixerCombo')

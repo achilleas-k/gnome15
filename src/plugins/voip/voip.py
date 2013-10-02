@@ -109,7 +109,7 @@ MODES = {
 
 def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "voip.glade"))
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "voip.ui"))
     dialog = widget_tree.get_object("VoipDialog")
     dialog.set_transient_for(parent)
     g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/raise_on_talk_status_change" % gconf_key, "RaiseOnTalkStatusChange", False, widget_tree)

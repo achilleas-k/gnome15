@@ -77,7 +77,7 @@ class LCDShotPreferences():
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key
         widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "lcdshot.glade"))
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "lcdshot.ui"))
         dialog = widget_tree.get_object("LCDShotDialog")
         dialog.set_transient_for(parent)        
         chooser = gtk.FileChooserDialog("Open..",

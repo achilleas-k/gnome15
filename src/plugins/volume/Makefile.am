@@ -2,7 +2,7 @@ SUBDIRS = default
 
 plugindir = $(datadir)/gnome15/plugins/volume
 plugin_DATA = volume.py \
-	volume.glade
+	volume.ui
 
 EXTRA_DIST =  			\
 	$(plugin_DATA)

@@ -58,7 +58,7 @@ def create(gconf_key, gconf_client, screen):
 
 def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "impulse15.glade"))
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "impulse15.ui"))
     
     dialog = widget_tree.get_object("ImpulseDialog")
     dialog.set_transient_for(parent)

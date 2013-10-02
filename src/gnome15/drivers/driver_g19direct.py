@@ -119,7 +119,7 @@ class G19DriverPreferences():
         g15locale.get_translation("driver_g19direct")
         widget_tree = gtk.Builder()
         widget_tree.set_translation_domain("driver_g19direct")
-        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.glade"))
+        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g19direct.ui"))
         self.window = widget_tree.get_object("G19DirectDriverSettings")
         self.window.set_transient_for(parent)
 

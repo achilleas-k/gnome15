@@ -104,7 +104,7 @@ def create(gconf_key, gconf_client, screen):
 
 def show_preferences(parent, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "notify-lcd.glade"))
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "notify-lcd.ui"))
     dialog = widget_tree.get_object("NotifyLCDDialog")
     dialog.set_transient_for(parent)
     g15uigconf.configure_checkbox_from_gconf(gconf_client, gconf_key + "/respect_timeout", "RespectTimeout", False, widget_tree, True)

@@ -68,7 +68,7 @@ def create(gconf_key, gconf_client, screen):
 
 def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "trafficstats.glade"))
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "trafficstats.ui"))
     dialog = widget_tree.get_object("TrafficStats")
 
     # Resets the value of the use_vnstat flag if vnstat is not installed

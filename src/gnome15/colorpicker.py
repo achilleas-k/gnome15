@@ -120,7 +120,7 @@ class ColorPreview(gtk.DrawingArea):
     def _button_press(self, widget, event):
         widget_tree = gtk.Builder()
         widget_tree.set_translation_domain("colorpicker")
-        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, 'colorpicker.glade'))
+        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, 'colorpicker.ui'))
         if self.picker.redblue:
             self._show_redblue_picker(widget_tree)
         else:

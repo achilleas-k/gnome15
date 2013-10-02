@@ -112,7 +112,7 @@ class G15SensorsPreferences():
         self._gconf_key = gconf_key
         
         widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "sense.glade"))
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "sense.ui"))
         
         # Feeds
         self.sensor_model = widget_tree.get_object("SensorModel")

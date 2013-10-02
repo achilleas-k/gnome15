@@ -54,7 +54,7 @@ class G15BackgroundPreferences():
     def __init__(self, parent, driver, gconf_client, gconf_key):
         
         widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "background.glade"))
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "background.ui"))
         
         self.gconf_client = gconf_client
         self.gconf_key = gconf_key

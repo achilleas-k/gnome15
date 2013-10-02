@@ -86,7 +86,7 @@ class GtkDriverPreferences():
         g15locale.get_translation("driver_gtk")
         widget_tree = gtk.Builder()
         widget_tree.set_translation_domain("driver_gtk")
-        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_gtk.glade"))
+        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_gtk.ui"))
         self.window = widget_tree.get_object("GtkDriverSettings")
         self.window.set_transient_for(parent)
 

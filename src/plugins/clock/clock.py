@@ -60,7 +60,7 @@ should display a dialog for editing the plugins preferences
 '''
 def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "clock.glade"))
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "clock.ui"))
     
     dialog = widget_tree.get_object("ClockDialog")
     dialog.set_transient_for(parent)

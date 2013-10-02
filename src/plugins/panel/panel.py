@@ -40,7 +40,7 @@ def create(gconf_key, gconf_client, screen):
 
 def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "panel.glade"))
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "panel.ui"))
     dialog = widget_tree.get_object("PanelDialog")
     dialog.set_transient_for(parent)
     g15uigconf.configure_adjustment_from_gconf(gconf_client, gconf_key + "/size", "SizeAdjustment", 24, widget_tree)
