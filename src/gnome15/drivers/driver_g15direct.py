@@ -186,7 +186,7 @@ class G15DirectDriverPreferences():
     def _set_offset_depending_on_mode(self, widget):
         mode = self.gconf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
         offset_model = self.offset_widget.get_adjustment()
-        if mode in [ "joystick", "mouse"]:
+        if mode in [ g15uinput.JOYSTICK, g15uinput.MOUSE]:
             val = g15gconf.get_int_or_default(self.gconf_client,
                                               "/apps/gnome15/%s/analogue_offset" % self.device.uid,
                                               ANALOGUE_OFFSET)
@@ -198,7 +198,7 @@ class G15DirectDriverPreferences():
 
     def _spinner_changed(self, widget):
         mode = self.gconf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
-        if mode in [ "joystick", "mouse"]:
+        if mode in [ g15uinput.JOYSTICK, g15uinput.MOUSE]:
             self.gconf_client.set_int("/apps/gnome15/%s/analogue_offset" % self.device.uid,
                                       int(widget.get_value()))
         else:
@@ -488,7 +488,7 @@ class Driver(g15driver.AbstractDriver):
             this_keys += self._convert_ext_g15daemon_code(ext_code)
         
         if self.get_model_name() == g15driver.MODEL_G13:
-            c = self.analogue_calibration if self.joy_mode in [ "joystick", "mouse" ] else self.digital_calibration
+            c = self.analogue_calibration if self.joy_mode in [ g15uinput.JOYSTICK, g15uinput.MOUSE ] else self.digital_calibration
             
             low_val = g15uinput.JOYSTICK_CENTER - c
             high_val = g15uinput.JOYSTICK_CENTER + c
@@ -508,10 +508,10 @@ class Driver(g15driver.AbstractDriver):
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Joystick at %s" % str(pos))
             
-            if self.joy_mode == "joystick":
+            if self.joy_mode == g15uinput.JOYSTICK:
                 if has_js:
                     self._abs_joystick(this_keys, pos)
-            elif self.joy_mode == "mouse":
+            elif self.joy_mode == g15uinput.MOUSE:
                 if has_js:
                     self._rel_mouse(this_keys, pos, low_val, high_val, max_step)                 
             else:
