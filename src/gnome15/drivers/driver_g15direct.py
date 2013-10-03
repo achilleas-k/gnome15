@@ -511,6 +511,9 @@ class Driver(g15driver.AbstractDriver):
             if self.joy_mode == g15uinput.JOYSTICK:
                 if has_js:
                     self._abs_joystick(this_keys, pos)
+            elif self.joy_mode == g15uinput.DIGITAL_JOYSTICK:
+                if has_js:
+                    self._digital_joystick(this_keys, pos, low_val, high_val)
             elif self.joy_mode == g15uinput.MOUSE:
                 if has_js:
                     self._rel_mouse(this_keys, pos, low_val, high_val, max_step)                 
@@ -596,10 +599,10 @@ class Driver(g15driver.AbstractDriver):
         elif pos[1] > high_val:
             this_keys.append(g15driver.G_KEY_DOWN)
             
-    def _check_js_buttons(self, this_keys):        
-        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_LEFT, g15uinput.BTN_1)
-        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_DOWN, g15uinput.BTN_2)
-        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_CENTER, g15uinput.BTN_3)
+    def _check_js_buttons(self, joystick_type, this_keys):
+        self._check_buttons(joystick_type, this_keys, g15driver.G_KEY_JOY_LEFT, g15uinput.BTN_1)
+        self._check_buttons(joystick_type, this_keys, g15driver.G_KEY_JOY_DOWN, g15uinput.BTN_2)
+        self._check_buttons(joystick_type, this_keys, g15driver.G_KEY_JOY_CENTER, g15uinput.BTN_3)
             
     def _check_mouse_buttons(self, this_keys):        
         self._check_buttons(g15uinput.MOUSE, this_keys, g15driver.G_KEY_JOY_LEFT, g15uinput.BTN_MOUSE)
@@ -633,9 +636,26 @@ class Driver(g15driver.AbstractDriver):
                 self.timer.cancel()
         
     def _abs_joystick(self, this_keys, pos):
-        self._check_js_buttons(this_keys) 
+        self._check_js_buttons(g15uinput.JOYSTICK, this_keys)
         g15uinput.emit(g15uinput.JOYSTICK, g15uinput.ABS_X, pos[0], syn=False)
         g15uinput.emit(g15uinput.JOYSTICK, g15uinput.ABS_Y, pos[1])
+
+    def _digital_joystick(self, this_keys, pos, low_val, high_val):
+        self._check_js_buttons(g15uinput.DIGITAL_JOYSTICK, this_keys)
+        pos_x = g15uinput.JOYSTICK_CENTER
+        pos_y = g15uinput.JOYSTICK_CENTER
+
+        if pos[0] < low_val:
+            pos_x = g15uinput.JOYSTICK_MIN
+        elif pos[0] > high_val:
+            pos_x = g15uinput.JOYSTICK_MAX
+        if pos[1] < low_val:
+            pos_y = g15uinput.JOYSTICK_MIN
+        elif pos[1] > high_val:
+            pos_y = g15uinput.JOYSTICK_MAX
+
+        g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.ABS_X, pos_x, syn=False)
+        g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.ABS_Y, pos_y)
         
     def _check_buttons(self, target, this_keys, key, button):        
         if key in this_keys:

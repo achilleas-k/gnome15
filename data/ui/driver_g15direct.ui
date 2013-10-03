@@ -22,6 +22,10 @@
         <col id="0">mouse</col>
         <col id="1" translatable="yes">Mouse</col>
       </row>
+      <row>
+        <col id="0" translatable="yes">digital-joystick</col>
+        <col id="1" translatable="yes">Digital Joystick</col>
+      </row>
     </data>
   </object>
   <object class="GtkAdjustment" id="OffsetAdjustment">
