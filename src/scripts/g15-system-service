@@ -57,11 +57,7 @@ DBusGMainLoop(set_as_default=True)
 # Server host class
 
 def check_service_status(bus):
-    try :
-        bus.get_object('org.gnome15.Gnome15', '/org/gnome15/SystemService').GetServerInformation()
-        return True
-    except:
-        return False
+    return bus.name_has_owner('org.gnome15.SystemService')
 
 def start_service(bus, no_trap=False,):    
     try :
