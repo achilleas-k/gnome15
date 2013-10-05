@@ -56,9 +56,9 @@ DBusGMainLoop(set_as_default=True)
 
 # Server host class
 
-def check_service_status(system_dbus):
+def check_service_status(bus):
     try :
-        system_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/SystemService').GetServerInformation()
+        bus.get_object('org.gnome15.Gnome15', '/org/gnome15/SystemService').GetServerInformation()
         return True
     except:
         return False
@@ -99,17 +99,17 @@ if __name__ == "__main__":
         logger.setLevel(level = level)
         
     if len(args) == 1 and ( args[0] == "stop" or args[0] == "restart" ):
-        system_bus = dbus.SessionBus() if options.use_session_bus else dbus.SystemBus()
-        if not check_service_status(system_bus):
+        bus = dbus.SessionBus() if options.use_session_bus else dbus.SystemBus()
+        if not check_service_status(bus):
             if args[0] == "stop":
                 print "Gnome15 system service is not running"
         else:            
-            session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/SystemService').Stop();
+            bus.get_object('org.gnome15.Gnome15', '/org/gnome15/SystemService').Stop();
             
     if len(args) == 0 or ( len(args) == 1 and ( args[0] == "start" or args[0] == "restart" ) ):
-        system_bus = dbus.SessionBus() if options.use_session_bus else dbus.SystemBus()
-        if check_service_status(system_bus):
+        bus = dbus.SessionBus() if options.use_session_bus else dbus.SystemBus()
+        if check_service_status(bus):
             print "Gnome15 desktop service already running"
         else:
             if options.foreground or ( not options.foreground and os.fork() == 0 ):
-                start_service(system_bus, options.no_trap)
+                start_service(bus, options.no_trap)
