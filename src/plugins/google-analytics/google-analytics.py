@@ -112,7 +112,7 @@ class GoogleAnalyticsOptions(g15accounts.G15AccountOptions):
         g15accounts.G15AccountOptions.__init__(self, account, account_ui)
                 
         self.widget_tree = gtk.Builder()
-        self.widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "google-analytics.glade"))
+        self.widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "google-analytics.ui"))
         self.component = self.widget_tree.get_object("OptionPanel")
         
         username = self.widget_tree.get_object("Username")

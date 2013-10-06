@@ -24,7 +24,7 @@ image_dir = os.path.join(package_dir, "..", "..", "data", "images")
 dev = False
 if os.path.exists(image_dir):
 	dev = True 
-	glade_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "data", "glade"))
+	ui_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "data", "ui"))
 	font_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "data", "fonts"))
 	icons_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "data", "icons"))
 	ukeys_dir = os.path.realpath(os.path.join(package_dir, "..", "..", "data", "ukeys"))
@@ -34,7 +34,7 @@ if os.path.exists(image_dir):
 	i18n_dir = os.path.realpath(os.path.join(package_dir, "..", "i18n"))
 else: 
 	image_dir = "@prefix@/share/gnome15/images"
-	glade_dir = "@prefix@/share/gnome15/glade"
+	ui_dir = "@prefix@/share/gnome15/ui"
 	font_dir = "@prefix@/share/gnome15"
 	plugin_dir = "@prefix@/share/gnome15/plugins"
 	themes_dir = "@prefix@/share/gnome15/themes"

@@ -132,7 +132,7 @@ class G15Keyring():
                 
             # Ask for the password
             widget_tree = gtk.Builder()
-            widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "password.glade"))
+            widget_tree.add_from_file(os.path.join(g15globals.ui_dir, "password.ui"))
             dialog = widget_tree.get_object("PasswordDialog")
             text_widget = widget_tree.get_object("Text")
             text_widget.set_text(_("The account <b>%s</b> for the user <b>%s</b>.\n\
@@ -333,7 +333,7 @@ class G15AccountPreferences():
             
         
         self.widget_tree = gtk.Builder()
-        self.widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "accounts.glade"))
+        self.widget_tree.add_from_file(os.path.join(g15globals.ui_dir, "accounts.ui"))
         
         # Models        
         self.type_model = self.widget_tree.get_object("TypeModel")

@@ -39,13 +39,13 @@ for i in src/*; do
            fi
         done
 
-        # Glade files
-        if [ $(ls *.glade 2>/dev/null|wc -l) -gt 0 ]; then 
-            for i in *.glade; do
+        # .ui files
+        if [ $(ls *.ui 2>/dev/null|wc -l) -gt 0 ]; then
+            for i in *.ui; do
                 intltool-extract --type=gettext/glade ${i}
-                gladename=$(basename $i .glade)
+                uiname=$(basename $i .ui)
                 mv -f ${i}.h i18n
-                xgettext --language=Python --keyword=_ --keyword=N_ --output=i18n/${gladename}.pot i18n/${i}.h
+                xgettext --language=Python --keyword=_ --keyword=N_ --output=i18n/${uiname}.pot i18n/${i}.h
             done
         fi
 

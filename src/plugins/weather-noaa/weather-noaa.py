@@ -65,7 +65,7 @@ class NOAAWeatherOptions(weather.WeatherOptions):
         weather.WeatherOptions.__init__(self)
                 
         self.widget_tree = gtk.Builder()
-        self.widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "weather-noaa.glade"))
+        self.widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "weather-noaa.ui"))
         self.component = self.widget_tree.get_object("OptionPanel")
         
         g15uigconf.configure_text_from_gconf(gconf_client, "%s/station_id" % gconf_key, "StationID", "KPEO", self.widget_tree)

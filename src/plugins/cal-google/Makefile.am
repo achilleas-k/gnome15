@@ -1,6 +1,6 @@
 plugindir = $(datadir)/gnome15/plugins/cal-google
 plugin_DATA = cal-google.py \
-	cal-google.glade \
+	cal-google.ui \
 	icon.png \
 	iso8601.py
 

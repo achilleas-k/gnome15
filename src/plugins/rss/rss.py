@@ -74,7 +74,7 @@ class G15RSSPreferences():
         self._gconf_key = gconf_key
         
         widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "rss.glade"))
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "rss.ui"))
         
         # Feeds
         self.feed_model = widget_tree.get_object("FeedModel")

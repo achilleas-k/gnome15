@@ -74,7 +74,7 @@ class G15TailsPreferences():
         self._gconf_key = gconf_key
         
         widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "tails.glade"))
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "tails.ui"))
         
         # Feeds
         self.file_model = widget_tree.get_object("FileModel")

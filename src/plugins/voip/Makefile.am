@@ -11,7 +11,7 @@ plugin_DATA = voip.py \
 	default_microphone-sensitivity-high.gif \
 	default_microphone-sensitivity-muted.gif \
 	default_record.gif \
-	voip.glade
+	voip.ui
 	
 
 EXTRA_DIST =  			\

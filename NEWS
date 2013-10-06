@@ -1,3 +1,89 @@
+gnome15 0.9.7 (2013-10-05)
+==========================
+
+Gnome15 is a suite of tools for the Logitech G series keyboards and
+headsets, including the G15, G19, G13, G930, G35, G510, G11, G110 and
+the Z-10 speakers aiming to provide the best integration possible with
+the Linux Desktop.
+
+Gnome15 provides:
+* A panel indicator (or applet)
+* A configuration tool
+* A macro system
+* A set of plugins
+
+Developers can extend Gnome15 by writing plugins in the Python
+programming language, or they can use the provided D-Bus API.
+Gnome15 uses GNOME technologies, while staying well integrated with
+other desktops such as Ubuntu Unity and XFCE. It should also work with
+KDE.
+
+About this release
+------------------
+
+Release 0.9.7 is mainly a bug fix release with some enhancements.
+Some minor changes took place with the configuration tool.
+The "Driver" tab no longer exists and the driver can now be selected
+directly from the "Keyboard" tab. A new button is used to display the
+driver options.
+
+Changes since 0.9.5
+-------------------
+
+* The volume monitor plugin now allows the selection of the sound card
+  to monitor. (https://projects.russo79.com/issues/212)
+* The sense plugin now supports udisks version 2.
+  (https://projects.russo79.com/issues/261)
+* Users using the g15direct driver can now make the G13 joystick behave
+  as a digital joystick. (https://projects.russo79.com/issues/280)
+
+Bugs fixed in this release
+--------------------------
+
+* The sense plugin now gracefully handles errors when it cannot connect
+  to a sensor source. (https://projects.russo79.com/issues/235)
+* The screensaver plugin now detects Gnome Shell integrated screensaver.
+  (https://projects.russo79.com/issues/257)
+* Fix a issue with the build system that automatically tries to build
+  appindicator even when the appindicator python library was not
+  available. (https://projects.russo79.com/issues/258)
+* Fixed the license displayed in the About dialogs.
+  (https://projects.russo79.com/issues/259)
+* Fixed the detection of the pillow library when building Gnome15.
+  (https://projects.russo79.com/issues/260)
+* The sense plugin udisks sensor source is now periodically refreshed.
+  (https://projects.russo79.com/issues/262)
+* The Display resolution plugin kept checking the display resolution
+  even when the plugin was disabled.
+  (https://projects.russo79.com/issues/266)
+* The impulse plugin wasn't correctly linked to the libpulse and fftw3
+  libraries. (https://projects.russo79.com/issues/267)
+* The virtual joysticks simulated by Gnome15 are now calibrated to at
+  they center instead of their top-left position.
+  (https://projects.russo79.com/issues/271)
+* Simulation of joystick events using G keys has been fixed and no
+  longer throws an exception.
+  (https://projects.russo79.com/issues/273)
+* No longer display a "Unknown property: GtkMenu.ubuntu-local" when
+  displaying some windows. (https://projects.russo79.com/issues/274)
+* Correctly simulate joystick axis movements when using the kernel
+  driver. (https://projects.russo79.com/issues/275)
+* Correctly handle changes of the kernel driver options.
+  (https://projects.russo79.com/issues/276)
+* The g15-system-service can now be manually stopped (useful for
+  development only). (https://projects.russo79.com/issues/281)
+
+Under the hood changes for this release
+---------------------------------------
+
+* The GetPagesBelowPriority D-Bus method is now marked as deprecated
+  and should no longer be used.
+  (https://projects.russo79.com/issues/270)
+
+Have contributed code to this release:
+
+* NoXPhasma <noxphasma@live.de>
+
 gnome15 0.9.6 (2013-09-01)
 ==========================
 

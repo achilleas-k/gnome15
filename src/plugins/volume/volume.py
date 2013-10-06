@@ -20,6 +20,7 @@ _ = g15locale.get_translation("volume", modfile = __file__).ugettext
 import gnome15.g15screen as g15screen
 import gnome15.util.g15scheduler as g15scheduler
 import gnome15.util.g15uigconf as g15uigconf
+import gnome15.util.g15gconf as g15gconf
 import gnome15.util.g15icontools as g15icontools
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
@@ -30,7 +31,6 @@ import alsaaudio
 import select
 import os
 import gtk
-import time
 import logging
 logger = logging.getLogger("volume")
 
@@ -80,14 +80,55 @@ def create(gconf_key, gconf_client, screen):
     return G15Volume(screen, gconf_client, gconf_key)
 
 def show_preferences(parent, driver, gconf_client, gconf_key):
+    def refresh_devices(widget):
+        new_soundcard_name = soundcard_model[widget.get_active()][0]
+        new_soundcard_index = alsa_soundcards.index(new_soundcard_name)
+        '''
+        We temporarily block the handler for the mixer_combo 'changed' signal, since we are going
+        to change the combobox contents.
+        '''
+        mixer_combo.handler_block(changed_handler_id)
+        mixer_model.clear()
+        for mixer in alsaaudio.mixers(new_soundcard_index):
+            mixer_model.append([mixer])
+        # Now we can unblock the handler
+        mixer_combo.handler_unblock(changed_handler_id)
+        # And since the list of mixers has changed, we select the first one by default
+        mixer_combo.set_active(0)
+
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "volume.glade"))    
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "volume.ui"))
     dialog = widget_tree.get_object("VolumeDialog") 
-    model = widget_tree.get_object("DeviceModel")   
-    for mixer in alsaaudio.mixers():
-        model.append([mixer])
-    dialog.set_transient_for(parent)    
-    g15uigconf.configure_combo_from_gconf(gconf_client, gconf_key + "/mixer", "DeviceCombo", "Master", widget_tree)
+    soundcard_combo = widget_tree.get_object('SoundcardCombo')
+    mixer_combo = widget_tree.get_object('MixerCombo')
+    soundcard_model = widget_tree.get_object("SoundcardModel")
+    mixer_model = widget_tree.get_object("MixerModel")
+    alsa_soundcards = alsaaudio.cards()
+    soundcard_name = g15gconf.get_string_or_default(gconf_client,
+                                                    gconf_key + "/soundcard",
+                                                    str(alsa_soundcards[0]))
+    soundcard_index = alsa_soundcards.index(soundcard_name)
+    soundcard_mixers = alsaaudio.mixers(soundcard_index)
+
+    for card in alsa_soundcards:
+        soundcard_model.append([card])
+    for mixer in soundcard_mixers:
+        mixer_model.append([mixer])
+
+    g15uigconf.configure_combo_from_gconf(gconf_client, \
+                                          gconf_key + "/soundcard", \
+                                          "SoundcardCombo", \
+                                          str(alsa_soundcards[0]), \
+                                          widget_tree)
+
+    changed_handler_id = g15uigconf.configure_combo_from_gconf(gconf_client, \
+                                                               gconf_key + "/mixer", \
+                                                               "MixerCombo", \
+                                                                str(soundcard_mixers[0]), \
+                                                                widget_tree)
+    soundcard_combo.connect('changed', refresh_devices)
+
+    dialog.set_transient_for(parent)
     dialog.run()
     dialog.hide()
             
@@ -102,10 +143,12 @@ class G15Volume():
         self._mute = False
         self._light_controls = None
         self._lights_timer = None
+        self._reload_config_timer = None
 
     def activate(self):
         self._screen.key_handler.action_listeners.append(self) 
         self._activated = True
+        self._read_config()
         self._start_monitoring()
         self._notify_handler = self._gconf_client.notify_add(self._gconf_key, self._config_changed); 
     
@@ -132,7 +175,7 @@ class G15Volume():
                         if vol_mixer is not None:
                             vol_mixer.close()
                         # Some pulse weirdness maybe?
-                        vol_mixer = self._open_mixer("PCM")
+                        vol_mixer = self._open_mixer("PCM", self.current_card_index)
                         try :
                             mutes = vol_mixer.getmute()
                         except alsaaudio.ALSAAudioError:
@@ -169,13 +212,52 @@ class G15Volume():
         self._volthread.start()
     
     def _config_changed(self, client, connection_id, entry, args):    
+        '''
+        If the user changes the soundcard on the preferences dialog this method
+        would be called two times. A first time for the soundcard change, and a
+        second time because the first mixer of the newly selected soundcard is
+        automatically selected.
+        The volume monitoring would then be restarted twice, which makes no sense.
+        Instead of restarting the monitoring as soon as this method is called,
+        we put it as a task on a queue for 1 second. If during that time, any
+        other change happens to the configuration, the previous restart request
+        is cancelled, and another one takes it's place.
+        This way, the monitoring is only restarted once when the user selects another
+        sound card.
+        '''
+        if self._reload_config_timer is not None:
+           if not self._reload_config_timer.is_complete():
+               self._reload_config_timer.cancel()
+           self._reload_config_timer = None
+
+        self._reload_config_timer = g15scheduler.queue('VolumeMonitorQueue',
+                                                       'RestartVolumeMonitoring',
+                                                       1.0,
+                                                       self._restart_monitoring)
+
+    def _restart_monitoring(self):
         self._stop_monitoring()
-        time.sleep(1.0)
+        self._read_config()
         self._start_monitoring()
+
+    def _read_config(self):
+        self.soundcard_name = g15gconf.get_string_or_default(self._gconf_client, \
+                                                             self._gconf_key + "/soundcard", \
+                                                             str(alsaaudio.cards()[0]))
+        self.soundcard_index = alsaaudio.cards().index(self.soundcard_name)
+
+        self.mixer_name = g15gconf.get_string_or_default(self._gconf_client, \
+                                                         self._gconf_key + "/mixer", \
+                                                         str(alsaaudio.mixers(self.soundcard_index)[0]))
+        if not self.mixer_name in alsaaudio.mixers(self.soundcard_index):
+            self.mixer_name = str(alsaaudio.mixers(self.soundcard_index)[0])
+            self._gconf_client.set_string(self._gconf_key + "/mixer", self.mixer_name)
+
             
     def _stop_monitoring(self):
         if self._volthread != None:
             self._volthread._stop_monitoring()
+            self._volthread.join(1.0)
         
     def _get_theme_properties(self):
         properties = {}
@@ -203,13 +285,13 @@ class G15Volume():
             self._light_controls = None
             
     def _open_mixer(self, mixer_name = None):
-        mixer_name = self._gconf_client.get_string(self._gconf_key + "/mixer") if mixer_name is None else mixer_name
+        mixer_name = self.mixer_name if mixer_name is None else mixer_name
         if not mixer_name or mixer_name == "":
             mixer_name = "Master"
             
-        logger.info("Opening mixer %s" % mixer_name)
+        logger.info("Opening soundcard %s mixer %s" % (self.soundcard_name, mixer_name))
         
-        vol_mixer = alsaaudio.Mixer(mixer_name, cardindex=0)
+        vol_mixer = alsaaudio.Mixer(mixer_name, cardindex=self.soundcard_index)
         return vol_mixer
     
     def _popup(self):
@@ -249,7 +331,7 @@ class G15Volume():
                 mutes = vol_mixer.getmute()
             except alsaaudio.ALSAAudioError:
                 # Some pulse weirdness maybe?
-                mute_mixer = alsaaudio.Mixer("PCM", cardindex=0)
+                mute_mixer = alsaaudio.Mixer("PCM", cardindex=self.soundcard_index)
                 try :
                     mutes = mute_mixer.getmute()
                 except alsaaudio.ALSAAudioError:
@@ -297,13 +379,9 @@ class VolumeThread(Thread):
         self.setDaemon(True)
         self._volume = volume
         
-        mixer_name = volume._gconf_client.get_string(volume._gconf_key + "/mixer")
-        if not mixer_name or mixer_name == "":
-            mixer_name = "Master"
-            
-        logger.info("Opening mixer %s" % mixer_name)
+        logger.info("Opening soundcard %s mixer %s" % (volume.soundcard_name, volume.mixer_name))
         
-        self._mixer = alsaaudio.Mixer(mixer_name, cardindex=0)
+        self._mixer = alsaaudio.Mixer(volume.mixer_name, cardindex=volume.soundcard_index)
         self._poll_desc = self._mixer.polldescriptors()
         self._poll = select.poll()
         self._fd = self._poll_desc[0][0]
@@ -332,4 +410,3 @@ class VolumeThread(Thread):
             except :
                 pass
             self._open.close()
- 

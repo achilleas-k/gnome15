@@ -54,7 +54,7 @@ def create(gconf_key, gconf_client, screen):
 
 def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "macros.glade"))
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "macros.ui"))
     dialog = widget_tree.get_object("MacrosDialog")
     dialog.set_transient_for(parent)
     g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/raise" % gconf_key, "RaisePageCheckbox", True, widget_tree)

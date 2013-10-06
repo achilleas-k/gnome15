@@ -569,6 +569,7 @@ class G15Service(g15desktop.G15AbstractService):
         self.debug_svg = False
         self.devices = g15devices.find_all_devices()
         self.macro_handler = MacroHandler()
+        self.global_plugins = None
                 
         # Expose Gnome15 functions via DBus
         logger.debug("Starting the DBUS service")
@@ -645,7 +646,8 @@ class G15Service(g15desktop.G15AbstractService):
     def shutdown(self, quickly = False):
         logger.info("Shutting down")
         self.shutting_down = True
-        self.global_plugins.destroy()
+        if self.global_plugins is not None:
+            self.global_plugins.destroy()
         self.stop(quickly)
         g15scheduler.stop_queue(MACRO_HANDLER_QUEUE)
         g15scheduler.stop_queue(SERVICE_QUEUE)
@@ -779,13 +781,8 @@ class G15Service(g15desktop.G15AbstractService):
         try:
             g15uinput.open_devices()
         except OSError as (errno, strerror):
-            if errno == 13:
-                raise Exception("Failed to open uinput devices. Do you have the uinput module loaded (try modprobe uinput), and are the permissions of /dev/uinput correct?  If you have just installed Gnome15 for the first time, you may need to simply reboot. %s" % strerror)
-            else:
-                raise
-        except IOError as (errno, strerror):
-            if errno == 13:
-                raise Exception("Failed to open uinput devices. Do you have the uinput module loaded (try modprobe uinput), and are the permissions of /dev/uinput correct? If you have just installed Gnome15 for the first time, you may need to simply reboot. %s" % strerror)
+            if errno == 13 or errno == 2:
+                raise Exception("Failed to open uinput devices. Do you have the uinput module loaded (try modprobe uinput), and are the permissions of /dev/uinput correct?  If you have just installed Gnome15 for the first time, you may need to simply reboot. Exception message: %s" % strerror)
             else:
                 raise
         

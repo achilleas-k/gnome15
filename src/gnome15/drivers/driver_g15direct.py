@@ -136,42 +136,74 @@ controls = {
 ANALOGUE_OFFSET = 20
 DIGITAL_OFFSET = 64
 
-def set_offset_depending_on_mode(widget, gconf_client, device, offset_widget):
-    mode = gconf_client.get_string("/apps/gnome15/%s/joymode" % device.uid)
-    offset_model = offset_widget.get_adjustment()
-    if mode in [ "joystick", "mouse"]:
-        val = g15gconf.get_int_or_default(gconf_client, "/apps/gnome15/%s/analogue_offset" % device.uid, ANALOGUE_OFFSET)
-    else:
-        val = g15gconf.get_int_or_default(gconf_client, "/apps/gnome15/%s/digital_offset" % device.uid, DIGITAL_OFFSET)
-    offset_model.set_value(val)
-        
 def show_preferences(device, parent, gconf_client):
-    g15locale.get_translation("driver_g15direct")
-    widget_tree = gtk.Builder()
-    widget_tree.set_translation_domain("driver_g15direct")
-    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15direct.glade"))  
-    g15uigconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/timeout" % device.uid, "Timeout", 10000, widget_tree, False)
-    if not device.model_id == g15driver.MODEL_G13:
-        widget_tree.get_object("JoyModeCombo").destroy()
-        widget_tree.get_object("JoyModeLabel").destroy()
-        widget_tree.get_object("Offset").destroy()
-        widget_tree.get_object("OffsetLabel").destroy()
-        widget_tree.get_object("OffsetDescription").destroy()
-    else:  
-        g15uigconf.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/joymode" % device.uid, "JoyModeCombo", "macro", widget_tree)
-        # We have separate offset values for digital / analogue, so swap between them based on configuration 
-        offset_widget = widget_tree.get_object("Offset")    
-        set_offset_depending_on_mode(None, gconf_client, device, offset_widget)
-        widget_tree.get_object("JoyModeCombo").connect("changed", set_offset_depending_on_mode, gconf_client, device, offset_widget)
-        def spinner_changed(widget):
-            mode = gconf_client.get_string("/apps/gnome15/%s/joymode" % device.uid)
-            if mode in [ "joystick", "mouse"]:
-                gconf_client.set_int("/apps/gnome15/%s/analogue_offset" % device.uid, int(widget.get_value()))
-            else:
-                gconf_client.set_int("/apps/gnome15/%s/digital_offset" % device.uid, int(widget.get_value()))
-        offset_widget.connect("value-changed", spinner_changed)
-    
-    return widget_tree.get_object("DriverComponent")
+    prefs = G15DirectDriverPreferences(device, parent, gconf_client)
+    prefs.run()
+
+class G15DirectDriverPreferences():
+
+    def __init__(self, device, parent, gconf_client):
+        self.gconf_client = gconf_client
+        self.device = device
+
+        g15locale.get_translation("driver_g15direct")
+        widget_tree = gtk.Builder()
+        widget_tree.set_translation_domain("driver_g15direct")
+        widget_tree.add_from_file(os.path.join(g15globals.ui_dir, "driver_g15direct.ui"))
+        self.window = widget_tree.get_object("G15DirectDriverSettings")
+        self.window.set_transient_for(parent)
+
+        g15uigconf.configure_spinner_from_gconf(gconf_client,
+                                                "/apps/gnome15/%s/timeout" % device.uid,
+                                                "Timeout",
+                                                10000,
+                                                widget_tree,
+                                                False)
+        if not device.model_id == g15driver.MODEL_G13:
+            widget_tree.get_object("JoyModeCombo").destroy()
+            widget_tree.get_object("JoyModeLabel").destroy()
+            widget_tree.get_object("Offset").destroy()
+            widget_tree.get_object("OffsetLabel").destroy()
+            widget_tree.get_object("OffsetDescription").destroy()
+        else:
+            g15uigconf.configure_combo_from_gconf(gconf_client,
+                                                  "/apps/gnome15/%s/joymode" % device.uid,
+                                                  "JoyModeCombo",
+                                                  "macro",
+                                                  widget_tree)
+            # We have separate offset values for digital / analogue,
+            # so swap between them based on configuration
+            self.offset_widget = widget_tree.get_object("Offset")
+            self._set_offset_depending_on_mode(None)
+            widget_tree.get_object("JoyModeCombo").connect("changed",
+                                                           self._set_offset_depending_on_mode)
+            self.offset_widget.connect("value-changed", self._spinner_changed)
+
+    def run(self):
+        self.window.run()
+        self.window.hide()
+
+    def _set_offset_depending_on_mode(self, widget):
+        mode = self.gconf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
+        offset_model = self.offset_widget.get_adjustment()
+        if mode in [ g15uinput.JOYSTICK, g15uinput.MOUSE]:
+            val = g15gconf.get_int_or_default(self.gconf_client,
+                                              "/apps/gnome15/%s/analogue_offset" % self.device.uid,
+                                              ANALOGUE_OFFSET)
+        else:
+            val = g15gconf.get_int_or_default(self.gconf_client,
+                                              "/apps/gnome15/%s/digital_offset" % self.device.uid,
+                                              DIGITAL_OFFSET)
+        offset_model.set_value(val)
+
+    def _spinner_changed(self, widget):
+        mode = self.gconf_client.get_string("/apps/gnome15/%s/joymode" % self.device.uid)
+        if mode in [ g15uinput.JOYSTICK, g15uinput.MOUSE]:
+            self.gconf_client.set_int("/apps/gnome15/%s/analogue_offset" % self.device.uid,
+                                      int(widget.get_value()))
+        else:
+            self.gconf_client.set_int("/apps/gnome15/%s/digital_offset" % self.device.uid,
+                                      int(widget.get_value()))
 
 def fix_sans_style(root):
     for element in root.iter():
@@ -456,21 +488,33 @@ class Driver(g15driver.AbstractDriver):
             this_keys += self._convert_ext_g15daemon_code(ext_code)
         
         if self.get_model_name() == g15driver.MODEL_G13:
-            c = self.analogue_calibration if self.joy_mode in [ "joystick", "mouse" ] else self.digital_calibration
+            c = self.analogue_calibration if self.joy_mode in [ g15uinput.JOYSTICK, g15uinput.MOUSE ] else self.digital_calibration
             
-            low_val = 128 - c
-            high_val = 128 + c
+            low_val = g15uinput.JOYSTICK_CENTER - c
+            high_val = g15uinput.JOYSTICK_CENTER + c
             max_step = 5
                 
             pos = pylibg15.get_joystick_position()
+            """
+            The device itself gives us joystick position values between 0 and 255.
+            The center is at 128.
+            The virtual joysticks are set to give values between -127 and 127.
+            The center is at 0.
+            So we adapt the received values.
+            """
+            pos = (pos[0] - g15uinput.DEVICE_JOYSTICK_CENTER,
+                   pos[1] - g15uinput.DEVICE_JOYSTICK_CENTER)
             
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("Joystick at %s" % str(pos))
             
-            if self.joy_mode == "joystick":
+            if self.joy_mode == g15uinput.JOYSTICK:
                 if has_js:
                     self._abs_joystick(this_keys, pos)
-            elif self.joy_mode == "mouse":
+            elif self.joy_mode == g15uinput.DIGITAL_JOYSTICK:
+                if has_js:
+                    self._digital_joystick(this_keys, pos, low_val, high_val)
+            elif self.joy_mode == g15uinput.MOUSE:
                 if has_js:
                     self._rel_mouse(this_keys, pos, low_val, high_val, max_step)                 
             else:
@@ -555,10 +599,10 @@ class Driver(g15driver.AbstractDriver):
         elif pos[1] > high_val:
             this_keys.append(g15driver.G_KEY_DOWN)
             
-    def _check_js_buttons(self, this_keys):        
-        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_LEFT, g15uinput.BTN_1)
-        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_DOWN, g15uinput.BTN_2)
-        self._check_buttons(g15uinput.JOYSTICK, this_keys, g15driver.G_KEY_JOY_CENTER, g15uinput.BTN_3)
+    def _check_js_buttons(self, joystick_type, this_keys):
+        self._check_buttons(joystick_type, this_keys, g15driver.G_KEY_JOY_LEFT, g15uinput.BTN_1)
+        self._check_buttons(joystick_type, this_keys, g15driver.G_KEY_JOY_DOWN, g15uinput.BTN_2)
+        self._check_buttons(joystick_type, this_keys, g15driver.G_KEY_JOY_CENTER, g15uinput.BTN_3)
             
     def _check_mouse_buttons(self, this_keys):        
         self._check_buttons(g15uinput.MOUSE, this_keys, g15driver.G_KEY_JOY_LEFT, g15uinput.BTN_MOUSE)
@@ -592,9 +636,26 @@ class Driver(g15driver.AbstractDriver):
                 self.timer.cancel()
         
     def _abs_joystick(self, this_keys, pos):
-        self._check_js_buttons(this_keys) 
+        self._check_js_buttons(g15uinput.JOYSTICK, this_keys)
         g15uinput.emit(g15uinput.JOYSTICK, g15uinput.ABS_X, pos[0], syn=False)
         g15uinput.emit(g15uinput.JOYSTICK, g15uinput.ABS_Y, pos[1])
+
+    def _digital_joystick(self, this_keys, pos, low_val, high_val):
+        self._check_js_buttons(g15uinput.DIGITAL_JOYSTICK, this_keys)
+        pos_x = g15uinput.JOYSTICK_CENTER
+        pos_y = g15uinput.JOYSTICK_CENTER
+
+        if pos[0] < low_val:
+            pos_x = g15uinput.JOYSTICK_MIN
+        elif pos[0] > high_val:
+            pos_x = g15uinput.JOYSTICK_MAX
+        if pos[1] < low_val:
+            pos_y = g15uinput.JOYSTICK_MIN
+        elif pos[1] > high_val:
+            pos_y = g15uinput.JOYSTICK_MAX
+
+        g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.ABS_X, pos_x, syn=False)
+        g15uinput.emit(g15uinput.DIGITAL_JOYSTICK, g15uinput.ABS_Y, pos_y)
         
     def _check_buttons(self, target, this_keys, key, button):        
         if key in this_keys:

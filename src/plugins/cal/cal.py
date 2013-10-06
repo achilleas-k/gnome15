@@ -246,7 +246,7 @@ class G15CalendarPreferences(g15accounts.G15AccountPreferences):
     
     def create_general_options(self):
         widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cal.glade"))
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cal.ui"))
         g15uigconf.configure_checkbox_from_gconf(self.gconf_client, "%s/twenty_four_hour_times" % self.gconf_key, "TwentyFourHourTimes", True, widget_tree)
         return widget_tree.get_object("OptionPanel")
         

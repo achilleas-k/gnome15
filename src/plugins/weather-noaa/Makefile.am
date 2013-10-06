@@ -1,6 +1,6 @@
 plugindir = $(datadir)/gnome15/plugins/weather-noaa
 plugin_DATA = weather-noaa.py \
-	weather-noaa.glade \
+	weather-noaa.ui \
 	icon.png
 
 EXTRA_DIST =  			\

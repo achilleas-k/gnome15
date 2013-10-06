@@ -57,7 +57,7 @@ actions={
 
 def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "mounts.glade"))
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "mounts.ui"))
     dialog = widget_tree.get_object("MountsDialog")
     dialog.set_transient_for(parent)
     g15uigconf.configure_checkbox_from_gconf(gconf_client, "%s/raise" % gconf_key, "RaisePageCheckbox", True, widget_tree)

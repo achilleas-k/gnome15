@@ -67,7 +67,7 @@ class ColorPreview(gtk.DrawingArea):
     def _show_redblue_picker(self, widget_tree):
         main_window = widget_tree.get_object("RBPicker")
         c_widget = widget_tree.get_object("RBImageEvents")
-        img_surface = cairo.ImageSurface.create_from_png(os.path.join(g15globals.glade_dir, 'redblue.png'))
+        img_surface = cairo.ImageSurface.create_from_png(os.path.join(g15globals.ui_dir, 'redblue.png'))
         
         r_adjustment = widget_tree.get_object("RAdjustment")
         r_adjustment.set_value(self.picker.color[0])
@@ -120,7 +120,7 @@ class ColorPreview(gtk.DrawingArea):
     def _button_press(self, widget, event):
         widget_tree = gtk.Builder()
         widget_tree.set_translation_domain("colorpicker")
-        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, 'colorpicker.glade'))
+        widget_tree.add_from_file(os.path.join(g15globals.ui_dir, 'colorpicker.ui'))
         if self.picker.redblue:
             self._show_redblue_picker(widget_tree)
         else:

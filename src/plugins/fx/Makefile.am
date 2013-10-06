@@ -1,5 +1,5 @@
 plugindir = $(datadir)/gnome15/plugins/fx
-plugin_DATA = fx.glade \
+plugin_DATA = fx.ui \
 	fx.py
 
 EXTRA_DIST =  			\

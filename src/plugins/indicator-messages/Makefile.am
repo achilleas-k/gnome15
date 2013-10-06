@@ -1,6 +1,6 @@
 plugindir = $(datadir)/gnome15/plugins/indicator-messages
 plugin_DATA = indicator-messages.py \
-	indicator-messages.glade \
+	indicator-messages.ui \
 	mono-mail-new.gif \
 	mono-mail-error.gif
 

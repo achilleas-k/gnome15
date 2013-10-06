@@ -88,7 +88,7 @@ class G15CairoClockPreferences():
     
     def __init__(self, parent, driver, gconf_key, gconf_client):
         widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cairo-clock.glade"))
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "cairo-clock.ui"))
         
         dialog = widget_tree.get_object("ClockDialog")
         dialog.set_transient_for(parent)

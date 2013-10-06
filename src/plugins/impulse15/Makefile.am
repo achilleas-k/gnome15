@@ -1,7 +1,7 @@
 SUBDIRS = themes
 
 plugindir = $(datadir)/gnome15/plugins/impulse15
-plugin_DATA = impulse15.glade \
+plugin_DATA = impulse15.ui \
 	impulse15.py
 
 EXTRA_DIST =  			\

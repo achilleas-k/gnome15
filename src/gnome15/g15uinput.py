@@ -35,16 +35,28 @@ DIGITAL_JOYSTICK = "digital-joystick"
 KEYBOARD = "keyboard"
 DEVICE_TYPES = [ MOUSE, KEYBOARD, JOYSTICK, DIGITAL_JOYSTICK ]
 
+"""
+Joystick calibration values
+"""
+JOYSTICK_MIN    = -127
+JOYSTICK_MAX    = 127
+JOYSTICK_CENTER = 0
+
+"""
+Value sent by the hardware when the joystick is at the center
+"""
+DEVICE_JOYSTICK_CENTER=128
+
 #capabilities = uinput.capabilities.CAPABILITIES
 capabilities = uinput.ev.__dict__
 registered_parameters = { MOUSE: {}, 
                    JOYSTICK:  {
-                    uinput.ABS_X: (0, 255, 0, 0),
-                    uinput.ABS_Y: (0, 255, 0, 0),
+                    uinput.ABS_X: (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0),
+                    uinput.ABS_Y: (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0),
                              }, 
                    DIGITAL_JOYSTICK:  {
-                    uinput.ABS_X: (0, 255, 0, 0),
-                    uinput.ABS_Y: (0, 255, 0, 0),
+                    uinput.ABS_X: (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0),
+                    uinput.ABS_Y: (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0),
                              }, 
                    KEYBOARD: {} }
 uinput_devices = {}
@@ -71,7 +83,12 @@ EV_REL = 0x02
 EV_ABS = 0x03
 
 """
-special virtual keys that are actually joystick movement
+special virtual keys that are actually joystick movement.
+
+These 'virtual' uinput codes are created so that the user can assign macros to the left, right, up
+and down directions of the joystick.
+By default uinput only has two codes (ABS_X and ABS_Y) that specify the axis, the direction being
+determinated by the value passed to uinput.emit.
 """
 JS = 0x9999
 JS_LEFT = 0x9701
@@ -262,19 +279,22 @@ def emit(target, code, value, syn=True):
                 logger.debug("UINPUT mouse event at %s, code = %s, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
             code = ( EV_REL, code )            
         elif ( target == JOYSTICK or target == DIGITAL_JOYSTICK ):
+            """ We translate the 'virtual' uinput codes into real uinput ones """
             if code == JS_LEFT:
-                value = 0 if value > 0 else 128
+                value = JOYSTICK_MIN if value > 0 else JOYSTICK_CENTER
                 code = ABS_X
             elif code == JS_RIGHT:
-                value = 255 if value > 0 else 128
+                value = JOYSTICK_MAX if value > 0 else JOYSTICK_CENTER
                 code = ABS_X
             elif code == JS_UP:
-                value = 0 if value > 0 else 128
+                value = JOYSTICK_MIN if value > 0 else JOYSTICK_CENTER
                 code = ABS_Y
             elif code == JS_DOWN:
-                value = 255 if value > 0 else 128
+                value = JOYSTICK_MAX if value > 0 else JOYSTICK_CENTER
                 code = ABS_Y
-            code = (EV_ABS, code)
+            else:
+                """ If we are simulating a bouton press, then the event is of type EV_KEY """
+                code = (EV_KEY, code)
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug("UINPUT joystick event at %s, code = %s, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
         else: 
@@ -331,12 +351,12 @@ def __check_devices():
                 keys.append((REL_Y[0], REL_Y[1], 0, 255, 0, 0))
             elif device_type == JOYSTICK:
                 virtual_product_id = GNOME15_JOYSTICK_PRODUCT_ID
-                keys.append((ABS_X[0], ABS_X[1], 0, 255, 0, 0))
-                keys.append((ABS_Y[0], ABS_Y[1], 0, 255, 0, 0))
+                keys.append(ABS_X + (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0))
+                keys.append(ABS_Y + (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0))
             elif device_type == DIGITAL_JOYSTICK:
                 virtual_product_id = GNOME15_JOYSTICK_PRODUCT_ID
-                keys.append((ABS_X[0], ABS_X[1], 0, 255, 0, 0))
-                keys.append((ABS_Y[0], ABS_Y[1], 0, 255, 0, 0))
+                keys.append(ABS_X + (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0))
+                keys.append(ABS_Y + (JOYSTICK_MIN, JOYSTICK_MAX, 0, 0))
             else:
                 virtual_product_id = GNOME15_KEYBOARD_PRODUCT_ID
                 
@@ -351,8 +371,8 @@ def __check_devices():
             if device_type == JOYSTICK or device_type == DIGITAL_JOYSTICK:
                 syn(device_type)
                 load_calibration(device_type)
-                emit(device_type, ABS_X, 128, False)
-                emit(device_type, ABS_Y, 128, False)
+                emit(device_type, ABS_X, JOYSTICK_CENTER, False)
+                emit(device_type, ABS_Y, JOYSTICK_CENTER, False)
                 syn(device_type)
             else:
                 emit(device_type, 0, 0)

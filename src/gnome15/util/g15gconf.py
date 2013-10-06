@@ -15,6 +15,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+'''
+Set of utility methods to read values stored in gconf
+'''
+
 def get_float_or_default(gconf_client, key, default = None):
     """
     Tries to read a float value from GConf and return a default value it

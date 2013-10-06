@@ -75,17 +75,34 @@ controls = {
 
 def show_preferences(device, parent, gconf_client):
     if device.model_id != 'virtual':
-        return None
-    g15locale.get_translation("driver_gtk")
-    widget_tree = gtk.Builder()
-    widget_tree.set_translation_domain("driver_gtk")
-    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_gtk.glade")) 
-    mode_model = widget_tree.get_object("ModeModel")
-    mode_model.clear()
-    for mode in g15driver.MODELS:
-        mode_model.append([mode])    
-    g15uigconf.configure_combo_from_gconf(gconf_client, "/apps/gnome15/%s/gtk_mode" % device.uid, "ModeCombo", g15driver.MODEL_G19, widget_tree)
-    return widget_tree.get_object("DriverComponent")
+        return
+
+    prefs = GtkDriverPreferences(device, parent, gconf_client)
+    prefs.run()
+
+class GtkDriverPreferences():
+
+    def __init__(self, device, parent, gconf_client):
+        g15locale.get_translation("driver_gtk")
+        widget_tree = gtk.Builder()
+        widget_tree.set_translation_domain("driver_gtk")
+        widget_tree.add_from_file(os.path.join(g15globals.ui_dir, "driver_gtk.ui"))
+        self.window = widget_tree.get_object("GtkDriverSettings")
+        self.window.set_transient_for(parent)
+
+        mode_model = widget_tree.get_object("ModeModel")
+        mode_model.clear()
+        for mode in g15driver.MODELS:
+            mode_model.append([mode])
+        g15uigconf.configure_combo_from_gconf(gconf_client,
+                                              "/apps/gnome15/%s/gtk_mode" % device.uid,
+                                              "ModeCombo",
+                                              g15driver.MODEL_G19,
+                                              widget_tree)
+
+    def run(self):
+        self.window.run()
+        self.window.hide()
 
 class Driver(g15driver.AbstractDriver):
 

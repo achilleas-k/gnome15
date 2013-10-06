@@ -63,21 +63,25 @@ g930_key_map = {
 EVIOCGRAB = 0x40044590
 
 def show_preferences(device, parent, gconf_client):
-    prefs = G930DriverPreferences(device, gconf_client)
-    return prefs.component
+    prefs = G930DriverPreferences(device, parent, gconf_client)
+    prefs.run()
 
 class G930DriverPreferences():
     
-    def __init__(self, device, gconf_client):
+    def __init__(self, device, parent, gconf_client):
         self.device = device
         
         widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g930.glade"))
+        widget_tree.add_from_file(os.path.join(g15globals.ui_dir, "driver_g930.ui"))
+        self.window = widget_tree.get_object("G930DriverSettings")
+        self.window.set_transient_for(parent)
         
         self.grab_multimedia = widget_tree.get_object("GrabMultimedia")
         g15uigconf.configure_checkbox_from_gconf(gconf_client, "/apps/gnome15/%s/grab_multimedia" % device.uid, "GrabMultimedia", False, widget_tree)
-        
-        self.component = widget_tree.get_object("DriverComponent")
+
+    def run(self):
+        self.window.run()
+        self.window.hide()
         
 class KeyboardReceiveThread(Thread):
     def __init__(self, device):

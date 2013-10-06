@@ -13,7 +13,7 @@ if [ -n "${locale}" ]; then
 	        pushd ${i} >/dev/null
 	        mkdir -p i18n
 	        
-	        # Generate python / glade
+	        # Generate python / ui
 	        pushd i18n >/dev/null
 			for i in *.pot; do
 				bn=$(basename $i .pot).${locale}.po

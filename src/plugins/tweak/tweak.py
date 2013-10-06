@@ -36,7 +36,7 @@ global_plugin=True
  
 def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "tweak.glade"))
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "tweak.ui"))
     dialog = widget_tree.get_object("TweakDialog")
     dialog.set_transient_for(parent)
     g15uigconf.configure_adjustment_from_gconf(gconf_client, "/apps/gnome15/scroll_delay", "ScrollDelayAdjustment", 500, widget_tree)

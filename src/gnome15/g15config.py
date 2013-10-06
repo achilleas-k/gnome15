@@ -254,7 +254,7 @@ class G15Config:
         
         # Load main Glade file
         g15locale.get_translation("g15-config")
-        g15Config = os.path.join(g15globals.glade_dir, 'g15-config.glade')
+        g15Config = os.path.join(g15globals.ui_dir, 'g15-config.ui')
         self.widget_tree = gtk.Builder()
         self.widget_tree.set_translation_domain("g15-config")
         self.widget_tree.add_from_file(g15Config)
@@ -351,7 +351,6 @@ class G15Config:
         self.keyboard_tab = self.widget_tree.get_object("KeyboardTab")
         self.plugins_tab = self.widget_tree.get_object("PluginsTab")
         self.profile_plugins_tab = self.widget_tree.get_object("ProfilePluginsTab")
-        self.driver_box = self.widget_tree.get_object("DriverBox")
         self.parent_profile_box = self.widget_tree.get_object("ParentProfileBox")
         self.parent_profile_label = self.widget_tree.get_object("ParentProfileLabel")
         self.parent_profile_model = self.widget_tree.get_object("ParentProfileModel")
@@ -373,6 +372,10 @@ class G15Config:
         self.enabled_profile_plugins_model = self.widget_tree.get_object("EnabledProfilePluginsModel")
         self.enabled_profile_plugins = self.widget_tree.get_object("EnabledProfilePlugins")
         self.enabled_profile_plugins_renderer = self.widget_tree.get_object("EnabledProfilePluginsRenderer")
+        self.device_settings = self.widget_tree.get_object("DeviceSettings")
+        self.no_device_selected = self.widget_tree.get_object("NoDeviceSelected")
+        self.no_driver_available = self.widget_tree.get_object("NoDriverAvailable")
+        self.driver_options = self.widget_tree.get_object("DriverOptions")
         
         # Window 
         self.main_window.set_transient_for(self.parent_window)
@@ -446,6 +449,7 @@ class G15Config:
         self.macro_list.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         self.macro_list.connect("button_press_event", self._macro_list_clicked)
         self.import_profile.connect("clicked", self._import_profile)
+        self.driver_options.connect('clicked', self._show_driver_options)
         
         # Enable profiles to be dropped onto the list
         self.macro_list.enable_model_drag_dest([('text/plain', 0, 0)],
@@ -523,9 +527,9 @@ class G15Config:
         ''' Set up everything and display the window
         '''
         if len(self.devices) > 1:
-            self.main_window.set_size_request(800, -1)
+            self.main_window.set_size_request(800, 600)
         else:            
-            self.main_window.set_size_request(640, -1)
+            self.main_window.set_size_request(640, 600)
         self.id = None
         while True:
             opt = self.main_window.run()
@@ -1057,35 +1061,24 @@ class G15Config:
             
             # Show or hide the Keyboard / Plugins tab depending on if there is a driver that matches
             if not driver_mod:
-                for c in self.driver_box.get_children():
-                    self.driver_box.remove(c)
-                widget = gtk.Label("")
-                widget.set_text(_("There is no appropriate driver for the device <b>" + \
-                                   "%s</b>.\nDo you have all the required packages installed?") % self.selected_device.model_fullname)
-                widget.set_use_markup(True)          
-                self.driver_box.pack_start(widget, False, False)
-                self.driver_box.show_all()      
-                self.keyboard_tab.set_visible(False)
-                self.plugins_tab.set_visible(False)
+                self.no_driver_available.set_label(_("There is no appropriate driver for the " + \
+                                                     "device <b>%s</b>.\nDo you have all the " + \
+                                                     "required packages installed?") \
+                                                   % self.selected_device.model_fullname)
+                self.tabs.set_visible(False)
+                self.no_driver_available.set_visible(True)
             else:                
-                controls = self.widget_tree.get_object("DriverOptionsBox")
-                for c in controls.get_children():
-                    controls.remove(c)
-                widget = None
-                if driver_mod.has_preferences:
-                    widget = driver_mod.show_preferences(self.selected_device, controls, self.conf_client)
-                    
-                    self.keyboard_tab.set_visible(True)
-                    self.plugins_tab.set_visible(True)
-                    
-                    # Show message if driver has no options
-                    if not widget:
-                        widget = gtk.Label(_("This driver has no configuration options"))
+                self.driver_options.set_sensitive(driver_mod.has_preferences)
+                self.tabs.set_visible(True)
+                self.no_driver_available.set_visible(False)
                 
-                # Build and show component
-                controls.pack_start(widget, False, False)
-                controls.show_all()
-                
+    def _show_driver_options(self, widget):
+        selected_driver = self.conf_client.get_string(self._get_full_key("driver"))
+        driver_mod = g15drivermanager.get_driver_mod(selected_driver)
+        driver_mod.show_preferences(self.selected_device,
+                                    self.main_window,
+                                    self.conf_client)
+
     def _set_tab_status(self):
         self.keyboard_tab.set_visible(self._controls_visible)
         self.plugins_tab.set_visible(len(self.plugin_model) > 0)
@@ -1137,6 +1130,11 @@ class G15Config:
         self._load_device()
         if self.selected_device:
             self.conf_client.set_string("/apps/gnome15/config_device_name", self.selected_device.uid)
+            self.device_settings.set_visible(True)
+            self.no_device_selected.set_visible(False)
+        else:
+            self.device_settings.set_visible(False)
+            self.no_device_selected.set_visible(True)
     
     def _load_device(self):
         sel_items = self.device_view.get_selected_items()
@@ -1595,7 +1593,10 @@ class G15Config:
             else:
                 self.widget_tree.get_object("MainScrolledWindow").set_visible(True)
                 self.widget_tree.get_object("DeviceDetails").set_visible(True)
-            
+        # Hide the device settings if no device is selected
+        if sel_device_name is None:
+            self.device_settings.set_visible(False)
+            self.no_device_selected.set_visible(True)
         
     def _load_profile_list(self):
         current_selection = self.selected_profile

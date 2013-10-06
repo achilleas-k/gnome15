@@ -122,7 +122,7 @@ class G15WeatherPreferences():
         self._visible_options = None
         
         self._widget_tree = gtk.Builder()
-        self._widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "weather.glade"))
+        self._widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "weather.ui"))
         
         dialog = self._widget_tree.get_object("WeatherDialog")
         dialog.set_transient_for(parent)

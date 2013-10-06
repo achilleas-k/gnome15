@@ -101,7 +101,7 @@ invert_control = g15driver.Control("invert_lcd", "Invert LCD", 0, 0, 1, hint = g
 
 def show_preferences(device, parent, gconf_client):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "driver_g15.glade"))
+    widget_tree.add_from_file(os.path.join(g15globals.ui_dir, "driver_g15.ui"))
     g15uigconf.configure_spinner_from_gconf(gconf_client, "/apps/gnome15/%s/g15daemon_port" % device.uid, "Port", DEFAULT_PORT, widget_tree, False)
     return widget_tree.get_object("DriverComponent")
 

@@ -1,7 +1,7 @@
 SUBDIRS = default tailer
 plugindir = $(datadir)/gnome15/plugins/tails
 plugin_DATA = tails.py \
-	tails.glade \
+	tails.ui \
 	LICENSE \
 	README
 

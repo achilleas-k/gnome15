@@ -1,4 +1,4 @@
-AC_INIT(gnome15, 0.9.6, https://projects.russo79.com/projects/gnome15/issues/new)
+AC_INIT(gnome15, 0.9.7, https://projects.russo79.com/projects/gnome15/issues/new)
 AC_CONFIG_SRCDIR([src/gnome15/g15service.py])
 AM_INIT_AUTOMAKE([tar-ustar])
 AM_MAINTAINER_MODE
@@ -10,7 +10,9 @@ dnl Dependencies
 dnl
 
 dnl C compiler toolchain
-AC_PROG_LIBTOOL
+LT_PREREQ([2.2.6])
+LT_INIT()
+
 AC_PROG_CC
 
 dnl Python
@@ -30,7 +32,7 @@ AX_PYTHON_MODULE(virtkey, [])
 AS_IF([test "x${HAVE_PYMOD_VIRTKEY}" = "xno"],
 	[AC_MSG_ERROR([Requires Python Virtkey Library])])
 
-AX_PYTHON_MODULE(Image, [])
+AX_PYTHON_MODULE(PIL.Image, [])
 AS_IF([test "x${HAVE_PYMOD_IMAGE}" = "xno"],
 	[AC_MSG_ERROR([Requires Python Image Library])])
 
@@ -149,23 +151,23 @@ AS_IF([test "x${HAVE_PYMOD_SENSORS}" = "xyes" ],
 	[have_sensors=no])
 
 dnl libg15 (Gnome15 version)
-AC_SEARCH_LIBS(initLibG15, g15,
+AC_CHECK_LIB(g15, initLibG15,
 	[have_libg15=yes],
 	[have_libg15=no])
 
 dnl fftw3
-AC_CHECK_HEADER(fftw3.h,
-	[have_fftw3_header=yes],
-	[have_fftw3_header=no])
-
-AC_CHECK_LIB([fftw3], fftw_execute,
-	[have_fftw3=yes],
-	[have_fftw3=no])
+PKG_CHECK_MODULES(FFTW, fftw3,
+                  [have_fftw3=yes],
+                  [have_fftw3=no])
+AC_SUBST(FFTW_CFLAGS)
+AC_SUBST(FFTW_LIBS)
 
 dnl libpulse
-AC_CHECK_LIB([pulse], pa_stream_new,
-	[have_pulse=yes],
-	[have_pulse=no])
+PKG_CHECK_MODULES(PULSE, libpulse,
+                  [have_pulse=yes],
+                  [have_pulse=no])
+AC_SUBST(PULSE_CFLAGS)
+AC_SUBST(PULSE_LIBS)
 
 dnl
 dnl Parse configure arguments
@@ -262,7 +264,7 @@ AC_ARG_ENABLE([indicator],
 		no)  indicator=no ;;
 		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-indicator]) ;;
 	esac],
-	indicator=yes)
+	indicator=${have_appindicator})
 AS_IF([test "x${indicator}" = "xyes" -a "x$have_appindicator" = "xno"],
 	[AC_MSG_ERROR([Ubuntu indicator cannot be built without appindicator python module])])
 AM_CONDITIONAL([ENABLE_INDICATOR], [test x$indicator = xyes])
@@ -816,8 +818,7 @@ AC_ARG_ENABLE([plugin-trafficstats],
 AM_CONDITIONAL([ENABLE_PLUGIN_TRAFFIC_STATS], [test x$plugin_trafficstats = xyes])
 
 dnl impulse15 plugin
-AS_IF([test "x${have_fftw3_header}" = "xyes" \
-       -a "x${have_fftw3}" = "xyes" \
+AS_IF([test "x${have_fftw3}" = "xyes" \
        -a "x${have_pulse}" = "xyes"],
 	  [deps_plugin_impulse15=yes],
 	  [deps_plugin_impulse15=no])
@@ -830,8 +831,6 @@ AC_ARG_ENABLE([plugin-impulse15],
 		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-impulse15]) ;;
 	esac],
 	[plugin_impulse15=${deps_plugin_impulse15}])
-AS_IF([test "x${plugin_impulse15}" = "xyes" -a "x$have_fftw3_header" = "xno"],
-	[AC_MSG_ERROR([Plugin Impulse15 cannot be built without fftw3 headers])])
 AS_IF([test "x${plugin_impulse15}" = "xyes" -a "x$have_fftw3" = "xno"],
 	[AC_MSG_ERROR([Plugin Impulse15 cannot be built without fftw3])])
 AS_IF([test "x${plugin_impulse15}" = "xyes" -a "x$have_pulse" = "xno"],
@@ -948,7 +947,6 @@ data/autostart/gnome15.desktop
 data/autostart/g15-systemtray.desktop
 data/autostart/g15-indicator.desktop
 data/dbus/Makefile
-data/glade/Makefile
 data/icons/Makefile
 data/icons/hicolor/Makefile
 data/icons/hicolor/16x16/Makefile
@@ -1002,6 +1000,7 @@ data/udev/99-gnome15-g15direct.rules
 data/udev/99-gnome15-g19direct.rules
 data/udev/99-gnome15-g930.rules
 data/ukeys/Makefile
+data/ui/Makefile
 i18n/Makefile
 man/Makefile
 src/Makefile

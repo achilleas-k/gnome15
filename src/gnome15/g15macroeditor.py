@@ -60,7 +60,7 @@ class G15MacroEditor():
         self.__gconf_client = gconf.client_get_default()
         self.__widget_tree = gtk.Builder()
         self.__widget_tree.set_translation_domain("g15-macroeditor")
-        self.__widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "macro-editor.glade"))
+        self.__widget_tree.add_from_file(os.path.join(g15globals.ui_dir, "macro-editor.ui"))
         self.__window = self.__widget_tree.get_object("EditMacroDialog")
         if self.__window is not None and parent is not None:            
             self.__window.set_transient_for(parent)
@@ -646,7 +646,7 @@ class G15MacroScriptEditor():
         
         self.__widget_tree = gtk.Builder()
         self.__widget_tree.set_translation_domain("g15-macroeditor")
-        self.__widget_tree.add_from_file(os.path.join(g15globals.glade_dir, "script-editor.glade"))
+        self.__widget_tree.add_from_file(os.path.join(g15globals.ui_dir, "script-editor.ui"))
         self._load_objects()
         if parent is not None:
             self.__window.set_transient_for(parent)

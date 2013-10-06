@@ -63,7 +63,7 @@ class G15PPAStatsPreferences():
         self.gconf_key = gconf_key
         
         widget_tree = gtk.Builder()
-        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "ppastats.glade"))
+        widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "ppastats.ui"))
         
         # Feeds
         self.feed_model = widget_tree.get_object("PPAModel")

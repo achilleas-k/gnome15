@@ -50,7 +50,7 @@ def create(gconf_key, gconf_client, screen):
 
 def show_preferences(parent, driver, gconf_client, gconf_key):
     widget_tree = gtk.Builder()
-    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "screensaver.glade"))
+    widget_tree.add_from_file(os.path.join(os.path.dirname(__file__), "screensaver.ui"))
     
     dialog = widget_tree.get_object("ScreenSaverDialog")
     dialog.set_transient_for(parent)
@@ -113,22 +113,26 @@ class G15ScreenSaver():
             # Paths vary from desktop to desktop
             screensavers = [
                             ("org.gnome.ScreenSaver", "org.gnome.ScreenSaver", "/"),
+                            ("org.gnome.ScreenSaver", "org.gnome.ScreenSaver", "/org/gnome/ScreenSaver"),
                             ("org.kde.screensaver", "org.freedesktop.ScreenSaver", "/ScreenSaver"),
                             ("org.mate.ScreenSaver", "org.mate.ScreenSaver", "/"),
                             ]
             
             for dbus_name, interface, path in screensavers:
                 try :
+                    logger.debug("Searching for screensaver. dbus_name: %s, dbus_interface: %s, dbus_object: %s" % (dbus_name, interface, path))
                     screen_saver = dbus.Interface(self._session_bus.get_object(dbus_name, path), interface)
                     self._dbus_interface = interface
                     self._dbus_name = dbus_name
+                    self._session_bus.add_signal_receiver(self._screensaver_changed_handler, dbus_interface = self._dbus_interface, signal_name = "ActiveChanged")
+                    self._in_screensaver = screen_saver.GetActive()
+                    break
                 except Exception as e:
+                    screen_saver = None
                     pass
                 
             if screen_saver is None:
                 raise Exception("No supported DBUS screen saver interface found.")
-            self._session_bus.add_signal_receiver(self._screensaver_changed_handler, dbus_interface = self._dbus_interface, signal_name = "ActiveChanged")
-            self._in_screensaver = screen_saver.GetActive()
             
         self._activated = True
         self._check_page()
