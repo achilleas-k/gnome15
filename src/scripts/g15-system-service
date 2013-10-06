@@ -100,7 +100,7 @@ if __name__ == "__main__":
             if args[0] == "stop":
                 print "Gnome15 system service is not running"
         else:            
-            bus.get_object('org.gnome15.SystemService', '/org/gnome15/SystemService')
+            service_object = bus.get_object('org.gnome15.SystemService', '/org/gnome15/SystemService')
             system_service = dbus.Interface(service_object, 'org.gnome15.SystemService')
             system_service.Stop()
             
