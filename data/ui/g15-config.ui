@@ -1390,6 +1390,12 @@
                                                         <property name="can_focus">True</property>
                                                         <property name="receives_default">True</property>
                                                       </object>
+                                                      <object class="GtkButton" id="WindowsImportButton">
+                                                        <property name="label" translatable="yes">Import Windows Profile</property>
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">True</property>
+                                                        <property name="receives_default">True</property>
+                                                      </object>
                                                       <packing>
                                                         <property name="expand">True</property>
                                                         <property name="fill">True</property>

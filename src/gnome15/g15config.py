@@ -220,7 +220,6 @@ class G15GlobalConfig:
             key = "/apps/gnome15/global/plugins/%s/enabled" % plugin.id
             self.conf_client.set_bool(key, not self.conf_client.get_bool(key))
         
-
 class G15Config:
     
     """
@@ -358,6 +357,7 @@ class G15Config:
         self.profile_author = self.widget_tree.get_object("ProfileAuthor")
         self.export_profile = self.widget_tree.get_object("Export")
         self.import_profile = self.widget_tree.get_object("ImportButton")
+        self.import_windows_profile = self.widget_tree.get_object("ImportWindowsButton")
         self.information_content = self.widget_tree.get_object("InformationContent")
         self.delays_content = self.widget_tree.get_object("DelaysContent")
         self.activation_content = self.widget_tree.get_object("ActivationContent")
@@ -449,6 +449,7 @@ class G15Config:
         self.macro_list.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         self.macro_list.connect("button_press_event", self._macro_list_clicked)
         self.import_profile.connect("clicked", self._import_profile)
+        self.import_windows_profile.connect("clicked", self._import_windows_profile)
         self.driver_options.connect('clicked', self._show_driver_options)
         
         # Enable profiles to be dropped onto the list
@@ -1217,7 +1218,8 @@ class G15Config:
             self.selected_profile.background = ""
             self._set_image(self.background, "") 
         self._save_profile(self.selected_profile)
-        
+
+    # TODO: Include .macros and .XML (AK)
     def _add_macro_filters(self, dialog):
         macros_filter = gtk.FileFilter()
         macros_filter.set_name("Macro Archives")
@@ -1227,7 +1229,7 @@ class G15Config:
         all_filter.set_name("All files")
         all_filter.add_pattern("*")
         dialog.add_filter(all_filter)
-        
+
     def _import_profile(self, widget):
         dialog = gtk.FileChooserDialog("Import..",
                                None,
@@ -1341,7 +1343,122 @@ class G15Config:
                 file.close()
             
         dialog.destroy()
-        
+
+    # TODO: Windows XML file import function (AK)
+    def _import_windows_profile(self, widget):
+        dialog = gtk.FileChooserDialog("XML Import..",
+                               None,
+                               gtk.FILE_CHOOSER_ACTION_OPEN,
+                               (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+        dialog.set_default_response(gtk.RESPONSE_OK)
+        dialog.set_transient_for(self.main_window)
+        self._add_macro_filters(dialog)
+        response = dialog.run()
+        dialog.hide()
+        if response == gtk.RESPONSE_OK:
+            import_filename = dialog.get_filename()
+            profile_dir = g15profile.get_profile_dir(self.selected_device)
+            file = zipfile.ZipFile(import_filename, "r")
+
+            profile_id = g15profile.generate_profile_id()
+
+            try:
+                everything_ok = False
+                error = ""
+
+                zip_contents = file.namelist();
+
+                # Check if there is a macro file
+                macro_filename = ""
+                for filename in zip_contents:
+                    if filename.endswith(".macros"):
+                        everything_ok = True
+                        macro_filename = filename
+                        break
+                else:
+                    error = "Invalid archive (missing .macros file)"
+
+                if everything_ok:
+                    # Parse and handle the macro file
+                    file_split = macro_filename.split(".", 1)
+
+                    dest_name = "%d.%s" % ( profile_id, file_split[1])
+
+                    # Read the profile so we can adjust for the new environment
+                    profiles = g15profile.get_profiles(self.selected_device)
+                    macro_file = file.open(macro_filename, 'r')
+                    try:
+                        imported_profile = g15profile.G15Profile(self.selected_device)
+                        imported_profile.load(None, macro_file)
+                        imported_profile.set_id(profile_id)
+                    finally:
+                        macro_file.close()
+
+                    if self.selected_device.model_id not in imported_profile.models:
+                        everything_ok = False
+                        error = "The profile you imported was made for another device."
+
+                    if everything_ok:
+                        # Find the best new name for the profile
+                        new_name = imported_profile.name
+                        idx = 1
+                        while True:
+                            found = False
+                            for p in profiles:
+                                if new_name == p.name:
+                                    found = True
+                                    break
+                            if found:
+                                idx += 1
+                                new_name = "%s (%d)" % (imported_profile.name, idx)
+                            else:
+                                break
+                        imported_profile.name = new_name
+
+                        # Set the icons
+                        if imported_profile.icon:
+                            imported_profile.icon = "%s/%d.%s" % ( profile_dir, profile_id, imported_profile.icon.split(".", 1)[1] )
+                        if imported_profile.background:
+                            imported_profile.background = "%s/%d.%s" % ( profile_dir, profile_id, imported_profile.background.split(".", 1)[1] )
+
+                        # Actually save
+                        g15profile.create_profile(imported_profile)
+
+                        # Import the other files
+                        for filename in zip_contents:
+                            file_split = filename.split(".", 1)
+
+                            dest_name = "%d.%s" % ( profile_id, file_split[1])
+
+                            if not dest_name.endswith(".macros"):
+                                # Just extract all other files
+                                dest_dir = os.path.join(profile_dir, os.path.dirname(dest_name))
+                                g15os.mkdir_p(dest_dir)
+                                macro_file = file.open(filename, 'r')
+                                try:
+                                    out_file = open(os.path.join(dest_dir, os.path.basename(dest_name)), 'w')
+                                    try:
+                                        out_file.write(macro_file.read())
+                                    finally:
+                                        out_file.close()
+                                finally:
+                                    macro_file.close()
+
+                # If there was an error when importing display an error message
+                if not everything_ok:
+                    import_profile_error_dialog = self.widget_tree.get_object("ImportProfileError")
+                    import_profile_error_dialog.set_transient_for(self.main_window)
+                    import_profile_error_dialog.format_secondary_text(error)
+                    import_profile_error_dialog_close_button = self.widget_tree.get_object("ImportProfileErrorCloseButton")
+                    import_profile_error_dialog_close_button.connect("clicked", lambda x: import_profile_error_dialog.hide())
+                    import_profile_error_dialog.run()
+
+            finally:
+                file.close()
+
+        dialog.destroy()
+
     def _lock_profile(self, widget):
         if g15profile.is_locked(self.selected_device):
             g15profile.set_locked(self.selected_device, False)
