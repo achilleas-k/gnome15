@@ -302,7 +302,7 @@ AC_ARG_ENABLE([icons-mono],
 		no)  icons_mono=no ;;
 		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-icons-mono]) ;;
 	esac],
-	[icons_mono=yes])
+	[icons_mono=no])
 AM_CONDITIONAL([ENABLE_ICONS_MONO], [test x$icons_mono = xyes])
 
 dnl
