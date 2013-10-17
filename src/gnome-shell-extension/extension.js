@@ -198,12 +198,12 @@ const DeviceItem = new Lang.Class({
 					let [screen] = result;
 					gnome15Device.connectSignal("ScreenAdded", Lang.bind(this, function(src, senderName, args) {
 						let [screenPath] = args;
-						global.log("Screen added " + screenPath);
+						_log("Screen added " + screenPath);
 						this._getPages(screenPath);
 					}));
 					gnome15Device.connectSignal("ScreenRemoved", Lang.bind(this, function(src, senderName, args) {
 						let [screenPath] = args;
-						global.log("Screen removed " + screenPath);
+						_log("Screen removed " + screenPath);
 						this._cleanUp();
 						this._gnome15Button.clearPages();
 					}));
@@ -536,6 +536,7 @@ const DeviceButton = new Lang.Class({
  */
 
 function init() {
+	_log('Loading Gnome15 Gnome Shell Extension')
 	devices = {}
 	let Gnome15ServiceProxy = Gio.DBusProxy.makeProxyWrapper(Gnome15ServiceInterface);
 	
@@ -552,6 +553,7 @@ function init() {
 }
 
 function enable() {
+	_log('Enabling Gnome15 Gnome Shell Extension')
 	Gio.bus_watch_name(Gio.BusType.SESSION,
 	                   'org.gnome15.Gnome15',
 	                   Gio.BusNameWatcherFlags.NONE,
@@ -562,6 +564,7 @@ function enable() {
 }
 
 function disable() {
+	_log('Disabling Gnome15 Gnome Shell Extension')
 	for(let key in devices) {
 		_removeDevice(key);
 	}
@@ -583,7 +586,7 @@ function _onDesktopServiceAppeared() {
  * when the service disappears, even when it dies unexpectedly. 
  */
 function _onDesktopServiceVanished() {
-	global.log("Desktop service vanished");
+	_log('Desktop service vanished');
 	_onDesktopServiceStopping();
 }
 
@@ -592,7 +595,7 @@ function _onDesktopServiceVanished() {
  * list at this point. 
  */
 function _onDesktopServiceStarted() {
-	global.log("Desktop service started");
+	_log('Desktop service started');
 	gnome15System.GetDevicesRemote(_refreshDeviceList);
 }
 
@@ -601,7 +604,7 @@ function _onDesktopServiceStarted() {
  * of user selecting "Stop Service" most probably).
  */
 function _onDesktopServiceStopping() {
-	global.log("Desktop service stopping");
+	_log('Desktop service stopping');
 	for(let key in devices) {
 		_removeDevice(key);
 	}
@@ -648,7 +651,7 @@ function _deviceAdded(source, senderName, args) {
 
 
 function _addDevice(key) {
-	global.log("Added device " + key);
+	_log('Added device ' + key);
 	devices[key] = new DeviceItem(key);
 }
 
@@ -665,7 +668,7 @@ function _deviceRemoved(source, senderName, args) {
 }
 
 function _removeDevice(key) {
-	global.log("Removed device " + key);
+	_log('Removed device ' + key);
 	devices[key].close();
 	delete devices[key];
 }
@@ -692,4 +695,13 @@ function _createDevice(path) {
 	let Gnome15DeviceProxy = Gio.DBusProxy.makeProxyWrapper(Gnome15DeviceInterface);
 	return new Gnome15DeviceProxy(Gio.DBus.session,
 			'org.gnome15.Gnome15', path);
+}
+
+/**
+ * Utility for logging messages
+ *
+ * @param message
+ */
+function _log(message) {
+  global.log('gnome15-gnome-shell: ' + message)
 }
