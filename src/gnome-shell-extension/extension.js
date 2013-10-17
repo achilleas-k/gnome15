@@ -36,7 +36,7 @@ const GLib = imports.gi.GLib;
 const Clutter = imports.gi.Clutter;
 const Config = imports.misc.config;
 
-let currNotification, gnome15System, devices;
+let currNotification, gnome15Service, devices;
 
 /*
  * Remote object definitions. This is just a sub-set of the full API 
@@ -543,13 +543,14 @@ function init() {
 	/* The "Service" is the core of Gnome, so connect to it and watch for some
 	 * signals
 	 */
-	gnome15System = new Gnome15ServiceProxy(Gio.DBus.session,
-			'org.gnome15.Gnome15', '/org/gnome15/Service');
+	gnome15Service = new Gnome15ServiceProxy(Gio.DBus.session,
+			'org.gnome15.Gnome15',
+			'/org/gnome15/Service');
 
-	gnome15System.connectSignal("Started", _onDesktopServiceStarted);
-	gnome15System.connectSignal("Stopping", _onDesktopServiceStopping);
-	gnome15System.connectSignal("DeviceAdded", _deviceAdded);
-	gnome15System.connectSignal("DeviceRemoved", _deviceRemoved);
+	gnome15Service.connectSignal("Started", _onDesktopServiceStarted);
+	gnome15Service.connectSignal("Stopping", _onDesktopServiceStopping);
+	gnome15Service.connectSignal("DeviceAdded", _deviceAdded);
+	gnome15Service.connectSignal("DeviceRemoved", _deviceRemoved);
 }
 
 function enable() {
@@ -560,7 +561,7 @@ function enable() {
 	                   _onDesktopServiceAppeared,
 	                   _onDesktopServiceVanished);
 
-	gnome15System.IsStartedRemote(_onStarted);
+	gnome15Service.IsStartedRemote(_onStarted);
 }
 
 function disable() {
@@ -596,7 +597,7 @@ function _onDesktopServiceVanished() {
  */
 function _onDesktopServiceStarted() {
 	_log('Desktop service started');
-	gnome15System.GetDevicesRemote(_refreshDeviceList);
+	gnome15Service.GetDevicesRemote(_refreshDeviceList);
 }
 
 /**
@@ -622,7 +623,7 @@ function _onStarted(result, excp) {
 
 	let [started] = result;
 	if(started) {
-		gnome15System.GetDevicesRemote(_refreshDeviceList);
+		gnome15Service.GetDevicesRemote(_refreshDeviceList);
 	}
 }
 
