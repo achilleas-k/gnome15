@@ -2,7 +2,8 @@
 	"shell-version": [
 		"3.4",
 		"3.6",
-		"3.8"
+		"3.8",
+		"3.10"
 	], 
 	"uuid": "gnome15-shell-extension@gnome15.org", 
 	"name": "Logitech Keyboard", 

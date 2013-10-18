@@ -217,13 +217,15 @@ const DeviceItem = new Lang.Class({
 		let hasScreen = screen != null && screen.length > 0;
 		this._gnome15Button = new DeviceButton(key, modelId, modelFullName, hasScreen);
 
-		// API change for 3.6
 		if(Config.PACKAGE_VERSION.indexOf("3.4") == 0) {
 			Main.panel._rightBox.insert_child_at_index(this._gnome15Button.actor, 1);
 			Main.panel._rightBox.child_set(this._gnome15Button.actor, {
 				y_fill : true
 			});
 			Main.panel._menus.addMenu(this._gnome15Button.menu);
+		}
+		else if(Config.PACKAGE_VERSION.indexOf("3.10") == 0) {
+			Main.panel.addToStatusArea('gnome15-' + modelId, this._gnome15Button);
 		}
 		else {
 			Main.panel.addToStatusArea('gnome15-' + modelId, this._gnome15Button);
@@ -359,7 +361,12 @@ const PageMenuItem = new Lang.Class({
 		this.label = new St.Label({
 			text : lblText
 		});
-		this.addActor(this.label);
+		if(Config.PACKAGE_VERSION.indexOf("3.10") == 0) {
+			this.actor.add_child(this.label);
+		}
+		else {
+			this.addActor(this.label);
+		}
 		this._pageProxy = page_proxy;
 		this._text = lblText;
 		this._idTxt = lblId;
@@ -391,20 +398,21 @@ const PreferencesMenuItem = new Lang.Class({
 });
 
 /**
- * Shell top panel "System Status Button" that represents a single Gnome15
- * device.  
+ * Shell top panel button that represents a single Gnome15 device.
  */
 const DeviceButton = new Lang.Class({
     Name: 'DeviceButton',
-    Extends: PanelMenu.SystemStatusButton,
+    Extends: Config.PACKAGE_VERSION.indexOf("3.10") == 0 ? PanelMenu.Button : PanelMenu.SystemStatusButton,
 
 	_init : function(devicePath, modelId, modelName) {
 		this._deviceUid = devicePath.substring(devicePath.lastIndexOf('/') + 1);
 		this._itemMap = {};
 		
-		// API change for 3.6
 		if(Config.PACKAGE_VERSION.indexOf("3.4") == 0) {
 			this.parent('logitech-' + modelId);
+		}
+		else if(Config.PACKAGE_VERSION.indexOf("3.10") == 0) {
+			this.parent(0.0, 'logitech-' + modelId + '-symbolic');
 		}
 		else {
 			this.parent('logitech-' + modelId + '-symbolic');
@@ -416,12 +424,22 @@ const DeviceButton = new Lang.Class({
 		this._modelId = modelId;
 		this._modelName = modelName;
 		this._screen = null;
-		// API change for 3.6
 		if(Config.PACKAGE_VERSION.indexOf("3.4") == 0) {
 			this._iconActor.add_style_class_name('device-icon');
 			this._iconActor.set_icon_size(20);
 			this._iconActor.add_style_class_name('device-button');
 		}
+		else if (Config.PACKAGE_VERSION.indexOf("3.10") == 0) {
+			this._icon = new St.Icon({
+					icon_name: 'logitech-' + modelId + '-symbolic',
+					style_class: 'device-icon',
+					reactive: true,
+					track_hover: true
+				});
+			this._icon.set_icon_size(20);
+			this._icon.add_style_class_name('device-button');
+			this.actor.add_actor(this._icon);
+                }
 		else {
 			this.mainIcon.add_style_class_name('device-icon');
 			this.mainIcon.set_icon_size(20);
