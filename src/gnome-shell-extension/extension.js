@@ -36,7 +36,7 @@ const GLib = imports.gi.GLib;
 const Clutter = imports.gi.Clutter;
 const Config = imports.misc.config;
 
-let currNotification, gnome15Service, devices;
+let currNotification, gnome15Service, devices, dbus_watch_id;
 
 /*
  * Remote object definitions. This is just a sub-set of the full API 
@@ -555,11 +555,11 @@ function init() {
 
 function enable() {
 	_log('Enabling Gnome15 Gnome Shell Extension')
-	Gio.bus_watch_name(Gio.BusType.SESSION,
-	                   'org.gnome15.Gnome15',
-	                   Gio.BusNameWatcherFlags.NONE,
-	                   _onDesktopServiceAppeared,
-	                   _onDesktopServiceVanished);
+	dbus_watch_id = Gio.bus_watch_name(Gio.BusType.SESSION,
+	                                   'org.gnome15.Gnome15',
+	                                   Gio.BusNameWatcherFlags.NONE,
+	                                   _onDesktopServiceAppeared,
+	                                   _onDesktopServiceVanished);
 
 	gnome15Service.IsStartedRemote(_onStarted);
 }
@@ -569,6 +569,7 @@ function disable() {
 	for(let key in devices) {
 		_removeDevice(key);
 	}
+	Gio.bus_unwatch_name(dbus_watch_id);
 }
 
 /*
