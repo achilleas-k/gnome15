@@ -403,6 +403,7 @@ const PreferencesMenuItem = new Lang.Class({
 const DeviceButton = new Lang.Class({
     Name: 'DeviceButton',
     Extends: Config.PACKAGE_VERSION.indexOf("3.10") == 0 ? PanelMenu.Button : PanelMenu.SystemStatusButton,
+	NUMBER_OF_FIXED_MENU_ITEMS: 4,
 
 	_init : function(devicePath, modelId, modelName) {
 		this._deviceUid = devicePath.substring(devicePath.lastIndexOf('/') + 1);
@@ -488,8 +489,7 @@ const DeviceButton = new Lang.Class({
 	 * @param pagePath page of page to add
 	 */
 	addPage : function(pagePath) {
-		this._itemList.push(pagePath);
-		this._addPage(pagePath);
+		this._addPage(pagePath, true);
 	},
 
 	/**
@@ -512,16 +512,39 @@ const DeviceButton = new Lang.Class({
 	 * added to the menu component.
 	 * 
 	 * @param pagePath page of page.
+	 * @param insertPagePathInItemList flag that specifies if the pagePath should be inserted in
+	 *                                 the _itemList. Should be set to true when adding a page
+	 *                                 for the first time.
 	 */
-	_addPage : function(pagePath) {
+	_addPage : function(pagePath, insertPagePathInItemList) {
 		let Gnome15PageProxy = Gio.DBusProxy.makeProxyWrapper(Gnome15PageInterface);
 		let pageProxy = new Gnome15PageProxy(Gio.DBus.session, 'org.gnome15.Gnome15', pagePath);
 		pageProxy.GetTitleRemote(Lang.bind(this, function(result) {
 			let [title] = result;
 			let item = new PageMenuItem(title, title, pageProxy);
+			let position = this._findMenuPositionFor(item);
+			if(insertPagePathInItemList == true)
+				this._itemList.splice(position, 0, pagePath);
 			this._itemMap[pagePath] = item;
-			this.menu.addMenuItem(item);
+			this.menu.addMenuItem(item, position + this.NUMBER_OF_FIXED_MENU_ITEMS);
 		}));
+	},
+
+	/**
+	 * Find the position where a given menu item must be inserted in the menu so that
+	 * all the items are alphabetically ordered.
+	 *
+	 * @param item item that will be inserted in the menu
+	 */
+	_findMenuPositionFor : function(item) {
+		let i = 0;
+		for(let key in this._itemList) {
+			let pagePath = this._itemList[key];
+			if(this._itemMap[pagePath]._text > item._text)
+				return i;
+			i++;
+		}
+		return this._itemList.length;
 	},
 	
 	/**
