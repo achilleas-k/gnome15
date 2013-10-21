@@ -166,7 +166,6 @@ def calibrate(device_type):
         device_file = get_device(device_type)
         if device_file:
             load_calibration(device_type)
-            g15os.mkdir_p(os.path.expanduser("~/.config/gnome15"))
             os.system("jstest-gtk '%s'" % (device_file))
             save_calibration(device_type)
         
@@ -184,8 +183,7 @@ def save_calibration(device_type):
         if device_file:
             proc = subprocess.Popen(["jscal", "-q", device_file ], stdout=subprocess.PIPE) 
             out = proc.communicate()[0]
-            js_config_file = "%s/%s.js" % ( os.path.expanduser("~/.config/gnome15"), device_type )
-            g15os.mkdir_p(os.path.expanduser("~/.config/gnome15"))
+            js_config_file = _get_js_config_file(device_type)
             f = open(js_config_file, "w")
             try :
                 f.write(out)
@@ -204,7 +202,7 @@ def load_calibration(device_type):
             raise Exception("Cannot calibrate this device type (%s)" % device_type)
         device_file = get_device(device_type)
         if device_file:
-            js_config_file = "%s/%s.js" % ( os.path.expanduser("~/.config/gnome15"), device_type )
+            js_config_file = _get_js_config_file(device_type)
             if os.path.exists(js_config_file):
                 f = open(js_config_file, "r")
                 try :
@@ -219,6 +217,18 @@ def load_calibration(device_type):
             else:
                 logger.warn("No joystick calibration available.")
 
+def _get_js_config_file(device_type):
+    """
+    Returns the filename used for saving the joystick calibration file
+
+    If the directory that should own the file doesn't exist, it will be
+    created.
+
+    Keyword arguments:
+    device_type    --    device_type
+    """
+    g15os.mkdir_p(g15globals.user_config_dir)
+    return os.path.join(g15globals.user_config_dir, "%s.js" % device_type)
             
 def get_device(device_type):
     """

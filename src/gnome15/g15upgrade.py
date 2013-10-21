@@ -22,6 +22,7 @@ any migration needs to take place.
  
 import os.path
 import g15devices
+import g15globals
 import util.g15pythonlang as g15pythonlang
 import logging
 import shutil
@@ -39,7 +40,7 @@ def version_0_x_0_to_0_8_5():
     Location of mail accounts moved
     """
     old_path = os.path.expanduser("~/.gnome2/gnome15/lcdbiff/mailboxes.xml")
-    new_path = os.path.expanduser("~/.config/gnome15/plugin-data/lcdbiff/mailboxes.xml")
+    new_path = os.path.join(g15globals.user_config_dir, "plugin-data", "lcdbiff", "mailboxes.xml")
     if os.path.exists(old_path) and not os.path.exists(new_path):
         logger.warn("Upgrading to 0.8.5, moving mailboxes")
         os.renames(old_path, new_path)    
@@ -50,8 +51,8 @@ def version_0_x_0_to_0_7_0():
     multiple device support was introduced, pushing configuration into 
     sub-directories
     """
-    macros_dir = os.path.expanduser("~/.config/gnome15/macro_profiles")
-    if os.path.exists(os.path.expanduser("%s/0.macros" % macros_dir)):
+    macros_dir = os.path.join(g15globals.user_config_dir, "macro_profiles")
+    if os.path.exists(os.path.join(macros_dir,  "0.macros")):
         logger.info("Upgrading macros and configuration to 0.7.x format")
         
         """

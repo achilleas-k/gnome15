@@ -29,6 +29,7 @@ from gnome15 import g15devices
 from gnome15 import util.g15os as g15os
 from gnome15 import util.g15icontools as g15icontools
 from gnome15 import g15screen
+from gnome15 import g15globals
 from cStringIO import StringIO
 import base64
 
@@ -52,7 +53,7 @@ has_preferences=False
 global_plugin=True
 
 # Cached 
-cache_dir = os.path.expanduser("~/.cache/gnome15/lens")
+cache_dir = os.path.join(g15globals.user_cache_dir, "lens")
 if not os.path.exists(cache_dir):
     g15os.mkdir_p(cache_dir)
 

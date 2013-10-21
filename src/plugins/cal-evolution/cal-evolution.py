@@ -26,9 +26,10 @@ import urllib
 import vobject
 import datetime
 import dateutil
-import sys, os
+import sys, os, os.path
 import re
 import cal
+import xdg.BaseDirectory
  
 """
 Plugin definition
@@ -90,7 +91,7 @@ class EvolutionBackend(cal.CalendarBackend):
         event_days = {}
         
         # Find all the calendar files
-        cal_dir = os.path.expanduser("~/.local/share/evolution/calendar")
+        cal_dir = os.path.join(xdg.BaseDirectory.xdg_data_home, "evolution", "calendar")
         if not os.path.exists(cal_dir):
             # Older versions of evolution store their data in ~/.evolution
             cal_dir = os.path.expanduser("~/.evolution/calendar")

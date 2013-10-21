@@ -67,7 +67,7 @@ except:
     pass
 
 # Store the temporary profile icons here (for when the icon comes from a window, the filename is not known
-icons_dir = os.path.join(os.path.expanduser("~"),".cache", "gnome15", "macro_profiles")
+icons_dir = os.path.join(g15globals.user_cache_dir, "macro_profiles")
 if not os.path.exists(icons_dir):
     os.makedirs(icons_dir)
 

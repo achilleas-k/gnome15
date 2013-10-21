@@ -21,7 +21,7 @@ Has functions to transform, load and convert cairo surfaces
 '''
 
 import gtk.gdk
-import os
+import os, os.path
 import cairo
 import math
 import rsvg
@@ -29,6 +29,7 @@ import urllib
 import base64
 import xdg.Mime as mime
 import g15convert
+import gnome15.g15globals
 
 # Logging
 import logging
@@ -57,10 +58,9 @@ def flip_hv_centered_on(context, fx, fy, cx, cy):
     
 def get_cache_filename(filename, size = None):    
     cache_file = base64.urlsafe_b64encode("%s-%s" % ( filename, str(size if size is not None else "0,0") ) )
-    cache_dir = os.path.expanduser("~/.cache/gnome15")
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    return "%s/%s.img" % ( cache_dir, cache_file )
+    if not os.path.exists(g15globals.user_cache_dir):
+        os.makedirs(g15globals.user_cache_dir)
+    return os.path.join(g15globals.user_cache_dir, "%s.img" % cache_file)
     
 def get_image_cache_file(filename, size = None):
     full_cache_path = get_cache_filename(filename, size)

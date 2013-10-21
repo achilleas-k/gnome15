@@ -35,6 +35,7 @@ import os
 import time
 
 import xdg.Mime as mime
+import xdg.BaseDirectory
 import urllib
 
 # Logging
@@ -250,7 +251,11 @@ class AbstractMPRISPlayer():
         if "art_uri" in self.song_properties and self.song_properties["art_uri"] != "":
             new_cover_uri = self.song_properties["art_uri"]
         else:   
-            cover_art = os.path.expanduser("~/.cache/rhythmbox/covers/" + self.song_properties["artist"] + " - " + self.song_properties["album"] + ".jpg")
+            cover_art = os.path.join(xdg.BaseDirectory.xdg_cache_home,
+                                     "rhythmbox",
+                                     "covers",
+                                     "%s - %s.jpg" % (self.song_properties["artist"],
+                                                      self.song_properties["album"]))
             new_cover_uri = None
             if cover_art != None and os.path.exists(cover_art):
                 new_cover_uri = cover_art

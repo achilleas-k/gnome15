@@ -45,6 +45,7 @@ import dbus
 import os.path
 import operator
 import xdg.DesktopEntry
+import xdg.BaseDirectory
 
 # Logging
 import logging
@@ -740,22 +741,36 @@ the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <http://www.gnu.org/philosophy/why-not-lgpl.html>.
 """
+
+def autostart_path_for(application_name):
+    """
+    Returns the autostart path of the application_name desktop file
+    """
+    return os.path.join(xdg.BaseDirectory.xdg_config_home,
+                        "autostart",
+                        "%s.desktop" % application_name)
     
 def is_desktop_application_installed(application_name):
     """
     Get if a desktop file is installed for a particular application
     
     Keyword arguments:
-    service_name    --    name of application
+    application_name    --    name of application
     """
-    return os.path.exists("/etc/xdg/autostart/%s.desktop" % application_name) or os.path.exists(os.path.expanduser("~/.local/share/autostart/%s.desktop" % application_name))
+    for directory in xdg.BaseDirectory.xdg_config_dirs:
+        desktop_file = os.path.join(directory,
+                                    "autostart",
+                                    "%s.desktop" % application_name)
+        if os.path.exists(desktop_file):
+            return True
+    return False
 
 def is_autostart_application(application_name):
     """
     Get whether the application is set to autostart
     """
     installed  = is_desktop_application_installed(application_name)
-    path = os.path.expanduser("~/.config/autostart/%s.desktop" % application_name)
+    path = autostart_path_for(application_name)
     if os.path.exists(path):
         desktop_entry = xdg.DesktopEntry.DesktopEntry(path)
         autostart = len(desktop_entry.get('X-GNOME-Autostart-enabled')) == 0 or desktop_entry.get('X-GNOME-Autostart-enabled', type="boolean")
@@ -773,7 +788,7 @@ def set_autostart_application(application_name, enabled):
     application_name    -- application name
     enabled             -- enabled or not
     """
-    path = os.path.expanduser("~/.config/autostart/%s.desktop" % application_name)
+    path = autostart_path_for(application_name)
     if enabled and os.path.exists(path):
         os.remove(path)
     elif not enabled:
@@ -836,13 +851,11 @@ def is_shell_extension_installed(extension):
     Keyword arguments:
     extension        --    extension name
     """
-    
-    # 
-    # TODO - Bit crap, how can we be sure this is the prefix?
-    # 
-    prefix = "/usr/share"
-    return os.path.exists("%s/gnome-shell/extensions/%s" % (prefix, extension)) or \
-        os.path.exists(os.path.expanduser("~/.local/share/gnome-shell/extensions/%s" % extension)) 
+    for prefix in xdg.BaseDirectory.xdg_data_dirs:
+        extension_path = os.path.join(prefix, "gnome-shell", "extensions", extension)
+        if os.path.exists(extension_path):
+            return True
+    return False
         
 def is_gnome_shell_extension_enabled(extension):
     """

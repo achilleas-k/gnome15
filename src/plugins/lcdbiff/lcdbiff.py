@@ -25,7 +25,8 @@ import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import gnome15.g15accounts as g15accounts
-import os
+import gnome15.g15globals as g15globals
+import os, os.path
 import pwd
 import gtk
 import traceback
@@ -66,7 +67,7 @@ CURRENT_USERNAME=pwd.getpwuid(os.getuid())[0]
 PROTO_POP3 = "pop3"
 PROTO_IMAP = "imap"
 TYPES = [ PROTO_POP3, PROTO_IMAP ]
-CONFIG_PATH = "~/.config/gnome15/plugin-data/lcdbiff/mailboxes.xml"
+CONFIG_PATH = os.path.join(g15globals.user_config_dir, "plugin-data" , "lcdbiff", "mailboxes.xml")
 CONFIG_ITEM_NAME = "mailbox"
 
 def create(gconf_key, gconf_client, screen):

@@ -28,9 +28,10 @@ import gnome15.util.g15icontools as g15icontools
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
 import gnome15.g15plugin as g15plugin
+import gnome15.g15globals as g15globals
 import datetime
 import time
-import os
+import os, os.path
 import gtk
 import calendar
 import traceback
@@ -73,7 +74,7 @@ unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, \
 REFRESH_INTERVAL = 15 * 60
 
 # Configuration
-CONFIG_PATH = "~/.config/gnome15/plugin-data/cal/calendars.xml"
+CONFIG_PATH = os.path.join(g15globals.user_config_dir, "plugin-data", "cal", "calendars.xml")
 CONFIG_ITEM_NAME = "calendar"
 
 """

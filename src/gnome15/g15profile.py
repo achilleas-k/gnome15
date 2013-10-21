@@ -28,6 +28,7 @@ import util.g15convert as g15convert
 import util.g15gconf as g15gconf
 import util.g15os as g15os
 import util.g15icontools as g15icontools
+import g15globals
 import g15actions
 import g15devices
 import g15uinput
@@ -57,7 +58,7 @@ wm = pyinotify.WatchManager()
 mask = pyinotify.IN_DELETE | pyinotify.IN_MODIFY | pyinotify.IN_CREATE | pyinotify.IN_ATTRIB  # watched events
 
 # Create macro profiles directory
-conf_dir = os.path.expanduser("~/.config/gnome15/macro_profiles")
+conf_dir = os.path.join(g15globals.user_config_dir, "macro_profiles")
 g15os.mkdir_p(conf_dir)
 
 class EventHandler(pyinotify.ProcessEvent):
