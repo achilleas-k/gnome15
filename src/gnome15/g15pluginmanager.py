@@ -60,9 +60,9 @@ or if Gnome15 itself is closing down.
  
 import os.path
 import sys
-import g15globals as pglobals
-import g15driver as g15driver
-import g15actions as g15actions
+import g15globals
+import g15driver
+import g15actions
 import gconf
 import traceback
 import threading
@@ -249,8 +249,8 @@ TODO - These should really be using __init__.py
 """
 all_plugin_directories = get_extra_plugin_dirs() + \
                          list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + \
-                         list_plugin_dirs(os.path.join(pglobals.user_config_dir, "plugins")) + \
-                         list_plugin_dirs(pglobals.plugin_dir)
+                         list_plugin_dirs(os.path.join(g15globals.user_config_dir, "plugins")) + \
+                         list_plugin_dirs(g15globals.plugin_dir)
             
 # Phase 1
 for plugindir in all_plugin_directories:

@@ -18,7 +18,7 @@
 Notifications
 '''
 import dbus
-import g15globals as pglobals
+import g15globals
 
 # Logging
 import logging
@@ -48,8 +48,15 @@ def notify(summary, body, icon = "", actions = [], hints = {}, timeout = 10.0, r
     actions_array = dbus.Array(actions, signature='s')
     hints_dict = dbus.Dictionary(hints,  signature='sv')
     msg = NotifyMessage()
-    _get_obj().Notify(pglobals.name, replaces, icon, summary, body, actions_array, hints_dict, int(timeout * 1000),
-                                        dbus_interface = 'org.freedesktop.Notifications',
-                                        reply_handler = msg.handle_reply,
-                                        error_handler = msg.handle_error )
+    _get_obj().Notify(g15globals.name,
+                      replaces,
+                      icon,
+                      summary,
+                      body,
+                      actions_array,
+                      hints_dict,
+                      int(timeout * 1000),
+                      dbus_interface = 'org.freedesktop.Notifications',
+                      reply_handler = msg.handle_reply,
+                      error_handler = msg.handle_error)
     return msg

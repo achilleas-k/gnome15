@@ -60,7 +60,7 @@ import gnome15.util.g15convert as g15convert
 import gnome15.util.g15scheduler as g15scheduler
 import gnome15.util.g15uigconf as g15uigconf
 import gnome15.util.g15icontools as g15icontools
-import gnome15.g15globals as pglobals
+import gnome15.g15globals as g15globals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 
@@ -206,7 +206,7 @@ class G15NotifyService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
     def GetServerInformation(self):
-        return ( pglobals.name, "TT", pglobals.version, "1.1" ) 
+        return (g15globals.name, "TT", g15globals.version, "1.1")
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='as')
     def GetCapabilities(self):
