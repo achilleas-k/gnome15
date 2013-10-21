@@ -30,6 +30,7 @@ import gtk
 import g15globals
 import util.g15scheduler as g15scheduler
 import util.g15gconf as g15gconf
+import util.g15os as g15os
 import util.g15pythonlang as g15pythonlang
 import pyinotify
 import pwd
@@ -224,8 +225,7 @@ class G15AccountManager(G15Keyring):
         accounts = []
         if not os.path.exists(self._conf_file):
             dir_path = os.path.dirname(self._conf_file)
-            if not os.path.exists(dir_path):
-                os.makedirs(dir_path)
+            g15os.mkdir_p(dir_path)
         else:
             document = etree.parse(self._conf_file)        
             for element in document.getroot().xpath('//%s' % self.item_name):

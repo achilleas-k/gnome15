@@ -68,8 +68,7 @@ except:
 
 # Store the temporary profile icons here (for when the icon comes from a window, the filename is not known
 icons_dir = os.path.join(g15globals.user_cache_dir, "macro_profiles")
-if not os.path.exists(icons_dir):
-    os.makedirs(icons_dir)
+g15os.mkdir_p(icons_dir)
 
 PALE_RED = gtk.gdk.Color(213, 65, 54)
 
