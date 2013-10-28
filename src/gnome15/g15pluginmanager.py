@@ -30,10 +30,14 @@ Global Plugins        - These are plugins that are not tied to any specific devi
                         
 Plugins are looked for in a number of locations.
 
-* g15globals.plugin_dir - This is where official plugins installed with Gnome15 reside
-* $XDG_CONFIG_HOME/gnome15/plugins - This is where users can put their own local plugins
-* $G15_PLUGINS_DIR - If it exists allows custom locations to be added
-* g15pluginmanager.extra_plugin_dirs - Allows other plugins to dynamically register new plugin locations
+* g15globals.plugin_dir              - This is where official plugins installed with Gnome15 reside
+* $XDG_DATA_HOME/gnome15/plugins     - This is where users can put their own local plugins
+* $XDG_CONFIG_HOME/gnome15/plugins   - This is a deprecated place where users can put
+                                       their own local plugins. It will be removed on a future
+                                       version of Gnome15
+* $G15_PLUGINS_DIR                   - If it exists allows custom locations to be added
+* g15pluginmanager.extra_plugin_dirs - Allows other plugins to dynamically register new plugin
+                                       locations
                         
 The lifecycle of all plugins consists of 5 stages. 
 
@@ -250,6 +254,7 @@ TODO - These should really be using __init__.py
 all_plugin_directories = get_extra_plugin_dirs() + \
                          list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + \
                          list_plugin_dirs(os.path.join(g15globals.user_config_dir, "plugins")) + \
+                         list_plugin_dirs(os.path.join(g15globals.user_data_dir, "plugins")) + \
                          list_plugin_dirs(g15globals.plugin_dir)
             
 # Phase 1
