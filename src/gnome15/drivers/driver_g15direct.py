@@ -437,7 +437,7 @@ class Driver(g15driver.AbstractDriver):
         if code & 1 << 0 != 0:
             keys.append(g15uinput.KEY_PLAYPAUSE)
         elif code & 1 << 1 != 0:
-            keys.append(g15uinput.KEY_STOP)
+            keys.append(g15uinput.KEY_STOPCD)
         elif code & 1 << 2 != 0:
             keys.append(g15uinput.KEY_PREVIOUSSONG)
         elif code & 1 << 3 != 0:
