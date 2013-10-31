@@ -49,7 +49,7 @@ import zipfile
 import time
 
 import logging
-logger = logging.getLogger("config")
+logger = logging.getLogger(__name__)
 
 # Upgrade
 import g15upgrade

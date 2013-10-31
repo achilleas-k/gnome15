@@ -34,7 +34,7 @@ import g15uinput
 import g15screen
 
 import logging
-logger = logging.getLogger("keyboard")
+logger = logging.getLogger(__name__)
    
 class KeyState():
     """

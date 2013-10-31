@@ -25,7 +25,7 @@ import util.g15scheduler as g15scheduler
 
 # Logging
 import logging
-logger = logging.getLogger("systemservice")
+logger = logging.getLogger(__name__)
     
 NAME = "Gnome15"
 VERSION = g15globals.version

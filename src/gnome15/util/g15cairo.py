@@ -34,7 +34,7 @@ import gnome15.g15globals
 
 # Logging
 import logging
-logger = logging.getLogger("cairo")
+logger = logging.getLogger(__name__)
 
 from cStringIO import StringIO
 

@@ -34,7 +34,7 @@ import feedparser
 import gtk
 import gconf
 import logging
-logger = logging.getLogger("rss")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id = "rss"

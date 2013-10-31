@@ -19,7 +19,7 @@ import pangocairo
 import cairo
 import gobject
 import logging
-logger = logging.getLogger("text")
+logger = logging.getLogger(__name__)
 
 # Shared pango context
 pango_context = pangocairo.cairo_font_map_get_default().create_context()

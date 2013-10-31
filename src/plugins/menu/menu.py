@@ -27,7 +27,7 @@ import cairo
 import base64
 from cStringIO import StringIO
 import logging
-logger = logging.getLogger("menu")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="menu"

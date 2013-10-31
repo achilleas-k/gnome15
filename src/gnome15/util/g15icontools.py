@@ -30,7 +30,7 @@ import base64
 
 # Logging
 import logging
-logger = logging.getLogger("icon")
+logger = logging.getLogger(__name__)
 
 from cStringIO import StringIO
 

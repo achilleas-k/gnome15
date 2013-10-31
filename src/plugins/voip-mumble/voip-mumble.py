@@ -48,7 +48,7 @@ global_plugin=True
 
 # Logging
 import logging
-logger = logging.getLogger("voip-mumble")
+logger = logging.getLogger(__name__)
 
 """
 Calendar Back-end module functions

@@ -33,7 +33,7 @@ import dbus.service
 
 # Logging
 import logging
-logger = logging.getLogger("debug")
+logger = logging.getLogger(__name__)
 
 id="debug"
 name=_("Debug")
@@ -332,7 +332,7 @@ class G15DBUSDebugService(dbus.service.Object):
           'warning': logging.WARNING,
           'error': logging.ERROR,
           'critical': logging.CRITICAL}
-        logger = logging.getLogger()
+        logger = logging.getLogger(__name__)
         level = levels.get(log_level.lower(), logging.NOTSET)
         logger.setLevel(level = level)
         

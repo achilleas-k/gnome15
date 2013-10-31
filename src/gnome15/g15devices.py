@@ -25,7 +25,7 @@ import g15drivermanager
 
 # Logging
 import logging
-logger = logging.getLogger("service")
+logger = logging.getLogger(__name__)
  
 '''
 Keyboard layouts 

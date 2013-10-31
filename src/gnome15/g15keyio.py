@@ -25,7 +25,7 @@ _ = g15locale.get_translation("macro-recorder", modfile = __file__).ugettext
 
 import time
 import logging
-logger = logging.getLogger("macros")
+logger = logging.getLogger(__name__)
  
 from Xlib import X, XK, display
 from Xlib.ext import record

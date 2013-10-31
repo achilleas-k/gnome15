@@ -180,7 +180,7 @@ import colorsys
 from threading import Lock
 from threading import Event
 import logging
-logger = logging.getLogger("driver")
+logger = logging.getLogger(__name__)
 
 seq_no = 0
 

@@ -39,7 +39,7 @@ import cairo
 
 # Logging
 import logging
-logger = logging.getLogger("google-analytics")
+logger = logging.getLogger(__name__)
 
  
 id="google-analytics"

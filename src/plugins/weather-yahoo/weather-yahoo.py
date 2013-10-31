@@ -65,7 +65,7 @@ YAHOO_WEATHER_NS     = 'http://xml.weather.yahoo.com/ns/rss/1.0'
 
 # Logging
 import logging
-logger = logging.getLogger("weather-yahoo")
+logger = logging.getLogger(__name__)
  
 """
 Plugin definition

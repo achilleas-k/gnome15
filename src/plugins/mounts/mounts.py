@@ -32,7 +32,7 @@ import gobject
 
 # Logging
 import logging
-logger = logging.getLogger("mounts")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="mounts"

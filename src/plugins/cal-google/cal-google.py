@@ -34,7 +34,7 @@ import socket
 
 # Logging
 import logging
-logger = logging.getLogger("cal-google")
+logger = logging.getLogger(__name__)
  
 """
 Plugin definition

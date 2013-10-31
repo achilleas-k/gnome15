@@ -29,7 +29,7 @@ import gobject
 
 # Logging
 import logging
-logger = logging.getLogger("dconf")
+logger = logging.getLogger(__name__)
 
 PASSIVE_MATCH_STRING="type='method_call',interface='ca.desrt.dconf.Writer',member='Change'"
 EAVESDROP_MATCH_STRING="eavesdrop='true',%s" % PASSIVE_MATCH_STRING

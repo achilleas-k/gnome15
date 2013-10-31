@@ -52,7 +52,7 @@ import gtk.gdk
  
 # Logging
 import logging
-logger = logging.getLogger("service")
+logger = logging.getLogger(__name__)
 
 # Used for getting logout  / shutdown signals
 master_client = None

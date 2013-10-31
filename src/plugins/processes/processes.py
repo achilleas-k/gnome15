@@ -28,7 +28,7 @@ import dbus
 import time
 import gobject
 import logging
-logger = logging.getLogger("processes")
+logger = logging.getLogger(__name__)
 
 try:
     import gtop

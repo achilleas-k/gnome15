@@ -27,7 +27,7 @@ import dbus
 
 # Logging
 import logging
-logger = logging.getLogger("network")
+logger = logging.getLogger(__name__)
 
 _system_bus = dbus.SystemBus()
 

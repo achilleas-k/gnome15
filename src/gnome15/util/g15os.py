@@ -25,7 +25,7 @@ import os
 
 # Logging
 import logging
-logger = logging.getLogger("shell")
+logger = logging.getLogger(__name__)
 
 def run_script(script, args = None, background = True):
     """

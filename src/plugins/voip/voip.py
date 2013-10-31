@@ -45,7 +45,7 @@ import gtk
 
 # Logging
 import logging
-logger = logging.getLogger("voip")
+logger = logging.getLogger(__name__)
 
 # Actions
 MUTE_INPUT = "voip-mute-input"

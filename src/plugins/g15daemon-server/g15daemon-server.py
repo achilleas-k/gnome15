@@ -38,7 +38,7 @@ import struct
 import sys
 _ = g15locale.get_translation("g15daemon-server", modfile = __file__).ugettext
 
-logger = logging.getLogger("g15daemon")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="g15daemon-server"

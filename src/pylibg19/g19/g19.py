@@ -23,7 +23,7 @@ import usb
 from PIL import Image as Img
 import logging
 import array
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 class G19(object):
     '''Simple access to Logitech G19 features.

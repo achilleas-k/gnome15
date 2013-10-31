@@ -22,7 +22,7 @@ from message import Command
 
 # Logging
 import logging
-logger = logging.getLogger("voip-teamspeak3")
+logger = logging.getLogger(__name__)
 
 def _receive_message(client):
     while True:

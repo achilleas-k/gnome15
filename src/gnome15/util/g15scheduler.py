@@ -20,7 +20,7 @@ import g15pythonlang
 
 # Logging
 import logging
-logger = logging.getLogger("scheduler")
+logger = logging.getLogger(__name__)
 
 import jobqueue
 

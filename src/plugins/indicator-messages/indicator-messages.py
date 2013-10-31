@@ -38,7 +38,7 @@ import gnome15.dbusmenu as dbusmenu
 from lxml import etree
 
 import logging
-logger = logging.getLogger("indicator-messages")
+logger = logging.getLogger(__name__)
 
 # Only works in Unity
 if not "XDG_CURRENT_DESKTOP" in os.environ or os.environ["XDG_CURRENT_DESKTOP"] != "Unity":

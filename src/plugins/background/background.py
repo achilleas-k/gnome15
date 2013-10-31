@@ -31,7 +31,7 @@ import os
 import logging
 import gconf
 from lxml import etree
-logger = logging.getLogger("background")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="background"

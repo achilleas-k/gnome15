@@ -41,7 +41,7 @@ import urllib
 # Logging
 import logging
 from dbus.exceptions import DBusException
-logger = logging.getLogger("mpris")
+logger = logging.getLogger(__name__)
 
 # Custom actions
 NEXT_TRACK = "mpris-next-track"

@@ -27,7 +27,7 @@ import subprocess
 from uinput.ev import *
 from threading import RLock
 from gnome15 import g15globals
-logger = logging.getLogger("uinput")
+logger = logging.getLogger(__name__)
 
 MOUSE = "mouse"
 JOYSTICK = "joystick"

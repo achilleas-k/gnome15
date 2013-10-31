@@ -17,7 +17,7 @@
 import logging
 import cairo
 import os
-logger = logging.getLogger("lens")
+logger = logging.getLogger(__name__)
 import sys
 from gi.repository import GLib, GObject, Gio
 from gi.repository import Dee

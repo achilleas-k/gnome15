@@ -31,7 +31,7 @@ import gnome15.g15plugin as g15plugin
 import time
 import datetime
 import logging
-logger=logging.getLogger("trafficstats")
+logger=logging.getLogger(__name__)
 try:
     import gtop
 except:

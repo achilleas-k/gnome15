@@ -38,7 +38,7 @@ import logging
 from PIL import ImageMath
 from PIL import Image
 import array
-logger = logging.getLogger("driver")
+logger = logging.getLogger(__name__)
 load_error = None
 try :
     import pylibg15

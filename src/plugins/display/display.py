@@ -28,7 +28,7 @@ import gnome15.util.g15icontools as g15icontools
 import logging
 import os
 import re
-logger = logging.getLogger("xrandr")
+logger = logging.getLogger(__name__)
 
 ICONS = [ "display", "gnome-display-properties", "system-config-display", "video-display", "xfce4-display", "display-capplet" ]
 

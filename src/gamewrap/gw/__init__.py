@@ -24,7 +24,7 @@ import re
 
 # Logging
 import logging
-logger = logging.getLogger("gamewrapper")
+logger = logging.getLogger(__name__)
     
 NAME = "GameWrap"
 VERSION = "0.1"

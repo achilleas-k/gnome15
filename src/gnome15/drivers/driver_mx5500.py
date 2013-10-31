@@ -37,7 +37,7 @@ import time
 import logging
 import asyncore
 import sys
-logger = logging.getLogger("driver")
+logger = logging.getLogger(__name__)
 
 # Driver information (used by driver selection UI)
 name="MX5500"

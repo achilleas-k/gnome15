@@ -72,7 +72,7 @@ import threading
 
 # Logging
 import logging
-logger = logging.getLogger("plugins")
+logger = logging.getLogger(__name__)
 
 imported_plugins = []
 

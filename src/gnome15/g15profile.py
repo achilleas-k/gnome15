@@ -43,7 +43,7 @@ import re
 import zipfile
 from cStringIO import StringIO
  
-logger = logging.getLogger("macros")
+logger = logging.getLogger(__name__)
 active_profile = None
 conf_client = gconf.client_get_default()
     

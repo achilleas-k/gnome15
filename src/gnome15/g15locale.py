@@ -36,7 +36,7 @@ import datetime
 import re
 
 import logging
-logger = logging.getLogger("locale")
+logger = logging.getLogger(__name__)
  
 # Change this variable to your app name!
 #  The translation files will be under

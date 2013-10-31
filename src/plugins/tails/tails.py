@@ -33,7 +33,7 @@ import gconf
 import logging
 import xdg.Mime as mime
 from threading import Thread
-logger = logging.getLogger("rss")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id = "tails"

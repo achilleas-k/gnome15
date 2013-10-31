@@ -39,7 +39,7 @@ import gobject
 import keyring
 
 import logging
-logger = logging.getLogger("accounts")
+logger = logging.getLogger(__name__)
 
 """
 Functions

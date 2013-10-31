@@ -36,7 +36,7 @@ import pango
 import logging
 import time
 import sys
-logger = logging.getLogger("weather")
+logger = logging.getLogger(__name__)
 
 
 # Plugin details - All of these must be provided

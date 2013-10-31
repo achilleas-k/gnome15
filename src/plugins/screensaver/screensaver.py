@@ -28,7 +28,7 @@ import gtk
 import dbus
 import logging
 import os.path
-logger = logging.getLogger("screensaver")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="screensaver"

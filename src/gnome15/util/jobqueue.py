@@ -28,7 +28,7 @@ TIME_FACTOR=1
 
 # Logging
 import logging
-logger = logging.getLogger("jobs")
+logger = logging.getLogger(__name__)
 
 # Thread local to allow threads to detect what queue they are on
 queue_names = local()

@@ -32,7 +32,7 @@ import select
 import os
 import gtk
 import logging
-logger = logging.getLogger("volume")
+logger = logging.getLogger(__name__)
 
 from threading import Thread
 

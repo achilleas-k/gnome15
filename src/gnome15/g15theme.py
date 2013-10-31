@@ -57,7 +57,7 @@ import base64
 import dbusmenu
 import logging
 import time
-logger = logging.getLogger("theme")
+logger = logging.getLogger(__name__)
 from string import Template
 from copy import deepcopy
 from cStringIO import StringIO

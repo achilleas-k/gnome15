@@ -37,7 +37,7 @@ import calendar
 
 # Logging
 import logging
-logger = logging.getLogger("cal")
+logger = logging.getLogger(__name__)
 
 # Plugin data
 id="cal"

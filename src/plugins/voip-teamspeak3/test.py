@@ -22,7 +22,7 @@ import logging
 if __name__ == "__main__":
     
     logging.basicConfig(format='%(levelname)s:%(asctime)s:%(threadName)s:%(name)s:%(message)s', datefmt='%H:%M:%S')
-    logger = logging.getLogger()
+    logger = logging.getLogger(__name__)
     logger.setLevel(level = logging.INFO)
     
     t = ts3.TS3()

@@ -31,7 +31,7 @@ import re
 import cal
 import xdg.BaseDirectory
 import logging
-logger = logging.getLogger("cal-evolution")
+logger = logging.getLogger(__name__)
  
 """
 Plugin definition

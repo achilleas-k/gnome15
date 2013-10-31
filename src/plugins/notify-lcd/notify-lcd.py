@@ -49,7 +49,7 @@ from dbus.exceptions import NameExistsException
 
 # Logging
 import logging
-logger = logging.getLogger("notify")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="notify-lcd"

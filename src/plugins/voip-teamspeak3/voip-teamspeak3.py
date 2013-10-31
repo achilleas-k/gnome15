@@ -50,7 +50,7 @@ global_plugin=True
 
 # Logging
 import logging
-logger = logging.getLogger("voip-teamspeak3")
+logger = logging.getLogger(__name__)
 
 """
 Calendar Back-end module functions

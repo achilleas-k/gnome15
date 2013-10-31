@@ -67,7 +67,7 @@ import logging
 from threading import RLock
 from g15exceptions import NotConnectedException
 from g15exceptions import RetryException
-logger = logging.getLogger("screen")
+logger = logging.getLogger(__name__)
 
 """
 This module contains the root component for a single device (i.e. the 'screen'), and all

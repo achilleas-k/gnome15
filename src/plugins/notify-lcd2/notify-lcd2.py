@@ -66,7 +66,7 @@ import gnome15.g15driver as g15driver
 # Logging
 import logging
 logging.basicConfig()
-logger = logging.getLogger("notify")
+logger = logging.getLogger(__name__)
 
 LEVELS = {'debug': logging.DEBUG,
           'info': logging.INFO,

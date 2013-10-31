@@ -44,7 +44,7 @@ import dbus
 from threading import Lock
  
 import logging
-logger = logging.getLogger("mediaplayer")
+logger = logging.getLogger(__name__)
 
 # Detect whether we will be able to grab multimedia keys
 session_bus = dbus.SessionBus()

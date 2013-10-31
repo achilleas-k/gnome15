@@ -41,7 +41,7 @@ import pango
 import gconf
 
 import logging
-logger = logging.getLogger("config")
+logger = logging.getLogger(__name__)
 
 # Key validation constants
 IN_USE = "in-use"

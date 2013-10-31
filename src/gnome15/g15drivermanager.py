@@ -29,7 +29,7 @@ device.
 
 import os
 import logging
-logger = logging.getLogger("driver")
+logger = logging.getLogger(__name__)
 
 # Find all drivers
 drivers_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "drivers"))

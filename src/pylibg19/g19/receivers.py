@@ -20,7 +20,7 @@ from runnable import Runnable
 import threading
 import time
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 class InputProcessor(object):
     '''Object to process key presses.'''

@@ -19,7 +19,7 @@ import dbus
 from lxml import etree
 import time
 import logging
-logger = logging.getLogger("dbusmenu")
+logger = logging.getLogger(__name__)
 
 
 '''

@@ -37,7 +37,7 @@ import gtk
 import usb
 import logging
 import array
-logger = logging.getLogger("driver")
+logger = logging.getLogger(__name__)
 
 # Import from local version of pylibg19 if available
 if g15globals.dev:

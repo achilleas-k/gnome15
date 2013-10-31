@@ -24,7 +24,7 @@ import g15pythonlang
 
 # Logging
 import logging
-logger = logging.getLogger("svg")
+logger = logging.getLogger(__name__)
 
 
 def rotate_element(element, degrees):

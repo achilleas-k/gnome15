@@ -29,7 +29,7 @@ import gtk
 import os
 import logging
 import time
-logger = logging.getLogger("macros")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="macros"

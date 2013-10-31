@@ -22,7 +22,7 @@ import g15globals
 
 # Logging
 import logging
-logger = logging.getLogger("plugins")
+logger = logging.getLogger(__name__)
 
 _session_bus = dbus.SessionBus()
 

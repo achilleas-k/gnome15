@@ -26,7 +26,7 @@ import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import time
 import logging
-logger=logging.getLogger("sysmon")
+logger=logging.getLogger(__name__)
 try:
     import gtop
 except Exception as e:

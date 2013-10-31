@@ -33,7 +33,7 @@ import cairo
 from PIL import Image
 from PIL import ImageMath
 import logging
-logger = logging.getLogger("driver") 
+logger = logging.getLogger(__name__)
 
 # Driver information (used by driver selection UI)
 id="gtk"

@@ -38,7 +38,7 @@ from threading import Thread
  
 # Logging
 import logging
-logger = logging.getLogger("lcdshot")
+logger = logging.getLogger(__name__)
 
 # Custom actions
 SCREENSHOT = "screenshot"

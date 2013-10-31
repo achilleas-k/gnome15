@@ -46,7 +46,7 @@ import gobject
 
 # Logging
 import logging
-logger = logging.getLogger("driver")
+logger = logging.getLogger(__name__)
 
 # Driver information (used by driver selection UI)
 id = "kernel"

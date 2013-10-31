@@ -51,7 +51,7 @@ from telepathy.constants import (
 
 # Logging
 import logging
-logger = logging.getLogger("im")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="im"

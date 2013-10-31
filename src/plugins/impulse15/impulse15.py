@@ -29,7 +29,7 @@ import datetime
 
 # Logging
 import logging
-logger = logging.getLogger("impulse15")
+logger = logging.getLogger(__name__)
 
 id="impulse15"
 name="Impulse15"

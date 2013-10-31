@@ -37,7 +37,7 @@ from imaplib import IMAP4_SSL
  
 # Logging
 import logging
-logger = logging.getLogger("lcdbiff")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id = "lcdbiff"

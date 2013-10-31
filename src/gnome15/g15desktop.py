@@ -48,7 +48,7 @@ import xdg.BaseDirectory
 
 # Logging
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 from threading import RLock
 from threading import Thread

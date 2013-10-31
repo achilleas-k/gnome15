@@ -42,7 +42,7 @@ DEVICE_IF_NAME="org.gnome15.Device"
 
 # Logging
 import logging
-logger = logging.getLogger("dbus")
+logger = logging.getLogger(__name__)
     
 class AbstractG15DBUSService(dbus.service.Object):
     

@@ -19,7 +19,7 @@ import gnome15.g15screen as g15screen
 import gnome15.util.g15convert as g15convert
 import gnome15.util.g15scheduler as g15scheduler
 import logging
-logger = logging.getLogger("things")
+logger = logging.getLogger(__name__)
 
 from Things.ThingsApp import *
 from Things.Thinglets import *
