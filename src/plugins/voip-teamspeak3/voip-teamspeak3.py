@@ -66,7 +66,8 @@ def find_avatar(server_unique_identifier, client_unique_identifier):
         for c in base64.b64decode(client_unique_identifier):
             decoded += chr(((ord(c) & 0xf0) >> 4) + 97)
             decoded += chr((ord(c) & 0x0f) + 97)
-    except TypeError:
+    except TypeError as e:
+        logging.debug("Error decoding client_unique_identifier. Using raw value", exc_info = e)
         # Sometimes the client_unique_identifier is not base64 encoded
         decoded = client_unique_identifier
 
@@ -182,7 +183,7 @@ class Teamspeak3Backend(voip.VoipBackend):
                 ))
 
         except ts3.TS3CommandException as e:
-            traceback.print_exc()
+            logger.debug("Error when changing channel", exc_info = e)
     
     def get_current_channel(self):
         if self._current_channel is None:
@@ -242,8 +243,8 @@ class Teamspeak3Backend(voip.VoipBackend):
                                         'channellist'
                                     ))
                     self._parse_channellist_reply(reply, s)
-                except ts3.TS3CommandException:
-                    traceback.print_exc()
+                except ts3.TS3CommandException as e:
+                    logger.debug("Error when getting channel list", exc_info = e)
                     
         
             # Switch back to the selected server connection
@@ -262,10 +263,10 @@ class Teamspeak3Backend(voip.VoipBackend):
         # Connect to ClientQuery plugin
         try :
             self._client.start()
-        except socket.error, v:
+        except socket.error as v:
+            logger.debug("Error starting client. Could not open socket.", exc_info = v)
             self._client = None
-            error_code = v[0]
-            if error_code == errno.ECONNREFUSED:
+            if v.error_code == errno.ECONNREFUSED:
                 return False
             raise v
         
@@ -280,6 +281,7 @@ class Teamspeak3Backend(voip.VoipBackend):
             
             return True
         except ts3.TS3CommandException as e:
+            logger.debug("TeamSpeak error getting initial data", exc_info = e)
             self._client.close()
             self._client = None
             if e.code == 1794:
@@ -288,6 +290,7 @@ class Teamspeak3Backend(voip.VoipBackend):
             else:
                 raise e
         except Exception as e:
+            logger.debug("Error getting initial data", exc_info = e)
             self._client.close()
             self._client = None
             raise e
@@ -386,9 +389,8 @@ class Teamspeak3Backend(voip.VoipBackend):
                 
                 
                 
-        except:
-            logger.error("Possible corrupt reply.")
-            traceback.print_exc()
+        except Exception as e:
+            logger.error("Possible corrupt reply.", exc_info = e)
                 
     def _disconnected(self):
         print "disconnex"
@@ -508,7 +510,8 @@ class Teamspeak3Backend(voip.VoipBackend):
             next_item = self._channels[position + item.child_count + 1]
             if next_item.cpid == item.cpid:
                 next_item.order = item.order
-        except IndexError:
+        except IndexError as e:
+            logger.debug("Did not found channel to remove", exc_info = e)
             pass
 
         self._channels.remove(item)
@@ -549,7 +552,8 @@ class Teamspeak3Backend(voip.VoipBackend):
             next_item = self._channels[position + 1]
             if next_item.cpid == item.cpid:
                 next_item.order = item.cid
-        except IndexError:
+        except IndexError as e:
+            logger.debug("Did not found channel to update", exc_info = e)
             pass
     
     def _parse_notifyconnectstatuschange_reply(self, message):
@@ -622,7 +626,8 @@ class Teamspeak3Backend(voip.VoipBackend):
                 result.append(item)
                 search_stack.append((item.cpid, item.cid))
                 search_stack.append((item.cid, 0))
-            except KeyError:
+            except KeyError as e:
+                logger.debug("Did not found channels matching search_criteria", exc_info = e)
                 continue
 
         return result

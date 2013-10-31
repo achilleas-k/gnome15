@@ -98,12 +98,12 @@ class KeyboardReceiveThread(Thread):
             try :
                 fcntl.ioctl(dev.fileno(), EVIOCGRAB, 0)
             except Exception as e:
-                logger.info("Failed ungrab. %s" % str(e))
+                logger.info("Failed ungrab.", exc_info = e)
             logger.info("Closing %d" % dev.fileno())
             try :
                 self.fds[dev.fileno()].close()
             except Exception as e:
-                logger.info("Failed close. %s" % str(e))
+                logger.info("Failed close.", exc_info = e)
             logger.info("Stopped %d" % dev.fileno())
         logger.info("Stopped all input devices")
         
@@ -121,6 +121,7 @@ class KeyboardReceiveThread(Thread):
                     if dev:
                         dev.read()
                 except OSError as e:
+                    logger.debug('Could not read device file.', exc_info = e)
                     # Ignore this error if deactivated
                     if self._run:
                         raise e

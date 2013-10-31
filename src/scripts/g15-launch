@@ -66,7 +66,8 @@ and a G19, to select the first G13 you would use g13_0.")
     try :
         service = session_bus.get_object('org.gnome15.Gnome15', \
                                '/org/gnome15/Service')
-    except:
+    except Exception as e:
+        logger.debug("D-Bus service not available.", exc_info = e)
         print "Gnome15 desktop service is not running. Applications may not be \
 launched through it. You can start the service using g15-desktop-service."
         sys.exit(1)

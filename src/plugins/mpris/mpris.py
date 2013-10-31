@@ -314,7 +314,8 @@ class AbstractMPRISPlayer():
         if new_cover_uri != None:
             try :            
                 new_cover_uri = "file://" + urllib.pathname2url(new_cover_uri)
-            except :
+            except Exception as e:
+                logger.debug("Error getting default cover, using None", exc_info = e)
                 new_cover_uri = None
                               
         if new_cover_uri == None:                      
@@ -487,7 +488,8 @@ class MPRIS2Player(AbstractMPRISPlayer):
         self.player_properties = dbus.Interface(player_obj, 'org.freedesktop.DBus.Properties')
         try:
             identity = self.player_properties.Get("org.mpris.MediaPlayer2", "Identity")
-        except DBusException:
+        except DBusException as e:
+            logger.debug("Error getting identify of player. Using default indentify.", exc_info = e)
             # Set a default identity if we cannot get players identity
             Identity = "MPRIS2"
         
@@ -498,7 +500,8 @@ class MPRIS2Player(AbstractMPRISPlayer):
             self.track_list = dbus.Interface(player_obj, 'org.mpris.MediaPlayer2.TrackList')                   
             self.track_list_properties = dbus.Interface(self.track_list, 'org.freedesktop.DBus.Properties')
             self.load_track_list()
-        except ( dbus.DBusException, KeyError ):
+        except ( dbus.DBusException, KeyError ) as e:
+            logger.debug("Cound not load track list", exc_info = e)
             pass
             
         if self.track_list is None:
@@ -663,6 +666,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
         try:
             return int(self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Volume") * 100)
         except DBusException as d:
+            logger.debug("Could not read volume from player. Setting to 100", exc_info = d)
             # Nuvola doesn't support the Volume property
             return 100
             
@@ -671,7 +675,8 @@ class MPRIS2Player(AbstractMPRISPlayer):
             try :
                 # This call seems to be where it usually hangs, although not always?????
                 return self.player_properties.Get("org.mpris.MediaPlayer2.Player", "Position") / 1000 / 1000
-            except:
+            except Exception as e:
+                logger.debug("Could not read player position.", exc_info = e)
                 pass
         return 0
     

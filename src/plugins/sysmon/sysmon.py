@@ -25,9 +25,12 @@ import gnome15.util.g15icontools as g15icontools
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import time
+import logging
+logger=logging.getLogger("sysmon")
 try:
     import gtop
-except:
+except Exception as e:
+    logger.debug("Could not import gtop. Falling back to g15top", exc_info = e)
     # API compatible work around for Ubuntu 12.10
     import gnome15.g15top as gtop
 import gtk
@@ -384,7 +387,8 @@ class G15SysMon(g15plugin.G15RefreshingPlugin):
         
         try :
             properties["info"] = socket.gethostname()
-        except :
+        except Exception as e:
+            logger.debug("Could not get hostname. Falling back to 'System'", exc_info = e)
             properties["info"] = "System"
         
         properties["cpu_no"] = self.selected_cpu.name.upper()

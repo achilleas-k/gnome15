@@ -171,10 +171,14 @@ class G15FeedsMenuItem(g15theme.MenuItem):
             
         try:
             dt = self.entry.date_parsed
-        except AttributeError:
+        except AttributeError as ae:
+            logger.debug("Could not get date_parsed attribute. Trying published_parsed",
+                         exc_info = ae)
             try:
                 dt = self.entry.published_parsed
-            except:
+            except Exception as e:
+                logger.debug("Could not get publish_parsed attribute. Using current time.",
+                             exc_info = e)
                 dt = time.localtime()
         
         element_properties["ent_locale_date_time"] = time.strftime("%x %X", dt)            
@@ -237,8 +241,8 @@ class G15FeedPage(g15theme.G15Page):
             try :
                 icon_surface = g15cairo.load_surface_from_file(self._menu.selected.icon)
                 self._selected_icon_embedded = g15icontools.get_embedded_image_url(icon_surface)
-            except:
-                logger.warning("Failed to get icon %s" % str(self._menu.selected.icon))
+            except Exception as e:
+                logger.warning("Failed to get icon %s", str(self._menu.selected.icon), exc_info = e)
         
     def _reload(self):
         self.feed = feedparser.parse(self.url)
@@ -267,8 +271,8 @@ class G15FeedPage(g15theme.G15Page):
                 icon_surface = g15cairo.load_surface_from_file(icon)
                 self._icon_surface = icon_surface
                 self._icon_embedded = g15icontools.get_embedded_image_url(icon_surface)
-            except:
-                logger.warning("Failed to get icon %s" % str(icon))
+            except Exception as e:
+                logger.warning("Failed to get icon %s", str(icon), exc_info = e)
                 self._icon_surface = None
                 self._icon_embedded = None
         self.set_title(title)
@@ -295,7 +299,8 @@ class G15FeedPage(g15theme.G15Page):
                 update_time =  self.feed.updated_parsed
             
             properties["updated"] = "%s %s" % (time.strftime("%H:%M", update_time), time.strftime("%a %d %b", update_time))
-        except AttributeError:
+        except AttributeError as ae:
+            logger.debug("Could not get attribute", exc_info = ae)
             pass
         return properties 
         

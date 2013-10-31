@@ -106,7 +106,7 @@ class G15ScreenSaver():
                 self._session_bus = dbus.SessionBus()
             except Exception as e:
                 self._session_bus = None
-                logger.error("Error. %s retrying in 10 seconds" % str(e) ) 
+                logger.error("Error. Retrying in 10 seconds", exc_info = e)
                 Timer(10, self.activate, ()).start()
                 return
             
@@ -128,6 +128,7 @@ class G15ScreenSaver():
                     self._in_screensaver = screen_saver.GetActive()
                     break
                 except Exception as e:
+                    logger.debug("Could not find screensaver", exc_info = e)
                     screen_saver = None
                     pass
                 

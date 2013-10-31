@@ -39,12 +39,13 @@ import logging
 from PIL import ImageMath
 from PIL import Image
 import array
+logger = logging.getLogger("driver")
 load_error = None
 try :
     import pylibg15
 except Exception as a:
+    logging.debug("Could not import pylibg15 module", exc_info = a)
     load_error = a
-logger = logging.getLogger("driver")
 
 # Import from local version of pylibg19 if available
 if g15globals.dev:
@@ -354,9 +355,8 @@ class Driver(g15driver.AbstractDriver):
                     if logger.isEnabledFor(logging.DEBUG):
                         logger.debug("Writing buffer of %d bytes" % len(buf))
                     pylibg15.write_pixmap(buf)
-                except IOError as (errno, strerror):
-                    logger.error("Failed to send buffer. %d: %s" % ( errno, strerror ) )                    
-                    traceback.print_exc(file=sys.stderr)
+                except IOError as e:
+                    logger.error("Failed to send buffer.", exc_info = e)
                     self.disconnect()
         finally:
             self.lock.release()

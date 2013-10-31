@@ -147,12 +147,14 @@ def get_supported_models(plugin_module):
     supported_models = []
     try:
         supported_models += plugin_module.supported_models
-    except:
+    except Exception as e:
+        logger.debug("Error while reading supported models", exc_info = e)
         supported_models += g15driver.MODELS
     try:
         for p in plugin_module.unsupported_models:
             supported_models.remove(p)
-    except:
+    except Exception as e:
+        logger.debug("Error while reading unsupported models", exc_info = e)
         pass        
     return supported_models
 
@@ -166,7 +168,8 @@ def is_needs_network(plugin_module):
     """
     try :
         return plugin_module.needs_network
-    except AttributeError: 
+    except AttributeError as e:
+        logger.debug("Error when reading need_network attribute", exc_info = e)
         pass 
     return False
 
@@ -181,7 +184,8 @@ def is_default_enabled(plugin_module):
     """
     try :
         return plugin_module.default_enabled
-    except AttributeError: 
+    except AttributeError as e:
+        logger.debug("Error when reading default_enabled attribute", exc_info = e)
         pass 
     return False
 
@@ -194,7 +198,8 @@ def is_global_plugin(plugin_module):
     """
     try :
         return plugin_module.global_plugin
-    except AttributeError: 
+    except AttributeError as e:
+        logger.debug("Error when reading global_plugin attribute", exc_info = e)
         pass 
     return False
 
@@ -209,7 +214,8 @@ def is_passive_plugin(plugin_module):
     """
     try :
         return plugin_module.passive
-    except AttributeError: 
+    except AttributeError as e:
+        logger.debug("Error when reading passive attribute", exc_info = e)
         pass 
     return False
  
@@ -228,12 +234,14 @@ def get_actions(plugin_module, device):
     if device is not None:
         try:
             return getattr(plugin_module, 'actions_%s' % device.model_id)
-        except AttributeError: 
+        except AttributeError as e:
+            logger.debug("Error when reading actions_%s attributes", device.model_id, exc_info = e)
             pass 
     
     try :
         return plugin_module.actions
-    except AttributeError: 
+    except AttributeError as e:
+        logger.debug("Error when reading actions attribute", exc_info = e)
         pass 
     
     return {}
@@ -277,11 +285,7 @@ for plugindir in all_plugin_directories:
                 if not a in g15actions.actions:
                     g15actions.actions.append(a)
     except Exception as e:
-        logger.error("Failed to load plugin module %s. %s" % (plugindir, str(e)))
-        if logger.isEnabledFor(logging.DEBUG):                  
-            traceback.print_exc(file=sys.stderr)
-
-
+        logger.error("Failed to load plugin module %s.", plugindir, exc_info = e)
 
 
 class G15Plugins():
@@ -395,11 +399,11 @@ class G15Plugins():
                                     self.started.append(instance)
                             except Exception as e:
                                 self.conf_client.set_bool(key, False)
-                                logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
-                                traceback.print_exc(file=sys.stderr)
+                                logger.error("Failed to load plugin %s.", mod.id, exc_info = e)
             self.state = STARTED
         except Exception as a:
             self.state = UNINITIALISED
+            logger.debug("Error when starting plugins", exc_info = a)
             raise a 
         finally:
             self.lock.release()
@@ -420,7 +424,8 @@ class G15Plugins():
             try :
                 getattr(plugin, "handle_key") 
                 can_handle_keys = True
-            except AttributeError: 
+            except AttributeError as e:
+                logger.debug("Error when reading handle_key attribute", exc_info = e)
                 pass
             if can_handle_keys and plugin.handle_key(key, state, post):
                 logger.info("Plugin %s handled key %s (%d), %s" % (str(plugin), str(key), state, str(post)))
@@ -463,6 +468,7 @@ class G15Plugins():
                 self.state = ACTIVATED
             except Exception as e:           
                 self.state = STARTED
+                logger.debug("Error while activating plugin", exc_info = e)
                 raise e     
             finally:
                 self.lock.release()
@@ -519,9 +525,8 @@ class G15Plugins():
             raise Exception("%s is not activated" % mod.id)
         try :
             plugin.deactivate()
-        except:
-            logger.warning("Failed to deactive plugin properly.")           
-            traceback.print_exc(file=sys.stderr)
+        except Exception as e:
+            logger.warning("Failed to deactive plugin properly.", exc_info = e)
         finally:                    
             mod_id = self.plugin_map[plugin].id
             if mod_id in self.service.active_plugins:
@@ -584,14 +589,14 @@ class G15Plugins():
             self.service.active_plugins[mod.id] = True
             self.activated.append(instance)
         except Exception as e:
-            logger.error("Failed to activate plugin %s. %s" % (mod.id, str(e)))   
+            logger.error("Failed to activate plugin %s.", mod.id, exc_info = e)
             self.conf_client.set_bool(self._get_plugin_key("%s/enabled" % mod.id), False)              
-            traceback.print_exc(file=sys.stderr)
         
     def _is_single_instance(self, module):
         try :
             return module.single_instance
-        except AttributeError: 
+        except AttributeError as e:
+            logger.debug("Error while reading single_instance attribute", exc_info = e)
             pass
         return False
             

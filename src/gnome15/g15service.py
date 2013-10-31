@@ -51,18 +51,19 @@ import g15actions
 from threading import Thread
 import gtk.gdk
  
+# Logging
+import logging
+logger = logging.getLogger("service")
+
 # Used for getting logout  / shutdown signals
 master_client = None
 if g15desktop.get_desktop() in [ "gnome", "gnome-shell" ]:
     try:
         import gnome.ui
         master_client = gnome.ui.master_client()
-    except:
+    except Exception as e:
+        logger.debug("Could not get gnome master client", exc_info = e)
         pass
-
-# Logging
-import logging
-logger = logging.getLogger("service")
 
 # Upgrade
 import g15upgrade
@@ -138,7 +139,7 @@ class StartThread(Thread):
         try:
             self.screen.start()
         except Exception as e:
-            logger.error("Failed to start screen. %s" % str(e))
+            logger.error("Failed to start screen.", exc_info = e)
             self.error = e
             
 class MacroHandler(object):
@@ -196,15 +197,15 @@ class MacroHandler(object):
                 import virtkey
                 self.virtual_keyboard = virtkey.virtkey()
                 self.x_test_available = False
-            except:
-                logger.warn("No python-virtkey, macros may be weird. Trying XTest")
+            except Exception as e:
+                logger.warn("No python-virtkey, macros may be weird. Trying XTest", exc_info = e)
     
                 # Determine whether to use XTest for sending key events to X
                 self.x_test_available  = True
                 try :
                     import Xlib.ext.xtest
-                except ImportError:
-                    logger.warn("No XTest, falling back to raw X11 events")
+                except ImportError as e:
+                    logger.warn("No XTest, falling back to raw X11 events", exc_info = e)
                     self.x_test_available = False
                      
                 self.local_dpy = Xlib.display.Display()
@@ -589,7 +590,7 @@ class G15Service(g15desktop.G15AbstractService):
             self._do_start_service()
         except Exception as e:
             self.shutdown(True)
-            logger.error("Failed to start service. %s" % str(e))
+            logger.error("Failed to start service.", exc_info = e)
     
     def sigusr1_handler(self, signum, frame):
         logger.info("Got SIGUSR1 signal from %s, restarting" % str(frame))
@@ -621,12 +622,14 @@ class G15Service(g15desktop.G15AbstractService):
                 try :
                     logger.info("Stopping profile change notification")
                     g15profile.notifier.stop()
-                except Exception:
+                except Exception as e:
+                    logger.debug("Error stopping profile change notification", exc_info = e)
                     pass
                 try :
                     logger.info("Stopping account change notification")
                     g15accounts.notifier.stop()
-                except Exception:
+                except Exception as e:
+                    logget.debug("Error stopping account change notification", exc_info = e)
                     pass
                 logger.info("Informing listeners we are stopping")
                 for listener in self.service_listeners:
@@ -674,7 +677,8 @@ class G15Service(g15desktop.G15AbstractService):
             try:
                 view = dbus.Interface(app, 'org.ayatana.bamf.view')
                 self.active_application_name = view.Name()
-            except dbus.DBusException:
+            except dbus.DBusException as e:
+                logger.debug("Could not get current application name", exc_info = e)
                 self.active_application_name = None
                 
             if view is not None:
@@ -707,14 +711,16 @@ class G15Service(g15desktop.G15AbstractService):
     def _get_x_prop(self, window, key):
         try :
             return window.XProps(key)                            
-        except dbus.DBusException:
+        except dbus.DBusException as e:
+            logger.debug("Could not get window XProps", exc_info = e)
             return None
             
     def _check_active_window(self, screen, app, window):
         try :
             if screen.set_active_application_name(self.active_window_title):
                 return True                            
-        except dbus.DBusException:
+        except dbus.DBusException as e:
+            logger.debug("Could not check active window", exc_info = e)
             pass
         
     def _check_active_application(self, screen, app, view):
@@ -730,7 +736,8 @@ class G15Service(g15desktop.G15AbstractService):
                         view = dbus.Interface(app, 'org.ayatana.bamf.view')
                         if self._check_active_application(screen, app, view):
                             return True                            
-        except dbus.DBusException:
+        except dbus.DBusException as e:
+            logger.debug("Could not check active application", exc_info = e)
             pass
         
     def _check_active_application_with_wnck(self, event=None):
@@ -746,9 +753,8 @@ class G15Service(g15desktop.G15AbstractService):
                     logger.info("Active application is now %s" % self.active_application_name)
                     for screen in self.screens:
                         screen.set_active_application_name(active_application_name)
-        except Exception:
-            logger.warning("Failed to activate profile for active window")
-            traceback.print_exc(file=sys.stdout)
+        except Exception as e:
+            logger.warning("Failed to activate profile for active window", exc_info = e)
             
         gobject.timeout_add(500, self._check_active_application_with_wnck)
         
@@ -780,9 +786,10 @@ class G15Service(g15desktop.G15AbstractService):
         # UINPUT
         try:
             g15uinput.open_devices()
-        except OSError as (errno, strerror):
-            if errno == 13 or errno == 2:
-                raise Exception("Failed to open uinput devices. Do you have the uinput module loaded (try modprobe uinput), and are the permissions of /dev/uinput correct?  If you have just installed Gnome15 for the first time, you may need to simply reboot. Exception message: %s" % strerror)
+        except OSError as e:
+            logger.debug("Error opening uinput devices", exc_info = e)
+            if e.errno == 13 or e.errno == 2:
+                raise Exception("Failed to open uinput devices. Do you have the uinput module loaded (try modprobe uinput), and are the permissions of /dev/uinput correct?  If you have just installed Gnome15 for the first time, you may need to simply reboot.")
             else:
                 raise
         
@@ -904,7 +911,7 @@ class G15Service(g15desktop.G15AbstractService):
             connected_to_session_manager = True
             logger.info("Connected to GNOME session manager")
         except Exception as e:
-            logger.warning("GNOME session manager not available. (%s)" % str(e))
+            logger.warning("GNOME session manager not available.", exc_info = e)
 
         if not connected_to_session_manager:
             try :
@@ -924,7 +931,7 @@ class G15Service(g15desktop.G15AbstractService):
                 connected_to_session_manager = True
                 logger.info("Connected to MATE session manager")
             except Exception as e:
-                logger.warning("MATE session manager not available. (%s)" % str(e))
+                logger.warning("MATE session manager not available.", exc_info = e)
 
         if not connected_to_session_manager:
             logger.warning("None of the supported session managers available, will not detect logout signal for clean shutdown.")
@@ -981,7 +988,7 @@ class G15Service(g15desktop.G15AbstractService):
             logger.info("Connected to ConsoleKit")
             connected_to_system_session_manager = True
         except Exception as e:
-            logger.warning("ConsoleKit not available (%s)" % str(e))
+            logger.warning("ConsoleKit not available", exc_info = e)
 
     def _connect_to_logind(self):
         try :
@@ -995,7 +1002,7 @@ class G15Service(g15desktop.G15AbstractService):
             logger.info("Connected to logind")
             connected_to_system_session_manager = True
         except Exception as e:
-            logger.warning("logind not available. (%s)" % str(e))
+            logger.warning("logind not available.", exc_info = e)
 
     def _get_systemd_active_session_path(self):
         seat0_object = self.system_bus.get_object("org.freedesktop.login1", '/org/freedesktop/login1/seat/seat0')
@@ -1036,13 +1043,13 @@ class G15Service(g15desktop.G15AbstractService):
             if active_window:
                 self._active_window_changed("", active_window)
         except Exception as e:
-            logger.warning("BAMF not available, falling back to polling WNCK. %s" % str(e))
+            logger.warning("BAMF not available, falling back to polling WNCK.", exc_info = e)
             try :                
                 import wnck
                 wnck.__file__
                 self._check_active_application_with_wnck()
-            except:
-                logger.warning("Python Wnck not available either, no automatic profile switching")
+            except Exception as e:
+                logger.warning("Python Wnck not available either, no automatic profile switching", exc_info = e)
             
     def _add_screen(self, device):
         try:
@@ -1051,9 +1058,8 @@ class G15Service(g15desktop.G15AbstractService):
             for listener in self.service_listeners:
                 listener.screen_added(screen)
             return screen
-        except Exception:
-            traceback.print_exc(file=sys.stdout)
-            logger.error("Failed to load driver for device %s." % device.uid)
+        except Exception as e:
+            logger.error("Failed to load driver for device %s.", device.uid, exc_info = e)
             
     def _hidden_configuration_changed(self, client, connection_id, entry, device):
         self._load_hidden_configuration()

@@ -65,14 +65,15 @@ def start_service(bus, no_trap=False,):
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
     except ImportError as ie:
         # Not a big issue
-        logger.debug("No setproctitle, process will be named 'python'")
+        logger.debug("No setproctitle, process will be named 'python'", exc_info = ie)
 
     # Start the loop    
     try :
         import gnome15.g15system as g15system   
         service = g15system.G15SystemServiceController(bus, no_trap=no_trap)
         service.start_loop()
-    except dbus.exceptions.NameExistsException:
+    except dbus.exceptions.NameExistsException as e:
+        logger.debug("Gnome15 service already running", exc_info = e)
         print "Gnome15 desktop service is already running"
         sys.exit(1)
     

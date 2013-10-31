@@ -171,15 +171,16 @@ class G15Volume():
                     mutes = None
                     try :
                         mutes = vol_mixer.getmute()
-                    except alsaaudio.ALSAAudioError:
+                    except alsaaudio.ALSAAudioError as e:
+                        logger.debug("Could not get mute channel. Trying PCM mixer", exc_info = e)
                         if vol_mixer is not None:
                             vol_mixer.close()
                         # Some pulse weirdness maybe?
                         vol_mixer = self._open_mixer("PCM", self.current_card_index)
                         try :
                             mutes = vol_mixer.getmute()
-                        except alsaaudio.ALSAAudioError:
-                            logger.warning("No mute switch found")
+                        except alsaaudio.ALSAAudioError as e:
+                            logger.warning("No mute switch found", exc_info = e)
                     if mutes != None:        
                         for ch_mute in mutes:
                             if ch_mute:
@@ -329,13 +330,14 @@ class G15Volume():
             mutes = None
             try :
                 mutes = vol_mixer.getmute()
-            except alsaaudio.ALSAAudioError:
+            except alsaaudio.ALSAAudioError as e:
+                logger.debug("Could note get mute channel. Trying PCM", exc_info = e)
                 # Some pulse weirdness maybe?
                 mute_mixer = alsaaudio.Mixer("PCM", cardindex=self.soundcard_index)
                 try :
                     mutes = mute_mixer.getmute()
-                except alsaaudio.ALSAAudioError:
-                    logger.warning("No mute switch found")
+                except alsaaudio.ALSAAudioError as e:
+                    logger.warning("No mute switch found", exc_info = e)
             if mutes != None:        
                 for ch_mute in mutes:
                     if ch_mute:
@@ -407,6 +409,7 @@ class VolumeThread(Thread):
         finally:
             try :
                 self._poll.unregister(self._open)
-            except :
+            except Exception as e:
+                logger.debug("Error when unregistering", exc_info = e)
                 pass
             self._open.close()

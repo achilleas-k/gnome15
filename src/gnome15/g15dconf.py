@@ -27,6 +27,10 @@ import dbus
 import os
 import gobject
 
+# Logging
+import logging
+logger = logging.getLogger("dconf")
+
 PASSIVE_MATCH_STRING="type='method_call',interface='ca.desrt.dconf.Writer',member='Change'"
 EAVESDROP_MATCH_STRING="eavesdrop='true',%s" % PASSIVE_MATCH_STRING
 
@@ -50,7 +54,8 @@ class GSettings():
         self._match_string = EAVESDROP_MATCH_STRING
         try:
             self._session_bus.add_match_string(self._match_string)
-        except:
+        except Exception as e:
+            logger.debug('Could not add EAVESDROP match rule. Trying PASSIVE', exc_info = e)
             self._match_string = PASSIVE_MATCH_STRING
             self._session_bus.add_match_string(self._match_string)
         self._session_bus.add_message_filter(self._msg_cb)

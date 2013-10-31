@@ -1488,9 +1488,10 @@ class G15Theme(object):
                         getattr(self.instance, "destroy")
                         try :
                             self.instance.destroy(self)
-                        except:
-                            traceback.print_exc(file=sys.stderr)
-                    except AttributeError:                
+                        except Exception as e:
+                            logger.debug("Error destroying instance", exc_info = e)
+                    except AttributeError as ae:
+                        logger.debug("Could not read attributte 'destroy'", exc_info = ae)
                         # Doesn't exist
                         pass
                 
@@ -1544,9 +1545,10 @@ class G15Theme(object):
                             getattr(self.instance, "create")
                             try :
                                 self.instance.create(self)
-                            except:
-                                traceback.print_exc(file=sys.stderr)
-                        except AttributeError:                
+                            except Exception as e:
+                                logger.debug("Error creating instance", exc_info = e)
+                        except AttributeError as ae:
+                            logger.debug("Could not read attribute 'create'", exc_info = ae)
                             # Doesn't exist
                             pass
                             
@@ -1721,9 +1723,10 @@ class G15Theme(object):
                         getattr(self.instance, "paint_background")
                         try :
                             self.instance.paint_background(properties, attributes)
-                        except:
-                            traceback.print_exc(file=sys.stderr)
-                    except AttributeError:                
+                        except Exception as e:
+                            logger.debug("Could not call attribute 'paint_background'", exc_info = e)
+                    except AttributeError as ae:
+                        logger.debug("Could not read attribute 'paint_background'", exc_info = ae)
                         # Doesn't exist
                         pass
                     
@@ -1752,9 +1755,10 @@ class G15Theme(object):
                         getattr(self.instance, "process_svg")
                         try :                
                             processing_result = self.instance.process_svg(self.driver, root, properties, self.nsmap)
-                        except:
-                            traceback.print_exc(file=sys.stderr)
-                    except AttributeError:                
+                        except Exception as e:
+                            logger.debug("Could not call attribute 'process_svg'", exc_info = e)
+                    except AttributeError as ae:
+                        logger.debug("Could not read attribute 'process_svg'", exc_info = ae)
                         # Doesn't exist
                         pass
                     
@@ -2092,12 +2096,12 @@ class G15Theme(object):
                 print "------------------------------------------------------"
                 print xml
                 print "------------------------------------------------------"
-        except:
-            traceback.print_exc(file=sys.stderr)
+        except Exception as e:
+            logger.debug("Could not write SVG", exc_info = e)
         try :
             svg.close()
-        except:
-            traceback.print_exc(file=sys.stderr)
+        except Exception as e:
+            logger.debug("Could not close SVG", exc_info = e)
         
         svg.render_cairo(canvas)
          
@@ -2113,9 +2117,10 @@ class G15Theme(object):
                 getattr(self.instance, "paint_foreground")
                 try :
                     self.instance.paint_foreground(canvas, render.properties, render.attributes, render.processing_result)
-                except:
-                    traceback.print_exc(file=sys.stderr)
-            except AttributeError:                
+                except Exception as e:
+                    logger.debug("Could not call attribute 'paint_foreground'", exc_info = e)
+            except AttributeError as ae:
+                logger.debug("Could not read attribute 'paint_foreground'", exc_info = ae)
                 # Doesn't exist
                 pass
             

@@ -369,9 +369,8 @@ class G15Async(Thread):
     def run(self):  
         try :      
             asyncore.loop(timeout=0.05)
-        except:            
-            sys.stderr.write("WARNING: Failed to connect to G15Daemon client")
-            traceback.print_stack()
+        except Exception as e:
+            logger.warning("Failed to connect to G15Daemon client", exc_info = e)
 
 class G15DaemonServer():
     

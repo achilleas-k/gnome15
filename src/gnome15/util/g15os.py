@@ -74,6 +74,7 @@ def mkdir_p(path):
     try:
         os.makedirs(path)
     except OSError as exc: # Python >2.5
+        logger.debug("Error when trying to create path %s", path, exc_info = exc)
         import errno
         if exc.errno == errno.EEXIST:
             pass

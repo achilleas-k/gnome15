@@ -16,11 +16,15 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
+logging.basicConfig()
+
 # This is a work around - Now Gio is used in the lens plugin, it must be 
 # initialised before GTK. 
 try:
     from gi.repository import Gio
 except Exception as a:
+    logger.debug("Error when importing Gio", exc_info = a)
     pass
 
 import pygtk
@@ -30,8 +34,6 @@ import sys
 import os
 import gconf
 import gobject
-import logging
-logging.basicConfig()
 gobject.threads_init()
        
 # DBUS - Use to check current desktop service status or stop it

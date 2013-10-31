@@ -194,5 +194,5 @@ class DBUSMenu():
             try :
                 menu.children.append(self._load_xml_menu(child, map))
             except dbus.DBUSException as e:
-                logger.warning("Failed to get child menu." % str(e))
+                logger.warning("Failed to get child menu.", exc_info = e)
         return menu

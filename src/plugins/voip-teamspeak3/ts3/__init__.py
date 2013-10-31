@@ -61,10 +61,12 @@ class TS3():
                             raise EOFError()
                         msg = _receive_message(self._client)
                     except TS3CommandException as e:
+                        logger.debug("Error while receving message", exc_info = e)
                         self._error_handler(e)
                     else:
                          self._reply_handler(msg)
             except Exception as e:
+                logger.debug("Error in main loop", exc_info = e)
                 self._error_handler(e)
     
     def __init__(self, hostname="127.0.0.1", port=25639, timeout=10):

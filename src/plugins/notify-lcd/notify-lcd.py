@@ -138,6 +138,7 @@ class G15Message():
             try:
                 self.body = lxml.html.fromstring(body).text_content()
             except Exception as e:
+                logger.debug("Could not parse body as html", exc_info = e)
                 self.body = body
         else:
             self.body = body
@@ -175,9 +176,9 @@ class G15Message():
                 file.close()
                 pixbuf.save(self.embedded_image, "png")
                 self.icon = None
-            except :
+            except Exception as e:
                 # Sometimes the image data seems to be bad
-                logger.warn("Failed to decode notification image")
+                logger.warn("Failed to decode notification image", exc_info = e)
                 
             if self.embedded_image == None and ( self.icon == None or self.icon == "" ):
                 self.icon = g15icontools.get_icon_path("dialog-information", 1024)
@@ -288,15 +289,18 @@ class G15NotifyLCD():
                         process.wait()
                     self._bus_name = dbus.service.BusName(IF_NAME, bus=self._bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
                     break
-                except NameExistsException:
+                except NameExistsException as e:
+                    logger.debug("Process still exists, Waiting one more second", exc_info = e)
                     time.sleep(1.0)
                     if i == 2:
+                        logger.error("Process still exists after waiting", exc_info = e)
                         raise
             
             try :
             	self._service = G15NotifyService(self._gconf_client, self._gconf_key, self._screen, self._bus_name, self)
-            except KeyError:
-                logger.error("DBUS notify service failed to start. May already be started.")
+            except KeyError as e:
+                logger.error("DBUS notify service failed to start. May already be started.",
+                             exc_info = e)
 #            
         if not self._service:
             # Just monitor raw DBUS events
@@ -304,10 +308,10 @@ class G15NotifyLCD():
             try:
                 self._bus.add_match_string(self._match_string)
                 logger.info("Using eavesdrop for monitoring DBUS")
-            except:
+            except Exception as e:
                 self._match_string = PASSIVE_MATCH_STRING
                 self._bus.add_match_string(self._match_string)
-                logger.info("Not using eavesdrop for monitoring DBUS")
+                logger.info("Not using eavesdrop for monitoring DBUS", exc_info = e)
             self._bus.add_message_filter(self.msg_cb)
                 
             
@@ -418,7 +422,7 @@ class G15NotifyLCD():
                 logger.info("Notify message has ID of %s" % str(id))
                 return id                         
         except Exception as blah:
-            traceback.print_exc()
+            logger.warning("Could not create notification", exc_info = blah)
     
     def close_notification(self, id):        
         logger.info("Closing notification %d. Message queue has %d items, allow cancel is %s" % (id, len(self._message_queue), str(self.allow_cancel)))

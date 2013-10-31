@@ -30,6 +30,8 @@ import sys, os, os.path
 import re
 import cal
 import xdg.BaseDirectory
+import logging
+logger = logging.getLogger("cal-evolution")
  
 """
 Plugin definition
@@ -64,7 +66,8 @@ class EvolutionCalendarOptions(g15accounts.G15AccountOptions):
         try :
             self.event.valarm
             self.alarm = True
-        except AttributeError:
+        except AttributeError as ae:
+            logger.debug("Could not set attribute", exc_info = ae)
             pass
 
 class EvolutionEvent(cal.CalendarEvent):
@@ -108,7 +111,8 @@ class EvolutionBackend(cal.CalendarBackend):
                 f.close()
                 try:
                     event_list = vobject.readOne(calstring).vevent_list
-                except AttributeError:
+                except AttributeError as ae:
+                    logger.debug("Could not read attribute", exc_info = ae)
                     continue
             else: # evolution library does not support webcal ics
                 webcal = urllib.urlopen('http://' + cal[1][9:])

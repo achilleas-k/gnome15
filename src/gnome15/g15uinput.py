@@ -211,7 +211,7 @@ def load_calibration(device_type):
                     proc = subprocess.Popen(cal, stdout=subprocess.PIPE) 
                     logger.info("Calibrated. %s" % proc.communicate()[0])
                 except Exception as e:
-                    logger.error("Failed to calibrate joystick device. %s" % e)
+                    logger.error("Failed to calibrate joystick device.", exc_info = e)
                 finally :
                     f.close()
             else:

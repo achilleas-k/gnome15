@@ -63,7 +63,8 @@ try :
     import appindicator
     appindicator.__path__
     HAS_APPINDICATOR=True
-except:
+except Exception as e:
+    logger.debug('Could not load appindicator module', exc_info = e)
     pass
 
 # Store the temporary profile icons here (for when the icon comes from a window, the filename is not known
@@ -264,6 +265,7 @@ class G15Config:
         try :
             G15ConfigService(self)
         except dbus.exceptions.NameExistsException as e:
+            logger.debug("D-Bus service already running", exc_info = e)
             if self._options is not None and self._options.device_uid != "":
                 self.session_bus.get_object(BUS_NAME, NAME).PresentWithDeviceUID(self._options.device_uid)
             else:
@@ -459,8 +461,8 @@ class G15Config:
         try :
             bamf_object = self.session_bus.get_object('org.ayatana.bamf', '/org/ayatana/bamf/matcher')     
             self.bamf_matcher = dbus.Interface(bamf_object, 'org.ayatana.bamf.matcher')
-        except:
-            logger.warning("BAMF not available, falling back to WNCK")
+        except Exception as e:
+            logger.warning("BAMF not available, falling back to WNCK", exc_info = e)
             self.bamf_matcher = None            
             import wnck
             self.screen = wnck.screen_get_default()
@@ -509,10 +511,8 @@ class G15Config:
         # Watch for Gnome15 starting and stopping
         try :
             self._connect()
-        except dbus.exceptions.DBusException:
-            if(logger.level == logging.DEBUG):
-                logger.debug("Failed to connect to service.")
-                traceback.print_exc(file=sys.stdout)
+        except dbus.exceptions.DBusException as e:
+            logger.debug("Failed to connect to service.", exc_info = e)
             self._disconnect()
         self.session_bus.add_signal_receiver(self._name_owner_changed,
                                      dbus_interface='org.freedesktop.DBus',
@@ -669,7 +669,8 @@ class G15Config:
                         connected += 1
                     else:
                         first_error = self.screen_services[screen].GetLastError() 
-                except dbus.DBusException:
+                except dbus.DBusException as e:
+                    logger.debug("D-Bus communication error", exc_info = e)
                     pass
             
             logger.debug("Found %d of %d connected" % (connected, len(self.screen_services)))
@@ -785,7 +786,7 @@ class G15Config:
                     if self.selected_device.model_id in driver.get_model_names():
                         self.driver_model.append((driver_mod.id, driver_mod.name))
                 except Exception as e:
-                    logger.info("Failed to load driver. %s" % str(e))
+                    logger.info("Failed to load driver.", exc_info = e)
             
         self.driver_combo.set_sensitive(len(self.driver_model) > 1)
         self._set_driver_from_configuration()
@@ -1859,7 +1860,7 @@ class G15Config:
                     control.set_from_configuration(self.driver.device, self.conf_client)
                     
             except Exception as e:
-                logger.error("Failed to load driver to query controls. %s" % str(e))
+                logger.error("Failed to load driver to query controls.", exc_info = e)
             
         if not driver_controls:
             driver_controls = []

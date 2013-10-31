@@ -587,12 +587,12 @@ class KeyboardReceiveThread(Thread):
             try :
                 fcntl.ioctl(dev.fileno(), EVIOCGRAB, 0)
             except Exception as e:
-                logger.info("Failed ungrab. %s" % str(e))
+                logger.info("Failed ungrab.", exc_info = e)
             logger.info("Closing %d" % dev.fileno())
             try :
                 self.fds[dev.fileno()].close()
             except Exception as e:
-                logger.info("Failed close. %s" % str(e))
+                logger.info("Failed close.", exc_info = e)
             logger.info("Stopped %d" % dev.fileno())
         logger.info("Stopped all input devices")
         
@@ -610,6 +610,7 @@ class KeyboardReceiveThread(Thread):
                     if dev:
                         dev.read()
                 except OSError as e:
+                    logger.debug('Could not read device file', exc_info = e)
                     # Ignore this error if deactivated
                     if self._run:
                         raise e
@@ -938,7 +939,7 @@ class Driver(g15driver.AbstractDriver):
                 self.conf_client.set_string("/apps/gnome15/%s/fb_device" % self.device.uid, "auto")
                 self._init_device()
             else:            
-                logger.warning("Could not open %s. %s" %(self.device_name, str(e)))
+                logger.warning("Could not open %s.", self.device_name, exc_info = e)
                 
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/joymode" % self.device.uid, self._config_changed, None))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/fb_device" % self.device.uid, self._framebuffer_device_changed, None))
@@ -1028,7 +1029,8 @@ class Driver(g15driver.AbstractDriver):
         if self.get_model_name() == g15driver.MODEL_G19:
             try:
                 back_surface = cairo.ImageSurface (4, width, height)
-            except:
+            except Exception as e:
+                logger.debug("Could not create ImageSurface. Trying earlier API.", exc_info = e)
                 # Earlier version of Cairo
                 back_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
             back_context = cairo.Context (back_surface)
@@ -1200,7 +1202,8 @@ class Driver(g15driver.AbstractDriver):
         system_bus = dbus.SystemBus()
         try:
             system_service_object = system_bus.get_object('org.gnome15.SystemService', '/org/gnome15/SystemService')
-        except dbus.DBusException:
+        except dbus.DBusException as e:
+            logger.debug('D-Bus service not available.', exc_info = e)
             raise Exception("Failed to connect to Gnome15 system service. Is g15-system-service running (as root). \
 It should be launched automatically if Gnome15 is installed correctly.")          
         self.system_service = dbus.Interface(system_service_object, 'org.gnome15.SystemService')    

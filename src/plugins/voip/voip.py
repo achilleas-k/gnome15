@@ -376,8 +376,8 @@ class G15Voip(g15plugin.G15MenuPlugin):
                 self._connected = True
             else:
                 self._connection_timer = g15scheduler.schedule("ReconnectVoip", 5, self._attempt_connection)
-        except:          
-            traceback.print_exc()
+        except Exception as e:
+            logger.debug("Error connecting. Will retry...", exc_info = e)
             self._connection_timer = g15scheduler.schedule("ReconnectVoip", 5, self._attempt_connection)
             
     def create_menu(self):    

@@ -100,7 +100,8 @@ if __name__ == "__main__":
     try :
         import setproctitle
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
-    except:
+    except Exception as e:
+        logger.debug("Could not import setproctitle. Using python as processname", exc_info = e)
         pass
     
     if g15desktop.get_desktop() == "gnome-shell":

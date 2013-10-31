@@ -213,7 +213,8 @@ class Driver(g15driver.AbstractDriver):
         # was disabled for a long time, as was only re-enabled in version 1.8.6.
         try:
             back_surface = cairo.ImageSurface (4, height, width)
-        except:
+        except Exception as e:
+            logger.debug('Could not create ImageSurface. Trying earlier API.', exc_info = e)
             # Earlier version of Cairo
             back_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, height, width)
         
@@ -243,7 +244,7 @@ class Driver(g15driver.AbstractDriver):
             try:
                 self.lg19.send_frame(buf)
             except usb.USBError as e:
-                traceback.print_exc(file=sys.stderr)
+                logger.debug("Failed to send buffer.", exc_info = e)
                 self._on_receive_error(e)
     
     def process_input(self, event):
@@ -295,7 +296,7 @@ class Driver(g15driver.AbstractDriver):
             self.lg19 = G19(reset, False, timeout, reset_wait)
             self.connected = True
         except usb.USBError as e:
-            logger.error("Failed to connect. %s" % str(e))
+            logger.error("Failed to connect.", exc_info = e)
             raise g15exceptions.NotConnectedException()
         
         # Start listening for keys
@@ -321,7 +322,8 @@ class Driver(g15driver.AbstractDriver):
         try:
             import usb.core
             return 1
-        except:
+        except Exception as e:
+            logger.debug('pyusb version 1 not available.', exc_info = e)
             return 0
         
     def _set_mkey_lights(self, lights):
@@ -347,7 +349,7 @@ class Driver(g15driver.AbstractDriver):
             elif control == mkeys_control: 
                 self._set_mkey_lights(control.value)
         except usb.USBError as e:
-            traceback.print_exc(file=sys.stderr)
+            logger.debug('Error updating control.', exc_info = e)
             self._on_receive_error(e)
             
     def _rgb_to_uint16(self, r, g, b):

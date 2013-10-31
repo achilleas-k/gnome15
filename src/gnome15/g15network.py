@@ -54,10 +54,7 @@ class NetworkManager():
             self._set_state(self._interface.state())
             self._handle = self._interface.connect_to_signal('StateChanged', self._set_state)
         except dbus.DBusException as e:
-            if logger.level == logging.DEBUG:
-                logger.warning("NetworkManager DBUS interface could not be contacted. All plugins will assume the network is available, and may behave unexpectedly. %s" % e)
-            else:
-                logger.warning("NetworkManager DBUS interface could not be contacted. All plugins will assume the network is available, and may behave unexpectedly.")
+            logger.warning("NetworkManager DBUS interface could not be contacted. All plugins will assume the network is available, and may behave unexpectedly.", exc_info = e)
                 
             # Assume connected
             self._state = 70

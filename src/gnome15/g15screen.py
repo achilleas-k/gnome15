@@ -731,6 +731,7 @@ class G15Screen():
             self.loading_complete = True
             logger.info("Loading complete")
         except Exception as e:
+            logger.debug("Exception completing loading", exc_info = e)
             if self._process_exception(e):
                 raise
         
@@ -978,8 +979,7 @@ class G15Screen():
                 g15pythonlang.call_if_exists(listener, "driver_connection_failed", self.driver, exception)
             self.driver = None     
         if self.should_reconnect(exception):
-            if logger.isEnabledFor(logging.DEBUG):
-                traceback.print_exc(file=sys.stderr)
+            logger.debug("Could not gracefully process exception.", exc_info = exception)
             self.attempt_connection(5.0)
         else:
             return True
@@ -1001,6 +1001,7 @@ class G15Screen():
             self.driver.on_driver_options_change = self._reload_driver
             return True
         except Exception as e:
+            logger.debug("Error loading driver", exc_info = e)
             self._process_exception(e)
             self.driver = None
             return False
@@ -1253,6 +1254,7 @@ class G15Screen():
                 self.complete_loading()
 
             except Exception as e:
+                logger.debug("Error attenpting connection", exc_info = e)
                 if self._process_exception(e):
                     raise
         finally:

@@ -149,14 +149,14 @@ class POP3Checker(Checker):
                     pop.pass_(password)            
                     self.save_password(account, password, default_port)            
                     return pop.stat()
-                except Exception:
-                    traceback.print_exc()
+                except Exception as e:
+                    logger.debug("Error while checking", exc_info = e)
                     try :
                         pop.apop(username, password)            
                         self.save_password(account, password, default_port)            
                         return pop.stat()
-                    except Exception:
-                        traceback.print_exc()
+                    except Exception as e2:
+                        logger.debug("Error while checking", exc_info = e2)
         finally :
             pop.quit()
         return (0, 0)
@@ -200,8 +200,8 @@ class IMAPChecker(Checker):
                         unread  = int(re.search("UNSEEN (\d+)", status[1][0]).group(1))      
                         count = ( unread, count )
                         return count 
-                    except Exception:
-                        traceback.print_exc()
+                    except Exception as e:
+                        logger.debug("Error while checking", exc_info = e)
                           
                 finally:
                     imap.logout()   
@@ -439,8 +439,7 @@ class G15Biff(g15plugin.G15MenuPlugin):
                 t_errors += 1
                 item.error = e
                 item.count = 0
-                if logger.level < logging.WARN and logger.level != logging.NOTSET:
-                    traceback.print_exc()
+                logger.debug("Error while refreshing item %s", str(item), exc_info = e)
                 
         self.total_count = t_count
         self.total_errors = t_errors

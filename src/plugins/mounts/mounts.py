@@ -94,7 +94,8 @@ class MountMenuItem(g15theme.MenuItem):
             self.disk_free = float(self.fs_attr.get_attribute_uint64(gio.FILE_ATTRIBUTE_FILESYSTEM_FREE))
             self.disk_used = float(self.disk_size - self.disk_free)
             self.disk_used_pc = int ( ( self.disk_used / self.disk_size ) * 100.0 )
-        except:
+        except Exception as e:
+            logger.debug("Error refreshing", exc_info = e)
             pass
         
     def get_theme_properties(self):       

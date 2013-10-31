@@ -447,11 +447,7 @@ class G15Cal(g15plugin.G15Plugin):
                     else:
                         logger.warn("Skipping backend %s because it requires the network, and the network is not availabe" % acc.type)
             except Exception as e:
-                if logger.level == logger.debug:
-                    logger.warn("Failed to load events for account %s.")
-                    traceback.print_exc()   
-                else:
-                    logger.warn("Failed to load events for account %s. %s" % (acc.name, e))
+                logger.warn("Failed to load events for account %s.", acc.name, exc_info = e)
                     
         g15screen.run_on_redraw(self._rebuild_components, now)
         self._page.mark_dirty()

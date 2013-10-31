@@ -139,7 +139,7 @@ def load_surface_from_file(filename, size = None):
                     return pixbuf_to_surface(pixbuf, size)
             return None
         except Exception as e:
-            logger.warning("Failed to get image %s (%s). %s" % (filename, type, e))
+            logger.warning("Failed to get image %s (%s).", filename, type, exc_info = e)
             return None
     else:
         if os.path.exists(filename):
@@ -152,7 +152,7 @@ def load_surface_from_file(filename, size = None):
                     return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
             
             except Exception as e:
-                logger.warning("Failed to get image %s (%s). %s" % (filename, type, e))
+                logger.warning("Failed to get image %s (%s).", filename, type, exc_info = e)
                 return None
             
 def load_svg_as_surface(filename, size):

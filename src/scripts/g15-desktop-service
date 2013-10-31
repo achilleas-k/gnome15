@@ -56,7 +56,8 @@ def check_service_status(session_dbus):
     try :
         session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service').GetServerInformation()
         return True
-    except:
+    except Exception as e:
+        logger.debug("Did not found enabled service", exc_info = e)
         return False
 
 def start_service(options): 
@@ -75,7 +76,8 @@ def start_service(options):
         service.exit_on_no_devices = options.exit_on_no_devices
         g15service.logger.setLevel(logger.level) 
         service.start_loop()
-    except dbus.exceptions.NameExistsException:
+    except dbus.exceptions.NameExistsException as e:
+        logger.debug("DBus service already exist", exc_info = e)
         print "Gnome15 desktop service is already running"
         sys.exit(1)
     

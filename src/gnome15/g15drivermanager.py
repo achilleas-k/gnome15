@@ -43,7 +43,7 @@ for d in driverfiles:
         mod = getattr(getattr(driver_mod, "drivers"), d)
         imported_drivers[d] = mod
     except Exception as e:
-        logger.warning("Failed to load driver. %s" % str(e))
+        logger.warning("Failed to load driver.", exc_info = e)
     
 
 def get_driver_mod(driver_id):

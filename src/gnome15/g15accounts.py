@@ -38,6 +38,8 @@ from threading import Lock
 import gobject
 import keyring
 
+import logging
+logger = logging.getLogger("accounts")
 
 """
 Functions
@@ -218,7 +220,8 @@ class G15AccountManager(G15Keyring):
         for k in wdd:
             try:
                 watch_manager.rm_watch(wdd[k],quiet = False)
-            except:
+            except Exception as e:
+                logger.debug("Error removing change listener '%s'", str(k), exc_info = e)
                 pass
             
     def load(self):

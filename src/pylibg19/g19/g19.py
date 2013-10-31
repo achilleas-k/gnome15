@@ -135,7 +135,8 @@ class G19(object):
         try:
             val = list(self.__usbDevice.handleIf1.interruptRead(
                 0x83, maxLen, 10))
-        except usb.USBError:
+        except usb.USBError as e:
+            logger.debug("Error reading g and m keys", exc_info = e)
             pass
         finally:
             self.__usbDeviceMutex.release()
@@ -151,7 +152,8 @@ class G19(object):
         val = []
         try:
             val = list(self.__usbDevice.handleIf0.interruptRead(0x81, 2, 10))
-        except usb.USBError:
+        except usb.USBError as e:
+            logger.debug("Error reading display menu keys", exc_info = e)
             pass
         finally:
             self.__usbDeviceMutex.release()
@@ -170,7 +172,8 @@ class G19(object):
         val = []
         try:
             val = list(self.__usbDevice.handleIfMM.interruptRead(0x82, 2, 10))
-        except usb.USBError:
+        except usb.USBError as e:
+            logger.debug("Error reading multimedia keys", exc_info = e)
             pass
         finally:
             self.__usbDeviceMutex.release()
@@ -348,16 +351,16 @@ class G19UsbController(object):
             # Use .interfaceNumber for pyusb 1.0 compatibility layer
             self.handleIf0.detachKernelDriver(display_interface.interfaceNumber)
             logger.debug("Detached kernel driver for LCD device")
-        except usb.USBError:
-            logger.debug("Detaching kernel driver for LCD device failed.")
+        except usb.USBError as e:
+            logger.debug("Detaching kernel driver for LCD device failed.", exc_info = e)
             
         try:
             logger.debug("Detaching kernel driver for macro / backlight device")
             # Use .interfaceNumber for pyusb 1.0 compatibility layer
             self.handleIf1.detachKernelDriver(macro_and_backlight_interface.interfaceNumber)
             logger.debug("Detached kernel driver for macro / backlight device")
-        except usb.USBError:
-            logger.debug("Detaching kernel driver for macro / backlight device failed.")
+        except usb.USBError as e:
+            logger.debug("Detaching kernel driver for macro / backlight device failed.", exc_info = e)
 
         logger.debug("Setting configuration")
         
@@ -391,14 +394,15 @@ class G19UsbController(object):
         
             try:
                 self.handleIfMM.setConfiguration(1)
-            except usb.USBError:
+            except usb.USBError as e:
+                logger.debug("Error when trying to set configuration", exc_info = e)
                 pass
             try:
                 logger.debug("Detaching kernel driver for multimedia keys device")
                 self.handleIfMM.detachKernelDriver(ifacMM)
                 logger.debug("Detached kernel driver for multimedia keys device")
-            except usb.USBError:
-                logger.debug("Detaching kernel driver for multimedia keys device failed.")
+            except usb.USBError as e:
+                logger.debug("Detaching kernel driver for multimedia keys device failed.", exc_info = e)
             
             logger.debug("Claiming multimedia interface")
             self.handleIfMM.claimInterface(1)

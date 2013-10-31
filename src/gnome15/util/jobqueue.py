@@ -219,7 +219,8 @@ class JobQueue():
                     logger.debug("Removed func = %s, args = %s, queued = %s, started = %s, finished = %s" % ( str(item.item), str(item.args), str(item.queued), str(item.started), str(item.finished) ) )
                     if item in self.queued_jobs:
                         self.queued_jobs.remove(item)
-            except Queue.Empty:
+            except Queue.Empty as e:
+                logger.debug("The queue is already empty", exc_info = e)
                 pass
             logger.info("Cleared queue %s" % self.name)
             
@@ -265,12 +266,13 @@ class JobQueue():
                     finally:
                         if item in self.queued_jobs: 
                             self.queued_jobs.remove(item)
-            except:
+            except Exception as a:
                 try:
-                    traceback.print_exc(file=sys.stderr)
-                    sys.stderr.write("Caused by job\n")
-                    sys.stderr.write("%s\n" % item.stack)
+                    logger.debug("Error on worker", exc_info = a)
+                    logger.debug("Caused by job")
+                    logger.debug("%s\n", item.stack)
                 except Exception as e:
+                    logger.debug("Could not log error on worker", exc_info = e)
                     pass
             self.work_queue.task_done()
             

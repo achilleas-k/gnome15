@@ -148,9 +148,10 @@ class G15Menu(g15plugin.G15MenuPlugin):
                     img.write_to_png(img_data)
                     item.thumbnail = base64.b64encode(img_data.getvalue())                    
                     
-            except :
-                logger.warning("Problem with painting thumbnail in %s" % item._item_page.id)                   
-                traceback.print_exc(file=sys.stderr)
+            except Exception as e:
+                logger.warning("Problem with painting thumbnail in %s",
+                               item._item_page.id,
+                               exc_info = e)
                     
     def _reset_delete_timer(self):
         if self.delete_timer:

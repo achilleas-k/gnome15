@@ -831,7 +831,8 @@ class G15DBUSService(AbstractG15DBUSService):
     def _silently_remove_from_connector(self, obj):
         try:
             obj.remove_from_connection()
-        except Exception:
+        except Exception as e:
+            logger.debug("Error silently removing obj from connection.", exc_info = e)
             pass
             
     '''
@@ -859,7 +860,8 @@ class G15DBUSService(AbstractG15DBUSService):
             screen_service = self._dbus_screens[screen.device.uid]
             screen_service._removing()
             screen_service.remove_from_connection()
-        except:
+        except Exception as e:
+            logger.debug("Error removing screen object.", exc_info = e)
             # May happen on shutdown
             pass  
         del self._dbus_screens[screen.device.uid]

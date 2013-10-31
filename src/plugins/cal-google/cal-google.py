@@ -136,7 +136,8 @@ class GoogleCalendarBackend(cal.CalendarBackend):
                 
                 try :
                     return self._retrieve_events(now, password)
-                except gdata.client.BadAuthentication:
+                except gdata.client.BadAuthentication as e:
+                    logger.debug("Error authenticating", exc_info = e)
                     pass
                 
         raise Exception(_("Authentication attempted too many times"))  

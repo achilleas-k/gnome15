@@ -34,6 +34,9 @@ import util.g15gconf as g15gconf
 import time
 import datetime
 import re
+
+import logging
+logger = logging.getLogger("locale")
  
 # Change this variable to your app name!
 #  The translation files will be under
@@ -224,7 +227,8 @@ def parse_US_time(time_val):
 def parse_US_time_or_none(time_val):
     try:
         return parse_US_time(time_val)
-    except:
+    except Exception as e:
+        logger.debug("Invalid format for US time.", exc_info = e)
         return None
 
 """

@@ -125,7 +125,8 @@ if __name__ == "__main__":
     if var_info.bits_per_pixel == 16:
         try:
             back_surface = cairo.ImageSurface (4, width, height)
-        except:
+        except Exception as e:
+            logger.debug("Could not create ImageSurface. Trying alternative method", exc_info = e)
             # Earlier version of Cairo
             back_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
         back_context = cairo.Context (back_surface)

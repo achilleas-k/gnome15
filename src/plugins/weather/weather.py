@@ -35,7 +35,6 @@ import os
 import pango
 import logging
 import time
-import traceback
 import sys
 logger = logging.getLogger("weather")
 
@@ -246,7 +245,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                 self._weather = None
             self._page_properties, self._page_attributes = self._build_properties()
         except Exception as e:
-            traceback.print_exc(file=sys.stderr)
+            logger.debug("Error while refreshing", exc_info = e)
             self._weather = None
             self._page_properties = {}
             self._page_attributes = {}

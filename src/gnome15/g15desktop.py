@@ -871,7 +871,7 @@ def is_gnome_shell_extension_enabled(extension):
         try:
             return extension in eval(text)
         except Exception as e:
-            logger.debug("Failed testing if extension is enabled. %s" % e)
+            logger.debug("Failed testing if extension is enabled.", exc_info = e)
             
     return False
         
@@ -889,7 +889,8 @@ def set_gnome_shell_extension_enabled(extension, enabled):
     if status == 0:
         try:
             extensions = eval(text)
-        except:
+        except Exception as e:
+            logger.debug('No gnome-shell extensions enabled.', exc_info = e)
             # No extensions available, so init an empty array
             extensions = []
             pass
@@ -906,7 +907,7 @@ def set_gnome_shell_extension_enabled(extension, enabled):
         try:
             status, text = g15os.get_command_output("gsettings set org.gnome.shell enabled-extensions \"[%s]\"" % s)
         except Exception as e:
-            logger.debug("Failed to set extension enabled. %s" % e)
+            logger.debug("Failed to set extension enabled.", exc_info = e)
             
 def browse(url):
     """
@@ -970,8 +971,8 @@ class G15AbstractService(Thread):
         g15pythonlang.set_gobject_thread()
         try:
             self.loop.run()
-        except:
-            traceback.print_stack()
+        except Exception as e:
+            logger.debug('Error while running GLib loop', exc_info = e)
         logger.info("Exited GLib loop")
         
     def start_service(self):
@@ -1034,9 +1035,8 @@ class G15DesktopComponent():
         # Try and connect to the service now
         try :
             self._connect()        
-        except dbus.exceptions.DBusException:
-            if logger.isEnabledFor(logging.DEBUG):
-                traceback.print_exc(file=sys.stdout)
+        except dbus.exceptions.DBusException as e:
+            logger.debug("Error while starting the service.", exc_info = e)
             self._disconnect()
         
         # Start watching various events
@@ -1232,7 +1232,8 @@ class G15DesktopComponent():
         if screen_path in self.screens:
             try :
                 del self.screens[screen_path]
-            except dbus.DBusException:
+            except dbus.DBusException as e:
+                logger.debug("Error removing screen '%s'", screen_path, exc_info = e)
                 pass
         self.rebuild_desktop_component()
         
@@ -1448,7 +1449,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                             self.add_service_item(item)
                     i += 1
             except Exception as e:
-                logger.debug("Failed to find devices, service probably stopped. %s", str(e))
+                logger.debug("Failed to find devices, service probably stopped.", exc_info = e)
                 self.connected = False
                 self.rebuild_desktop_component()
                 
@@ -1512,7 +1513,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
             try:
                 self.notify_message.close()
             except Exception as e:
-                logger.debug("Failed to close message. %s" % str(e))
+                logger.debug("Failed to close message.", exc_info = e)
             self.notify_message = None
        
     def _append_item(self, item, menu = None):

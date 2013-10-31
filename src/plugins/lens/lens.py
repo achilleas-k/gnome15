@@ -277,4 +277,4 @@ class MenuScreenChangeListener(g15screen.ScreenChangeAdapter):
                     logger.info("Writing thumbnail to %s" % filename)
                     img.write_to_png(filename)
             except Exception as e:
-                logger.warning("Problem with painting thumbnail. %s" % str(e))
+                logger.warning("Problem with painting thumbnail.", exc_info = e)

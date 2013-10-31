@@ -203,7 +203,7 @@ class G15Dispatcher(asyncore.dispatcher):
         except Exception as e:
             self.oob_buffer = ""
             self.out_buffer = ""
-            traceback.print_exc(file=sys.stderr)
+            logger.debug("Error reading data from G15 daemon", exc_info = e)
             raise e
         
     def get_data(self, required_length):
@@ -368,9 +368,8 @@ class Driver(g15driver.AbstractDriver):
             else:
                 try : 
                     self.send(buf)
-                except IOError as (errno, strerror):
-                    logger.error("Failed to send buffer. %d: %s" % ( errno, strerror ) )                    
-                    traceback.print_exc(file=sys.stderr)
+                except IOError as e:
+                    logger.error("Failed to send buffer.", exc_info = e)
                     self.disconnect()
         finally:
             self.lock.release()

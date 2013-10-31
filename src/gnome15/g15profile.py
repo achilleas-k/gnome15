@@ -628,7 +628,8 @@ class G15Macro(object):
     def __eq__(self, macro):
         try:
             return macro is not None and self.profile.id == macro.profile.id and self.key_list_key == macro.key_list_key and self.activate_on == macro.activate_on
-        except AttributeError:
+        except AttributeError as e:
+            logger.debug("Error when reading a macro attribute", exc_info = e)
             return False
     
     def _get_total(self, keys):
@@ -1131,6 +1132,7 @@ class G15Profile(object):
         try:
             return self.parser.getint(section, name) if self.parser.has_option(section, name) else default_value
         except ValueError as v:
+            logger.debug("Error when parsing a integer value", exc_info = v)
             return default_value
                     
     def __ne__(self, profile):

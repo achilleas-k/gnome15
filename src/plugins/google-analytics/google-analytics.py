@@ -333,6 +333,7 @@ class G15GoogleAnalytics():
                 try :
                     return self._retrieve_site_data(items, account, password)
                 except gdata.client.BadAuthentication as e:
+                    logger.debug("Error authenticating", exc_info = e)
                     ex = e
                     
         if ex is not None:
