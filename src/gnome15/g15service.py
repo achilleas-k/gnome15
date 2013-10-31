@@ -33,7 +33,6 @@ import g15uinput
 import g15network
 import g15accounts
 import g15driver
-import traceback
 import gconf
 import util.g15scheduler as g15scheduler
 import util.g15gconf as g15gconf

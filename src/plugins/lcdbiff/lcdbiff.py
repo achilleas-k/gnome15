@@ -29,7 +29,6 @@ import gnome15.g15globals as g15globals
 import os, os.path
 import pwd
 import gtk
-import traceback
 import re
 from poplib import POP3_SSL
 from poplib import POP3

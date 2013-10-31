@@ -36,7 +36,6 @@ import os
 import socket
 import struct
 import sys
-import traceback
 _ = g15locale.get_translation("g15daemon-server", modfile = __file__).ugettext
 
 logger = logging.getLogger("g15daemon")

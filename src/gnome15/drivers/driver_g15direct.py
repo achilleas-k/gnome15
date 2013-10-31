@@ -34,7 +34,6 @@ import sys
 import os
 import gconf
 import gtk
-import traceback 
 import logging
 from PIL import ImageMath
 from PIL import Image

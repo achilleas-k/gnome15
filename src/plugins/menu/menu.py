@@ -24,7 +24,6 @@ import gnome15.g15plugin as g15plugin
 from gnome15.util.g15pythonlang import find
 import sys
 import cairo
-import traceback
 import base64
 from cStringIO import StringIO
 import logging

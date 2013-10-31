@@ -68,7 +68,6 @@ import g15globals
 import g15driver
 import g15actions
 import gconf
-import traceback
 import threading
 
 # Logging

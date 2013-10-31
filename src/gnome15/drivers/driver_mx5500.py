@@ -36,7 +36,6 @@ import struct
 import time
 import logging
 import asyncore
-import traceback
 import sys
 logger = logging.getLogger("driver")
 

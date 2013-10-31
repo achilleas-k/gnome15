@@ -26,7 +26,6 @@ import gtk
 import gtk.gdk
 from PIL import Image
 import subprocess
-import traceback
 import tempfile
 import lxml.html
 import Queue

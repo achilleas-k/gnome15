@@ -21,7 +21,6 @@ _ = g15locale.get_translation("voip-mumble", modfile = __file__).ugettext
 import gnome15.g15driver as g15driver
 import gnome15.util.g15convert as g15convert
 import ts3
-import traceback
 from threading import Thread
 from threading import Lock
 from threading import RLock

@@ -41,7 +41,6 @@ import os
 import cairo
 import rsvg
 import sys
-import traceback
 import pango
 import g15driver
 import g15globals

@@ -29,7 +29,6 @@ import gdata.calendar.client
 import gdata.acl.data
 import gdata.service
 import iso8601
-import traceback
 import subprocess
 import socket
 

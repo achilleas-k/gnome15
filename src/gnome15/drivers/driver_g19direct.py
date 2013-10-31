@@ -35,7 +35,6 @@ import os
 import gconf
 import gtk
 import usb
-import traceback 
 import logging
 import array
 logger = logging.getLogger("driver")

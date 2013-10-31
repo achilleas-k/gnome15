@@ -62,7 +62,6 @@ import threading
 import cairo
 import gconf
 import os.path
-import traceback
 import sys
 import logging
 from threading import RLock

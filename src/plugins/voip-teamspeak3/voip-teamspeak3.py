@@ -22,7 +22,6 @@ _ = g15locale.get_translation("voip-teamspeak3", modfile = __file__).ugettext
 import gnome15.g15driver as g15driver
 import gnome15.util.g15icontools as g15icontools
 import ts3
-import traceback
 from threading import Thread
 from threading import Lock
 from threading import RLock

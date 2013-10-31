@@ -34,7 +34,6 @@ import time
 import os, os.path
 import gtk
 import calendar
-import traceback
 
 # Logging
 import logging

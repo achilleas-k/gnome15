@@ -36,7 +36,6 @@ import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import gnome15.g15screen as g15screen
 import os
-import traceback
 import time
 import gnome15.colorpicker as colorpicker
 from math import pi

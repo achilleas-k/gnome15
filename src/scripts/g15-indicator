@@ -29,7 +29,6 @@ import gtk
 import os
 import appindicator
 import gconf
-import traceback
 from threading import RLock
 
 # Logging

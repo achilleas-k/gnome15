@@ -45,7 +45,6 @@ import g15theme
 import colorpicker
 import subprocess
 import shutil
-import traceback
 import zipfile
 import time
 

@@ -33,7 +33,6 @@ import subprocess
 import gconf
 import gobject
 import shutil
-import traceback
 import gnome15.g15globals as g15globals
 import gnome15.g15screen as g15screen
 import gnome15.util.g15pythonlang as g15pythonlang
