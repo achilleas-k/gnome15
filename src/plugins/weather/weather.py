@@ -214,6 +214,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
     
     def __init__(self, gconf_key, gconf_client, screen):
         g15plugin.G15RefreshingPlugin.__init__(self, gconf_client, gconf_key, screen, "weather-few-clouds", id, name)
+        self.only_refresh_when_visible = False
         
     def activate(self):    
         self._page_properties = {}
