@@ -136,7 +136,8 @@ class G19(object):
             val = list(self.__usbDevice.handleIf1.interruptRead(
                 0x83, maxLen, 10))
         except usb.USBError as e:
-            logger.debug("Error reading g and m keys", exc_info = e)
+            if e.message != "Connection timed out":
+                logger.debug("Error reading g and m keys", exc_info = e)
             pass
         finally:
             self.__usbDeviceMutex.release()
@@ -153,7 +154,8 @@ class G19(object):
         try:
             val = list(self.__usbDevice.handleIf0.interruptRead(0x81, 2, 10))
         except usb.USBError as e:
-            logger.debug("Error reading display menu keys", exc_info = e)
+            if e.message != "Connection timed out":
+                logger.debug("Error reading display menu keys", exc_info = e)
             pass
         finally:
             self.__usbDeviceMutex.release()
@@ -173,7 +175,8 @@ class G19(object):
         try:
             val = list(self.__usbDevice.handleIfMM.interruptRead(0x82, 2, 10))
         except usb.USBError as e:
-            logger.debug("Error reading multimedia keys", exc_info = e)
+            if e.message != "Connection timed out":
+                logger.debug("Error reading multimedia keys", exc_info = e)
             pass
         finally:
             self.__usbDeviceMutex.release()
