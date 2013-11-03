@@ -14,7 +14,7 @@
    height="240"
    id="svg2"
    version="1.2"
-   inkscape:version="0.48.1 r9760"
+   inkscape:version="0.48.4 r9939"
    sodipodi:docname="g19.svg">
   <defs
      id="defs4">
@@ -65,14 +65,14 @@
     </clipPath>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath3000">
+       id="clipPath3793">
       <rect
-         y="941.11218"
-         x="24.547737"
-         height="69.999985"
+         style="fill:#aa0000;fill-opacity:0.50196078;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none"
+         id="rect3795"
          width="290"
-         id="rect3002"
-         style="fill:#aa0000;fill-opacity:0.50196078;stroke-width:1;stroke-miterlimit:0;stroke-dasharray:none" />
+         height="69.999985"
+         x="24.547737"
+         y="941.11218" />
     </clipPath>
   </defs>
   <sodipodi:namedview
@@ -89,17 +89,19 @@
      inkscape:current-layer="layer1"
      showgrid="true"
      borderlayer="false"
-     inkscape:window-width="1429"
-     inkscape:window-height="940"
-     inkscape:window-x="2034"
-     inkscape:window-y="84"
-     inkscape:window-maximized="0"
+     inkscape:window-width="1680"
+     inkscape:window-height="988"
+     inkscape:window-x="1680"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
      fit-margin-bottom="0"
      showguides="true"
-     inkscape:guide-bbox="true">
+     inkscape:guide-bbox="true"
+     inkscape:snap-grids="true"
+     inkscape:snap-page="false">
     <inkscape:grid
        type="xygrid"
        id="grid3986"
@@ -136,12 +138,12 @@
        rx="21.692308"
        ry="20.769232" />
     <image
-       sodipodi:absref="/home/tanktarta/Workspaces/Gnome/gnome15/gnome15-plugins/src/screensaver/default/${icon}"
+       sodipodi:absref="/home/nuno/work/gnome15/code/gnome15/src/plugins/screensaver/default/${icon}"
        xlink:href="${icon}"
-       transform="matrix(0.4797619,0,0,0.4797619,120.40488,804.11217)"
-       width="240"
+       id="image3055"
        height="240"
-       id="image3055" />
+       width="240"
+       transform="matrix(0.4797619,0,0,0.4797619,120.40488,804.11217)" />
     <rect
        style="fill:#696969;fill-opacity:0.50196078000000000;stroke:none"
        id="rect2994"
@@ -154,16 +156,17 @@
        ry="12" />
     <text
        xml:space="preserve"
-       style="font-size:18px;font-style:normal;font-weight:normal;text-align:center;line-height:125%;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill-opacity:1;stroke:none;font-family:Sans"
-       x="175.04581"
+       style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans"
+       x="65.045807"
        y="956.35071"
        id="text2998"
        sodipodi:linespacing="125%"
-       clip-path="url(#clipPath3000)"
-       title="vertical-wrap"><tspan
+       clip-path="url(#clipPath3793)"
+       title="vertical-wrap"
+       transform="translate(-42,0)"><tspan
          sodipodi:role="line"
          id="tspan3000"
-         x="137.47696"
+         x="65.045807"
          y="956.35071">${body}</tspan></text>
   </g>
 </svg>
