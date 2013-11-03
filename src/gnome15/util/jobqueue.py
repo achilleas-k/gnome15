@@ -66,11 +66,9 @@ class GTimer:
         
     def exec_item(self, function, *args):
         try:
-            if logger.isEnabledFor(logging.DEBUG):
-                logging.debug("Executing GTimer %s" % str(self.task_name))
+            logger.debug("Executing GTimer %s" % str(self.task_name))
             ji = self.task_queue.run(self.stack, function, *args)
-            if logger.isEnabledFor(logging.DEBUG):
-                logging.debug("Executed GTimer %s" % str(self.task_name))
+            logger.debug("Executed GTimer %s" % str(self.task_name))
         finally:
             self.scheduler.all_jobs_lock.acquire()
             try:
@@ -89,7 +87,7 @@ class GTimer:
             if self in self.scheduler.all_jobs:
                 self.scheduler.all_jobs.remove(self)
             gobject.source_remove(self.source)
-            logging.debug("Cancelled GTimer %s" % str(self.task_name))
+            logger.debug("Cancelled GTimer %s" % str(self.task_name))
         finally:
             self.scheduler.all_jobs_lock.release()
         
@@ -135,8 +133,7 @@ class JobScheduler():
             del self.queues[queue_name]
     
     def execute(self, queue_name, name, function, *args):
-        if logger.isEnabledFor(logging.DEBUG):
-            logging.debug("Executing on queue %s" % ( queue_name ) )
+        logger.debug("Executing on queue %s" % ( queue_name ) )
         if not queue_name in self.queues:
             self.queues[queue_name] = JobQueue(name=queue_name)   
         self.queues[queue_name].run(self._get_stack(), function, *args)        
@@ -150,8 +147,7 @@ class JobScheduler():
     def queue(self, queue_name, name, interval, function, *args):
         if not hasattr(function, "__call__"):
             raise Exception("Not a function")
-        if logger.isEnabledFor(logging.DEBUG):
-            logging.debug("Queueing %s on %s for execution in %f" % ( name, queue_name, interval ) )
+        logger.debug("Queueing %s on %s for execution in %f" % ( name, queue_name, interval ) )
         if not queue_name in self.queues:
             self.queues[queue_name] = JobQueue(name=queue_name)
         
@@ -160,8 +156,7 @@ class JobScheduler():
             self.queues[queue_name].run(self._get_stack(), function, *args)
         else:
             timer = GTimer(self, self.queues[queue_name], name, interval, function, self._get_stack(), *args)
-            if logger.isEnabledFor(logging.DEBUG):
-                logging.debug("Queued %s" % name)
+            logger.debug("Queued %s" % name)
             return timer
 
 
@@ -177,8 +172,7 @@ class JobQueue():
             self.stack = stack
         
     def __init__(self,number_of_workers=1, name="JobQueue"):
-        if logger.isEnabledFor(logging.DEBUG):
-            logging.debug("Creating job queue %s with %d workers" % (name, number_of_workers))
+        logger.debug("Creating job queue %s with %d workers" % (name, number_of_workers))
         self.work_queue = Queue.Queue()
         self.queued_jobs = []
         self.name = name
@@ -233,14 +227,13 @@ class JobQueue():
             return
         self.all_jobs_lock.acquire()
         try :
-            if logger.isEnabledFor(logging.DEBUG):
-                logging.debug("Queued task on %s", self.name)
+            logger.debug("Queued task on %s", self.name)
             ji = self.JobItem(stack, item, args)
             self.queued_jobs.append(ji)
             self.work_queue.put(ji)
             jobs = self.work_queue.qsize()
-            if jobs > 1 and logger.level == logging.DEBUG:
-                logging.debug("Queue %s filling, now at %d jobs." % (self.name, jobs ) )
+            if jobs > 1:
+                logger.debug("Queue %s filling, now at %d jobs." % (self.name, jobs ) )
                 
         finally :
             self.all_jobs_lock.release()
@@ -253,16 +246,14 @@ class JobQueue():
             try:
                 if item != None:
                     try:
-                        if logger.isEnabledFor(logging.DEBUG):
-                            logging.debug("Running task on %s", self.name)
+                        logger.debug("Running task on %s", self.name)
                         item.started = time.time()
                         if item.args and len(item.args) > 0:
                             item.item(*item.args)
                         else:
                             item.item()
                         item.finished = time.time()
-                        if logger.isEnabledFor(logging.DEBUG):
-                            logging.debug("Ran task on %s", self.name)
+                        logger.debug("Ran task on %s", self.name)
                     finally:
                         if item in self.queued_jobs: 
                             self.queued_jobs.remove(item)

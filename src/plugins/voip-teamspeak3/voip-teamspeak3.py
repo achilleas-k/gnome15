@@ -66,7 +66,7 @@ def find_avatar(server_unique_identifier, client_unique_identifier):
             decoded += chr(((ord(c) & 0xf0) >> 4) + 97)
             decoded += chr((ord(c) & 0x0f) + 97)
     except TypeError as e:
-        logging.debug("Error decoding client_unique_identifier. Using raw value", exc_info = e)
+        logger.debug("Error decoding client_unique_identifier. Using raw value", exc_info = e)
         # Sometimes the client_unique_identifier is not base64 encoded
         decoded = client_unique_identifier
 

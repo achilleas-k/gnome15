@@ -43,7 +43,7 @@ load_error = None
 try :
     import pylibg15
 except Exception as a:
-    logging.debug("Could not import pylibg15 module", exc_info = a)
+    logger.debug("Could not import pylibg15 module", exc_info = a)
     load_error = a
 
 # Import from local version of pylibg19 if available
