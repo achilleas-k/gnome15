@@ -28,11 +28,8 @@ if __name__ == "__main__":
     t = ts3.TS3()
     t.start()
     
-    logger.info("schandlerid : %d" % t.schandlerid)
+    logger.info("schandlerid : %d", t.schandlerid)
     
     
-    logger.info("channel: %s"  % ( t.send_command(
-                ts3.Command(
-                        'channelconnectinfo'
-                    ) ).args['path'] ))
+    logger.info("channel: %s", t.send_command(ts3.Command('channelconnectinfo')).args['path'])
     

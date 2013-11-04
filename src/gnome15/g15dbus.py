@@ -172,7 +172,7 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     def memory_bank_changed(self, new_memory_bank):
         if g15scheduler.run_on_gobject(self.memory_bank_changed, new_memory_bank):
             return
-        logger.debug("Sending memory bank changed signel (%d)" % new_memory_bank)
+        logger.debug("Sending memory bank changed signel (%d)", new_memory_bank)
         self.MemoryBankChanged(new_memory_bank)
         
     def attention_cleared(self):
@@ -213,20 +213,20 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     def page_changed(self, page):
         if g15scheduler.run_on_gobject(self.page_changed, page):
             return
-        logger.debug("Sending page changed signal for %s" % page.id)
+        logger.debug("Sending page changed signal for %s", page.id)
         if page.id in self._dbus_pages:
             dbus_page = self._dbus_pages[page.id]
             self.PageChanged(dbus_page._bus_name)
-            logger.debug("Sent page changed signal for %s" % page.id)
+            logger.debug("Sent page changed signal for %s", page.id)
         else:
-            logger.warn("Got page_changed event when no such page (%s) exists" % page.id)
+            logger.warn("Got page_changed event when no such page (%s) exists", page.id)
         
     def new_page(self, page): 
         if g15scheduler.run_on_gobject(self.new_page, page):
             return
-        logger.debug("Sending new page signal for %s" % page.id)
+        logger.debug("Sending new page signal for %s", page.id)
         if page.id in self._dbus_pages:
-            raise Exception("Page %s already in DBUS service." % page.id)
+            raise Exception("Page %s already in DBUS service.", page.id)
         dbus_page = G15DBUSPageService(self, page, self._dbus_service._page_sequence_number)
         self._dbus_pages[page.id] = dbus_page
         self.PageCreated(dbus_page._bus_name, page.title)
@@ -236,15 +236,15 @@ class G15DBUSScreenService(AbstractG15DBUSService):
     def title_changed(self, page, title): 
         if g15scheduler.run_on_gobject(self.title_changed, page, title):
             return
-        logger.debug("Sending title changed signal for %s" % page.id)
+        logger.debug("Sending title changed signal for %s", page.id)
         dbus_page = self._dbus_pages[page.id]
         self.PageTitleChanged(dbus_page._bus_name, title)
-        logger.debug("Sent title changed signal for %s" % page.id)
+        logger.debug("Sent title changed signal for %s", page.id)
     
     def deleting_page(self, page):
         if g15scheduler.run_on_gobject(self.deleting_page, page):
             return
-        logger.debug("Sending page deleting signal for %s" % page.id)
+        logger.debug("Sending page deleting signal for %s", page.id)
         
         for client_bus_name in self._clients:
             client = self._clients[client_bus_name]
@@ -257,21 +257,25 @@ class G15DBUSScreenService(AbstractG15DBUSService):
                 page.key_handlers.remove(dbus_page)
             self.PageDeleting(dbus_page._bus_name, )
         else:
-            logger.warning("DBUS Page %s is deleting, but it never existed. Huh? %s" % ( page.id, str(self._dbus_pages) ))
-        logger.debug("Sent page deleting signal for %s" % page.id)
+            logger.warning("DBUS Page %s is deleting, but it never existed. Huh? %s",
+                           page.id,
+                           str(self._dbus_pages))
+        logger.debug("Sent page deleting signal for %s", page.id)
             
     def deleted_page(self, page):
         if g15scheduler.run_on_gobject(self.deleted_page, page):
             return
-        logger.debug("Sending page deleted signal for %s" % page.id)
+        logger.debug("Sending page deleted signal for %s", page.id)
         if page.id in self._dbus_pages:
             dbus_page = self._dbus_pages[page.id]
             self.PageDeleted(dbus_page._bus_name)
             dbus_page.remove_from_connection()
             del self._dbus_pages[page.id]
         else:
-            logger.warning("DBUS Page %s was deleted, but it never existed. Huh? %s" % ( page.id, str(self._dbus_pages) ))
-        logger.debug("Sent page deleted signal for %s" % page.id)
+            logger.warning("DBUS Page %s was deleted, but it never existed. Huh? %s",
+                           page.id,
+                           str(self._dbus_pages))
+        logger.debug("Sent page deleted signal for %s", page.id)
             
     """
     DBUS Functions
@@ -583,7 +587,7 @@ class G15DBUSControlAcquisition(AbstractG15DBUSService):
     Private
     """
     def _notify_release(self):
-        logger.info("Release acquisition of control %s" % self._acquisition.control.id)
+        logger.info("Release acquisition of control %s", self._acquisition.control.id)
         for client_bus_name in self._screen_service._clients:
             client = self._screen_service._clients[client_bus_name]
             if self._acquisition in client.acquisitions:
@@ -806,17 +810,17 @@ class G15DBUSService(AbstractG15DBUSService):
             dbus_device = self._dbus_device_map[device.uid]
             self._dbus_devices.remove(dbus_device)
             del self._dbus_device_map[device.uid]
-            logger.info("Removed DBUS device %s/%s" % ( DEVICE_NAME, device.uid ))
+            logger.info("Removed DBUS device %s/%s", DEVICE_NAME, device.uid)
             self.DeviceRemoved("%s/%s" % ( DEVICE_NAME, device.uid ))
             self._silently_remove_from_connector(dbus_device)
         else:
-            logger.warn("DBUS service did not know about a device for some reason (%s)" % device.uid)
+            logger.warn("DBUS service did not know about a device for some reason (%s)", device.uid)
         
     def _device_added(self, device):
         dbus_device = G15DBUSDeviceService(self, device)
         self._dbus_devices.append(dbus_device)
         self._dbus_device_map[device.uid] = dbus_device
-        logger.info("Added DBUS device %s/%s" % ( DEVICE_NAME, device.uid ))
+        logger.info("Added DBUS device %s/%s", DEVICE_NAME, device.uid)
         self.DeviceAdded("%s/%s" % ( DEVICE_NAME, device.uid ))
         
     def stop(self):   
@@ -841,7 +845,7 @@ class G15DBUSService(AbstractG15DBUSService):
     def screen_added(self, screen):
         if g15scheduler.run_on_gobject(self.screen_added, screen):
             return
-        logger.debug("Screen added for %s" % screen.device.model_id)        
+        logger.debug("Screen added for %s", screen.device.model_id)
         screen_service = G15DBUSScreenService(self, screen)
         self._dbus_screens[screen.device.uid] = screen_service
         self.ScreenAdded("%s/%s" % ( SCREEN_NAME, screen.device.uid ))
@@ -851,7 +855,7 @@ class G15DBUSService(AbstractG15DBUSService):
     def screen_removed(self, screen):
         if g15scheduler.run_on_gobject(self.screen_removed, screen):
             return
-        logger.debug("Screen removed for %s" % screen.device.model_id)
+        logger.debug("Screen removed for %s", screen.device.model_id)
         self.ScreenRemoved("%s/%s" % ( SCREEN_NAME, screen.device.uid ))
         if screen.device.uid in self._dbus_device_map:
             dbus_device = self._dbus_device_map[screen.device.uid]
@@ -966,7 +970,10 @@ class G15DBUSService(AbstractG15DBUSService):
 
     @dbus.service.method(IF_NAME, in_signature='ssas')
     def Launch(self, profile_name, screen_id, args):
-        logger.info("Launch under profile %s, screen %s, args = %s" % (profile_name, screen_id, str(args)))
+        logger.info("Launch under profile %s, screen %s, args = %s",
+                    profile_name,
+                    screen_id,
+                    str(args))
     
     """
     Private
@@ -974,7 +981,7 @@ class G15DBUSService(AbstractG15DBUSService):
     def _name_owner_changed(self, name, old_owner, new_owner):
         for screen in self._dbus_screens.values():
             if name in screen._clients and old_owner and not new_owner:
-                logger.info("Cleaning up DBUS client %s" % name)
+                logger.info("Cleaning up DBUS client %s", name)
                 client = screen._clients[name]
                 client.cleanup()
                 del screen._clients[name]

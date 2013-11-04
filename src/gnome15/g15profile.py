@@ -228,7 +228,7 @@ def create_profile(profile):
     """
     if profile.id == None or profile.id == -1:
         profile.set_id(generate_profile_id())
-    logger.info("Creating profile %s, %s" % ( profile.id, profile.name ))
+    logger.info("Creating profile %s, %s", profile.id, profile.name)
     profile.save()
 
 
@@ -377,7 +377,7 @@ def find_profile_for_command(args, device):
             command_line += " "
         command_line += "'" + a + "'"
         
-    logger.info("Processed command \"%s\"" % command_line)
+    logger.info("Processed command '%s'", command_line)
     
     for p in get_profiles(device):
         if p.can_launch(command_line):
@@ -787,7 +787,7 @@ class G15Profile(object):
         """
         if self.read_only:
             raise Exception("Cannot write to read-only profile")
-        logger.info("Saving macro profile %s, %s" % ( self.id, self.name ))
+        logger.info("Saving macro profile %s, %s", self.id, self.name)
         if filename is None:
             filename = self.filename
         if self.window_name == None:
@@ -908,7 +908,7 @@ class G15Profile(object):
         """
         section_name = self._get_section_name(activate_on, memory)     
         key_list_key = get_keys_key(keys)
-        logger.info("Deleting macro M%d, for %s" % ( memory, key_list_key ))
+        logger.info("Deleting macro M%d, for %s", memory, key_list_key)
         self._delete_key(section_name, key_list_key)
         self._write(self.filename)
         bank_macros = self.macros[activate_on][memory - 1] 
@@ -967,7 +967,7 @@ class G15Profile(object):
         macro         --     content of macro
         """
         key_list_key = get_keys_key(keys)  
-        logger.info("Creating macro M%d, for %s" % ( memory, key_list_key ))
+        logger.info("Creating macro M%d, for %s", memory, key_list_key)
         new_macro = G15Macro(self, memory, key_list_key, activate_on)
         new_macro.name = name
         new_macro.type = macro_type

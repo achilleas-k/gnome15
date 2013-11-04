@@ -123,7 +123,7 @@ class DBUSMenu():
     '''
      
     def _item_activation_requested(self, id, timestamp):
-        logger.warning("TODO - implement item activation request for %s on %d" % ( id, timestamp ) )
+        logger.warning("TODO - implement item activation request for %s on %d", id, timestamp)
         
     def _layout_updated(self, revision, parent):
         self._get_layout()

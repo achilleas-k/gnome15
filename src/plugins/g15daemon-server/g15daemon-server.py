@@ -246,7 +246,9 @@ class G15DaemonClient(asyncore.dispatcher):
                 self.img_buffer = ""
 
             elif len(self.img_buffer) > self.buffer_len:
-                logger.warning('Received bad frame (%d bytes), should be %d' % ( len(self.img_buffer), self.buffer_len ) )
+                logger.warning("Received bad frame (%d bytes), should be %d",
+                               len(self.img_buffer),
+                               self.buffer_len)
                 
     def draw_buffer(self, img_buffer):
                 
@@ -415,7 +417,7 @@ class G15DaemonServer():
         port = self._get_port()
         if self.daemon == None or self.daemon.port != port:
             if self.daemon != None:
-                logger.warning("Port changed to %d (will restart daemon - clients may have to be reconnected manually" % port)
+                logger.warning("Port changed to %d (will restart daemon - clients may have to be reconnected manually", port)
                 self._stop_all_clients()
                 self.daemon.close()
             self.daemon = G15Daemon(port, self)
@@ -475,9 +477,9 @@ class G15Daemon(asyncore.dispatcher):
         asyncore.dispatcher.__init__(self)        
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
-        logger.info('Binding to port %d' % port)
+        logger.info('Binding to port %d', port)
         self.bind(("127.0.0.1", port))
-        logger.info('Bound to port %d' % port)
+        logger.info('Bound to port %d', port)
         self.listen(5)
         self.plugin = plugin
         self.port = port

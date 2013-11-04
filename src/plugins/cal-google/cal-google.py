@@ -110,7 +110,7 @@ class GoogleEvent(cal.CalendarEvent):
         self.alt_icon = os.path.join(os.path.dirname(__file__), "icon.png")
         
     def activate(self):
-        logger.info("xdg-open '%s'" % self.link)
+        logger.info("xdg-open '%s'", self.link)
         subprocess.Popen(['xdg-open', self.link])
 
         
@@ -152,14 +152,14 @@ class GoogleCalendarBackend(cal.CalendarBackend):
         
         for i, a_calendar in zip(xrange(len(feeds.entry)), feeds.entry):
             query = gdata.calendar.client.CalendarEventQuery(start_min=start_date, start_max=end_date)
-            logger.info("Retrieving events from %s to %s" % (str(start_date), str(end_date)))
+            logger.info("Retrieving events from %s to %s", str(start_date), str(end_date))
             feed = self.cal_client.GetCalendarEventFeed(a_calendar.content.src, q = query)
             
             # TODO - Color doesn't seem to work 
             color = None
             
             for i, an_event in zip(xrange(len(feed.entry)), feed.entry):
-                logger.info('Adding event %s (%s)' % ( an_event.title.text, str(an_event.when) ) )
+                logger.info('Adding event %s (%s)', an_event.title.text, str(an_event.when))
                 
                 """
                 An event may have multiple times. cal doesn't support multiple times, so we add multiple events instead

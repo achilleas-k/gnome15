@@ -445,7 +445,7 @@ class G15NotifyLCD():
         for i in range(0, 6):
             try :            
                 for pn in OTHER_NOTIFY_DAEMON_PROCESS_NAMES:
-                    logger.debug("Killing %s" % pn)
+                    logger.debug("Killing %s", pn)
                     process = subprocess.Popen(['killall', '--quiet', pn])
                     process.wait()
                 self._bus_name = dbus.service.BusName(IF_NAME, bus=self._bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
@@ -461,9 +461,9 @@ class G15NotifyLCD():
         # Notification Service
         self._notification_service = G15NotifyService(self._gconf_client, self._gconf_key, self._service, self._driver, self._bus)        
         try :
-            logger.info("Starting notification service %s" % IF_NAME)
+            logger.info("Starting notification service %s", IF_NAME)
             dbus.service.Object.__init__(self._notification_service, self._bus_name, BUS_NAME)
-            logger.info("Started notification service %s" % IF_NAME)
+            logger.info("Started notification service %s", IF_NAME)
         except KeyError as ke:
             logger.warning("DBUS notify service failed to start. May already be started.",
                            exc_info = ke)

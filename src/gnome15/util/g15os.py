@@ -41,7 +41,7 @@ def run_script(script, args = None, background = True):
         for arg in args:
             a += "\"%s\"" % arg
     p = os.path.realpath(os.path.join(g15globals.scripts_dir,script))
-    logger.info("Running '%s'" % p)
+    logger.info("Running '%s'", p)
     return os.system("\"%s\" %s %s" % ( p, a, " &" if background else "" ))
 
 def get_command_output(cmd):

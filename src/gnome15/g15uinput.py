@@ -119,7 +119,7 @@ if os.path.exists(__keysym_map_path):
             if len(arr) > 1:
                 __keysym_map[arr[0].lower()] = arr[1]
 else:
-    logger.warning("Could not find keysym to uinput map %s" % __keysym_map_path)
+    logger.warning("Could not find keysym to uinput map %s", __keysym_map_path)
     
 def get_keysym_to_uinput_mapping(keysym):
     """
@@ -130,7 +130,11 @@ def get_keysym_to_uinput_mapping(keysym):
     """
     if keysym.lower() in __keysym_map:
         return __keysym_map[keysym.lower()]
-    logger.warning("Failed to translate X keysym %s to UInput code. You can add a mapping by editing %s. Please also report this on the Gnome15 project forums." % ( keysym, __keysym_map_path ))
+    logger.warning("Failed to translate X keysym %s to UInput code. " \
+                   "You can add a mapping by editing %s. " \
+                   "Please also report this on the Gnome15 project forums.",
+                   keysym,
+                   __keysym_map_path)
 
 def are_calibration_tools_available():
     """
@@ -150,7 +154,7 @@ def close_devices():
     """
     for device_type in DEVICE_TYPES:
         if device_type in uinput_devices:
-            logger.debug("Closing UINPUT device %s" % device_type)
+            logger.debug("Closing UINPUT device %s", device_type)
             del uinput_devices[device_type]
             
 def calibrate(device_type):
@@ -207,9 +211,9 @@ def load_calibration(device_type):
                 f = open(js_config_file, "r")
                 try :
                     cal = f.readline().split()
-                    logger.info("Calibrating using '%s'" % cal) 
+                    logger.info("Calibrating using '%s'", cal)
                     proc = subprocess.Popen(cal, stdout=subprocess.PIPE) 
-                    logger.info("Calibrated. %s" % proc.communicate()[0])
+                    logger.info("Calibrated. %s", proc.communicate()[0])
                 except Exception as e:
                     logger.error("Failed to calibrate joystick device.", exc_info = e)
                 finally :
@@ -286,7 +290,11 @@ def emit(target, code, value, syn=True):
     if not isinstance(code, tuple):
         if target == MOUSE and code in [ uinput.REL_X[1], uinput.REL_Y[1] ]:
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("UINPUT mouse event at %s, code = %s, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
+                logger.debug("UINPUT mouse event at %s, code = %s, val = %d, syn = %s",
+                             target,
+                             code,
+                             value,
+                             str(syn))
             code = ( EV_REL, code )            
         elif ( target == JOYSTICK or target == DIGITAL_JOYSTICK ):
             """ We translate the 'virtual' uinput codes into real uinput ones """
@@ -306,11 +314,19 @@ def emit(target, code, value, syn=True):
                 """ If we are simulating a bouton press, then the event is of type EV_KEY """
                 code = (EV_KEY, code)
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("UINPUT joystick event at %s, code = %s, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
+                logger.debug("UINPUT joystick event at %s, code = %s, val = %d, syn = %s",
+                             target,
+                             code,
+                             value,
+                             str(syn))
         else: 
             code = ( EV_KEY, code )
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("UINPUT uinput keyboard event at %s, code = %s, val = %d, syn = %s" % ( target, code, value, str(syn) ) )
+                logger.debug("UINPUT uinput keyboard event at %s, code = %s, val = %d, syn = %s",
+                             target,
+                             code,
+                             value,
+                             str(syn))
     
     locks[target].acquire()
     try:
@@ -343,13 +359,13 @@ def get_buttons(device_type, real_uinput_only = False):
             if line in capabilities:
                 b.append((line, capabilities[line][1]))
             else:
-                logger.warning("Invalid key name '%s' in %s" % (line, fname))
+                logger.warning("Invalid key name '%s' in %s", line, fname)
     return b
     
 def __check_devices():
     for device_type in DEVICE_TYPES:
         if not device_type in uinput_devices:
-            logger.info("Opening uinput device for %s" % device_type)
+            logger.info("Opening uinput device for %s", device_type)
             keys = []
             for b, _ in get_buttons(device_type, True):
                 if capabilities[b][0] < 0x9999:

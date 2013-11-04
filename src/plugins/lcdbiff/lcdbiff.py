@@ -351,7 +351,7 @@ class MailItem(g15theme.MenuItem):
     
     def activate(self):
         email_client = self.gconf_client.get_string("/desktop/gnome/url-handlers/mailto/command")
-        logger.info("Running email client %s" % email_client)
+        logger.info("Running email client %s", email_client)
         if email_client != None:
             call_str = "%s &" % email_client.replace("%s", "").replace("%U", "mailto:")
             os.system(call_str)

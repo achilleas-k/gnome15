@@ -142,10 +142,10 @@ class MountMenuItem(g15theme.MenuItem):
         return True
             
     def _ejected(self, arg1, arg2):
-        logger.info("Ejected %s %s %s" % (self.mount.get_name(), str(arg1), str(arg2)))
+        logger.info("Ejected %s %s %s", self.mount.get_name(), str(arg1), str(arg2))
             
     def _unmounted(self, arg1, arg2):
-        logger.info("Unmounted %s %s %s" % (self.mount.get_name(), str(arg1), str(arg2)))
+        logger.info("Unmounted %s %s %s", self.mount.get_name(), str(arg1), str(arg2))
         
 """
 Represents a volumne as a single item in a menu
@@ -170,7 +170,7 @@ class VolumeMenuItem(g15theme.MenuItem):
         return True
     
     def _mounted(self, arg1, arg2):
-        logger.info("Mounted %s %s %s" % (self.volume.get_name(), str(arg1), str(arg2)))
+        logger.info("Mounted %s %s %s", self.volume.get_name(), str(arg1), str(arg2))
 
 
 """
@@ -296,7 +296,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         """
         Remove a volume from the menu
         """ 
-        logger.info("Removing volume %s" % str(volume))
+        logger.info("Removing volume %s", str(volume))
         self.menu.remove_child(self._get_item_for_volume(volume))
         self.screen.redraw(self.page)
         
@@ -304,7 +304,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         """
         Remove a mount from the menu
         """ 
-        logger.info("Removing mount %s" % str(mount))
+        logger.info("Removing mount %s", str(mount))
         mnt = self._get_item_for_mount(mount)
         if mnt:
             self.menu.remove_child(mnt)
@@ -330,7 +330,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         """
         Add a new volume to the menu
         """ 
-        logger.info("Adding volume %s" % str(volume))
+        logger.info("Adding volume %s", str(volume))
         item = VolumeMenuItem("volumeitem-%s" % self._get_key(volume), volume)
         self.menu.add_child(item)
         self.screen.redraw(self.page)
@@ -339,7 +339,7 @@ class G15Places(g15plugin.G15MenuPlugin):
         """
         Add a new mount to the menu
         """ 
-        logger.info("Adding mount %s" % str(mount))
+        logger.info("Adding mount %s", str(mount))
         item = MountMenuItem("mountitem-%s" % self._get_key(mount), mount, self)
         self.menu.add_child(item, 0)
         self.screen.redraw(self.page)

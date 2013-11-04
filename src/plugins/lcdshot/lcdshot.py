@@ -169,7 +169,7 @@ class G15LCDShot():
                 g15notify.notify(_("LCD Screenshot"), _("Video encoding complete. Result at %s" % self._record_to), "dialog-info", timeout = 0)
                 shutil.rmtree("%s.tmp" % self._record_to, True)
             else:
-                logger.error("Video encoding failed with status %d" % ret)
+                logger.error("Video encoding failed with status %d", ret)
                 g15notify.notify(_("LCD Screenshot"), _("Video encoding failed."), "dialog-error", timeout = 0)
         except Exception as e:
                 logger.error("Video encoding failed.", exc_info = e)
@@ -227,7 +227,7 @@ class G15LCDShot():
             try:
                 path = self._find_next_free_filename("png", self._screen.get_visible_page().title)
                 self._screen.old_surface.write_to_png(path)
-                logger.info("Written to screenshot to %s" % path)
+                logger.info("Written to screenshot to %s", path)
                 g15notify.notify(_("LCD Screenshot"), _("Screenshot saved to %s") % path, "dialog-info", timeout = 0)
                 return True
             except Exception as e:

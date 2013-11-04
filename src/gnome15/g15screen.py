@@ -334,7 +334,7 @@ class G15Screen():
         return found
         
     def start(self):
-        logger.info("Starting %s." % self.device.uid)
+        logger.info("Starting %s.", self.device.uid)
         
         # Remove previous fader is it exists
         if self.fader:
@@ -356,14 +356,14 @@ class G15Screen():
         
         # Monitor gconf
         screen_key = "/apps/gnome15/%s" % self.device.uid
-        logger.info("Watching GConf settings in %s" % screen_key)
+        logger.info("Watching GConf settings in %s", screen_key)
         self.conf_client.add_dir(screen_key, gconf.CLIENT_PRELOAD_NONE)
         self.notify_handles.append(self.conf_client.notify_add("%s/cycle_screens" % screen_key, self.resched_cycle))
         self.notify_handles.append(self.conf_client.notify_add("%s/active_profile" % screen_key, self.active_profile_changed))
         self.notify_handles.append(self.conf_client.notify_add("%s/driver" % screen_key, self.driver_changed))
         for control in self.driver.get_controls():
             self.notify_handles.append(self.conf_client.notify_add("%s/%s" % (screen_key, control.id), self._control_changed))
-        logger.info("Starting for %s is complete." % self.device.uid)
+        logger.info("Starting for %s is complete.", self.device.uid)
         
         g15profile.profile_listeners.append(self._profile_changed)
         
@@ -371,7 +371,7 @@ class G15Screen():
         self.service.network_manager.listeners.append(self._network_state_change)
         
     def stop(self, quickly=False):  
-        logger.info("Stopping screen for %s" % self.device.uid)
+        logger.info("Stopping screen for %s", self.device.uid)
         self.stopping = True
         
         # Stop attempting reconnection
@@ -456,7 +456,7 @@ class G15Screen():
         return self.mkey
         
     def set_memory_bank(self, bank):
-        logger.info("Setting memory bank to %d" % bank)
+        logger.info("Setting memory bank to %d", bank)
         self.mkey = bank
         val = g15driver.get_mask_for_memory_bank(bank)
         control = self.driver.get_control_for_hint(g15driver.HINT_MKEYS)
@@ -511,15 +511,15 @@ class G15Screen():
         if self.driver.get_bpp() == 0:
             raise Exception("The current device has no suitable output device")
         
-        logger.info("Creating new page with %s of priority %d" % (page.id, page.priority))
+        logger.info("Creating new page with %s of priority %d", page.id, page.priority)
         self.page_model_lock.acquire()
         try :
-            logger.info("Adding page %s" % page.id)
+            logger.info("Adding page %s", page.id)
             self.clear_popup()
             if page.priority == PRI_EXCLUSIVE:
                 for p in self.pages:
                     if p.priority == PRI_EXCLUSIVE:
-                        logger.warning("Another page is already exclusive. Lowering %s to HIGH" % id)
+                        logger.warning("Another page is already exclusive. Lowering %s to HIGH", id)
                         page.priority = PRI_HIGH
                         break
             self.pages.append(page)   
@@ -553,14 +553,14 @@ class G15Screen():
         if self.driver.get_bpp() == 0:
             raise Exception(_("The current device has no suitable output device"))
         
-        logger.info("Creating new page with %s of priority %d" % (id, priority))
+        logger.info("Creating new page with %s of priority %d", id, priority)
         self.page_model_lock.acquire()
         try :
             self.clear_popup()
             if priority == PRI_EXCLUSIVE:
                 for page in self.pages:
                     if page.priority == PRI_EXCLUSIVE:
-                        logger.warning("Another page is already exclusive. Lowering %s to HIGH" % id)
+                        logger.warning("Another page is already exclusive. Lowering %s to HIGH", id)
                         priority = PRI_HIGH
                         break
                     
@@ -667,7 +667,7 @@ class G15Screen():
         self.page_model_lock.acquire()
         try :
             if page != None and page in self.pages:                
-                logger.info("Deleting page %s" % page.id)
+                logger.info("Deleting page %s", page.id)
                    
                 # Remove any timers that might be running on this page
                 if page.id in self.deleting:
@@ -767,7 +767,7 @@ class G15Screen():
                 self.cycle_color(val, c)
         
     def cycle_color(self, val, control):
-        logger.debug("Cycling of %s color by %d" % (control.id, val))
+        logger.debug("Cycling of %s color by %d", control.id, val)
         self.color_no += val
         if self.color_no < 0:
             self.color_no = len(COLOURS) - 1
@@ -778,7 +778,7 @@ class G15Screen():
         
             
     def cycle_level(self, val, control):
-        logger.debug("Cycling of %s level by %d" % (control.id, val))
+        logger.debug("Cycling of %s level by %d", control.id, val)
         level = self.conf_client.get_int("/apps/gnome15/%s/%s" % (self.device.uid, control.id))
         level += val
         if level > control.upper - 1:
@@ -841,7 +841,7 @@ class G15Screen():
             logger.info("No profile active")
             self.deactivate_profile()
         else:
-            logger.info("Active profile changed to %s" % new_profile.name)
+            logger.info("Active profile changed to %s", new_profile.name)
             self.activate_profile()
         self.set_color_for_mkey()                
         g15scheduler.schedule("ProfileChange", 1.0, self._check_active_plugins)
@@ -873,7 +873,7 @@ class G15Screen():
             g15pythonlang.call_if_exists(listener, "attention_cleared")
             
     def request_attention(self, message=None):
-        logger.debug("Requesting attention '%s'" % message)
+        logger.debug("Requesting attention '%s'", message)
         self.attention = True
         if message != None:
             self.attention_message = message
@@ -1144,7 +1144,7 @@ class G15Screen():
             
     def redraw(self, page=None, direction="up", transitions=True, redraw_content=True, queue=True):
         if page:
-            logger.debug("Redrawing %s" % page.id)
+            logger.debug("Redrawing %s", page.id)
         else:
             logger.debug("Redrawing current page")
         if queue:
@@ -1181,7 +1181,7 @@ class G15Screen():
         self.fader = Fader(self, stay_faded=stay_faded, duration=duration, step=step).run()
         
     def attempt_connection(self, delay=0.0):
-        logger.debug("Attempting connection" if delay == 0 else "Attempting connection in %f" % delay)
+        logger.debug("Attempting connection in %f", delay)
         self.connection_lock.acquire()
         try :     
             if self.reconnect_timer is not None:
@@ -1235,7 +1235,9 @@ class G15Screen():
                 for control in self.driver.get_controls():
                     control.set_from_configuration(self.driver.device, self.conf_client)
                     self.acquired_controls[control.id] = self.driver.acquire_control(control, val=control.value)
-                    logger.info("Acquired control of %s with value of %s" % (control.id, str(control.value)))
+                    logger.info("Acquired control of %s with value of %s",
+                                control.id,
+                                str(control.value))
                     self.control_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/%s" % (self.device.uid, control.id), self.control_configuration_changed));
                 self.driver.update_controls()       
                 self._init_screen()
@@ -1259,7 +1261,7 @@ class G15Screen():
         finally:
             self.connection_lock.release()
             
-        logger.debug("Connection for %s is complete." % self.device.uid)
+        logger.debug("Connection for %s is complete.", self.device.uid)
         
     def clear_canvas(self, canvas):
         """
@@ -1338,7 +1340,12 @@ class G15Screen():
                 
             # Call the screen's painter
             if self.visible_page != None:
-                logger.debug("Drawing page %s (direction = %s, transitions = %s, redraw_content = %s" % (self.visible_page.id, direction, str(transitions), str(redraw_content)))
+                logger.debug("Drawing page %s " \
+                             "(direction = %s, transitions = %s, redraw_content = %s",
+                             self.visible_page.id,
+                             direction,
+                             str(transitions),
+                             str(redraw_content))
             
                          
                 # Paint the content to a new surface so it can be cached

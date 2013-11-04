@@ -372,14 +372,14 @@ class G15MediaPlayerPage(g15theme.G15Page):
         if message.structure is None:
             return
         message_name = message.structure.get_name()
-        logger.debug("Sync. %s" % message)
+        logger.debug("Sync. %s", message)
     
     def _on_message(self, bus, message):
         """
         Handle changes in the playing state.
         """
         t = message.type
-        logger.debug("Message. %s" % message)
+        logger.debug("Message. %s", message)
         if t == gst.MESSAGE_EOS:
             self._pipeline.set_state(gst.STATE_NULL)
             self._show_sidebar()
@@ -737,7 +737,7 @@ class G15WebCamSource(G15MediaSource):
     def create_source(self):
         src = gst.element_factory_make("v4l2src", "video-source")
         device_path = "/dev/%s" % self.name
-        logger.info("Opening Video device %s" % device_path)
+        logger.info("Opening Video device %s", device_path)
         src.set_property("device", device_path)
         return src
     
@@ -927,7 +927,7 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
                         self._mm_key = g15driver.G_KEY_PREV
                         self._player_page._rew()
                     else:
-                        logger.warn("Unsupported media key %s" % key)
+                        logger.warn("Unsupported media key %s", key)
                     if self._mm_key_timer is not None:
                         self._mm_key_timer.cancel()
                         self._mm_key_timer = None

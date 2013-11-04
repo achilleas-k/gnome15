@@ -531,7 +531,7 @@ class G15Config:
         self.id = None
         while True:
             opt = self.main_window.run()
-            logger.debug("Option %s" % str(opt))         
+            logger.debug("Option %s", str(opt))
             if opt != 1 and opt != 2:
                 break
             
@@ -563,10 +563,10 @@ class G15Config:
         self.gnome15_service.Stop(reply_handler = self._general_dbus_reply, error_handler = self._general_dbus_error)
         
     def _general_dbus_reply(self, *args):
-        logger.info("DBUS reply %s" % str(args))
+        logger.info("DBUS reply %s", str(args))
 
     def _general_dbus_error(self, *args):
-        logger.error("DBUS error %s" % str(args))
+        logger.error("DBUS error %s", str(args))
 
     def _starting(self):
         logger.debug("Got starting signal")
@@ -612,7 +612,7 @@ class G15Config:
             logger.debug("State is started")
             self.state = STARTED
             for screen_name in self.gnome15_service.GetScreens():
-                logger.debug("Screen added %s" % screen_name)
+                logger.debug("Screen added %s", screen_name)
                 screen_service =  self.session_bus.get_object('org.gnome15.Gnome15', screen_name)
                 self.screen_services[screen_name] = screen_service
         
@@ -630,13 +630,13 @@ class G15Config:
         self._do_status_change()
         
     def _screen_added(self, screen_name):
-        logger.debug("Screen added %s" % screen_name)
+        logger.debug("Screen added %s", screen_name)
         screen_service =  self.session_bus.get_object('org.gnome15.Gnome15', screen_name)
         self.screen_services[screen_name] = screen_service
         gobject.idle_add(self._do_status_change)
         
     def _screen_removed(self, screen_name):
-        logger.debug("Screen removed %s" % screen_name)
+        logger.debug("Screen removed %s", screen_name)
         if screen_name in self.screen_services:
             del self.screen_services[screen_name]
         self._do_status_change()
@@ -672,7 +672,7 @@ class G15Config:
                     logger.debug("D-Bus communication error", exc_info = e)
                     pass
             
-            logger.debug("Found %d of %d connected" % (connected, len(self.screen_services)))
+            logger.debug("Found %d of %d connected", connected, len(self.screen_services))
             screen_count = len(self.screen_services)
             if connected != screen_count and first_error is not None and first_error != "":
                 if len(self.screen_services) == 1:
@@ -877,7 +877,8 @@ class G15Config:
                 if action_binding is not None:
                     bindings.append(action_binding)
                 else:
-                    logger.warning("Plugin %s requires an action that is not available (%s)" % ( plugin.id, action_id))
+                    logger.warning("Plugin %s requires an action that is not available (%s)",
+                                   plugin.id, action_id)
                     
             bindings = sorted(bindings)
                     
@@ -1502,7 +1503,7 @@ class G15Config:
             self.profile_save_timer = g15scheduler.schedule("SaveProfile", 2, self._do_save_profile, profile)
             
     def _do_save_profile(self, profile):
-        logger.info("Saving profile %s" % profile.name)
+        logger.info("Saving profile %s", profile.name)
         profile.save()
             
     global_config = None

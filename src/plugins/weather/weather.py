@@ -153,7 +153,7 @@ class G15WeatherPreferences():
     def _create_options_for_source(self, source):
         backend = get_backend(source)
         if backend is None:
-            logger.warning("No backend for weather source %s" % source)
+            logger.warning("No backend for weather source %s", source)
             return None
         return backend.create_options(self._gconf_client, "%s/%s" % ( self._gconf_key, source ) )
             
@@ -309,7 +309,7 @@ class G15Weather(g15plugin.G15RefreshingPlugin):
                     attributes["icon"] = g15cairo.load_surface_from_file(t_icon)
                     properties["icon"] = g15icontools.get_embedded_image_url(attributes["icon"])
                 else:
-                    logger.warning("No translated weather icon for %s" % c_icon)
+                    logger.warning("No translated weather icon for %s", c_icon)
                 mono_thumb = self._get_mono_thumb_icon(c_icon)        
                 if mono_thumb != None:
                     attributes["mono_thumb_icon"] = g15cairo.load_surface_from_file(os.path.join(os.path.join(os.path.dirname(__file__), "default"), mono_thumb))

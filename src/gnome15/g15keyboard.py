@@ -103,18 +103,18 @@ class G15KeyHandler():
         Start handling keys
         """
         screen_key = "/apps/gnome15/%s" % self.__screen.device.uid
-        logger.info("Starting %s's key handler." % self.__screen.device.uid)
+        logger.info("Starting %s's key handler.", self.__screen.device.uid)
         g15profile.profile_listeners.append(self._profile_changed)
         self.__screen.screen_change_listeners.append(self)
         self.__notify_handles.append(self.__conf_client.notify_add("%s/active_profile" % screen_key, self._active_profile_changed))
-        logger.info("Starting of %s's key handler is complete." % self.__screen.device.uid)
+        logger.info("Starting of %s's key handler is complete.", self.__screen.device.uid)
         self._reload_active_macros()
         
     def stop(self):
         """
         Stop handling keys
         """  
-        logger.info("Stopping key handler for %s" % self.__screen.device.uid)
+        logger.info("Stopping key handler for %s", self.__screen.device.uid)
         g15scheduler.stop_queue(self.queue_name)
         if self in self.__screen.screen_change_listeners:
             self.__screen.screen_change_listeners.remove(self)
@@ -123,7 +123,7 @@ class G15KeyHandler():
         for h in self.__notify_handles:
             self.__conf_client.notify_remove(h)
         self.__notify_handles = [] 
-        logger.info("Stopped key handler for %s" % self.__screen.device.uid)
+        logger.info("Stopped key handler for %s", self.__screen.device.uid)
         
     def key_received(self, keys, state_id):
         """
@@ -467,7 +467,8 @@ class G15KeyHandler():
             return False
 #        if new_state_id == g15driver.KEY_STATE_DOWN and \
 #            key_state.state_id is not None:
-#            logger.warning("Received unexpected key down (key was in state %s)." % g15profile.to_key_state_name(key_state.state_id))
+#            logger.warning("Received unexpected key down (key was in state %s).",
+#                           g15profile.to_key_state_name(key_state.state_id))
 #            return False
         if new_state_id == g15driver.KEY_STATE_HELD and \
             key_state.state_id in [ g15driver.KEY_STATE_UP, None ]:
@@ -497,7 +498,7 @@ class G15KeyHandler():
         p = g15profile.get_profile(macro.profile.device, macro.profile.id)
         if p:
             return p.get_macro(macro.activate_on, macro.memory, macro.keys)
-        logger.warning("Could not reload macro %s, using old instance." % macro.name)
+        logger.warning("Could not reload macro %s, using old instance.", macro.name)
         return macro
         
     def _handle_uinput_macro(self, macro, state, key_states):
@@ -653,7 +654,7 @@ class G15KeyHandler():
         return False
     
     def _action_performed(self, binding):
-        logger.info("Invoking action '%s'" % binding.action)
+        logger.info("Invoking action '%s'", binding.action)
         
         for l in self.action_listeners:  
             if l.action_performed(binding):

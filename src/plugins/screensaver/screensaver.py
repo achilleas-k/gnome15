@@ -120,7 +120,11 @@ class G15ScreenSaver():
             
             for dbus_name, interface, path in screensavers:
                 try :
-                    logger.debug("Searching for screensaver. dbus_name: %s, dbus_interface: %s, dbus_object: %s" % (dbus_name, interface, path))
+                    logger.debug("Searching for screensaver. " \
+                                 "dbus_name: %s, dbus_interface: %s, dbus_object: %s",
+                                 dbus_name,
+                                 interface,
+                                 path)
                     screen_saver = dbus.Interface(self._session_bus.get_object(dbus_name, path), interface)
                     self._dbus_interface = interface
                     self._dbus_name = dbus_name

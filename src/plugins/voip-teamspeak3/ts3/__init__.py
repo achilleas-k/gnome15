@@ -28,7 +28,7 @@ def _receive_message(client):
     while True:
         incoming_message = client.read_until('\n', 10).strip()
         if incoming_message is not None and incoming_message.strip():
-            logger.info("Received: %s" % incoming_message)
+            logger.info("Received: %s", incoming_message)
             message = MessageFactory.get_message(incoming_message)
             if message:
                 return message
@@ -192,7 +192,7 @@ class TS3():
             self._lock.release()
         
     def _write_command(self, client, command):
-        logger.info("Sending command: %s" % command.output)
+        logger.info("Sending command: %s", command.output)
         client.write("%s\n" % command.output)
     
     def _create_command_client(self):

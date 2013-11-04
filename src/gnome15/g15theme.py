@@ -99,7 +99,7 @@ class ThemeDefinition(object):
         tdomain = "%s.%s" % ( plugin_module.id, theme_id )
         self.translation = g15locale.get_translation(tdomain, self.directory)
         if self.translation:
-            logger.info("Found translation %s" % tdomain)
+            logger.info("Found translation %s", tdomain)
             
     def supports(self, model_id):
         return ( len(self.supported) == 0 or model_id in self.supported )  \
@@ -233,7 +233,7 @@ class GridLayoutManager(LayoutManager):
             if c.is_showing():
                 bounds = c.view_bounds
                 if bounds is None:
-                    logger.warn("No bounds on component %s" % c.id)
+                    logger.warn("No bounds on component %s", c.id)
                 else:
                     c.view_bounds = ( x, y, bounds[2], bounds[3])
                     x += bounds[2]
@@ -492,7 +492,7 @@ class Component(object):
         self.on_configure()
         theme = self.get_theme()
         if theme == None:
-            logger.warning("No theme for component with ID of %s" % self.id)
+            logger.warning("No theme for component with ID of %s", self.id)
         else:
             self.view_element = theme.get_element(self.id) 
             if self.view_element is None:
@@ -1004,7 +1004,7 @@ class Menu(Component):
         
     def get_item_height(self, item, group = False):
         if item.theme is None:
-            logger.warn("Component %s has no theme and so no height" % item.id)
+            logger.warn("Component %s has no theme and so no height", item.id)
             return 10
         else:            
             return item.theme.bounds[3]
@@ -1808,7 +1808,7 @@ class G15Theme(object):
                         c.getparent().remove(c)
                     self.component.child_map[component_id].draw(self, c)
                 else:
-                    logger.warning("Cannot find SVG element for component %s" % component_id)
+                    logger.warning("Cannot find SVG element for component %s", component_id)
     
     def _process_deletes(self, root, properties):
         """
@@ -1983,7 +1983,7 @@ class G15Theme(object):
         # then rendered after the SVG using Pango.
         for element in root.xpath('//svg:rect[@class=\'textbox\']',namespaces=self.nsmap):
             id = element.get("id")
-            logger.warning("DEPRECATED Text box with ID %s in %s" % (id, self.dir))
+            logger.warning("DEPRECATED Text box with ID %s in %s", id, self.dir)
             text_node = root.xpath('//*[@id=\'' + id + '_text\']',namespaces=self.nsmap)[0]
             if text_node != None:            
                 styles = self.parse_css(text_node.get("style"))                

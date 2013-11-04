@@ -94,17 +94,17 @@ class KeyboardReceiveThread(Thread):
     def deactivate(self):
         self._run = False
         for dev in self.devices:
-            logger.info("Ungrabbing %d" % dev.fileno())
+            logger.info("Ungrabbing %d", dev.fileno())
             try :
                 fcntl.ioctl(dev.fileno(), EVIOCGRAB, 0)
             except Exception as e:
                 logger.info("Failed ungrab.", exc_info = e)
-            logger.info("Closing %d" % dev.fileno())
+            logger.info("Closing %d", dev.fileno())
             try :
                 self.fds[dev.fileno()].close()
             except Exception as e:
                 logger.info("Failed close.", exc_info = e)
-            logger.info("Stopped %d" % dev.fileno())
+            logger.info("Stopped %d", dev.fileno())
         logger.info("Stopped all input devices")
         
     def run(self):        
@@ -142,7 +142,7 @@ class AbstractInputDevice(SimpleDevice):
             key = self.key_map[event_code]
             self.callback([key], state)
         else:
-            logger.warning("Unmapped key for event: %s" % event_code)
+            logger.warning("Unmapped key for event: %s", event_code)
         
 '''
 SimpleDevice implementation for handling multi-media keys. 
@@ -170,7 +170,7 @@ class MultiMediaDevice(AbstractInputDevice):
                 g15uinput.emit(g15uinput.KEYBOARD, g15uinput.KEY_VOLUMEUP, 1, True)
                 g15uinput.emit(g15uinput.KEYBOARD, g15uinput.KEY_VOLUMEUP, 0, True)
         else:
-            logger.warning("Unhandled event: %s" % str(event))
+            logger.warning("Unhandled event: %s", str(event))
 
 class Driver(g15driver.AbstractDriver):
 
@@ -239,7 +239,7 @@ class Driver(g15driver.AbstractDriver):
         
         self.key_thread = KeyboardReceiveThread(self.device)
         for devpath in self.mm_devices:
-            logger.info("Adding input multi-media device %s" % devpath)
+            logger.info("Adding input multi-media device %s", devpath)
             self.key_thread.devices.append(MultiMediaDevice(self.grab_multimedia, callback, devpath, devpath))
             
         self.key_thread.start()
@@ -283,7 +283,7 @@ class Driver(g15driver.AbstractDriver):
         for p in os.listdir(dir_path):
             # TODO - not sure about the G35 - feedback needed
             if re.search(r"usb-Logitech_Logitech_G930_Headset-event-if.*", p) or re.search(r"usb-Logitech_Logitech_G35_Headset-event-if.*", p):
-                logger.info("Input multi-media device %s matches" % p)
+                logger.info("Input multi-media device %s matches", p)
                 self.mm_devices.append(dir_path + "/" + p)
                 
     def __del__(self):

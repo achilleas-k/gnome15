@@ -64,7 +64,7 @@ def get_transforms(element, position_only = False):
             elif name == "scale":
                 list.append(cairo.Matrix(float(args[0]), 0.0, 0.0, float(args[1]), 0.0, 0.0))
             else:
-                logger.warning("Unsupported transform %s" % name)
+                logger.warning("Unsupported transform %s", name)
             start = end_args + 1
 
     return list
@@ -94,7 +94,7 @@ def get_location(element):
                 elif name == "matrix":
                     list.append((float(args[4]),float(args[5])))
                 else:
-                    logger.warning("WARNING: Unsupported transform %s" % name)
+                    logger.warning("WARNING: Unsupported transform %s", name)
                 start = end_args + 1
         element = element.getparent()
     list.reverse()

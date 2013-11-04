@@ -772,7 +772,7 @@ class SelectModeMenuItem(g15theme.MenuItem):
         
     def activate(self):      
         self._buddy_menu.mode = self._mode
-        logger.info("Mode is now %s" % self._mode)
+        logger.info("Mode is now %s", self._mode)
         self._gconf_client.set_string(self._gconf_key + "/mode", self._mode)
         self._buddy_menu.get_screen().redraw(self._buddy_menu.get_root())
         self.get_root().delete()

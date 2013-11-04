@@ -31,15 +31,15 @@ class NotifyMessage():
         self.id = 0
         
     def close(self):
-        logger.info("Closing notification %s" % str(self.id))
+        logger.info("Closing notification %s", str(self.id))
         _get_obj().CloseNotification(self.id)
 
     def handle_reply(self, e):
         self.id = int(e)
-        logger.debug("Got message ID %d" % self.id)
+        logger.debug("Got message ID %d", self.id)
         
     def handle_error(self, e):
-        logger.error("Error getting notification message ID.  %s" % str(e))
+        logger.error("Error getting notification message ID. %s", str(e))
         
 def _get_obj():
     return _session_bus.get_object("org.freedesktop.Notifications", '/org/freedesktop/Notifications')

@@ -92,10 +92,10 @@ def get_sensor_sources():
     sensor_sources = []
     for sensor_source_group in available_sensor_sources:
         for candidade in sensor_source_group:
-            logger.info("Testing if '%s' is a valid sensor source" % candidade.name)
+            logger.info("Testing if '%s' is a valid sensor source", candidade.name)
             try:
                 if candidade.is_valid():
-                    logger.info("Adding '%s' as a sensor source" % candidade.name)
+                    logger.info("Adding '%s' as a sensor source", candidade.name)
                     sensor_sources.append(candidade)
                 else:
                     candidade.stop()
@@ -296,14 +296,14 @@ class UDisks2Source():
             if not is_a_drive(device):
                 continue
             if not is_a_ata_drive_supporting_SMART(self.udisks_data[device]):
-                logger.debug('SMART is disabled or unsupported by drive %s.' % device)
+                logger.debug('SMART is disabled or unsupported by drive %s.', device)
                 continue
             sensor_name = find_valid_sensor_name(self.udisks_data[device])
-            logger.debug('Found sensor %s for drive %s.' % (sensor_name, device))
+            logger.debug('Found sensor %s for drive %s.', sensor_name, device)
             sensor = Sensor(TEMPERATURE, sensor_name, 0.0)
             try:
                 sensor.value = drive_temperature(self.udisks_data[device])
-                logger.debug('Temperature of drive %s is %f.' % (sensor_name,sensor.value))
+                logger.debug('Temperature of drive %s is %f.', sensor_name,sensor.value)
             except ValueError as ve:
                 logger.warn("Invalid temperature for device %s.", sensor_name, exc_info = ve)
                 sensor.value = 0
@@ -333,7 +333,7 @@ class LibsensorsSource():
         sensor_objects = []
         sensor_names = []
         for chip in sensors.iter_detected_chips():
-            logger.debug("Found chip %s, adapter %s" % ( chip, chip.adapter_name))
+            logger.debug("Found chip %s, adapter %s", chip, chip.adapter_name)
             for feature in chip:
                 sensor_name = feature.label
                 
@@ -348,7 +348,7 @@ class LibsensorsSource():
                         sensor_name = "%s-%d" % (o, idx) 
                     sensor_names.append(sensor_name)
                 
-                logger.debug("'  %s: %.2f" % (sensor_name, feature.get_value()))
+                logger.debug("'  %s: %.2f", sensor_name, feature.get_value())
                 sensor = Sensor(feature.type, sensor_name, float(feature.get_value()))
                 sensor_objects.append(sensor)
                 
@@ -545,9 +545,13 @@ class G15Sensors(g15plugin.G15RefreshingPlugin):
                 if s.name in self.sensor_dict:
                     self.sensor_dict[s.name].sensor = s
                     if s.critical is not None:
-                        logger.debug("Sensor %s on %s is %f (critical %f)" % ( s.name, c.name, s.value, s.critical ))
+                        logger.debug("Sensor %s on %s is %f (critical %f)",
+                                     s.name,
+                                     c.name,
+                                     s.value,
+                                     s.critical)
                     else:
-                        logger.debug("Sensor %s on %s is %f" % ( s.name, c.name, s.value ))
+                        logger.debug("Sensor %s on %s is %f", s.name, c.name, s.value)
                     
     def get_theme_properties(self): 
         properties = g15plugin.G15RefreshingPlugin.get_theme_properties(self) 

@@ -311,14 +311,14 @@ class Teamspeak3Backend(voip.VoipBackend):
     def kick(self, buddy):
         reply = self._client.send_command(ts3.Command(
             'clientkick', clid = buddy.clid, reasonid = 5, reasonmsg = 'No reason given'))
-        logger.info("Kicked %s (%s)" % (buddy.nickname, buddy.clid) )
+        logger.info("Kicked %s (%s)", buddy.nickname, buddy.clid)
     
     def ban(self, buddy):
         if buddy.uid is None:
             raise Exception("UID is not known")        
         reply = self._client.send_command(ts3.Command(
             'banadd', banreason = 'No reason given', uid = buddy.uid))
-        logger.info("Banned %s (%s)" % (buddy.nickname, buddy.uid) )
+        logger.info("Banned %s (%s)", buddy.nickname, buddy.uid)
         
     def away(self):
         reply = self._client.send_command(ts3.Command(
@@ -352,7 +352,7 @@ class Teamspeak3Backend(voip.VoipBackend):
         if isinstance(error, EOFError):
             self._disconnected()
         else:
-            logger.warn("Teamspeak3 error. %s" % str(error))
+            logger.warn("Teamspeak3 error. %s", str(error))
         
     def _handle_message(self, message):
         print message.command
@@ -417,7 +417,7 @@ class Teamspeak3Backend(voip.VoipBackend):
             'whoami', virtualserver_unique_identifier=None
         ))
         self._clid = int(reply.args['clid'])
-        logger.info("Your CLID is %d" % self._clid)
+        logger.info("Your CLID is %d", self._clid)
     
     def _get_server_uid(self):
         reply = self._client.send_command(ts3.Command(
@@ -570,7 +570,7 @@ class Teamspeak3Backend(voip.VoipBackend):
             self._plugin.buddy_left(item)
             self._do_redraw()
         else:
-            logger.warning("Client left that we knew nothing about yet (%d)" % clid)
+            logger.warning("Client left that we knew nothing about yet (%d)", clid)
         
     def _parse_notifycliententerview_reply(self, message):
         reply= self._client.send_command(ts3.Command(
@@ -649,7 +649,7 @@ class Teamspeak3Backend(voip.VoipBackend):
         if 'invokername' in message.args and 'msg' in message.args:
             self._plugin.message_received(message.args['invokername'], self._filter_formatting_tags(message.args['msg']))
         else:
-            logger.warn("Got text messsage I didn't understand. %s" % str(message))
+            logger.warn("Got text messsage I didn't understand. %s", str(message))
             
     def _parse_notifytalkstatuschange_reply(self, message):
         clid = int(message.args['clid'])

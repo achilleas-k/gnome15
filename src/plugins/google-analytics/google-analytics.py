@@ -341,7 +341,11 @@ class G15GoogleAnalytics():
         
     def _retrieve_site_data(self, items, account, password):
         username = account.get_property("username", "")
-        logger.info("Logging in as %s / %s for %s on %s" % (username, password, account, self._client.source))
+        logger.info("Logging in as %s / %s for %s on %s",
+                    username,
+                    password,
+                    account,
+                    self._client.source)
         self._client.ClientLogin(username, password, self._client.source)
         account_query = gdata.analytics.client.AccountFeedQuery()
         self._account_manager.store_password(account, password, ACC_MGR_HOSTNAME, None)

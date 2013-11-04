@@ -918,7 +918,7 @@ def browse(url):
     b = g15gconf.get_string_or_default(gconf.client_get_default(), \
                                       "/apps/gnome15/browser", "default")
     if not b in __browsers and not b == "default":
-        logger.warning("Could not find browser %s, falling back to default" % b)
+        logger.warning("Could not find browser %s, falling back to default", b)
         b = "default"
     if not b in __browsers:
         raise Exception("Could not find browser %s" % b)
@@ -950,7 +950,7 @@ class G15DefaultBrowser(G15Browser):
         G15Browser.__init__(self, "default", _("Default system browser"))
     
     def browse(self, url):
-        logger.info("xdg-open '%s'" % url)
+        logger.info("xdg-open '%s'", url)
         subprocess.Popen(['xdg-open', url])
         
 add_browser(G15DefaultBrowser())
@@ -1063,7 +1063,7 @@ class G15DesktopComponent():
             # using the full filename. Unfortunately this means scaling may be a bit
             # blurry in the indicator applet
             path = g15icontools.get_icon_path(icon_name, 128)
-            logger.debug("Dev mode icon %s is at %s" % ( icon_name, path ) )
+            logger.debug("Dev mode icon %s is at %s", icon_name, path)
             return path
         else:
             if not isinstance(icon_name, list):
@@ -1171,7 +1171,7 @@ class G15DesktopComponent():
         
     def _page_created(self, page_path, page_title, path = None):
         screen_path = path
-        logger.debug("Page created (%s) %s = %s" % ( screen_path, page_path, page_title ) )
+        logger.debug("Page created (%s) %s = %s", screen_path, page_path, page_title)
         page = self.session_bus.get_object('org.gnome15.Gnome15', page_path )
         self.lock.acquire()
         try :
@@ -1192,7 +1192,7 @@ class G15DesktopComponent():
     def _page_deleting(self, page_path, path = None):
         screen_path = path
         self.lock.acquire()
-        logger.debug("Destroying page (%s) %s" % ( screen_path, page_path ) )
+        logger.debug("Destroying page (%s) %s", screen_path, page_path)
         try :
             items = self.screens[screen_path].items
             if page_path in items:
@@ -1237,7 +1237,7 @@ class G15DesktopComponent():
         self.rebuild_desktop_component()
         
     def _add_screen(self, screen_path):
-        logger.debug("Screen added %s" % screen_path)
+        logger.debug("Screen added %s", screen_path)
         remote_screen = self.session_bus.get_object('org.gnome15.Gnome15', screen_path)
         ( device_uid, device_model_name, device_usb_id, device_model_fullname ) = remote_screen.GetDeviceInformation()
         screen = G15Screen(screen_path, device_model_fullname, device_uid)        
@@ -1262,7 +1262,7 @@ class G15DesktopComponent():
         self.lock.acquire()
         try : 
             for screen_path in self.service.GetScreens():
-                logger.debug("Adding %s" % screen_path)
+                logger.debug("Adding %s", screen_path)
                 self._add_screen(screen_path)
                 remote_screen = self.session_bus.get_object('org.gnome15.Gnome15', screen_path)
                 for page_path in remote_screen.GetPages():
@@ -1314,7 +1314,7 @@ class G15DesktopComponent():
         self.rebuild_desktop_component()
             
     def _add_page(self, screen_path, page_path, page):
-        logger.debug("Adding page %s to %s" % (page_path, screen_path))
+        logger.debug("Adding page %s to %s", page_path, screen_path)
         items = self.screens[screen_path].items
         if not page_path in items:
             items[page_path] = page.GetTitle()
@@ -1436,7 +1436,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                         
                         sorted_x = sorted(screen.items.iteritems(), key=operator.itemgetter(1))
                         for item_key, text in sorted_x:
-                            logger.debug("Adding item %s = %s " % (item_key, text ) )
+                            logger.debug("Adding item %s = %s ", item_key, text)
                             item = gtk.MenuItem(text)
                             item.connect("activate", self._show_page, item_key)
                             self._append_item(item)

@@ -88,7 +88,7 @@ def create(gconf_key, gconf_client, screen):
 class AbstractMPRISPlayer():
     
     def __init__(self, gconf_client, screen, players, interface_name, session_bus, title, theme):
-        logger.info("Starting player %s" % interface_name)
+        logger.info("Starting player %s", interface_name)
         self.stopped = False
         self.elapsed = 0
         self.volume = 0
@@ -155,7 +155,7 @@ class AbstractMPRISPlayer():
         
     def set_status(self, new_status):        
         if new_status != self.status:
-            logger.info("Playback status changed to %s" % new_status)
+            logger.info("Playback status changed to %s", new_status)
             self.status = new_status
             if self.status == "Playing":
                 g15scheduler.schedule("playbackStarted", 1.0, self._playback_started)
@@ -178,7 +178,7 @@ class AbstractMPRISPlayer():
         self.schedule_redraw()
     
     def stop(self):
-        logger.info("Stopping player %s" % self.interface_name)
+        logger.info("Stopping player %s", self.interface_name)
         self.stopped = True
         self.on_stop()
         if self.redraw_timer != None:
@@ -265,7 +265,7 @@ class AbstractMPRISPlayer():
                 
         if new_cover_uri != self.cover_uri:
             self.cover_uri = new_cover_uri
-            logger.info("Getting cover art from %s" % self.cover_uri)
+            logger.info("Getting cover art from %s", self.cover_uri)
             self.cover_image = None
             self.thumb_image = None
             if self.cover_uri != None:
@@ -278,7 +278,8 @@ class AbstractMPRISPlayer():
                         self.cover_uri = g15cairo.get_image_cache_file(self.cover_uri, self.screen.driver.get_size()[0])
                 else:
                     cover_image = self.get_default_cover()
-                    logger.warning("Failed to loaded preferred cover art, falling back to default of %s" % cover_image)
+                    logger.warning("Failed to loaded preferred cover art, " \
+                                   "falling back to default of %s", cover_image)
                     if cover_image:
                         self.cover_uri = cover_image
                         self.cover_image = g15cairo.load_surface_from_file(self.cover_uri, self.screen.driver.get_size()[0])
@@ -540,7 +541,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
         track_list_props = self.track_list_properties.GetAll("org.mpris.MediaPlayer2.TrackList")
         self.tracks = []
         for track in track_list_props["Tracks"]:
-            logger.info("   Track %s" % track)
+            logger.info("   Track %s", track)
         
     def on_stop(self): 
         if self.timer:
@@ -570,7 +571,7 @@ class MPRIS2Player(AbstractMPRISPlayer):
         self.start_elapsed = seek_time / 1000 / 1000
         
 #        self.start_elapsed = self.get_progress()    
-        logger.info("Seek changed to %f (%d)" % ( self.start_elapsed, seek_time ) )
+        logger.info("Seek changed to %f (%d)", self.start_elapsed, seek_time)
         self.playback_started = time.time()
         self.recalc_progress()
         self.screen.redraw()
@@ -748,7 +749,7 @@ class G15MPRIS(g15plugin.G15Plugin):
                 if not name in mpris_blacklist:
                     self.players[name] = MPRIS1Player(self.gconf_client, self.screen, self.players, name, self.session_bus, self.create_theme())
                 else:
-                    logger.info("%s is a blacklisted player, ignoring" % name)
+                    logger.info("%s is a blacklisted player, ignoring", name)
         
     def _discover(self):
         # Find new players

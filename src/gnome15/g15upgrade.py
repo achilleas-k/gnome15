@@ -67,9 +67,9 @@ def version_0_x_0_to_0_7_0():
                 for device in devices:
                     device_dir = os.path.join(macros_dir, device.uid)
                     if not os.path.exists(device_dir):
-                        logger.info("Creating macro_profile directory for %s" % device.uid)
+                        logger.info("Creating macro_profile directory for %s", device.uid)
                         os.mkdir(device_dir)
-                    logger.info("Copying macro_profile %s to %s " % ( file, device.uid ))
+                    logger.info("Copying macro_profile %s to %s ", file, device.uid)
                     shutil.copyfile(profile_file, os.path.join(device_dir, file))
                 os.remove(profile_file)
                 
@@ -82,11 +82,11 @@ def version_0_x_0_to_0_7_0():
         for device in devices:
             device_dir = os.path.join(gconf_dir, device.uid)
             if not os.path.exists(device_dir):
-                logger.info("Creating GConf directory for %s" % device.uid)
+                logger.info("Creating GConf directory for %s", device.uid)
                 os.mkdir(device_dir)
-            logger.info("Copying settings %s to %s " % ( gconf_file, device.uid ))
+            logger.info("Copying settings %s to %s", gconf_file, device.uid)
             shutil.copyfile(gconf_file, os.path.join(device_dir, "%gconf.xml"))
-            logger.info("Copying plugin settings %s to %s " % ( gconf_plugins_dir, device.uid ))
+            logger.info("Copying plugin settings %s to %s", gconf_plugins_dir, device.uid)
             target_plugins_path = os.path.join(device_dir, "plugins")
             if not os.path.exists(target_plugins_path):
                 shutil.copytree(gconf_plugins_dir, target_plugins_path )
@@ -112,5 +112,5 @@ def version_0_x_0_to_0_7_0():
             process_info = commands.getstatusoutput("sh -c \"ps -U %d|grep gconfd|head -1\"" % os.getuid()) 
         if process_info:
             pid = g15pythonlang.split_args(process_info)[0]
-            logger.info("Sending process %s SIGHUP" % pid)
+            logger.info("Sending process %s SIGHUP", pid)
             subprocess.check_call([ "kill", "-SIGHUP", pid ])

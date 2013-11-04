@@ -255,7 +255,7 @@ class MenuScreenChangeListener(g15screen.ScreenChangeAdapter):
     
     def del_page(self, page):
         filename = self._get_page_filename(page)
-        logger.info("Removing page thumbnail image" % filename)
+        logger.info("Removing page thumbnail image", filename)
         os.remove(filename)
             
     """
@@ -274,7 +274,7 @@ class MenuScreenChangeListener(g15screen.ScreenChangeAdapter):
             try :
                 if page.thumbnail_painter(thumb_canvas, self.screen.height, True):
                     filename = self._get_page_filename(page) 
-                    logger.info("Writing thumbnail to %s" % filename)
+                    logger.info("Writing thumbnail to %s", filename)
                     img.write_to_png(filename)
             except Exception as e:
                 logger.warning("Problem with painting thumbnail.", exc_info = e)

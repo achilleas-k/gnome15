@@ -238,7 +238,7 @@ class Driver(g15driver.AbstractDriver):
                   
         expected_size = MAX_X * MAX_Y * ( self.get_bpp() / 8 )
         if len(buf) != expected_size:
-            logger.warning("Invalid buffer size, expected %d, got %d" % ( expected_size, len(buf) ) )
+            logger.warning("Invalid buffer size, expected %d, got %d", expected_size, len(buf))
         else:
             try:
                 self.lg19.send_frame(buf)
@@ -255,7 +255,9 @@ class Driver(g15driver.AbstractDriver):
         keys_up = event.keysUp
         
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Processing input, keys_down = %d, keys_up = %d" % ( len(keys_down), len(keys_up)))
+            logger.debug("Processing input, keys_down = %d, keys_up = %d",
+                         len(keys_down),
+                         len(keys_up))
 
         if len(keys_up) > 0:
             c = []

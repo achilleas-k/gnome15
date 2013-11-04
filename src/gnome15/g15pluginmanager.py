@@ -105,7 +105,7 @@ def list_plugin_dirs(path):
             if os.path.isdir(plugin_path):
                 plugindirs.append(os.path.realpath(plugin_path))
     else:
-        logger.debug("Plugin path %s does not exist." % path)
+        logger.debug("Plugin path %s does not exist.", path)
     return plugindirs
 
 def get_extra_plugin_dirs():    
@@ -375,7 +375,8 @@ class G15Plugins():
             for mod in imported_plugins:
                 plugin_dir_key = self._get_plugin_key(mod.id)
                 if mod.id in added:
-                    logger.warn("Same plugin with ID of %s is already loaded. Only the first copy will be used." % mod.id) 
+                    logger.warn("Same plugin with ID of %s is already loaded." \
+                                "Only the first copy will be used.", mod.id)
                 else:
                     self.conf_client.add_dir(plugin_dir_key, gconf.CLIENT_PRELOAD_NONE)
                     key = "%s/enabled" % plugin_dir_key
@@ -427,7 +428,11 @@ class G15Plugins():
                 logger.debug("Error when reading handle_key attribute", exc_info = e)
                 pass
             if can_handle_keys and plugin.handle_key(key, state, post):
-                logger.info("Plugin %s handled key %s (%d), %s" % (str(plugin), str(key), state, str(post)))
+                logger.info("Plugin %s handled key %s (%d), %s",
+                        str(plugin),
+                        str(key),
+                        state,
+                        str(post))
                 return True 
         return False
     
@@ -519,7 +524,7 @@ class G15Plugins():
     ''' 
     def _deactivate_instance(self, plugin):
         mod = self.plugin_map[plugin]
-        logger.debug("De-activating %s" % mod.id)
+        logger.debug("De-activating %s", mod.id)
         if not plugin in self.activated:
             raise Exception("%s is not activated" % mod.id)
         try :
@@ -576,10 +581,10 @@ class G15Plugins():
             
     def _activate_instance(self, instance, callback=None, idx=0):
         mod = self.plugin_map[instance] 
-        logger.info("Activating %s" % mod.id)
+        logger.info("Activating %s", mod.id)
         try :             
             if self._is_single_instance(mod):
-                logger.info("%s may only be run once, checking if there is another instance" % mod.id)
+                logger.info("%s may only be run once, checking if there is another instance", mod.id)
                 if  mod.id in self.service.active_plugins:
                     raise Exception("Plugin may %s only run on one device at a time." % mod.id)
             if callback != None:
@@ -600,13 +605,13 @@ class G15Plugins():
         return False
             
     def _create_instance(self, module, key):
-        logger.info("Loading %s" % module.id)
+        logger.info("Loading %s", module.id)
         if self.screen is not None:
             instance = module.create(key, self.conf_client, screen=self.screen)
         else:
             instance = module.create(key, self.conf_client, service=self.service)
         self.module_map[module.id] = instance
         self.plugin_map[instance] = module
-        logger.info("Loaded %s" % module.id)
+        logger.info("Loaded %s", module.id)
         return instance
     

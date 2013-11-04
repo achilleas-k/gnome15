@@ -290,7 +290,7 @@ class G15Volume():
         if not mixer_name or mixer_name == "":
             mixer_name = "Master"
             
-        logger.info("Opening soundcard %s mixer %s" % (self.soundcard_name, mixer_name))
+        logger.info("Opening soundcard %s mixer %s", self.soundcard_name, mixer_name)
         
         vol_mixer = alsaaudio.Mixer(mixer_name, cardindex=self.soundcard_index)
         return vol_mixer
@@ -381,7 +381,7 @@ class VolumeThread(Thread):
         self.setDaemon(True)
         self._volume = volume
         
-        logger.info("Opening soundcard %s mixer %s" % (volume.soundcard_name, volume.mixer_name))
+        logger.info("Opening soundcard %s mixer %s", volume.soundcard_name, volume.mixer_name)
         
         self._mixer = alsaaudio.Mixer(volume.mixer_name, cardindex=volume.soundcard_index)
         self._poll_desc = self._mixer.polldescriptors()

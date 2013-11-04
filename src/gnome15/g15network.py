@@ -61,7 +61,7 @@ class NetworkManager():
 
     def _set_state(self, state):
         if state in NM_STATE_INDEX:
-            logger.info("New network state is %s" % NM_STATE_INDEX[state])
+            logger.info("New network state is %s", NM_STATE_INDEX[state])
             s = state
         else:
             logger.info("New network state is unknown")

@@ -171,7 +171,7 @@ class G15TailMenuItem(g15theme.MenuItem):
         return element_properties 
     
     def activate(self):
-        logger.info("xdg-open '%s'" % self.file)
+        logger.info("xdg-open '%s'", self.file)
         subprocess.Popen(['xdg-open', self.file])
         return True
         

@@ -358,7 +358,7 @@ class AbstractControlAcquisition(object):
         old_val = val
         if self.val is None or val != self.val or reset_after is not None:
             if self.val is None:
-                logger.debug("Initial value of control is %s" % str(val))
+                logger.debug("Initial value of control is %s", str(val))
                 self.reset_val = val
             
             self.val = val
@@ -367,7 +367,7 @@ class AbstractControlAcquisition(object):
             self.adjust(val)
             self.cancel_reset()
             
-            logger.debug("Set value of control to %s" % str(val))
+            logger.debug("Set value of control to %s", str(val))
                     
             if reset_after:
                 self.reset_val = old_val
@@ -546,7 +546,7 @@ class AbstractDriver(object):
             return self.acquire_control(control, release_after, val)
     
     def release_control(self, control_acquisition):
-        logger.info("Releasing %s" % control_acquisition.control.id)
+        logger.info("Releasing %s", control_acquisition.control.id)
         if control_acquisition.control.id in self.acquired_controls:
             control_acquisitions = self.acquired_controls[control_acquisition.control.id]
             control_acquisition._notify_released()
@@ -601,7 +601,7 @@ class AbstractDriver(object):
         """
         if self.is_connected():
             raise Exception("Already connected")
-        logger.info("Connecting driver %s" % self.get_name())
+        logger.info("Connecting driver %s", self.get_name())
         self.connecting = True
         try:
             self._on_connect()

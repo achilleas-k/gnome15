@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 # Find all drivers
 drivers_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "drivers"))
-logger.info("Loading drivers from %s" % drivers_dir)
+logger.info("Loading drivers from %s", drivers_dir)
 imported_drivers = {}
 
 driverfiles = [fname[:-3] for fname in os.listdir(drivers_dir) if fname.endswith(".py") and fname.startswith("driver_")]
@@ -74,7 +74,7 @@ def get_driver(conf_client, device, on_close = None):
         if driver == None:
             raise Exception(_("No drivers support the model %s") % device.model_id)
             
-        logger.info("Using first available driver for %s, %s" % ( device.model_id, driver.get_name()))
+        logger.info("Using first available driver for %s, %s", device.model_id, driver.get_name())
         return driver
     
     driver_mod_key = "driver_" + driver_name
@@ -84,7 +84,9 @@ def get_driver(conf_client, device, on_close = None):
         if driver == None:        
             raise Exception(_("Driver %s is not available. Do you have to appropriate package installed?") % driver_name)
         else:            
-            logger.info("Configured driver %s is not available, using %s instead" % ( driver_mod_key, driver.get_name()))
+            logger.info("Configured driver %s is not available, using %s instead",
+                        driver_mod_key,
+                        driver.get_name())
     else:
         driver = imported_drivers[driver_mod_key].Driver(device, on_close = on_close)
     
@@ -94,7 +96,8 @@ def get_driver(conf_client, device, on_close = None):
         driver = _get_best_driver(device, on_close)
         if driver == None:
             raise Exception(_("No drivers support the model %s") % device.model_id)
-        logger.warning("Ignoring configured driver %s, as the model is not supported by it. Looking for best driver" % driver)
+        logger.warning("Ignoring configured driver %s, as the model is not supported by it." \
+                       "Looking for best driver", driver)
         return driver
     else:
         # Configured driver is OK to use    

@@ -443,7 +443,7 @@ def __device_added(observer, device):
                         find_all_devices()
                         for r in reversed(__cached_devices):
                             if r.usb_id == usb_id:
-                                logger.info("Added device %s" % r)
+                                logger.info("Added device %s", r)
                                 for l in device_added_listeners:
                                     l(r)
                                 break

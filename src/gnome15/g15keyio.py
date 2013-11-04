@@ -39,7 +39,7 @@ record_dpy = display.Display()
 def get_keysyms():
     l = []
     for name in dir(XK):
-        logger.debug("   %s" % name)
+        logger.debug("   %s", name)
         if name[:3] == "XK_":
             l.append(name[3:])
     return l
@@ -109,9 +109,9 @@ class G15KeyRecorder():
     ''' 
     
     def _lookup_keysym(self, keysym):
-        logger.debug("Looking up %s" % keysym)
+        logger.debug("Looking up %s", keysym)
         for name in dir(XK):
-            logger.debug("   %s" % name)
+            logger.debug("   %s", name)
             if name[:3] == "XK_" and getattr(XK, name) == keysym:
                 return name[3:]
         return "[%d]" % keysym
@@ -130,15 +130,15 @@ class G15KeyRecorder():
             event, data = rq.EventField(None).parse_binary_value(data, record_dpy.display, None, None)
             if event.type in [X.KeyPress, X.KeyRelease]:
                 pr = event.type == X.KeyPress and "Press" or "Release"
-                logger.debug("Event detail = %s" % event.detail)
+                logger.debug("Event detail = %s", event.detail)
                 keysym = local_dpy.keycode_to_keysym(event.detail, 0)
                 if not keysym:
-                    logger.debug("Recorded %s" % event.detail)  
+                    logger.debug("Recorded %s", event.detail)
                     self._record_key_callback(event, event.detail)                    
                 else:
-                    logger.debug("Keysym = %s" % str(keysym))
+                    logger.debug("Keysym = %s", str(keysym))
                     s = self._lookup_keysym(keysym)
-                    logger.debug("Recorded %s" % s)
+                    logger.debug("Recorded %s", s)
                     self._record_key_callback(event, s)
                     
     def _record_key_callback(self, event, keyname):
