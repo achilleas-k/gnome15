@@ -625,8 +625,7 @@ class SinkDevice(SimpleDevice):
         SimpleDevice.__init__(self, *args, **kwargs)
         
     def receive(self, event):
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Sunk event %s", str(event))
+        logger.debug("Sunk event %s", str(event))
             
 '''
 Abstract input device

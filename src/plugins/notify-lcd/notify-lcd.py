@@ -356,8 +356,7 @@ class G15NotifyLCD():
                 self.action()
     
     def notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Notify app=%s id=%s '%s' {%s}", app_name, id, summary, hints)
+        logger.debug("Notify app=%s id=%s '%s' {%s}", app_name, id, summary, hints)
         try :                
             if self._active:
                 timeout = float(timeout) / 1000.0

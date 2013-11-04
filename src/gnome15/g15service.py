@@ -222,29 +222,26 @@ class MacroHandler(object):
         ch        --    character to send
         press     --    boolean indicating if this is a PRESS or RELEASE
         """
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Sending string %s", ch)
+        logger.debug("Sending string %s", ch)
             
         if self.virtual_keyboard is not None:
             keysym = self._get_keysym(ch)
             if press:
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug("Sending keychar %s press = %s, keysym = %d (%x)",
-                                 ch,
-                                 press,
-                                 keysym,
-                                 keysym)
+                logger.debug("Sending keychar %s press = %s, keysym = %d (%x)",
+                             ch,
+                             press,
+                             keysym,
+                             keysym)
                 self.virtual_keyboard.press_keysym(keysym)
             else:
                 self.virtual_keyboard.release_keysym(self._get_keysym(ch))
         else:
             keycode, shift_mask = self._char_to_keycodes(ch)
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Sending keychar %s keycode %d, press = %s, shift = %d",
-                        ch,
-                        int(keycode),
-                        str(press),
-                        shift_mask)
+            logger.debug("Sending keychar %s keycode %d, press = %s, shift = %d",
+                         ch,
+                         int(keycode),
+                         str(press),
+                         shift_mask)
             if (self.x_test_available and self.use_x_test) :
                 if press:
                     if shift_mask != 0 :
@@ -298,8 +295,7 @@ class MacroHandler(object):
                     time.sleep(release_delay + press_delay)
                 else:                          
                     if i > 0:
-                        if logger.isEnabledFor(logging.DEBUG):
-                            logger.debug("Release delay of %f", release_delay)
+                        logger.debug("Release delay of %f", release_delay)
                         time.sleep(release_delay)
                         
                     if esc and c == 't':
@@ -320,8 +316,7 @@ class MacroHandler(object):
                         
                     self.send_string(c, True)
                     time.sleep(press_delay)
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug("Press delay of %f", press_delay)
+                    logger.debug("Press delay of %f", press_delay)
                     self.send_string(c, False)
                     
                     i += 1
@@ -330,14 +325,12 @@ class MacroHandler(object):
 
     def press_delay(self, macro):
         delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.press_delay) / 1000.0 )
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Press delay of %f", delay)
+        logger.debug("Press delay of %f", delay)
         time.sleep(delay)
         
     def release_delay(self, macro):
         delay = 0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Release delay of %f", delay)
+        logger.debug("Release delay of %f", delay)
         time.sleep(delay)
         
         

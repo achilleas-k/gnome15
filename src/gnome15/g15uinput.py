@@ -289,12 +289,11 @@ def emit(target, code, value, syn=True):
     
     if not isinstance(code, tuple):
         if target == MOUSE and code in [ uinput.REL_X[1], uinput.REL_Y[1] ]:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("UINPUT mouse event at %s, code = %s, val = %d, syn = %s",
-                             target,
-                             code,
-                             value,
-                             str(syn))
+            logger.debug("UINPUT mouse event at %s, code = %s, val = %d, syn = %s",
+                         target,
+                         code,
+                         value,
+                         str(syn))
             code = ( EV_REL, code )            
         elif ( target == JOYSTICK or target == DIGITAL_JOYSTICK ):
             """ We translate the 'virtual' uinput codes into real uinput ones """
@@ -313,20 +312,18 @@ def emit(target, code, value, syn=True):
             else:
                 """ If we are simulating a bouton press, then the event is of type EV_KEY """
                 code = (EV_KEY, code)
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("UINPUT joystick event at %s, code = %s, val = %d, syn = %s",
-                             target,
-                             code,
-                             value,
-                             str(syn))
+            logger.debug("UINPUT joystick event at %s, code = %s, val = %d, syn = %s",
+                         target,
+                         code,
+                         value,
+                         str(syn))
         else: 
             code = ( EV_KEY, code )
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("UINPUT uinput keyboard event at %s, code = %s, val = %d, syn = %s",
-                             target,
-                             code,
-                             value,
-                             str(syn))
+            logger.debug("UINPUT uinput keyboard event at %s, code = %s, val = %d, syn = %s",
+                         target,
+                         code,
+                         value,
+                         str(syn))
     
     locks[target].acquire()
     try:

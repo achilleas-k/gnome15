@@ -351,8 +351,7 @@ class Driver(g15driver.AbstractDriver):
                             arrbuf[byte_offset] = pv &  ~(1 << bit_offset)
                 buf = arrbuf.tostring()
                 try :
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug("Writing buffer of %d bytes", len(buf))
+                    logger.debug("Writing buffer of %d bytes", len(buf))
                     pylibg15.write_pixmap(buf)
                 except IOError as e:
                     logger.error("Failed to send buffer.", exc_info = e)
@@ -475,8 +474,7 @@ class Driver(g15driver.AbstractDriver):
     def _handle_key_event(self, code, ext_code):
         if not self.is_connected() or self.disconnecting:
             return
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Key code %d", code)
+        logger.debug("Key code %d", code)
             
         has_js = ext_code & EXT_KEY_MAP[g15driver.G_KEY_JOY] > 0
         if has_js:
@@ -506,8 +504,7 @@ class Driver(g15driver.AbstractDriver):
             pos = (pos[0] - g15uinput.DEVICE_JOYSTICK_CENTER,
                    pos[1] - g15uinput.DEVICE_JOYSTICK_CENTER)
             
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Joystick at %s", str(pos))
+            logger.debug("Joystick at %s", str(pos))
             
             if self.joy_mode == g15uinput.JOYSTICK:
                 if has_js:
