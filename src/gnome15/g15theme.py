@@ -1482,17 +1482,11 @@ class G15Theme(object):
         try:
             if self.component is not None and component is None:
                 # Give the python portion of the theme chance to de-initialize
-                if self.instance != None:            
-                    try :
-                        getattr(self.instance, "destroy")
-                        try :
-                            self.instance.destroy(self)
-                        except Exception as e:
-                            logger.debug("Error destroying instance", exc_info = e)
-                    except AttributeError as ae:
-                        logger.debug("Could not read attributte 'destroy'", exc_info = ae)
-                        # Doesn't exist
-                        pass
+                if self.instance is not None and hasattr(self.instance, 'destroy'):
+                    try:
+                        self.instance.destroy(self)
+                    except Exception as e:
+                        logger.debug("Error destroying instance", exc_info = e)
                 
             
             self.component = component
@@ -1539,17 +1533,11 @@ class G15Theme(object):
                     
                         
                     # Give the python portion of the theme chance to initialize
-                    if self.instance != None:            
-                        try :
-                            getattr(self.instance, "create")
-                            try :
-                                self.instance.create(self)
-                            except Exception as e:
-                                logger.debug("Error creating instance", exc_info = e)
-                        except AttributeError as ae:
-                            logger.debug("Could not read attribute 'create'", exc_info = ae)
-                            # Doesn't exist
-                            pass
+                    if self.instance is not None and hasattr(self.instance, 'create'):
+                        try:
+                            self.instance.create(self)
+                        except Exception as e:
+                            logger.debug("Error creating instance", exc_info = e)
                             
                 elif self.svg_text != None:
                     self.document = etree.ElementTree(etree.fromstring(self.svg_text))
@@ -1717,17 +1705,11 @@ class G15Theme(object):
                 processing_result = None
                 
                 # Give the python portion of the theme chance to draw stuff under the SVG
-                if self.instance != None:            
-                    try :
-                        getattr(self.instance, "paint_background")
-                        try :
-                            self.instance.paint_background(properties, attributes)
-                        except Exception as e:
-                            logger.debug("Could not call attribute 'paint_background'", exc_info = e)
-                    except AttributeError as ae:
-                        logger.debug("Could not read attribute 'paint_background'", exc_info = ae)
-                        # Doesn't exist
-                        pass
+                if self.instance is not None and hasattr(self.instance, 'paint_background'):
+                    try:
+                        self.instance.paint_background(properties, attributes)
+                    except Exception as e:
+                        logger.debug("Error painting background", exc_info = e)
                     
                 root = document.getroot()
                          
@@ -1749,17 +1731,14 @@ class G15Theme(object):
                     self.svg_processor(document, properties, attributes)
                 
                 # Pass the SVG document to the theme's python code to manipulate the document if required
-                if self.instance != None:
-                    try :
-                        getattr(self.instance, "process_svg")
-                        try :                
-                            processing_result = self.instance.process_svg(self.driver, root, properties, self.nsmap)
-                        except Exception as e:
-                            logger.debug("Could not call attribute 'process_svg'", exc_info = e)
-                    except AttributeError as ae:
-                        logger.debug("Could not read attribute 'process_svg'", exc_info = ae)
-                        # Doesn't exist
-                        pass
+                if self.instance is not None and hasattr(self.instance, 'process_svg'):
+                    try:
+                        processing_result = self.instance.process_svg(self.driver,
+                                                                      root,
+                                                                      properties,
+                                                                      self.nsmap)
+                    except Exception as e:
+                        logger.debug("Error processing SVG", exc_info = e)
                     
                 self._set_default_style(root)
                     
@@ -2111,17 +2090,14 @@ class G15Theme(object):
                 self._render_text_box(canvas, text_box, rgb, bg_rgb)
         
         # Give the python portion of the theme chance to draw stuff over the SVG
-        if self.instance != None:
-            try :
-                getattr(self.instance, "paint_foreground")
-                try :
-                    self.instance.paint_foreground(canvas, render.properties, render.attributes, render.processing_result)
-                except Exception as e:
-                    logger.debug("Could not call attribute 'paint_foreground'", exc_info = e)
-            except AttributeError as ae:
-                logger.debug("Could not read attribute 'paint_foreground'", exc_info = ae)
-                # Doesn't exist
-                pass
+        if self.instance is not None and hasattr(self.instance, 'paint_foreground'):
+            try:
+                self.instance.paint_foreground(canvas,
+                                               render.properties,
+                                               render.attributes,
+                                               render.processing_result)
+            except Exception as e:
+                logger.debug("Error painting foreground", exc_info = e)
             
     def _render_text_box(self, canvas, text_box, rgb, bg_rgb):
         self._update_text(text_box, text_box.wrap)

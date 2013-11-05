@@ -169,17 +169,14 @@ class G15FeedsMenuItem(g15theme.MenuItem):
         if g15pythonlang.attr_exists(self.entry, "description"):
             element_properties["ent_description"] = self.entry.description
             
-        try:
+        if hasattr(self.entry, 'date_parsed'):
             dt = self.entry.date_parsed
-        except AttributeError as ae:
-            logger.debug("Could not get date_parsed attribute. Trying published_parsed",
-                         exc_info = ae)
-            try:
-                dt = self.entry.published_parsed
-            except Exception as e:
-                logger.debug("Could not get publish_parsed attribute. Using current time.",
-                             exc_info = e)
-                dt = time.localtime()
+        elif hasattr(self.entry, 'published_parsed'):
+            logger.debug("Could not get date_parsed attribute. Trying published_parsed")
+            dt = self.entry.published_parsed
+        else:
+            logger.debug("Could not get publish_parsed attribute. Using current time.")
+            dt = time.localtime()
         
         element_properties["ent_locale_date_time"] = time.strftime("%x %X", dt)            
         element_properties["ent_locale_time"] = time.strftime("%X", dt)            
