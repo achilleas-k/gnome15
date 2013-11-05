@@ -24,6 +24,7 @@ This class is stop gap until a better solution can be found
 """
 
 import os
+import time
 
 class CPU():
     def __init__(self, name):
@@ -179,6 +180,25 @@ def proc_args(pid):
             return line.split("\0")
     finally:
         cmddata.close()
+
+class Uptime:
+    def __init__(self, uptime, idletime):
+        self.uptime = uptime
+        self.idletime = idletime
+        self.boot_time = time.time() - self.uptime
+
+def uptime():
+    """
+    Get the uptime of the computer
+    """
+    cmddata = open('/proc/uptime')
+    try:
+        for line in cmddata:
+            vals = line.strip('\n').split(' ')
+    finally:
+        cmddata.close()
+
+    return Uptime(float(vals[0]), float(vals[1]))
 
 if __name__ == "__main__":
     for d in proclist():
