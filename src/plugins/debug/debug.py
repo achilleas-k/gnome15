@@ -332,7 +332,7 @@ class G15DBUSDebugService(dbus.service.Object):
           'warning': logging.WARNING,
           'error': logging.ERROR,
           'critical': logging.CRITICAL}
-        logger = logging.getLogger(__name__)
+        logger = logging.getLogger()
         level = levels.get(log_level.lower(), logging.NOTSET)
         logger.setLevel(level = level)
         
