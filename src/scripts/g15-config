@@ -16,8 +16,16 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-logging.basicConfig()
+import sys
+import os
+# Allow running from local path
+path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..")
+if os.path.exists(path):
+    sys.path.insert(0, path)
+
+#Logging
+import gnome15.g15logging as g15logging
+logger = g15logging.get_root_logger()
 
 # This is a work around - Now Gio is used in the lens plugin, it must be 
 # initialised before GTK. 
@@ -30,8 +38,6 @@ except Exception as a:
 import pygtk
 pygtk.require('2.0')
 import gtk
-import sys
-import os
 import gconf
 import gobject
 gobject.threads_init()
@@ -42,11 +48,6 @@ from dbus.mainloop.glib import DBusGMainLoop
 from dbus.mainloop.glib import threads_init
 dbus.mainloop.glib.threads_init()
 DBusGMainLoop(set_as_default=True)
-
-# Allow running from local path
-path = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), "..")
-if os.path.exists(path):
-    sys.path.insert(0, path)
 
 import gnome15.g15config as g15config
 import gnome15.g15globals as g15globals

@@ -27,22 +27,15 @@ import sys
 import os
 import glib
 
-# Logging
-import logging
-logging.basicConfig(format='%(threadName)s:%(name)s:%(message)s')
-logger = logging.getLogger()
-
-LEVELS = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL}
-
 # Allow running from local path
 path = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), ".."))
 if os.path.exists(path):
     sys.path.insert(0, path) 
     
+# Logging
+import gnome15.g15logging as g15logging
+logger = g15logging.get_root_logger()
+
 #
 import gobject
 gobject.threads_init()
@@ -90,10 +83,8 @@ if __name__ == "__main__":
         default=False, help="Do not try to trap signals.")
     (options, args) = parser.parse_args()
     
-    level = logging.NOTSET
     if options.log_level != None:      
-        level = LEVELS.get(options.log_level.lower(), logging.NOTSET)
-        logger.setLevel(level = level)
+        logger.setLevel(g15logging.get_level(options.log_level))
         
     if len(args) == 1 and ( args[0] == "stop" or args[0] == "restart" ):
         bus = dbus.SessionBus() if options.use_session_bus else dbus.SystemBus()

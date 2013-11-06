@@ -33,6 +33,7 @@ gnome15_PYTHON = 		\
 	g15util.py \
 	g15upgrade.py \
 	g15uinput.py \
+	g15logging.py \
 	objgraph.py \
 	dbusmenu.py \
 	colorpicker.py \

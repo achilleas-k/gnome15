@@ -64,15 +64,11 @@ import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 
 # Logging
-import logging
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-
-LEVELS = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL}
+import gnome15.g15logging as g15logging
+if __name__ == "__main__":
+    logger = g15logging.get_root_logger()
+else:
+    logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="notify-lcd2"
@@ -515,10 +511,8 @@ if __name__ == "__main__":
         default="warning" , help="Log level")
     (options, args) = parser.parse_args()
     
-    level = logging.NOTSET
     if options.log_level != None:      
-        level = LEVELS.get(options.log_level, logging.NOTSET)
-        logger.setLevel(level = level)
+        logger.setLevel(g15logging.get_level(options.log_level))
      
     bus = dbus.SessionBus()
     try :
