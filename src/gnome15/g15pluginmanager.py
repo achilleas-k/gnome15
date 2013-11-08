@@ -143,7 +143,7 @@ def get_supported_models(plugin_module):
     Keyword arguments:
     plugin_module -- plugin module instance
     """
-    supported_models = getattr(plugin_module, 'supported_models', g15driver.MODELS)
+    supported_models = [] + getattr(plugin_module, 'supported_models', g15driver.MODELS)
     unsupported_models = getattr(plugin_module, 'unsupported_models', [])
     for p in unsupported_models:
         if p in supported_models:
