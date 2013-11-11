@@ -837,6 +837,18 @@ AS_IF([test "x${plugin_impulse15}" = "xyes" -a "x$have_pulse" = "xno"],
 	[AC_MSG_ERROR([Plugin Impulse15 cannot be built without pulse library])])
 AM_CONDITIONAL([ENABLE_PLUGIN_IMPULSE15], [test x$plugin_impulse15 = xyes])
 
+dnl Pommodoro Timer plugin
+AC_ARG_ENABLE([plugin-pommodoro],
+	[AS_HELP_STRING([--enable-plugin-pommodoro],
+		[Enable Pommodoro Timer plugin.])],
+	[case "${enableval}" in
+		yes) plugin_pommodoro=yes ;;
+		no)  plugin_pommodoro=no ;;
+		*)   AC_MSG_ERROR([bad value ${enableval} for --enable-plugin-pommodoro]) ;;
+	esac],
+	[plugin_pommodoro=yes])
+AM_CONDITIONAL([ENABLE_PLUGIN_POMMODORO], [test x$plugin_pommodoro = xyes])
+
 dnl
 dnl Experimental (under development) plugins
 dnl
@@ -1046,6 +1058,8 @@ src/plugins/mounts/Makefile
 src/plugins/mounts/default/Makefile
 src/plugins/menu/Makefile
 src/plugins/panel/Makefile
+src/plugins/pommodoro/Makefile
+src/plugins/pommodoro/default/Makefile
 src/plugins/profiles/Makefile
 src/plugins/processes/Makefile
 src/plugins/im/Makefile
@@ -1315,6 +1329,10 @@ AS_IF([test "x$plugin_debug" = "xyes" ],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("trafficstats                - ")
 AS_IF([test "x$plugin_trafficstats" = "xyes" ],
+     [AS_ECHO("Enabled")],
+     [AS_ECHO("Disabled")])
+AS_ECHO_N("pommodoro                   - ")
+AS_IF([test "x$plugin_pommodoro" = "xyes" ],
      [AS_ECHO("Enabled")],
      [AS_ECHO("Disabled")])
 AS_ECHO_N("game-nexuiz                 - ")
