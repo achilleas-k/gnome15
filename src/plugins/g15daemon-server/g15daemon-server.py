@@ -36,10 +36,9 @@ import os
 import socket
 import struct
 import sys
-import traceback
 _ = g15locale.get_translation("g15daemon-server", modfile = __file__).ugettext
 
-logger = logging.getLogger("g15daemon")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="g15daemon-server"
@@ -247,7 +246,9 @@ class G15DaemonClient(asyncore.dispatcher):
                 self.img_buffer = ""
 
             elif len(self.img_buffer) > self.buffer_len:
-                logger.warning('Received bad frame (%d bytes), should be %d' % ( len(self.img_buffer), self.buffer_len ) )
+                logger.warning("Received bad frame (%d bytes), should be %d",
+                               len(self.img_buffer),
+                               self.buffer_len)
                 
     def draw_buffer(self, img_buffer):
                 
@@ -369,9 +370,8 @@ class G15Async(Thread):
     def run(self):  
         try :      
             asyncore.loop(timeout=0.05)
-        except:            
-            sys.stderr.write("WARNING: Failed to connect to G15Daemon client")
-            traceback.print_stack()
+        except Exception as e:
+            logger.warning("Failed to connect to G15Daemon client", exc_info = e)
 
 class G15DaemonServer():
     
@@ -417,7 +417,7 @@ class G15DaemonServer():
         port = self._get_port()
         if self.daemon == None or self.daemon.port != port:
             if self.daemon != None:
-                logger.warning("Port changed to %d (will restart daemon - clients may have to be reconnected manually" % port)
+                logger.warning("Port changed to %d (will restart daemon - clients may have to be reconnected manually", port)
                 self._stop_all_clients()
                 self.daemon.close()
             self.daemon = G15Daemon(port, self)
@@ -477,9 +477,9 @@ class G15Daemon(asyncore.dispatcher):
         asyncore.dispatcher.__init__(self)        
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
-        logger.info('Binding to port %d' % port)
+        logger.info('Binding to port %d', port)
         self.bind(("127.0.0.1", port))
-        logger.info('Bound to port %d' % port)
+        logger.info('Bound to port %d', port)
         self.listen(5)
         self.plugin = plugin
         self.port = port

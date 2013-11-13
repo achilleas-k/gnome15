@@ -33,7 +33,7 @@ import gconf
 import logging
 import xdg.Mime as mime
 from threading import Thread
-logger = logging.getLogger("rss")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id = "tails"
@@ -171,7 +171,7 @@ class G15TailMenuItem(g15theme.MenuItem):
         return element_properties 
     
     def activate(self):
-        logger.info("xdg-open '%s'" % self.file)
+        logger.info("xdg-open '%s'", self.file)
         subprocess.Popen(['xdg-open', self.file])
         return True
         
@@ -202,6 +202,7 @@ class G15TailThread(Thread):
                 if self._stopped:
                     break
         except ValueError as e:
+            logger.debug("Error while reading", exc_info = e)
             if not self._stopped:
                 raise e
         self.page.redraw()
@@ -263,8 +264,8 @@ class G15TailPage(g15theme.G15Page):
                 icon_surface = g15cairo.load_surface_from_file(icon)
                 self._icon_surface = icon_surface
                 self._icon_embedded = g15icontools.get_embedded_image_url(icon_surface)
-            except:
-                logger.warning("Failed to get icon %s" % str(icon))
+            except Exception as e:
+                logger.warning("Failed to get icon %s", str(icon), exc_info = e)
                 self._icon_surface = None
                 self._icon_embedded = None
         

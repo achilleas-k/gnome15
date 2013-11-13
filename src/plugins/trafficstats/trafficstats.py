@@ -30,9 +30,12 @@ import gnome15.g15text as g15text
 import gnome15.g15plugin as g15plugin
 import time
 import datetime
+import logging
+logger=logging.getLogger(__name__)
 try:
     import gtop
-except:
+except Exception as e:
+    logger.debug("Could not import gtop. Falling back to g15top", exc_info = e)
     # API compatible work around for Ubuntu 12.10
     import gnome15.g15top as gtop
 import os

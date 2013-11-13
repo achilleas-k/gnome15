@@ -21,7 +21,7 @@ Has functions to transform, load and convert cairo surfaces
 '''
 
 import gtk.gdk
-import os
+import os, os.path
 import cairo
 import math
 import rsvg
@@ -29,10 +29,12 @@ import urllib
 import base64
 import xdg.Mime as mime
 import g15convert
+import g15os
+import gnome15.g15globals
 
 # Logging
 import logging
-logger = logging.getLogger("cairo")
+logger = logging.getLogger(__name__)
 
 from cStringIO import StringIO
 
@@ -57,10 +59,8 @@ def flip_hv_centered_on(context, fx, fy, cx, cy):
     
 def get_cache_filename(filename, size = None):    
     cache_file = base64.urlsafe_b64encode("%s-%s" % ( filename, str(size if size is not None else "0,0") ) )
-    cache_dir = os.path.expanduser("~/.cache/gnome15")
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    return "%s/%s.img" % ( cache_dir, cache_file )
+    g15os.mkdir_p(g15globals.user_cache_dir)
+    return os.path.join(g15globals.user_cache_dir, "%s.img" % cache_file)
     
 def get_image_cache_file(filename, size = None):
     full_cache_path = get_cache_filename(filename, size)
@@ -139,7 +139,7 @@ def load_surface_from_file(filename, size = None):
                     return pixbuf_to_surface(pixbuf, size)
             return None
         except Exception as e:
-            logger.warning("Failed to get image %s (%s). %s" % (filename, type, e))
+            logger.warning("Failed to get image %s (%s).", filename, type, exc_info = e)
             return None
     else:
         if os.path.exists(filename):
@@ -152,7 +152,7 @@ def load_surface_from_file(filename, size = None):
                     return pixbuf_to_surface(gtk.gdk.pixbuf_new_from_file(filename), size)
             
             except Exception as e:
-                logger.warning("Failed to get image %s (%s). %s" % (filename, type, e))
+                logger.warning("Failed to get image %s (%s).", filename, type, exc_info = e)
                 return None
             
 def load_svg_as_surface(filename, size):

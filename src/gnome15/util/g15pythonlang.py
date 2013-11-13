@@ -18,6 +18,9 @@
 import re
 import threading
 
+import logging
+logger = logging.getLogger(__name__)
+
 '''
 Helper methods "extending" the python syntax
 '''
@@ -49,7 +52,8 @@ def module_exists(module_name):
     """
     try:
         __import__(module_name)
-    except ImportError:
+    except ImportError as e:
+        logger.debug("Could not find module %s", module_name, exc_info = e)
         return False
     else:
         return True
@@ -88,7 +92,8 @@ def value_or_default(d, key, default_value):
     """
     try :
         return d[key]
-    except KeyError:
+    except KeyError as ke:
+        logger.debug("Didn't found %s in %s", key, d, exc_info = ke)
         return default_value
 
 def to_int_or_none(s):
@@ -97,7 +102,8 @@ def to_int_or_none(s):
     """
     try:
         return int(s)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
+        logger.debug("Error converting %s to int", s, exc_info = e)
         return None
 
 def to_float_or_none(s):
@@ -106,7 +112,8 @@ def to_float_or_none(s):
     """
     try:
         return float(s)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
+        logger.debug("Error converting %s to float", s, exc_info = e)
         return None
 
 def find(f, seq):

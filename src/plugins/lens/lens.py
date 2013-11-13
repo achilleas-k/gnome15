@@ -17,7 +17,7 @@
 import logging
 import cairo
 import os
-logger = logging.getLogger("lens")
+logger = logging.getLogger(__name__)
 import sys
 from gi.repository import GLib, GObject, Gio
 from gi.repository import Dee
@@ -29,6 +29,7 @@ from gnome15 import g15devices
 from gnome15 import util.g15os as g15os
 from gnome15 import util.g15icontools as g15icontools
 from gnome15 import g15screen
+from gnome15 import g15globals
 from cStringIO import StringIO
 import base64
 
@@ -52,7 +53,7 @@ has_preferences=False
 global_plugin=True
 
 # Cached 
-cache_dir = os.path.expanduser("~/.cache/gnome15/lens")
+cache_dir = os.path.join(g15globals.user_cache_dir, "lens")
 if not os.path.exists(cache_dir):
     g15os.mkdir_p(cache_dir)
 
@@ -254,7 +255,7 @@ class MenuScreenChangeListener(g15screen.ScreenChangeAdapter):
     
     def del_page(self, page):
         filename = self._get_page_filename(page)
-        logger.info("Removing page thumbnail image" % filename)
+        logger.info("Removing page thumbnail image", filename)
         os.remove(filename)
             
     """
@@ -273,7 +274,7 @@ class MenuScreenChangeListener(g15screen.ScreenChangeAdapter):
             try :
                 if page.thumbnail_painter(thumb_canvas, self.screen.height, True):
                     filename = self._get_page_filename(page) 
-                    logger.info("Writing thumbnail to %s" % filename)
+                    logger.info("Writing thumbnail to %s", filename)
                     img.write_to_png(filename)
             except Exception as e:
-                logger.warning("Problem with painting thumbnail. %s" % str(e))
+                logger.warning("Problem with painting thumbnail.", exc_info = e)

@@ -41,7 +41,6 @@ import os
 import cairo
 import rsvg
 import sys
-import traceback
 import pango
 import g15driver
 import g15globals
@@ -58,7 +57,7 @@ import base64
 import dbusmenu
 import logging
 import time
-logger = logging.getLogger("theme")
+logger = logging.getLogger(__name__)
 from string import Template
 from copy import deepcopy
 from cStringIO import StringIO
@@ -100,7 +99,7 @@ class ThemeDefinition(object):
         tdomain = "%s.%s" % ( plugin_module.id, theme_id )
         self.translation = g15locale.get_translation(tdomain, self.directory)
         if self.translation:
-            logger.info("Found translation %s" % tdomain)
+            logger.info("Found translation %s", tdomain)
             
     def supports(self, model_id):
         return ( len(self.supported) == 0 or model_id in self.supported )  \
@@ -234,7 +233,7 @@ class GridLayoutManager(LayoutManager):
             if c.is_showing():
                 bounds = c.view_bounds
                 if bounds is None:
-                    logger.warn("No bounds on component %s" % c.id)
+                    logger.warn("No bounds on component %s", c.id)
                 else:
                     c.view_bounds = ( x, y, bounds[2], bounds[3])
                     x += bounds[2]
@@ -493,7 +492,7 @@ class Component(object):
         self.on_configure()
         theme = self.get_theme()
         if theme == None:
-            logger.warning("No theme for component with ID of %s" % self.id)
+            logger.warning("No theme for component with ID of %s", self.id)
         else:
             self.view_element = theme.get_element(self.id) 
             if self.view_element is None:
@@ -1005,7 +1004,7 @@ class Menu(Component):
         
     def get_item_height(self, item, group = False):
         if item.theme is None:
-            logger.warn("Component %s has no theme and so no height" % item.id)
+            logger.warn("Component %s has no theme and so no height", item.id)
             return 10
         else:            
             return item.theme.bounds[3]
@@ -1483,16 +1482,11 @@ class G15Theme(object):
         try:
             if self.component is not None and component is None:
                 # Give the python portion of the theme chance to de-initialize
-                if self.instance != None:            
-                    try :
-                        getattr(self.instance, "destroy")
-                        try :
-                            self.instance.destroy(self)
-                        except:
-                            traceback.print_exc(file=sys.stderr)
-                    except AttributeError:                
-                        # Doesn't exist
-                        pass
+                if self.instance is not None and hasattr(self.instance, 'destroy'):
+                    try:
+                        self.instance.destroy(self)
+                    except Exception as e:
+                        logger.debug("Error destroying instance", exc_info = e)
                 
             
             self.component = component
@@ -1539,16 +1533,11 @@ class G15Theme(object):
                     
                         
                     # Give the python portion of the theme chance to initialize
-                    if self.instance != None:            
-                        try :
-                            getattr(self.instance, "create")
-                            try :
-                                self.instance.create(self)
-                            except:
-                                traceback.print_exc(file=sys.stderr)
-                        except AttributeError:                
-                            # Doesn't exist
-                            pass
+                    if self.instance is not None and hasattr(self.instance, 'create'):
+                        try:
+                            self.instance.create(self)
+                        except Exception as e:
+                            logger.debug("Error creating instance", exc_info = e)
                             
                 elif self.svg_text != None:
                     self.document = etree.ElementTree(etree.fromstring(self.svg_text))
@@ -1716,16 +1705,11 @@ class G15Theme(object):
                 processing_result = None
                 
                 # Give the python portion of the theme chance to draw stuff under the SVG
-                if self.instance != None:            
-                    try :
-                        getattr(self.instance, "paint_background")
-                        try :
-                            self.instance.paint_background(properties, attributes)
-                        except:
-                            traceback.print_exc(file=sys.stderr)
-                    except AttributeError:                
-                        # Doesn't exist
-                        pass
+                if self.instance is not None and hasattr(self.instance, 'paint_background'):
+                    try:
+                        self.instance.paint_background(properties, attributes)
+                    except Exception as e:
+                        logger.debug("Error painting background", exc_info = e)
                     
                 root = document.getroot()
                          
@@ -1747,16 +1731,14 @@ class G15Theme(object):
                     self.svg_processor(document, properties, attributes)
                 
                 # Pass the SVG document to the theme's python code to manipulate the document if required
-                if self.instance != None:
-                    try :
-                        getattr(self.instance, "process_svg")
-                        try :                
-                            processing_result = self.instance.process_svg(self.driver, root, properties, self.nsmap)
-                        except:
-                            traceback.print_exc(file=sys.stderr)
-                    except AttributeError:                
-                        # Doesn't exist
-                        pass
+                if self.instance is not None and hasattr(self.instance, 'process_svg'):
+                    try:
+                        processing_result = self.instance.process_svg(self.driver,
+                                                                      root,
+                                                                      properties,
+                                                                      self.nsmap)
+                    except Exception as e:
+                        logger.debug("Error processing SVG", exc_info = e)
                     
                 self._set_default_style(root)
                     
@@ -1805,7 +1787,7 @@ class G15Theme(object):
                         c.getparent().remove(c)
                     self.component.child_map[component_id].draw(self, c)
                 else:
-                    logger.warning("Cannot find SVG element for component %s" % component_id)
+                    logger.warning("Cannot find SVG element for component %s", component_id)
     
     def _process_deletes(self, root, properties):
         """
@@ -1980,7 +1962,7 @@ class G15Theme(object):
         # then rendered after the SVG using Pango.
         for element in root.xpath('//svg:rect[@class=\'textbox\']',namespaces=self.nsmap):
             id = element.get("id")
-            logger.warning("DEPRECATED Text box with ID %s in %s" % (id, self.dir))
+            logger.warning("DEPRECATED Text box with ID %s in %s", id, self.dir)
             text_node = root.xpath('//*[@id=\'' + id + '_text\']',namespaces=self.nsmap)[0]
             if text_node != None:            
                 styles = self.parse_css(text_node.get("style"))                
@@ -2092,12 +2074,12 @@ class G15Theme(object):
                 print "------------------------------------------------------"
                 print xml
                 print "------------------------------------------------------"
-        except:
-            traceback.print_exc(file=sys.stderr)
+        except Exception as e:
+            logger.debug("Could not write SVG", exc_info = e)
         try :
             svg.close()
-        except:
-            traceback.print_exc(file=sys.stderr)
+        except Exception as e:
+            logger.debug("Could not close SVG", exc_info = e)
         
         svg.render_cairo(canvas)
          
@@ -2108,16 +2090,14 @@ class G15Theme(object):
                 self._render_text_box(canvas, text_box, rgb, bg_rgb)
         
         # Give the python portion of the theme chance to draw stuff over the SVG
-        if self.instance != None:
-            try :
-                getattr(self.instance, "paint_foreground")
-                try :
-                    self.instance.paint_foreground(canvas, render.properties, render.attributes, render.processing_result)
-                except:
-                    traceback.print_exc(file=sys.stderr)
-            except AttributeError:                
-                # Doesn't exist
-                pass
+        if self.instance is not None and hasattr(self.instance, 'paint_foreground'):
+            try:
+                self.instance.paint_foreground(canvas,
+                                               render.properties,
+                                               render.attributes,
+                                               render.processing_result)
+            except Exception as e:
+                logger.debug("Error painting foreground", exc_info = e)
             
     def _render_text_box(self, canvas, text_box, rgb, bg_rgb):
         self._update_text(text_box, text_box.wrap)

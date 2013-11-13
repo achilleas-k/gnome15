@@ -20,7 +20,7 @@ from runnable import Runnable
 import threading
 import time
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 class InputProcessor(object):
     '''Object to process key presses.'''
@@ -185,7 +185,7 @@ class State(object):
         '''
         oldState = self.clone()
         evt = None
-        logger.debug("G key of %d" % len(data))
+        logger.debug("G key of %d", len(data))
         if len(data) == 4:
             keys = self._data_to_keys_g_and_m(data)
             keysDown, keysUp = self._update_keys_down(Key.gmKeys, keys)
@@ -202,7 +202,7 @@ class State(object):
         '''
         oldState = self.clone()
         evt = None
-        logger.debug("D key of %d" % len(data))
+        logger.debug("D key of %d", len(data))
         if len(data) == 2:
             keys = self._data_to_keys_d(data)
             keysDown, keysUp = self._update_keys_down(Key.displayKeys, keys)
@@ -220,12 +220,12 @@ class State(object):
         oldState = self.clone()
         if len(data) != 2:
             raise ValueError("incorrect multimedia key packet: " + str(data))
-        logger.debug("MM or Win key of %d" % len(data))
+        logger.debug("MM or Win key of %d", len(data))
         keys = self._data_to_keys_mm(data)
         winKeySet = set([Key.WINKEY_SWITCH])
         if data[0] == 1:
             # update state of all mm keys
-            logger.debug("MM key %d" % len(data))
+            logger.debug("MM key %d", len(data))
             possibleKeys = Key.mmKeys.difference(winKeySet)
             keysDown, keysUp = self._update_keys_down(possibleKeys, keys)
         else:
@@ -260,7 +260,7 @@ class G19Receiver(Runnable):
         if self.__g19.enable_mm_keys:
             data = self.__g19.read_multimedia_keys()        
             if data:
-                logger.debug('MM keys data %s' % len(data))
+                logger.debug('MM keys data %s', len(data))
                 evt = self.__state.packet_received_mm(data)
                 if evt:
                     for proc in processors:
@@ -272,7 +272,7 @@ class G19Receiver(Runnable):
 
         data = self.__g19.read_g_and_m_keys()
         if data:
-            logger.debug('G/M keys data %s' % len(data))
+            logger.debug('G/M keys data %s', len(data))
             evt = self.__state.packet_received_g_and_m(data)
             if evt:
                 for proc in processors:
@@ -284,7 +284,7 @@ class G19Receiver(Runnable):
 
         data = self.__g19.read_display_menu_keys()
         if data:
-            logger.debug('Menu keys Data %s' % len(data))
+            logger.debug('Menu keys Data %s', len(data))
             evt = self.__state.packet_received_d(data)
             if evt:
                 for proc in processors:

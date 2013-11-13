@@ -28,7 +28,7 @@ import gnome15.g15actions as g15actions
 from gnome15.util.g15pythonlang import find
 import os
 import logging
-logger = logging.getLogger("macros")
+logger = logging.getLogger(__name__)
 
 # Custom actions
 SELECT_PROFILE = "select-profile"

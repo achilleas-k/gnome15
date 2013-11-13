@@ -33,7 +33,6 @@ import subprocess
 import gconf
 import gobject
 import shutil
-import traceback
 import gnome15.g15globals as g15globals
 import gnome15.g15screen as g15screen
 import gnome15.util.g15pythonlang as g15pythonlang
@@ -45,10 +44,11 @@ import dbus
 import os.path
 import operator
 import xdg.DesktopEntry
+import xdg.BaseDirectory
 
 # Logging
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 from threading import RLock
 from threading import Thread
@@ -740,22 +740,36 @@ the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <http://www.gnu.org/philosophy/why-not-lgpl.html>.
 """
+
+def autostart_path_for(application_name):
+    """
+    Returns the autostart path of the application_name desktop file
+    """
+    return os.path.join(xdg.BaseDirectory.xdg_config_home,
+                        "autostart",
+                        "%s.desktop" % application_name)
     
 def is_desktop_application_installed(application_name):
     """
     Get if a desktop file is installed for a particular application
     
     Keyword arguments:
-    service_name    --    name of application
+    application_name    --    name of application
     """
-    return os.path.exists("/etc/xdg/autostart/%s.desktop" % application_name) or os.path.exists(os.path.expanduser("~/.local/share/autostart/%s.desktop" % application_name))
+    for directory in xdg.BaseDirectory.xdg_config_dirs:
+        desktop_file = os.path.join(directory,
+                                    "autostart",
+                                    "%s.desktop" % application_name)
+        if os.path.exists(desktop_file):
+            return True
+    return False
 
 def is_autostart_application(application_name):
     """
     Get whether the application is set to autostart
     """
     installed  = is_desktop_application_installed(application_name)
-    path = os.path.expanduser("~/.config/autostart/%s.desktop" % application_name)
+    path = autostart_path_for(application_name)
     if os.path.exists(path):
         desktop_entry = xdg.DesktopEntry.DesktopEntry(path)
         autostart = len(desktop_entry.get('X-GNOME-Autostart-enabled')) == 0 or desktop_entry.get('X-GNOME-Autostart-enabled', type="boolean")
@@ -773,7 +787,7 @@ def set_autostart_application(application_name, enabled):
     application_name    -- application name
     enabled             -- enabled or not
     """
-    path = os.path.expanduser("~/.config/autostart/%s.desktop" % application_name)
+    path = autostart_path_for(application_name)
     if enabled and os.path.exists(path):
         os.remove(path)
     elif not enabled:
@@ -836,13 +850,11 @@ def is_shell_extension_installed(extension):
     Keyword arguments:
     extension        --    extension name
     """
-    
-    # 
-    # TODO - Bit crap, how can we be sure this is the prefix?
-    # 
-    prefix = "/usr/share"
-    return os.path.exists("%s/gnome-shell/extensions/%s" % (prefix, extension)) or \
-        os.path.exists(os.path.expanduser("~/.local/share/gnome-shell/extensions/%s" % extension)) 
+    for prefix in xdg.BaseDirectory.xdg_data_dirs:
+        extension_path = os.path.join(prefix, "gnome-shell", "extensions", extension)
+        if os.path.exists(extension_path):
+            return True
+    return False
         
 def is_gnome_shell_extension_enabled(extension):
     """
@@ -858,7 +870,7 @@ def is_gnome_shell_extension_enabled(extension):
         try:
             return extension in eval(text)
         except Exception as e:
-            logger.debug("Failed testing if extension is enabled. %s" % e)
+            logger.debug("Failed testing if extension is enabled.", exc_info = e)
             
     return False
         
@@ -876,7 +888,8 @@ def set_gnome_shell_extension_enabled(extension, enabled):
     if status == 0:
         try:
             extensions = eval(text)
-        except:
+        except Exception as e:
+            logger.debug('No gnome-shell extensions enabled.', exc_info = e)
             # No extensions available, so init an empty array
             extensions = []
             pass
@@ -893,7 +906,7 @@ def set_gnome_shell_extension_enabled(extension, enabled):
         try:
             status, text = g15os.get_command_output("gsettings set org.gnome.shell enabled-extensions \"[%s]\"" % s)
         except Exception as e:
-            logger.debug("Failed to set extension enabled. %s" % e)
+            logger.debug("Failed to set extension enabled.", exc_info = e)
             
 def browse(url):
     """
@@ -905,7 +918,7 @@ def browse(url):
     b = g15gconf.get_string_or_default(gconf.client_get_default(), \
                                       "/apps/gnome15/browser", "default")
     if not b in __browsers and not b == "default":
-        logger.warning("Could not find browser %s, falling back to default" % b)
+        logger.warning("Could not find browser %s, falling back to default", b)
         b = "default"
     if not b in __browsers:
         raise Exception("Could not find browser %s" % b)
@@ -937,7 +950,7 @@ class G15DefaultBrowser(G15Browser):
         G15Browser.__init__(self, "default", _("Default system browser"))
     
     def browse(self, url):
-        logger.info("xdg-open '%s'" % url)
+        logger.info("xdg-open '%s'", url)
         subprocess.Popen(['xdg-open', url])
         
 add_browser(G15DefaultBrowser())
@@ -957,8 +970,8 @@ class G15AbstractService(Thread):
         g15pythonlang.set_gobject_thread()
         try:
             self.loop.run()
-        except:
-            traceback.print_stack()
+        except Exception as e:
+            logger.debug('Error while running GLib loop', exc_info = e)
         logger.info("Exited GLib loop")
         
     def start_service(self):
@@ -1021,9 +1034,8 @@ class G15DesktopComponent():
         # Try and connect to the service now
         try :
             self._connect()        
-        except dbus.exceptions.DBusException:
-            if logger.isEnabledFor(logging.DEBUG):
-                traceback.print_exc(file=sys.stdout)
+        except dbus.exceptions.DBusException as e:
+            logger.debug("Error while starting the service.", exc_info = e)
             self._disconnect()
         
         # Start watching various events
@@ -1051,7 +1063,7 @@ class G15DesktopComponent():
             # using the full filename. Unfortunately this means scaling may be a bit
             # blurry in the indicator applet
             path = g15icontools.get_icon_path(icon_name, 128)
-            logger.debug("Dev mode icon %s is at %s" % ( icon_name, path ) )
+            logger.debug("Dev mode icon %s is at %s", icon_name, path)
             return path
         else:
             if not isinstance(icon_name, list):
@@ -1159,7 +1171,7 @@ class G15DesktopComponent():
         
     def _page_created(self, page_path, page_title, path = None):
         screen_path = path
-        logger.debug("Page created (%s) %s = %s" % ( screen_path, page_path, page_title ) )
+        logger.debug("Page created (%s) %s = %s", screen_path, page_path, page_title)
         page = self.session_bus.get_object('org.gnome15.Gnome15', page_path )
         self.lock.acquire()
         try :
@@ -1180,7 +1192,7 @@ class G15DesktopComponent():
     def _page_deleting(self, page_path, path = None):
         screen_path = path
         self.lock.acquire()
-        logger.debug("Destroying page (%s) %s" % ( screen_path, page_path ) )
+        logger.debug("Destroying page (%s) %s", screen_path, page_path)
         try :
             items = self.screens[screen_path].items
             if page_path in items:
@@ -1219,12 +1231,13 @@ class G15DesktopComponent():
         if screen_path in self.screens:
             try :
                 del self.screens[screen_path]
-            except dbus.DBusException:
+            except dbus.DBusException as e:
+                logger.debug("Error removing screen '%s'", screen_path, exc_info = e)
                 pass
         self.rebuild_desktop_component()
         
     def _add_screen(self, screen_path):
-        logger.debug("Screen added %s" % screen_path)
+        logger.debug("Screen added %s", screen_path)
         remote_screen = self.session_bus.get_object('org.gnome15.Gnome15', screen_path)
         ( device_uid, device_model_name, device_usb_id, device_model_fullname ) = remote_screen.GetDeviceInformation()
         screen = G15Screen(screen_path, device_model_fullname, device_uid)        
@@ -1249,7 +1262,7 @@ class G15DesktopComponent():
         self.lock.acquire()
         try : 
             for screen_path in self.service.GetScreens():
-                logger.debug("Adding %s" % screen_path)
+                logger.debug("Adding %s", screen_path)
                 self._add_screen(screen_path)
                 remote_screen = self.session_bus.get_object('org.gnome15.Gnome15', screen_path)
                 for page_path in remote_screen.GetPages():
@@ -1301,7 +1314,7 @@ class G15DesktopComponent():
         self.rebuild_desktop_component()
             
     def _add_page(self, screen_path, page_path, page):
-        logger.debug("Adding page %s to %s" % (page_path, screen_path))
+        logger.debug("Adding page %s to %s", page_path, screen_path)
         items = self.screens[screen_path].items
         if not page_path in items:
             items[page_path] = page.GetTitle()
@@ -1423,7 +1436,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                         
                         sorted_x = sorted(screen.items.iteritems(), key=operator.itemgetter(1))
                         for item_key, text in sorted_x:
-                            logger.debug("Adding item %s = %s " % (item_key, text ) )
+                            logger.debug("Adding item %s = %s ", item_key, text)
                             item = gtk.MenuItem(text)
                             item.connect("activate", self._show_page, item_key)
                             self._append_item(item)
@@ -1435,7 +1448,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
                             self.add_service_item(item)
                     i += 1
             except Exception as e:
-                logger.debug("Failed to find devices, service probably stopped. %s", str(e))
+                logger.debug("Failed to find devices, service probably stopped.", exc_info = e)
                 self.connected = False
                 self.rebuild_desktop_component()
                 
@@ -1499,7 +1512,7 @@ class G15GtkMenuPanelComponent(G15DesktopComponent):
             try:
                 self.notify_message.close()
             except Exception as e:
-                logger.debug("Failed to close message. %s" % str(e))
+                logger.debug("Failed to close message.", exc_info = e)
             self.notify_message = None
        
     def _append_item(self, item, menu = None):

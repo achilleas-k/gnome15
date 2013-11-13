@@ -29,7 +29,7 @@ import gnome15.g15accounts as g15accounts
 import gnome15.g15globals as g15globals
 import datetime
 import time
-import os
+import os, os.path
 import gobject
 import calendar
 import gtk
@@ -39,7 +39,7 @@ import cairo
 
 # Logging
 import logging
-logger = logging.getLogger("google-analytics")
+logger = logging.getLogger(__name__)
 
  
 id="google-analytics"
@@ -59,7 +59,10 @@ actions={
 unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, g15driver.MODEL_MX5500, g15driver.MODEL_G930, g15driver.MODEL_G35 ]
 
 SOURCE_APP_NAME = '%s-%s' % ( g15globals.name, g15globals.version )
-CONFIG_PATH = "~/.config/gnome15/plugin-data/google-analytics/accounts.xml"
+CONFIG_PATH = os.path.join(g15globals.user_config_dir,
+                           "plugin-data",
+                           "google-analytics",
+                           "accounts.xml")
 CONFIG_ITEM_NAME = "accounts"
 ACC_MGR_HOSTNAME = "www.google.com"
 
@@ -330,6 +333,7 @@ class G15GoogleAnalytics():
                 try :
                     return self._retrieve_site_data(items, account, password)
                 except gdata.client.BadAuthentication as e:
+                    logger.debug("Error authenticating", exc_info = e)
                     ex = e
                     
         if ex is not None:
@@ -337,7 +341,11 @@ class G15GoogleAnalytics():
         
     def _retrieve_site_data(self, items, account, password):
         username = account.get_property("username", "")
-        logger.info("Logging in as %s / %s for %s on %s" % (username, password, account, self._client.source))
+        logger.info("Logging in as %s / %s for %s on %s",
+                    username,
+                    password,
+                    account,
+                    self._client.source)
         self._client.ClientLogin(username, password, self._client.source)
         account_query = gdata.analytics.client.AccountFeedQuery()
         self._account_manager.store_password(account, password, ACC_MGR_HOSTNAME, None)

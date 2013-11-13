@@ -34,7 +34,7 @@ import feedparser
 import gtk
 import gconf
 import logging
-logger = logging.getLogger("rss")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id = "rss"
@@ -169,13 +169,14 @@ class G15FeedsMenuItem(g15theme.MenuItem):
         if g15pythonlang.attr_exists(self.entry, "description"):
             element_properties["ent_description"] = self.entry.description
             
-        try:
+        if hasattr(self.entry, 'date_parsed'):
             dt = self.entry.date_parsed
-        except AttributeError:
-            try:
-                dt = self.entry.published_parsed
-            except:
-                dt = time.localtime()
+        elif hasattr(self.entry, 'published_parsed'):
+            logger.debug("Could not get date_parsed attribute. Trying published_parsed")
+            dt = self.entry.published_parsed
+        else:
+            logger.debug("Could not get publish_parsed attribute. Using current time.")
+            dt = time.localtime()
         
         element_properties["ent_locale_date_time"] = time.strftime("%x %X", dt)            
         element_properties["ent_locale_time"] = time.strftime("%X", dt)            
@@ -237,8 +238,8 @@ class G15FeedPage(g15theme.G15Page):
             try :
                 icon_surface = g15cairo.load_surface_from_file(self._menu.selected.icon)
                 self._selected_icon_embedded = g15icontools.get_embedded_image_url(icon_surface)
-            except:
-                logger.warning("Failed to get icon %s" % str(self._menu.selected.icon))
+            except Exception as e:
+                logger.warning("Failed to get icon %s", str(self._menu.selected.icon), exc_info = e)
         
     def _reload(self):
         self.feed = feedparser.parse(self.url)
@@ -267,8 +268,8 @@ class G15FeedPage(g15theme.G15Page):
                 icon_surface = g15cairo.load_surface_from_file(icon)
                 self._icon_surface = icon_surface
                 self._icon_embedded = g15icontools.get_embedded_image_url(icon_surface)
-            except:
-                logger.warning("Failed to get icon %s" % str(icon))
+            except Exception as e:
+                logger.warning("Failed to get icon %s", str(icon), exc_info = e)
                 self._icon_surface = None
                 self._icon_embedded = None
         self.set_title(title)
@@ -295,7 +296,8 @@ class G15FeedPage(g15theme.G15Page):
                 update_time =  self.feed.updated_parsed
             
             properties["updated"] = "%s %s" % (time.strftime("%H:%M", update_time), time.strftime("%a %d %b", update_time))
-        except AttributeError:
+        except AttributeError as ae:
+            logger.debug("Could not get attribute", exc_info = ae)
             pass
         return properties 
         

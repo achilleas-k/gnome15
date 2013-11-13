@@ -29,7 +29,7 @@ import datetime
 
 # Logging
 import logging
-logger = logging.getLogger("impulse15")
+logger = logging.getLogger(__name__)
 
 id="impulse15"
 name="Impulse15"
@@ -50,7 +50,7 @@ def get_source_index(source_name):
                 i = int(line[7:])
             elif line.startswith("name: <%s" % source_name):
                 return i
-    logger.warn("Audio source %s not found, default to first source" % source_name)
+    logger.warn("Audio source %s not found, default to first source", source_name)
     return 0
 
 def create(gconf_key, gconf_client, screen):
@@ -337,7 +337,7 @@ class G15Impulse():
         self.disco = g15gconf.get_bool_or_default(self.gconf_client, self.gconf_key + "/disco", False)
         self.refresh_interval = 1.0 / g15gconf.get_float_or_default(self.gconf_client, self.gconf_key + "/frame_rate", 25.0)
         self.gain = g15gconf.get_float_or_default(self.gconf_client, self.gconf_key + "/gain", 1.0)
-        logger.info("Refresh interval is %f" % self.refresh_interval)
+        logger.info("Refresh interval is %f", self.refresh_interval)
         self.animate_mkeys = g15gconf.get_bool_or_default(self.gconf_client, self.gconf_key + "/animate_mkeys", False)
         if self.mode == None or self.mode == "" or self.mode == "spectrum" or self.mode == "scope":
             self.mode = "default"

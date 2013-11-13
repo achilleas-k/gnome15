@@ -27,7 +27,7 @@ import dbus
 
 # Logging
 import logging
-logger = logging.getLogger("network")
+logger = logging.getLogger(__name__)
 
 _system_bus = dbus.SystemBus()
 
@@ -54,17 +54,14 @@ class NetworkManager():
             self._set_state(self._interface.state())
             self._handle = self._interface.connect_to_signal('StateChanged', self._set_state)
         except dbus.DBusException as e:
-            if logger.level == logging.DEBUG:
-                logger.warning("NetworkManager DBUS interface could not be contacted. All plugins will assume the network is available, and may behave unexpectedly. %s" % e)
-            else:
-                logger.warning("NetworkManager DBUS interface could not be contacted. All plugins will assume the network is available, and may behave unexpectedly.")
+            logger.warning("NetworkManager DBUS interface could not be contacted. All plugins will assume the network is available, and may behave unexpectedly.", exc_info = e)
                 
             # Assume connected
             self._state = 70
 
     def _set_state(self, state):
         if state in NM_STATE_INDEX:
-            logger.info("New network state is %s" % NM_STATE_INDEX[state])
+            logger.info("New network state is %s", NM_STATE_INDEX[state])
             s = state
         else:
             logger.info("New network state is unknown")

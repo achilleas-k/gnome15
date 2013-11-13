@@ -19,7 +19,7 @@ import dbus
 from lxml import etree
 import time
 import logging
-logger = logging.getLogger("dbusmenu")
+logger = logging.getLogger(__name__)
 
 
 '''
@@ -123,7 +123,7 @@ class DBUSMenu():
     '''
      
     def _item_activation_requested(self, id, timestamp):
-        logger.warning("TODO - implement item activation request for %s on %d" % ( id, timestamp ) )
+        logger.warning("TODO - implement item activation request for %s on %d", id, timestamp)
         
     def _layout_updated(self, revision, parent):
         self._get_layout()
@@ -194,5 +194,5 @@ class DBUSMenu():
             try :
                 menu.children.append(self._load_xml_menu(child, map))
             except dbus.DBUSException as e:
-                logger.warning("Failed to get child menu." % str(e))
+                logger.warning("Failed to get child menu.", exc_info = e)
         return menu

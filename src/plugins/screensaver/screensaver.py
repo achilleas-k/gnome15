@@ -28,7 +28,7 @@ import gtk
 import dbus
 import logging
 import os.path
-logger = logging.getLogger("screensaver")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="screensaver"
@@ -106,7 +106,7 @@ class G15ScreenSaver():
                 self._session_bus = dbus.SessionBus()
             except Exception as e:
                 self._session_bus = None
-                logger.error("Error. %s retrying in 10 seconds" % str(e) ) 
+                logger.error("Error. Retrying in 10 seconds", exc_info = e)
                 Timer(10, self.activate, ()).start()
                 return
             
@@ -120,7 +120,11 @@ class G15ScreenSaver():
             
             for dbus_name, interface, path in screensavers:
                 try :
-                    logger.debug("Searching for screensaver. dbus_name: %s, dbus_interface: %s, dbus_object: %s" % (dbus_name, interface, path))
+                    logger.debug("Searching for screensaver. " \
+                                 "dbus_name: %s, dbus_interface: %s, dbus_object: %s",
+                                 dbus_name,
+                                 interface,
+                                 path)
                     screen_saver = dbus.Interface(self._session_bus.get_object(dbus_name, path), interface)
                     self._dbus_interface = interface
                     self._dbus_name = dbus_name
@@ -128,6 +132,7 @@ class G15ScreenSaver():
                     self._in_screensaver = screen_saver.GetActive()
                     break
                 except Exception as e:
+                    logger.debug("Could not find screensaver", exc_info = e)
                     screen_saver = None
                     pass
                 

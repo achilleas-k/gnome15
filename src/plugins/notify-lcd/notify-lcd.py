@@ -23,7 +23,7 @@ import gnome15.util.g15uigconf as g15uigconf
 import gnome15.util.g15gconf as g15gconf
 import gnome15.util.g15icontools as g15icontools
 import gnome15.util.g15markup as g15markup
-import gnome15.g15globals as pglobals
+import gnome15.g15globals as g15globals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15desktop as g15desktop
@@ -37,7 +37,6 @@ import gtk
 import gtk.gdk
 from PIL import Image
 import subprocess
-import traceback
 import tempfile
 import lxml.html
 import Queue
@@ -50,7 +49,7 @@ from dbus.exceptions import NameExistsException
 
 # Logging
 import logging
-logger = logging.getLogger("notify")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="notify-lcd"
@@ -138,6 +137,7 @@ class G15Message():
             try:
                 self.body = lxml.html.fromstring(body).text_content()
             except Exception as e:
+                logger.debug("Could not parse body as html", exc_info = e)
                 self.body = body
         else:
             self.body = body
@@ -175,9 +175,9 @@ class G15Message():
                 file.close()
                 pixbuf.save(self.embedded_image, "png")
                 self.icon = None
-            except :
+            except Exception as e:
                 # Sometimes the image data seems to be bad
-                logger.warn("Failed to decode notification image")
+                logger.warn("Failed to decode notification image", exc_info = e)
                 
             if self.embedded_image == None and ( self.icon == None or self.icon == "" ):
                 self.icon = g15icontools.get_icon_path("dialog-information", 1024)
@@ -200,7 +200,7 @@ class G15NotifyService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
     def GetServerInformation(self):
-        return ( pglobals.name, "TT", pglobals.version, "1.1" ) 
+        return (g15globals.name, "TT", g15globals.version, "1.1")
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='as')
     def GetCapabilities(self):
@@ -211,7 +211,7 @@ class G15NotifyService(dbus.service.Object):
         if self._plugin._get_enable_sounds():
             caps.append("sounds")
             
-        logger.debug("Got capabilities %s" % str(caps))
+        logger.debug("Got capabilities %s", str(caps))
         return caps     
     
     @dbus.service.method(IF_NAME, in_signature='susssasa{sv}i', out_signature='u')
@@ -220,19 +220,19 @@ class G15NotifyService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='u', out_signature='')
     def CloseNotification(self, id):     
-        logger.info("Close notification %d" % ( id ) )   
+        logger.info("Close notification %d", id)
         self._plugin.close_notification(id)
         
     @dbus.service.signal(dbus_interface=IF_NAME,
                          signature='us')
     
     def ActionInvoked(self, id, action_key):
-        logger.debug("Sending ActionInvoked for %d, %s" % ( id, action_key ) )
+        logger.debug("Sending ActionInvoked for %d, %s", id, action_key)
     
     @dbus.service.signal(dbus_interface=IF_NAME,
                          signature='uu')
     def NotificationClosed(self, id, reason):
-        logger.debug("Sending NotificationClosed for %d, %s" % ( id, reason ) )
+        logger.debug("Sending NotificationClosed for %d, %s", id, reason)
     
 '''
 Gnome15 notification plugin
@@ -288,15 +288,18 @@ class G15NotifyLCD():
                         process.wait()
                     self._bus_name = dbus.service.BusName(IF_NAME, bus=self._bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
                     break
-                except NameExistsException:
+                except NameExistsException as e:
+                    logger.debug("Process still exists, Waiting one more second", exc_info = e)
                     time.sleep(1.0)
                     if i == 2:
+                        logger.error("Process still exists after waiting", exc_info = e)
                         raise
             
             try :
             	self._service = G15NotifyService(self._gconf_client, self._gconf_key, self._screen, self._bus_name, self)
-            except KeyError:
-                logger.error("DBUS notify service failed to start. May already be started.")
+            except KeyError as e:
+                logger.error("DBUS notify service failed to start. May already be started.",
+                             exc_info = e)
 #            
         if not self._service:
             # Just monitor raw DBUS events
@@ -304,10 +307,10 @@ class G15NotifyLCD():
             try:
                 self._bus.add_match_string(self._match_string)
                 logger.info("Using eavesdrop for monitoring DBUS")
-            except:
+            except Exception as e:
                 self._match_string = PASSIVE_MATCH_STRING
                 self._bus.add_match_string(self._match_string)
-                logger.info("Not using eavesdrop for monitoring DBUS")
+                logger.info("Not using eavesdrop for monitoring DBUS", exc_info = e)
             self._bus.add_message_filter(self.msg_cb)
                 
             
@@ -353,8 +356,7 @@ class G15NotifyLCD():
                 self.action()
     
     def notify(self, app_name, id, icon, summary, body, actions, hints, timeout):
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Notify app=%s id=%s '%s' {%s}", app_name, id, summary, hints)
+        logger.debug("Notify app=%s id=%s '%s' {%s}", app_name, id, summary, hints)
         try :                
             if self._active:
                 timeout = float(timeout) / 1000.0
@@ -380,7 +382,9 @@ class G15NotifyLCD():
                 if id != 0 and not id in self._message_map:
                     if len(self._message_queue) > 0:
                         new_id = self._message_queue[0].id
-                        logger.warn("Got request to replace message %d, but we do not know about it. Just replacing visible message %d" % (id, new_id))
+                        logger.warn("Got request to replace message %d, " \
+                                    "but we do not know about it. " \
+                                    "Just replacing visible message %d", id, new_id)
                         id = new_id
                     else:
                         id = 0
@@ -403,7 +407,8 @@ class G15NotifyLCD():
                             self._screen.redraw(self._page)
                 else:
                     if id in self._message_map:
-                        logger.debug("Message %s is already in queue, replacing its details" % str(id))
+                        logger.debug("Message %s is already in queue, replacing its details",
+                                     str(id))
                         message = self._message_map[id]
                         message.set_details(icon, summary, body, timeout, actions, hints) 
                         
@@ -415,13 +420,16 @@ class G15NotifyLCD():
                             if self._page != None:
                                 self._screen.redraw(self._page)
                             
-                logger.info("Notify message has ID of %s" % str(id))
+                logger.info("Notify message has ID of %s", str(id))
                 return id                         
         except Exception as blah:
-            traceback.print_exc()
+            logger.warning("Could not create notification", exc_info = blah)
     
     def close_notification(self, id):        
-        logger.info("Closing notification %d. Message queue has %d items, allow cancel is %s" % (id, len(self._message_queue), str(self.allow_cancel)))
+        logger.info("Closing notification %d. Message queue has %d items, allow cancel is %s",
+                    id,
+                    len(self._message_queue),
+                    str(self.allow_cancel))
         self._lock.acquire()
         try :
             if self.allow_cancel and len(self._message_queue) > 0:
@@ -512,7 +520,7 @@ class G15NotifyLCD():
 
     def _notify(self):
         if len(self._message_queue) != 0:            
-            logger.debug("Displaying first message in queue of %d" % len(self._message_queue))   
+            logger.debug("Displaying first message in queue of %d", len(self._message_queue))
             message = self._message_queue[0] 
             
                 
@@ -578,7 +586,7 @@ class G15NotifyLCD():
             self._timer.cancel()
         
     def _move_to_next(self, reason = NOTIFICATION_DISMISSED):
-        logger.debug("Dismissing current message. Reason code %d", reason)  
+        logger.debug("Dismissing current message. Reason code %d", reason)
         self._lock.acquire()
         try :      
             if len(self._message_queue) > 0:

@@ -25,7 +25,7 @@ import os
 
 # Logging
 import logging
-logger = logging.getLogger("shell")
+logger = logging.getLogger(__name__)
 
 def run_script(script, args = None, background = True):
     """
@@ -41,8 +41,8 @@ def run_script(script, args = None, background = True):
         for arg in args:
             a += "\"%s\"" % arg
     p = os.path.realpath(os.path.join(g15globals.scripts_dir,script))
-    logger.info("Running '%s'" % p)
-    return os.system("python \"%s\" %s %s" % ( p, a, " &" if background else "" ))
+    logger.info("Running '%s'", p)
+    return os.system("\"%s\" %s %s" % ( p, a, " &" if background else "" ))
 
 def get_command_output(cmd):
     """
@@ -74,6 +74,7 @@ def mkdir_p(path):
     try:
         os.makedirs(path)
     except OSError as exc: # Python >2.5
+        logger.debug("Error when trying to create path %s", path, exc_info = exc)
         import errno
         if exc.errno == errno.EEXIST:
             pass

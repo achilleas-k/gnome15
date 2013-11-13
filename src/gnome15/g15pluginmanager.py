@@ -30,10 +30,14 @@ Global Plugins        - These are plugins that are not tied to any specific devi
                         
 Plugins are looked for in a number of locations.
 
-* g15globals.plugin_dir - This is where official plugins installed with Gnome15 reside
-* $HOME/.config/gnome15/plugins - This is where users can put their own local plugins
-* $G15_PLUGINS_DIR - If it exists allows custom locations to be added
-* g15pluginmanager.extra_plugin_dirs - Allows other plugins to dynamically register new plugin locations
+* g15globals.plugin_dir              - This is where official plugins installed with Gnome15 reside
+* $XDG_DATA_HOME/gnome15/plugins     - This is where users can put their own local plugins
+* $XDG_CONFIG_HOME/gnome15/plugins   - This is a deprecated place where users can put
+                                       their own local plugins. It will be removed on a future
+                                       version of Gnome15
+* $G15_PLUGINS_DIR                   - If it exists allows custom locations to be added
+* g15pluginmanager.extra_plugin_dirs - Allows other plugins to dynamically register new plugin
+                                       locations
                         
 The lifecycle of all plugins consists of 5 stages. 
 
@@ -60,16 +64,15 @@ or if Gnome15 itself is closing down.
  
 import os.path
 import sys
-import g15globals as pglobals
-import g15driver as g15driver
-import g15actions as g15actions
+import g15globals
+import g15driver
+import g15actions
 import gconf
-import traceback
 import threading
 
 # Logging
 import logging
-logger = logging.getLogger("plugins")
+logger = logging.getLogger(__name__)
 
 imported_plugins = []
 
@@ -102,7 +105,7 @@ def list_plugin_dirs(path):
             if os.path.isdir(plugin_path):
                 plugindirs.append(os.path.realpath(plugin_path))
     else:
-        logger.debug("Plugin path %s does not exist." % path)
+        logger.debug("Plugin path %s does not exist.", path)
     return plugindirs
 
 def get_extra_plugin_dirs():    
@@ -140,16 +143,13 @@ def get_supported_models(plugin_module):
     Keyword arguments:
     plugin_module -- plugin module instance
     """
-    supported_models = []
-    try:
-        supported_models += plugin_module.supported_models
-    except:
-        supported_models += g15driver.MODELS
-    try:
-        for p in plugin_module.unsupported_models:
+    supported_models = [] + getattr(plugin_module, 'supported_models', g15driver.MODELS)
+    unsupported_models = getattr(plugin_module, 'unsupported_models', [])
+    for p in unsupported_models:
+        if p in supported_models:
             supported_models.remove(p)
-    except:
-        pass        
+        else:
+            logger.debug("Tried to remove '%s' not in supported_models. Ignoring...", p)
     return supported_models
 
 def is_needs_network(plugin_module):
@@ -160,11 +160,7 @@ def is_needs_network(plugin_module):
     Keyword arguments:
     plugin_module -- plugin module instance
     """
-    try :
-        return plugin_module.needs_network
-    except AttributeError: 
-        pass 
-    return False
+    return getattr(plugin_module, 'needs_network', False)
 
 def is_default_enabled(plugin_module):
     """
@@ -175,11 +171,7 @@ def is_default_enabled(plugin_module):
     Keyword arguments:
     plugin_module -- plugin module instance
     """
-    try :
-        return plugin_module.default_enabled
-    except AttributeError: 
-        pass 
-    return False
+    return getattr(plugin_module, 'default_enabled', False)
 
 def is_global_plugin(plugin_module):
     """
@@ -188,11 +180,7 @@ def is_global_plugin(plugin_module):
     Keyword arguments:
     plugin_module -- plugin module instance
     """
-    try :
-        return plugin_module.global_plugin
-    except AttributeError: 
-        pass 
-    return False
+    return getattr(plugin_module, 'global_plugin', False)
 
 def is_passive_plugin(plugin_module):
     """
@@ -203,11 +191,7 @@ def is_passive_plugin(plugin_module):
     Keyword arguments:
     plugin_module -- plugin module instance
     """
-    try :
-        return plugin_module.passive
-    except AttributeError: 
-        pass 
-    return False
+    return getattr(plugin_module, 'passive', False)
  
 def get_actions(plugin_module, device):
     """
@@ -219,20 +203,15 @@ def get_actions(plugin_module, device):
     plugin_module -- plugin module instance
     device        -- device the plugins are for
     """
-    
+    actions = {}
     # First look for actions for the specific device
     if device is not None:
-        try:
-            return getattr(plugin_module, 'actions_%s' % device.model_id)
-        except AttributeError: 
-            pass 
-    
-    try :
-        return plugin_module.actions
-    except AttributeError: 
-        pass 
-    
-    return {}
+        actions = getattr(plugin_module, 'actions_%s' % device.model_id, {})
+
+    if actions == {}:
+        return getattr(plugin_module, 'actions', {})
+    else:
+        return actions
 
 
 
@@ -247,8 +226,11 @@ name as the directory they are in. Each one of these is the main plugin module.
 
 TODO - These should really be using __init__.py
 """
-all_plugin_directories = get_extra_plugin_dirs() + list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + \
-            list_plugin_dirs(os.path.expanduser("~/.config/gnome15/plugins")) + list_plugin_dirs(pglobals.plugin_dir)
+all_plugin_directories = get_extra_plugin_dirs() + \
+                         list_plugin_dirs(os.path.expanduser("~/.gnome15/plugins")) + \
+                         list_plugin_dirs(os.path.join(g15globals.user_config_dir, "plugins")) + \
+                         list_plugin_dirs(os.path.join(g15globals.user_data_dir, "plugins")) + \
+                         list_plugin_dirs(g15globals.plugin_dir)
             
 # Phase 1
 for plugindir in all_plugin_directories:
@@ -270,11 +252,7 @@ for plugindir in all_plugin_directories:
                 if not a in g15actions.actions:
                     g15actions.actions.append(a)
     except Exception as e:
-        logger.error("Failed to load plugin module %s. %s" % (plugindir, str(e)))
-        if logger.isEnabledFor(logging.DEBUG):                  
-            traceback.print_exc(file=sys.stderr)
-
-
+        logger.error("Failed to load plugin module %s.", plugindir, exc_info = e)
 
 
 class G15Plugins():
@@ -365,7 +343,8 @@ class G15Plugins():
             for mod in imported_plugins:
                 plugin_dir_key = self._get_plugin_key(mod.id)
                 if mod.id in added:
-                    logger.warn("Same plugin with ID of %s is already loaded. Only the first copy will be used." % mod.id) 
+                    logger.warn("Same plugin with ID of %s is already loaded." \
+                                "Only the first copy will be used.", mod.id)
                 else:
                     self.conf_client.add_dir(plugin_dir_key, gconf.CLIENT_PRELOAD_NONE)
                     key = "%s/enabled" % plugin_dir_key
@@ -388,11 +367,11 @@ class G15Plugins():
                                     self.started.append(instance)
                             except Exception as e:
                                 self.conf_client.set_bool(key, False)
-                                logger.error("Failed to load plugin %s. %s" % (mod.id, str(e)))                    
-                                traceback.print_exc(file=sys.stderr)
+                                logger.error("Failed to load plugin %s.", mod.id, exc_info = e)
             self.state = STARTED
         except Exception as a:
             self.state = UNINITIALISED
+            logger.debug("Error when starting plugins", exc_info = a)
             raise a 
         finally:
             self.lock.release()
@@ -409,14 +388,13 @@ class G15Plugins():
         post -- post processing stage 
         """
         for plugin in self.started:
-            can_handle_keys = False
-            try :
-                getattr(plugin, "handle_key") 
-                can_handle_keys = True
-            except AttributeError: 
-                pass
+            can_handle_keys = hasattr(plugin, 'handle_key')
             if can_handle_keys and plugin.handle_key(key, state, post):
-                logger.info("Plugin %s handled key %s (%d), %s" % (str(plugin), str(key), state, str(post)))
+                logger.info("Plugin %s handled key %s (%d), %s",
+                        str(plugin),
+                        str(key),
+                        state,
+                        str(post))
                 return True 
         return False
     
@@ -456,6 +434,7 @@ class G15Plugins():
                 self.state = ACTIVATED
             except Exception as e:           
                 self.state = STARTED
+                logger.debug("Error while activating plugin", exc_info = e)
                 raise e     
             finally:
                 self.lock.release()
@@ -507,14 +486,13 @@ class G15Plugins():
     ''' 
     def _deactivate_instance(self, plugin):
         mod = self.plugin_map[plugin]
-        logger.debug("De-activating %s" % mod.id)
+        logger.debug("De-activating %s", mod.id)
         if not plugin in self.activated:
             raise Exception("%s is not activated" % mod.id)
         try :
             plugin.deactivate()
-        except:
-            logger.warning("Failed to deactive plugin properly.")           
-            traceback.print_exc(file=sys.stderr)
+        except Exception as e:
+            logger.warning("Failed to deactive plugin properly.", exc_info = e)
         finally:                    
             mod_id = self.plugin_map[plugin].id
             if mod_id in self.service.active_plugins:
@@ -565,10 +543,10 @@ class G15Plugins():
             
     def _activate_instance(self, instance, callback=None, idx=0):
         mod = self.plugin_map[instance] 
-        logger.info("Activating %s" % mod.id)
+        logger.info("Activating %s", mod.id)
         try :             
             if self._is_single_instance(mod):
-                logger.info("%s may only be run once, checking if there is another instance" % mod.id)
+                logger.info("%s may only be run once, checking if there is another instance", mod.id)
                 if  mod.id in self.service.active_plugins:
                     raise Exception("Plugin may %s only run on one device at a time." % mod.id)
             if callback != None:
@@ -577,25 +555,20 @@ class G15Plugins():
             self.service.active_plugins[mod.id] = True
             self.activated.append(instance)
         except Exception as e:
-            logger.error("Failed to activate plugin %s. %s" % (mod.id, str(e)))   
+            logger.error("Failed to activate plugin %s.", mod.id, exc_info = e)
             self.conf_client.set_bool(self._get_plugin_key("%s/enabled" % mod.id), False)              
-            traceback.print_exc(file=sys.stderr)
         
     def _is_single_instance(self, module):
-        try :
-            return module.single_instance
-        except AttributeError: 
-            pass
-        return False
+        return getattr(module, 'single_instance', False)
             
     def _create_instance(self, module, key):
-        logger.info("Loading %s" % module.id)
+        logger.info("Loading %s", module.id)
         if self.screen is not None:
             instance = module.create(key, self.conf_client, screen=self.screen)
         else:
             instance = module.create(key, self.conf_client, service=self.service)
         self.module_map[module.id] = instance
         self.plugin_map[instance] = module
-        logger.info("Loaded %s" % module.id)
+        logger.info("Loaded %s", module.id)
         return instance
     

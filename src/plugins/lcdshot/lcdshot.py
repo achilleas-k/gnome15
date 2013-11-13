@@ -38,7 +38,7 @@ from threading import Thread
  
 # Logging
 import logging
-logger = logging.getLogger("lcdshot")
+logger = logging.getLogger(__name__)
 
 # Custom actions
 SCREENSHOT = "screenshot"
@@ -169,10 +169,10 @@ class G15LCDShot():
                 g15notify.notify(_("LCD Screenshot"), _("Video encoding complete. Result at %s" % self._record_to), "dialog-info", timeout = 0)
                 shutil.rmtree("%s.tmp" % self._record_to, True)
             else:
-                logger.error("Video encoding failed with status %d" % ret)
+                logger.error("Video encoding failed with status %d", ret)
                 g15notify.notify(_("LCD Screenshot"), _("Video encoding failed."), "dialog-error", timeout = 0)
         except Exception as e:
-                logger.error("Video encoding failed. Exception thrown: %s" %e)
+                logger.error("Video encoding failed.", exc_info = e)
                 g15notify.notify(_("LCD Screenshot"), _("Video encoding failed. Do you have mencoder installed?"), "dialog-error", timeout = 0)
                     
     def _stop_recording(self):
@@ -205,7 +205,7 @@ class G15LCDShot():
                 pixbuf.save(path, "jpeg", {"quality":"100"})
                 self._frame_no += 1
             except Exception as e:
-                logger.error("Failed to save screenshot. %s" % str(e))
+                logger.error("Failed to save screenshot.", exc_info = e)
                 self._screen.error_on_keyboard_display(_("Failed to save screenshot to %s. %s") % (dir, str(e)))
                 self._recording = False
             
@@ -227,11 +227,11 @@ class G15LCDShot():
             try:
                 path = self._find_next_free_filename("png", self._screen.get_visible_page().title)
                 self._screen.old_surface.write_to_png(path)
-                logger.info("Written to screenshot to %s" % path)
+                logger.info("Written to screenshot to %s", path)
                 g15notify.notify(_("LCD Screenshot"), _("Screenshot saved to %s") % path, "dialog-info", timeout = 0)
                 return True
             except Exception as e:
-                logger.error("Failed to save screenshot. %s" % str(e))
+                logger.error("Failed to save screenshot.", exc_info = e)
                 self._screen.error_on_keyboard_display(_("Failed to save screenshot to %s. %s") % (dir, str(e)))
             finally:
                 self._screen.draw_lock.release()

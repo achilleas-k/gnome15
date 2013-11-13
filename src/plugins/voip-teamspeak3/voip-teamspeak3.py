@@ -22,7 +22,6 @@ _ = g15locale.get_translation("voip-teamspeak3", modfile = __file__).ugettext
 import gnome15.g15driver as g15driver
 import gnome15.util.g15icontools as g15icontools
 import ts3
-import traceback
 from threading import Thread
 from threading import Lock
 from threading import RLock
@@ -51,7 +50,7 @@ global_plugin=True
 
 # Logging
 import logging
-logger = logging.getLogger("voip-teamspeak3")
+logger = logging.getLogger(__name__)
 
 """
 Calendar Back-end module functions
@@ -66,7 +65,8 @@ def find_avatar(server_unique_identifier, client_unique_identifier):
         for c in base64.b64decode(client_unique_identifier):
             decoded += chr(((ord(c) & 0xf0) >> 4) + 97)
             decoded += chr((ord(c) & 0x0f) + 97)
-    except TypeError:
+    except TypeError as e:
+        logger.debug("Error decoding client_unique_identifier. Using raw value", exc_info = e)
         # Sometimes the client_unique_identifier is not base64 encoded
         decoded = client_unique_identifier
 
@@ -182,7 +182,7 @@ class Teamspeak3Backend(voip.VoipBackend):
                 ))
 
         except ts3.TS3CommandException as e:
-            traceback.print_exc()
+            logger.debug("Error when changing channel", exc_info = e)
     
     def get_current_channel(self):
         if self._current_channel is None:
@@ -242,8 +242,8 @@ class Teamspeak3Backend(voip.VoipBackend):
                                         'channellist'
                                     ))
                     self._parse_channellist_reply(reply, s)
-                except ts3.TS3CommandException:
-                    traceback.print_exc()
+                except ts3.TS3CommandException as e:
+                    logger.debug("Error when getting channel list", exc_info = e)
                     
         
             # Switch back to the selected server connection
@@ -262,10 +262,10 @@ class Teamspeak3Backend(voip.VoipBackend):
         # Connect to ClientQuery plugin
         try :
             self._client.start()
-        except socket.error, v:
+        except socket.error as v:
+            logger.debug("Error starting client. Could not open socket.", exc_info = v)
             self._client = None
-            error_code = v[0]
-            if error_code == errno.ECONNREFUSED:
+            if v.error_code == errno.ECONNREFUSED:
                 return False
             raise v
         
@@ -280,6 +280,7 @@ class Teamspeak3Backend(voip.VoipBackend):
             
             return True
         except ts3.TS3CommandException as e:
+            logger.debug("TeamSpeak error getting initial data", exc_info = e)
             self._client.close()
             self._client = None
             if e.code == 1794:
@@ -288,6 +289,7 @@ class Teamspeak3Backend(voip.VoipBackend):
             else:
                 raise e
         except Exception as e:
+            logger.debug("Error getting initial data", exc_info = e)
             self._client.close()
             self._client = None
             raise e
@@ -309,14 +311,14 @@ class Teamspeak3Backend(voip.VoipBackend):
     def kick(self, buddy):
         reply = self._client.send_command(ts3.Command(
             'clientkick', clid = buddy.clid, reasonid = 5, reasonmsg = 'No reason given'))
-        logger.info("Kicked %s (%s)" % (buddy.nickname, buddy.clid) )
+        logger.info("Kicked %s (%s)", buddy.nickname, buddy.clid)
     
     def ban(self, buddy):
         if buddy.uid is None:
             raise Exception("UID is not known")        
         reply = self._client.send_command(ts3.Command(
             'banadd', banreason = 'No reason given', uid = buddy.uid))
-        logger.info("Banned %s (%s)" % (buddy.nickname, buddy.uid) )
+        logger.info("Banned %s (%s)", buddy.nickname, buddy.uid)
         
     def away(self):
         reply = self._client.send_command(ts3.Command(
@@ -350,7 +352,7 @@ class Teamspeak3Backend(voip.VoipBackend):
         if isinstance(error, EOFError):
             self._disconnected()
         else:
-            logger.warn("Teamspeak3 error. %s" % str(error))
+            logger.warn("Teamspeak3 error. %s", str(error))
         
     def _handle_message(self, message):
         print message.command
@@ -386,9 +388,8 @@ class Teamspeak3Backend(voip.VoipBackend):
                 
                 
                 
-        except:
-            logger.error("Possible corrupt reply.")
-            traceback.print_exc()
+        except Exception as e:
+            logger.error("Possible corrupt reply.", exc_info = e)
                 
     def _disconnected(self):
         print "disconnex"
@@ -416,7 +417,7 @@ class Teamspeak3Backend(voip.VoipBackend):
             'whoami', virtualserver_unique_identifier=None
         ))
         self._clid = int(reply.args['clid'])
-        logger.info("Your CLID is %d" % self._clid)
+        logger.info("Your CLID is %d", self._clid)
     
     def _get_server_uid(self):
         reply = self._client.send_command(ts3.Command(
@@ -508,7 +509,8 @@ class Teamspeak3Backend(voip.VoipBackend):
             next_item = self._channels[position + item.child_count + 1]
             if next_item.cpid == item.cpid:
                 next_item.order = item.order
-        except IndexError:
+        except IndexError as e:
+            logger.debug("Did not found channel to remove", exc_info = e)
             pass
 
         self._channels.remove(item)
@@ -549,7 +551,8 @@ class Teamspeak3Backend(voip.VoipBackend):
             next_item = self._channels[position + 1]
             if next_item.cpid == item.cpid:
                 next_item.order = item.cid
-        except IndexError:
+        except IndexError as e:
+            logger.debug("Did not found channel to update", exc_info = e)
             pass
     
     def _parse_notifyconnectstatuschange_reply(self, message):
@@ -567,7 +570,7 @@ class Teamspeak3Backend(voip.VoipBackend):
             self._plugin.buddy_left(item)
             self._do_redraw()
         else:
-            logger.warning("Client left that we knew nothing about yet (%d)" % clid)
+            logger.warning("Client left that we knew nothing about yet (%d)", clid)
         
     def _parse_notifycliententerview_reply(self, message):
         reply= self._client.send_command(ts3.Command(
@@ -622,7 +625,8 @@ class Teamspeak3Backend(voip.VoipBackend):
                 result.append(item)
                 search_stack.append((item.cpid, item.cid))
                 search_stack.append((item.cid, 0))
-            except KeyError:
+            except KeyError as e:
+                logger.debug("Did not found channels matching search_criteria", exc_info = e)
                 continue
 
         return result
@@ -645,7 +649,7 @@ class Teamspeak3Backend(voip.VoipBackend):
         if 'invokername' in message.args and 'msg' in message.args:
             self._plugin.message_received(message.args['invokername'], self._filter_formatting_tags(message.args['msg']))
         else:
-            logger.warn("Got text messsage I didn't understand. %s" % str(message))
+            logger.warn("Got text messsage I didn't understand. %s", str(message))
             
     def _parse_notifytalkstatuschange_reply(self, message):
         clid = int(message.args['clid'])

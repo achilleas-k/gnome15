@@ -30,7 +30,7 @@ import base64
 
 # Logging
 import logging
-logger = logging.getLogger("icon")
+logger = logging.getLogger(__name__)
 
 from cStringIO import StringIO
 
@@ -87,7 +87,7 @@ def get_icon_path(icon = None, size = 128, warning = True, include_missing = Tru
             p = get_icon_path(i, size, warning = False, include_missing = False)
             if p != None:
                 return p
-        logger.warning("Icon %s (%d) not found" % ( str(icon), size ))
+        logger.warning("Icon %s (%d) not found", str(icon), size)
         if include_missing and not icon in [ "image-missing", "gtk-missing-image" ]:
             return get_icon_path(["image-missing", "gtk-missing-image"], size, warning)
     else:
@@ -95,20 +95,20 @@ def get_icon_path(icon = None, size = 128, warning = True, include_missing = Tru
             icon = gtk_icon_theme.lookup_icon(icon, size, 0)
         if icon != None:
             if icon.get_filename() == None and warning:
-                logger.warning("Found icon %s (%d), but no filename was available" % ( o_icon, size ))
+                logger.warning("Found icon %s (%d), but no filename was available", o_icon, size)
             fn = icon.get_filename()
             if os.path.isfile(fn):
                 return fn
             elif include_missing and not icon in [ "image-missing", "gtk-missing-image" ]:
                 if warning:
-                    logger.warning("Icon %s (%d) not found, using missing image" % ( o_icon, size ))
+                    logger.warning("Icon %s (%d) not found, using missing image", o_icon, size)
                 return get_icon_path(["image-missing", "gtk-missing-image"], size, warning)
         else:
             if os.path.isfile(o_icon):
                 return o_icon
             else:
                 if warning:
-                    logger.warning("Icon %s (%d) not found" % ( o_icon, size ))
+                    logger.warning("Icon %s (%d) not found", o_icon, size)
                 if include_missing and not icon in [ "image-missing", "gtk-missing-image" ]:
                     return get_icon_path(["image-missing", "gtk-missing-image"], size, warning)
 

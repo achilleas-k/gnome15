@@ -37,6 +37,7 @@ import cairo
 import rsvg
 import pango
 import locale
+import xdg.BaseDirectory
 
 # Plugin details - All of these must be provided
 id="cairo-clock"
@@ -75,12 +76,12 @@ def get_theme_dirs(model_name, gconf_key, gconf_client):
     elif model_name == g15driver.MODEL_MX5500:
         model_dir = "mx5500"
     dirs.append(os.path.join(os.path.dirname(__file__), model_dir))
-    dirs.append(os.path.expanduser("~/.local/share/gnome15/cairo-clock/%s" % model_dir))
+    dirs.append(os.path.join(g15globals.user_data_dir, "cairo-clock", model_dir))
     theme_dir = gconf_client.get(gconf_key + "/theme_dir")
     if theme_dir != None:
         dirs.append(theme_dir.get_string())
     if model_name == g15driver.MODEL_G19:
-        dirs.append(os.path.expanduser("~/.local/share/cairo-clock"))
+        dirs.append(os.path.join(xdg.BaseDirectory.xdg_data_home, "cairo-clock"))
         dirs.append("/usr/share/cairo-clock/themes")
     return dirs
 

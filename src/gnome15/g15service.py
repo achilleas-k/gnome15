@@ -33,7 +33,6 @@ import g15uinput
 import g15network
 import g15accounts
 import g15driver
-import traceback
 import gconf
 import util.g15scheduler as g15scheduler
 import util.g15gconf as g15gconf
@@ -51,18 +50,19 @@ import g15actions
 from threading import Thread
 import gtk.gdk
  
+# Logging
+import logging
+logger = logging.getLogger(__name__)
+
 # Used for getting logout  / shutdown signals
 master_client = None
 if g15desktop.get_desktop() in [ "gnome", "gnome-shell" ]:
     try:
         import gnome.ui
         master_client = gnome.ui.master_client()
-    except:
+    except Exception as e:
+        logger.debug("Could not get gnome master client", exc_info = e)
         pass
-
-# Logging
-import logging
-logger = logging.getLogger("service")
 
 # Upgrade
 import g15upgrade
@@ -138,7 +138,7 @@ class StartThread(Thread):
         try:
             self.screen.start()
         except Exception as e:
-            logger.error("Failed to start screen. %s" % str(e))
+            logger.error("Failed to start screen.", exc_info = e)
             self.error = e
             
 class MacroHandler(object):
@@ -196,15 +196,15 @@ class MacroHandler(object):
                 import virtkey
                 self.virtual_keyboard = virtkey.virtkey()
                 self.x_test_available = False
-            except:
-                logger.warn("No python-virtkey, macros may be weird. Trying XTest")
+            except Exception as e:
+                logger.warn("No python-virtkey, macros may be weird. Trying XTest", exc_info = e)
     
                 # Determine whether to use XTest for sending key events to X
                 self.x_test_available  = True
                 try :
                     import Xlib.ext.xtest
-                except ImportError:
-                    logger.warn("No XTest, falling back to raw X11 events")
+                except ImportError as e:
+                    logger.warn("No XTest, falling back to raw X11 events", exc_info = e)
                     self.x_test_available = False
                      
                 self.local_dpy = Xlib.display.Display()
@@ -222,21 +222,26 @@ class MacroHandler(object):
         ch        --    character to send
         press     --    boolean indicating if this is a PRESS or RELEASE
         """
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Sending string %s" % ch)
+        logger.debug("Sending string %s", ch)
             
         if self.virtual_keyboard is not None:
             keysym = self._get_keysym(ch)
             if press:
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug("Sending keychar %s press = %s, keysym = %d (%x)" % (ch, press, keysym, keysym))
+                logger.debug("Sending keychar %s press = %s, keysym = %d (%x)",
+                             ch,
+                             press,
+                             keysym,
+                             keysym)
                 self.virtual_keyboard.press_keysym(keysym)
             else:
                 self.virtual_keyboard.release_keysym(self._get_keysym(ch))
         else:
             keycode, shift_mask = self._char_to_keycodes(ch)
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Sending keychar %s keycode %d, press = %s, shift = %d" % (ch, int(keycode), str(press), shift_mask))
+            logger.debug("Sending keychar %s keycode %d, press = %s, shift = %d",
+                         ch,
+                         int(keycode),
+                         str(press),
+                         shift_mask)
             if (self.x_test_available and self.use_x_test) :
                 if press:
                     if shift_mask != 0 :
@@ -272,7 +277,7 @@ class MacroHandler(object):
                 self.local_dpy.sync()
         
     def send_simple_macro(self, macro):
-        logger.debug("Simple macro '%s'" % macro.macro)
+        logger.debug("Simple macro '%s'", macro.macro)
         esc = False
         i = 0
     
@@ -290,8 +295,7 @@ class MacroHandler(object):
                     time.sleep(release_delay + press_delay)
                 else:                          
                     if i > 0:
-                        if logger.isEnabledFor(logging.DEBUG):
-                            logger.debug("Release delay of %f" % release_delay)
+                        logger.debug("Release delay of %f", release_delay)
                         time.sleep(release_delay)
                         
                     if esc and c == 't':
@@ -312,8 +316,7 @@ class MacroHandler(object):
                         
                     self.send_string(c, True)
                     time.sleep(press_delay)
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug("Press delay of %f" % press_delay)
+                    logger.debug("Press delay of %f", press_delay)
                     self.send_string(c, False)
                     
                     i += 1
@@ -322,14 +325,12 @@ class MacroHandler(object):
 
     def press_delay(self, macro):
         delay = 0.0 if not macro.profile.fixed_delays else ( float(macro.profile.press_delay) / 1000.0 )
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Press delay of %f" % delay) 
+        logger.debug("Press delay of %f", delay)
         time.sleep(delay)
         
     def release_delay(self, macro):
         delay = 0 if not macro.profile.fixed_delays else ( float(macro.profile.release_delay) / 1000.0 )
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Release delay of %f" % delay) 
+        logger.debug("Release delay of %f", delay)
         time.sleep(delay)
         
         
@@ -377,7 +378,7 @@ class MacroHandler(object):
             if keysym_code == 65027:
                 keycode = 108
             else:
-                logger.warn("Unknown keysym %d",keysym_code)
+                logger.warn("Unknown keysym %d", keysym_code)
                 keycode = 0
         else:
             
@@ -407,7 +408,7 @@ class MacroHandler(object):
             self.window = self.local_dpy.get_input_focus()._data["focus"]; 
         
         if macro.type == g15profile.MACRO_COMMAND:
-            logger.warning("Running external command '%s'" % macro.macro)
+            logger.warning("Running external command '%s'", macro.macro)
             os.system(macro.macro)
         elif macro.type == g15profile.MACRO_SIMPLE:
             self.send_simple_macro(macro)
@@ -477,7 +478,7 @@ class MacroScriptExecution(object):
                     if val in self.labels:
                         self.l = self.labels[val]
                     else:
-                        logger.warning("Unknown goto label %s in macro script. Ignoring")  
+                        logger.warning("Unknown goto label %s in macro script. Ignoring", val)
                 elif op == "delay":
                     if not self.handler.cancelled and self.macro.profile.send_delays and not self.macro.profile.fixed_delays:
                         time.sleep(float(val) / 1000.0 if not self.macro.profile.fixed_delays else self.macro.profile.delay_amount)
@@ -492,7 +493,7 @@ class MacroScriptExecution(object):
                     self.down -= 1
                 elif op == "upress":
                     if len(split) < 3:                        
-                        logger.error("Invalid operation in macro script. '%s'" % macro_text)
+                        logger.error("Invalid operation in macro script. '%s'", macro_text)
                     else:
                         if self.down > 0:
                             self.handler.release_delay(self.macro)
@@ -501,13 +502,14 @@ class MacroScriptExecution(object):
                         self.handler.press_delay(self.macro)
                 elif op == "urelease":
                     if len(split) < 3:                        
-                        logger.error("Invalid operation in macro script. '%s'" % macro_text)
+                        logger.error("Invalid operation in macro script. '%s'", macro_text)
                     else:
                         self.down -= 1
                         self._send_uinput(split[2], val, 0)
                 elif op == "wait":
                     if self.all_keys_up:
-                        logger.warn("All keys for the macro %s are already up, the rest of the script will be ignored" % self.macro.name)
+                        logger.warn("All keys for the macro %s are already up, " \
+                                    "the rest of the script will be ignored", self.macro.name)
                         return False
                     else:
                         val = val.lower()
@@ -531,18 +533,18 @@ class MacroScriptExecution(object):
                     # Ignore label / comment
                     pass
                 else:
-                    logger.error("Invalid operation in macro script. '%s'" % macro_text)
+                    logger.error("Invalid operation in macro script. '%s'", macro_text)
                 
             else:
                 if len(split) > 0:
-                    logger.error("Insufficient arguments in macro script. '%s'" % macro_text)
+                    logger.error("Insufficient arguments in macro script. '%s'", macro_text)
                     
         
     def _send_uinput(self, target, val, state):
         if val in g15uinput.capabilities:
             g15uinput.emit(target, g15uinput.capabilities[val], state, True)
         else:                        
-            logger.error("Unknown uinput key %s." % val)
+            logger.error("Unknown uinput key %s.", val)
 
 class G15Service(g15desktop.G15AbstractService):
     
@@ -589,18 +591,18 @@ class G15Service(g15desktop.G15AbstractService):
             self._do_start_service()
         except Exception as e:
             self.shutdown(True)
-            logger.error("Failed to start service. %s" % str(e))
+            logger.error("Failed to start service.", exc_info = e)
     
     def sigusr1_handler(self, signum, frame):
-        logger.info("Got SIGUSR1 signal from %s, restarting" % str(frame))
+        logger.info("Got SIGUSR1 signal from %s, restarting", str(frame))
         self.restart()
     
     def sigint_handler(self, signum, frame):
-        logger.info("Got SIGINT signal from %s, shutting down" % str(frame))
+        logger.info("Got SIGINT signal from %s, shutting down", str(frame))
         self.shutdown(True)
     
     def sigterm_handler(self, signum, frame):
-        logger.info("Got SIGTERM signal from %s, shutting down" % str(frame))
+        logger.info("Got SIGTERM signal from %s, shutting down", str(frame))
         self.shutdown(True)
         
     def stop(self, quickly = False):
@@ -621,12 +623,14 @@ class G15Service(g15desktop.G15AbstractService):
                 try :
                     logger.info("Stopping profile change notification")
                     g15profile.notifier.stop()
-                except Exception:
+                except Exception as e:
+                    logger.debug("Error stopping profile change notification", exc_info = e)
                     pass
                 try :
                     logger.info("Stopping account change notification")
                     g15accounts.notifier.stop()
-                except Exception:
+                except Exception as e:
+                    logget.debug("Error stopping account change notification", exc_info = e)
                     pass
                 logger.info("Informing listeners we are stopping")
                 for listener in self.service_listeners:
@@ -674,7 +678,8 @@ class G15Service(g15desktop.G15AbstractService):
             try:
                 view = dbus.Interface(app, 'org.ayatana.bamf.view')
                 self.active_application_name = view.Name()
-            except dbus.DBusException:
+            except dbus.DBusException as e:
+                logger.debug("Could not get current application name", exc_info = e)
                 self.active_application_name = None
                 
             if view is not None:
@@ -707,14 +712,16 @@ class G15Service(g15desktop.G15AbstractService):
     def _get_x_prop(self, window, key):
         try :
             return window.XProps(key)                            
-        except dbus.DBusException:
+        except dbus.DBusException as e:
+            logger.debug("Could not get window XProps", exc_info = e)
             return None
             
     def _check_active_window(self, screen, app, window):
         try :
             if screen.set_active_application_name(self.active_window_title):
                 return True                            
-        except dbus.DBusException:
+        except dbus.DBusException as e:
+            logger.debug("Could not check active window", exc_info = e)
             pass
         
     def _check_active_application(self, screen, app, view):
@@ -730,7 +737,8 @@ class G15Service(g15desktop.G15AbstractService):
                         view = dbus.Interface(app, 'org.ayatana.bamf.view')
                         if self._check_active_application(screen, app, view):
                             return True                            
-        except dbus.DBusException:
+        except dbus.DBusException as e:
+            logger.debug("Could not check active application", exc_info = e)
             pass
         
     def _check_active_application_with_wnck(self, event=None):
@@ -743,22 +751,21 @@ class G15Service(g15desktop.G15AbstractService):
                 if active_application_name != self.active_application_name:
                     self.active_application_name = active_application_name
                     self.active_window_title = active_application_name
-                    logger.info("Active application is now %s" % self.active_application_name)
+                    logger.info("Active application is now %s", self.active_application_name)
                     for screen in self.screens:
                         screen.set_active_application_name(active_application_name)
-        except Exception:
-            logger.warning("Failed to activate profile for active window")
-            traceback.print_exc(file=sys.stdout)
+        except Exception as e:
+            logger.warning("Failed to activate profile for active window", exc_info = e)
             
         gobject.timeout_add(500, self._check_active_application_with_wnck)
         
     def _check_state_of_all_devices(self, quickly = False):
-        logger.info("Checking state of %d devices" % len(self.devices))
+        logger.info("Checking state of %d devices", len(self.devices))
         for d in self.devices:
             self._check_device_state(d, quickly)
             
     def _check_state_of_all_devices_async(self, quickly = False):
-        logger.info("Checking state of %d devices" % len(self.devices))
+        logger.info("Checking state of %d devices", len(self.devices))
         t = []
         for d in self.devices:
             t.append(CheckThread(d, self._check_device_state, quickly))
@@ -780,9 +787,10 @@ class G15Service(g15desktop.G15AbstractService):
         # UINPUT
         try:
             g15uinput.open_devices()
-        except OSError as (errno, strerror):
-            if errno == 13 or errno == 2:
-                raise Exception("Failed to open uinput devices. Do you have the uinput module loaded (try modprobe uinput), and are the permissions of /dev/uinput correct?  If you have just installed Gnome15 for the first time, you may need to simply reboot. Exception message: %s" % strerror)
+        except OSError as e:
+            logger.debug("Error opening uinput devices", exc_info = e)
+            if e.errno == 13 or e.errno == 2:
+                raise Exception("Failed to open uinput devices. Do you have the uinput module loaded (try modprobe uinput), and are the permissions of /dev/uinput correct?  If you have just installed Gnome15 for the first time, you may need to simply reboot.")
             else:
                 raise
         
@@ -904,7 +912,7 @@ class G15Service(g15desktop.G15AbstractService):
             connected_to_session_manager = True
             logger.info("Connected to GNOME session manager")
         except Exception as e:
-            logger.warning("GNOME session manager not available. (%s)" % str(e))
+            logger.warning("GNOME session manager not available.", exc_info = e)
 
         if not connected_to_session_manager:
             try :
@@ -924,7 +932,7 @@ class G15Service(g15desktop.G15AbstractService):
                 connected_to_session_manager = True
                 logger.info("Connected to MATE session manager")
             except Exception as e:
-                logger.warning("MATE session manager not available. (%s)" % str(e))
+                logger.warning("MATE session manager not available.", exc_info = e)
 
         if not connected_to_session_manager:
             logger.warning("None of the supported session managers available, will not detect logout signal for clean shutdown.")
@@ -968,34 +976,34 @@ class G15Service(g15desktop.G15AbstractService):
             self.system_bus.add_signal_receiver(self._active_session_changed, dbus_interface="org.freedesktop.ConsoleKit.Seat", signal_name="ActiveSessionChanged")
             console_kit_object = self.system_bus.get_object("org.freedesktop.ConsoleKit", '/org/freedesktop/ConsoleKit/Manager')
             console_kit_manager = dbus.Interface(console_kit_object, 'org.freedesktop.ConsoleKit.Manager')
-            logger.info("Seats %s " % str(console_kit_manager.GetSeats()))
+            logger.info("Seats %s ", str(console_kit_manager.GetSeats()))
             self.this_session_path = console_kit_manager.GetSessionForCookie (os.environ['XDG_SESSION_COOKIE'])
-            logger.info("This session %s " % self.this_session_path)
+            logger.info("This session %s", self.this_session_path)
 
             # TODO GetCurrentSession doesn't seem to work as i would expect. Investigate. For now, assume we are the active session
 #            current_session = console_kit_manager.GetCurrentSession()
-#            logger.info("Current session %s " % current_session)
+#            logger.info("Current session %s ", current_session)
 #            self.session_active = current_session == self.this_session_path
             self.session_active = True
 
             logger.info("Connected to ConsoleKit")
             connected_to_system_session_manager = True
         except Exception as e:
-            logger.warning("ConsoleKit not available (%s)" % str(e))
+            logger.warning("ConsoleKit not available", exc_info = e)
 
     def _connect_to_logind(self):
         try :
             logger.info("Connecting to logind")
             self.system_bus.add_signal_receiver(self._logind_seat0_property_changed, "PropertiesChanged", "org.freedesktop.DBus.Properties", "org.freedesktop.login1", "/org/freedesktop/login1/seat/seat0")
             self.this_session_path = self._get_systemd_active_session_path()
-            logger.info("This session %s " % self.this_session_path)
+            logger.info("This session %s ", self.this_session_path)
 
             self.session_active = True
 
             logger.info("Connected to logind")
             connected_to_system_session_manager = True
         except Exception as e:
-            logger.warning("logind not available. (%s)" % str(e))
+            logger.warning("logind not available.", exc_info = e)
 
     def _get_systemd_active_session_path(self):
         seat0_object = self.system_bus.get_object("org.freedesktop.login1", '/org/freedesktop/login1/seat/seat0')
@@ -1007,7 +1015,7 @@ class G15Service(g15desktop.G15AbstractService):
         if "ActiveSession" in properties:
             if self._is_monitor_session():
                 session_path = self._get_systemd_active_session_path()
-                logger.info("This session %s " % session_path)
+                logger.info("This session %s", session_path)
                 self.session_active = session_path == self.this_session_path
                 if self.session_active:
                     logger.info("g15-desktop service is running on the active session")
@@ -1016,7 +1024,7 @@ class G15Service(g15desktop.G15AbstractService):
                 g15scheduler.queue(SERVICE_QUEUE, "activeSessionChanged", 0.0, self._check_state_of_all_devices)
 
     def _active_session_changed(self, object_path):        
-        logger.debug("Adding seat %s" % object_path)
+        logger.debug("Adding seat %s", object_path)
         if self._is_monitor_session():
             self.session_active = object_path == self.this_session_path
             if self.session_active:
@@ -1036,13 +1044,13 @@ class G15Service(g15desktop.G15AbstractService):
             if active_window:
                 self._active_window_changed("", active_window)
         except Exception as e:
-            logger.warning("BAMF not available, falling back to polling WNCK. %s" % str(e))
+            logger.warning("BAMF not available, falling back to polling WNCK.", exc_info = e)
             try :                
                 import wnck
                 wnck.__file__
                 self._check_active_application_with_wnck()
-            except:
-                logger.warning("Python Wnck not available either, no automatic profile switching")
+            except Exception as e:
+                logger.warning("Python Wnck not available either, no automatic profile switching", exc_info = e)
             
     def _add_screen(self, device):
         try:
@@ -1051,9 +1059,8 @@ class G15Service(g15desktop.G15AbstractService):
             for listener in self.service_listeners:
                 listener.screen_added(screen)
             return screen
-        except Exception:
-            traceback.print_exc(file=sys.stdout)
-            logger.error("Failed to load driver for device %s." % device.uid)
+        except Exception as e:
+            logger.error("Failed to load driver for device %s.", device.uid, exc_info = e)
             
     def _hidden_configuration_changed(self, client, connection_id, entry, device):
         self._load_hidden_configuration()
@@ -1084,20 +1091,20 @@ class G15Service(g15desktop.G15AbstractService):
         enabled = device in self.devices and g15devices.is_enabled(self.conf_client, device) and self.session_active
         screen = self._get_screen_for_device(device)
         if enabled and not screen:
-            logger.info("Enabling device %s" % device.uid)
+            logger.info("Enabling device %s", device.uid)
             # Enable screen
             screen = self._add_screen(device)
             if screen:
                 screen.start()
-                logger.info("Enabled device %s" % device.uid)
+                logger.info("Enabled device %s", device.uid)
         elif not enabled and screen:
             # Disable screen
-            logger.info("Disabling device %s" % device.uid)
+            logger.info("Disabling device %s", device.uid)
             screen.stop(quickly)
             self.screens.remove(screen)
             for listener in self.service_listeners:
                 listener.screen_removed(screen)
-            logger.info("Disabled device %s" % device.uid)
+            logger.info("Disabled device %s", device.uid)
             
             # If there is a single device, stop the service as well
             if len(self.devices) == 0 and ( not g15devices.have_udev or self.exit_on_no_devices ):

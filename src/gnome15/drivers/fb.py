@@ -115,7 +115,8 @@ class fb_device():
     def __del__(self):
         try:
             self.close()
-        except:
+        except Exception as e:
+            logger.debug('Error destroying fb_device.', exc_info = e)
             pass
     
     def get_screen_size(self):

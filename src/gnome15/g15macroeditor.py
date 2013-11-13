@@ -41,7 +41,7 @@ import pango
 import gconf
 
 import logging
-logger = logging.getLogger("config")
+logger = logging.getLogger(__name__)
 
 # Key validation constants
 IN_USE = "in-use"
@@ -418,7 +418,7 @@ class G15MacroEditor():
         macro        -- macro to save
         """
         if self.__validate_macro(macro.keys) in [ OK, RESERVED_FOR_ACTION ] :
-            logger.info("Saving macro %s" % macro.name)
+            logger.info("Saving macro %s", macro.name)
             macro.save()
             
     def __load_actions(self):

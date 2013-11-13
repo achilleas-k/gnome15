@@ -27,17 +27,18 @@ import os
 import dbus
 import time
 import gobject
+import logging
+logger = logging.getLogger(__name__)
+
 try:
     import gtop
-except:
+except Exception as e:
+    logger.debug("Could not import gtop module. Will use g15top instead", exc_info = e)
     # API compatible work around for Ubuntu 12.10
     import gnome15.g15top as gtop
 
 from Xlib import X
 import Xlib.protocol.event
-
-import logging
-logger = logging.getLogger("processes")
 
 # Plugin details - All of these must be provided
 id="processes"
@@ -108,8 +109,8 @@ class G15Processes(g15plugin.G15MenuPlugin):
         try :
             bamf_object = self.session_bus.get_object('org.ayatana.bamf', '/org/ayatana/bamf/matcher')     
             self.bamf_matcher = dbus.Interface(bamf_object, 'org.ayatana.bamf.matcher')
-        except:
-            logger.warning("BAMF not available, falling back to WNCK")
+        except Exception as e:
+            logger.warning("BAMF not available, falling back to WNCK", exc_info = e)
 
     def activate(self):
         self._modes = [ "applications", "all", "user" ]
@@ -280,7 +281,8 @@ class G15Processes(g15plugin.G15MenuPlugin):
         item = self._get_menu_item(window)
         try:
             item.process_name = view.Name()
-        except dbus.DBusException:
+        except dbus.DBusException as e:
+            logger.debug("Could not get process_name. Using default", exc_info = e)
             item.process_name = "Unknown"
         try:
             icon_name = view.Icon()
@@ -288,7 +290,8 @@ class G15Processes(g15plugin.G15MenuPlugin):
                 icon_path = g15icontools.get_icon_path(icon_name, warning = False)
                 if icon_path:
                     item.icon = g15cairo.load_surface_from_file(icon_path, 32)
-        except dbus.DBusException:
+        except dbus.DBusException as e:
+            logger.debug("Could not get icon", exc_info = e)
             pass
                 
             
@@ -305,7 +308,8 @@ class G15Processes(g15plugin.G15MenuPlugin):
                     try:
                         item = self._get_item_for_bamf_application(window)                    
                         this_items[item.id] = item
-                    except:
+                    except Exception as e:
+                        logger.debug("Could not get info from BAMF", exc_info = e)
                         pass
             else:
                 import wnck
@@ -332,7 +336,8 @@ class G15Processes(g15plugin.G15MenuPlugin):
                         item.icon = None
                         item.process_name = self._get_process_name(proc_args, proc_state.cmd)
                         this_items[item.id] = item
-                except :
+                except Exception as e:
+                    logger.debug("Process may have disappeared", exc_info = e)
                     # In case the process disappears
                     pass
  

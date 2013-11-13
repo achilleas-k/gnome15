@@ -32,7 +32,7 @@ import select
 import os
 import gtk
 import logging
-logger = logging.getLogger("volume")
+logger = logging.getLogger(__name__)
 
 from threading import Thread
 
@@ -171,15 +171,16 @@ class G15Volume():
                     mutes = None
                     try :
                         mutes = vol_mixer.getmute()
-                    except alsaaudio.ALSAAudioError:
+                    except alsaaudio.ALSAAudioError as e:
+                        logger.debug("Could not get mute channel. Trying PCM mixer", exc_info = e)
                         if vol_mixer is not None:
                             vol_mixer.close()
                         # Some pulse weirdness maybe?
                         vol_mixer = self._open_mixer("PCM", self.current_card_index)
                         try :
                             mutes = vol_mixer.getmute()
-                        except alsaaudio.ALSAAudioError:
-                            logger.warning("No mute switch found")
+                        except alsaaudio.ALSAAudioError as e:
+                            logger.warning("No mute switch found", exc_info = e)
                     if mutes != None:        
                         for ch_mute in mutes:
                             if ch_mute:
@@ -289,7 +290,7 @@ class G15Volume():
         if not mixer_name or mixer_name == "":
             mixer_name = "Master"
             
-        logger.info("Opening soundcard %s mixer %s" % (self.soundcard_name, mixer_name))
+        logger.info("Opening soundcard %s mixer %s", self.soundcard_name, mixer_name)
         
         vol_mixer = alsaaudio.Mixer(mixer_name, cardindex=self.soundcard_index)
         return vol_mixer
@@ -329,13 +330,14 @@ class G15Volume():
             mutes = None
             try :
                 mutes = vol_mixer.getmute()
-            except alsaaudio.ALSAAudioError:
+            except alsaaudio.ALSAAudioError as e:
+                logger.debug("Could note get mute channel. Trying PCM", exc_info = e)
                 # Some pulse weirdness maybe?
                 mute_mixer = alsaaudio.Mixer("PCM", cardindex=self.soundcard_index)
                 try :
                     mutes = mute_mixer.getmute()
-                except alsaaudio.ALSAAudioError:
-                    logger.warning("No mute switch found")
+                except alsaaudio.ALSAAudioError as e:
+                    logger.warning("No mute switch found", exc_info = e)
             if mutes != None:        
                 for ch_mute in mutes:
                     if ch_mute:
@@ -379,7 +381,7 @@ class VolumeThread(Thread):
         self.setDaemon(True)
         self._volume = volume
         
-        logger.info("Opening soundcard %s mixer %s" % (volume.soundcard_name, volume.mixer_name))
+        logger.info("Opening soundcard %s mixer %s", volume.soundcard_name, volume.mixer_name)
         
         self._mixer = alsaaudio.Mixer(volume.mixer_name, cardindex=volume.soundcard_index)
         self._poll_desc = self._mixer.polldescriptors()
@@ -407,6 +409,7 @@ class VolumeThread(Thread):
         finally:
             try :
                 self._poll.unregister(self._open)
-            except :
+            except Exception as e:
+                logger.debug("Error when unregistering", exc_info = e)
                 pass
             self._open.close()

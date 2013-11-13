@@ -26,7 +26,6 @@ import gtk
 import gtk.gdk
 from PIL import Image
 import subprocess
-import traceback
 import tempfile
 import lxml.html
 import Queue
@@ -60,20 +59,16 @@ import gnome15.util.g15convert as g15convert
 import gnome15.util.g15scheduler as g15scheduler
 import gnome15.util.g15uigconf as g15uigconf
 import gnome15.util.g15icontools as g15icontools
-import gnome15.g15globals as pglobals
+import gnome15.g15globals as g15globals
 import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 
 # Logging
-import logging
-logging.basicConfig()
-logger = logging.getLogger("notify")
-
-LEVELS = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL}
+import gnome15.g15logging as g15logging
+if __name__ == "__main__":
+    logger = g15logging.get_root_logger()
+else:
+    logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="notify-lcd2"
@@ -206,7 +201,7 @@ class G15NotifyService(dbus.service.Object):
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='ssss')
     def GetServerInformation(self):
-        return ( pglobals.name, "TT", pglobals.version, "1.1" ) 
+        return (g15globals.name, "TT", g15globals.version, "1.1")
     
     @dbus.service.method(IF_NAME, in_signature='', out_signature='as')
     def GetCapabilities(self):
@@ -248,13 +243,13 @@ class G15NotifyService(dbus.service.Object):
                         try :                
                             self._notify()                         
                         except Exception as blah:
-                            traceback.print_exc()
+                            logger.warning("Could not notify", exc_info = blah)
                     else:         
                         self._do_draw()
                         
                 return message.id                         
         except Exception as blah:
-            traceback.print_exc()
+            logger.warning("Could not notify", exc_info = blah)
     
     @dbus.service.method(IF_NAME, in_signature='u', out_signature='')
     def CloseNotification(self, id):
@@ -446,24 +441,28 @@ class G15NotifyLCD():
         for i in range(0, 6):
             try :            
                 for pn in OTHER_NOTIFY_DAEMON_PROCESS_NAMES:
-                    logger.debug("Killing %s" % pn)
+                    logger.debug("Killing %s", pn)
                     process = subprocess.Popen(['killall', '--quiet', pn])
                     process.wait()
                 self._bus_name = dbus.service.BusName(IF_NAME, bus=self._bus, replace_existing=True, allow_replacement=True, do_not_queue=True)
                 break
-            except NameExistsException:
+            except NameExistsException as e:
+                logger.debug("Process still exists. Waiting one second and retrying to kill",
+                             exc_info = e)
                 time.sleep(1.0)
                 if i == 2:
+                    logger.debug("Process still exists after retry.", exc_info = e)
                     raise
                 
         # Notification Service
         self._notification_service = G15NotifyService(self._gconf_client, self._gconf_key, self._service, self._driver, self._bus)        
         try :
-            logger.info("Starting notification service %s" % IF_NAME)
+            logger.info("Starting notification service %s", IF_NAME)
             dbus.service.Object.__init__(self._notification_service, self._bus_name, BUS_NAME)
-            logger.info("Started notification service %s" % IF_NAME)
-        except KeyError:
-            print "DBUS notify service failed to start. May already be started." 
+            logger.info("Started notification service %s", IF_NAME)
+        except KeyError as ke:
+            logger.warning("DBUS notify service failed to start. May already be started.",
+                           exc_info = ke)
             
     def deactivate(self):
         # TODO How do we properly 'unexport' a service? This seems to kind of work, in
@@ -501,7 +500,8 @@ if __name__ == "__main__":
     try :
         import setproctitle
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
-    except:
+    except Exception as e:
+        logger.debug("setproctitle doesn't seem to be available", exc_info = e)
         pass
     
     
@@ -511,16 +511,14 @@ if __name__ == "__main__":
         default="warning" , help="Log level")
     (options, args) = parser.parse_args()
     
-    level = logging.NOTSET
     if options.log_level != None:      
-        level = LEVELS.get(options.log_level, logging.NOTSET)
-        logger.setLevel(level = level)
+        logger.setLevel(g15logging.get_level(options.log_level))
      
     bus = dbus.SessionBus()
     try :
         screen = bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service')
-    except dbus.DBusException:
-        logger.error("g15-desktop-service is not running.")
+    except dbus.DBusException as e:
+        logger.error("g15-desktop-service is not running.", exc_info = e)
         sys.exit(0)  
         
     plugin = G15NotifyLCD(gconf.client_get_default(), 

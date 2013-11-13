@@ -24,7 +24,7 @@ import re
 
 # Logging
 import logging
-logger = logging.getLogger("gamewrapper")
+logger = logging.getLogger(__name__)
     
 NAME = "GameWrap"
 VERSION = "0.1"
@@ -39,24 +39,24 @@ class RunThread(threading.Thread):
         self.controller = controller
         
     def run(self):
-        logger.info("Running '%s'" % str(self.controller.args))
+        logger.info("Running '%s'", str(self.controller.args))
         self.process = subprocess.Popen(self.controller.args, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
         logger.info("Process started OK")
         while True:
             line = self.process.stdout.readline(1024)
             if line: 
-                logger.info(">%s<" % line)
+                logger.info(">%s<", line)
                 for pattern_id in self.controller.patterns:
                     pattern = self.controller.patterns[pattern_id]
                     match = re.search(pattern, line)
                     if match:
-                        logger.info("Match! %s" % str(match))
+                        logger.info("Match! %s", str(match))
                         gobject.idle_add(self.controller.PatternMatched(patter_id, line))
             else:
                 break
         logger.info("Waiting for process to complete")
         self.controller.status = self.process.wait()
-        logger.info("Process complete with %s" % self.controller.status)
+        logger.info("Process complete with %s", self.controller.status)
         self.controller.Stop()
             
 class G15GameWrapperServiceController(dbus.service.Object):
@@ -71,7 +71,7 @@ class G15GameWrapperServiceController(dbus.service.Object):
         self.status = 0
         self.patterns = {}
 
-        logger.info("Exposing service for '%s'. Wait for signal to wait" % str(args))
+        logger.info("Exposing service for '%s'. Wait for signal to wait", str(args))
         
         if not no_trap:
             signal.signal(signal.SIGINT, self.sigint_handler)
@@ -105,14 +105,14 @@ class G15GameWrapperServiceController(dbus.service.Object):
         
     @dbus.service.method(IF_NAME, in_signature='ss')
     def AddPattern(self, pattern_id, pattern):
-        logger.info("Adding pattern '%s' with id '%s'" % (pattern, pattern_id))
+        logger.info("Adding pattern '%s' with id '%s'", pattern, pattern_id)
         if pattern_id in self.patterns:
             raise Exception("Pattern with ID %s already registered." % pattern_id)
         self.patterns[pattern_id] = pattern
         
     @dbus.service.method(IF_NAME, in_signature='s')
     def RemovePattern(self, pattern_id):
-        logger.info("Removing pattern with id '%s'" % (pattern_id))
+        logger.info("Removing pattern with id '%s'", pattern_id)
         if not pattern_id in self.patterns:
             raise Exception("Pattern with ID %s not registered." % pattern_id)
         del self.patterns[id]

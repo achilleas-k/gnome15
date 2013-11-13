@@ -18,11 +18,11 @@
 Notifications
 '''
 import dbus
-import g15globals as pglobals
+import g15globals
 
 # Logging
 import logging
-logger = logging.getLogger("plugins")
+logger = logging.getLogger(__name__)
 
 _session_bus = dbus.SessionBus()
 
@@ -31,15 +31,15 @@ class NotifyMessage():
         self.id = 0
         
     def close(self):
-        logger.info("Closing notification %s" % str(self.id))
+        logger.info("Closing notification %s", str(self.id))
         _get_obj().CloseNotification(self.id)
 
     def handle_reply(self, e):
         self.id = int(e)
-        logger.debug("Got message ID %d" % self.id)
+        logger.debug("Got message ID %d", self.id)
         
     def handle_error(self, e):
-        logger.error("Error getting notification message ID.  %s" % str(e))
+        logger.error("Error getting notification message ID. %s", str(e))
         
 def _get_obj():
     return _session_bus.get_object("org.freedesktop.Notifications", '/org/freedesktop/Notifications')
@@ -48,8 +48,15 @@ def notify(summary, body, icon = "", actions = [], hints = {}, timeout = 10.0, r
     actions_array = dbus.Array(actions, signature='s')
     hints_dict = dbus.Dictionary(hints,  signature='sv')
     msg = NotifyMessage()
-    _get_obj().Notify(pglobals.name, replaces, icon, summary, body, actions_array, hints_dict, int(timeout * 1000),
-                                        dbus_interface = 'org.freedesktop.Notifications',
-                                        reply_handler = msg.handle_reply,
-                                        error_handler = msg.handle_error )
+    _get_obj().Notify(g15globals.name,
+                      replaces,
+                      icon,
+                      summary,
+                      body,
+                      actions_array,
+                      hints_dict,
+                      int(timeout * 1000),
+                      dbus_interface = 'org.freedesktop.Notifications',
+                      reply_handler = msg.handle_reply,
+                      error_handler = msg.handle_error)
     return msg

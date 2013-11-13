@@ -25,7 +25,7 @@ import gnome15.g15devices as g15devices
 import gnome15.g15profile as g15profile
 import logging
 import os
-logger = logging.getLogger("macros")
+logger = logging.getLogger(__name__)
 
 # Actions
 SHOW_KEY_HELP = 'key-help'

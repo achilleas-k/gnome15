@@ -46,7 +46,7 @@ import gobject
 
 # Logging
 import logging
-logger = logging.getLogger("driver")
+logger = logging.getLogger(__name__)
 
 # Driver information (used by driver selection UI)
 id = "kernel"
@@ -583,17 +583,17 @@ class KeyboardReceiveThread(Thread):
     def deactivate(self):
         self._run = False
         for dev in self.devices:
-            logger.info("Ungrabbing %d" % dev.fileno())
+            logger.info("Ungrabbing %d", dev.fileno())
             try :
                 fcntl.ioctl(dev.fileno(), EVIOCGRAB, 0)
             except Exception as e:
-                logger.info("Failed ungrab. %s" % str(e))
-            logger.info("Closing %d" % dev.fileno())
+                logger.info("Failed ungrab.", exc_info = e)
+            logger.info("Closing %d", dev.fileno())
             try :
                 self.fds[dev.fileno()].close()
             except Exception as e:
-                logger.info("Failed close. %s" % str(e))
-            logger.info("Stopped %d" % dev.fileno())
+                logger.info("Failed close.", exc_info = e)
+            logger.info("Stopped %d", dev.fileno())
         logger.info("Stopped all input devices")
         
     def run(self):        
@@ -610,6 +610,7 @@ class KeyboardReceiveThread(Thread):
                     if dev:
                         dev.read()
                 except OSError as e:
+                    logger.debug('Could not read device file', exc_info = e)
                     # Ignore this error if deactivated
                     if self._run:
                         raise e
@@ -624,8 +625,7 @@ class SinkDevice(SimpleDevice):
         SimpleDevice.__init__(self, *args, **kwargs)
         
     def receive(self, event):
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Sunk event %s" % str(event))
+        logger.debug("Sunk event %s", str(event))
             
 '''
 Abstract input device
@@ -641,7 +641,7 @@ class AbstractInputDevice(SimpleDevice):
             key = self.key_map[event_code]
             self.callback([key], state)
         else:
-            logger.warning("Unmapped key for event: %s" % event_code)
+            logger.warning("Unmapped key for event: %s", event_code)
         
 '''
 SimpleDevice implementation for handling multi-media keys. 
@@ -658,7 +658,7 @@ class MultiMediaDevice(AbstractInputDevice):
         elif event.etype == 0:
             return
         else:
-            logger.warning("Unhandled event: %s" % str(event))
+            logger.warning("Unhandled event: %s", str(event))
 
 '''
 SimpleDevice implementation that translates kernel input events
@@ -682,7 +682,7 @@ class ForwardDevice(AbstractInputDevice):
 
     def send_all(self, events):
         for event in events:
-            logger.debug(" --> %r" % event)
+            logger.debug(" --> %r", event)
             self.udev.send_event(event)
 
     @property
@@ -730,7 +730,7 @@ class ForwardDevice(AbstractInputDevice):
                 # Just pass-through when in analogue joystick mode
                 g15uinput.emit(self.driver.joy_mode, ( event.etype, event.ecode ), event.evalue, False)
         else:
-            logger.warning("Unhandled event: %s" % str(event))
+            logger.warning("Unhandled event: %s", str(event))
                 
     """
     Private
@@ -938,7 +938,7 @@ class Driver(g15driver.AbstractDriver):
                 self.conf_client.set_string("/apps/gnome15/%s/fb_device" % self.device.uid, "auto")
                 self._init_device()
             else:            
-                logger.warning("Could not open %s. %s" %(self.device_name, str(e)))
+                logger.warning("Could not open %s.", self.device_name, exc_info = e)
                 
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/joymode" % self.device.uid, self._config_changed, None))
         self.notify_handles.append(self.conf_client.notify_add("/apps/gnome15/%s/fb_device" % self.device.uid, self._framebuffer_device_changed, None))
@@ -1028,7 +1028,8 @@ class Driver(g15driver.AbstractDriver):
         if self.get_model_name() == g15driver.MODEL_G19:
             try:
                 back_surface = cairo.ImageSurface (4, width, height)
-            except:
+            except Exception as e:
+                logger.debug("Could not create ImageSurface. Trying earlier API.", exc_info = e)
                 # Earlier version of Cairo
                 back_surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, width, height)
             back_context = cairo.Context (back_surface)
@@ -1152,13 +1153,13 @@ class Driver(g15driver.AbstractDriver):
               
         self.key_thread = KeyboardReceiveThread(self.device)
         for devpath in self.keyboard_devices:
-            logger.info("Adding input device %s" % devpath)
+            logger.info("Adding input device %s", devpath)
             self.key_thread.devices.append(ForwardDevice(self, callback, self.device_info.key_map, devpath, devpath))
         for devpath in self.sink_devices:
-            logger.info("Adding input sink device %s" % devpath)
+            logger.info("Adding input sink device %s", devpath)
             self.key_thread.devices.append(SinkDevice(devpath, devpath))
         for devpath in self.mm_devices:
-            logger.info("Adding input multi-media device %s" % devpath)
+            logger.info("Adding input multi-media device %s", devpath)
             self.key_thread.devices.append(MultiMediaDevice(callback, self.device_info.key_map, devpath, devpath))
         self.key_thread.start()
         
@@ -1185,7 +1186,7 @@ class Driver(g15driver.AbstractDriver):
                 raise usb.USBError("Unexpected framebuffer mode %s, expected %s for device %s" % (self.fb_mode, self.framebuffer_mode, self.device_name))
             
             # Open framebuffer
-            logger.info("Using framebuffer %s"  % self.device_name)
+            logger.info("Using framebuffer %s", self.device_name)
             self.fb = fb.fb_device(self.device_name)
             if logger.isEnabledFor(logging.DEBUG):
                 self.fb.dump()
@@ -1200,7 +1201,8 @@ class Driver(g15driver.AbstractDriver):
         system_bus = dbus.SystemBus()
         try:
             system_service_object = system_bus.get_object('org.gnome15.SystemService', '/org/gnome15/SystemService')
-        except dbus.DBusException:
+        except dbus.DBusException as e:
+            logger.debug('D-Bus service not available.', exc_info = e)
             raise Exception("Failed to connect to Gnome15 system service. Is g15-system-service running (as root). \
 It should be launched automatically if Gnome15 is installed correctly.")          
         self.system_service = dbus.Interface(system_service_object, 'org.gnome15.SystemService')    
@@ -1254,7 +1256,7 @@ It should be launched automatically if Gnome15 is installed correctly.")
         if not self.system_service:
             logger.warning("Attempt to write to LED when not connected")
         else:
-            logger.debug("Writing %s to LED %s" % (value, name ))
+            logger.debug("Writing %s to LED %s", value, name)
             self.system_service.SetLight(self.device.uid, name, value)
     
     def _write_to_led(self, name, value):
@@ -1280,20 +1282,20 @@ It should be launched automatically if Gnome15 is installed correctly.")
         self.framebuffer_mode = "NONE"
         
         if self.device.bpp == 0:
-            logger.info("Device %s has no framebuffer" % self.device.model_id)
+            logger.info("Device %s has no framebuffer", self.device.model_id)
         else:
             if self.device.bpp == 1:
                 self.framebuffer_mode = "GFB_MONO"
             else:
                 self.framebuffer_mode = "GFB_QVGA"
-            logger.info("Using %s frame buffer mode" % self.framebuffer_mode)
+            logger.info("Using %s frame buffer mode", self.framebuffer_mode)
                 
             # Determine the framebuffer device to use
             self.device_name = self.conf_client.get_string("/apps/gnome15/%s/fb_device" % self.device.uid)
             if self.device_name == None or self.device_name == "" or self.device_name == "auto":
                 for fb in os.listdir("/sys/class/graphics"):
                     if fb != "fbcon":
-                        logger.info("Trying %s" %fb)
+                        logger.info("Trying %s", fb)
                         device_file = "/sys/class/graphics/%s/device" % fb
                         if os.path.exists(device_file):                        
                             usb_id = os.path.basename(os.path.realpath(device_file)).split(".")[0].split(":")
@@ -1324,13 +1326,13 @@ It should be launched automatically if Gnome15 is installed correctly.")
         dir = "/dev/input/by-id"
         for p in os.listdir(dir):
             if re.search(self.device_info.keydev_pattern, p):
-                logger.info("Input device %s matches %s" % (p, self.device_info.keydev_pattern))
+                logger.info("Input device %s matches %s", p, self.device_info.keydev_pattern)
                 self.keyboard_devices.append(dir + "/" + p)
             if self.device_info.sink_pattern is not None and re.search(self.device_info.sink_pattern, p):
-                logger.info("Input sink device %s matches %s" % (p, self.device_info.sink_pattern))
+                logger.info("Input sink device %s matches %s", p, self.device_info.sink_pattern)
                 self.sink_devices.append(dir + "/" + p)
             if self.grab_multimedia and self.device_info.mm_pattern is not None and re.search(self.device_info.mm_pattern, p):
-                logger.info("Input multi-media device %s matches %s" % (p, self.device_info.mm_pattern))
+                logger.info("Input multi-media device %s matches %s", p, self.device_info.mm_pattern)
                 self.mm_devices.append(dir + "/" + p)
                 
     def __del__(self):

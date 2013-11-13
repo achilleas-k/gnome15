@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
  
 #  Gnome15 - Suite of tools for the Logitech G series keyboards and headsets
 #  Copyright (C) 2011 Brett Smith <tanktarta@blueyonder.co.uk>
@@ -53,7 +53,8 @@ def check_service_status(system_dbus):
     try :
         system_bus.get_object('org.gnome15.GameWrap', '/org/gnome15/GameWrap').GetServerInformation()
         return True
-    except:
+    except Exception as e:
+        logger.debug("D-Bus service not available.", exc_info = e)
         return False
 
 def start_service(args, bus, no_trap=False,):    
@@ -62,14 +63,15 @@ def start_service(args, bus, no_trap=False,):
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
     except ImportError as ie:
         # Not a big issue
-        logger.debug("No setproctitle, process will be named 'python'")
+        logger.debug("No setproctitle, process will be named 'python'", exc_info = ie)
 
     # Start the loop    
     try :
         import gw   
         service = gw.G15GameWrapperServiceController(args, bus, no_trap=no_trap)
         service.start_loop()
-    except dbus.exceptions.NameExistsException:
+    except dbus.exceptions.NameExistsException as nee:
+        logger.debug("D-Bus service already running", exc_info = nee)
         print "GameWrap service is already running"
         sys.exit(1)
     

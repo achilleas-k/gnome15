@@ -214,14 +214,20 @@ class G15RefreshingPlugin(G15PagePlugin):
         self.only_refresh_when_visible = True
     
     def create_page(self):
-        return g15theme.G15Page(self.page_id, self.screen, on_shown=self._on_shown, on_hidden=self._on_hidden, \
-                                     title = self._title, theme = self.create_theme(),
-                                     thumbnail_painter = self._paint_thumbnail,
-                                     painter = self._paint,
-                                     panel_painter = self._paint_panel,
-                                     theme_properties_callback = self.get_theme_properties,
-                                     originating_plugin = self)
+        return g15theme.G15Page(self.page_id,
+                                self.screen,
+                                title = self._title,
+                                theme = self.create_theme(),
+                                thumbnail_painter = self._paint_thumbnail,
+                                painter = self._paint,
+                                panel_painter = self._paint_panel,
+                                theme_properties_callback = self.get_theme_properties,
+                                originating_plugin = self)
     
+    def activate(self):
+        G15PagePlugin.activate(self)
+        self._schedule_refresh()
+
     def deactivate(self):
         self._cancel_refresh()
         G15PagePlugin.deactivate(self)
@@ -249,20 +255,13 @@ class G15RefreshingPlugin(G15PagePlugin):
         Programatically refresh. The timer will be reset
         """
         self._cancel_refresh()
-        self._refresh()
+        self._do_refresh()
+        self._schedule_refresh()
         
     
     ''' Private
     '''
         
-    def _on_shown(self):
-        if self.only_refresh_when_visible:
-            self._reschedule_refresh()
-            
-    def _on_hidden(self):
-        if self.only_refresh_when_visible:
-            self._reschedule_refresh()
-            
     def _reschedule_refresh(self):
         self._cancel_refresh()
         self._schedule_refresh()
@@ -276,16 +275,21 @@ class G15RefreshingPlugin(G15PagePlugin):
             self.timer = None
         
     def _schedule_refresh(self):
-        if self.page and ( not self.only_refresh_when_visible or self.screen.is_visible(self.page) ):
-            if self.schedule_on_gobject:
-                self.timer = gobject.timeout_add(int(self.get_next_tick() * 1000), self._refresh)
-            else:
-                self.timer = g15scheduler.schedule("%s-Redraw" % self.page.id, self.get_next_tick(), self._refresh)
+        if self.schedule_on_gobject:
+            self.timer = gobject.timeout_add(int(self.get_next_tick() * 1000), self._refresh)
+        else:
+            self.timer = g15scheduler.schedule("%s-Redraw" % self.page_id,
+                                               self.get_next_tick(),
+                                               self._refresh)
         
     def _refresh(self):
+        if self.page and (not self.only_refresh_when_visible or self.screen.is_visible(self.page)):
+            self._do_refresh()
+        self._reschedule_refresh()
+
+    def _do_refresh(self):
         self.refresh()
         self.screen.redraw(self.page)
-        self._reschedule_refresh()  
     
 class G15MenuPlugin(G15Plugin):
     '''

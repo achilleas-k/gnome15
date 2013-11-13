@@ -29,11 +29,12 @@ import sys
 import traceback
 import gc
 import gnome15.objgraph as objgraph
+import gnome15.g15logging as g15logging
 import dbus.service
 
 # Logging
 import logging
-logger = logging.getLogger("debug")
+logger = logging.getLogger(__name__)
 
 id="debug"
 name=_("Debug")
@@ -327,14 +328,8 @@ class G15DBUSDebugService(dbus.service.Object):
         
     @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
     def SetDebugLevel(self, log_level):
-        levels = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL}
         logger = logging.getLogger()
-        level = levels.get(log_level.lower(), logging.NOTSET)
-        logger.setLevel(level = level)
+        logger.setLevel(g15logging.get_level(log_level))
         
     @dbus.service.method(DEBUG_IF_NAME, in_signature='s')
     def Referrers(self, typename):

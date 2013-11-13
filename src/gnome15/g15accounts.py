@@ -30,6 +30,7 @@ import gtk
 import g15globals
 import util.g15scheduler as g15scheduler
 import util.g15gconf as g15gconf
+import util.g15os as g15os
 import util.g15pythonlang as g15pythonlang
 import pyinotify
 import pwd
@@ -37,6 +38,8 @@ from threading import Lock
 import gobject
 import keyring
 
+import logging
+logger = logging.getLogger(__name__)
 
 """
 Functions
@@ -217,15 +220,15 @@ class G15AccountManager(G15Keyring):
         for k in wdd:
             try:
                 watch_manager.rm_watch(wdd[k],quiet = False)
-            except:
+            except Exception as e:
+                logger.debug("Error removing change listener '%s'", str(k), exc_info = e)
                 pass
             
     def load(self):
         accounts = []
         if not os.path.exists(self._conf_file):
             dir_path = os.path.dirname(self._conf_file)
-            if not os.path.exists(dir_path):
-                os.makedirs(dir_path)
+            g15os.mkdir_p(dir_path)
         else:
             document = etree.parse(self._conf_file)        
             for element in document.getroot().xpath('//%s' % self.item_name):

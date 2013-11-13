@@ -28,16 +28,16 @@ import gnome15.util.g15icontools as g15icontools
 import gnome15.g15screen as g15screen
 import gnome15.g15accounts as g15accounts
 import gnome15.g15plugin as g15plugin
+import gnome15.g15globals as g15globals
 import datetime
 import time
-import os
+import os, os.path
 import gtk
 import calendar
-import traceback
 
 # Logging
 import logging
-logger = logging.getLogger("cal")
+logger = logging.getLogger(__name__)
 
 # Plugin data
 id="cal"
@@ -73,7 +73,7 @@ unsupported_models = [ g15driver.MODEL_G110, g15driver.MODEL_G11, \
 REFRESH_INTERVAL = 15 * 60
 
 # Configuration
-CONFIG_PATH = "~/.config/gnome15/plugin-data/cal/calendars.xml"
+CONFIG_PATH = os.path.join(g15globals.user_config_dir, "plugin-data", "cal", "calendars.xml")
 CONFIG_ITEM_NAME = "calendar"
 
 """
@@ -240,7 +240,7 @@ class G15CalendarPreferences(g15accounts.G15AccountPreferences):
     def create_options_for_type(self, account, account_type):
         backend = get_backend(account.type)
         if backend is None:
-            logger.warning("No backend for account type %s" % account_type)
+            logger.warning("No backend for account type %s", account_type)
             return None
         return backend.create_options(account, self)
     
@@ -431,7 +431,7 @@ class G15Cal(g15plugin.G15Plugin):
             try:
                 backend = get_backend(acc.type)
                 if backend is None:
-                    logger.warn("Could not find a calendar backend for %s" % acc.name)
+                    logger.warn("Could not find a calendar backend for %s", acc.name)
                 else:
                     # Backends may specify if they need a network or not, so check the state
                     import gnome15.g15pluginmanager as g15pluginmanager
@@ -444,13 +444,10 @@ class G15Cal(g15plugin.G15Plugin):
                             self._event_days = dict(self._event_days.items() + \
                                                     backend_events.items())
                     else:
-                        logger.warn("Skipping backend %s because it requires the network, and the network is not availabe" % acc.type)
+                        logger.warn("Skipping backend %s because it requires the network, " \
+                                    "and the network is not availabe", acc.type)
             except Exception as e:
-                if logger.level == logger.debug:
-                    logger.warn("Failed to load events for account %s.")
-                    traceback.print_exc()   
-                else:
-                    logger.warn("Failed to load events for account %s. %s" % (acc.name, e))
+                logger.warn("Failed to load events for account %s.", acc.name, exc_info = e)
                     
         g15screen.run_on_redraw(self._rebuild_components, now)
         self._page.mark_dirty()

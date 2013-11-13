@@ -65,7 +65,7 @@ YAHOO_WEATHER_NS     = 'http://xml.weather.yahoo.com/ns/rss/1.0'
 
 # Logging
 import logging
-logger = logging.getLogger("weather-yahoo")
+logger = logging.getLogger(__name__)
  
 """
 Plugin definition
@@ -184,6 +184,7 @@ class YahooWeatherBackend(weather.WeatherBackend):
         try:
             observed_datetime = datetime.datetime.strptime(condition_el["date"], "%a, %d %b %Y %H:%M %p %Z")
         except ValueError as v: 
+            logger.debug("Error parsing date, trying alternative method.", exc_info = v)
             import email.utils
             dxt = email.utils.parsedate_tz(condition_el["date"])
             class TZ(datetime.tzinfo):

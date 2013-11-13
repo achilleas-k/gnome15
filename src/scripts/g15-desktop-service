@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
  
 #  Gnome15 - Suite of tools for the Logitech G series keyboards and headsets
 #  Copyright (C) 2011 Brett Smith <tanktarta@blueyonder.co.uk>
@@ -21,22 +21,15 @@ import os
 import glib
 import time
 
-# Logging
-import logging
-logging.basicConfig(format='%(levelname)s:%(asctime)s:%(threadName)s:%(name)s:%(message)s', datefmt='%H:%M:%S')
-logger = logging.getLogger()
-
-LEVELS = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL}
-
 # Allow running from local path
 path = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), ".."))
 if os.path.exists(path):
-    sys.path.insert(0, path) 
-    
+    sys.path.insert(0, path)
+
+# Logging
+import gnome15.g15logging as g15logging
+logger = g15logging.get_root_logger()
+
 #
 import gobject
 import gnome15.util.g15pythonlang as g15pythonlang
@@ -56,7 +49,8 @@ def check_service_status(session_dbus):
     try :
         session_bus.get_object('org.gnome15.Gnome15', '/org/gnome15/Service').GetServerInformation()
         return True
-    except:
+    except Exception as e:
+        logger.debug("Did not found enabled service", exc_info = e)
         return False
 
 def start_service(options): 
@@ -75,7 +69,8 @@ def start_service(options):
         service.exit_on_no_devices = options.exit_on_no_devices
         g15service.logger.setLevel(logger.level) 
         service.start_loop()
-    except dbus.exceptions.NameExistsException:
+    except dbus.exceptions.NameExistsException as e:
+        logger.debug("DBus service already exist", exc_info = e)
         print "Gnome15 desktop service is already running"
         sys.exit(1)
     
@@ -92,10 +87,8 @@ if __name__ == "__main__":
         default=False, help="Exit immediately if there are no devices.")
     (options, args) = parser.parse_args()
     
-    level = logging.NOTSET
     if options.log_level != None:      
-        level = LEVELS.get(options.log_level.lower(), logging.NOTSET)
-        logger.setLevel(level = level)
+        logger.setLevel(g15logging.get_level(options.log_level))
         
     session_bus = None
         

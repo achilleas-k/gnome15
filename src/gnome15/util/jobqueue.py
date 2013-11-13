@@ -28,7 +28,7 @@ TIME_FACTOR=1
 
 # Logging
 import logging
-logger = logging.getLogger("jobs")
+logger = logging.getLogger(__name__)
 
 # Thread local to allow threads to detect what queue they are on
 queue_names = local()
@@ -53,7 +53,7 @@ class GTimer:
     def __init__(self, scheduler, task_queue, task_name, interval, function, stack, *args):
         self.function = function
         if function == None:
-            logger.warning("Attempt to run empty job %s on %s" % ( task_name, task_queue.name ) )
+            logger.warning("Attempt to run empty job %s on %s", task_name, task_queue.name)
             traceback.print_stack()
             return
         self.stack = stack
@@ -66,11 +66,9 @@ class GTimer:
         
     def exec_item(self, function, *args):
         try:
-            if logger.isEnabledFor(logging.DEBUG):
-                logging.debug("Executing GTimer %s" % str(self.task_name))
+            logger.debug("Executing GTimer %s", str(self.task_name))
             ji = self.task_queue.run(self.stack, function, *args)
-            if logger.isEnabledFor(logging.DEBUG):
-                logging.debug("Executed GTimer %s" % str(self.task_name))
+            logger.debug("Executed GTimer %s", str(self.task_name))
         finally:
             self.scheduler.all_jobs_lock.acquire()
             try:
@@ -89,7 +87,7 @@ class GTimer:
             if self in self.scheduler.all_jobs:
                 self.scheduler.all_jobs.remove(self)
             gobject.source_remove(self.source)
-            logging.debug("Cancelled GTimer %s" % str(self.task_name))
+            logger.debug("Cancelled GTimer %s", str(self.task_name))
         finally:
             self.scheduler.all_jobs_lock.release()
         
@@ -135,8 +133,7 @@ class JobScheduler():
             del self.queues[queue_name]
     
     def execute(self, queue_name, name, function, *args):
-        if logger.isEnabledFor(logging.DEBUG):
-            logging.debug("Executing on queue %s" % ( queue_name ) )
+        logger.debug("Executing on queue %s", queue_name)
         if not queue_name in self.queues:
             self.queues[queue_name] = JobQueue(name=queue_name)   
         self.queues[queue_name].run(self._get_stack(), function, *args)        
@@ -150,8 +147,7 @@ class JobScheduler():
     def queue(self, queue_name, name, interval, function, *args):
         if not hasattr(function, "__call__"):
             raise Exception("Not a function")
-        if logger.isEnabledFor(logging.DEBUG):
-            logging.debug("Queueing %s on %s for execution in %f" % ( name, queue_name, interval ) )
+        logger.debug("Queueing %s on %s for execution in %f", name, queue_name, interval)
         if not queue_name in self.queues:
             self.queues[queue_name] = JobQueue(name=queue_name)
         
@@ -160,8 +156,7 @@ class JobScheduler():
             self.queues[queue_name].run(self._get_stack(), function, *args)
         else:
             timer = GTimer(self, self.queues[queue_name], name, interval, function, self._get_stack(), *args)
-            if logger.isEnabledFor(logging.DEBUG):
-                logging.debug("Queued %s" % name)
+            logger.debug("Queued %s", name)
             return timer
 
 
@@ -177,8 +172,7 @@ class JobQueue():
             self.stack = stack
         
     def __init__(self,number_of_workers=1, name="JobQueue"):
-        if logger.isEnabledFor(logging.DEBUG):
-            logging.debug("Creating job queue %s with %d workers" % (name, number_of_workers))
+        logger.debug("Creating job queue %s with %d workers", name, number_of_workers)
         self.work_queue = Queue.Queue()
         self.queued_jobs = []
         self.name = name
@@ -199,12 +193,12 @@ class JobQueue():
             print "     %s - %s" % (str(s.item), str(s.queued))
             
     def stop(self):
-        logger.info("Stopping queue %s" % self.name)
+        logger.info("Stopping queue %s", self.name)
         self.stopping = True
         self.clear()
         for i in range(0, self.number_of_workers):
             self.work_queue.put(self.JobItem("Stopping", self._dummy))
-        logger.info("Stopped queue %s" % self.name)
+        logger.info("Stopped queue %s", self.name)
         
     def _dummy(self):
         pass
@@ -212,16 +206,23 @@ class JobQueue():
     def clear(self):
         jobs = self.work_queue.qsize()
         if jobs > 0:
-            logger.info("Clearing queue %s as it has %d jobs" % ( self.name, jobs ) )
+            logger.info("Clearing queue %s as it has %d jobs", self.name, jobs)
             try :
                 while True:
                     item = self.work_queue.get_nowait()
-                    logger.debug("Removed func = %s, args = %s, queued = %s, started = %s, finished = %s" % ( str(item.item), str(item.args), str(item.queued), str(item.started), str(item.finished) ) )
+                    logger.debug("Removed func = %s, args = %s, queued = %s, " \
+                                 "started = %s, finished = %s",
+                                 str(item.item),
+                                 str(item.args),
+                                 str(item.queued),
+                                 str(item.started),
+                                 str(item.finished))
                     if item in self.queued_jobs:
                         self.queued_jobs.remove(item)
-            except Queue.Empty:
+            except Queue.Empty as e:
+                logger.debug("The queue is already empty", exc_info = e)
                 pass
-            logger.info("Cleared queue %s" % self.name)
+            logger.info("Cleared queue %s", self.name)
             
     def run(self, stack, item, *args):
         if self.stopping:
@@ -232,14 +233,13 @@ class JobQueue():
             return
         self.all_jobs_lock.acquire()
         try :
-            if logger.isEnabledFor(logging.DEBUG):
-                logging.debug("Queued task on %s", self.name)
+            logger.debug("Queued task on %s", self.name)
             ji = self.JobItem(stack, item, args)
             self.queued_jobs.append(ji)
             self.work_queue.put(ji)
             jobs = self.work_queue.qsize()
-            if jobs > 1 and logger.level == logging.DEBUG:
-                logging.debug("Queue %s filling, now at %d jobs." % (self.name, jobs ) )
+            if jobs > 1:
+                logger.debug("Queue %s filling, now at %d jobs.", self.name, jobs)
                 
         finally :
             self.all_jobs_lock.release()
@@ -252,31 +252,30 @@ class JobQueue():
             try:
                 if item != None:
                     try:
-                        if logger.isEnabledFor(logging.DEBUG):
-                            logging.debug("Running task on %s", self.name)
+                        logger.debug("Running task on %s", self.name)
                         item.started = time.time()
                         if item.args and len(item.args) > 0:
                             item.item(*item.args)
                         else:
                             item.item()
                         item.finished = time.time()
-                        if logger.isEnabledFor(logging.DEBUG):
-                            logging.debug("Ran task on %s", self.name)
+                        logger.debug("Ran task on %s", self.name)
                     finally:
                         if item in self.queued_jobs: 
                             self.queued_jobs.remove(item)
-            except:
+            except Exception as a:
                 try:
-                    traceback.print_exc(file=sys.stderr)
-                    sys.stderr.write("Caused by job\n")
-                    sys.stderr.write("%s\n" % item.stack)
+                    logger.debug("Error on worker", exc_info = a)
+                    logger.debug("Caused by job")
+                    logger.debug("%s\n", item.stack)
                 except Exception as e:
+                    logger.debug("Could not log error on worker", exc_info = e)
                     pass
             self.work_queue.task_done()
             
         if logger:
             try:
-                logger.info("Exited queue %s" % self.name)
+                logger.info("Exited queue %s", self.name)
             except Exception as e:
                 pass
  

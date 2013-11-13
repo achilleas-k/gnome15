@@ -34,17 +34,17 @@ import sys
 import os
 import gconf
 import gtk
-import traceback 
 import logging
 from PIL import ImageMath
 from PIL import Image
 import array
+logger = logging.getLogger(__name__)
 load_error = None
 try :
     import pylibg15
 except Exception as a:
+    logger.debug("Could not import pylibg15 module", exc_info = a)
     load_error = a
-logger = logging.getLogger("driver")
 
 # Import from local version of pylibg19 if available
 if g15globals.dev:
@@ -351,12 +351,10 @@ class Driver(g15driver.AbstractDriver):
                             arrbuf[byte_offset] = pv &  ~(1 << bit_offset)
                 buf = arrbuf.tostring()
                 try :
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug("Writing buffer of %d bytes" % len(buf))
+                    logger.debug("Writing buffer of %d bytes", len(buf))
                     pylibg15.write_pixmap(buf)
-                except IOError as (errno, strerror):
-                    logger.error("Failed to send buffer. %d: %s" % ( errno, strerror ) )                    
-                    traceback.print_exc(file=sys.stderr)
+                except IOError as e:
+                    logger.error("Failed to send buffer.", exc_info = e)
                     self.disconnect()
         finally:
             self.lock.release()
@@ -365,7 +363,7 @@ class Driver(g15driver.AbstractDriver):
     Private
     """
     def _on_error(self, code):
-        logger.info("Disconnected due to error %d" % code)
+        logger.info("Disconnected due to error %d", code)
         self.disconnect()
         
     def _on_connect(self):  
@@ -384,7 +382,9 @@ class Driver(g15driver.AbstractDriver):
         if e:
             self.timeout = e.get_int()
         
-        logger.info("Initialising pylibg15, looking for %s:%s" % ( hex(self.device.controls_usb_id[0]), hex(self.device.controls_usb_id[1]) ))
+        logger.info("Initialising pylibg15, looking for %s:%s",
+                    hex(self.device.controls_usb_id[0]),
+                    hex(self.device.controls_usb_id[1]))
         if DEBUG_LIBG15 or ( logger.level < logging.WARN and logger.level != logging.NOTSET ):
             pylibg15.set_debug(pylibg15.G15_LOG_INFO)
         err = pylibg15.init(False, self.device.controls_usb_id[0], self.device.controls_usb_id[1])
@@ -437,7 +437,7 @@ class Driver(g15driver.AbstractDriver):
         if code & 1 << 0 != 0:
             keys.append(g15uinput.KEY_PLAYPAUSE)
         elif code & 1 << 1 != 0:
-            keys.append(g15uinput.KEY_STOP)
+            keys.append(g15uinput.KEY_STOPCD)
         elif code & 1 << 2 != 0:
             keys.append(g15uinput.KEY_PREVIOUSSONG)
         elif code & 1 << 3 != 0:
@@ -474,8 +474,7 @@ class Driver(g15driver.AbstractDriver):
     def _handle_key_event(self, code, ext_code):
         if not self.is_connected() or self.disconnecting:
             return
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("Key code %d" % code)
+        logger.debug("Key code %d", code)
             
         has_js = ext_code & EXT_KEY_MAP[g15driver.G_KEY_JOY] > 0
         if has_js:
@@ -505,8 +504,7 @@ class Driver(g15driver.AbstractDriver):
             pos = (pos[0] - g15uinput.DEVICE_JOYSTICK_CENTER,
                    pos[1] - g15uinput.DEVICE_JOYSTICK_CENTER)
             
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug("Joystick at %s" % str(pos))
+            logger.debug("Joystick at %s", str(pos))
             
             if self.joy_mode == g15uinput.JOYSTICK:
                 if has_js:
@@ -677,7 +675,7 @@ class Driver(g15driver.AbstractDriver):
         
     def _do_update_control(self, control):
         level = control.value
-        logger.debug("Updating control %s to %s" % (str(control.id), str(control.value)))
+        logger.debug("Updating control %s to %s", str(control.id), str(control.value))
         if control.id == backlight_control.id:
             self.check_control(control)
             pylibg15.set_keyboard_brightness(level)

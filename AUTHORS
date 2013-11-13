@@ -25,6 +25,9 @@ released under the MIT license.
 
 Some of the graphical work was made by Andrea Calabrò.
 
+Images src/plugins/pommodoro/Machovka_tomato.png was taken from [15]
+and was released under the public domain.
+
 [1]  http://github.com/MultiCoreNop/Logitech-G19-Linux-Daemon
 [2]  http://github.com/MultiCoreNop
 [3]  http://impulse.ian-halpern.com/
@@ -39,3 +42,5 @@ Some of the graphical work was made by Andrea Calabrò.
 [12] https://bitbucket.org/latestrevision/python-teamspeak3/
 [13] https://code.google.com/p/python-weather-api/
 [14] Eugene Kaznacheev <qetzal@gmail.com>
+[15] http://openclipart.org/detail/2542/tomato-by-machovka
+

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
  
 #  Gnome15 - Suite of tools for the Logitech G series keyboards and headsets
 #  Copyright (C) 2011 Brett Smith <tanktarta@blueyonder.co.uk>
@@ -27,22 +27,15 @@ import sys
 import os
 import glib
 
-# Logging
-import logging
-logging.basicConfig(format='%(threadName)s:%(name)s:%(message)s')
-logger = logging.getLogger()
-
-LEVELS = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL}
-
 # Allow running from local path
 path = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), ".."))
 if os.path.exists(path):
     sys.path.insert(0, path) 
     
+# Logging
+import gnome15.g15logging as g15logging
+logger = g15logging.get_root_logger()
+
 #
 import gobject
 gobject.threads_init()
@@ -65,14 +58,15 @@ def start_service(bus, no_trap=False,):
         setproctitle.setproctitle(os.path.basename(os.path.abspath(sys.argv[0])))
     except ImportError as ie:
         # Not a big issue
-        logger.debug("No setproctitle, process will be named 'python'")
+        logger.debug("No setproctitle, process will be named 'python'", exc_info = ie)
 
     # Start the loop    
     try :
         import gnome15.g15system as g15system   
         service = g15system.G15SystemServiceController(bus, no_trap=no_trap)
         service.start_loop()
-    except dbus.exceptions.NameExistsException:
+    except dbus.exceptions.NameExistsException as e:
+        logger.debug("Gnome15 service already running", exc_info = e)
         print "Gnome15 desktop service is already running"
         sys.exit(1)
     
@@ -89,10 +83,8 @@ if __name__ == "__main__":
         default=False, help="Do not try to trap signals.")
     (options, args) = parser.parse_args()
     
-    level = logging.NOTSET
     if options.log_level != None:      
-        level = LEVELS.get(options.log_level.lower(), logging.NOTSET)
-        logger.setLevel(level = level)
+        logger.setLevel(g15logging.get_level(options.log_level))
         
     if len(args) == 1 and ( args[0] == "stop" or args[0] == "restart" ):
         bus = dbus.SessionBus() if options.use_session_bus else dbus.SystemBus()

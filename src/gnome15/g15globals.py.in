@@ -15,6 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import xdg.BaseDirectory
 
 name = "@PACKAGE_NAME@"
 version = "@PACKAGE_VERSION@"
@@ -42,6 +43,10 @@ else:
 	i18n_dir = "@prefix@/share/gnome15/i18n"
 	icons_dir = "@prefix@/share/icons"
 	scripts_dir = "@prefix@/bin"
+
+user_config_dir = os.path.join(xdg.BaseDirectory.xdg_config_home, "gnome15")
+user_data_dir = os.path.join(xdg.BaseDirectory.xdg_data_home, "gnome15")
+user_cache_dir = os.path.join(xdg.BaseDirectory.xdg_cache_home, "gnome15")
 
 # Differs from distro to distro, so it can changed as a ./configure option
 # by setting the FIXED_SIZE_FONT environment variable.

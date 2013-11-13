@@ -28,6 +28,7 @@ import util.g15convert as g15convert
 import util.g15gconf as g15gconf
 import util.g15os as g15os
 import util.g15icontools as g15icontools
+import g15globals
 import g15actions
 import g15devices
 import g15uinput
@@ -42,7 +43,7 @@ import re
 import zipfile
 from cStringIO import StringIO
  
-logger = logging.getLogger("macros")
+logger = logging.getLogger(__name__)
 active_profile = None
 conf_client = gconf.client_get_default()
     
@@ -57,7 +58,7 @@ wm = pyinotify.WatchManager()
 mask = pyinotify.IN_DELETE | pyinotify.IN_MODIFY | pyinotify.IN_CREATE | pyinotify.IN_ATTRIB  # watched events
 
 # Create macro profiles directory
-conf_dir = os.path.expanduser("~/.config/gnome15/macro_profiles")
+conf_dir = os.path.join(g15globals.user_config_dir, "macro_profiles")
 g15os.mkdir_p(conf_dir)
 
 class EventHandler(pyinotify.ProcessEvent):
@@ -227,7 +228,7 @@ def create_profile(profile):
     """
     if profile.id == None or profile.id == -1:
         profile.set_id(generate_profile_id())
-    logger.info("Creating profile %s, %s" % ( profile.id, profile.name ))
+    logger.info("Creating profile %s, %s", profile.id, profile.name)
     profile.save()
 
 
@@ -376,7 +377,7 @@ def find_profile_for_command(args, device):
             command_line += " "
         command_line += "'" + a + "'"
         
-    logger.info("Processed command \"%s\"" % command_line)
+    logger.info("Processed command '%s'", command_line)
     
     for p in get_profiles(device):
         if p.can_launch(command_line):
@@ -627,7 +628,8 @@ class G15Macro(object):
     def __eq__(self, macro):
         try:
             return macro is not None and self.profile.id == macro.profile.id and self.key_list_key == macro.key_list_key and self.activate_on == macro.activate_on
-        except AttributeError:
+        except AttributeError as e:
+            logger.debug("Error when reading a macro attribute", exc_info = e)
             return False
     
     def _get_total(self, keys):
@@ -785,7 +787,7 @@ class G15Profile(object):
         """
         if self.read_only:
             raise Exception("Cannot write to read-only profile")
-        logger.info("Saving macro profile %s, %s" % ( self.id, self.name ))
+        logger.info("Saving macro profile %s, %s", self.id, self.name)
         if filename is None:
             filename = self.filename
         if self.window_name == None:
@@ -906,7 +908,7 @@ class G15Profile(object):
         """
         section_name = self._get_section_name(activate_on, memory)     
         key_list_key = get_keys_key(keys)
-        logger.info("Deleting macro M%d, for %s" % ( memory, key_list_key ))
+        logger.info("Deleting macro M%d, for %s", memory, key_list_key)
         self._delete_key(section_name, key_list_key)
         self._write(self.filename)
         bank_macros = self.macros[activate_on][memory - 1] 
@@ -965,7 +967,7 @@ class G15Profile(object):
         macro         --     content of macro
         """
         key_list_key = get_keys_key(keys)  
-        logger.info("Creating macro M%d, for %s" % ( memory, key_list_key ))
+        logger.info("Creating macro M%d, for %s", memory, key_list_key)
         new_macro = G15Macro(self, memory, key_list_key, activate_on)
         new_macro.name = name
         new_macro.type = macro_type
@@ -1130,6 +1132,7 @@ class G15Profile(object):
         try:
             return self.parser.getint(section, name) if self.parser.has_option(section, name) else default_value
         except ValueError as v:
+            logger.debug("Error when parsing a integer value", exc_info = v)
             return default_value
                     
     def __ne__(self, profile):

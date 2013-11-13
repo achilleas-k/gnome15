@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
  
 #  Gnome15 - Suite of tools for the Logitech G series keyboards and headsets
 #  Copyright (C) 2011 Brett Smith <tanktarta@blueyonder.co.uk>
@@ -21,22 +21,15 @@ import os
 import glib
 import time
 
-# Logging
-import logging
-logging.basicConfig(format='%(levelname)s:%(asctime)s:%(threadName)s:%(name)s:%(message)s', datefmt='%H:%M:%S')
-logger = logging.getLogger()
-
-LEVELS = {'debug': logging.DEBUG,
-          'info': logging.INFO,
-          'warning': logging.WARNING,
-          'error': logging.ERROR,
-          'critical': logging.CRITICAL}
-
 # Allow running from local path
 path = os.path.abspath(os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), ".."))
 if os.path.exists(path):
     sys.path.insert(0, path) 
     
+# Logging
+import gnome15.g15logging as g15logging
+logger = g15logging.get_root_logger()
+
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 DBusGMainLoop(set_as_default=True)
@@ -57,16 +50,15 @@ and a G19, to select the first G13 you would use g13_0.")
         print "You must provide the command to launch through Gnome15 as an argument."
         sys.exit(2)
     
-    level = logging.NOTSET
     if options.log_level != None:      
-        level = LEVELS.get(options.log_level.lower(), logging.NOTSET)
-        logger.setLevel(level = level)
+        logger.setLevel(g15logging.get_level(options.log_level))
         
     session_bus = dbus.SessionBus()
     try :
         service = session_bus.get_object('org.gnome15.Gnome15', \
                                '/org/gnome15/Service')
-    except:
+    except Exception as e:
+        logger.debug("D-Bus service not available.", exc_info = e)
         print "Gnome15 desktop service is not running. Applications may not be \
 launched through it. You can start the service using g15-desktop-service."
         sys.exit(1)

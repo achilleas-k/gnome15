@@ -1,3 +1,81 @@
+gnome15 0.9.8 (2013-11-11)
+==========================
+
+Gnome15 is a suite of tools for the Logitech G series keyboards and
+headsets, including the G15, G19, G13, G930, G35, G510, G11, G110 and
+the Z-10 speakers aiming to provide the best integration possible with
+the Linux Desktop.
+
+Gnome15 provides:
+* A panel indicator (or applet)
+* A configuration tool
+* A macro system
+* A set of plugins
+
+Developers can extend Gnome15 by writing plugins in the Python
+programming language, or they can use the provided D-Bus API.
+Gnome15 uses GNOME technologies, while staying well integrated with
+other desktops such as Ubuntu Unity and XFCE. It should also work with
+KDE.
+
+About this release
+------------------
+
+Release 0.9.8 is mainly a bug fix release with some enhancements and a
+new plugin.
+A new "Pommodoro Timer" plugin is now available.
+The Gnome shell extension now supports Gnome 3.10
+
+Changes since 0.9.7
+-------------------
+
+* The Gnome Shell extension now displays the plugin list in
+  alphabetical order. (https://projects.russo79.com/issues/172)
+* A new "Pommodoro Timer" plugin is now available.
+  (https://projects.russo79.com/issues/240)
+* The Gnome Shell extension now supports Gnome 3.10.
+  (https://projects.russo79.com/issues/290)
+
+Bugs fixed in this release
+--------------------------
+
+* The build now displays an error error if neither PIL or pillow python
+  libraries are available. (https://projects.russo79.com/issues/286)
+* The stop key (multimedia) now sends the correct keycode when Gnome15
+  is running. (https://projects.russo79.com/issues/291)
+* The weather plugin now keeps refreshing its data even if it is not
+  the active plugin. (https://projects.russo79.com/issues/298)
+* The screensaver plugin now correctly displays the user message on
+  G19 keyboards. (https://projects.russo79.com/issues/299)
+* The g15top module now provides a uptime method. This module is used
+  as a fallback replacement for python-gtop on systems that don't
+  provide it. (https://projects.russo79.com/issues/301)
+
+Under the hood changes for this release
+---------------------------------------
+
+* Exceptions are now logged in a consistent way
+  (https://projects.russo79.com/issues/269)
+* XDG directories are now used instead of hard coded paths.
+  (https://projects.russo79.com/issues/278)
+* mono icons are no longer installed by default. These icons are only
+  used on Ubuntu systems. (https://projects.russo79.com/issues/285)
+* The python interpreter for Gnome15 scripts was changed from 'python'
+  to 'python2'. 'python2' is available on all the supported
+  distributions except Debian 7 (Wheezy). Users of Debian 7 building
+  Gnome15 from source must manually change the shebang lines of the
+  files in the src/scripts directory.
+  (https://projects.russo79.com/issues/289)
+* User custom plugins should now be installed in
+  $XDG_DATA_HOME/gnome15/plugins instead of
+  $XDG_CONFIG_HOME/gnome15/plugins.
+  Support for $XDG_CONFIG_HOME/gnome15/plugins will be removed in a
+  future release.
+
+Have contributed code to this release:
+
+* Bram Faas <jacala@home.nl>
+
 gnome15 0.9.7 (2013-10-05)
 ==========================
 
@@ -27,7 +105,7 @@ The "Driver" tab no longer exists and the driver can now be selected
 directly from the "Keyboard" tab. A new button is used to display the
 driver options.
 
-Changes since 0.9.5
+Changes since 0.9.6
 -------------------
 
 * The volume monitor plugin now allows the selection of the sound card

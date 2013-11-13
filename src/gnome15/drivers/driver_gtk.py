@@ -33,7 +33,7 @@ import cairo
 from PIL import Image
 from PIL import ImageMath
 import logging
-logger = logging.getLogger("driver") 
+logger = logging.getLogger(__name__)
 
 # Driver information (used by driver selection UI)
 id="gtk"
@@ -298,7 +298,8 @@ class Driver(g15driver.AbstractDriver):
         if self.is_connected():
             gobject.idle_add(self.disconnect)
         else:
-            logger.warning("Mode change would cause disconnect when already connected. %s" % str(entry) )
+            logger.warning("Mode change would cause disconnect when already connected. %s",
+                           str(entry))
             
     def _draw_surface(self):
         # Finally paint the Cairo surface on the GTK widget
@@ -331,7 +332,7 @@ class Driver(g15driver.AbstractDriver):
             self.mode = self.device.model_id
         if self.mode == None or self.mode == "":
             self.mode = g15driver.MODEL_G19
-        logger.info("Mode is now %s" % self.mode)
+        logger.info("Mode is now %s", self.mode)
         self.controls = controls[self.mode]
         import gnome15.g15devices as g15devices
         device_info = g15devices.get_device_info(self.mode)

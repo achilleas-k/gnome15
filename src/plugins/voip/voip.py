@@ -36,7 +36,6 @@ import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import gnome15.g15screen as g15screen
 import os
-import traceback
 import time
 import gnome15.colorpicker as colorpicker
 from math import pi
@@ -46,7 +45,7 @@ import gtk
 
 # Logging
 import logging
-logger = logging.getLogger("voip")
+logger = logging.getLogger(__name__)
 
 # Actions
 MUTE_INPUT = "voip-mute-input"
@@ -376,8 +375,8 @@ class G15Voip(g15plugin.G15MenuPlugin):
                 self._connected = True
             else:
                 self._connection_timer = g15scheduler.schedule("ReconnectVoip", 5, self._attempt_connection)
-        except:          
-            traceback.print_exc()
+        except Exception as e:
+            logger.debug("Error connecting. Will retry...", exc_info = e)
             self._connection_timer = g15scheduler.schedule("ReconnectVoip", 5, self._attempt_connection)
             
     def create_menu(self):    
@@ -773,7 +772,7 @@ class SelectModeMenuItem(g15theme.MenuItem):
         
     def activate(self):      
         self._buddy_menu.mode = self._mode
-        logger.info("Mode is now %s" % self._mode)
+        logger.info("Mode is now %s", self._mode)
         self._gconf_client.set_string(self._gconf_key + "/mode", self._mode)
         self._buddy_menu.get_screen().redraw(self._buddy_menu.get_root())
         self.get_root().delete()

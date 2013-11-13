@@ -32,7 +32,7 @@ import datetime
 
 # Logging
 import logging
-logger = logging.getLogger("weather-noaa")
+logger = logging.getLogger(__name__)
  
 """
 Plugin definition

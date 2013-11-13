@@ -29,7 +29,7 @@ import gtk
 import os
 import logging
 import time
-logger = logging.getLogger("macros")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="macros"
@@ -188,7 +188,7 @@ class G15Macros(g15plugin.G15MenuPlugin):
         """
         Remove a macro from the menu
         """ 
-        logger.info("Removing macro %s" % str(macro.name))
+        logger.info("Removing macro %s", str(macro.name))
         self.menu.remove_child(self._get_item_for_macro(macro))
         self.screen.redraw(self.page)
         

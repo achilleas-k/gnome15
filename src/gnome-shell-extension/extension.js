@@ -36,7 +36,7 @@ const GLib = imports.gi.GLib;
 const Clutter = imports.gi.Clutter;
 const Config = imports.misc.config;
 
-let currNotification, gnome15System, devices;
+let currNotification, gnome15Service, devices, dbus_watch_id;
 
 /*
  * Remote object definitions. This is just a sub-set of the full API 
@@ -198,12 +198,12 @@ const DeviceItem = new Lang.Class({
 					let [screen] = result;
 					gnome15Device.connectSignal("ScreenAdded", Lang.bind(this, function(src, senderName, args) {
 						let [screenPath] = args;
-						global.log("Screen added " + screenPath);
+						_log("Screen added " + screenPath);
 						this._getPages(screenPath);
 					}));
 					gnome15Device.connectSignal("ScreenRemoved", Lang.bind(this, function(src, senderName, args) {
 						let [screenPath] = args;
-						global.log("Screen removed " + screenPath);
+						_log("Screen removed " + screenPath);
 						this._cleanUp();
 						this._gnome15Button.clearPages();
 					}));
@@ -217,13 +217,15 @@ const DeviceItem = new Lang.Class({
 		let hasScreen = screen != null && screen.length > 0;
 		this._gnome15Button = new DeviceButton(key, modelId, modelFullName, hasScreen);
 
-		// API change for 3.6
 		if(Config.PACKAGE_VERSION.indexOf("3.4") == 0) {
 			Main.panel._rightBox.insert_child_at_index(this._gnome15Button.actor, 1);
 			Main.panel._rightBox.child_set(this._gnome15Button.actor, {
 				y_fill : true
 			});
 			Main.panel._menus.addMenu(this._gnome15Button.menu);
+		}
+		else if(Config.PACKAGE_VERSION.indexOf("3.10") == 0) {
+			Main.panel.addToStatusArea('gnome15-' + modelId, this._gnome15Button);
 		}
 		else {
 			Main.panel.addToStatusArea('gnome15-' + modelId, this._gnome15Button);
@@ -359,7 +361,12 @@ const PageMenuItem = new Lang.Class({
 		this.label = new St.Label({
 			text : lblText
 		});
-		this.addActor(this.label);
+		if(Config.PACKAGE_VERSION.indexOf("3.10") == 0) {
+			this.actor.add_child(this.label);
+		}
+		else {
+			this.addActor(this.label);
+		}
 		this._pageProxy = page_proxy;
 		this._text = lblText;
 		this._idTxt = lblId;
@@ -391,20 +398,22 @@ const PreferencesMenuItem = new Lang.Class({
 });
 
 /**
- * Shell top panel "System Status Button" that represents a single Gnome15
- * device.  
+ * Shell top panel button that represents a single Gnome15 device.
  */
 const DeviceButton = new Lang.Class({
     Name: 'DeviceButton',
-    Extends: PanelMenu.SystemStatusButton,
+    Extends: Config.PACKAGE_VERSION.indexOf("3.10") == 0 ? PanelMenu.Button : PanelMenu.SystemStatusButton,
+	NUMBER_OF_FIXED_MENU_ITEMS: 4,
 
 	_init : function(devicePath, modelId, modelName) {
 		this._deviceUid = devicePath.substring(devicePath.lastIndexOf('/') + 1);
 		this._itemMap = {};
 		
-		// API change for 3.6
 		if(Config.PACKAGE_VERSION.indexOf("3.4") == 0) {
 			this.parent('logitech-' + modelId);
+		}
+		else if(Config.PACKAGE_VERSION.indexOf("3.10") == 0) {
+			this.parent(0.0, 'logitech-' + modelId + '-symbolic');
 		}
 		else {
 			this.parent('logitech-' + modelId + '-symbolic');
@@ -416,12 +425,22 @@ const DeviceButton = new Lang.Class({
 		this._modelId = modelId;
 		this._modelName = modelName;
 		this._screen = null;
-		// API change for 3.6
 		if(Config.PACKAGE_VERSION.indexOf("3.4") == 0) {
 			this._iconActor.add_style_class_name('device-icon');
 			this._iconActor.set_icon_size(20);
 			this._iconActor.add_style_class_name('device-button');
 		}
+		else if (Config.PACKAGE_VERSION.indexOf("3.10") == 0) {
+			this._icon = new St.Icon({
+					icon_name: 'logitech-' + modelId + '-symbolic',
+					style_class: 'device-icon',
+					reactive: true,
+					track_hover: true
+				});
+			this._icon.set_icon_size(20);
+			this._icon.add_style_class_name('device-button');
+			this.actor.add_actor(this._icon);
+                }
 		else {
 			this.mainIcon.add_style_class_name('device-icon');
 			this.mainIcon.set_icon_size(20);
@@ -470,8 +489,7 @@ const DeviceButton = new Lang.Class({
 	 * @param pagePath page of page to add
 	 */
 	addPage : function(pagePath) {
-		this._itemList.push(pagePath);
-		this._addPage(pagePath);
+		this._addPage(pagePath, true);
 	},
 
 	/**
@@ -494,16 +512,39 @@ const DeviceButton = new Lang.Class({
 	 * added to the menu component.
 	 * 
 	 * @param pagePath page of page.
+	 * @param insertPagePathInItemList flag that specifies if the pagePath should be inserted in
+	 *                                 the _itemList. Should be set to true when adding a page
+	 *                                 for the first time.
 	 */
-	_addPage : function(pagePath) {
+	_addPage : function(pagePath, insertPagePathInItemList) {
 		let Gnome15PageProxy = Gio.DBusProxy.makeProxyWrapper(Gnome15PageInterface);
 		let pageProxy = new Gnome15PageProxy(Gio.DBus.session, 'org.gnome15.Gnome15', pagePath);
 		pageProxy.GetTitleRemote(Lang.bind(this, function(result) {
 			let [title] = result;
 			let item = new PageMenuItem(title, title, pageProxy);
+			let position = this._findMenuPositionFor(item);
+			if(insertPagePathInItemList == true)
+				this._itemList.splice(position, 0, pagePath);
 			this._itemMap[pagePath] = item;
-			this.menu.addMenuItem(item);
+			this.menu.addMenuItem(item, position + this.NUMBER_OF_FIXED_MENU_ITEMS);
 		}));
+	},
+
+	/**
+	 * Find the position where a given menu item must be inserted in the menu so that
+	 * all the items are alphabetically ordered.
+	 *
+	 * @param item item that will be inserted in the menu
+	 */
+	_findMenuPositionFor : function(item) {
+		let i = 0;
+		for(let key in this._itemList) {
+			let pagePath = this._itemList[key];
+			if(this._itemMap[pagePath]._text > item._text)
+				return i;
+			i++;
+		}
+		return this._itemList.length;
 	},
 	
 	/**
@@ -536,35 +577,40 @@ const DeviceButton = new Lang.Class({
  */
 
 function init() {
+	_log('Loading Gnome15 Gnome Shell Extension')
 	devices = {}
 	let Gnome15ServiceProxy = Gio.DBusProxy.makeProxyWrapper(Gnome15ServiceInterface);
 	
 	/* The "Service" is the core of Gnome, so connect to it and watch for some
 	 * signals
 	 */
-	gnome15System = new Gnome15ServiceProxy(Gio.DBus.session,
-			'org.gnome15.Gnome15', '/org/gnome15/Service');
+	gnome15Service = new Gnome15ServiceProxy(Gio.DBus.session,
+			'org.gnome15.Gnome15',
+			'/org/gnome15/Service');
 
-	gnome15System.connectSignal("Started", _onDesktopServiceStarted);
-	gnome15System.connectSignal("Stopping", _onDesktopServiceStopping);
-	gnome15System.connectSignal("DeviceAdded", _deviceAdded);
-	gnome15System.connectSignal("DeviceRemoved", _deviceRemoved);
+	gnome15Service.connectSignal("Started", _onDesktopServiceStarted);
+	gnome15Service.connectSignal("Stopping", _onDesktopServiceStopping);
+	gnome15Service.connectSignal("DeviceAdded", _deviceAdded);
+	gnome15Service.connectSignal("DeviceRemoved", _deviceRemoved);
 }
 
 function enable() {
-	Gio.bus_watch_name(Gio.BusType.SESSION,
-	                   'org.gnome15.Gnome15',
-	                   Gio.BusNameWatcherFlags.NONE,
-	                   _onDesktopServiceAppeared,
-	                   _onDesktopServiceVanished);
+	_log('Enabling Gnome15 Gnome Shell Extension')
+	dbus_watch_id = Gio.bus_watch_name(Gio.BusType.SESSION,
+	                                   'org.gnome15.Gnome15',
+	                                   Gio.BusNameWatcherFlags.NONE,
+	                                   _onDesktopServiceAppeared,
+	                                   _onDesktopServiceVanished);
 
-	gnome15System.IsStartedRemote(_onStarted);
+	gnome15Service.IsStartedRemote(_onStarted);
 }
 
 function disable() {
+	_log('Disabling Gnome15 Gnome Shell Extension')
 	for(let key in devices) {
 		_removeDevice(key);
 	}
+	Gio.bus_unwatch_name(dbus_watch_id);
 }
 
 /*
@@ -583,7 +629,7 @@ function _onDesktopServiceAppeared() {
  * when the service disappears, even when it dies unexpectedly. 
  */
 function _onDesktopServiceVanished() {
-	global.log("Desktop service vanished");
+	_log('Desktop service vanished');
 	_onDesktopServiceStopping();
 }
 
@@ -592,8 +638,8 @@ function _onDesktopServiceVanished() {
  * list at this point. 
  */
 function _onDesktopServiceStarted() {
-	global.log("Desktop service started");
-	gnome15System.GetDevicesRemote(_refreshDeviceList);
+	_log('Desktop service started');
+	gnome15Service.GetDevicesRemote(_refreshDeviceList);
 }
 
 /**
@@ -601,7 +647,7 @@ function _onDesktopServiceStarted() {
  * of user selecting "Stop Service" most probably).
  */
 function _onDesktopServiceStopping() {
-	global.log("Desktop service stopping");
+	_log('Desktop service stopping');
 	for(let key in devices) {
 		_removeDevice(key);
 	}
@@ -619,7 +665,7 @@ function _onStarted(result, excp) {
 
 	let [started] = result;
 	if(started) {
-		gnome15System.GetDevicesRemote(_refreshDeviceList);
+		gnome15Service.GetDevicesRemote(_refreshDeviceList);
 	}
 }
 
@@ -648,7 +694,7 @@ function _deviceAdded(source, senderName, args) {
 
 
 function _addDevice(key) {
-	global.log("Added device " + key);
+	_log('Added device ' + key);
 	devices[key] = new DeviceItem(key);
 }
 
@@ -665,7 +711,7 @@ function _deviceRemoved(source, senderName, args) {
 }
 
 function _removeDevice(key) {
-	global.log("Removed device " + key);
+	_log('Removed device ' + key);
 	devices[key].close();
 	delete devices[key];
 }
@@ -692,4 +738,13 @@ function _createDevice(path) {
 	let Gnome15DeviceProxy = Gio.DBusProxy.makeProxyWrapper(Gnome15DeviceInterface);
 	return new Gnome15DeviceProxy(Gio.DBus.session,
 			'org.gnome15.Gnome15', path);
+}
+
+/**
+ * Utility for logging messages
+ *
+ * @param message
+ */
+function _log(message) {
+  global.log('gnome15-gnome-shell: ' + message)
 }

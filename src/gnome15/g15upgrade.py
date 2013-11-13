@@ -22,13 +22,14 @@ any migration needs to take place.
  
 import os.path
 import g15devices
+import g15globals
 import util.g15pythonlang as g15pythonlang
 import logging
 import shutil
 import sys
 import subprocess
 
-logger = logging.getLogger("upgrade")
+logger = logging.getLogger(__name__)
  
 def upgrade():
     version_0_x_0_to_0_7_0()
@@ -39,7 +40,7 @@ def version_0_x_0_to_0_8_5():
     Location of mail accounts moved
     """
     old_path = os.path.expanduser("~/.gnome2/gnome15/lcdbiff/mailboxes.xml")
-    new_path = os.path.expanduser("~/.config/gnome15/plugin-data/lcdbiff/mailboxes.xml")
+    new_path = os.path.join(g15globals.user_config_dir, "plugin-data", "lcdbiff", "mailboxes.xml")
     if os.path.exists(old_path) and not os.path.exists(new_path):
         logger.warn("Upgrading to 0.8.5, moving mailboxes")
         os.renames(old_path, new_path)    
@@ -50,8 +51,8 @@ def version_0_x_0_to_0_7_0():
     multiple device support was introduced, pushing configuration into 
     sub-directories
     """
-    macros_dir = os.path.expanduser("~/.config/gnome15/macro_profiles")
-    if os.path.exists(os.path.expanduser("%s/0.macros" % macros_dir)):
+    macros_dir = os.path.join(g15globals.user_config_dir, "macro_profiles")
+    if os.path.exists(os.path.join(macros_dir,  "0.macros")):
         logger.info("Upgrading macros and configuration to 0.7.x format")
         
         """
@@ -66,9 +67,9 @@ def version_0_x_0_to_0_7_0():
                 for device in devices:
                     device_dir = os.path.join(macros_dir, device.uid)
                     if not os.path.exists(device_dir):
-                        logger.info("Creating macro_profile directory for %s" % device.uid)
+                        logger.info("Creating macro_profile directory for %s", device.uid)
                         os.mkdir(device_dir)
-                    logger.info("Copying macro_profile %s to %s " % ( file, device.uid ))
+                    logger.info("Copying macro_profile %s to %s ", file, device.uid)
                     shutil.copyfile(profile_file, os.path.join(device_dir, file))
                 os.remove(profile_file)
                 
@@ -81,11 +82,11 @@ def version_0_x_0_to_0_7_0():
         for device in devices:
             device_dir = os.path.join(gconf_dir, device.uid)
             if not os.path.exists(device_dir):
-                logger.info("Creating GConf directory for %s" % device.uid)
+                logger.info("Creating GConf directory for %s", device.uid)
                 os.mkdir(device_dir)
-            logger.info("Copying settings %s to %s " % ( gconf_file, device.uid ))
+            logger.info("Copying settings %s to %s", gconf_file, device.uid)
             shutil.copyfile(gconf_file, os.path.join(device_dir, "%gconf.xml"))
-            logger.info("Copying plugin settings %s to %s " % ( gconf_plugins_dir, device.uid ))
+            logger.info("Copying plugin settings %s to %s", gconf_plugins_dir, device.uid)
             target_plugins_path = os.path.join(device_dir, "plugins")
             if not os.path.exists(target_plugins_path):
                 shutil.copytree(gconf_plugins_dir, target_plugins_path )
@@ -111,5 +112,5 @@ def version_0_x_0_to_0_7_0():
             process_info = commands.getstatusoutput("sh -c \"ps -U %d|grep gconfd|head -1\"" % os.getuid()) 
         if process_info:
             pid = g15pythonlang.split_args(process_info)[0]
-            logger.info("Sending process %s SIGHUP" % pid)
+            logger.info("Sending process %s SIGHUP", pid)
             subprocess.check_call([ "kill", "-SIGHUP", pid ])

@@ -44,7 +44,7 @@ import dbus
 from threading import Lock
  
 import logging
-logger = logging.getLogger("mediaplayer")
+logger = logging.getLogger(__name__)
 
 # Detect whether we will be able to grab multimedia keys
 session_bus = dbus.SessionBus()
@@ -53,13 +53,16 @@ try:
     dbus.Interface(session_bus.get_object('org.g.SettingsDaemon',
                         '/org/gnome/SettingsDaemon'), 'org.gnome.SettingsDaemon')
     can_grab_media_keys = True
-except dbus.DBusException:
+except dbus.DBusException as e:
+    logger.debug("Error when trying to check if media keys could be grabbed. Trying alternative.",
+                 exc_info = e)
     try:
         dbus.Interface(session_bus.get_object('org.gnome.SettingsDaemon',
                             '/org/gnome/SettingsDaemon/MediaKeys'),
                             'org.gnome.SettingsDaemon.MediaKeys')
         can_grab_media_keys = True
-    except dbus.DBusException:
+    except dbus.DBusException as e:
+        logger.debug("Error when trying to check if media keys could be grabbed.", exc_info = e)
         pass
 
 # Register the custom actions
@@ -328,7 +331,8 @@ class G15MediaPlayerPage(g15theme.G15Page):
         properties["aspect"] = "%d:%d" % self._aspect
         try:
             progress_pc, progress, duration = self._get_track_progress()
-        except:
+        except Exception as e:
+            logger.debug("Could not read track progress. Setting values to 0", exc_info = e)
             progress_pc, progress, duration = 0,(0,0,0),(0,0,0)
             
         if self._last_seconds != progress[2]:
@@ -368,14 +372,14 @@ class G15MediaPlayerPage(g15theme.G15Page):
         if message.structure is None:
             return
         message_name = message.structure.get_name()
-        logger.debug("Sync. %s" % message)
+        logger.debug("Sync. %s", message)
     
     def _on_message(self, bus, message):
         """
         Handle changes in the playing state.
         """
         t = message.type
-        logger.debug("Message. %s" % message)
+        logger.debug("Message. %s", message)
         if t == gst.MESSAGE_EOS:
             self._pipeline.set_state(gst.STATE_NULL)
             self._show_sidebar()
@@ -733,7 +737,7 @@ class G15WebCamSource(G15MediaSource):
     def create_source(self):
         src = gst.element_factory_make("v4l2src", "video-source")
         device_path = "/dev/%s" % self.name
-        logger.info("Opening Video device %s" % device_path)
+        logger.info("Opening Video device %s", device_path)
         src.set_property("device", device_path)
         return src
     
@@ -867,7 +871,8 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
             try:
                 gst.element_factory_make(c)
                 items.append(G15VisualisationMenuItem(c, self))
-            except:
+            except Exception as e:
+                logger.debug("Error creating visualizations", exc_info = e)
                 pass            
         
         self.menu.set_children(items)
@@ -922,7 +927,7 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
                         self._mm_key = g15driver.G_KEY_PREV
                         self._player_page._rew()
                     else:
-                        logger.warn("Unsupported media key %s" % key)
+                        logger.warn("Unsupported media key %s", key)
                     if self._mm_key_timer is not None:
                         self._mm_key_timer.cancel()
                         self._mm_key_timer = None
@@ -933,7 +938,8 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
                                     '/org/gnome/SettingsDaemon'), 'org.gnome.SettingsDaemon')
                 self._settings.GrabMediaPlayerKeys(self._app_name, 0)
                 self._grabbed_keys = self._settings.connect_to_signal('MediaPlayerKeyPressed', _on_key)
-            except dbus.DBusException:
+            except dbus.DBusException as e:
+                logger.debug("Error grabing multimedia keys. Trying alternative", exc_info = e)
                 self._settings = dbus.Interface(session_bus.get_object('org.gnome.SettingsDaemon',
                                     '/org/gnome/SettingsDaemon/MediaKeys'),
                                     'org.gnome.SettingsDaemon.MediaKeys')
@@ -941,8 +947,8 @@ class G15MediaPlayer(g15plugin.G15MenuPlugin):
                 self._grabbed_keys = self._settings.connect_to_signal('MediaPlayerKeyPressed', _on_key)
                
             logger.info("Grabbed multimedia keys")
-        except dbus.DBusException, error:
-            logger.warn("Could not grab multi-media keys. %s" % error)
+        except dbus.DBusException as error:
+            logger.warn("Could not grab multi-media keys.", exc_info = error)
             
     def _clear_mm_key(self):
         self._mm_key = None

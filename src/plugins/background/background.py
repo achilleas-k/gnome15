@@ -31,7 +31,7 @@ import os
 import logging
 import gconf
 from lxml import etree
-logger = logging.getLogger("background")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="background"
@@ -169,7 +169,8 @@ class G15Background():
                 try:
                     from gi.repository import Gio
                     self.gnome_dconf_settings = Gio.Settings.new("org.gnome.desktop.background")
-                except:
+                except Exception as e:
+                    logger.debug("Could not get background with GI, falling back", exc_info = e)
                     # Work around on Ubuntu 12.10+ until Gnome15 is converted to GObject bindings
                     import gnome15.g15dconf as g15dconf
                     self.gnome_dconf_settings = g15dconf.GSettings("org.gnome.desktop.background")

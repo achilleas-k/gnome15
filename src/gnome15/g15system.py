@@ -25,7 +25,7 @@ import util.g15scheduler as g15scheduler
 
 # Logging
 import logging
-logger = logging.getLogger("systemservice")
+logger = logging.getLogger(__name__)
     
 NAME = "Gnome15"
 VERSION = g15globals.version
@@ -125,7 +125,7 @@ def set_value(filename, value):
     g15scheduler.execute("System", "setValue", _do_set_value, filename, value);
         
 def _do_set_value(filename, value):
-    logger.debug("Writing %s to %s" % (filename, value))
+    logger.debug("Writing %s to %s", filename, value)
     fd = open(filename, "w")
     try :
         fd.write("%s\n" % str(value))
@@ -148,14 +148,14 @@ class KeyboardDevice():
             self.leds[light_key] = LED(light_key, self, f)
             
     def set_keymap_switching(self, enabled):
-        logger.info("Setting keymap switching on %s to '%s'" % (self.device.uid, str(enabled)))
+        logger.info("Setting keymap switching on %s to '%s'", self.device.uid, str(enabled))
         set_value(os.path.join(self.device_path, "keymap_switching"), 1 if enabled else 0)
         
     def get_keymap_switching(self):
         return get_int_value(os.path.join(self.device_path, "keymap_switching")) == 1 
             
     def set_keymap_index(self, index):
-        logger.info("Setting keymap index on %s to '%d'" % (self.device.uid, index))
+        logger.info("Setting keymap index on %s to '%d'", self.device.uid, index)
         set_value(os.path.join(self.device_path, "keymap_index"), index)
         
     def get_keymap_index(self):
@@ -165,7 +165,7 @@ class KeyboardDevice():
         s = ""
         for k in keymap:
             s += "%04x %04x\n" % ( k, keymap[k])
-        logger.info("Setting keymap on %s to '%s'" % (self.device.uid, str(keymap)))
+        logger.info("Setting keymap on %s to '%s'", self.device.uid, str(keymap))
         set_value(os.path.join(self.device_path, "keymap"), s)
         
     def get_keymap(self):
@@ -263,13 +263,15 @@ class G15SystemServiceController():
                     # Extract the USB ID
                     a = device.split(":")
                     usb_id = ( int("0x%s" % a[1], 16), int("0x%s" % a[2].split(".")[0], 16) )
-                    logger.info("Testing if device %04x:%04x is supported by Gnome15" % (usb_id[0], usb_id[1]))
+                    logger.info("Testing if device %04x:%04x is supported by Gnome15",
+                                usb_id[0],
+                                usb_id[1])
                     
                     # Look for a matching Gnome15 device
                     for device in g15devices.find_all_devices():
                         if device.controls_usb_id == usb_id:
                             # Found a device we want
-                            logger.info("Found device %s " % str(device))
+                            logger.info("Found device %s", str(device))
                             
                             # Work out UID
                             # TODO this is not quite right - if there is more than one device of same type, indexs might not match                            
@@ -279,5 +281,5 @@ class G15SystemServiceController():
                             indices[device.model_id] = index + 1
                  
         else:
-            logger.info("No devices found at %s" % DEVICES_PATH)
+            logger.info("No devices found at %s", DEVICES_PATH)
             

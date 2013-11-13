@@ -25,10 +25,10 @@ import gnome15.g15theme as g15theme
 import gnome15.g15driver as g15driver
 import gnome15.g15plugin as g15plugin
 import gnome15.g15accounts as g15accounts
-import os
+import gnome15.g15globals as g15globals
+import os, os.path
 import pwd
 import gtk
-import traceback
 import re
 from poplib import POP3_SSL
 from poplib import POP3
@@ -37,7 +37,7 @@ from imaplib import IMAP4_SSL
  
 # Logging
 import logging
-logger = logging.getLogger("lcdbiff")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id = "lcdbiff"
@@ -66,7 +66,7 @@ CURRENT_USERNAME=pwd.getpwuid(os.getuid())[0]
 PROTO_POP3 = "pop3"
 PROTO_IMAP = "imap"
 TYPES = [ PROTO_POP3, PROTO_IMAP ]
-CONFIG_PATH = "~/.config/gnome15/plugin-data/lcdbiff/mailboxes.xml"
+CONFIG_PATH = os.path.join(g15globals.user_config_dir, "plugin-data" , "lcdbiff", "mailboxes.xml")
 CONFIG_ITEM_NAME = "mailbox"
 
 def create(gconf_key, gconf_client, screen):
@@ -148,14 +148,14 @@ class POP3Checker(Checker):
                     pop.pass_(password)            
                     self.save_password(account, password, default_port)            
                     return pop.stat()
-                except Exception:
-                    traceback.print_exc()
+                except Exception as e:
+                    logger.debug("Error while checking", exc_info = e)
                     try :
                         pop.apop(username, password)            
                         self.save_password(account, password, default_port)            
                         return pop.stat()
-                    except Exception:
-                        traceback.print_exc()
+                    except Exception as e2:
+                        logger.debug("Error while checking", exc_info = e2)
         finally :
             pop.quit()
         return (0, 0)
@@ -199,8 +199,8 @@ class IMAPChecker(Checker):
                         unread  = int(re.search("UNSEEN (\d+)", status[1][0]).group(1))      
                         count = ( unread, count )
                         return count 
-                    except Exception:
-                        traceback.print_exc()
+                    except Exception as e:
+                        logger.debug("Error while checking", exc_info = e)
                           
                 finally:
                     imap.logout()   
@@ -351,7 +351,7 @@ class MailItem(g15theme.MenuItem):
     
     def activate(self):
         email_client = self.gconf_client.get_string("/desktop/gnome/url-handlers/mailto/command")
-        logger.info("Running email client %s" % email_client)
+        logger.info("Running email client %s", email_client)
         if email_client != None:
             call_str = "%s &" % email_client.replace("%s", "").replace("%U", "mailto:")
             os.system(call_str)
@@ -438,8 +438,7 @@ class G15Biff(g15plugin.G15MenuPlugin):
                 t_errors += 1
                 item.error = e
                 item.count = 0
-                if logger.level < logging.WARN and logger.level != logging.NOTSET:
-                    traceback.print_exc()
+                logger.debug("Error while refreshing item %s", str(item), exc_info = e)
                 
         self.total_count = t_count
         self.total_errors = t_errors

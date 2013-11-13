@@ -37,6 +37,9 @@ import gnome15.dbusmenu as dbusmenu
 
 from lxml import etree
 
+import logging
+logger = logging.getLogger(__name__)
+
 # Only works in Unity
 if not "XDG_CURRENT_DESKTOP" in os.environ or os.environ["XDG_CURRENT_DESKTOP"] != "Unity":
     raise Exception("Only works in Ubuntu Unity desktop")
@@ -108,6 +111,7 @@ class IndicatorMessagesMenu(dbusmenu.DBUSMenu):
         try:
             dbusmenu.DBUSMenu.__init__(self, session_bus, "com.canonical.indicator.messages", "/com/canonical/indicator/messages/menu", "com.canonical.dbusmenu", on_change, True)
         except dbus.DBusException as dbe:
+            logger.debug("Could not create DBUS menu, trying alternative", exc_info = dbe)
             dbusmenu.DBUSMenu.__init__(self, session_bus, "org.ayatana.indicator.messages", "/org/ayatana/indicator/messages/menu", "org.ayatana.dbusmenu", on_change, False)
 
     def create_entry(self, id, properties):

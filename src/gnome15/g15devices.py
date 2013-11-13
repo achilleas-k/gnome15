@@ -25,7 +25,7 @@ import g15drivermanager
 
 # Logging
 import logging
-logger = logging.getLogger("service")
+logger = logging.getLogger(__name__)
  
 '''
 Keyboard layouts 
@@ -284,7 +284,8 @@ class Device():
     def __eq__(self, o):
         try:
             return o is not None and self.uid == o.uid
-        except AttributeError:
+        except AttributeError as e:
+            logger.debug('AttributeError when comparing Device', exc_info = e)
             return False
         
     def __repr__(self):
@@ -442,7 +443,7 @@ def __device_added(observer, device):
                         find_all_devices()
                         for r in reversed(__cached_devices):
                             if r.usb_id == usb_id:
-                                logger.info("Added device %s" % r)
+                                logger.info("Added device %s", r)
                                 for l in device_added_listeners:
                                     l(r)
                                 break
@@ -474,8 +475,8 @@ try:
     find_all_devices()
     have_udev = True
     __monitor.start()
-except:
-    logger.info("Failed to get PyUDev context, hot plugging support not available")
+except Exception as e:
+    logger.info("Failed to get PyUDev context, hot plugging support not available", exc_info = e)
     
 if __name__ == "__main__":
     for device in find_all_devices():

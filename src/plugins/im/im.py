@@ -51,7 +51,7 @@ from telepathy.constants import (
 
 # Logging
 import logging
-logger = logging.getLogger("im")
+logger = logging.getLogger(__name__)
 
 # Plugin details - All of these must be provided
 id="im"
@@ -122,12 +122,10 @@ class ContactList:
 
     def _connection_ready_cb(self, conn):
         if CONNECTION_INTERFACE_SIMPLE_PRESENCE not in conn:
-            logger.warning("SIMPLE_PRESENCE interface not available on %s" %
-                    conn.service_name)
+            logger.warning("SIMPLE_PRESENCE interface not available on %s", conn.service_name)
             return
         if CONNECTION_INTERFACE_REQUESTS not in conn:
-            logger.warning("REQUESTS interface not available on %s" %
-                    conn.service_name)
+            logger.warning("REQUESTS interface not available on %s", conn.service_name)
             return
 
         conn[CONNECTION_INTERFACE_SIMPLE_PRESENCE].connect_to_signal(
@@ -158,7 +156,7 @@ class ContactList:
                 error_handler = self._error_cb)
 
     def _request_contact_info(self, handles):
-        logger.debug("Requesting contact info for %s" %(str(handles)))
+        logger.debug("Requesting contact info for %s", str(handles))
         interfaces = [CONNECTION,
                 CONNECTION_INTERFACE_ALIASING,
                 CONNECTION_INTERFACE_SIMPLE_PRESENCE]
@@ -170,7 +168,7 @@ class ContactList:
             error_handler = self._error_cb)
 
     def _get_contact_attributes_cb(self, attributes):
-        logger.debug("Received contact attributes for %s" %(str(attributes)))
+        logger.debug("Received contact attributes for %s", str(attributes))
         for handle, member in attributes.iteritems():
             contact_info = self._parse_member_attributes(member)
             contact, alias, presence = contact_info
@@ -190,12 +188,12 @@ class ContactList:
         return (contact_id, alias, presence)
 
     def _add_contact(self, handle, contact, presence, alias):
-        logger.debug("Add contact %s (%s)" %(str(contact),str(handle)))
+        logger.debug("Add contact %s (%s)", str(contact), str(handle))
         self._contact_list[handle] = contact
         self.menu.add_contact(self._conn, handle, contact, presence, alias)
 
     def _contact_presence_changed_cb(self, presences):
-        logger.debug("Contact presence changed %s" %(str(presences)))
+        logger.debug("Contact presence changed %s", str(presences))
         for handle, presence in presences.iteritems():
             if handle in self._contact_list:
                 self._update_contact_presence(handle, presence)
@@ -203,11 +201,11 @@ class ContactList:
                 self._request_contact_info([handle])
 
     def _update_contact_presence(self, handle, presence):
-        logger.debug("Updating contact presence for %s" %(str(handle)))
+        logger.debug("Updating contact presence for %s", str(handle))
         self.menu.update_contact_presence(self._conn, handle, presence)
 
     def _error_cb(self, *args):
-        logger.error("Error happens: %s" % args)
+        logger.error("Error happens: %s", args)
 
 """
 Represents a contact as a single item in a menu
@@ -241,7 +239,7 @@ class ContactMenuItem(g15theme.MenuItem):
         return item_properties
         
     def set_presence(self, presence):
-        logger.debug("Setting presence of %s to %s" % (str(self.contact), str(presence)))
+        logger.debug("Setting presence of %s to %s", str(self.contact), str(presence))
         self.presence = presence   
         
     '''
@@ -255,7 +253,7 @@ class ContactMenuItem(g15theme.MenuItem):
         key = ( presence[0], None ) 
         if key in STATUS_MAP:
             return STATUS_MAP[key][1]
-        logger.warning("Unknown presence %d = %s" % (presence[0], presence[1]))
+        logger.warning("Unknown presence %d = %s", presence[0], presence[1])
         return "Unknown"
     
     def _get_status_icon_name(self, presence):
@@ -265,7 +263,7 @@ class ContactMenuItem(g15theme.MenuItem):
         key = ( presence[0], None ) 
         if key in STATUS_MAP:
             return STATUS_MAP[key][0]
-        logger.warning("Unknown presence %d = %s" % (presence[0], presence[1]))
+        logger.warning("Unknown presence %d = %s", presence[0], presence[1])
         return "dialog-warning"   
         
 """
@@ -414,14 +412,14 @@ class ContactMenu(g15theme.Menu):
         """
         for row in self._contacts:
             if row.handle == handle and row.conn == conn:
-                logger.debug("Updating presence of %s to %s" % (str(row.contact), str(presence)))
+                logger.debug("Updating presence of %s to %s", str(row.contact), str(presence))
                 row.set_presence(presence)
                 self.selected = row
                 self.reload()
                 if self.on_update:
                     self.on_update()
                 return
-        logger.warning("Got presence update for unknown contact %s" %(str(presence)))
+        logger.warning("Got presence update for unknown contact %s", str(presence))
     
         
     '''
@@ -504,7 +502,7 @@ class G15Im(g15plugin.G15MenuPlugin):
             if mode_index >= len(MODE_LIST):
                 mode_index = 0
             self.menu.mode = MODE_LIST[mode_index]
-            logger.info("Mode is now %s" % self.menu.mode)
+            logger.info("Mode is now %s", self.menu.mode)
             self.gconf_client.set_string(self.gconf_key + "/mode", self.menu.mode)
             self.menu.reload()
             self.screen.redraw(self.page)
@@ -532,12 +530,15 @@ class G15Im(g15plugin.G15MenuPlugin):
         be added
         """
         if name.startswith("org.freedesktop.Telepathy.Connection"):
-            logger.info("Telepathy Name owner changed for %s from %s to %s", name, old_owner, new_owner)
+            logger.info("Telepathy Name owner changed for %s from %s to %s",
+                        name,
+                        old_owner,
+                        new_owner)
             connected = self.menu.is_connected(name)
             if new_owner == "" and connected:
-                logger.info("Removing %s" % name)
+                logger.info("Removing %s", name)
                 g15scheduler.schedule("RemoveConnection", 5.0, self.menu.remove_connection, name)
             elif old_owner == "" and not connected:
-                logger.info("Adding %s" % name)
+                logger.info("Adding %s", name)
                 g15scheduler.schedule("NewConnection", 5.0, self.menu.new_connection, name, self._session_bus)
         
