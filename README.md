@@ -1,16 +1,9 @@
 STATUS OF GNOME15
 =================
 
-Gnome15 is currently **unmaintained**.
-The original primary repository has been unavailable since November 2014 due to a hosting server crash.
-This fork was made to add a feature and has not been updated since November 2013, but it appears to be the latest snapshot of the repository that is currently publicly available.
+The latest updates to Fedora 21 seem to have broken the G15logging scripts for python.  There's quite a bit of outdated code that's being used so I expect getting this project up to speed may take a while.
 
-I intend to bring this repository up to date with the latest version (the version before the server crash) using the code contained in the latest distribution packages available.
-
-Feel free to fork this repository or send a pull request if you want to maintain it.
-
-
-
+I'm going to be attempting to find the issue preventing the logs from being imported to get the GUI running again.  The install was switched somewhere down the line to automake so the build instructions need a little updating to get running.  Because of the Russo79 website going down it appears we may have lost some commits.  Anyways I'm picking up maintance of the project and will be setting up a bug tracker to help get this project rolling again.
 
 Gnome15
 =======
